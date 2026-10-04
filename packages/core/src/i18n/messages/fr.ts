@@ -1980,6 +1980,38 @@ export const fr: Messages = {
     unavailable:
       "La connexion d'un compte IA n'est pas disponible pour le moment.",
     notEnabled: "La connexion d'un compte IA n'est pas encore ouverte.",
+    /** Le Profil : la section « Compte IA ». */
+    section: "Compte IA",
+    footer:
+      "Les lectures écrites — votre mois, une catégorie, vos placements — sont rédigées sur votre propre compte IA, avec le modèle de votre choix.",
+    footerConnected:
+      "Pluclair garde la clé chiffrée et ne s'en sert que pour vos lectures. Le solde de votre compte se consulte sur openrouter.ai.",
+    connect: "Connecter un compte IA",
+    connectHint: "Avec OpenRouter, en une fois",
+    consentWhat:
+      "Les lectures écrites — votre mois, une catégorie, vos placements, un fonds — seront rédigées par le modèle que vous choisissez, sur votre compte OpenRouter, et facturées sur vos crédits.",
+    consentSent:
+      "Pour chaque lecture, Pluclair envoie les chiffres de la page concernée : totaux, noms de catégories, lignes de vos placements. Jamais votre nom, votre e-mail, vos opérations une à une ni vos identifiants bancaires.",
+    consentWhere:
+      "OpenRouter les transmet au fournisseur du modèle (Mistral, OpenAI ou Anthropic), le plus souvent aux États-Unis. Vous pouvez déconnecter ce compte à tout moment, ici ou depuis OpenRouter.",
+    continue: "Continuer vers OpenRouter",
+    continuing: "Ouverture d'OpenRouter…",
+    model: "Modèle",
+    modelChosen: "Les prochaines lectures seront écrites avec {model}.",
+    credit: "Dépensé ce mois-ci",
+    creditLeft: "Reste {left} sur la limite de {limit} de cette clé",
+    creditNoLimit: "Aucune limite sur cette clé",
+    creditUnknown: "OpenRouter ne répond pas pour le moment",
+    keyRefused: "Clé refusée",
+    keyRefusedHint:
+      "OpenRouter ne reconnaît plus cette clé : reconnectez le compte.",
+    disconnect: "Déconnecter",
+    disconnectBlurb:
+      "Pluclair oubliera la clé, et vos lectures ne seront plus écrites. La clé « Pluclair » reste dans votre compte OpenRouter jusqu'à ce que vous l'y supprimiez.",
+    disconnected: "Compte IA déconnecté.",
+    connected: "Compte IA connecté.",
+    refused: "OpenRouter n'a pas accordé l'accès. Rien n'a été enregistré.",
+    expired: "La connexion a pris trop de temps. Recommencez.",
   },
 
   /** La revue des portefeuilles : ce qu'un modèle tire de la transparence. */

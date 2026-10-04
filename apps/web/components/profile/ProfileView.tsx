@@ -33,6 +33,12 @@ import {
 } from "@finance/core/notification-kinds";
 import { NotificationKindRows } from "@/components/profile/NotificationKindRows";
 import { NotificationsRow } from "@/components/profile/NotificationsRow";
+import {
+  AiAccountSection,
+  type AiAccountRow,
+  type AiConnectOutcome,
+} from "@/components/profile/AiAccountSection";
+import type { AiModel } from "@finance/core/ai-models";
 import { setCurrencyPreference, useCurrency } from "@/lib/use-currency";
 import { CURRENCY_LABELS } from "@finance/core/constants";
 import { useLocale, useT } from "@/lib/locale-context";
@@ -61,10 +67,19 @@ interface ProfileViewProps {
   showBank: boolean;
   /** Whether the account has the Immobilier tab, and so its notifications. */
   showProperty: boolean;
+  /**
+   * The AI account section, behind `ai.account`: null with the flag off;
+   * otherwise the connected account's model (null with none) and what the
+   * OpenRouter round trip just came back with.
+   */
+  aiAccount: {
+    model: AiModel | null;
+    outcome: AiConnectOutcome | null;
+  } | null;
 }
 
 /** Which row is showing its editor. One at a time, as on the phone. */
-type OpenRow = "name" | "passkeys" | "wipe" | "close" | null;
+type OpenRow = "name" | "passkeys" | "wipe" | "close" | AiAccountRow | null;
 
 /**
  * Settings, as rows.
@@ -86,6 +101,7 @@ export function ProfileView({
   initialPasskeys,
   showBank,
   showProperty,
+  aiAccount,
 }: ProfileViewProps) {
   const { toast } = useToast();
   const currency = useCurrency();
@@ -265,6 +281,18 @@ export function ProfileView({
             onClick={switchLocale}
           />
         </ListSection>
+
+        {/* Beside the money it reads: the written reads are what an AI
+            account is for. */}
+        {aiAccount ? (
+          <AiAccountSection
+            model={aiAccount.model}
+            outcome={aiAccount.outcome}
+            open={open}
+            onToggle={toggle}
+            onClose={() => setOpen(null)}
+          />
+        ) : null}
 
         <ListSection
           title={t("profile.securitySection")}
