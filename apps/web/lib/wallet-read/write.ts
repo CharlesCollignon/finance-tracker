@@ -10,6 +10,7 @@ import {
   buildWalletReadPrompt,
 } from "@finance/core/wallet-read-prompt";
 import { verifyWalletRead } from "@finance/core/wallet-read";
+import { namesInWalletReadPrompt } from "@finance/core/wallet-read-prompt";
 import { factsDigest } from "@finance/core/month-facts";
 import type { Database } from "@finance/core/types/database";
 import { walletReadConfigured } from "@/lib/wallet-read/client";
@@ -119,9 +120,19 @@ export async function writeWalletRead(
     };
   }
 
-  const verdict = verifyWalletRead(raw, facts, locale);
+  const verdict = verifyWalletRead(raw, facts, locale, {
+    names: namesInWalletReadPrompt(lookThrough),
+  });
 
   if (!verdict.ok) {
+    // The reason, on the server, once — never the answer itself, which can
+    // quote the prompt back. Without it every refusal was the same sentence
+    // and the one that kept recurring could not be told from the others.
+    console.warn(
+      `[wallet-read] answer refused (${verdict.reason}): ${
+        verdict.issue ?? verdict.detail
+      }`,
+    );
     // Kept, not refunded: an answer arrived and cost money. The previous read
     // stays where it is — a rejected answer is a reason to keep what was
     // already there, not to throw the surface back to silence.
@@ -142,13 +153,9 @@ export async function writeWalletRead(
 
     return {
       read: false,
-      // Named rather than generic for the two that say something about the
-      // prompt: these are the messages worth reading while it is being tuned.
-      message:
-        verdict.reason === "unknown-datum" ||
-        verdict.reason === "invented-instrument"
-          ? t("walletRead.threwAway", { detail: verdict.detail })
-          : t("walletRead.unusable"),
+      // Always named: « n'a pas pu être utilisée » alone gave the reader
+      // nothing to report and the prompt nothing to fix.
+      message: t("walletRead.threwAway", { detail: verdict.detail }),
       readsLeft: walletReadsRemaining(reserved),
     };
   }

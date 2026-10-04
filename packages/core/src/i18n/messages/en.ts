@@ -2824,7 +2824,6 @@ export const en = {
     untracked: "Wallet reads are not available here yet.",
     noWriter: "No writer is configured.",
     noAnswer: "The writer did not answer just now.",
-    unusable: "The writer's answer could not be used.",
     threwAway: "The writer's answer was thrown away. ({detail})",
 
     /** Why an answer was thrown away. Short and plain; these are shown. */

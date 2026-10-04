@@ -45,6 +45,22 @@ export interface BuildWalletPromptOptions {
 }
 
 /**
+ * Every holding and index the prompt names, for the answer's figure rule to
+ * look past: a model asked about « Amundi S&P 500 » and « iShares Core S&P
+ * 500 » tracking the same index will name them, digits and all, and those
+ * digits are the app's own words, not a quantity it made up.
+ */
+export function namesInWalletReadPrompt(lookThrough: LookThrough): string[] {
+  return [
+    ...lookThrough.indexCollisions.flatMap((collision) => [
+      ...collision.names,
+      ...collision.indexes,
+    ]),
+    ...lookThrough.eligibility.map((issue) => issue.name),
+  ];
+}
+
+/**
  * The catalogue, written out for the prompt.
  *
  * Handed over in full rather than summarised, which is what makes refusing an

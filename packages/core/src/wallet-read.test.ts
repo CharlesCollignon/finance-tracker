@@ -136,6 +136,36 @@ describe("verifyWalletRead", () => {
 
   /* ------------------------------------------------------- the figure rule */
 
+  it("says a wrong shape in the reader's words, and keeps the schema's for the log", () => {
+    const verdict = verifyWalletRead({ nope: true }, pack().facts, "fr");
+    expect(verdict.ok).toBe(false);
+    if (verdict.ok) return;
+    expect(verdict.detail).toBe("Pas la forme demandée");
+    expect(verdict.issue).toBeTruthy();
+  });
+
+  it("looks past an index's own number, however it is cased", () => {
+    const verdict = verifyWalletRead(
+      answer({ headline: "Both funds follow the s&p 500 closely." }),
+      pack().facts,
+      "en",
+    );
+    expect(verdict.ok).toBe(true);
+  });
+
+  it("looks past the digits in a holding the prompt named", () => {
+    const headline = "Horizon 2040 carries nearly everything.";
+    const named = verifyWalletRead(answer({ headline }), pack().facts, "en", {
+      names: ["Horizon 2040"],
+    });
+    expect(named.ok).toBe(true);
+
+    const unnamed = verifyWalletRead(answer({ headline }), pack().facts, "en");
+    expect(unnamed.ok).toBe(false);
+    if (unnamed.ok) return;
+    expect(unnamed.reason).toBe("invented-figure");
+  });
+
   it("refuses a headline that writes its own figure", () => {
     const verdict = verifyWalletRead(
       answer({ headline: "You are 65% United States." }),

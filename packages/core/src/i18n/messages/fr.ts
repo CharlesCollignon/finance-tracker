@@ -2008,7 +2008,6 @@ export const fr: Messages = {
     untracked: "Les revues de placements ne sont pas encore disponibles ici.",
     noWriter: "Aucun rédacteur n'est configuré.",
     noAnswer: "Le rédacteur n'a pas répondu à l'instant.",
-    unusable: "La réponse du rédacteur n'a pas pu être utilisée.",
     threwAway: "La réponse du rédacteur a été écartée. ({detail})",
 
     refusal: {
