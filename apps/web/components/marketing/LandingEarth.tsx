@@ -182,8 +182,13 @@ export function LandingEarth({
       )}
       aria-hidden
     >
+      {/* Hidden until WebGL is known to have failed. Shown from the first
+          paint, its planet — tilted, rim to the upper left — sat there until
+          the renderer's first frame replaced it with the real horizon, rim
+          along the bottom: the hero seemed to turn round on every load. */}
       <div
         ref={fallback}
+        hidden
         className="absolute inset-0 overflow-hidden"
         style={{
           background:
@@ -202,10 +207,12 @@ export function LandingEarth({
           }}
         />
       </div>
+      {/* Faded in on its first frame, over the black of space, rather than
+          swapped in. */}
       <canvas
         ref={canvas}
         tabIndex={-1}
-        className="absolute inset-0 block h-full w-full"
+        className="absolute inset-0 block h-full w-full opacity-0 transition-opacity duration-700 ease-out motion-reduce:transition-none"
         style={{ touchAction: interactive ? "pan-y" : "auto" }}
       />
     </div>
@@ -689,6 +696,7 @@ function createRenderer(
   if (!context) {
     canvas.hidden = true;
     canvas.style.visibility = "hidden";
+    fallback.hidden = false;
     canvas.dataset.status = "fallback";
     return { update: () => {}, dispose: () => {} };
   }
@@ -1148,6 +1156,7 @@ function createRenderer(
     gl.drawArrays(gl.POINTS, 0, options.starCount * 7);
     gl.disable(gl.BLEND);
     canvas.dataset.status = "ready";
+    canvas.style.opacity = "1";
     fallback.hidden = true;
     if (!still()) requestFrame();
   }
