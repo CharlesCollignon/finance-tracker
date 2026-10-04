@@ -268,6 +268,8 @@ const fragment = `
     // The sunrise of the entrance, 0 to 1: the sun's glow, and the light it
     // throws on the rim and the land.
     uniform float dawn;
+    // How far the sun has risen, 0 to 1: the land brightens with it.
+    uniform float sunrise;
     uniform sampler2D earth;
     uniform sampler2D cosmos;
     const float PI = 3.141592653589793;
@@ -426,7 +428,9 @@ const fragment = `
         float pool = max(gauss(angleDistance, .37), bloom * gauss(eventDistance, .65)) * grazing;
         vec3 surface = mix(tex, vec3(dot(tex, vec3(.2126, .7152, .0722))), .32);
         surface *= vec3(.61, .74, 1.);
-        float lit = .45 + .55 * dawn;
+        // The land is lit by the sun as it clears the rim: dark at first, at
+        // full brightness once it has risen.
+        float lit = .2 + .8 * sunrise;
         color += surface * pool * (.045 + reveal * .24 + bloom * .20 + charge * .045) * inside * surfaceBrightness * illumination * lit;
         color += vec3(.010, .018, .032) * pool * (reveal + bloom) * inside * surfaceBrightness * illumination * lit;
       }
@@ -703,8 +707,8 @@ function holeAt(
 /**
  * The entrance: the scene fades in smoothly (the canvas's own transition,
  * below), then the sun fades in, hyper slowly, as it rises very, very slowly
- * behind the rim from wholly below it — and lights the rim and the land as
- * it comes. Seconds.
+ * behind the rim from wholly below it. The rim brightens as it fades in; the
+ * land as it rises. Seconds.
  */
 const SUN_DELAY_S = 2.2;
 const SUN_FADE_S = 14;
@@ -925,6 +929,7 @@ function createRenderer(
       "illumination",
       "farSun",
       "dawn",
+      "sunrise",
       "auroraPreview",
       "standingAurora",
     ]);
@@ -1156,7 +1161,7 @@ function createRenderer(
       size,
     ];
     const hole = holeAt(g.holePath, still() ? null : state.clock);
-    return { sun, hole, dawn };
+    return { sun, hole, dawn, rise };
   }
   let scene: ReturnType<typeof stage> | undefined;
   function common(u: Uniforms) {
@@ -1225,6 +1230,7 @@ function createRenderer(
     quad(program, position);
     common(uniforms);
     gl.uniform1f(uniforms.dawn!, scene.dawn);
+    gl.uniform1f(uniforms.sunrise!, scene.rise);
     gl.uniform1f(uniforms.reveal!, state.reveal);
     gl.uniform1f(uniforms.viewAngle!, geometry.rest);
     gl.uniform1f(uniforms.galaxyBrightness!, options.galaxyBrightness);
