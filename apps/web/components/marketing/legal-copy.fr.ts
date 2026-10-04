@@ -15,7 +15,7 @@ export const legalCopyFr: LegalCopy = {
     notice: "Mentions légales",
   },
   updatedLabel: "Dernière mise à jour\u00A0:",
-  updated: "2026-09-30",
+  updated: "2026-10-04",
   contents: "Sur cette page",
   draftNotice:
     "Brouillon à relire. Les blancs surlignés sont à compléter par l'éditeur, et le texte n'a pas encore été vérifié par un juriste.",
@@ -100,6 +100,7 @@ export const legalCopyFr: LegalCopy = {
           "Supabase\u00A0: la base de données et la connexion, dans l'Union européenne ([[la région exacte du projet Supabase dans l'UE]]).",
           "Vercel\u00A0: l'hébergement du site et du serveur, les fonctions serveur s'exécutant à Paris, en France.",
           "Mistral AI (France) : rédige les courtes lectures de votre mois et de vos portefeuilles. Elle ne reçoit que les chiffres à partir desquels une lecture est écrite — noms de catégories et totaux du mois, ou fonds d'un portefeuille et leurs valeurs — et jamais votre nom, votre e-mail ni vos écritures une à une.",
+          "OpenRouter (États-Unis), si vous connectez votre propre compte IA\u00A0: vos lectures sont alors rédigées par le modèle que vous avez choisi, sur votre compte et à vos frais, et non plus par Mistral AI pour notre compte. OpenRouter reçoit les mêmes chiffres — noms de catégories et totaux du mois, fonds d'un portefeuille et leurs valeurs, nom et identifiant d'un fonds à lire — et les transmet au fournisseur du modèle (Mistral, OpenAI ou Anthropic). Jamais votre nom, votre e-mail, vos écritures une à une ni vos identifiants bancaires. La clé de ce compte est conservée chiffrée sur notre serveur, et vous pouvez le déconnecter à tout moment.",
           "Google : seulement si vous vous connectez avec Google.",
           "La distribution des notifications : les notifications web sont chiffrées, si bien que le service push de votre navigateur (Apple, Google, Microsoft ou Mozilla selon le navigateur) ne peut pas les lire. Les notifications sur téléphone passent par le service push d'Expo, puis par Apple ou Google.",
           "Les cours de marché : pour valoriser vos fonds, nous consultons leurs cours sur Yahoo Finance et sur les pages des émetteurs (justETF, iShares). Nous n'envoyons que l'identifiant du fonds, jamais rien vous concernant.",
@@ -107,6 +108,7 @@ export const legalCopyFr: LegalCopy = {
         ],
         after: [
           "Vercel Inc. est une société américaine certifiée au titre du cadre de protection des données UE–États-Unis, sur lequel repose tout transfert vers elle. Supabase et Mistral AI conservent les données dans l'Union européenne, et Supabase s'appuie sur les clauses contractuelles types de la Commission européenne pour tout accès depuis l'extérieur. [[Vérifier l'accord de sous-traitance en vigueur de chaque prestataire.]]",
+          "Si vous connectez un compte IA, OpenRouter et le fournisseur du modèle choisi peuvent traiter ces chiffres hors de l'Union européenne, le plus souvent aux États-Unis\u00A0: ce transfert a lieu sur votre compte, à votre demande, et vous en êtes informé avant de le connecter.",
         ],
       },
       {

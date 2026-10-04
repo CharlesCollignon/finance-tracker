@@ -22,6 +22,7 @@
 | Supabase                                | Base de données, authentification                                       | Union européenne — [[région exacte]]                | Accord de sous-traitance (DPA v1, 1ᵉʳ août 2026) ; clauses contractuelles types pour tout accès hors UE |
 | Vercel Inc.                             | Hébergement du site et des fonctions serveur                            | Fonctions à Paris (`cdg1`) ; société aux États-Unis | Certification au cadre UE–États-Unis (Data Privacy Framework) ; DPA                                     |
 | Mistral AI                              | Rédaction des « lectures » du mois, des catégories et des portefeuilles | France                                              | [[DPA à signer / vérifier]]                                                                             |
+| OpenRouter, Inc.                        | Si l'utilisateur connecte son propre compte IA : transmission des lectures au modèle qu'il a choisi | États-Unis, puis selon le fournisseur du modèle | Sur le compte de l'utilisateur, à sa demande, après consentement ; [[conditions d'OpenRouter à vérifier]] |
 | Expo, Apple, Google, Mozilla, Microsoft | Acheminement des notifications                                          | Selon le service                                    | Notifications web chiffrées de bout en bout ; [[vérifier les conditions d'Expo]]                        |
 | Google                                  | Connexion « Se connecter avec Google », si l'utilisateur la choisit     | Selon Google                                        | Responsable de traitement distinct                                                                      |
 
@@ -114,6 +115,15 @@ auprès desquels l'utilisateur a lui-même ouvert un compte.
 - **Données transmises à Mistral AI** : noms des catégories et totaux du mois,
   ou fonds d'un portefeuille et leurs valeurs ; jamais le nom, l'e-mail ni les
   opérations une à une.
+- **Avec un compte IA connecté** (drapeau `ai.account`, migration 053) : les
+  lectures sont rédigées sur le compte OpenRouter de l'utilisateur, par le
+  modèle qu'il a choisi, et non plus par Mistral AI pour le compte de
+  Pluclair. Les mêmes chiffres — plus le nom et l'ISIN d'un fonds à lire —
+  sont transmis à OpenRouter (États-Unis), puis au fournisseur du modèle
+  (Mistral, OpenAI ou Anthropic). Base légale : le consentement de
+  l'utilisateur, recueilli avant la connexion (art. 6.1.a). La clé du compte
+  est conservée chiffrée (AES-256-GCM, clé maître `AI_SECRETS_KEY`) et
+  supprimée à la déconnexion.
 - **Durée** : lectures conservées [[durée de conservation des lectures]].
 
 ## 6. Journaux techniques
