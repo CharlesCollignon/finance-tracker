@@ -40,6 +40,9 @@ export const AI_BRAND_MARKS: Record<AiBrand, AiBrandMark> = {
   },
 };
 
+/** In the order the onboarding lines them up, the Profile's own order. */
+export const AI_BRANDS: readonly AiBrand[] = ["mistral", "openai", "claude"];
+
 /**
  * Whose mark goes beside a model, from its id — `mistral-medium-latest`,
  * `openai/gpt-6-sol` — or from the name a screen already holds, « GPT-6

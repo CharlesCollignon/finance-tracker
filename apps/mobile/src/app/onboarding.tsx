@@ -8,6 +8,7 @@ import { groupCategoriesByType } from "@finance/core/categories";
 import type { Category } from "@finance/core/types/database";
 
 import { ConnectBankSheet } from "@/components/bank/ConnectBankSheet";
+import { AiWelcomeStep } from "@/components/onboarding/AiWelcomeStep";
 import { CategoryIcon } from "@/components/CategoryIcon";
 import { Logo } from "@/components/Logo";
 import { FadeIn } from "@/components/motion/FadeIn";
@@ -17,6 +18,7 @@ import { Input } from "@/components/ui/Input";
 import { Screen } from "@/components/ui/Screen";
 import { Text } from "@/components/ui/Text";
 import { useBankState } from "@/hooks/useBankState";
+import { useFlag } from "@/hooks/useFlag";
 import { useRefreshable } from "@/hooks/useRefreshable";
 import { shouldInvite } from "@/lib/bank-connect";
 import { cn } from "@/lib/cn";
@@ -33,18 +35,23 @@ import { useThemeColors } from "@/theme/useThemeColors";
 
 const CURRENCIES: CurrencyCode[] = ["EUR", "USD"];
 
-type Step = "currency" | "income" | "recurring" | "bank";
+type Step = "currency" | "income" | "recurring" | "bank" | "ai";
 
 /**
- * The bank step sits last and only where connecting one is possible, as on
- * the web: after typing a charge or two by hand is when "let your bank do
- * this" means something. There is no "done" step: the last one finishes, as
- * on the web, and the meter counted a step nobody saw.
+ * The bank step comes after the charges and only where connecting one is
+ * possible, as on the web: after typing a charge or two by hand is when "let
+ * your bank do this" means something. The AI account comes last, behind
+ * `ai.account`. There is no "done" step: the last one finishes, as on the
+ * web, and the meter counted a step nobody saw.
  */
-function stepsFor(offerBank: boolean): Step[] {
-  return offerBank
-    ? ["currency", "income", "recurring", "bank"]
-    : ["currency", "income", "recurring"];
+function stepsFor(offerBank: boolean, offerAi: boolean): Step[] {
+  return [
+    "currency",
+    "income",
+    "recurring",
+    ...(offerBank ? (["bank"] as const) : []),
+    ...(offerAi ? (["ai"] as const) : []),
+  ];
 }
 
 /**
@@ -99,7 +106,11 @@ export default function OnboardingScreen() {
 
   const { bank } = useBankState();
   const offerBank = bank !== null && shouldInvite("welcome", bank);
-  const stepOrder = stepsFor(offerBank);
+  const offerAi = useFlag("ai.account");
+  const stepOrder = stepsFor(offerBank, offerAi);
+  // Connected at the bank step: setup ends on the Bank screen, where its
+  // history comes in — after the AI step rather than instead of it.
+  const [bankJustConnected, setBankJustConnected] = useState(false);
   const stepIndex = stepOrder.indexOf(step);
 
   function goTo(next: Step) {
@@ -133,10 +144,21 @@ export default function OnboardingScreen() {
     router.replace(to);
   }
 
-  /** What follows the charges: the bank step where there is one. */
+  /** What follows the charges: the bank step, the AI step, or the end. */
   function afterCharges() {
     if (offerBank) {
       goTo("bank");
+    } else if (offerAi) {
+      goTo("ai");
+    } else {
+      void finish();
+    }
+  }
+
+  /** What follows the bank: the AI step where there is one. */
+  function afterBank() {
+    if (offerAi) {
+      goTo("ai");
     } else {
       void finish();
     }
@@ -467,7 +489,7 @@ export default function OnboardingScreen() {
                 label={
                   pending
                     ? t("onboarding.saving")
-                    : offerBank
+                    : offerBank || offerAi
                       ? t("onboarding.continue")
                       : t("removal.onboardingFinish")
                 }
@@ -512,9 +534,7 @@ export default function OnboardingScreen() {
               <Button
                 label={t("onboarding.skipForNow")}
                 variant="ghost"
-                onPress={() => {
-                  void finish();
-                }}
+                onPress={afterBank}
               />
             </View>
 
@@ -524,11 +544,25 @@ export default function OnboardingScreen() {
               onConnected={() => {
                 toast(t("bankConnect.connected"), "success");
                 // Setup ends on the Bank screen, where the history comes
-                // in, rather than on a Bearing still waiting for it.
-                void finish("/bank" as Href);
+                // in, rather than on a Bearing still waiting for it — after
+                // the AI step, where there is one.
+                if (offerAi) {
+                  setBankJustConnected(true);
+                  goTo("ai");
+                } else {
+                  void finish("/bank" as Href);
+                }
               }}
             />
           </FadeIn>
+        ) : null}
+
+        {step === "ai" ? (
+          <AiWelcomeStep
+            onDone={() => {
+              void finish(bankJustConnected ? ("/bank" as Href) : "/");
+            }}
+          />
         ) : null}
       </ScrollView>
     </Screen>

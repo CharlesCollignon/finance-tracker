@@ -27,7 +27,7 @@ export type AiAccountRow = "aiConnect" | "aiModel" | "aiDisconnect";
 export type AiConnectOutcome = "connected" | "refused" | "expired";
 
 /** Each outcome's sentence, spelled out so the catalogue check can see them. */
-const OUTCOME_MESSAGES: Record<AiConnectOutcome, string> = {
+export const OUTCOME_MESSAGES: Record<AiConnectOutcome, string> = {
   connected: "aiAccount.connected",
   refused: "aiAccount.refused",
   expired: "aiAccount.expired",

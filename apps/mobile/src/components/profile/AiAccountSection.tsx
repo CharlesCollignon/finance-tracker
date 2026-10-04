@@ -16,7 +16,11 @@ import { Button } from "@/components/ui/Button";
 import { ListRow, ListSection } from "@/components/ui/ListRow";
 import { Text } from "@/components/ui/Text";
 import { useRefreshable } from "@/hooks/useRefreshable";
-import { connectAiAccount, getAiCredit } from "@/lib/ai-account";
+import {
+  connectAiAccount,
+  getAiCredit,
+  OUTCOME_MESSAGES,
+} from "@/lib/ai-account";
 import { cn } from "@/lib/cn";
 import { chooseAiModel, disconnectAiAccount } from "@/lib/mutations";
 import { getAiConnection } from "@/lib/queries";
@@ -27,13 +31,6 @@ import { ICON } from "@/theme/tokens";
 
 /** The rows of this section that open an editor under them. */
 export type AiAccountRow = "aiConnect" | "aiModel" | "aiDisconnect";
-
-/** Each outcome's sentence, spelled out so the catalogue check can see them. */
-const OUTCOME_MESSAGES = {
-  connected: "aiAccount.connected",
-  refused: "aiAccount.refused",
-  expired: "aiAccount.expired",
-} as const;
 
 /**
  * The user's own AI account (docs/plans/AI_ACCOUNT_PLAN.md, Phase 3), as on
