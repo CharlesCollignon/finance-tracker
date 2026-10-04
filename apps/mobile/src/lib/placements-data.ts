@@ -9,6 +9,7 @@ import {
   type InvestmentReturns,
 } from "@finance/core/investment-returns";
 import type { InvestmentPortfolioSummary } from "@finance/core/investment-positions";
+import { contributionStreak } from "@finance/core/investment-streak";
 import {
   buildUpcomingInvestments,
   buildWalletFundingNeeds,
@@ -51,6 +52,8 @@ export interface PlacementsData {
   plans: WalletPlan[];
   templates: RecurringTemplateWithCategory[];
   savings: SavingsState;
+  /** Months running with money put into the placements. */
+  streak: number;
 }
 
 export async function getPlacementsData(
@@ -88,6 +91,7 @@ export async function getPlacementsData(
     plans,
     templates: allTemplates,
     savings,
+    streak: contributionStreak(transactions, todayIsoLocal()),
   };
 }
 

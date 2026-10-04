@@ -104,7 +104,6 @@ export function BearingMonthView({
         <section className={cn(GLASS_CARD, "rounded-card p-card")}>
           <ArrivedCharges
             proposals={data.arrived.proposals}
-            misses={data.arrived.misses}
           />
         </section>
       ) : null}

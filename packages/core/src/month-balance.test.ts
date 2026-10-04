@@ -3,7 +3,6 @@ import { describe, expect, it } from "vitest";
 import {
   balanceExplanation,
   buildMonthBalance,
-  leftAtMonthEnd,
   outflowsByDay,
   recordedDeltas,
   spendingByMonth,
@@ -92,29 +91,6 @@ describe("upcomingDelta", () => {
         tracked: true,
       }),
     ).toBe(0);
-  });
-});
-
-describe("leftAtMonthEnd", () => {
-  it("counts the month's rows by the account's rule, and what is still to come", () => {
-    expect(
-      leftAtMonthEnd(
-        [
-          tx({ id: "pay", type: "income", amount: 3_000, name: "Salaire" }),
-          tx({ id: "rent", amount: 900, name: "Loyer" }),
-          tx({
-            id: "transfer",
-            type: "investment",
-            amount: 400,
-            name: "Virement vers le courtier",
-          }),
-          // Bought with the transfer above: no money moves twice.
-          tx({ id: "dca", type: "investment", counts: false, amount: 400 }),
-          tx({ id: "out", type: "savings", counts: false, amount: 100 }),
-        ],
-        { arriving: 0, budgetedOutflow: 250 },
-      ),
-    ).toBe(1_550);
   });
 });
 

@@ -116,24 +116,6 @@ export function upcomingDelta(charge: UpcomingCharge): number {
   return charge.type === "income" ? charge.amount : -charge.amount;
 }
 
-/**
- * What the month leaves on the account once everything planned for it has
- * happened, counted by the month each row counts for — so an October salary
- * paid on 22 September, and the transfer to the broker made with it, are both
- * October's.
- *
- * Recorded rows move the account by `transactionDelta` (a purchase inside a
- * wallet moves nothing, a savings withdrawal comes back); what is still to
- * come by the still-to-come totals, which leave the same purchases out.
- */
-export function leftAtMonthEnd(
-  recorded: readonly TransactionWithCategory[],
-  upcoming: { arriving: number; budgetedOutflow: number },
-): number {
-  const net = recorded.reduce((sum, row) => sum + transactionDelta(row), 0);
-  return roundMoney(net + upcoming.arriving - upcoming.budgetedOutflow);
-}
-
 export type MonthPeriod = "past" | "current" | "future";
 
 export interface MonthBalanceInput {

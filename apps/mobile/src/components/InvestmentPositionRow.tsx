@@ -1,24 +1,28 @@
-import { useMemo, useState } from "react";
 import { Pressable, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import type { EChartsCoreOption } from "echarts/core";
 
 import type { InvestmentPositionItem } from "@finance/core/investment-positions";
 import { isCryptoWallet } from "@finance/core/crypto-holdings";
+import {
+  formatSignedPercent,
+  type RangeSeries,
+} from "@finance/core/instrument-price-series";
 
-import { CategoryIcon } from "@/components/CategoryIcon";
-import { EChart } from "@/components/charts/EChart";
+import { InstrumentLogo } from "@/components/InstrumentLogo";
+import { PriceSparkline } from "@/components/PriceSparkline";
 import { PrivateAmount } from "@/components/PrivateAmount";
 import { Text } from "@/components/ui/Text";
 import { cn } from "@/lib/cn";
 import { useFormatCurrency } from "@/providers/CurrencyProvider";
 import { useThemeColors } from "@/theme/useThemeColors";
 import { ICON } from "@/theme/tokens";
-import { useT } from "@/providers/LocaleProvider";
+import { useLocale, useT } from "@/providers/LocaleProvider";
 import { formatSigned } from "@finance/core/amount-sign";
 
 interface InvestmentPositionRowProps {
   item: InvestmentPositionItem;
+  /** The instrument's own price over a year, once it has been read. */
+  priceLine?: RangeSeries;
   onEdit: () => void;
 }
 
@@ -50,71 +54,50 @@ function Metric({
   );
 }
 
-/** One wallet position: identity, the three metrics, and an optional chart. */
+/**
+ * One wallet position: its mark, what it is, the three figures — and behind
+ * them, faintly, the instrument's own price over a year, with its move said
+ * once beside the name. The web's row, at phone width.
+ */
 export function InvestmentPositionRow({
   item,
+  priceLine,
   onEdit,
 }: InvestmentPositionRowProps) {
   const t = useT();
+  const locale = useLocale();
   const formatEuro = useFormatCurrency();
   const colors = useThemeColors();
-  const [chartOpen, setChartOpen] = useState(false);
 
   const isCrypto = isCryptoWallet(item.walletId);
   const valueLabel =
     item.hasManualValue || item.hasMarketQuote
       ? t("wallets.market")
       : t("wallets.invested");
-  const hasChart = item.chartPoints.length > 0;
-
-  const option = useMemo<EChartsCoreOption | null>(() => {
-    if (!hasChart) {
-      return null;
-    }
-    const line = item.gainLoss < 0 ? colors.destructive : colors.success;
-    return {
-      animationDuration: 300,
-      grid: { left: 8, right: 8, top: 12, bottom: 8, containLabel: true },
-      xAxis: {
-        type: "category",
-        data: item.chartPoints.map((point) => point.label),
-        axisLine: { show: false },
-        axisTick: { show: false },
-        axisLabel: { color: colors.mutedForeground, fontSize: 9 },
-      },
-      yAxis: {
-        type: "value",
-        splitLine: { lineStyle: { color: colors.border, type: "dashed" } },
-        axisLabel: { color: colors.mutedForeground, fontSize: 9 },
-      },
-      series: [
-        {
-          type: "line",
-          name: t("wallets.invested"),
-          smooth: true,
-          showSymbol: false,
-          lineStyle: { color: colors.mutedForeground, width: 1.5 },
-          itemStyle: { color: colors.mutedForeground },
-          data: item.chartPoints.map((point) => point.invested),
-        },
-        {
-          type: "line",
-          name: t("wallets.market"),
-          smooth: true,
-          showSymbol: false,
-          lineStyle: { color: line, width: 2 },
-          itemStyle: { color: line },
-          data: item.chartPoints.map((point) => point.market),
-        },
-      ],
-    };
-  }, [colors, hasChart, item.chartPoints, item.gainLoss, t]);
+  const hasLine = (priceLine?.values.length ?? 0) > 1;
+  const change = priceLine?.changePct ?? null;
+  const lineColor =
+    change === null || change === 0
+      ? colors.mutedForeground
+      : change > 0
+        ? colors.success
+        : colors.destructive;
 
   return (
     <View className="min-w-0 py-4">
+      {hasLine ? (
+        <PriceSparkline
+          values={priceLine!.values}
+          color={lineColor}
+          style={{ left: 0, right: 0, bottom: 6, height: 48 }}
+        />
+      ) : null}
       <View className="flex-row items-start justify-between gap-2">
-        <View className="min-w-0 flex-1 flex-row items-start gap-2">
-          <CategoryIcon icon={item.icon} className="h-8 w-8" />
+        <View className="min-w-0 flex-1 flex-row items-start gap-2.5">
+          <InstrumentLogo
+            symbol={item.instrumentSymbol}
+            fallbackIcon={item.icon}
+          />
           <View className="min-w-0 flex-1">
             <Text numberOfLines={1} className="text-sm font-medium">
               {item.name}
@@ -124,6 +107,23 @@ export function InvestmentPositionRow({
                 {isCrypto
                   ? t("position.bitcoin")
                   : (item.instrumentName ?? item.instrumentSymbol)}
+              </Text>
+            ) : null}
+            {hasLine && change !== null ? (
+              <Text
+                numberOfLines={1}
+                className={cn(
+                  "text-xs font-medium",
+                  change > 0
+                    ? "text-success"
+                    : change < 0
+                      ? "text-destructive"
+                      : "text-muted-foreground",
+                )}
+              >
+                {t("wallets.priceOverYear", {
+                  change: formatSignedPercent(change, locale),
+                })}
               </Text>
             ) : null}
             {item.needsShareCount ? (
@@ -168,22 +168,6 @@ export function InvestmentPositionRow({
           }
         />
       </View>
-
-      {hasChart ? (
-        <Pressable
-          accessibilityRole="button"
-          onPress={() => setChartOpen((open) => !open)}
-          className="mt-2 min-h-11 justify-center"
-        >
-          <Text variant="muted" className="text-xs font-medium">
-            {chartOpen ? t("wallets.hideChart") : t("wallets.showChart")}
-          </Text>
-        </Pressable>
-      ) : null}
-
-      {chartOpen && option ? (
-        <EChart option={option} height={160} className="mt-1" />
-      ) : null}
     </View>
   );
 }

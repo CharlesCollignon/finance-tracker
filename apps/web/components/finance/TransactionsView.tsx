@@ -51,8 +51,6 @@ import {
   relativeDayLabel,
   todayIsoLocal,
 } from "@finance/core/constants";
-import { leftAtMonthEnd } from "@finance/core/month-balance";
-import { buildStillToCome } from "@finance/core/still-to-come";
 import {
   FULFILMENT_STATE_KEY,
   indexFulfilmentStates,
@@ -70,7 +68,6 @@ import {
 } from "@finance/core/selection";
 import type {
   Category,
-  RecurringTemplateWithCategory,
   TransactionWithCategory,
 } from "@finance/core/types/database";
 import { ICON } from "@/lib/icon-scale";
@@ -88,15 +85,6 @@ interface TransactionsViewProps {
    */
   planned?: PlannedOccurrence[];
   categories: Category[];
-  recurringTemplates: RecurringTemplateWithCategory[];
-  /** Occurrences waved off for this month, so they are not counted as owed. */
-  skippedKeys?: string[];
-  /**
-   * Occurrences a bank movement has been confirmed to settle. Not owed any
-   * more either: without them the month-end figure counted a salary the bank
-   * had already paid, once as received and once as still to come.
-   */
-  fulfilledKeys?: string[];
   /** Rows the user has confirmed settle a recurring charge. */
   confirmedTransactionIds?: string[];
   /** Rows the matcher has offered as settling one, awaiting a press. */
@@ -149,9 +137,6 @@ export function TransactionsView({
   transactions: loaded,
   planned = [],
   categories,
-  recurringTemplates,
-  skippedKeys,
-  fulfilledKeys,
   confirmedTransactionIds,
   proposedTransactionIds,
   year,
@@ -379,32 +364,6 @@ export function TransactionsView({
   // under a filter would state something the list below contradicts.
   const shown = useMemo(() => ledgerTotals(filtered), [filtered]);
   const shownOut = shown.expense + shown.savings + shown.investment;
-
-  // What the month ends at, which is a fact about the whole month and does
-  // not move with the filters beside it — hence its own label rather than a
-  // third figure in the In / Out pair. Counted by the account's own rule
-  // (`leftAtMonthEnd`): a purchase inside a wallet moves no money twice — the
-  // transfer to the broker that paid for it already left — and a savings
-  // withdrawal comes back.
-  const monthEnd = useMemo(() => {
-    const upcoming = buildStillToCome(
-      transactions,
-      recurringTemplates,
-      year,
-      month,
-      todayIsoLocal(),
-      new Set(skippedKeys ?? []),
-      new Set(fulfilledKeys ?? []),
-    );
-    return leftAtMonthEnd(transactions, upcoming);
-  }, [
-    transactions,
-    recurringTemplates,
-    year,
-    month,
-    skippedKeys,
-    fulfilledKeys,
-  ]);
 
   /**
    * The category dropdown, drawn in the toolbar on a wide screen and full
@@ -717,19 +676,6 @@ export function TransactionsView({
                   </span>
                   <span className="privacy-amount tabular-nums text-destructive">
                     {formatEuro(shownOut)}
-                  </span>
-                </span>
-                <span className="border-l border-border pl-4 md:pl-5">
-                  <span className="text-muted-foreground">
-                    {t("ledger.leftAtMonthEnd")}{" "}
-                  </span>
-                  <span
-                    className={cn(
-                      "privacy-amount tabular-nums",
-                      monthEnd < 0 && "text-destructive",
-                    )}
-                  >
-                    {formatEuro(monthEnd)}
                   </span>
                 </span>
               </p>

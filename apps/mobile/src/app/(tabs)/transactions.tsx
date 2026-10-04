@@ -15,8 +15,6 @@ import {
   relativeDayLabel,
   todayIsoLocal,
 } from "@finance/core/constants";
-import { leftAtMonthEnd } from "@finance/core/month-balance";
-import { buildStillToCome } from "@finance/core/still-to-come";
 import {
   FULFILMENT_STATE_KEY,
   indexFulfilmentStates,
@@ -374,37 +372,6 @@ export default function TransactionsScreen() {
   // under a filter would state something the list below contradicts.
   const shown = useMemo(() => ledgerTotals(filtered), [filtered]);
   const shownOut = shown.expense + shown.savings + shown.investment;
-
-  // What the month ends at, which is a fact about the whole month and does
-  // not move with the filters beside it — hence its own label rather than a
-  // third figure in the In / Out pair. By the account's own rule: a purchase
-  // inside a wallet moves nothing (the transfer that paid for it did), and a
-  // savings withdrawal comes back.
-  const monthEnd = useMemo(() => {
-    const upcoming = buildStillToCome(
-      transactions,
-      data?.templates ?? [],
-      year,
-      month,
-      todayIsoLocal(),
-      new Set(
-        (data?.skipped ?? []).map(
-          (entry) => `${entry.templateId}:${entry.occurredOn}`,
-        ),
-      ),
-      // Settled by a bank movement already, so not still to come: without
-      // this a salary the bank had paid counted twice in the month's end.
-      data?.fulfilled,
-    );
-    return leftAtMonthEnd(transactions, upcoming);
-  }, [
-    transactions,
-    data?.templates,
-    data?.skipped,
-    data?.fulfilled,
-    year,
-    month,
-  ]);
 
   // A ledger is read a day at a time, not as one unbroken column. Grouping
   // here keeps a heading and its rows in the same object, so the list can
@@ -812,13 +779,6 @@ export default function TransactionsScreen() {
                 value={formatEuro(shownOut)}
                 className="text-destructive"
               />
-              <View className="w-px bg-border" />
-              <SummaryFigure
-                label={t("ledger.leftAtMonthEnd")}
-                value={formatEuro(monthEnd)}
-                className={monthEnd < 0 ? "text-destructive" : undefined}
-                wide
-              />
             </View>
           </View>
         </>
@@ -1184,21 +1144,18 @@ function SkippedLine({
   );
 }
 
-/** One of the three figures over the list: a small label, then the amount. */
+/** One of the figures over the list: a small label, then the amount. */
 function SummaryFigure({
   label,
   value,
   className,
-  wide = false,
 }: {
   label: string;
   value: string;
   className?: string;
-  /** The month-end label is the long one; it gets the room. */
-  wide?: boolean;
 }) {
   return (
-    <View className="min-w-0 gap-0.5" style={{ flex: wide ? 1.5 : 1 }}>
+    <View className="min-w-0 flex-1 gap-0.5">
       <Text
         variant="muted"
         numberOfLines={1}

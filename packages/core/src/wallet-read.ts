@@ -59,16 +59,30 @@ export const MAX_WALLET_SUGGESTIONS = 4;
 
 export const WALLET_READ_VERSION = 1;
 
+/**
+ * Bounds that mean the model ignored the format entirely rather than ran a
+ * little long — the month read's, for the same reason. What the card holds
+ * is set by the caps above, applied after: a claim resting on six figures,
+ * or a sixth observation, is trimmed or dropped on its own; only an answer
+ * past these is not a review at all. These were the card's own caps once,
+ * and a sentence citing five figures threw the whole review away as « Pas
+ * la forme demandée ».
+ */
+const RUNAWAY_HEADLINE_LENGTH = 400;
+const RUNAWAY_CLAIM_LENGTH = 1200;
+const RUNAWAY_CLAIMS = 24;
+const RUNAWAY_BASIS = 16;
+
 const claimSchema = z
   .object({
-    text: z.string().min(1).max(600),
-    basis: z.array(z.string().min(1).max(80)).max(4),
+    text: z.string().max(RUNAWAY_CLAIM_LENGTH),
+    basis: z.array(z.string().min(1).max(80)).max(RUNAWAY_BASIS),
   })
   .strict();
 
 export const walletReadAnswerSchema = z
   .object({
-    headline: z.string().min(1).max(300),
+    headline: z.string().min(1).max(RUNAWAY_HEADLINE_LENGTH),
     observations: z
       .array(
         claimSchema
@@ -78,14 +92,14 @@ export const walletReadAnswerSchema = z
           .strict(),
       )
       .min(1)
-      .max(8),
+      .max(RUNAWAY_CLAIMS),
     suggestions: z
       .array(
         claimSchema
           .extend({
             effort: z.enum(["now", "this-month", "habit"]),
             /** From the catalogue handed over in the prompt. Never invented. */
-            isin: z.string().min(1).max(20),
+            isin: z.string().max(20),
             role: z.enum(SUGGESTION_ROLES),
             wallet: z.enum(INVESTMENT_WALLET_IDS as [string, ...string[]]),
             /** How big, said without a number. */
@@ -93,7 +107,7 @@ export const walletReadAnswerSchema = z
           })
           .strict(),
       )
-      .max(8),
+      .max(RUNAWAY_CLAIMS),
   })
   .strict();
 
@@ -110,7 +124,7 @@ const SCHEMA_WORDS: Record<
   }
 > = {
   en: {
-    headline: "One short clause. No figures, not even as {{fact:id}}.",
+    headline: `One short clause, ${MAX_WALLET_HEADLINE_LENGTH} characters at most. No figures, not even as {{fact:id}}.`,
     claim: "Two sentences at most. Write every figure as {{fact:id}}.",
     basis:
       'The ids this rests on, bare: "us-share", not "{{fact:us-share}}". Every id used in the text must appear here.',
@@ -119,8 +133,7 @@ const SCHEMA_WORDS: Record<
       "How big a part this should play. Never a percentage — the app computes those.",
   },
   fr: {
-    headline:
-      "Une seule courte proposition. Aucun chiffre, pas même sous la forme {{fact:id}}.",
+    headline: `Une seule courte proposition, ${MAX_WALLET_HEADLINE_LENGTH} caractères au plus. Aucun chiffre, pas même sous la forme {{fact:id}}.`,
     claim:
       "Deux phrases au plus. Écrivez chaque chiffre sous la forme {{fact:id}}.",
     basis:
@@ -276,12 +289,23 @@ export interface DroppedClaim {
     | "unknown-datum"
     | "unbacked-placeholder"
     | "too-long"
-    | "wrong-wrapper";
+    | "wrong-wrapper"
+    /** A suggestion that named no instrument at all: nothing to suggest. */
+    | "no-instrument"
+    /** A claim left blank: nothing to show. */
+    | "empty";
 }
 
 export type WalletReadVerdict =
   | { ok: true; read: WalletRead; dropped: DroppedClaim[] }
-  | { ok: false; reason: WalletReadRefusal; detail: string };
+  | {
+      ok: false;
+      reason: WalletReadRefusal;
+      /** In the reader's language: what the refusal says on screen. */
+      detail: string;
+      /** The schema's own words, for the server's log; never shown. */
+      issue?: string;
+    };
 
 /**
  * Check a read against the figures it was given and the catalogue it was
@@ -291,34 +315,38 @@ export function verifyWalletRead(
   raw: unknown,
   facts: LookThroughFacts,
   locale: Locale,
+  {
+    names = [],
+  }: {
+    /**
+     * The user's own holdings and the indexes they track, as the prompt
+     * named them: identifiers the model was handed, not figures it made up,
+     * however many digits they carry.
+     */
+    names?: readonly string[];
+  } = {},
 ): WalletReadVerdict {
   const t = translator(locale);
   const parsed = walletReadAnswerSchema.safeParse(raw);
   if (!parsed.success) {
+    const first = parsed.error.issues[0];
     return {
       ok: false,
       reason: "unreadable",
-      detail:
-        parsed.error.issues[0]?.message ?? t("walletRead.refusal.wrongShape"),
+      detail: t("walletRead.refusal.wrongShape"),
+      issue: first ? `${first.path.join(".")}: ${first.message}` : undefined,
     };
   }
+  const named = identifierPattern(names);
 
   const answer = parsed.data;
   const known = factIds(facts);
 
-  // Every reference, anywhere: declared bases and inline placeholders alike.
-  const everyReference = [
-    ...answer.observations.flatMap((row) => [
-      ...row.basis.map(bareId),
-      ...citedIds(row.text),
-    ]),
-    ...answer.suggestions.flatMap((row) => [
-      ...row.basis.map(bareId),
-      ...citedIds(row.text),
-    ]),
-    ...citedIds(answer.headline),
-  ];
-  const unknownDatum = everyReference.find((id) => !known.has(id));
+  // A reference to a figure that was never handed over is fatal in the
+  // headline, which the surface rests on; in a claim, that claim is dropped
+  // below and the rest of the review stands — as a claim that writes its own
+  // figure already was.
+  const unknownDatum = citedIds(answer.headline).find((id) => !known.has(id));
   if (unknownDatum !== undefined) {
     return {
       ok: false,
@@ -330,6 +358,11 @@ export function verifyWalletRead(
   // An invented identifier is fatal before anything else is considered. A
   // read that made one up has told us what the rest of it is worth.
   for (const row of answer.suggestions) {
+    // Left blank is not invented: that suggestion is dropped below, and the
+    // rest of the review stands.
+    if (row.isin.trim() === "") {
+      continue;
+    }
     if (shortlistEntry(row.isin) === null) {
       return {
         ok: false,
@@ -339,7 +372,7 @@ export function verifyWalletRead(
     }
   }
 
-  if (writesAFigure(withoutInstrumentNames(answer.headline))) {
+  if (writesAFigure(withoutInstrumentNames(answer.headline, named))) {
     return {
       ok: false,
       reason: "invented-figure",
@@ -347,15 +380,11 @@ export function verifyWalletRead(
     };
   }
 
-  // The one length that is fatal, because a headline cannot be dropped: it is
-  // the line the whole surface rests on and there is nothing to fall back to.
-  if (visibleLength(answer.headline) > MAX_WALLET_HEADLINE_LENGTH) {
-    return {
-      ok: false,
-      reason: "unreadable",
-      detail: t("walletRead.refusal.headlineTooLong"),
-    };
-  }
+  // A headline cannot be dropped — the surface rests on it — so one that ran
+  // long is shortened rather than taken as a reason to throw the review away,
+  // which is what this used to do: four observations lost over a title a
+  // few words too long.
+  const headline = shortenHeadline(answer.headline, MAX_WALLET_HEADLINE_LENGTH);
 
   const dropped: DroppedClaim[] = [];
 
@@ -363,7 +392,16 @@ export function verifyWalletRead(
     row: { text: string; basis: string[] },
     kind: "observation" | "suggestion",
   ): boolean {
-    if (writesAFigure(withoutInstrumentNames(row.text))) {
+    if (row.text.trim() === "") {
+      dropped.push({ kind, text: row.text, why: "empty" });
+      return false;
+    }
+    const references = [...row.basis.map(bareId), ...citedIds(row.text)];
+    if (references.some((id) => !known.has(id))) {
+      dropped.push({ kind, text: row.text, why: "unknown-datum" });
+      return false;
+    }
+    if (writesAFigure(withoutInstrumentNames(row.text, named))) {
       dropped.push({ kind, text: row.text, why: "figure" });
       return false;
     }
@@ -396,6 +434,17 @@ export function verifyWalletRead(
   const suggestions: WalletSuggestion[] = [];
   const seen = new Set<string>();
   for (const row of answer.suggestions) {
+    // A suggestion with no instrument has nothing to suggest. Refusing the
+    // whole review over it — what a required, non-empty ISIN in the schema
+    // used to do — threw away every observation beside it.
+    if (row.isin.trim() === "") {
+      dropped.push({
+        kind: "suggestion",
+        text: row.text,
+        why: "no-instrument",
+      });
+      continue;
+    }
     if (!keepProse(row, "suggestion")) {
       continue;
     }
@@ -441,7 +490,7 @@ export function verifyWalletRead(
 
   return {
     ok: true,
-    read: { headline: answer.headline, observations, suggestions },
+    read: { headline, observations, suggestions },
     dropped,
   };
 }
@@ -464,30 +513,90 @@ const INSTRUMENT_LITERALS: string[] = [
 ].sort((left, right) => right.length - left.length);
 
 /**
- * The text with catalogued instrument names taken out.
+ * A headline brought within `max` characters: cut where a clause ends if one
+ * ends far enough in — after a dash, a colon, a semicolon or a comma — and
+ * otherwise at the last whole word, with an ellipsis. A headline already
+ * short enough comes back as it was.
+ */
+export function shortenHeadline(text: string, max: number): string {
+  const trimmed = text.trim();
+  if (trimmed.length <= max) {
+    return trimmed;
+  }
+  const head = trimmed.slice(0, max);
+  const clauseEnd = Math.max(
+    head.lastIndexOf(" — "),
+    head.lastIndexOf(" : "),
+    head.lastIndexOf("; "),
+    head.lastIndexOf(", "),
+  );
+  if (clauseEnd >= max * 0.5) {
+    return head.slice(0, clauseEnd).replace(/[\s,;:—-]+$/, "");
+  }
+  const wordEnd = head.slice(0, max - 1).lastIndexOf(" ");
+  const cut = wordEnd > 0 ? head.slice(0, wordEnd) : head.slice(0, max - 1);
+  return `${cut.replace(/[\s,;:—-]+$/, "")}…`;
+}
+
+/**
+ * Index names that carry a number, written as the model writes them in
+ * prose rather than as the catalogue spells them: « le S&P 500 », « du CAC
+ * 40 ». A number in an index's name is part of what it is called.
+ */
+const INDEX_LITERALS: readonly string[] = [
+  "S&P 500",
+  "S&P500",
+  "Nasdaq-100",
+  "Nasdaq 100",
+  "Euro Stoxx 50",
+  "Stoxx Europe 600",
+  "Stoxx 600",
+  "CAC 40",
+  "DAX 40",
+  "FTSE 100",
+  "FTSE 250",
+  "Russell 2000",
+  "Russell 1000",
+  "Nikkei 225",
+  "Dow Jones 30",
+];
+
+function escapeForPattern(literal: string): string {
+  return literal.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+/**
+ * One case-blind pattern for every identifier the figure rule must look past:
+ * the catalogue's names, the indexes above and whatever the caller adds —
+ * the user's own holdings and their indexes. Longest first, so "S&P 500" goes
+ * before a shorter overlapping match can leave "500" behind.
+ */
+function identifierPattern(extra: readonly string[]): RegExp {
+  const literals = [
+    ...new Set([...INSTRUMENT_LITERALS, ...INDEX_LITERALS, ...extra]),
+  ]
+    .map((literal) => literal.trim())
+    .filter((literal) => literal !== "")
+    .sort((left, right) => right.length - left.length);
+  return new RegExp(literals.map(escapeForPattern).join("|"), "gi");
+}
+
+/**
+ * The text with instrument and index names taken out.
  *
  * Because half the index names in existence contain a number. "S&P 500",
  * "STOXX Europe 600", "Russell 2000", "Nasdaq-100" — every one of those trips
  * a check whose entire purpose is to catch invented quantities, and the
  * result was that any suggestion naming the fund it was about got silently
- * dropped. Observed on a real answer: two of three suggestions thrown away,
- * both for the digits in a fund's own name.
- *
- * A digit inside a catalogued name is an identifier, not a figure, and the
- * app is the one that put that name in front of the model. Removing the names
- * before checking leaves the rule exactly as strict about everything it was
- * meant to be strict about — a model can still not write "about 20%" or "two
- * thirds", because neither is in this list.
+ * dropped, and a headline naming one threw the whole review away. A digit
+ * inside a name the app handed the model — from the catalogue, from the
+ * user's own holdings — or inside an index's name is an identifier, not a
+ * figure. Removing the names before checking leaves the rule exactly as
+ * strict about everything it was meant to be strict about: a model can still
+ * not write "about 20%" or "two thirds".
  */
-function withoutInstrumentNames(text: string): string {
-  let stripped = text;
-  for (const literal of INSTRUMENT_LITERALS) {
-    if (literal.trim() === "") {
-      continue;
-    }
-    stripped = stripped.split(literal).join(" ");
-  }
-  return stripped;
+function withoutInstrumentNames(text: string, named: RegExp): string {
+  return text.replace(named, " ");
 }
 
 /**

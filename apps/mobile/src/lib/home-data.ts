@@ -282,7 +282,7 @@ export async function gatherHomeMonth(
     invested,
     attention,
     arrived:
-      arrived && (arrived.proposals.length > 0 || arrived.misses.length > 0)
+      arrived && arrived.proposals.length > 0
         ? arrived
         : null,
     empty:

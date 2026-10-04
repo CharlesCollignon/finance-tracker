@@ -80,6 +80,7 @@ import { useFormatCurrency } from "@/providers/CurrencyProvider";
 import { useLocale, useT } from "@/providers/LocaleProvider";
 import { useToast } from "@/providers/ToastProvider";
 import { ICON } from "@/theme/tokens";
+import { useTabBarClearance } from "@/theme/chrome";
 import { useThemeColors } from "@/theme/useThemeColors";
 
 type Result = { success?: boolean; error?: string };
@@ -93,8 +94,8 @@ export default function PropertyDetailScreen() {
   const t = useT();
   const locale = useLocale();
   const router = useRouter();
-  const colors = useThemeColors();
   const format = useFormatCurrency();
+  const tabBarClearance = useTabBarClearance();
   const { toast } = useToast();
   const { user } = useAuth();
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -118,17 +119,13 @@ export default function PropertyDetailScreen() {
   const detail = data?.properties.find(({ property }) => property.id === id) ?? null;
   const today = todayIsoLocal();
 
-  const back = (
-    <Pressable
-      accessibilityRole="button"
-      accessibilityLabel={t("property.backToList")}
-      hitSlop={8}
-      onPress={() => router.back()}
-      className="h-9 w-9 items-center justify-center rounded-control"
-    >
-      <Ionicons name="chevron-back" size={ICON.xl} color={colors.foreground} />
-    </Pressable>
-  );
+  // Back to the list — or to it, when the property was opened from
+  // elsewhere and there is nothing under it in this tab.
+  const back = {
+    label: t("property.backToList"),
+    onPress: () =>
+      router.canGoBack() ? router.back() : router.replace("/property"),
+  };
 
   async function confirmRemove() {
     if (!detail) {
@@ -150,21 +147,21 @@ export default function PropertyDetailScreen() {
 
   if (loading && !data) {
     return (
-      <Screen title={t("nav.property")} headerActions={back} showLogo={false}>
+      <Screen title={t("nav.property")} back={back}>
         <ScreenSkeleton rows={3} />
       </Screen>
     );
   }
   if (error) {
     return (
-      <Screen title={t("nav.property")} headerActions={back} showLogo={false}>
+      <Screen title={t("nav.property")} back={back}>
         <ScreenError message={error} onRetry={onRefresh} />
       </Screen>
     );
   }
   if (!detail) {
     return (
-      <Screen title={t("nav.property")} headerActions={back} showLogo={false}>
+      <Screen title={t("nav.property")} back={back}>
         <EmptyState title={t("errors.notFound")} description={t("property.backToList")} />
       </Screen>
     );
@@ -179,10 +176,12 @@ export default function PropertyDetailScreen() {
   const attached = templates.filter((template) => template.attached);
 
   return (
-    <Screen title={property.name} headerActions={back} showLogo={false}>
+    <Screen title={property.name} back={back}>
       <ScrollView
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefreshAll} />}
-        contentContainerClassName="gap-5 pt-2 pb-12"
+        contentContainerClassName="gap-5 pt-2"
+        // Under the tab bar now, as every tab's screen is.
+        contentContainerStyle={{ paddingBottom: tabBarClearance }}
       >
         <StaggerItem index={0}>
         <Card bezel innerClassName="gap-5">

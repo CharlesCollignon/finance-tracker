@@ -240,10 +240,7 @@ export async function gatherBearingMonth(
     run,
     invested,
     attention,
-    arrived:
-      arrived && (arrived.proposals.length > 0 || arrived.misses.length > 0)
-        ? arrived
-        : null,
+    arrived: arrived && arrived.proposals.length > 0 ? arrived : null,
     empty:
       source === "none" &&
       rows.length === 0 &&

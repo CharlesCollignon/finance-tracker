@@ -333,6 +333,10 @@ export default function CalendarScreen() {
           refreshControl={
             <RefreshControl refreshing={refreshing} onRefresh={onRefreshAll} />
           }
+          // Out to the screen's edges, with the margin back inside: a scroll
+          // view clips what overflows it, and the grid runs edge to edge.
+          className="-mx-4"
+          contentContainerClassName="px-4"
           contentContainerStyle={{ paddingBottom: tabBarClearance }}
         >
           <View className="mb-5">

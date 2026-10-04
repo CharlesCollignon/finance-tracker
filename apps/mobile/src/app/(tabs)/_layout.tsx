@@ -3,7 +3,7 @@ import { Tabs } from "expo-router";
 import { useRef, type ComponentProps } from "react";
 import { StyleSheet, Text } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { TAB_BAR_INSET, TAB_BAR_SIDE, useTabBarHeight } from "@/theme/chrome";
+import { useTabBarHeight } from "@/theme/chrome";
 
 import { Blur } from "@/components/ui/Blur";
 import { notifyDataChanged } from "@/lib/data-version";
@@ -152,29 +152,21 @@ export default function TabsLayout() {
                 </Text>
               ),
               tabBarItemStyle: { paddingVertical: 4, paddingHorizontal: 2 },
-              // Blur only means something if content passes beneath the bar, so it
-              // overlays rather than docks. Screens pad their scroll content to
-              // clear it.
-              tabBarBackground: () => (
-                <Blur
-                  style={[
-                    StyleSheet.absoluteFill,
-                    { borderRadius: RADIUS.pill, overflow: "hidden" },
-                  ]}
-                />
-              ),
+              // Docked to the bottom edge, square, over the content: blur only
+              // means something if content passes beneath the bar, so screens
+              // pad their scroll content to clear it rather than the bar
+              // taking room of its own. It runs under the gesture area, its
+              // items held above it.
+              tabBarBackground: () => <Blur style={StyleSheet.absoluteFill} />,
               tabBarStyle: {
                 position: "absolute",
-                left: TAB_BAR_SIDE,
-                right: TAB_BAR_SIDE,
-                bottom: insets.bottom + TAB_BAR_INSET,
-                height: barHeight,
-                paddingBottom: 0,
-                borderRadius: RADIUS.pill,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                height: barHeight + insets.bottom,
+                paddingBottom: insets.bottom,
                 backgroundColor: "transparent",
-                borderWidth: StyleSheet.hairlineWidth,
                 borderTopWidth: StyleSheet.hairlineWidth,
-                borderColor: colors.hairlineStrong,
                 borderTopColor: colors.hairlineStrong,
                 elevation: 0,
                 shadowOpacity: 0,

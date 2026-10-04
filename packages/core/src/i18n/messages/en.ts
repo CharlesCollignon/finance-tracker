@@ -297,7 +297,6 @@ export const en = {
     /* The Ledger's own totals strip, which describes what is on screen. */
     in: "In",
     out: "Out",
-    leftAtMonthEnd: "Left at month end",
     clearFilters: "Clear filters",
     /* What a row's own control is called, for a reader who cannot see it. */
     selectRow: "Select {name}",
@@ -982,11 +981,6 @@ export const en = {
     nameCrypto: "Crypto",
     /** The widest range of the price line. The others need no translation. */
     rangeAll: "All",
-    range1D: "1D",
-    range1W: "1W",
-    range1M: "1M",
-    range3M: "3M",
-    range1Y: "1Y",
     positions: "Positions",
     /**
      * How the holdings in a wallet are ordered.
@@ -1003,8 +997,6 @@ export const en = {
     noItems:
       "Nothing in this account yet. Add what you hold in it to follow what you put in and what it is worth.",
     editPosition: "Edit {name}",
-    showChart: "Show chart",
-    hideChart: "Hide chart",
     /**
      * Fragments, not sentences, wherever a figure sits inside one.
      *
@@ -1028,7 +1020,14 @@ export const en = {
     returnTitle: "Return per year",
     returnBody:
       "Worked out over each payment on its own date, so paying in a little every month is compared fairly with one large payment.",
-    upcomingThisMonth: "{amount} still to pay in this month",
+    summaryTitle: "Your investments",
+    summarySavings: "+ {amount} in savings accounts · {total} in all",
+    contributionStreak: {
+      one: "{count} month of contributions",
+      other: "{count} months of contributions in a row",
+    },
+    nextContributionOn: "Next contribution: {date} · {amount}",
+    priceOverYear: "{change} over a year",
     inWallet: "In your {wallet}",
   },
 
@@ -1541,7 +1540,6 @@ export const en = {
     trackedAsset: "Tracked asset",
     trackedEtf: "Tracked ETF",
     bitcoin: "Bitcoin",
-    shares: "Shares",
     totalBtc: "Total BTC",
     totalShares: "Total shares",
     totalBtcHeld: "Total BTC held",
@@ -1592,16 +1590,6 @@ export const en = {
     openedOn: "Opened on",
     peaOpenedLabel: "Set the date the PEA was opened",
     peaOpenedHint: "Add the opening date to track the five-year mark.",
-    chartRange: "Chart range",
-    totalInvested: "Total paid in",
-    averageBuyPrice: "Average buy price",
-    averageSharePrice: "Average share price",
-    averageMonthly: "Average paid in a month",
-    nextContribution: "Next payment",
-    returnAmount: "Gain or loss",
-    returnPercent: "Gain or loss in %",
-    noHistory: "No history for this account yet.",
-    oneMonthOnly: "One month of history so far — a line needs at least two.",
   },
 
   /**
@@ -2388,11 +2376,6 @@ export const en = {
      * because each of these follows a "label · amount · date ·" prefix.
      */
     misses: {
-      hide: "Hide what was not offered",
-      show: {
-        one: "{count} other charge was not offered — why?",
-        other: "{count} other charges were not offered — why?",
-      },
       nothingAlike: "nothing in its category to match",
       refused: "you said the nearest movement was not it",
       notArrived: "the nearest movement has not happened yet",
@@ -2830,7 +2813,6 @@ export const en = {
     untracked: "Wallet reads are not available here yet.",
     noWriter: "No writer is configured.",
     noAnswer: "The writer did not answer just now.",
-    unusable: "The writer's answer could not be used.",
     threwAway: "The writer's answer was thrown away. ({detail})",
 
     /** Why an answer was thrown away. Short and plain; these are shown. */
@@ -2840,7 +2822,6 @@ export const en = {
       unknownInstrument:
         'It proposed "{isin}", which is not an instrument this app knows',
       headlineHadFigure: "The headline contained a figure of its own",
-      headlineTooLong: "The headline was longer than one line",
       everythingDropped: "Every observation had to be dropped",
     },
 

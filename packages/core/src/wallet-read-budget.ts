@@ -46,8 +46,12 @@ import type { LookThroughFacts } from "./look-through-facts";
  * rations this in practice: a press over a portfolio that has not moved is
  * refused before it costs anything, so the ceiling only ever binds on
  * portfolios that really are changing between presses.
+ *
+ * Ten rather than five since October 2026: an answer the checks throw away
+ * still spends its attempt, and while the review's checks were being put
+ * right five went before a single review had been read.
  */
-export const WALLET_READS_PER_MONTH = 5;
+export const WALLET_READS_PER_MONTH = 10;
 
 /** A double press is one call, not two. */
 export const WALLET_READ_COOLDOWN_SECONDS = 60;

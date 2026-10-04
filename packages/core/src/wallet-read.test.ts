@@ -7,6 +7,7 @@ import {
   MAX_WALLET_SUGGESTIONS,
   createFakeWalletReadSource,
   renderWalletRead,
+  shortenHeadline,
   targetFromWalletRead,
   verifyWalletRead,
   walletReadFooting,
@@ -135,6 +136,91 @@ describe("verifyWalletRead", () => {
   });
 
   /* ------------------------------------------------------- the figure rule */
+
+  it("drops a blank observation, and keeps the review", () => {
+    const verdict = verifyWalletRead(
+      answer({
+        observations: [
+          ...answer().observations,
+          { text: " ", tone: "neutral", basis: [] },
+        ],
+      }),
+      pack().facts,
+      "en",
+    );
+    expect(verdict.ok).toBe(true);
+    if (!verdict.ok) return;
+    expect(verdict.read.observations).toHaveLength(2);
+  });
+
+  it("drops a suggestion that names no instrument, and keeps the review", () => {
+    const blank = {
+      text: "Something broader would help.",
+      effort: "habit",
+      basis: [],
+      isin: "",
+      role: "core-world",
+      wallet: "pea",
+      weightClass: "lead",
+    };
+    const verdict = verifyWalletRead(
+      answer({ suggestions: [answer().suggestions[0], blank] }),
+      pack().facts,
+      "en",
+    );
+    expect(verdict.ok).toBe(true);
+    if (!verdict.ok) return;
+    expect(verdict.read.suggestions).toHaveLength(1);
+    expect(verdict.dropped).toEqual([
+      expect.objectContaining({ kind: "suggestion", why: "no-instrument" }),
+    ]);
+  });
+
+  it("takes a claim resting on many figures, and trims a read that runs long", () => {
+    const many = {
+      text: "The United States is {{fact:us-share}} of what could be read.",
+      tone: "watch",
+      basis: ["us-share", "annual-cost", "us-share", "annual-cost", "us-share"],
+    };
+    const verdict = verifyWalletRead(
+      answer({ observations: Array.from({ length: 6 }, () => many) }),
+      pack().facts,
+      "en",
+    );
+    expect(verdict.ok).toBe(true);
+    if (!verdict.ok) return;
+    expect(verdict.read.observations).toHaveLength(MAX_WALLET_OBSERVATIONS);
+  });
+
+  it("says a wrong shape in the reader's words, and keeps the schema's for the log", () => {
+    const verdict = verifyWalletRead({ nope: true }, pack().facts, "fr");
+    expect(verdict.ok).toBe(false);
+    if (verdict.ok) return;
+    expect(verdict.detail).toBe("Pas la forme demandée");
+    expect(verdict.issue).toBeTruthy();
+  });
+
+  it("looks past an index's own number, however it is cased", () => {
+    const verdict = verifyWalletRead(
+      answer({ headline: "Both funds follow the s&p 500 closely." }),
+      pack().facts,
+      "en",
+    );
+    expect(verdict.ok).toBe(true);
+  });
+
+  it("looks past the digits in a holding the prompt named", () => {
+    const headline = "Horizon 2040 carries nearly everything.";
+    const named = verifyWalletRead(answer({ headline }), pack().facts, "en", {
+      names: ["Horizon 2040"],
+    });
+    expect(named.ok).toBe(true);
+
+    const unnamed = verifyWalletRead(answer({ headline }), pack().facts, "en");
+    expect(unnamed.ok).toBe(false);
+    if (unnamed.ok) return;
+    expect(unnamed.reason).toBe("invented-figure");
+  });
 
   it("refuses a headline that writes its own figure", () => {
     const verdict = verifyWalletRead(
@@ -283,10 +369,11 @@ describe("verifyWalletRead", () => {
 
   /* -------------------------------------------------------- the datum rule */
 
-  it("refuses a claim resting on a datum that was never sent", () => {
+  it("drops a claim resting on a datum that was never sent, and keeps the rest", () => {
     const verdict = verifyWalletRead(
       answer({
         observations: [
+          ...answer().observations,
           {
             text: "Japan is {{fact:japan-share}} of it.",
             tone: "neutral",
@@ -294,6 +381,20 @@ describe("verifyWalletRead", () => {
           },
         ],
       }),
+      pack().facts,
+      "en",
+    );
+    expect(verdict.ok).toBe(true);
+    if (!verdict.ok) return;
+    expect(verdict.read.observations).toHaveLength(2);
+    expect(verdict.dropped).toEqual([
+      expect.objectContaining({ why: "unknown-datum" }),
+    ]);
+  });
+
+  it("refuses a headline resting on a datum that was never sent", () => {
+    const verdict = verifyWalletRead(
+      answer({ headline: "Mostly {{fact:japan-share}} Japan." }),
       pack().facts,
       "en",
     );
@@ -476,15 +577,25 @@ describe("verifyWalletRead", () => {
 
   /* ------------------------------------------------------------- the limits */
 
-  it("refuses a headline longer than a line", () => {
-    const verdict = verifyWalletRead(
-      answer({ headline: "x".repeat(MAX_WALLET_HEADLINE_LENGTH + 1) }),
-      pack().facts,
-      "en",
+  it("shortens a headline longer than a line rather than refusing the read", () => {
+    const headline =
+      "Your portfolio leans heavily on the same large American companies, through two funds that overlap almost entirely";
+    const verdict = verifyWalletRead(answer({ headline }), pack().facts, "en");
+    expect(verdict.ok).toBe(true);
+    if (!verdict.ok) return;
+    expect(verdict.read.headline.length).toBeLessThanOrEqual(
+      MAX_WALLET_HEADLINE_LENGTH,
     );
-    expect(verdict.ok).toBe(false);
-    if (verdict.ok) return;
-    expect(verdict.reason).toBe("unreadable");
+    expect(verdict.read.headline).toBe(
+      "Your portfolio leans heavily on the same large American companies",
+    );
+  });
+
+  it("cuts a headline with no clause to end at at a whole word", () => {
+    expect(shortenHeadline("one two three four five six", 15)).toBe(
+      "one two three…",
+    );
+    expect(shortenHeadline("short enough", 15)).toBe("short enough");
   });
 
   it("drops an over-long claim rather than the read", () => {

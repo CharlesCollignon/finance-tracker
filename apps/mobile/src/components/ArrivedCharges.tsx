@@ -5,8 +5,6 @@ import { Ionicons } from "@expo/vector-icons";
 import {
   confirmLabel,
   describeFulfilment,
-  describeMiss,
-  type FulfilmentMiss,
   type FulfilmentProposal,
 } from "@finance/core/recurring-fulfilment";
 import { formatShortDate, relativeDayLabel } from "@finance/core/constants";
@@ -24,15 +22,6 @@ import { useLocale, useT } from "@/providers/LocaleProvider";
 
 interface ArrivedChargesProps {
   proposals: FulfilmentProposal[];
-  /**
-   * Occurrences the matcher could not offer, and why.
-   *
-   * Optional so a caller with nothing to say about absences can leave it out,
-   * but the Ledger's dots are the reason it matters: a row that is confirmed
-   * or waiting gets a mark, and a charge that never arrived has no row to mark
-   * at all. This is the only place that absence is visible.
-   */
-  misses?: FulfilmentMiss[];
 }
 
 /**
@@ -52,7 +41,6 @@ interface ArrivedChargesProps {
  */
 export function ArrivedCharges({
   proposals,
-  misses = [],
 }: ArrivedChargesProps) {
   const t = useT();
   const locale = useLocale();
@@ -61,7 +49,6 @@ export function ArrivedCharges({
   const formatEuro = useFormatCurrency();
   const [pending, setPending] = useState(false);
   const [answered, setAnswered] = useState<Set<string>>(new Set());
-  const [showMisses, setShowMisses] = useState(false);
 
   // An answer only hides its proposal until the screen's next read says it
   // is gone. Kept for good, a proposal reopened somewhere else — undone on
@@ -80,13 +67,7 @@ export function ArrivedCharges({
 
   const waiting = proposals.filter((proposal) => !answered.has(proposal.key));
 
-  // This used to return on `waiting.length === 0` alone, on the reasoning that
-  // "an absence is only a question once something else has been offered". That
-  // was right while the misses were a footnote to a question; it is wrong now
-  // that they are the only place a charge which never arrived is mentioned. A
-  // month where nothing was offered and three charges are missing is the case
-  // this block exists for, and it was the one case it stayed silent for.
-  if (waiting.length === 0 && misses.length === 0) {
+  if (waiting.length === 0) {
     return null;
   }
 
@@ -323,55 +304,6 @@ export function ArrivedCharges({
         );
       })}
 
-      {/* Collapsed by default. A narrow matcher should be legible rather than
-          merely silent, but the reasons are a second-order question and the
-          charges themselves are what the block is for. */}
-      {misses.length > 0 ? (
-        <View
-          className={cn(
-            "px-4 py-2.5",
-            waiting.length > 0 && "border-t border-border",
-          )}
-        >
-          <Pressable
-            accessibilityRole="button"
-            accessibilityState={{ expanded: showMisses }}
-            onPress={() => {
-              void hapticLight();
-              setShowMisses((current) => !current);
-            }}
-            className="min-h-11 justify-center"
-          >
-            <Text className="text-xs text-muted-foreground underline">
-              {showMisses
-                ? t("fulfilment.misses.hide")
-                : t("fulfilment.misses.show", { count: misses.length })}
-            </Text>
-          </Pressable>
-
-          {showMisses ? (
-            <View className="mt-2 gap-1">
-              {misses.map((miss) => (
-                <View
-                  key={miss.key}
-                  className="flex-row flex-wrap items-baseline gap-x-2"
-                >
-                  <Text className="text-xs">{miss.label}</Text>
-                  <PrivateAmount className="text-xs text-muted-foreground">
-                    {formatEuro(miss.expectedAmount)}
-                  </PrivateAmount>
-                  <Text className="text-xs text-muted-foreground">
-                    {formatShortDate(miss.occurredOn, locale)}
-                  </Text>
-                  <Text className="text-xs text-muted-foreground">
-                    {`· ${describeMiss(miss, formatEuro, locale)}`}
-                  </Text>
-                </View>
-              ))}
-            </View>
-          ) : null}
-        </View>
-      ) : null}
     </View>
   );
 }

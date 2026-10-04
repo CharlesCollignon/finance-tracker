@@ -83,15 +83,20 @@ export function CalendarGrid({
   const colors = useThemeColors();
 
   return (
-    <View className="overflow-hidden rounded-card border border-border bg-card">
-      <View className="flex-row border-b border-border">
+    // Flat and edge to edge, as the web draws it at phone width: no card,
+    // no corners, the days divided by hairlines and the selection a raised
+    // ground.
+    <View className="-mx-4">
+      <View className="flex-row border-b border-border/40">
         {weekdayShortMondayFirst(locale).map((name, index) => (
           <Text
             key={`${name}-${index}`}
             numberOfLines={1}
-            className="flex-1 py-2 text-center text-xs font-medium text-muted-foreground"
+            className="flex-1 py-2.5 text-center font-medium uppercase tracking-wide text-muted-foreground"
+            style={{ fontSize: 11 }}
           >
-            {name}
+            {/* The initial, as the web's grid shows at this width. */}
+            {name.charAt(0)}
           </Text>
         ))}
       </View>
@@ -101,7 +106,7 @@ export function CalendarGrid({
           key={weekIndex}
           className={cn(
             "flex-row",
-            weekIndex < weeks.length - 1 && "border-b border-border",
+            weekIndex < weeks.length - 1 && "border-b border-border/40",
           )}
         >
           {week.map((day, dayIndex) => {
@@ -131,17 +136,17 @@ export function CalendarGrid({
                   onSelect(day.date);
                 }}
                 className={cn(
-                  "min-h-16 flex-1 p-1",
-                  dayIndex < week.length - 1 && "border-r border-border",
-                  selected && "bg-secondary",
+                  "min-h-16 flex-1 p-1.5",
+                  dayIndex < week.length - 1 && "border-r border-border/40",
+                  selected && "bg-muted",
                   // Lit from the strip above, as the finger would.
-                  !selected && day.date === litDate && "bg-secondary/50",
+                  !selected && day.date === litDate && "bg-muted/30",
                 )}
               >
                 {day.isToday ? (
                   <View
                     pointerEvents="none"
-                    className="absolute inset-0.5 rounded-control border"
+                    className="absolute inset-0 border"
                     style={{ borderColor: colors.hairlineStrong }}
                   />
                 ) : null}

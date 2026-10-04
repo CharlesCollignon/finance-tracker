@@ -1,9 +1,9 @@
 import { unstable_cache } from "next/cache";
 import {
   fetchMonthlyClosesBySymbolInEur,
+  fetchPriceSeriesBySymbol,
   fetchQuotesInEur,
 } from "@finance/core/market/fx";
-import { fetchPriceSeries } from "@/lib/queries/investments";
 import type { InstrumentPriceSeries } from "@finance/core/instrument-price-series";
 
 function symbolsCacheKey(symbols: string[]): string {
@@ -59,7 +59,7 @@ export async function getCachedPriceSeries(
   }
 
   return unstable_cache(
-    async () => fetchPriceSeries(key.split(","), today),
+    async () => fetchPriceSeriesBySymbol(key.split(","), today),
     ["market-price-series", key, today],
     { revalidate: 3600, tags: ["market-quotes"] },
   )();

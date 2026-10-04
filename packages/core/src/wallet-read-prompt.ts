@@ -33,7 +33,10 @@ import { formatCharge } from "./fund-costs";
 import type { InvestmentWalletId } from "./investments";
 import type { LookThrough } from "./look-through";
 import type { LookThroughFacts } from "./look-through-facts";
-import type { WalletReadRequest } from "./wallet-read";
+import {
+  MAX_WALLET_HEADLINE_LENGTH,
+  type WalletReadRequest,
+} from "./wallet-read";
 
 export const WALLET_READ_PROMPT_VERSION = 1;
 
@@ -42,6 +45,22 @@ export interface BuildWalletPromptOptions {
   locale: Locale;
   /** The wrappers this person actually holds something in. */
   wallets: InvestmentWalletId[];
+}
+
+/**
+ * Every holding and index the prompt names, for the answer's figure rule to
+ * look past: a model asked about « Amundi S&P 500 » and « iShares Core S&P
+ * 500 » tracking the same index will name them, digits and all, and those
+ * digits are the app's own words, not a quantity it made up.
+ */
+export function namesInWalletReadPrompt(lookThrough: LookThrough): string[] {
+  return [
+    ...lookThrough.indexCollisions.flatMap((collision) => [
+      ...collision.names,
+      ...collision.indexes,
+    ]),
+    ...lookThrough.eligibility.map((issue) => issue.name),
+  ];
 }
 
 /**
@@ -187,8 +206,8 @@ const EN = {
       "unread instrument is unknown, not empty.",
   ],
   lengthRule: [
-    "The headline is one line. Each observation and suggestion is one or two " +
-      "sentences.",
+    `The headline is one line, ${MAX_WALLET_HEADLINE_LENGTH} characters at ` +
+      "most. Each observation and suggestion is one or two sentences.",
   ],
   positionsHeading: "The positions:",
   factsHeading: "The figures, as id | what it is | value:",
@@ -283,8 +302,8 @@ const FR = {
       "une absence : un instrument non lu est inconnu, pas vide.",
   ],
   lengthRule: [
-    "Le titre fait une ligne. Chaque observation et suggestion fait une ou " +
-      "deux phrases.",
+    `Le titre fait une ligne, ${MAX_WALLET_HEADLINE_LENGTH} caractères au ` +
+      "plus. Chaque observation et suggestion fait une ou deux phrases.",
   ],
   positionsHeading: "Les positions :",
   factsHeading: "Les chiffres, sous la forme id | ce que c'est | valeur :",

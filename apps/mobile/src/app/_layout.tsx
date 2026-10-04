@@ -2,7 +2,9 @@ import "@/global.css";
 
 import { useFonts } from "expo-font";
 import {
+  DarkTheme,
   Stack,
+  ThemeProvider,
   usePathname,
   useRouter,
   useSegments,
@@ -30,8 +32,27 @@ import { RefreshProvider } from "@/providers/RefreshProvider";
 import { ToastProvider } from "@/providers/ToastProvider";
 import { useNotificationRouting } from "@/lib/notification-routing";
 import { initTheme } from "@/lib/theme";
+import { COLORS } from "@/theme/tokens";
 
 SplashScreen.preventAutoHideAsync();
+
+/**
+ * The navigators' own ground, Pluclair's near-black rather than React
+ * Navigation's light grey. Every screen paints its own background, but the
+ * container under them showed through for a frame on each change of screen —
+ * the white flash between tabs and on opening a property.
+ */
+const NAVIGATION_THEME = {
+  ...DarkTheme,
+  colors: {
+    ...DarkTheme.colors,
+    background: COLORS.background,
+    card: COLORS.background,
+    border: COLORS.border,
+    primary: COLORS.primary,
+    text: COLORS.foreground,
+  },
+};
 
 function RootNavigator({ fontsReady }: { fontsReady: boolean }) {
   const { session, initializing } = useAuth();
@@ -91,15 +112,28 @@ function RootNavigator({ fontsReady }: { fontsReady: boolean }) {
     router,
   ]);
 
+  // Nothing is drawn until the fonts are in: a screen laid out with the
+  // fallback face keeps the widths it measured with it, which cut « Le point »
+  // to « Le poi… » and the month to « octobre 20… » on the first screen of
+  // every launch, until a change of screen measured them again. The splash
+  // screen stays up meanwhile.
+  if (!fontsReady) {
+    return null;
+  }
+
   return (
-    <>
-      <Stack screenOptions={{ headerShown: false }}>
+    <ThemeProvider value={NAVIGATION_THEME}>
+      <Stack
+        screenOptions={{
+          headerShown: false,
+          contentStyle: { backgroundColor: COLORS.background },
+        }}
+      >
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="(auth)" />
         <Stack.Screen name="auth/callback" />
         <Stack.Screen name="categories" />
         <Stack.Screen name="bank" />
-        <Stack.Screen name="property/[id]" />
         <Stack.Screen name="import" />
         <Stack.Screen name="onboarding" />
       </Stack>
@@ -131,7 +165,7 @@ function RootNavigator({ fontsReady }: { fontsReady: boolean }) {
       />
       {/* Light glyphs, always: the ground behind them is near-black. */}
       <StatusBar style="light" />
-    </>
+    </ThemeProvider>
   );
 }
 
