@@ -50,6 +50,9 @@ export type DeferralKind = "none" | "partial" | "total";
 export type KnownOutstandingKeeps = "payment" | "term";
 
 /** Where a user's bank connection stands — see migration 041. */
+/** The services an AI account can be connected through (migration 053). */
+export type AiProvider = "openrouter";
+
 export type BankConnectionStatus =
   "active" | "expired" | "paused" | "revoked" | "error";
 
@@ -90,6 +93,8 @@ type NarrowTable<
  * recurrence, a pricing, a wallet — come through generated already.
  */
 interface Narrowed {
+  ai_connections: { provider: AiProvider };
+  ai_connect_flows: { mode: "redirect" | "app" };
   bank_connections: { status: BankConnectionStatus };
   bank_feed_items: {
     direction: "in" | "out";

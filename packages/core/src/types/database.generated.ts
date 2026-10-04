@@ -16,6 +16,95 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      ai_connect_flows: {
+        Row: {
+          created_at: string;
+          expires_at: string;
+          key_id: string;
+          mode: string;
+          state: string;
+          user_id: string;
+          verifier_ciphertext: string;
+        };
+        Insert: {
+          created_at?: string;
+          expires_at: string;
+          key_id: string;
+          mode: string;
+          state: string;
+          user_id: string;
+          verifier_ciphertext: string;
+        };
+        Update: {
+          created_at?: string;
+          expires_at?: string;
+          key_id?: string;
+          mode?: string;
+          state?: string;
+          user_id?: string;
+          verifier_ciphertext?: string;
+        };
+        Relationships: [];
+      };
+      ai_connection_secrets: {
+        Row: {
+          ciphertext: string;
+          created_at: string;
+          key_id: string;
+          user_id: string;
+        };
+        Insert: {
+          ciphertext: string;
+          created_at?: string;
+          key_id: string;
+          user_id: string;
+        };
+        Update: {
+          ciphertext?: string;
+          created_at?: string;
+          key_id?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "ai_connection_secrets_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: true;
+            referencedRelation: "ai_connections";
+            referencedColumns: ["user_id"];
+          },
+        ];
+      };
+      ai_connections: {
+        Row: {
+          connected_at: string;
+          last_error: string | null;
+          last_used_at: string | null;
+          model: string;
+          provider: string;
+          updated_at: string;
+          user_id: string;
+        };
+        Insert: {
+          connected_at?: string;
+          last_error?: string | null;
+          last_used_at?: string | null;
+          model: string;
+          provider?: string;
+          updated_at?: string;
+          user_id: string;
+        };
+        Update: {
+          connected_at?: string;
+          last_error?: string | null;
+          last_used_at?: string | null;
+          model?: string;
+          provider?: string;
+          updated_at?: string;
+          user_id?: string;
+        };
+        Relationships: [];
+      };
       bank_accounts: {
         Row: {
           counts_as_cash: boolean;
@@ -909,9 +998,9 @@ export type Database = {
           first_payment_on: string;
           id: string;
           insurance_monthly: number;
+          insurance_rate: number | null;
           insurance_separate: boolean;
           insurance_template_id: string | null;
-          insurance_rate: number | null;
           kind: string;
           known_keeps: string | null;
           known_outstanding: number | null;
@@ -934,9 +1023,9 @@ export type Database = {
           first_payment_on: string;
           id?: string;
           insurance_monthly?: number;
+          insurance_rate?: number | null;
           insurance_separate?: boolean;
           insurance_template_id?: string | null;
-          insurance_rate?: number | null;
           kind?: string;
           known_keeps?: string | null;
           known_outstanding?: number | null;
@@ -959,9 +1048,9 @@ export type Database = {
           first_payment_on?: string;
           id?: string;
           insurance_monthly?: number;
+          insurance_rate?: number | null;
           insurance_separate?: boolean;
           insurance_template_id?: string | null;
-          insurance_rate?: number | null;
           kind?: string;
           known_keeps?: string | null;
           known_outstanding?: number | null;
