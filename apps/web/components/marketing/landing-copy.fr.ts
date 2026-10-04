@@ -32,6 +32,7 @@ export const landingCopyFr: LandingCopySections & {
     titleLines: ["Votre argent,", "plus clair chaque mois"],
     tagline:
       "Vos revenus, vos dépenses, votre épargne et vos placements au même endroit. Ce qui revient chaque mois s’ajoute tout seul, et une fois par mois, Pluclair compare avec votre banque pour retrouver ce qui a filé.",
+    rail: "Pluclair · Votre mois · 2026",
   },
 
   promise: {

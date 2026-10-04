@@ -18,6 +18,27 @@ import { cn } from "@/lib/utils";
 
 interface LandingPageProps {
   isLoggedIn: boolean;
+  /** Which hero layout to draw while the owner compares them. */
+  heroLayout?: HeroLayout;
+}
+
+/**
+ * The hero layouts being compared, at `/?hero=a|b|c` (temporary: the one the
+ * owner keeps replaces the centred default, and the switch goes).
+ *
+ * - centre: everything stacked on one centred axis — Hallmark's gate 6.
+ * - a: a film title card, bottom left, on the planet's dark body; the sky,
+ *   the sun and the black hole keep the top and the right.
+ * - b: a left column centred in height, with a vertical rail along the left
+ *   edge naming the brand and the year (Hallmark HP1).
+ * - c: a low band: the tagline and the buttons, then the headline on one
+ *   line along the bottom, the width of the page; the top left to the scene.
+ *   (A two-column band put the tagline over the rim and the sun.)
+ */
+export type HeroLayout = "centre" | "a" | "b" | "c";
+
+export function heroLayoutFrom(value: string | undefined): HeroLayout {
+  return value === "a" || value === "b" || value === "c" ? value : "centre";
 }
 
 /**
@@ -55,14 +76,24 @@ const SPLIT_FLIPPED = "md:grid-cols-[minmax(0,7fr)_minmax(0,5fr)]";
  * into view. What is not open to everyone yet is said once, under "Coming
  * soon", in the future tense.
  */
-export async function LandingPage({ isLoggedIn }: LandingPageProps) {
+export async function LandingPage({
+  isLoggedIn,
+  heroLayout = "centre",
+}: LandingPageProps) {
   const locale = await getLocale();
   const { hero, promise, how, soon, faq, finalCta } = landingCopyFor(locale);
 
   return (
     <>
       {/* ------------------------------------------------------------ hero */}
-      <section className="relative isolate flex min-h-dvh flex-col justify-center overflow-hidden px-6 pb-20 pt-28">
+      <section
+        className={cn(
+          "relative isolate flex min-h-dvh flex-col overflow-hidden px-6 pt-28",
+          heroLayout === "a" || heroLayout === "c"
+            ? "justify-end pb-14 md:pb-20"
+            : "justify-center pb-20",
+        )}
+      >
         {/* The Earth from orbit, its rim arcing across the hero with Europe
             lit at dusk below it, under its own nebula and stars, a distant
             sun setting on the rim with the light in it. Still: the light
@@ -81,23 +112,7 @@ export async function LandingPage({ isLoggedIn }: LandingPageProps) {
           />
         </div>
 
-        <div className="page-enter relative z-20 mx-auto flex w-full max-w-3xl flex-col items-center text-center">
-          <h1 className="marketing-display text-display-hero">
-            {hero.titleLines.map((line) => (
-              <span key={line} className="block">
-                {line}
-              </span>
-            ))}
-          </h1>
-          <p className="mt-6 max-w-xl text-[0.975rem] leading-relaxed text-marketing-muted sm:text-lg">
-            {hero.tagline}
-          </p>
-          <LandingCtas
-            isLoggedIn={isLoggedIn}
-            size="lg"
-            className="mt-9 justify-center"
-          />
-        </div>
+        <HeroText layout={heroLayout} isLoggedIn={isLoggedIn} hero={hero} />
       </section>
 
       {/* --------------------------------------------------------- promise */}
@@ -236,5 +251,90 @@ export async function LandingPage({ isLoggedIn }: LandingPageProps) {
         </div>
       </section>
     </>
+  );
+}
+
+/** The headline, tagline and buttons, in the layout being compared. */
+function HeroText({
+  layout,
+  isLoggedIn,
+  hero,
+}: {
+  layout: HeroLayout;
+  isLoggedIn: boolean;
+  hero: { titleLines: string[]; tagline: string; rail: string };
+}) {
+  const title = (
+    <h1 className="marketing-display text-display-hero">
+      {hero.titleLines.map((line) => (
+        <span key={line} className="block">
+          {line}
+        </span>
+      ))}
+    </h1>
+  );
+  const tagline = (className: string) => (
+    <p
+      className={cn(
+        "text-[0.975rem] leading-relaxed text-marketing-muted sm:text-lg",
+        className,
+      )}
+    >
+      {hero.tagline}
+    </p>
+  );
+
+  if (layout === "a") {
+    return (
+      <div className="page-enter relative z-20 mx-auto w-full max-w-6xl">
+        {title}
+        {tagline("mt-6 max-w-xl")}
+        <LandingCtas isLoggedIn={isLoggedIn} size="lg" className="mt-8" />
+      </div>
+    );
+  }
+
+  if (layout === "b") {
+    return (
+      <div className="page-enter relative z-20 mx-auto grid w-full max-w-6xl items-center gap-10 md:grid-cols-[auto_minmax(0,1fr)] md:gap-14">
+        <p
+          aria-hidden
+          className="hidden text-xs uppercase tracking-[0.3em] text-marketing-faint [writing-mode:vertical-rl] md:block md:rotate-180"
+        >
+          {hero.rail}
+        </p>
+        <div className="max-w-3xl">
+          {title}
+          {tagline("mt-6 max-w-lg")}
+          <LandingCtas isLoggedIn={isLoggedIn} size="lg" className="mt-8" />
+        </div>
+      </div>
+    );
+  }
+
+  if (layout === "c") {
+    // The headline first in the document, last on the screen: read in order,
+    // seen as a band of type along the bottom, under the words it sums up.
+    return (
+      <div className="page-enter relative z-20 mx-auto flex w-full max-w-6xl flex-col">
+        <h1 className="marketing-display order-last mt-12 text-[clamp(2.4rem,5.3vw,4.5rem)] md:whitespace-nowrap">
+          {hero.titleLines.join(" ")}
+        </h1>
+        {tagline("max-w-xl")}
+        <LandingCtas isLoggedIn={isLoggedIn} size="lg" className="mt-7" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="page-enter relative z-20 mx-auto flex w-full max-w-3xl flex-col items-center text-center">
+      {title}
+      {tagline("mt-6 max-w-xl")}
+      <LandingCtas
+        isLoggedIn={isLoggedIn}
+        size="lg"
+        className="mt-9 justify-center"
+      />
+    </div>
   );
 }

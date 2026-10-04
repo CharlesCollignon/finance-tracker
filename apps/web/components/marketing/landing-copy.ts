@@ -27,6 +27,8 @@ export const landingCopy = {
     titleLines: ["Your money,", "clearer every month"],
     tagline:
       "Income, spending, savings and investments in one place. What repeats fills itself in each month, and once a month Pluclair checks against your bank to find what slipped through.",
+    /** The vertical rail of hero layout B, while the layouts are compared. */
+    rail: "Pluclair · Your month · 2026",
   },
 
   /** The three commitments, as one sentence rather than three cards. */
