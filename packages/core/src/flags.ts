@@ -14,6 +14,11 @@
 
 const FLAG_KEYS = [
   /**
+   * Connecting one's own AI account through OpenRouter, and writing the reads
+   * with it (migration 053, docs/plans/AI_ACCOUNT_PLAN.md).
+   */
+  "ai.account",
+  /**
    * Connecting a bank by uploading an open-banking.io credentials file: the
    * Bank page's setup, and every invitation to it (migration 042).
    */

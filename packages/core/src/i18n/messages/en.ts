@@ -2765,6 +2765,12 @@ export const en = {
     },
   },
 
+  /** The user's own AI account, connected through OpenRouter. */
+  aiAccount: {
+    unavailable: "Connecting an AI account is not available right now.",
+    notEnabled: "Connecting an AI account is not open yet.",
+  },
+
   /**
    * The wallet read: what a model made of the look-through.
    *
