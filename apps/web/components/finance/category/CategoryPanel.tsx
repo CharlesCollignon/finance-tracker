@@ -37,6 +37,8 @@ interface CategoryPanelProps {
   readConfigured: boolean;
   /** The maker, for the control that spends a call. */
   readWriterBrand: string;
+  /** Written on the user's own AI account. */
+  readAccount: boolean;
   /** The model recorded on the stored read, when there is one. */
   readModel: string | null;
 }
@@ -61,6 +63,7 @@ export function CategoryPanel({
   readWritesLeft,
   readConfigured,
   readWriterBrand,
+  readAccount,
   readModel,
 }: CategoryPanelProps) {
   const t = useT();
@@ -177,6 +180,7 @@ export function CategoryPanel({
         writesLeft={readWritesLeft}
         configured={readConfigured}
         writerBrand={readWriterBrand}
+        account={readAccount}
         readModel={readModel}
       />
     </section>

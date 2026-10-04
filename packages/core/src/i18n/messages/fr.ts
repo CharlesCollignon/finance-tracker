@@ -1974,6 +1974,9 @@ export const fr: Messages = {
 
   /** Le compte IA de l'utilisateur, connecté par OpenRouter. */
   aiAccount: {
+    writeOne: "Écrire avec {model}",
+    writeAgain: "Réécrire avec {model}",
+    connectFirst: "Connectez un compte IA pour des lectures écrites.",
     unavailable:
       "La connexion d'un compte IA n'est pas disponible pour le moment.",
     notEnabled: "La connexion d'un compte IA n'est pas encore ouverte.",

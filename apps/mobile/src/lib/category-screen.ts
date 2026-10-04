@@ -1,3 +1,4 @@
+import { ACCOUNT_ALLOWANCE, type WriterState } from "@finance/core/ai-models";
 import { CATEGORY_READ_WRITES_PER_MONTH } from "@finance/core/category-read";
 import type { CategoryScreen } from "@finance/core/category-screen";
 import {
@@ -8,6 +9,7 @@ import type { Locale } from "@finance/core/i18n/locale";
 import { writesRemaining } from "@finance/core/month-read-budget";
 import { readCategoryScreen } from "@finance/data/category-screen";
 
+import { getWriterState } from "@/lib/ai-writer";
 import { announcingFetch } from "@/lib/data-version";
 import { WEB_APP_URL } from "@/lib/env";
 import { supabase } from "@/lib/supabase";
@@ -26,6 +28,8 @@ import { supabase } from "@/lib/supabase";
 
 export interface PhoneCategoryScreen {
   screen: CategoryScreen;
+  /** Who would write: Pluclair's key or the user's own AI account. */
+  writer: WriterState;
   /** Whether a read can be asked for from this build at all. */
   readWritable: boolean;
   /** The category reads' shared allowance, left this month. */
@@ -39,17 +43,16 @@ export async function getCategoryScreen(
   userId: string,
   locale: Locale,
 ): Promise<PhoneCategoryScreen> {
-  const { screen, readTally, selection } = await readCategoryScreen(
-    supabase,
-    userId,
-    locale,
-  );
-  // Without a web address there is no one to ask; without a tally the call
-  // could not be counted, and a call that cannot be counted is not capped.
-  const reachable = WEB_APP_URL !== null;
+  const [{ screen, readTally, selection }, writer] = await Promise.all([
+    readCategoryScreen(supabase, userId, locale),
+    getWriterState(userId),
+  ]);
+  // Without a writer there is no one to ask; without a tally the call could
+  // not be counted, and a call that cannot be counted is not capped.
   return {
     screen,
-    readWritable: reachable && readTally.tracked,
+    writer,
+    readWritable: writer.writable && readTally.tracked,
     readWritesLeft: readTally.tracked
       ? writesRemaining(
           {
@@ -58,15 +61,20 @@ export async function getCategoryScreen(
             lastWrittenAt: null,
             pendingSince: null,
           },
-          CATEGORY_READ_WRITES_PER_MONTH,
+          writer.account ? ACCOUNT_ALLOWANCE : CATEGORY_READ_WRITES_PER_MONTH,
         )
       : 0,
     rerankWritable:
-      reachable &&
+      writer.writable &&
       selection.tracked &&
       screen.allFindings.length >= MIN_FINDINGS_TO_RANK,
     rerankWritesLeft: selection.tracked
-      ? writesRemaining(selection.tally, CATEGORY_SELECTION_WRITES_PER_MONTH)
+      ? writesRemaining(
+          selection.tally,
+          writer.account
+            ? ACCOUNT_ALLOWANCE
+            : CATEGORY_SELECTION_WRITES_PER_MONTH,
+        )
       : 0,
   };
 }

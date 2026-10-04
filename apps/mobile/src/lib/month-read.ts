@@ -178,11 +178,6 @@ export interface WriteOutcome {
   writesLeft: number | null;
 }
 
-/** Whether a read can be written from this build at all. */
-export function monthReadWritable(): boolean {
-  return WEB_APP_URL !== null;
-}
-
 /** Long enough for a model to answer, short enough not to hang a press. */
 const TIMEOUT_MS = 45_000;
 

@@ -1,8 +1,6 @@
 import { useState } from "react";
 import { RefreshControl, ScrollView } from "react-native";
 
-import { DEFAULT_WRITER_MODEL, describeModel } from "@finance/core/model-name";
-
 import { CategoryGrid } from "@/components/category/CategoryGrid";
 import { CategoryPanel } from "@/components/category/CategoryPanel";
 import { FindingBand } from "@/components/category/FindingBand";
@@ -116,10 +114,10 @@ export default function HistoryScreen() {
                         }
                         readWritesLeft={data.readWritesLeft}
                         readWritable={data.readWritable}
-                        // The web's key is Mistral's, so only the model's size
-                        // can differ; which model wrote a stored read is on
-                        // the read itself.
-                        readWriterBrand={describeModel(DEFAULT_WRITER_MODEL).brand}
+                        readAccount={data.writer.account}
+                        // Pluclair's model or the user's own; which model
+                        // wrote a stored read is on the read itself.
+                        readWriterBrand={data.writer.name}
                         readModel={
                           screen.readModels[openCard.history.categoryId] ?? null
                         }

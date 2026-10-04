@@ -3,6 +3,7 @@ import { formatCurrency } from "@finance/core/constants";
 import {
   decideWalletReadWrite,
   explainWalletReadRefusal,
+  WALLET_READS_PER_MONTH,
   walletReadsRemaining,
 } from "@finance/core/wallet-read-budget";
 import {
@@ -13,9 +14,11 @@ import { verifyWalletRead } from "@finance/core/wallet-read";
 import { namesInWalletReadPrompt } from "@finance/core/wallet-read-prompt";
 import { factsDigest } from "@finance/core/month-facts";
 import type { Database } from "@finance/core/types/database";
-import { walletReadConfigured } from "@/lib/wallet-read/client";
+import { readSource } from "@/lib/ai/read-source";
+import { ACCOUNT_ALLOWANCE, writerFor } from "@/lib/ai/writer";
+import { createClient } from "@/lib/supabase/server";
+import { WALLET_READ_SOURCE } from "@/lib/wallet-read/client";
 import { gatherLookThrough } from "@/lib/wallet-read/facts";
-import { walletReadSource } from "@/lib/wallet-read/source";
 import {
   readWalletReadState,
   refundWalletRead,
@@ -57,9 +60,19 @@ export async function writeWalletRead(
   const locale = await getLocale();
   const t = await getT();
 
-  if (!walletReadConfigured()) {
-    return { read: false, message: t("walletRead.noWriter"), readsLeft: 0 };
+  const { writer, account } = await writerFor(
+    userId,
+    client ?? (await createClient()),
+  );
+  if (!writer) {
+    return {
+      read: false,
+      message: account ? t("aiAccount.connectFirst") : t("walletRead.noWriter"),
+      readsLeft: 0,
+    };
   }
+  const allowance = account ? ACCOUNT_ALLOWANCE : WALLET_READS_PER_MONTH;
+  const source = readSource(WALLET_READ_SOURCE, writer);
 
   const [{ stored, tracked }, bundle] = await Promise.all([
     readWalletReadState(userId, client),
@@ -74,19 +87,20 @@ export async function writeWalletRead(
     storedDigest: stored?.read ? stored.factsDigest : null,
     now: new Date().toISOString(),
     tracked,
+    allowance,
   });
 
   if (!decision.write) {
     return {
       read: false,
       message: explainWalletReadRefusal(decision, locale),
-      readsLeft: walletReadsRemaining(stored?.tally ?? null),
+      readsLeft: walletReadsRemaining(stored?.tally ?? null, allowance),
     };
   }
 
   // Reserved before the call, not counted after it. Counting afterwards means
   // any number of concurrent presses all pass the check and all spend.
-  const reserved = await reserveWalletRead(userId, client);
+  const reserved = await reserveWalletRead(userId, client, allowance);
   const before = stored?.tally.writes ?? 0;
   if (!reserved || reserved.writes <= before) {
     // The database declined where the pure decision had allowed it, which
@@ -95,7 +109,10 @@ export async function writeWalletRead(
     return {
       read: false,
       message: t("walletRead.inFlight"),
-      readsLeft: walletReadsRemaining(reserved ?? stored?.tally ?? null),
+      readsLeft: walletReadsRemaining(
+        reserved ?? stored?.tally ?? null,
+        allowance,
+      ),
     };
   }
 
@@ -107,7 +124,7 @@ export async function writeWalletRead(
     wallets: bundle.walletsInUse,
   });
 
-  const raw = await walletReadSource.write(prompt);
+  const raw = await source.write(prompt);
 
   if (raw === null) {
     // Never reached the provider, or came back unreadable at the envelope
@@ -116,7 +133,7 @@ export async function writeWalletRead(
     return {
       read: false,
       message: t("walletRead.noAnswer"),
-      readsLeft: walletReadsRemaining(stored?.tally ?? null),
+      readsLeft: walletReadsRemaining(stored?.tally ?? null, allowance),
     };
   }
 
@@ -143,7 +160,7 @@ export async function writeWalletRead(
         facts: null,
         digest: null,
         dropped: 0,
-        model: walletReadSource.model,
+        model: source.model,
         promptVersion: WALLET_READ_PROMPT_VERSION,
         locale,
         refusedDelta: 1,
@@ -156,7 +173,7 @@ export async function writeWalletRead(
       // Always named: « n'a pas pu être utilisée » alone gave the reader
       // nothing to report and the prompt nothing to fix.
       message: t("walletRead.threwAway", { detail: verdict.detail }),
-      readsLeft: walletReadsRemaining(reserved),
+      readsLeft: walletReadsRemaining(reserved, allowance),
     };
   }
 
@@ -167,7 +184,7 @@ export async function writeWalletRead(
       facts,
       digest: factsDigest(facts),
       dropped: verdict.dropped.length,
-      model: walletReadSource.model,
+      model: source.model,
       promptVersion: WALLET_READ_PROMPT_VERSION,
       locale,
       refusedDelta: 0,
@@ -178,6 +195,6 @@ export async function writeWalletRead(
   return {
     read: true,
     message: null,
-    readsLeft: walletReadsRemaining(reserved),
+    readsLeft: walletReadsRemaining(reserved, allowance),
   };
 }

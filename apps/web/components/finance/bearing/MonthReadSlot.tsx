@@ -1,10 +1,10 @@
 import { formatMonthLabel } from "@finance/core/constants";
 import { writesRemaining } from "@finance/core/month-read-budget";
-import { describeModel } from "@finance/core/model-name";
 import { MonthRead } from "@/components/finance/MonthRead";
 import { getLocale } from "@/lib/locale";
 import { GLASS_CARD } from "@/lib/glass";
-import { monthReadConfigured, monthReadModel } from "@/lib/month-read/client";
+import { ACCOUNT_ALLOWANCE, writerStateFor } from "@/lib/ai/writer";
+import { createClient } from "@/lib/supabase/server";
 import { gatherMonthFacts } from "@/lib/month-read/facts";
 import { readMonthReadState } from "@/lib/month-read/store";
 import { getMonthRead } from "@/lib/queries/month-read";
@@ -35,9 +35,10 @@ export async function MonthReadSlot({
   const locale = await getLocale();
   const facts = await gatherMonthFacts(userId, year, month);
 
-  const [view, { stored }] = await Promise.all([
+  const [view, { stored }, writer] = await Promise.all([
     getMonthRead(userId, year, month, facts),
     readMonthReadState(userId, year, month),
+    writerStateFor(userId, await createClient()),
   ]);
 
   const readFacts =
@@ -60,9 +61,11 @@ export async function MonthReadSlot({
         facts={facts}
         readFacts={readFacts}
         readLocale={view?.locale ?? locale}
-        writesLeft={writesRemaining(stored?.tally ?? null)}
-        configured={monthReadConfigured()}
-        writerBrand={describeModel(monthReadModel()).brand}
+        writesLeft={writesRemaining(
+          stored?.tally ?? null,
+          writer.account ? ACCOUNT_ALLOWANCE : undefined,
+        )}
+        writer={writer}
         readModel={stored?.read ? stored.model : null}
       />
     </section>

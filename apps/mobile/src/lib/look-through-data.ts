@@ -1,3 +1,4 @@
+import type { WriterState } from "@finance/core/ai-models";
 import { isMissingSchema } from "@finance/data/schema";
 import {
   INVESTMENT_WALLET_IDS,
@@ -35,6 +36,7 @@ import {
 import type { WalletReadRow } from "@finance/core/types/database";
 
 import { WEB_APP_URL } from "@/lib/env";
+import { getWriterState } from "@/lib/ai-writer";
 import { getWalletPlans, getWalletPortfolio } from "@/lib/queries";
 import { supabase } from "@/lib/supabase";
 import * as readings from "@finance/data/instrument-readings";
@@ -124,6 +126,8 @@ export interface LookThroughData {
   stored: StoredWalletRead | null;
   /** False when migration 033 has not run: no Review button then. */
   readsTracked: boolean;
+  /** Who would write the review and read the instruments. */
+  writer: WriterState;
 }
 
 /** Everything the look-through screen draws, computed here. */
@@ -132,12 +136,13 @@ export async function getLookThroughData(
   locale: Locale,
   now: Date = new Date(),
 ): Promise<LookThroughData> {
-  const [portfolio, plans, readings, walletRead] = await Promise.all([
+  const [portfolio, plans, readings, walletRead, writer] = await Promise.all([
     // History is not needed: nothing here is a time series.
     getWalletPortfolio(userId, locale, { includeHistory: false }),
     getWalletPlans(userId),
     getInstrumentReadings(userId),
     getStoredWalletRead(userId),
+    getWriterState(userId),
   ]);
 
   const positions: LookThroughPosition[] = [];
@@ -200,12 +205,8 @@ export async function getLookThroughData(
     ),
     stored: walletRead.stored,
     readsTracked: walletRead.tracked,
+    writer,
   };
-}
-
-/** Whether this build has a web app to spend a model call through. */
-export function canAskTheWeb(): boolean {
-  return Boolean(WEB_APP_URL);
 }
 
 const TIMEOUT_MS = 60_000;

@@ -14,6 +14,8 @@ import { PrivateAmount } from "@/components/layout/PrivateAmount";
 import { useToast } from "@/components/layout/ToastProvider";
 import { Button } from "@/components/ui/Button";
 import { cn } from "@/lib/utils";
+import type { WriterState } from "@finance/core/ai-models";
+import { ConnectAiInvite } from "@/components/finance/ConnectAiInvite";
 import { GLASS_CARD } from "@/lib/glass";
 import { useFormatCurrency } from "@/lib/use-currency";
 import { ICON } from "@/lib/icon-scale";
@@ -42,15 +44,14 @@ interface MonthReadProps {
   /** The language the prose is in, which may not be the reader's. */
   readLocale: Locale;
   writesLeft: number;
-  /** Whether a writer exists on this deployment at all. */
-  configured: boolean;
   /**
-   * The maker, for the control that spends a call — "Write with Mistral".
-   *
-   * The button said "Write one", and the line beside it said "a model", which
-   * between them named neither what would happen nor what would do it.
+   * Who would write, and whether anyone can: Pluclair's key or the user's own
+   * AI account, and the name for the control that spends a call — « Écrire
+   * avec Mistral ». The button said « Write one », and the line beside it
+   * said « a model », which between them named neither what would happen nor
+   * what would do it.
    */
-  writerBrand: string;
+  writer: WriterState;
   /** The model recorded on the stored read, when there is one. */
   readModel: string | null;
 }
@@ -82,10 +83,10 @@ export function MonthRead({
   readFacts,
   readLocale,
   writesLeft,
-  configured,
-  writerBrand,
+  writer,
   readModel,
 }: MonthReadProps) {
+  const writerBrand = writer.name;
   const { toast } = useToast();
   const formatMoney = useFormatCurrency();
   const locale = useLocale();
@@ -104,8 +105,10 @@ export function MonthRead({
 
   // Nothing to show and nothing that could be written. The same honesty as
   // the bank capability probe: no broken button on a deployment with no key.
-  if (!configured && !rendered) {
-    return null;
+  // On one's own AI account, a line where the read would be says how to get
+  // one, rather than nothing at all.
+  if (!writer.writable && !rendered) {
+    return writer.account && !facts.thin ? <ConnectAiInvite /> : null;
   }
 
   // A month with nothing in it is not worth offering a read of, and the
@@ -222,7 +225,9 @@ export function MonthRead({
           ) : null}
         </p>
 
-        {configured ? (
+        {!writer.writable && writer.account ? (
+          <ConnectAiInvite />
+        ) : writer.writable ? (
           <Button
             type="button"
             onClick={write}
@@ -241,9 +246,13 @@ export function MonthRead({
               ? t("monthRead.writing")
               : left <= 0
                 ? t("monthRead.noReadsLeft", { month: monthLabel })
-                : rendered
-                  ? t("monthRead.writeAgain", { left, model: writerBrand })
-                  : t("monthRead.writeOne", { left, model: writerBrand })}
+                : writer.account
+                  ? rendered
+                    ? t("aiAccount.writeAgain", { model: writerBrand })
+                    : t("aiAccount.writeOne", { model: writerBrand })
+                  : rendered
+                    ? t("monthRead.writeAgain", { left, model: writerBrand })
+                    : t("monthRead.writeOne", { left, model: writerBrand })}
           </Button>
         ) : null}
       </div>

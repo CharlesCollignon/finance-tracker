@@ -2767,6 +2767,9 @@ export const en = {
 
   /** The user's own AI account, connected through OpenRouter. */
   aiAccount: {
+    writeOne: "Write with {model}",
+    writeAgain: "Write again with {model}",
+    connectFirst: "Connect an AI account for written reads.",
     unavailable: "Connecting an AI account is not available right now.",
     notEnabled: "Connecting an AI account is not open yet.",
   },

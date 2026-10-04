@@ -173,23 +173,34 @@ for the owner's account.
 
 ## Phase 2 — The reads, on the user's account (branch `ai-account-2/reads`)
 
-- [ ] One OpenAI-compatible adapter (base address, key, model), with
-      structured output and `require_parameters`, so a request only goes to
-      a provider that honours the schema.
-- [ ] `readSourceFor(userId)`: the user's connection, or none. The four
-      writers take their source from it; « configured » becomes « this user
-      has a connection ».
-- [ ] Without a connection: no write button anywhere; a discreet line where
-      a read would be — « Connectez un compte IA pour des lectures écrites »
-      — opening the Profile. Stored reads still show.
-- [ ] Each read keeps saying exactly which model wrote it (it already
-      records the model).
-- [ ] No monthly allowance for a connected account; the cooldown and the
-      in-flight guard stay. The allowance copy (« N restantes ») goes.
-- [ ] Instrument readings on the user's account. They use Mistral's own
-      `web_search` tool today; through OpenRouter they need its web search
-      instead (charged per request on top of the model), so this adapter is
-      its own task, tested on a few real ISINs.
+Behind `ai.account`: off — every account until it is opened — nothing
+changes, Pluclair's key writes within its allowances; on, the rules below.
+
+- [x] One adapter (`lib/ai/read-source.ts`) for every read, over a
+      `Writer` (`lib/ai/writer.ts`): where to send, which key, which model,
+      what else the service wants. Mistral and OpenRouter speak the same
+      dialect; on an account, `provider.require_parameters` keeps a request
+      to providers that honour the schema, and the GPT-6 models get no
+      `temperature`. Failures are counted per writer.
+- [x] `writerFor(userId)`: Pluclair's key with the flag off, the user's
+      connection with it on, or none. The month read, a category's read,
+      the band's re-rank, the portfolio review and instrument readings all
+      take their writer from it — the nightly walk too, which reads the
+      flag from the tables since it has no session.
+- [x] Without a connection: no write button; one quiet line where a read
+      would be — « Connectez un compte IA pour des lectures écrites » —
+      opening the Profile, on both apps. Stored reads still show.
+- [x] No monthly allowance on an account (`ACCOUNT_ALLOWANCE`, in core);
+      the cooldown and the in-flight guard stay, and the button shows no
+      count. Each read still records exactly which model wrote it.
+- [x] Instrument readings on an account search through OpenRouter's web
+      plugin (`plugins: [{ id: "web" }]`, pages read back as `url_citation`
+      annotations), Mistral's own `web_search` staying for Pluclair's key.
+      Not tried against a live account yet: to check on a few real ISINs
+      once the owner's account is connected.
+- [x] The privacy policy (both languages, dated 2026-10-04), the register
+      and the DPIA name OpenRouter beside Mistral AI, for an account that
+      connects its own.
 
 ## Phase 3 — The Profile, on both apps (branch `ai-account-3/profile`)
 

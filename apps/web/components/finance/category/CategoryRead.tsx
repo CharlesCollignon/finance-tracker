@@ -15,6 +15,7 @@ import { PrivateAmount } from "@/components/layout/PrivateAmount";
 import { useToast } from "@/components/layout/ToastProvider";
 import { Button } from "@/components/ui/Button";
 import { cn } from "@/lib/utils";
+import { ConnectAiInvite } from "@/components/finance/ConnectAiInvite";
 import { GLASS_CARD } from "@/lib/glass";
 import { useFormatCurrency } from "@/lib/use-currency";
 import { ICON } from "@/lib/icon-scale";
@@ -41,6 +42,8 @@ interface CategoryReadProps {
   configured: boolean;
   /** The maker, for the control that spends a call. */
   writerBrand: string;
+  /** Written on the user's own AI account: no count, and an invitation without one. */
+  account: boolean;
   /** The model recorded on the stored read, when there is one. */
   readModel: string | null;
 }
@@ -84,6 +87,7 @@ export function CategoryRead({
   writesLeft,
   configured,
   writerBrand,
+  account,
   readModel,
 }: CategoryReadProps) {
   const { toast } = useToast();
@@ -100,16 +104,17 @@ export function CategoryRead({
   // Stated rather than smoothed over — see `MonthRead`'s own comment on this.
   const inAnotherLanguage = Boolean(rendered) && readLocale !== locale;
 
-  // Nothing to show and nothing that could be written. No broken button on a
-  // deployment with no model key.
-  if (!configured && !rendered) {
-    return null;
-  }
-
   // A category with too little history is not worth offering a read of, and
   // the server refuses one anyway.
   if (!rendered && thin) {
     return null;
+  }
+
+  // Nothing to show and nothing that could be written: no broken button on a
+  // deployment with no model key — and on one's own AI account, a line
+  // saying how to get one.
+  if (!configured && !rendered) {
+    return account ? <ConnectAiInvite /> : null;
   }
 
   function write() {
@@ -200,7 +205,9 @@ export function CategoryRead({
           ) : null}
         </p>
 
-        {configured ? (
+        {!configured && account ? (
+          <ConnectAiInvite />
+        ) : configured ? (
           <Button
             type="button"
             onClick={write}
@@ -219,9 +226,13 @@ export function CategoryRead({
               ? t("categoryRead.writing")
               : left <= 0
                 ? t("categoryRead.noReadsLeft")
-                : rendered
-                  ? t("categoryRead.writeAgain", { left, model: writerBrand })
-                  : t("categoryRead.writeOne", { left, model: writerBrand })}
+                : account
+                  ? rendered
+                    ? t("aiAccount.writeAgain", { model: writerBrand })
+                    : t("aiAccount.writeOne", { model: writerBrand })
+                  : rendered
+                    ? t("categoryRead.writeAgain", { left, model: writerBrand })
+                    : t("categoryRead.writeOne", { left, model: writerBrand })}
           </Button>
         ) : null}
       </div>

@@ -7,15 +7,13 @@ import {
 } from "@finance/core/category-selection";
 import { CATEGORY_READ_WRITES_PER_MONTH } from "@finance/core/category-read";
 import { writesRemaining } from "@finance/core/month-read-budget";
-import { describeModel } from "@finance/core/model-name";
 import { readCategoryScreen } from "@finance/data/category-screen";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { LEDGER_TABS, SurfaceTabs } from "@/components/layout/SurfaceTabs";
 import { CategoryHistoryView } from "@/components/finance/category/CategoryHistoryView";
 import { getLocale } from "@/lib/locale";
-import { categoryReadConfigured } from "@/lib/category-read/client";
-import { monthReadModel } from "@/lib/month-read/client";
+import { ACCOUNT_ALLOWANCE, writerStateFor } from "@/lib/ai/writer";
 
 /**
  * The by-category screen: every category's run, what moved, and a read of
@@ -36,11 +34,10 @@ export default async function HistoryPage() {
   }
 
   const [supabase, locale] = await Promise.all([createClient(), getLocale()]);
-  const { screen, readTally, selection } = await readCategoryScreen(
-    supabase,
-    user.id,
-    locale,
-  );
+  const [{ screen, readTally, selection }, writer] = await Promise.all([
+    readCategoryScreen(supabase, user.id, locale),
+    writerStateFor(user.id, supabase),
+  ]);
 
   /**
    * Whether the panel may offer a read at all — both halves, as the band's
@@ -54,7 +51,7 @@ export default async function HistoryPage() {
    * untouched and the table it would be counted in does not exist, which is
    * both a refusal nobody earned and a sentence that is not true.
    */
-  const readConfigured = categoryReadConfigured() && readTally.tracked;
+  const readConfigured = writer.writable && readTally.tracked;
   const readWritesLeft = readTally.tracked
     ? writesRemaining(
         {
@@ -63,7 +60,7 @@ export default async function HistoryPage() {
           lastWrittenAt: null,
           pendingSince: null,
         },
-        CATEGORY_READ_WRITES_PER_MONTH,
+        writer.account ? ACCOUNT_ALLOWANCE : CATEGORY_READ_WRITES_PER_MONTH,
       )
     : 0;
 
@@ -80,11 +77,16 @@ export default async function HistoryPage() {
    * the write path makes, from the same constant.
    */
   const rerankConfigured =
-    categoryReadConfigured() &&
+    writer.writable &&
     selection.tracked &&
     screen.allFindings.length >= MIN_FINDINGS_TO_RANK;
   const rerankWritesLeft = selection.tracked
-    ? writesRemaining(selection.tally, CATEGORY_SELECTION_WRITES_PER_MONTH)
+    ? writesRemaining(
+        selection.tally,
+        writer.account
+          ? ACCOUNT_ALLOWANCE
+          : CATEGORY_SELECTION_WRITES_PER_MONTH,
+      )
     : 0;
 
   return (
@@ -110,7 +112,8 @@ export default async function HistoryPage() {
           readThin={screen.readThin}
           readWritesLeft={readWritesLeft}
           readConfigured={readConfigured}
-          readWriterBrand={describeModel(monthReadModel()).brand}
+          readWriterBrand={writer.name}
+          readAccount={writer.account}
           readModels={screen.readModels}
         />
       </PageContainer>

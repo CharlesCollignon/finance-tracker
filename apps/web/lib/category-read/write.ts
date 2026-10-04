@@ -17,9 +17,11 @@ import {
 } from "@finance/core/month-read-budget";
 import { factsDigest } from "@finance/core/month-facts";
 import type { Database } from "@finance/core/types/database";
-import { categoryReadConfigured } from "@/lib/category-read/client";
+import { readSource } from "@/lib/ai/read-source";
+import { ACCOUNT_ALLOWANCE, writerFor } from "@/lib/ai/writer";
+import { CATEGORY_READ_SOURCE } from "@/lib/category-read/client";
 import { gatherCategoryFacts } from "@/lib/category-read/facts";
-import { categoryReadSource } from "@/lib/category-read/source";
+import { createClient } from "@/lib/supabase/server";
 import { getLocale, getT } from "@/lib/locale";
 import {
   readCategoryReadState,
@@ -57,13 +59,23 @@ export async function writeCategoryRead(
   const locale = await getLocale();
   const t = await getT();
 
-  if (!categoryReadConfigured()) {
+  const { writer, account } = await writerFor(
+    userId,
+    client ?? (await createClient()),
+  );
+  if (!writer) {
     return {
       written: false,
-      message: t("categoryRead.noWriter"),
+      message: account
+        ? t("aiAccount.connectFirst")
+        : t("categoryRead.noWriter"),
       writesLeft: 0,
     };
   }
+  const allowance = account
+    ? ACCOUNT_ALLOWANCE
+    : CATEGORY_READ_WRITES_PER_MONTH;
+  const source = readSource(CATEGORY_READ_SOURCE, writer);
 
   const [state, facts] = await Promise.all([
     readCategoryReadState(userId, categoryId, client),
@@ -82,7 +94,7 @@ export async function writeCategoryRead(
     return {
       written: false,
       message: t("categoryRead.gone"),
-      writesLeft: writesRemaining(state.tally, CATEGORY_READ_WRITES_PER_MONTH),
+      writesLeft: writesRemaining(state.tally, allowance),
     };
   }
 
@@ -91,7 +103,7 @@ export async function writeCategoryRead(
     facts,
     now: new Date().toISOString(),
     tracked: state.tracked,
-    allowance: CATEGORY_READ_WRITES_PER_MONTH,
+    allowance,
     cooldownSeconds: CATEGORY_READ_COOLDOWN_SECONDS,
     reservationSeconds: CATEGORY_READ_RESERVATION_SECONDS,
   });
@@ -100,12 +112,12 @@ export async function writeCategoryRead(
     return {
       written: false,
       message: explainWriteRefusal(decision, facts.monthLabel, locale),
-      writesLeft: writesRemaining(state.tally, CATEGORY_READ_WRITES_PER_MONTH),
+      writesLeft: writesRemaining(state.tally, allowance),
     };
   }
 
   // Reserved before the call, not counted after it — see `month-read/write.ts`.
-  const reserved = await reserveWrite(userId, categoryId, client);
+  const reserved = await reserveWrite(userId, categoryId, client, allowance);
   if (!reserved || reserved.writes <= state.writes) {
     // The database declined where the pure decision had allowed it: usually
     // a second press landing first, or the category having gone since the
@@ -113,10 +125,7 @@ export async function writeCategoryRead(
     return {
       written: false,
       message: t("monthRead.inFlight"),
-      writesLeft: writesRemaining(
-        reserved?.tally ?? state.tally,
-        CATEGORY_READ_WRITES_PER_MONTH,
-      ),
+      writesLeft: writesRemaining(reserved?.tally ?? state.tally, allowance),
     };
   }
 
@@ -127,7 +136,7 @@ export async function writeCategoryRead(
     locale,
   });
 
-  const raw = await categoryReadSource.write(prompt);
+  const raw = await source.write(prompt);
 
   if (raw === null) {
     // Never reached the provider, or came back unreadable at the envelope
@@ -136,7 +145,7 @@ export async function writeCategoryRead(
     return {
       written: false,
       message: t("monthRead.noAnswer"),
-      writesLeft: writesRemaining(state.tally, CATEGORY_READ_WRITES_PER_MONTH),
+      writesLeft: writesRemaining(state.tally, allowance),
     };
   }
 
@@ -154,7 +163,7 @@ export async function writeCategoryRead(
         facts: null,
         digest: null,
         trimmed: 0,
-        model: categoryReadSource.model,
+        model: source.model,
         promptVersion: CATEGORY_READ_PROMPT_VERSION,
         refusedDelta: 1,
         locale,
@@ -169,10 +178,7 @@ export async function writeCategoryRead(
         verdict.reason === "unknown-datum"
           ? t("monthRead.threwAway", { detail: verdict.detail })
           : t("monthRead.unusable"),
-      writesLeft: writesRemaining(
-        reserved.tally,
-        CATEGORY_READ_WRITES_PER_MONTH,
-      ),
+      writesLeft: writesRemaining(reserved.tally, allowance),
     };
   }
 
@@ -184,7 +190,7 @@ export async function writeCategoryRead(
       facts,
       digest: factsDigest(facts),
       trimmed: verdict.trimmed.length,
-      model: categoryReadSource.model,
+      model: source.model,
       promptVersion: CATEGORY_READ_PROMPT_VERSION,
       refusedDelta: 0,
       locale,
@@ -195,6 +201,6 @@ export async function writeCategoryRead(
   return {
     written: true,
     message: null,
-    writesLeft: writesRemaining(reserved.tally, CATEGORY_READ_WRITES_PER_MONTH),
+    writesLeft: writesRemaining(reserved.tally, allowance),
   };
 }
