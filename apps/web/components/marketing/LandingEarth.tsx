@@ -654,9 +654,9 @@ function visibleArc(
  * pass starts just out of frame on the right, so it comes into view at
  * once; to the left, where the rim climbs, it passes behind the planet. Its
  * disk keeps the tilt it had there, and under reduced motion it sits there.
- * About three quarters of its first size (a tenth, then fifteen per cent
- * smaller); smaller still on a portrait screen, where the hero's height is a
- * long way across.
+ * About three fifths of its first size (a tenth, fifteen per cent, then a
+ * fifth smaller, each at the owner's ask); smaller still on a portrait
+ * screen, where the hero's height is a long way across.
  */
 function holePath(
   center: [number, number],
@@ -665,7 +665,7 @@ function holePath(
   anchor: number,
   aspect: number,
 ): HolePath {
-  const size = 0.02754 * clamp(aspect, 0.75, 1);
+  const size = 0.022 * clamp(aspect, 0.75, 1);
   const angle = low + (anchor - low) * 0.36;
   const lift = radius + size * 0.6;
   // Far enough past each edge that its light, nine shadow radii out, is off
