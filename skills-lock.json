@@ -31,6 +31,12 @@
       "skillPath": "skills/productivity/grilling/SKILL.md",
       "computedHash": "a16b2f661db6caf310d7e02dd0d069e597cb888873e210e66f641eae715c5f23"
     },
+    "hallmark": {
+      "source": "nutlope/hallmark",
+      "sourceType": "github",
+      "skillPath": "skills/hallmark/SKILL.md",
+      "computedHash": "579f86b27cdd7eb972107f7aecedd537f472891c5fd7c7c821bea15f64e0fe86"
+    },
     "high-end-visual-design": {
       "source": "leonxlnx/taste-skill",
       "sourceType": "github",
