@@ -1017,16 +1017,11 @@ export const fr: Messages = {
     unrecordedIn: "Non noté en {month}",
     underAllowance: "sous votre marge de {amount}",
     ofWhatCameIn: "{percent} de ce qui est entré",
-    monthsValue: {
-      one: "{count} mois",
-      other: "{count} mois",
-    },
     monthsInARow: {
       one: "{count} mois d'affilée",
       other: "{count} mois d'affilée",
     },
     inARow: "{count} d'affilée",
-    inARowInsideAllowance: "d'affilée dans la marge",
     readyToClose: "{month} est prêt pour son bilan",
     keepTheRun:
       "Restez sous {amount} de dépenses non notées pour continuer la série.",
@@ -1257,7 +1252,6 @@ export const fr: Messages = {
     setUp: "Configuration",
     usePassword: "Utiliser le mot de passe",
     browserNotifications: "Notifications du navigateur",
-    theRun: "La série",
     kept: "Économisé",
     showAmounts: "Afficher les montants",
     hideAmounts: "Masquer les montants",
