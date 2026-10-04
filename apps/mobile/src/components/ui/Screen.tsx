@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
-import { View } from "react-native";
+import { Pressable, View } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { cn } from "@/lib/cn";
@@ -10,7 +11,10 @@ import { Orb } from "@/components/Orb";
 import { PrivacyToggle } from "@/components/PrivacyToggle";
 import { RefreshButton } from "@/components/RefreshButton";
 import { Text } from "@/components/ui/Text";
+import { hapticLight } from "@/lib/haptics";
 import { CHROME_MAX_FONT_SCALE, useChromeFontScale } from "@/theme/chrome";
+import { ICON } from "@/theme/tokens";
+import { useThemeColors } from "@/theme/useThemeColors";
 
 export interface ScreenProps {
   title?: string;
@@ -30,6 +34,11 @@ export interface ScreenProps {
   showAccountMenu?: boolean;
   /** The orb beside the title; off for the auth screens, which show their own. */
   showLogo?: boolean;
+  /**
+   * A screen pushed over another: a back chevron where the orb sits, left of
+   * the title, as a navigation bar puts it.
+   */
+  back?: { label: string; onPress: () => void };
 }
 
 /** At the system's default text size; it grows with the setting below. */
@@ -63,7 +72,9 @@ export function Screen({
   showRefresh = true,
   showAccountMenu = true,
   showLogo = true,
+  back,
 }: ScreenProps) {
+  const colors = useThemeColors();
   /*
    * The band is a fixed height holding text that the user can scale, so it
    * grows with the setting rather than cropping the title — the same bound the
@@ -75,6 +86,7 @@ export function Screen({
 
   const showHeader =
     Boolean(title) ||
+    Boolean(back) ||
     showPrivacyToggle ||
     showAccountMenu ||
     showLogo ||
@@ -106,12 +118,35 @@ export function Screen({
             className="absolute inset-y-0 left-4 flex-row items-center gap-2.5"
             style={{ right: ACTIONS_WIDTH }}
           >
-            {showLogo ? <Orb size="sm" /> : null}
+            {back ? (
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={back.label}
+                hitSlop={12}
+                onPress={() => {
+                  void hapticLight();
+                  back.onPress();
+                }}
+                className="-ml-1.5 h-9 w-9 items-center justify-center rounded-control"
+              >
+                <Ionicons
+                  name="chevron-back"
+                  size={ICON.xl}
+                  color={colors.foreground}
+                />
+              </Pressable>
+            ) : showLogo ? (
+              <Orb size="sm" />
+            ) : null}
+            {/* A long name — a property's own — shrinks a little before it
+                gives up its end. */}
             <Text
               className="min-w-0 shrink font-sans text-foreground"
               style={{ fontSize: TITLE_SIZE }}
               maxFontSizeMultiplier={CHROME_MAX_FONT_SCALE}
               numberOfLines={1}
+              adjustsFontSizeToFit
+              minimumFontScale={0.8}
             >
               {title}
             </Text>
