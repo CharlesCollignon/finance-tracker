@@ -27,6 +27,20 @@ import { aiSealer } from "./secrets";
 
 export type ConnectMode = "redirect" | "app";
 
+/**
+ * Where the round trip began, and so where it lands: the Profile, or the
+ * welcome flow. Carried as the state's last segment — `<random>.welcome` —
+ * because the state is the one thing OpenRouter hands back untouched, and
+ * the whole of it is what is looked up: a segment changed on the way back
+ * names no round trip at all. The dot is outside the random part's
+ * base64url alphabet.
+ */
+export type ConnectOrigin = "profile" | "welcome";
+
+export function connectionOrigin(state: string): ConnectOrigin {
+  return state.endsWith(".welcome") ? "welcome" : "profile";
+}
+
 /** As long as OpenRouter's own code lives. */
 const FLOW_MINUTES = 10;
 
@@ -38,6 +52,7 @@ function callbackUrl(): string {
 export async function startConnection(
   userId: string,
   mode: ConnectMode,
+  origin: ConnectOrigin = "profile",
 ): Promise<{ url: string } | { error: string }> {
   const admin = createAdminClient();
   if (!admin || !aiSealer.configured()) {
@@ -50,7 +65,7 @@ export async function startConnection(
     .delete()
     .lt("expires_at", new Date().toISOString());
 
-  const state = newState();
+  const state = origin === "welcome" ? `${newState()}.welcome` : newState();
   const { verifier, challenge } = pkcePair();
   const sealed = aiSealer.seal(verifier);
   const { error } = await admin.from("ai_connect_flows").insert({
