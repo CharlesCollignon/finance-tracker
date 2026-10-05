@@ -342,6 +342,14 @@
     font-family: var(--font-sans), system-ui, sans-serif;
   }
 
+  /* Tailwind 4 leaves a button the browser's arrow. Every button here does
+     something on a press, so the hand says so — the toggles, the chips, the
+     sheet controls — without each one remembering `cursor-pointer`. */
+  button:not(:disabled),
+  [role="button"]:not([aria-disabled="true"]) {
+    cursor: pointer;
+  }
+
   @media (prefers-reduced-motion: reduce) {
     *,
     *::before,

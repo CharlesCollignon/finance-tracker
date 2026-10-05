@@ -8,9 +8,6 @@ import {
 import { CATEGORY_READ_WRITES_PER_MONTH } from "@finance/core/category-read";
 import { writesRemaining } from "@finance/core/month-read-budget";
 import { readCategoryScreen } from "@finance/data/category-screen";
-import { PageHeader } from "@/components/layout/PageHeader";
-import { PageContainer } from "@/components/layout/PageContainer";
-import { LEDGER_TABS, SurfaceTabs } from "@/components/layout/SurfaceTabs";
 import { CategoryHistoryView } from "@/components/finance/category/CategoryHistoryView";
 import { getLocale } from "@/lib/locale";
 import { ACCOUNT_ALLOWANCE, writerStateFor } from "@/lib/ai/writer";
@@ -89,34 +86,30 @@ export default async function HistoryPage() {
       )
     : 0;
 
+  // The header and the views are the Ledger layout's, so they stay put while
+  // this loads.
   return (
-    <>
-      <PageHeader titleKey="nav.ledger" />
-      <PageContainer>
-        <SurfaceTabs tabs={LEDGER_TABS} className="mb-4" />
-        <CategoryHistoryView
-          cards={screen.cards}
-          findings={screen.findings}
-          remarks={screen.remarks}
-          rerankState={screen.rerankState}
-          rerankConfigured={rerankConfigured}
-          rerankWritesLeft={rerankWritesLeft}
-          breakdown={screen.breakdown}
-          breakdownTotal={screen.breakdownTotal}
-          behind={screen.behind}
-          behindMonth={screen.behindMonth}
-          behindMonthLabel={screen.behindMonthLabel}
-          reads={screen.reads}
-          readFacts={screen.readFacts}
-          readLocale={screen.readLocale}
-          readThin={screen.readThin}
-          readWritesLeft={readWritesLeft}
-          readConfigured={readConfigured}
-          readWriterBrand={writer.name}
-          readAccount={writer.account}
-          readModels={screen.readModels}
-        />
-      </PageContainer>
-    </>
+    <CategoryHistoryView
+      cards={screen.cards}
+      findings={screen.findings}
+      remarks={screen.remarks}
+      rerankState={screen.rerankState}
+      rerankConfigured={rerankConfigured}
+      rerankWritesLeft={rerankWritesLeft}
+      breakdown={screen.breakdown}
+      breakdownTotal={screen.breakdownTotal}
+      behind={screen.behind}
+      behindMonth={screen.behindMonth}
+      behindMonthLabel={screen.behindMonthLabel}
+      reads={screen.reads}
+      readFacts={screen.readFacts}
+      readLocale={screen.readLocale}
+      readThin={screen.readThin}
+      readWritesLeft={readWritesLeft}
+      readConfigured={readConfigured}
+      readWriterBrand={writer.name}
+      readAccount={writer.account}
+      readModels={screen.readModels}
+    />
   );
 }

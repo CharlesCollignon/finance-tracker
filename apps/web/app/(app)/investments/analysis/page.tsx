@@ -4,10 +4,6 @@ import { buildInvestmentReturns } from "@finance/core/investment-returns";
 import { getAuthUser } from "@/lib/auth/get-user";
 import { getPlacementsBase } from "@/lib/queries/placements";
 import { AnalysisView } from "@/components/finance/analysis/AnalysisView";
-import { RefreshQuotesButton } from "@/components/finance/RefreshQuotesButton";
-import { PageContainer } from "@/components/layout/PageContainer";
-import { PageHeader } from "@/components/layout/PageHeader";
-import { SurfaceTabs, WALLET_TABS } from "@/components/layout/SurfaceTabs";
 
 /**
  * Placements, Analyse: what each account earns, how the money is spread
@@ -52,28 +48,20 @@ export default async function AnalysisPage() {
     0,
   );
 
+  // The header, the views and the quotes' refresh are Placements' layout's,
+  // so they stay put while this loads.
   return (
-    <>
-      <PageHeader titleKey="nav.wallets" />
-      <PageContainer>
-        <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-          <SurfaceTabs tabs={WALLET_TABS} />
-          {base.keptWallets.length > 0 ? <RefreshQuotesButton /> : null}
-        </div>
-
-        <AnalysisView
-          portfolio={base.portfolio}
-          returns={returns}
-          plans={base.plans}
-          savingsAccounts={base.savings.accounts}
-          keptWallets={base.keptWallets}
-          accounts={base.accounts}
-          values={values}
-          monthly={monthly}
-          targets={base.targets}
-          monthlyContribution={monthlyContribution}
-        />
-      </PageContainer>
-    </>
+    <AnalysisView
+      portfolio={base.portfolio}
+      returns={returns}
+      plans={base.plans}
+      savingsAccounts={base.savings.accounts}
+      keptWallets={base.keptWallets}
+      accounts={base.accounts}
+      values={values}
+      monthly={monthly}
+      targets={base.targets}
+      monthlyContribution={monthlyContribution}
+    />
   );
 }
