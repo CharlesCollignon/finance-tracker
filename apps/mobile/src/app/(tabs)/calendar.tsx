@@ -20,7 +20,10 @@ import {
   FULFILMENT_STATE_KEY,
   indexFulfilmentStates,
 } from "@finance/core/fulfilment-state";
-import type { FulfilmentProposal } from "@finance/core/recurring-fulfilment";
+import type {
+  BankForecast,
+  FulfilmentProposal,
+} from "@finance/core/recurring-fulfilment";
 import {
   plannedOccurrences,
   recurringOccurrenceKey,
@@ -68,6 +71,7 @@ import { useFormatCurrency } from "@/providers/CurrencyProvider";
 import { useTabBarClearance } from "@/theme/chrome";
 import { useLocale, useT } from "@/providers/LocaleProvider";
 import {
+  getBankForecast,
   getCategories,
   getConfirmedTransactionIds,
   getFulfilledKeys,
@@ -75,6 +79,7 @@ import {
   getRecurringTemplates,
   getSkippedOccurrences,
   getTransactions,
+  hasBankFeed,
 } from "@/lib/queries";
 import { useScreenMonth } from "@/providers/MonthProvider";
 
@@ -115,6 +120,7 @@ export default function CalendarScreen() {
           confirmed: new Set<string>(),
           proposals: [] as FulfilmentProposal[],
           notPlanned: new Set<string>(),
+          bank: null as BankForecast | null,
         };
       }
       const [
@@ -124,6 +130,7 @@ export default function CalendarScreen() {
         confirmed,
         skipped,
         fulfilled,
+        bankFed,
       ] = await Promise.all([
         getTransactions(user.id, year, month),
         getCategories(user.id),
@@ -135,16 +142,14 @@ export default function CalendarScreen() {
         // the month, or already stood for by another row.
         getSkippedOccurrences(user.id, year, month),
         getFulfilledKeys(user.id),
+        hasBankFeed(user.id),
       ]);
-      // Asked after the batch, because it needs the templates and categories
-      // the batch fetched.
-      const proposals = await getFulfilmentProposals(
-        user.id,
-        templates,
-        categories,
-        year,
-        month,
-      );
+      // Asked after the batch, because they need the templates and
+      // categories the batch fetched.
+      const [proposals, bank] = await Promise.all([
+        getFulfilmentProposals(user.id, templates, categories, year, month),
+        getBankForecast(user.id, templates, bankFed, todayIsoLocal()),
+      ]);
       return {
         transactions,
         categories,
@@ -157,6 +162,7 @@ export default function CalendarScreen() {
           ),
           ...fulfilled,
         ]),
+        bank,
       };
     }, [user?.id, year, month], {
       reads: ["transactions", "templates", "categories", "bank"],
@@ -208,6 +214,7 @@ export default function CalendarScreen() {
       month,
       data.notPlanned,
       todayIsoLocal(),
+      data.bank,
     )) {
       const day = out.get(occurrence.occurredOn) ?? [];
       day.push(occurrence);
@@ -558,7 +565,7 @@ export default function CalendarScreen() {
                 <Pressable
                   key={occurrence.key}
                   accessibilityRole="button"
-                  accessibilityLabel={`${occurrence.categoryName}, ${t("ledger.planned")}`}
+                  accessibilityLabel={`${occurrence.categoryName}, ${t(occurrence.awaited ? "ledger.awaited" : "ledger.planned")}`}
                   accessibilityHint={occurrence.name}
                   disabled={selectMode}
                   onPress={() => {
@@ -587,7 +594,14 @@ export default function CalendarScreen() {
                       numberOfLines={1}
                       className="mt-0.5 text-xs"
                     >
-                      {[t("ledger.planned"), occurrence.note]
+                      {[
+                        t(
+                          occurrence.awaited
+                            ? "ledger.awaited"
+                            : "ledger.planned",
+                        ),
+                        occurrence.note,
+                      ]
                         .filter(Boolean)
                         .join(" · ")}
                     </Text>

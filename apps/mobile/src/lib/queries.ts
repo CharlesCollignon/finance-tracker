@@ -22,7 +22,10 @@ import {
 import type { Locale } from "@finance/core/i18n/locale";
 import type { BankMerchantIndex } from "@finance/core/bank-merchant";
 import type { RecurringProposal } from "@finance/core/recurring-detection";
-import { type FulfilmentProposal } from "@finance/core/recurring-fulfilment";
+import {
+  type BankForecast,
+  type FulfilmentProposal,
+} from "@finance/core/recurring-fulfilment";
 import {
   type MonthCloseResult,
   type RecordedCashFlows,
@@ -489,6 +492,22 @@ export function getFulfilmentProposals(
     year,
     month,
   );
+}
+
+/**
+ * What the bank has and has not brought of the charges around today, or
+ * null for a ledger no bank feeds — where the day alone decides, because a
+ * charge is written on it.
+ */
+export async function getBankForecast(
+  userId: string,
+  templates: readonly RecurringTemplateWithCategory[],
+  bankFed: boolean,
+  today: string,
+): Promise<BankForecast | null> {
+  return bankFed
+    ? fulfilment.getBankForecast(supabase, userId, templates, today)
+    : null;
 }
 
 /** How many are waiting, for the Journal's badge. */

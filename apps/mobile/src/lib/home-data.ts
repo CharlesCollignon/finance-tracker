@@ -41,6 +41,7 @@ import { getWriterState } from "@/lib/ai-writer";
 import {
   countPendingFeedItems,
   countSwallowedFeedItems,
+  getBankForecast,
   getCategories,
   getFulfilledKeys,
   getFulfilmentProposals,
@@ -365,9 +366,12 @@ export async function gatherHomeRead(
   // figure from a moment that has gone.
   let pulse: ReturnType<typeof buildMonthPulse> | null = null;
   if (isCurrentMonth) {
-    const [cash, flows] = await Promise.all([
+    const [cash, flows, bank] = await Promise.all([
       readCashBalance(userId, today),
       getRecordedCashFlows(userId, year, month),
+      hasBankFeed(userId).then((bankFed) =>
+        getBankForecast(userId, templates, bankFed, today),
+      ),
     ]);
     const upcoming = buildStillToCome(
       currentTx,
@@ -377,6 +381,7 @@ export async function gatherHomeRead(
       today,
       skipKeys,
       fulfilledKeys,
+      bank,
     );
     const latest = closes.history[0];
     pulse = buildMonthPulse({
