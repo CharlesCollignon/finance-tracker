@@ -117,7 +117,10 @@ export function PlannedOccurrenceSheet({
                 {occurrence.categoryName}
               </span>
               <span className="block text-sm text-muted-foreground">
-                {t("planned.body", { date })}
+                {t(
+                  occurrence.awaited ? "planned.awaitedBody" : "planned.body",
+                  { date },
+                )}
               </span>
             </span>
           </span>
@@ -133,7 +136,8 @@ export function PlannedOccurrenceSheet({
         </div>
 
         <div className="flex flex-col gap-2">
-          {inCurrentMonth ? (
+          {/* One the bank still owes is recorded by the bank. */}
+          {inCurrentMonth && !occurrence.awaited ? (
             <div className="flex flex-col gap-1">
               <Button
                 type="button"

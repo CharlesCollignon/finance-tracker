@@ -711,6 +711,8 @@ export const en = {
   /** A planned row, opened: what can be done about one occurrence to come. */
   planned: {
     body: "Planned for {date}. It is recorded on the day.",
+    /** Its day has come and the bank has not brought it yet. */
+    awaitedBody: "Due on {date}, not through the bank yet.",
     recordNow: "Record it now",
     recordNowHint: "It already happened — adds it dated today.",
     skip: "Skip this date",

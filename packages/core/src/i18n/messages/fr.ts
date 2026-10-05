@@ -497,6 +497,7 @@ export const fr: Messages = {
 
   planned: {
     body: "Prévu le {date}. Il sera enregistré le jour même.",
+    awaitedBody: "Prévu le {date}, pas encore passé à la banque.",
     recordNow: "L'enregistrer maintenant",
     recordNowHint: "C'est déjà arrivé — l'ajoute à la date d'aujourd'hui.",
     skip: "Passer cette date",

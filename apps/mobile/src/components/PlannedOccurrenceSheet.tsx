@@ -187,7 +187,10 @@ export function PlannedOccurrenceSheet({
                 {current.categoryName}
               </Text>
               <Text variant="muted" className="text-sm">
-                {t("planned.body", { date })}
+                {t(
+                  current.awaited ? "planned.awaitedBody" : "planned.body",
+                  { date },
+                )}
               </Text>
             </View>
             <PrivateAmount
@@ -241,7 +244,8 @@ export function PlannedOccurrenceSheet({
             </View>
           ) : (
             <View className="mt-6 gap-2">
-              {inThisMonth ? (
+              {/* One the bank still owes is recorded by the bank. */}
+              {inThisMonth && !current.awaited ? (
                 <View className="gap-1">
                   <Button
                     label={t("planned.recordNow")}
