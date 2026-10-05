@@ -346,6 +346,11 @@ export const en = {
      * say which of the row's meanings it carries.
      */
     planned: "Coming up",
+    /**
+     * An occurrence whose day has come that the bank has not brought yet:
+     * still owed, though its date is behind — « pas encore passé ».
+     */
+    awaited: "Not through yet",
     receivedOn: "Received on {date}",
     paidOn: "Paid on {date}",
     recurringEntry: "Recurring entry",

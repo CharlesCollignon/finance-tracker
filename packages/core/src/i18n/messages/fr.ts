@@ -247,6 +247,7 @@ export const fr: Messages = {
     repeatBody: "Ajoute un autre {category} de {amount} daté d'aujourd'hui.",
     repeatConfirm: "Ajouter pour aujourd'hui",
     planned: "À venir",
+    awaited: "Pas encore passé",
     receivedOn: "Reçu le {date}",
     paidOn: "Payé le {date}",
     recurringEntry: "Opération récurrente",

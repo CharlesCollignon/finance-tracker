@@ -597,7 +597,7 @@ export function CalendarView({
                       type="button"
                       disabled={selectMode}
                       onClick={() => setOpenPlanned(occurrence)}
-                      aria-label={`${occurrence.name}, ${t("ledger.planned")}`}
+                      aria-label={`${occurrence.name}, ${t(occurrence.awaited ? "ledger.awaited" : "ledger.planned")}`}
                       className="flex w-full items-start gap-3 px-2 py-3.5 text-left transition-colors hover:bg-muted/30 disabled:cursor-default disabled:hover:bg-transparent"
                     >
                       <div className="min-w-0 flex-1">
@@ -605,7 +605,14 @@ export function CalendarView({
                           {occurrence.categoryName}
                         </p>
                         <p className="mt-0.5 text-xs text-muted-foreground">
-                          {[t("ledger.planned"), occurrence.note]
+                          {[
+                            t(
+                              occurrence.awaited
+                                ? "ledger.awaited"
+                                : "ledger.planned",
+                            ),
+                            occurrence.note,
+                          ]
                             .filter(Boolean)
                             .join(" · ")}
                         </p>

@@ -7,6 +7,7 @@ import {
   getTransactions,
 } from "@/lib/queries/finance";
 import {
+  getBankForecast,
   getConfirmedTransactionIds,
   getFulfilledKeys,
   getFulfilmentProposals,
@@ -81,7 +82,8 @@ export default async function TransactionsPage({
   // whose ledger a bank has fed, so the page costs nothing extra for anyone
   // else; and without a feed, the slot the inbox would fill invites one
   // instead — this page is where typing every line in is felt most.
-  const [proposals, bank, bankInvite] = await Promise.all([
+  const today = todayIsoLocal();
+  const [proposals, bank, bankInvite, bankForecast] = await Promise.all([
     // Only the ids are handed on: a proposal carries twelve fields explaining
     // why it was offered, and a row needs none of them.
     getFulfilmentProposals(
@@ -101,6 +103,7 @@ export default async function TransactionsPage({
         ])
       : null,
     bankFed ? false : shouldInviteToConnect(user.id, "ledger"),
+    getBankForecast(user.id, recurringTemplates, bankFed, today),
   ]);
   const [feedItems, swallowed, feedSize, decided, bankMerchants] = bank ?? [
     null,
@@ -114,7 +117,8 @@ export default async function TransactionsPage({
 
   // What the month's charges still have to bring, drawn rather than stored:
   // the rows a future month shows, and the rest of this one. An occurrence
-  // already written, skipped, or fulfilled by another row is not planned.
+  // already written, skipped, or fulfilled by another row is not planned;
+  // with a bank, one it has not brought yet still is.
   const planned = plannedOccurrences(
     recurringTemplates,
     new Set(
@@ -127,7 +131,8 @@ export default async function TransactionsPage({
     year,
     month,
     new Set([...skippedKeys, ...fulfilledKeys]),
-    todayIsoLocal(),
+    today,
+    bankForecast,
   );
 
   // One answer per shop rather than per row: the review is grouped by the

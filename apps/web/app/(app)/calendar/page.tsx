@@ -14,10 +14,12 @@ import { todayIsoLocal } from "@finance/core/constants";
 import { resolveMonthScope } from "@/lib/month-scope";
 import { CalendarView } from "@/components/finance/CalendarView";
 import {
+  getBankForecast,
   getConfirmedTransactionIds,
   getFulfilledKeys,
   getFulfilmentProposals,
 } from "@/lib/queries/fulfilment";
+import { hasBankFeed } from "@/lib/queries/bank";
 
 interface CalendarPageProps {
   searchParams: Promise<{ y?: string; m?: string }>;
@@ -41,6 +43,7 @@ export default async function CalendarPage({
     confirmedTransactionIds,
     skippedKeys,
     fulfilledKeys,
+    bankFed,
   ] = await Promise.all([
     getTransactions(user.id, year, month),
     getCategories(user.id),
@@ -51,6 +54,22 @@ export default async function CalendarPage({
     // What keeps an occurrence from being drawn as planned.
     getRecurringSkipKeys(user.id, year, month),
     getFulfilledKeys(user.id),
+    hasBankFeed(user.id),
+  ]);
+
+  // Asked after the batch, because they need the templates and categories
+  // the batch fetched. Only the ids are handed on: a proposal carries twelve
+  // fields explaining why it was offered, and a row needs none of them.
+  const today = todayIsoLocal();
+  const [proposals, bankForecast] = await Promise.all([
+    getFulfilmentProposals(
+      user.id,
+      recurringTemplates,
+      categories,
+      year,
+      month,
+    ),
+    getBankForecast(user.id, recurringTemplates, bankFed, today),
   ]);
 
   // The Ledger list draws these too; see its page for why they are drawn
@@ -67,18 +86,8 @@ export default async function CalendarPage({
     year,
     month,
     new Set([...skippedKeys, ...fulfilledKeys]),
-    todayIsoLocal(),
-  );
-
-  // Asked after the batch, because it needs the templates and categories the
-  // batch fetched. Only the ids are handed on: a proposal carries twelve
-  // fields explaining why it was offered, and a row needs none of them.
-  const proposals = await getFulfilmentProposals(
-    user.id,
-    recurringTemplates,
-    categories,
-    year,
-    month,
+    today,
+    bankForecast,
   );
 
   return (
