@@ -43,7 +43,10 @@ export function AppShell({
         <div
           className={cn(
             "flex min-w-0 flex-1 flex-col",
-            "md:pt-[calc(var(--shell-frame)+var(--shell-notch-height))]",
+            "md:pt-[calc(var(--shell-edge)+var(--shell-notch-height))]",
+            // The scrollbar's room is on the right; the same on the left
+            // keeps the page centred in the frame rather than in the window.
+            "md:pl-[var(--scrollbar-gutter)]",
             SHELL_MAIN_PADDING_BOTTOM,
           )}
         >

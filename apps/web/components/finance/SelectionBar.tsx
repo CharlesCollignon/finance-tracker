@@ -90,7 +90,8 @@ export function SelectionBar({
       className={cn(
         "fixed inset-x-0 z-40 px-4",
         "bottom-[calc(var(--shell-bottom-nav-height)+var(--shell-bottom-nav-inset)+env(safe-area-inset-bottom,0px)+0.75rem)]",
-        "md:bottom-4",
+        // Half a rem above the bezel, and centred in the frame as the page is.
+        "md:bottom-[calc(var(--shell-edge)+0.5rem)] md:pl-[calc(var(--scrollbar-gutter)+1rem)]",
       )}
     >
       <div

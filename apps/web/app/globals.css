@@ -126,6 +126,9 @@
   --warning-foreground: #0a0a10;
   --border: rgba(236, 236, 241, 0.1);
   --hairline-strong: rgba(236, 236, 241, 0.16);
+  /* A scrollbar's thumb: a hairline a step brighter, enough to be found on
+     the frame without being the brightest thing at the window's edge. */
+  --scrollbar-thumb: rgba(236, 236, 241, 0.22);
   --input: #131320;
   --ring: #ecb25e;
   --chart-1: #d8a041;
@@ -174,6 +177,13 @@
   --shell-header-height: 3.25rem;
   /* The desktop bezel's width, and how far the notch hangs below it. */
   --shell-frame: 0.5rem;
+  /* The room kept for the scrollbar at the right edge, measured by the root
+     layout; nothing where the scrollbar floats over the page. */
+  --scrollbar-gutter: 0px;
+  /* The bezel on the left, the top and the bottom: its own width and that
+     room, which the right edge already has beside its own band — so the
+     window is framed evenly all round. */
+  --shell-edge: calc(var(--shell-frame) + var(--scrollbar-gutter));
   --shell-notch-height: 3.5rem;
   --shell-bottom-nav-height: 3.5rem;
   --shell-bottom-nav-inset: 0.75rem;
@@ -340,6 +350,37 @@
     @apply bg-background text-foreground;
     letter-spacing: var(--tracking-normal);
     font-family: var(--font-sans), system-ui, sans-serif;
+    /* Its own stacking context, so its background is painted before the
+       backdrops behind the page (`-z-10`: the app's light, the marketing
+       site's ambience) rather than over them. It used to hand that
+       background to the canvas, under everything; with the root painting
+       the frame's colour for the scrollbar (below), it paints its own, and
+       a background is drawn after negative z-index layers in the context
+       they share — which put the page's flat colour over the light. */
+    isolation: isolate;
+  }
+
+  /* The page's scrollbar belongs to the bezel. Its room is kept whether or
+     not the page scrolls, so a page tall enough to scroll is not a few
+     pixels narrower than one that is not, and opening a sheet — which stops
+     the page scrolling — moves nothing. The room is the frame's colour, as
+     is the track, so on a desktop the thumb reads as running in the frame
+     round the window rather than in a strip of its own; on a phone the
+     scrollbar floats over the page and keeps no room at all. */
+  html {
+    scrollbar-gutter: stable;
+    scrollbar-color: var(--scrollbar-thumb) var(--frame);
+    background-color: var(--frame);
+  }
+
+  /* Thin everywhere, and inside the page — a sheet, a long list — on
+     whatever it scrolls over. */
+  * {
+    scrollbar-width: thin;
+  }
+
+  body * {
+    scrollbar-color: var(--scrollbar-thumb) transparent;
   }
 
   /* Tailwind 4 leaves a button the browser's arrow. Every button here does
@@ -557,7 +598,9 @@
    "further than any window is wide". */
 .app-frame {
   position: fixed;
-  inset: var(--shell-frame);
+  /* Every side but the right, which the scrollbar's room already widens. */
+  inset: var(--shell-edge) var(--shell-frame) var(--shell-edge)
+    var(--shell-edge);
   z-index: 40;
   border-radius: 1rem;
   outline: 100vmax solid var(--frame);
@@ -583,8 +626,8 @@
    pane's, so it never paints over the bezel's curve. */
 .app-topbar-scrim {
   position: fixed;
-  inset-inline: var(--shell-frame);
-  top: var(--shell-frame);
+  inset-inline: var(--shell-edge) var(--shell-frame);
+  top: var(--shell-edge);
   z-index: 40;
   height: calc(var(--shell-notch-height) + 1.5rem);
   border-radius: 1rem 1rem 0 0;

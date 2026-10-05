@@ -229,7 +229,7 @@ export function TopNav({
         className="app-topbar-scrim"
         data-scrolled={scrolled ? "" : undefined}
       />
-      <header className="pointer-events-none fixed inset-x-[var(--shell-frame)] top-[var(--shell-frame)] z-40">
+      <header className="pointer-events-none fixed left-[var(--shell-edge)] right-[var(--shell-frame)] top-[var(--shell-edge)] z-40">
         <div className={TOPBAR_START_CLASS}>
           <Logo className="md:text-[1.625rem]" />
         </div>
