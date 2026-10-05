@@ -67,6 +67,25 @@ export const viewport: Viewport = {
 
 const privacyInitScript = `(function(){try{document.documentElement.dataset.privacy=localStorage.getItem("privacy-blur")==="1"?"on":"off";}catch(e){document.documentElement.dataset.privacy="off";}})();`;
 
+/**
+ * How wide the room kept for the scrollbar is (`scrollbar-gutter` in
+ * globals.css), as `--scrollbar-gutter`: the bezel takes it on the other
+ * three sides so the window is framed evenly. CSS cannot read it, and it
+ * depends on the browser and the zoom — about 10px for a thin bar, nothing
+ * where the bar floats — so it is measured, and again whenever the window
+ * or the zoom changes.
+ *
+ * Measured as the window less the root's own box, which the room is kept
+ * out of whether or not a scrollbar is drawn in it. Not `clientWidth`,
+ * which only leaves out a scrollbar actually drawn — none on a page too
+ * short to scroll, nor on any page this early.
+ *
+ * At the top of the body rather than in the head: an inline script there
+ * waits for the stylesheets before it, so the room it measures is kept,
+ * and it still runs before anything is painted.
+ */
+const scrollbarGutterScript = `(function(){var d=document.documentElement;function m(){d.style.setProperty("--scrollbar-gutter",Math.max(0,Math.round(window.innerWidth-d.getBoundingClientRect().width))+"px");}m();window.addEventListener("resize",m);})();`;
+
 export default async function RootLayout({
   children,
 }: Readonly<{
@@ -91,6 +110,7 @@ export default async function RootLayout({
         <script dangerouslySetInnerHTML={{ __html: privacyInitScript }} />
       </head>
       <body className="flex min-h-full flex-col bg-background text-foreground antialiased">
+        <script dangerouslySetInnerHTML={{ __html: scrollbarGutterScript }} />
         <LocaleProvider locale={locale}>
           <LocaleSuggestion />
           {children}

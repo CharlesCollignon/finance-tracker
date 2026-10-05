@@ -177,6 +177,13 @@
   --shell-header-height: 3.25rem;
   /* The desktop bezel's width, and how far the notch hangs below it. */
   --shell-frame: 0.5rem;
+  /* The room kept for the scrollbar at the right edge, measured by the root
+     layout; nothing where the scrollbar floats over the page. */
+  --scrollbar-gutter: 0px;
+  /* The bezel on the left, the top and the bottom: its own width and that
+     room, which the right edge already has beside its own band — so the
+     window is framed evenly all round. */
+  --shell-edge: calc(var(--shell-frame) + var(--scrollbar-gutter));
   --shell-notch-height: 3.5rem;
   --shell-bottom-nav-height: 3.5rem;
   --shell-bottom-nav-inset: 0.75rem;
@@ -591,7 +598,9 @@
    "further than any window is wide". */
 .app-frame {
   position: fixed;
-  inset: var(--shell-frame);
+  /* Every side but the right, which the scrollbar's room already widens. */
+  inset: var(--shell-edge) var(--shell-frame) var(--shell-edge)
+    var(--shell-edge);
   z-index: 40;
   border-radius: 1rem;
   outline: 100vmax solid var(--frame);
@@ -617,8 +626,8 @@
    pane's, so it never paints over the bezel's curve. */
 .app-topbar-scrim {
   position: fixed;
-  inset-inline: var(--shell-frame);
-  top: var(--shell-frame);
+  inset-inline: var(--shell-edge) var(--shell-frame);
+  top: var(--shell-edge);
   z-index: 40;
   height: calc(var(--shell-notch-height) + 1.5rem);
   border-radius: 1rem 1rem 0 0;
