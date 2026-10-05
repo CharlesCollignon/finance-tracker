@@ -4,7 +4,7 @@ import { AppBackdrop } from "@/components/layout/AppBackdrop";
 import { TopNav } from "@/components/layout/TopNav";
 import { BottomNav } from "@/components/layout/BottomNav";
 import { PageEnter } from "@/components/motion/PageEnter";
-import { NO_BADGES, type NavBadges } from "@/lib/navigation";
+import { NO_BADGES, type NavBadges } from "@/lib/nav-badges";
 import { SHELL_MAIN_PADDING_BOTTOM } from "@/lib/layout-shell";
 import { cn } from "@/lib/utils";
 

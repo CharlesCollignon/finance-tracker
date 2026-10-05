@@ -3,13 +3,8 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
-import {
-  activeNavHref,
-  badgeFor,
-  navItems,
-  NO_BADGES,
-  type NavBadges,
-} from "@/lib/navigation";
+import { activeNavHref, navItems } from "@/lib/navigation";
+import { badgeFor, NO_BADGES, type NavBadges } from "@/lib/nav-badges";
 import { GLASS_PANEL } from "@/lib/glass";
 import { ICON } from "@/lib/icon-scale";
 import { useT } from "@/lib/locale-context";
