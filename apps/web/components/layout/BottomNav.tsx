@@ -3,7 +3,13 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { activeNavHref, navItems } from "@/lib/navigation";
+import {
+  activeNavHref,
+  badgeFor,
+  navItems,
+  NO_BADGES,
+  type NavBadges,
+} from "@/lib/navigation";
 import { GLASS_PANEL } from "@/lib/glass";
 import { ICON } from "@/lib/icon-scale";
 import { useT } from "@/lib/locale-context";
@@ -13,10 +19,10 @@ import { useT } from "@/lib/locale-context";
  * on the phone app, so every target here is a surface.
  */
 export function BottomNav({
-  ledgerBadge = 0,
+  badges = NO_BADGES,
   showProperty = false,
 }: {
-  ledgerBadge?: number;
+  badges?: NavBadges;
   /** The Immobilier surface, for an account with `property.track`. */
   showProperty?: boolean;
 }) {
@@ -41,6 +47,7 @@ export function BottomNav({
         {navItems({ property: showProperty }).map(
           ({ href, labelKey, icon: Icon }) => {
             const active = activeNavHref(pathname) === href;
+            const waiting = badgeFor(href, badges);
 
             return (
               <Link
@@ -66,10 +73,10 @@ export function BottomNav({
                 <Icon size={ICON.xl} weight={active ? "fill" : "light"} />
                 {/* A dot rather than a count down here. The bar is five or six
                   targets across a phone; a numeral beside a 10px label is
-                  unreadable and the number is on the Bearing anyway. */}
-                {href === "/transactions" && ledgerBadge > 0 ? (
+                  unreadable and the number is on the surface itself. */}
+                {waiting > 0 ? (
                   <span
-                    aria-label={t("nav.waiting", { count: ledgerBadge })}
+                    aria-label={t("nav.waiting", { count: waiting })}
                     className="absolute right-1.5 top-1 size-1.5 rounded-full bg-foreground"
                   />
                 ) : null}

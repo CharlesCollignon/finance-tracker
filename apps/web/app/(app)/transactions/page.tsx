@@ -16,7 +16,7 @@ import {
   plannedOccurrences,
   recurringOccurrenceKey,
 } from "@finance/core/apply-recurring";
-import { todayIsoLocal } from "@finance/core/constants";
+import { getCurrentMonth, todayIsoLocal } from "@finance/core/constants";
 import { resolveMonthScope } from "@/lib/month-scope";
 import { TransactionsView } from "@/components/finance/TransactionsView";
 import { BankInbox } from "@/components/finance/BankInbox";
@@ -83,15 +83,18 @@ export default async function TransactionsPage({
   // else; and without a feed, the slot the inbox would fill invites one
   // instead — this page is where typing every line in is felt most.
   const today = todayIsoLocal();
+  const now = getCurrentMonth();
   const [proposals, bank, bankInvite, bankForecast] = await Promise.all([
     // Only the ids are handed on: a proposal carries twelve fields explaining
-    // why it was offered, and a row needs none of them.
+    // why it was offered, and a row needs none of them. The ones Le point
+    // asks about, whichever month is shown: a row marked « À confirmer » is
+    // one that can be confirmed there.
     getFulfilmentProposals(
       user.id,
       recurringTemplates,
       categories,
-      year,
-      month,
+      now.year,
+      now.month,
     ),
     bankFed
       ? Promise.all([

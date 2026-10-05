@@ -351,6 +351,14 @@ export const en = {
      * still owed, though its date is behind — « pas encore passé ».
      */
     awaited: "Not through yet",
+    /**
+     * Rows « C'est arrivé ? » asks about, which are answered on the Bearing:
+     * the line in the Ledger that leads there.
+     */
+    toConfirm: {
+      one: "{count} movement to confirm on Overview",
+      other: "{count} movements to confirm on Overview",
+    },
     receivedOn: "Received on {date}",
     paidOn: "Paid on {date}",
     recurringEntry: "Recurring entry",

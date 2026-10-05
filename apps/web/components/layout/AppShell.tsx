@@ -4,6 +4,7 @@ import { AppBackdrop } from "@/components/layout/AppBackdrop";
 import { TopNav } from "@/components/layout/TopNav";
 import { BottomNav } from "@/components/layout/BottomNav";
 import { PageEnter } from "@/components/motion/PageEnter";
+import { NO_BADGES, type NavBadges } from "@/lib/navigation";
 import { SHELL_MAIN_PADDING_BOTTOM } from "@/lib/layout-shell";
 import { cn } from "@/lib/utils";
 
@@ -11,8 +12,8 @@ interface AppShellProps {
   children: ReactNode;
   displayName: string;
   initial: string;
-  /** How many charges are waiting to be confirmed, for the Ledger's badge. */
-  ledgerBadge?: number;
+  /** What is waiting behind the Bearing and the Ledger, for their tabs. */
+  badges?: NavBadges;
   /** The Immobilier surface, for an account with `property.track`. */
   showProperty?: boolean;
 }
@@ -21,7 +22,7 @@ export function AppShell({
   children,
   displayName,
   initial,
-  ledgerBadge = 0,
+  badges = NO_BADGES,
   showProperty = false,
 }: AppShellProps) {
   return (
@@ -33,7 +34,7 @@ export function AppShell({
         <TopNav
           displayName={displayName}
           initial={initial}
-          ledgerBadge={ledgerBadge}
+          badges={badges}
           showProperty={showProperty}
         />
         {/* From `md` the notch and the bar either side of it are fixed over the
@@ -62,7 +63,7 @@ export function AppShell({
             <PageEnter>{children}</PageEnter>
           </main>
         </div>
-        <BottomNav ledgerBadge={ledgerBadge} showProperty={showProperty} />
+        <BottomNav badges={badges} showProperty={showProperty} />
       </div>
     </AccountLabelProvider>
   );

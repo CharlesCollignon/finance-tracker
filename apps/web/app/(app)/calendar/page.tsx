@@ -10,7 +10,7 @@ import {
   plannedOccurrences,
   recurringOccurrenceKey,
 } from "@finance/core/apply-recurring";
-import { todayIsoLocal } from "@finance/core/constants";
+import { getCurrentMonth, todayIsoLocal } from "@finance/core/constants";
 import { resolveMonthScope } from "@/lib/month-scope";
 import { CalendarView } from "@/components/finance/CalendarView";
 import {
@@ -61,13 +61,15 @@ export default async function CalendarPage({
   // the batch fetched. Only the ids are handed on: a proposal carries twelve
   // fields explaining why it was offered, and a row needs none of them.
   const today = todayIsoLocal();
+  const now = getCurrentMonth();
   const [proposals, bankForecast] = await Promise.all([
+    // The ones Le point asks about, as the Ledger marks them.
     getFulfilmentProposals(
       user.id,
       recurringTemplates,
       categories,
-      year,
-      month,
+      now.year,
+      now.month,
     ),
     getBankForecast(user.id, recurringTemplates, bankFed, today),
   ]);

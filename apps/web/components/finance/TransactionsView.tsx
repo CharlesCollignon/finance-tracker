@@ -9,6 +9,7 @@ import {
 } from "react";
 import Link from "next/link";
 import {
+  ArrowRight,
   DownloadSimple,
   MagnifyingGlass,
   Plus,
@@ -52,6 +53,7 @@ import {
   todayIsoLocal,
 } from "@finance/core/constants";
 import {
+  FULFILMENT_DOT_CLASS,
   FULFILMENT_STATE_KEY,
   indexFulfilmentStates,
 } from "@finance/core/fulfilment-state";
@@ -203,6 +205,11 @@ export function TransactionsView({
       ),
     [proposedTransactionIds, confirmedTransactionIds],
   );
+  // The rows here « C'est arrivé ? » asks about. Answered on Le point, whose
+  // card asks it, so the Ledger says how many and leads there.
+  const toConfirm = transactions.filter(
+    (tx) => fulfilmentStates.get(tx.id) === "proposed",
+  ).length;
 
   /**
    * The row's second line: its standing, then whatever the user wrote.
@@ -426,6 +433,29 @@ export function TransactionsView({
 
         {/* Wrapped rather than dropped in bare: see PageContainer. */}
         {bankSlot ? <div className="contents">{bankSlot}</div> : null}
+
+        {toConfirm > 0 ? (
+          <Link
+            href="/bearing"
+            className="group -mx-1 flex items-center gap-3 rounded-control px-1 py-1.5 transition-colors hover:bg-muted/40"
+          >
+            <span
+              aria-hidden
+              className={cn(
+                "size-2 shrink-0 rounded-full",
+                FULFILMENT_DOT_CLASS.proposed,
+              )}
+            />
+            <span className="min-w-0 flex-1 truncate text-sm">
+              {t("ledger.toConfirm", { count: toConfirm })}
+            </span>
+            <ArrowRight
+              size={ICON.sm}
+              aria-hidden
+              className="shrink-0 transition-transform group-hover:translate-x-0.5"
+            />
+          </Link>
+        ) : null}
 
         {transactions.length === 0 && planned.length === 0 ? (
           <EmptyState

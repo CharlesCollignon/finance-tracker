@@ -248,6 +248,10 @@ export const fr: Messages = {
     repeatConfirm: "Ajouter pour aujourd'hui",
     planned: "À venir",
     awaited: "Pas encore passé",
+    toConfirm: {
+      one: "{count} mouvement à confirmer sur Le point",
+      other: "{count} mouvements à confirmer sur Le point",
+    },
     receivedOn: "Reçu le {date}",
     paidOn: "Payé le {date}",
     recurringEntry: "Opération récurrente",

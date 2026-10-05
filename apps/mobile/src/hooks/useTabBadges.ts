@@ -9,15 +9,23 @@ import { useAuth } from "@/providers/AuthProvider";
 /** What the two counts are drawn from. */
 const BADGE_READS = ["transactions", "templates", "bank"] as const;
 
+/** How many things wait behind Le point and behind the Ledger. */
+export interface TabBadges {
+  bearing: number;
+  ledger: number;
+}
+
+const NONE: TabBadges = { bearing: 0, ledger: 0 };
+
 /**
- * How many things are waiting behind the Ledger tab.
+ * What is waiting behind the tabs, each question badged where it is
+ * answered, as on the web.
  *
- * Two questions land there, and the bar should light up for either. A charge
- * the bank looks to have already paid needs confirming; a bank row with no
- * category needs filing. This counted only the first, so an inbox the
- * overnight sync had filled with six entries left the tab bar looking exactly
- * as it does on a quiet day — which was the whole problem: nothing anywhere
- * on the phone said the review existed.
+ * A charge the bank looks to have already paid needs confirming, and Le
+ * point's card is where « C'est arrivé ? » is asked: its tab lights up for
+ * it. It used to light the Ledger's, which showed the row with a dot and
+ * nowhere to answer. A bank row with no category needs filing, in the
+ * Ledger's review: its tab lights up for that.
  *
  * Fulfilments are asked about the month in progress only. A question about a
  * month that has ended is not one the navigation should nag about, and the
@@ -27,15 +35,14 @@ const BADGE_READS = ["transactions", "templates", "bank"] as const;
  *
  * Re-read whenever the ledger, the charges or the bank's rows change, which
  * is how every screen notices a write that happened somewhere else — so
- * answering a question in the inbox clears the badge without the bar knowing
- * why.
+ * answering a question clears its badge without the bar knowing why.
  */
-export function useLedgerBadge(): number {
+export function useTabBadges(): TabBadges {
   // The id rather than the user object, so the guard and the dependency list
   // name the same thing and the effect does not re-run on an identical user.
   const userId = useAuth().user?.id;
   const dataVersion = useDataVersion(BADGE_READS);
-  const [count, setCount] = useState(0);
+  const [badges, setBadges] = useState<TabBadges>(NONE);
 
   useEffect(() => {
     if (!userId) {
@@ -46,21 +53,18 @@ export function useLedgerBadge(): number {
     const now = getCurrentMonth();
 
     // Settled rather than awaited together: one of these failing should cost
-    // its own half of the count, not the whole badge.
+    // its own badge, not both.
     void Promise.allSettled([
       countFulfilmentProposals(userId, now.year, now.month),
       countPendingFeedItems(userId),
-    ]).then((results) => {
+    ]).then(([arrived, inbox]) => {
       if (cancelled) {
         return;
       }
-      setCount(
-        results.reduce(
-          (total, result) =>
-            total + (result.status === "fulfilled" ? result.value : 0),
-          0,
-        ),
-      );
+      setBadges({
+        bearing: arrived.status === "fulfilled" ? arrived.value : 0,
+        ledger: inbox.status === "fulfilled" ? inbox.value : 0,
+      });
     });
 
     return () => {
@@ -68,5 +72,5 @@ export function useLedgerBadge(): number {
     };
   }, [userId, dataVersion]);
 
-  return count;
+  return badges;
 }

@@ -6,7 +6,13 @@ import { usePathname } from "next/navigation";
 import { Plus } from "@phosphor-icons/react";
 import { LazyMotion, m, MotionConfig } from "motion/react";
 import { cn } from "@/lib/utils";
-import { activeNavHref, navItems } from "@/lib/navigation";
+import {
+  activeNavHref,
+  badgeFor,
+  navItems,
+  NO_BADGES,
+  type NavBadges,
+} from "@/lib/navigation";
 import {
   NOTCH_CENTRE_CLASS,
   NOTCH_ITEM_ACTIVE_CLASS,
@@ -196,12 +202,12 @@ function NavBadge({ count }: { count: number }) {
 export function TopNav({
   displayName,
   initial,
-  ledgerBadge = 0,
+  badges = NO_BADGES,
   showProperty = false,
 }: {
   displayName: string;
   initial: string;
-  ledgerBadge?: number;
+  badges?: NavBadges;
   /** The Immobilier surface, for an account with `property.track`. */
   showProperty?: boolean;
 }) {
@@ -281,9 +287,7 @@ export function TopNav({
                       >
                         {label}
                       </span>
-                      <NavBadge
-                        count={item.href === "/transactions" ? ledgerBadge : 0}
-                      />
+                      <NavBadge count={badgeFor(item.href, badges)} />
                     </span>
                   </Link>
                 );

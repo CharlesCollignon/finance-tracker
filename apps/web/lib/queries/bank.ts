@@ -39,6 +39,11 @@ export async function countFeedItems(userId: string): Promise<number> {
   return inbox.countFeedItems(await createClient(), userId);
 }
 
+/** How many bank rows are waiting for a category, for the Ledger's badge. */
+export async function countPendingFeedItems(userId: string): Promise<number> {
+  return inbox.countPendingFeedItems(await createClient(), userId);
+}
+
 /** How many bank rows an earlier sync merged away without asking. */
 export async function countSwallowedFeedItems(userId: string): Promise<number> {
   return inbox.countSwallowedFeedItems(await createClient(), userId);

@@ -15,7 +15,7 @@ import { ReminderProvider } from "@/providers/ReminderProvider";
 import { useThemeColors } from "@/theme/useThemeColors";
 import { useAppForeground } from "@/hooks/useAppForeground";
 import { useFlag } from "@/hooks/useFlag";
-import { useLedgerBadge } from "@/hooks/useLedgerBadge";
+import { useTabBadges } from "@/hooks/useTabBadges";
 import { useMonthFill } from "@/hooks/useMonthFill";
 import { useT } from "@/providers/LocaleProvider";
 import type { Key } from "@finance/core/i18n/t";
@@ -109,7 +109,7 @@ export default function TabsLayout() {
   const colors = useThemeColors();
   const insets = useSafeAreaInsets();
   const barHeight = useTabBarHeight();
-  const waiting = useLedgerBadge();
+  const badges = useTabBadges();
   const showProperty = useFlag("property.track");
   // The month's charges, written in when the app opens — there is no Apply
   // button any more.
@@ -177,40 +177,48 @@ export default function TabsLayout() {
                 sceneStyle: { backgroundColor: "transparent" },
               }}
             >
-              {TABS.map(({ name, titleKey, icon, iconInactive }) => (
-                <Tabs.Screen
-                  key={name}
-                  name={name}
-                  options={{
-                    title: t(titleKey),
-                    tabBarIcon: ({ focused, color, size }) => (
-                      <Ionicons
-                        name={focused ? icon : iconInactive}
-                        size={size ?? 20}
-                        color={color}
-                      />
-                    ),
-                    // Both of the Ledger's open questions: charges the bank
-                    // looks to have already paid, and bank rows still waiting for
-                    // a category. A dot rather than a count: the bar is five
-                    // targets across a phone, and the numbers are on the Bearing,
-                    // one panel each.
-                    ...(name === "transactions" && waiting > 0
-                      ? {
-                          tabBarBadge: "",
-                          tabBarBadgeStyle: {
-                            backgroundColor: colors.foreground,
-                            minWidth: 8,
-                            maxWidth: 8,
-                            height: 8,
-                            borderRadius: RADIUS.pill,
-                            transform: [{ translateX: -2 }, { translateY: 2 }],
-                          },
-                        }
-                      : {}),
-                  }}
-                />
-              ))}
+              {TABS.map(({ name, titleKey, icon, iconInactive }) => {
+                const waiting =
+                  name === "index"
+                    ? badges.bearing
+                    : name === "transactions"
+                      ? badges.ledger
+                      : 0;
+                return (
+                  <Tabs.Screen
+                    key={name}
+                    name={name}
+                    options={{
+                      title: t(titleKey),
+                      tabBarIcon: ({ focused, color, size }) => (
+                        <Ionicons
+                          name={focused ? icon : iconInactive}
+                          size={size ?? 20}
+                          color={color}
+                        />
+                      ),
+                      // Each question where it is answered: charges the bank
+                      // looks to have already paid on Le point, bank rows still
+                      // waiting for a category on the Ledger. A dot rather than
+                      // a count: the bar is five targets across a phone, and the
+                      // numbers are on the screens themselves.
+                      ...(waiting > 0
+                        ? {
+                            tabBarBadge: "",
+                            tabBarBadgeStyle: {
+                              backgroundColor: colors.foreground,
+                              minWidth: 8,
+                              maxWidth: 8,
+                              height: 8,
+                              borderRadius: RADIUS.pill,
+                              transform: [{ translateX: -2 }, { translateY: 2 }],
+                            },
+                          }
+                        : {}),
+                    }}
+                  />
+                );
+              })}
               <Tabs.Screen
                 name={PROPERTY_TAB.name}
                 options={{
