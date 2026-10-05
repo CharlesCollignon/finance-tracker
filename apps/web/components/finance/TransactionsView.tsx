@@ -12,20 +12,15 @@ import {
   ArrowRight,
   DownloadSimple,
   MagnifyingGlass,
-  Plus,
   SlidersHorizontal,
   UploadSimple,
 } from "@phosphor-icons/react";
-import { Button, ButtonNub } from "@/components/ui/Button";
+import { Button } from "@/components/ui/Button";
 import { CategoryIcon } from "@/components/finance/CategoryIcon";
 import { FulfilmentDot } from "@/components/finance/FulfilmentDot";
 import type { ReactNode } from "react";
-import { PageHeader } from "@/components/layout/PageHeader";
-import { LEDGER_TABS, SurfaceTabs } from "@/components/layout/SurfaceTabs";
-import { PageContainer } from "@/components/layout/PageContainer";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { useDeletedToast } from "@/lib/use-deleted-toast";
-import { MonthPicker } from "@/components/layout/MonthPicker";
 import { useToast } from "@/components/layout/ToastProvider";
 import { TransactionForm } from "@/components/finance/TransactionForm";
 import { PlannedOccurrenceSheet } from "@/components/finance/PlannedOccurrenceSheet";
@@ -38,7 +33,6 @@ import {
   ledgerTotals,
   type LedgerTypeFilter,
 } from "@finance/core/ledger-view";
-import { useQuickAdd } from "@/components/layout/QuickAddProvider";
 import { amountSign } from "@finance/core/amount-sign";
 import {
   categoryTypeLabels,
@@ -164,12 +158,6 @@ export function TransactionsView({
   const formatEuro = useFormatCurrency();
   const locale = useLocale();
   const t = useT();
-  const quickAdd = useQuickAdd();
-  // Today while reading this month; the month's first day while reading
-  // another, so an entry added from there lands in the month on screen.
-  const addDate = todayIsoLocal().startsWith(defaultDate.slice(0, 7))
-    ? undefined
-    : defaultDate;
 
   /**
    * The four type filters, plus "all".
@@ -397,40 +385,11 @@ export function TransactionsView({
     );
   }
 
+  // The header, the views, the month and Add are the Ledger layout's
+  // (`LedgerToolbar`), so they stay put while the views load.
   return (
     <>
-      <PageHeader titleKey="nav.ledger" />
-
-      <PageContainer className="flex flex-col gap-3 md:gap-4">
-        {/* The views, the month and Add in one row from `lg`: the month in the
-            middle, because it is what everything below is about. Narrower,
-            the month takes a row of its own under the views — under rather
-            than over, so the views stay where they are on the one Ledger view
-            that has no month. */}
-        <div className="grid grid-cols-[1fr_auto] items-center gap-x-3 gap-y-2 lg:grid-cols-[1fr_auto_1fr]">
-          <SurfaceTabs tabs={LEDGER_TABS} className="min-w-0" />
-          <MonthPicker
-            basePath="/transactions"
-            className="col-span-2 row-start-2 justify-self-center lg:col-span-1 lg:col-start-2 lg:row-start-1"
-          />
-          <div className="flex shrink-0 items-center gap-2 justify-self-end lg:col-start-3 lg:row-start-1">
-            {/* A phone has the floating add button; this is the desktop's.
-                The same sheet as the notch's "+", opened on the month being
-                read when that is not this one. */}
-            <Button
-              variant="pill"
-              size="sm"
-              className="hidden md:inline-flex"
-              onClick={() => quickAdd?.open({ date: addDate })}
-            >
-              {t("ledger.add")}
-              <ButtonNub>
-                <Plus size={ICON.md} weight="bold" />
-              </ButtonNub>
-            </Button>
-          </div>
-        </div>
-
+      <div className="flex flex-col gap-3 md:gap-4">
         {/* Wrapped rather than dropped in bare: see PageContainer. */}
         {bankSlot ? <div className="contents">{bankSlot}</div> : null}
 
@@ -867,7 +826,7 @@ export function TransactionsView({
             )}
           </section>
         )}
-      </PageContainer>
+      </div>
 
       <TransactionForm
         categories={categories}

@@ -4,11 +4,7 @@ import { useMemo, useOptimistic, useState, useTransition } from "react";
 import { Plus } from "@phosphor-icons/react";
 import { Button, ButtonNub } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
-import { PageHeader } from "@/components/layout/PageHeader";
-import { LEDGER_TABS, SurfaceTabs } from "@/components/layout/SurfaceTabs";
-import { PageContainer } from "@/components/layout/PageContainer";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { MonthPicker } from "@/components/layout/MonthPicker";
 import { TransactionForm } from "@/components/finance/TransactionForm";
 import { PlannedOccurrenceSheet } from "@/components/finance/PlannedOccurrenceSheet";
 import type { PlannedOccurrence } from "@finance/core/apply-recurring";
@@ -242,393 +238,379 @@ export function CalendarView({
     [weeks, byDate, plannedByDate],
   );
 
+  // The header, the views and the month are the Ledger layout's
+  // (`LedgerToolbar`), so they stay put while the views load.
   return (
     <>
-      <PageHeader titleKey="nav.ledger" />
-
-      <PageContainer>
-        {/* The Ledger list's toolbar, without its Add: here the day's own Add
-            is under the calendar, beside the day it adds to. */}
-        <div className="mb-4 grid grid-cols-[1fr_auto] items-center gap-x-3 gap-y-2 lg:grid-cols-[1fr_auto_1fr]">
-          <SurfaceTabs tabs={LEDGER_TABS} className="min-w-0" />
-          <MonthPicker
-            basePath="/calendar"
-            className="col-span-2 row-start-2 justify-self-center lg:col-span-1 lg:col-start-2 lg:row-start-1"
+      <Stagger
+        className="flex w-full min-w-0 flex-col items-center gap-8 md:gap-10"
+        stagger={0.05}
+      >
+        <StaggerItem className="w-full min-w-0">
+          <CalendarPulse
+            key={monthKey}
+            label={monthLabel}
+            days={pulseDays}
+            totals={monthTotals}
+            stillToCome={pulseDays.reduce(
+              (sum, day) => sum + day.plannedOutflow,
+              0,
+            )}
+            selectedDate={selectedDate}
+            hoverDate={hoverDate}
+            onHover={setHoverDate}
+            onSelect={setSelectedDate}
           />
-        </div>
-        <Stagger
-          className="flex w-full min-w-0 flex-col items-center gap-8 md:gap-10"
-          stagger={0.05}
-        >
-          <StaggerItem className="w-full min-w-0">
-            <CalendarPulse
-              key={monthKey}
-              label={monthLabel}
-              days={pulseDays}
-              totals={monthTotals}
-              stillToCome={pulseDays.reduce(
-                (sum, day) => sum + day.plannedOutflow,
-                0,
-              )}
-              selectedDate={selectedDate}
-              hoverDate={hoverDate}
-              onHover={setHoverDate}
-              onSelect={setSelectedDate}
-            />
-          </StaggerItem>
+        </StaggerItem>
 
-          <StaggerItem className="w-full min-w-0">
-            {/* Full-bleed on mobile so the 7-day grid uses the screen width. */}
-            <section
-              className="-mx-4 w-[calc(100%+2rem)] min-w-0 sm:mx-0 sm:w-full"
-              aria-label={t("calendarView.monthlyCalendar")}
-              onMouseLeave={() => setHoverDate(null)}
-            >
-              <div className="grid w-full grid-cols-7 border-b border-border/40">
-                {weekdayLabels(locale).map((label) => (
-                  <div
-                    key={label}
-                    className={cn(
-                      "py-2.5 text-center text-[11px] font-medium uppercase",
-                      "tracking-wide text-muted-foreground sm:text-xs",
-                    )}
-                  >
-                    <span className="sm:hidden">{label.charAt(0)}</span>
-                    <span className="hidden sm:inline">{label}</span>
-                  </div>
-                ))}
-              </div>
+        <StaggerItem className="w-full min-w-0">
+          {/* Full-bleed on mobile so the 7-day grid uses the screen width. */}
+          <section
+            className="-mx-4 w-[calc(100%+2rem)] min-w-0 sm:mx-0 sm:w-full"
+            aria-label={t("calendarView.monthlyCalendar")}
+            onMouseLeave={() => setHoverDate(null)}
+          >
+            <div className="grid w-full grid-cols-7 border-b border-border/40">
+              {weekdayLabels(locale).map((label) => (
+                <div
+                  key={label}
+                  className={cn(
+                    "py-2.5 text-center text-[11px] font-medium uppercase",
+                    "tracking-wide text-muted-foreground sm:text-xs",
+                  )}
+                >
+                  <span className="sm:hidden">{label.charAt(0)}</span>
+                  <span className="hidden sm:inline">{label}</span>
+                </div>
+              ))}
+            </div>
 
-              <div className="flex w-full flex-col">
-                {weeks.map((week, weekIndex) => (
-                  <div
-                    key={weekIndex}
-                    className="grid w-full grid-cols-7 border-b border-border/40 last:border-b-0"
-                  >
-                    {week.map((day) => {
-                      const dayTxs = byDate.get(day.date) ?? [];
-                      const totals = computeDayTotals(dayTxs);
-                      const isSelected = day.date === selectedDate;
-                      // Only on a day with nothing recorded, and muted: a
-                      // planned amount is what the day is expected to hold,
-                      // not what it did.
-                      const dayPlanned =
-                        totals.count === 0 && day.isCurrentMonth
-                          ? plannedTotals(plannedByDate.get(day.date) ?? [])
-                          : null;
+            <div className="flex w-full flex-col">
+              {weeks.map((week, weekIndex) => (
+                <div
+                  key={weekIndex}
+                  className="grid w-full grid-cols-7 border-b border-border/40 last:border-b-0"
+                >
+                  {week.map((day) => {
+                    const dayTxs = byDate.get(day.date) ?? [];
+                    const totals = computeDayTotals(dayTxs);
+                    const isSelected = day.date === selectedDate;
+                    // Only on a day with nothing recorded, and muted: a
+                    // planned amount is what the day is expected to hold,
+                    // not what it did.
+                    const dayPlanned =
+                      totals.count === 0 && day.isCurrentMonth
+                        ? plannedTotals(plannedByDate.get(day.date) ?? [])
+                        : null;
 
-                      return (
-                        <button
-                          key={day.date}
-                          type="button"
-                          onClick={() => setSelectedDate(day.date)}
-                          onMouseEnter={() =>
-                            setHoverDate(day.isCurrentMonth ? day.date : null)
-                          }
-                          className={cn(
-                            "flex min-h-[4.25rem] min-w-0 flex-col items-stretch",
-                            "border-r border-border/40 p-1.5 text-left",
-                            "transition-colors last:border-r-0",
-                            "sm:min-h-[4.75rem] sm:p-2 md:min-h-[5.5rem]",
-                            // A day spilling in from the neighbouring month is
-                            // pressable like any other, so its number has to
-                            // be readable. It was `text-muted-foreground/50`,
-                            // about 2.6:1 on the grid ground. Full-strength
-                            // muted foreground against the foreground the
-                            // month's own days carry is the distinction, and
-                            // the missing hover wash says the rest.
-                            !day.isCurrentMonth && "text-muted-foreground",
-                            // Today is an inset hairline and the day you are
-                            // reading is a raised ground, so the two can be
-                            // true at once and neither spends the accent on a
-                            // grid that repeats it forty-two times.
-                            day.isToday &&
-                              "ring-1 ring-inset ring-hairline-strong",
-                            isSelected && "bg-muted",
-                            day.isCurrentMonth &&
-                              !isSelected &&
-                              "hover:bg-muted/30",
-                            // Lit from the strip above, as the pointer would.
-                            hoverDate === day.date &&
-                              !isSelected &&
-                              "bg-muted/30",
-                          )}
-                          aria-label={t("calendarView.dayLabel", {
-                            day: day.day,
-                            entries:
-                              totals.count > 0
-                                ? t("ledger.entryCount", {
-                                    count: totals.count,
-                                  })
-                                : dayPlanned
-                                  ? t("ledger.planned")
-                                  : t("calendarView.noTransactions"),
-                          })}
-                          aria-pressed={isSelected}
-                        >
-                          {/* Today's numeral needs no colour of its own: the
+                    return (
+                      <button
+                        key={day.date}
+                        type="button"
+                        onClick={() => setSelectedDate(day.date)}
+                        onMouseEnter={() =>
+                          setHoverDate(day.isCurrentMonth ? day.date : null)
+                        }
+                        className={cn(
+                          "flex min-h-[4.25rem] min-w-0 flex-col items-stretch",
+                          "border-r border-border/40 p-1.5 text-left",
+                          "transition-colors last:border-r-0",
+                          "sm:min-h-[4.75rem] sm:p-2 md:min-h-[5.5rem]",
+                          // A day spilling in from the neighbouring month is
+                          // pressable like any other, so its number has to
+                          // be readable. It was `text-muted-foreground/50`,
+                          // about 2.6:1 on the grid ground. Full-strength
+                          // muted foreground against the foreground the
+                          // month's own days carry is the distinction, and
+                          // the missing hover wash says the rest.
+                          !day.isCurrentMonth && "text-muted-foreground",
+                          // Today is an inset hairline and the day you are
+                          // reading is a raised ground, so the two can be
+                          // true at once and neither spends the accent on a
+                          // grid that repeats it forty-two times.
+                          day.isToday &&
+                            "ring-1 ring-inset ring-hairline-strong",
+                          isSelected && "bg-muted",
+                          day.isCurrentMonth &&
+                            !isSelected &&
+                            "hover:bg-muted/30",
+                          // Lit from the strip above, as the pointer would.
+                          hoverDate === day.date &&
+                            !isSelected &&
+                            "bg-muted/30",
+                        )}
+                        aria-label={t("calendarView.dayLabel", {
+                          day: day.day,
+                          entries:
+                            totals.count > 0
+                              ? t("ledger.entryCount", {
+                                  count: totals.count,
+                                })
+                              : dayPlanned
+                                ? t("ledger.planned")
+                                : t("calendarView.noTransactions"),
+                        })}
+                        aria-pressed={isSelected}
+                      >
+                        {/* Today's numeral needs no colour of its own: the
                               cell it sits in is the one carrying the inset
                               hairline, and every day of this month is already
                               set in the foreground. */}
-                          <span className="text-sm font-semibold leading-none">
-                            {day.day}
-                          </span>
-
-                          {totals.income > 0 ? (
-                            <span
-                              className={cn(
-                                "privacy-amount mt-auto truncate font-mono",
-                                "text-[10px] font-medium leading-tight text-success",
-                                "md:text-xs",
-                              )}
-                            >
-                              +{formatShortAmount(totals.income, locale)} 
-                              {symbol}
-                            </span>
-                          ) : null}
-                          {totals.outflow > 0 ? (
-                            <span
-                              className={cn(
-                                "privacy-amount truncate font-mono text-[10px]",
-                                "font-medium leading-tight text-destructive md:text-xs",
-                                totals.income > 0 && "-mt-0.5",
-                              )}
-                            >
-                              −{formatShortAmount(totals.outflow, locale)} 
-                              {symbol}
-                            </span>
-                          ) : null}
-                          {dayPlanned && dayPlanned.income > 0 ? (
-                            <span className="privacy-amount mt-auto truncate font-mono text-[10px] font-medium leading-tight text-muted-foreground md:text-xs">
-                              +{formatShortAmount(dayPlanned.income, locale)} 
-                              {symbol}
-                            </span>
-                          ) : null}
-                          {dayPlanned && dayPlanned.outflow > 0 ? (
-                            <span
-                              className={cn(
-                                "privacy-amount truncate font-mono text-[10px] font-medium leading-tight text-muted-foreground md:text-xs",
-                                dayPlanned.income > 0 ? "-mt-0.5" : "mt-auto",
-                              )}
-                            >
-                              −{formatShortAmount(dayPlanned.outflow, locale)} 
-                              {symbol}
-                            </span>
-                          ) : null}
-                        </button>
-                      );
-                    })}
-                  </div>
-                ))}
-              </div>
-            </section>
-          </StaggerItem>
-
-          <StaggerItem className="w-full min-w-0">
-            <section
-              className="flex min-w-0 flex-col gap-3"
-              aria-label={t("calendarView.selectedDay")}
-            >
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <h2 className="text-sm font-medium text-muted-foreground">
-                    {formatCalendarDate(selectedDate, locale)}
-                  </h2>
-                  <p className="mt-1 text-sm text-muted-foreground">
-                    {selectedTotals.count === 0
-                      ? t("calendarView.noTransactions")
-                      : t("ledger.entryCount", { count: selectedTotals.count })}
-                    {selectedTotals.count > 0 ? (
-                      <span className="privacy-sensitive font-mono">
-                        {" · "}
-                        {t("calendarView.inAndOut", {
-                          income: formatEuro(selectedTotals.income),
-                          outflow: formatEuro(selectedTotals.outflow),
-                        })}
-                      </span>
-                    ) : (
-                      ""
-                    )}
-                  </p>
-                </div>
-                <div className="flex shrink-0 items-center gap-1">
-                  {selectedTransactions.length > 0 ? (
-                    <Button
-                      variant="link"
-                      size="sm"
-                      onClick={() =>
-                        selectMode ? leaveSelectMode() : setSelectMode(true)
-                      }
-                    >
-                      {selectMode ? t("ledger.selectDone") : t("ledger.select")}
-                    </Button>
-                  ) : null}
-                  {selectMode ? (
-                    <Button
-                      variant="link"
-                      size="sm"
-                      onClick={() =>
-                        setSelected((current) =>
-                          toggleSelectAll(visibleIds, current),
-                        )
-                      }
-                    >
-                      {allState === "all"
-                        ? t("ledger.clearAll")
-                        : t("calendarView.all")}
-                    </Button>
-                  ) : null}
-                  <Button
-                    size="sm"
-                    onClick={() => quickAdd?.open({ date: selectedDate })}
-                  >
-                    <Plus size={ICON.md} weight="bold" />
-                    <span className="hidden sm:inline">{t("ledger.add")}</span>
-                  </Button>
-                </div>
-              </div>
-
-              {selectedTransactions.length === 0 &&
-              selectedPlanned.length === 0 ? (
-                <EmptyState
-                  title={t("calendarView.emptyTitle")}
-                  description={t("calendarView.emptyBody")}
-                >
-                  <Button
-                    variant="pill"
-                    size="md"
-                    onClick={() => quickAdd?.open({ date: selectedDate })}
-                  >
-                    {t("ledger.addTransaction")}
-                    <ButtonNub>
-                      <Plus size={ICON.md} weight="bold" />
-                    </ButtonNub>
-                  </Button>
-                </EmptyState>
-              ) : (
-                <Card.Bezel
-                  className="w-full"
-                  innerClassName="divide-y divide-border px-2 py-1"
-                >
-                  {selectedTransactions.map((tx) => {
-                    const fulfilment = fulfilmentStates.get(tx.id);
-                    return (
-                      <button
-                        key={tx.id}
-                        type="button"
-                        onClick={() =>
-                          selectMode
-                            ? setSelected((current) =>
-                                toggleSelected(current, tx.id),
-                              )
-                            : setEditTransaction(tx)
-                        }
-                        aria-label={t(
-                          selectMode ? "ledger.selectRow" : "ledger.editRow",
-                          { name: tx.categories.name },
-                        )}
-                        aria-pressed={
-                          selectMode ? selected.has(tx.id) : undefined
-                        }
-                        className={cn(
-                          "flex w-full items-start gap-3 px-2 py-3.5 text-left transition-colors hover:bg-muted/30",
-                          // The checkbox is what says a row is picked; the
-                          // wash behind it only has to separate the picked
-                          // rows from the rest, which the raised ground does.
-                          selectMode && selected.has(tx.id) && "bg-muted",
-                        )}
-                      >
-                        {selectMode ? (
-                          <RowCheckbox
-                            checked={selected.has(tx.id)}
-                            label={t("ledger.selectRow", {
-                              name: tx.categories.name,
-                            })}
-                            onChange={() =>
-                              setSelected((current) =>
-                                toggleSelected(current, tx.id),
-                              )
-                            }
-                          />
-                        ) : null}
-                        <div className="min-w-0 flex-1">
-                          {/* `items-baseline`, not `items-center`: this name is
-                            allowed to wrap to two lines, and a centred dot
-                            would then float in the middle of the block
-                            instead of sitting beside the first word. */}
-                          <p className="flex items-baseline gap-1.5 text-sm font-medium leading-snug">
-                            <span className="min-w-0">
-                              {tx.categories.name}
-                            </span>
-                            <FulfilmentDot state={fulfilment} />
-                          </p>
-                          <p className="mt-0.5 text-xs text-muted-foreground">
-                            {[
-                              // Ahead of "recurring": this is the newer and more
-                              // specific fact about the row, and it is the one
-                              // the dot beside the name is pointing at.
-                              fulfilment
-                                ? t(FULFILMENT_STATE_KEY[fulfilment])
-                                : null,
-                              tx.recurring_template_id
-                                ? t("calendarView.recurring")
-                                : null,
-                              tx.note,
-                            ]
-                              .filter(Boolean)
-                              .join(" · ") || "—"}
-                          </p>
-                        </div>
-                        <span
-                          className={cn(
-                            "privacy-amount shrink-0 font-mono text-sm font-semibold tabular-nums",
-                            TYPE_AMOUNT_CLASS[tx.categories.type],
-                          )}
-                        >
-                          {amountSign(tx.categories.type)}
-                          {formatEuro(Number(tx.amount))}
+                        <span className="text-sm font-semibold leading-none">
+                          {day.day}
                         </span>
+
+                        {totals.income > 0 ? (
+                          <span
+                            className={cn(
+                              "privacy-amount mt-auto truncate font-mono",
+                              "text-[10px] font-medium leading-tight text-success",
+                              "md:text-xs",
+                            )}
+                          >
+                            +{formatShortAmount(totals.income, locale)} {symbol}
+                          </span>
+                        ) : null}
+                        {totals.outflow > 0 ? (
+                          <span
+                            className={cn(
+                              "privacy-amount truncate font-mono text-[10px]",
+                              "font-medium leading-tight text-destructive md:text-xs",
+                              totals.income > 0 && "-mt-0.5",
+                            )}
+                          >
+                            −{formatShortAmount(totals.outflow, locale)} 
+                            {symbol}
+                          </span>
+                        ) : null}
+                        {dayPlanned && dayPlanned.income > 0 ? (
+                          <span className="privacy-amount mt-auto truncate font-mono text-[10px] font-medium leading-tight text-muted-foreground md:text-xs">
+                            +{formatShortAmount(dayPlanned.income, locale)} 
+                            {symbol}
+                          </span>
+                        ) : null}
+                        {dayPlanned && dayPlanned.outflow > 0 ? (
+                          <span
+                            className={cn(
+                              "privacy-amount truncate font-mono text-[10px] font-medium leading-tight text-muted-foreground md:text-xs",
+                              dayPlanned.income > 0 ? "-mt-0.5" : "mt-auto",
+                            )}
+                          >
+                            −{formatShortAmount(dayPlanned.outflow, locale)} 
+                            {symbol}
+                          </span>
+                        ) : null}
                       </button>
                     );
                   })}
-                  {selectedPlanned.map((occurrence) => (
+                </div>
+              ))}
+            </div>
+          </section>
+        </StaggerItem>
+
+        <StaggerItem className="w-full min-w-0">
+          <section
+            className="flex min-w-0 flex-col gap-3"
+            aria-label={t("calendarView.selectedDay")}
+          >
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <h2 className="text-sm font-medium text-muted-foreground">
+                  {formatCalendarDate(selectedDate, locale)}
+                </h2>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  {selectedTotals.count === 0
+                    ? t("calendarView.noTransactions")
+                    : t("ledger.entryCount", { count: selectedTotals.count })}
+                  {selectedTotals.count > 0 ? (
+                    <span className="privacy-sensitive font-mono">
+                      {" · "}
+                      {t("calendarView.inAndOut", {
+                        income: formatEuro(selectedTotals.income),
+                        outflow: formatEuro(selectedTotals.outflow),
+                      })}
+                    </span>
+                  ) : (
+                    ""
+                  )}
+                </p>
+              </div>
+              <div className="flex shrink-0 items-center gap-1">
+                {selectedTransactions.length > 0 ? (
+                  <Button
+                    variant="link"
+                    size="sm"
+                    onClick={() =>
+                      selectMode ? leaveSelectMode() : setSelectMode(true)
+                    }
+                  >
+                    {selectMode ? t("ledger.selectDone") : t("ledger.select")}
+                  </Button>
+                ) : null}
+                {selectMode ? (
+                  <Button
+                    variant="link"
+                    size="sm"
+                    onClick={() =>
+                      setSelected((current) =>
+                        toggleSelectAll(visibleIds, current),
+                      )
+                    }
+                  >
+                    {allState === "all"
+                      ? t("ledger.clearAll")
+                      : t("calendarView.all")}
+                  </Button>
+                ) : null}
+                <Button
+                  size="sm"
+                  onClick={() => quickAdd?.open({ date: selectedDate })}
+                >
+                  <Plus size={ICON.md} weight="bold" />
+                  <span className="hidden sm:inline">{t("ledger.add")}</span>
+                </Button>
+              </div>
+            </div>
+
+            {selectedTransactions.length === 0 &&
+            selectedPlanned.length === 0 ? (
+              <EmptyState
+                title={t("calendarView.emptyTitle")}
+                description={t("calendarView.emptyBody")}
+              >
+                <Button
+                  variant="pill"
+                  size="md"
+                  onClick={() => quickAdd?.open({ date: selectedDate })}
+                >
+                  {t("ledger.addTransaction")}
+                  <ButtonNub>
+                    <Plus size={ICON.md} weight="bold" />
+                  </ButtonNub>
+                </Button>
+              </EmptyState>
+            ) : (
+              <Card.Bezel
+                className="w-full"
+                innerClassName="divide-y divide-border px-2 py-1"
+              >
+                {selectedTransactions.map((tx) => {
+                  const fulfilment = fulfilmentStates.get(tx.id);
+                  return (
                     <button
-                      key={occurrence.key}
+                      key={tx.id}
                       type="button"
-                      disabled={selectMode}
-                      onClick={() => setOpenPlanned(occurrence)}
-                      aria-label={`${occurrence.name}, ${t(occurrence.awaited ? "ledger.awaited" : "ledger.planned")}`}
-                      className="flex w-full items-start gap-3 px-2 py-3.5 text-left transition-colors hover:bg-muted/30 disabled:cursor-default disabled:hover:bg-transparent"
+                      onClick={() =>
+                        selectMode
+                          ? setSelected((current) =>
+                              toggleSelected(current, tx.id),
+                            )
+                          : setEditTransaction(tx)
+                      }
+                      aria-label={t(
+                        selectMode ? "ledger.selectRow" : "ledger.editRow",
+                        { name: tx.categories.name },
+                      )}
+                      aria-pressed={
+                        selectMode ? selected.has(tx.id) : undefined
+                      }
+                      className={cn(
+                        "flex w-full items-start gap-3 px-2 py-3.5 text-left transition-colors hover:bg-muted/30",
+                        // The checkbox is what says a row is picked; the
+                        // wash behind it only has to separate the picked
+                        // rows from the rest, which the raised ground does.
+                        selectMode && selected.has(tx.id) && "bg-muted",
+                      )}
                     >
+                      {selectMode ? (
+                        <RowCheckbox
+                          checked={selected.has(tx.id)}
+                          label={t("ledger.selectRow", {
+                            name: tx.categories.name,
+                          })}
+                          onChange={() =>
+                            setSelected((current) =>
+                              toggleSelected(current, tx.id),
+                            )
+                          }
+                        />
+                      ) : null}
                       <div className="min-w-0 flex-1">
-                        <p className="text-sm font-medium leading-snug text-muted-foreground">
-                          {occurrence.categoryName}
+                        {/* `items-baseline`, not `items-center`: this name is
+                            allowed to wrap to two lines, and a centred dot
+                            would then float in the middle of the block
+                            instead of sitting beside the first word. */}
+                        <p className="flex items-baseline gap-1.5 text-sm font-medium leading-snug">
+                          <span className="min-w-0">{tx.categories.name}</span>
+                          <FulfilmentDot state={fulfilment} />
                         </p>
                         <p className="mt-0.5 text-xs text-muted-foreground">
                           {[
-                            t(
-                              occurrence.awaited
-                                ? "ledger.awaited"
-                                : "ledger.planned",
-                            ),
-                            occurrence.note,
+                            // Ahead of "recurring": this is the newer and more
+                            // specific fact about the row, and it is the one
+                            // the dot beside the name is pointing at.
+                            fulfilment
+                              ? t(FULFILMENT_STATE_KEY[fulfilment])
+                              : null,
+                            tx.recurring_template_id
+                              ? t("calendarView.recurring")
+                              : null,
+                            tx.note,
                           ]
                             .filter(Boolean)
-                            .join(" · ")}
+                            .join(" · ") || "—"}
                         </p>
                       </div>
-                      <span className="privacy-amount shrink-0 font-mono text-sm font-semibold tabular-nums text-muted-foreground">
-                        {amountSign(occurrence.categoryType)}
-                        {formatEuro(occurrence.amount)}
+                      <span
+                        className={cn(
+                          "privacy-amount shrink-0 font-mono text-sm font-semibold tabular-nums",
+                          TYPE_AMOUNT_CLASS[tx.categories.type],
+                        )}
+                      >
+                        {amountSign(tx.categories.type)}
+                        {formatEuro(Number(tx.amount))}
                       </span>
                     </button>
-                  ))}
-                </Card.Bezel>
-              )}
-            </section>
-          </StaggerItem>
-        </Stagger>
-      </PageContainer>
+                  );
+                })}
+                {selectedPlanned.map((occurrence) => (
+                  <button
+                    key={occurrence.key}
+                    type="button"
+                    disabled={selectMode}
+                    onClick={() => setOpenPlanned(occurrence)}
+                    aria-label={`${occurrence.name}, ${t(occurrence.awaited ? "ledger.awaited" : "ledger.planned")}`}
+                    className="flex w-full items-start gap-3 px-2 py-3.5 text-left transition-colors hover:bg-muted/30 disabled:cursor-default disabled:hover:bg-transparent"
+                  >
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-medium leading-snug text-muted-foreground">
+                        {occurrence.categoryName}
+                      </p>
+                      <p className="mt-0.5 text-xs text-muted-foreground">
+                        {[
+                          t(
+                            occurrence.awaited
+                              ? "ledger.awaited"
+                              : "ledger.planned",
+                          ),
+                          occurrence.note,
+                        ]
+                          .filter(Boolean)
+                          .join(" · ")}
+                      </p>
+                    </div>
+                    <span className="privacy-amount shrink-0 font-mono text-sm font-semibold tabular-nums text-muted-foreground">
+                      {amountSign(occurrence.categoryType)}
+                      {formatEuro(occurrence.amount)}
+                    </span>
+                  </button>
+                ))}
+              </Card.Bezel>
+            )}
+          </section>
+        </StaggerItem>
+      </Stagger>
 
       <PlannedOccurrenceSheet
         occurrence={openPlanned}

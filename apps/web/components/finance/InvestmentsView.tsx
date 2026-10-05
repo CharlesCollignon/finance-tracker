@@ -4,10 +4,6 @@ import { useMemo, useState } from "react";
 import { PencilSimple, Plus } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
-import { PageHeader } from "@/components/layout/PageHeader";
-import { PageContainer } from "@/components/layout/PageContainer";
-import { SurfaceTabs, WALLET_TABS } from "@/components/layout/SurfaceTabs";
-import { RefreshQuotesButton } from "@/components/finance/RefreshQuotesButton";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { InstrumentLogo } from "@/components/finance/InstrumentLogo";
 import { Sparkline } from "@/components/finance/charts";
@@ -175,201 +171,191 @@ export function InvestmentsView({
     portfolio.columns.find((entry) => entry.walletId === activeWallet) ??
     emptyColumn(activeWallet);
 
+  // The header, the views and the quotes' refresh are Placements' layout's,
+  // so they stay put while the views load.
   return (
     <>
-      <PageHeader titleKey="nav.wallets" />
-
-      <PageContainer>
-        {/* The tab strip belongs on both views, not just the new one — without
-            it the look-through was reachable only from the sidebar, which is
-            hidden on a phone. */}
-        <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-          <SurfaceTabs tabs={WALLET_TABS} />
-          <RefreshQuotesButton />
-        </div>
-
-        <Stagger
-          className="flex w-full min-w-0 flex-col items-center gap-8 md:gap-10"
-          stagger={0.05}
-        >
-          <StaggerItem className="w-full min-w-0">
-            <StatHero
-              label={t("accounts.total")}
-              amount={formatEuro(total)}
-              animateValue={total}
-              format={formatEuro}
-              subtitle={
-                <p>
-                  {savings.accounts.length > 0 ? (
-                    <span className="privacy-sensitive block">
-                      {t("accounts.split", {
-                        savings: formatEuro(savingsTotal),
-                        investments: formatEuro(portfolio.totalMarketValue),
-                      })}
+      <Stagger
+        className="flex w-full min-w-0 flex-col items-center gap-8 md:gap-10"
+        stagger={0.05}
+      >
+        <StaggerItem className="w-full min-w-0">
+          <StatHero
+            label={t("accounts.total")}
+            amount={formatEuro(total)}
+            animateValue={total}
+            format={formatEuro}
+            subtitle={
+              <p>
+                {savings.accounts.length > 0 ? (
+                  <span className="privacy-sensitive block">
+                    {t("accounts.split", {
+                      savings: formatEuro(savingsTotal),
+                      investments: formatEuro(portfolio.totalMarketValue),
+                    })}
+                  </span>
+                ) : null}
+                <span className="privacy-amount">
+                  {formatEuro(portfolio.totalInvested)}
+                </span>{" "}
+                {t("wallets.investedSuffix")}
+                {showPl ? (
+                  <>
+                    {" · "}
+                    <span
+                      className={cn(
+                        "privacy-amount font-mono font-medium",
+                        portfolio.totalGainLoss > 0
+                          ? "text-success"
+                          : "text-destructive",
+                      )}
+                    >
+                      {formatSigned(portfolio.totalGainLoss, formatEuro)}
                     </span>
-                  ) : null}
-                  <span className="privacy-amount">
-                    {formatEuro(portfolio.totalInvested)}
-                  </span>{" "}
-                  {t("wallets.investedSuffix")}
-                  {showPl ? (
-                    <>
-                      {" · "}
-                      <span
-                        className={cn(
-                          "privacy-amount font-mono font-medium",
-                          portfolio.totalGainLoss > 0
-                            ? "text-success"
-                            : "text-destructive",
-                        )}
-                      >
-                        {formatSigned(portfolio.totalGainLoss, formatEuro)}
-                      </span>
-                    </>
-                  ) : null}
-                </p>
-              }
-            />
-          </StaggerItem>
+                  </>
+                ) : null}
+              </p>
+            }
+          />
+        </StaggerItem>
 
-          {visibleFunding.length > 0 ? (
-            <StaggerItem className="w-full">
-              {/* One row of tags rather than one sentence per wallet: three
+        {visibleFunding.length > 0 ? (
+          <StaggerItem className="w-full">
+            {/* One row of tags rather than one sentence per wallet: three
                   lines of "Send to X €Y / month" is three lines of height for
                   three numbers, and the wallet name is label enough. */}
-              <ul
-                aria-label={t("wallets.fundingLabel")}
-                className="flex flex-wrap items-center justify-center gap-2"
-              >
-                {visibleFunding.map((tag) => (
-                  <li
-                    key={tag.id}
-                    className="flex items-baseline gap-1.5 rounded-full border border-border px-3 py-1 text-xs text-muted-foreground sm:text-sm"
-                  >
-                    <span>{accountShortName(tag.id, locale)}</span>
-                    <span className="privacy-amount font-mono font-medium text-foreground tabular-nums">
-                      {formatEuro(tag.monthly)}
-                    </span>
-                    <span>{t("wallets.perMonth")}</span>
-                  </li>
-                ))}
-              </ul>
-            </StaggerItem>
-          ) : null}
+            <ul
+              aria-label={t("wallets.fundingLabel")}
+              className="flex flex-wrap items-center justify-center gap-2"
+            >
+              {visibleFunding.map((tag) => (
+                <li
+                  key={tag.id}
+                  className="flex items-baseline gap-1.5 rounded-full border border-border px-3 py-1 text-xs text-muted-foreground sm:text-sm"
+                >
+                  <span>{accountShortName(tag.id, locale)}</span>
+                  <span className="privacy-amount font-mono font-medium text-foreground tabular-nums">
+                    {formatEuro(tag.monthly)}
+                  </span>
+                  <span>{t("wallets.perMonth")}</span>
+                </li>
+              ))}
+            </ul>
+          </StaggerItem>
+        ) : null}
 
-          {accounts.length === 0 ? (
-            <StaggerItem className="w-full">
-              <EmptyState
-                title={t("accounts.emptyTitle")}
-                description={t("accounts.emptyBody")}
-              >
-                <Button onClick={() => setAddOpen(true)}>
-                  <Plus size={ICON.md} weight="bold" className="mr-1.5" />
-                  {t("accounts.add")}
-                </Button>
-              </EmptyState>
-            </StaggerItem>
-          ) : !hasData && savings.accounts.length === 0 ? (
-            <StaggerItem className="w-full">
-              <EmptyState
-                title={t("wallets.emptyTitle")}
-                description={t("wallets.emptyBody")}
-              />
-            </StaggerItem>
-          ) : null}
+        {accounts.length === 0 ? (
+          <StaggerItem className="w-full">
+            <EmptyState
+              title={t("accounts.emptyTitle")}
+              description={t("accounts.emptyBody")}
+            >
+              <Button onClick={() => setAddOpen(true)}>
+                <Plus size={ICON.md} weight="bold" className="mr-1.5" />
+                {t("accounts.add")}
+              </Button>
+            </EmptyState>
+          </StaggerItem>
+        ) : !hasData && savings.accounts.length === 0 ? (
+          <StaggerItem className="w-full">
+            <EmptyState
+              title={t("wallets.emptyTitle")}
+              description={t("wallets.emptyBody")}
+            />
+          </StaggerItem>
+        ) : null}
 
-          <StaggerItem className="w-full min-w-0">
-            {/* A group of toggles, not tabs. `role="tablist"` over
+        <StaggerItem className="w-full min-w-0">
+          {/* A group of toggles, not tabs. `role="tablist"` over
                 `role="tab"` was a promise the markup did not keep: the panel
                 below is not a `tabpanel`, nothing carries `aria-controls`,
                 and there was neither a roving `tabIndex` nor a key handler —
                 so a screen reader announced a tab set and then the arrow keys
                 did nothing. `aria-pressed` on plain buttons says which wallet
                 is in force and claims no keys the control does not handle. */}
-            {accounts.length > 0 ? (
-              <div
-                className="flex w-full min-w-0 flex-wrap justify-center gap-2"
-                role="group"
-                aria-label={t("accounts.yourAccounts")}
-              >
-                {accounts.map((id) => {
-                  const active = selected === id;
+          {accounts.length > 0 ? (
+            <div
+              className="flex w-full min-w-0 flex-wrap justify-center gap-2"
+              role="group"
+              aria-label={t("accounts.yourAccounts")}
+            >
+              {accounts.map((id) => {
+                const active = selected === id;
 
-                  return (
-                    <button
-                      key={id}
-                      type="button"
-                      aria-pressed={active}
-                      onClick={() => setChosen(id)}
-                      className={cn(
-                        "min-h-11 shrink-0 rounded-full border px-4 py-2 text-sm font-semibold lg:min-h-0",
-                        "transition-colors duration-hover",
-                        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-                        active
-                          ? "border-foreground bg-foreground text-background"
-                          : "border-border text-muted-foreground hover:text-foreground",
-                      )}
-                    >
-                      {accountShortName(id, locale)}
-                    </button>
-                  );
-                })}
-                {missingSavings.length + missingWallets.length > 0 ? (
+                return (
                   <button
+                    key={id}
                     type="button"
-                    onClick={() => setAddOpen(true)}
+                    aria-pressed={active}
+                    onClick={() => setChosen(id)}
                     className={cn(
-                      "flex min-h-11 shrink-0 items-center gap-1.5 rounded-full border border-border px-4 py-2 text-sm text-muted-foreground lg:min-h-0",
-                      "transition-colors duration-hover hover:bg-muted hover:text-foreground",
+                      "min-h-11 shrink-0 rounded-full border px-4 py-2 text-sm font-semibold lg:min-h-0",
+                      "transition-colors duration-hover",
                       "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                      active
+                        ? "border-foreground bg-foreground text-background"
+                        : "border-border text-muted-foreground hover:text-foreground",
                     )}
                   >
-                    <Plus size={ICON.sm} weight="bold" aria-hidden />
-                    {t("accounts.add")}
+                    {accountShortName(id, locale)}
                   </button>
-                ) : null}
-              </div>
-            ) : null}
+                );
+              })}
+              {missingSavings.length + missingWallets.length > 0 ? (
+                <button
+                  type="button"
+                  onClick={() => setAddOpen(true)}
+                  className={cn(
+                    "flex min-h-11 shrink-0 items-center gap-1.5 rounded-full border border-border px-4 py-2 text-sm text-muted-foreground lg:min-h-0",
+                    "transition-colors duration-hover hover:bg-muted hover:text-foreground",
+                    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                  )}
+                >
+                  <Plus size={ICON.sm} weight="bold" aria-hidden />
+                  {t("accounts.add")}
+                </button>
+              ) : null}
+            </div>
+          ) : null}
+        </StaggerItem>
+
+        {selectedSavings ? (
+          <StaggerItem className="w-full min-w-0">
+            <SavingsAccountPanel
+              key={selectedSavings.id}
+              account={selectedSavings}
+              monthly={savingsMonthly[selectedSavings.kind] ?? 0}
+              linkable={savings.linkable}
+            />
           </StaggerItem>
+        ) : selected !== null ? (
+          <StaggerItem className="w-full min-w-0">
+            <WalletPanel
+              key={activeWallet}
+              column={activeColumn}
+              priceSeries={priceSeries}
+              onEdit={setEditingItem}
+              onAdd={() => setAddingWallet(activeWallet)}
+              removeConfirm={t("accounts.removeWalletConfirm", {
+                name: accountShortName(activeWallet, locale),
+                count: activeColumn.items.length,
+              })}
+              onRemove={() => removeWallet(activeWallet)}
+            />
+          </StaggerItem>
+        ) : null}
 
-          {selectedSavings ? (
-            <StaggerItem className="w-full min-w-0">
-              <SavingsAccountPanel
-                key={selectedSavings.id}
-                account={selectedSavings}
-                monthly={savingsMonthly[selectedSavings.kind] ?? 0}
-                linkable={savings.linkable}
-              />
-            </StaggerItem>
-          ) : selected !== null ? (
-            <StaggerItem className="w-full min-w-0">
-              <WalletPanel
-                key={activeWallet}
-                column={activeColumn}
-                priceSeries={priceSeries}
-                onEdit={setEditingItem}
-                onAdd={() => setAddingWallet(activeWallet)}
-                removeConfirm={t("accounts.removeWalletConfirm", {
-                  name: accountShortName(activeWallet, locale),
-                  count: activeColumn.items.length,
-                })}
-                onRemove={() => removeWallet(activeWallet)}
-              />
-            </StaggerItem>
-          ) : null}
-
-          {/* The PEA's ceiling and five-year clock are about the PEA alone,
+        {/* The PEA's ceiling and five-year clock are about the PEA alone,
               so they sit with it. */}
-          {selected === "pea" ? (
-            <StaggerItem className="w-full min-w-0">
-              <PeaCard
-                column={activeColumn}
-                plan={plans.find((plan) => plan.wallet === "pea")}
-              />
-            </StaggerItem>
-          ) : null}
-        </Stagger>
-      </PageContainer>
+        {selected === "pea" ? (
+          <StaggerItem className="w-full min-w-0">
+            <PeaCard
+              column={activeColumn}
+              plan={plans.find((plan) => plan.wallet === "pea")}
+            />
+          </StaggerItem>
+        ) : null}
+      </Stagger>
 
       <AddAccountSheet
         open={addOpen}

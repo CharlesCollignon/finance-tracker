@@ -45,13 +45,9 @@ import { Badge } from "@/components/ui/Badge";
 import { Button, buttonVariants } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { PageContainer } from "@/components/layout/PageContainer";
-import { PageHeader } from "@/components/layout/PageHeader";
 import { PrivateAmount } from "@/components/layout/PrivateAmount";
-import { SurfaceTabs, WALLET_TABS } from "@/components/layout/SurfaceTabs";
 import { StatHero } from "@/components/finance/StatHero";
 import { WeightBars } from "@/components/finance/WeightBars";
-import { RefreshQuotesButton } from "@/components/finance/RefreshQuotesButton";
 import { Stagger, StaggerItem } from "@/components/motion/Stagger";
 import { readNextInstrument, reviewWallets } from "@/lib/actions/wallet-read";
 import { useFormatCurrency } from "@/lib/use-currency";
@@ -283,607 +279,578 @@ export function LookThroughView({
     }
   }
 
+  // The header, the views and the quotes' refresh are Placements' layout's,
+  // so they stay put while the views load.
   if (lookThrough.totalValue <= 0) {
     return (
-      <>
-        <PageHeader titleKey="nav.walletsLookThrough" />
-        <PageContainer>
-          <SurfaceTabs tabs={WALLET_TABS} className="mb-4" />
-          <EmptyState
-            title={t("lookThrough.title")}
-            description={t("lookThrough.caveats.noMarketValue")}
-          />
-        </PageContainer>
-      </>
+      <EmptyState
+        title={t("lookThrough.title")}
+        description={t("lookThrough.caveats.noMarketValue")}
+      />
     );
   }
 
   return (
-    <>
-      <PageHeader titleKey="nav.walletsLookThrough" />
-      <PageContainer>
-        <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-          <SurfaceTabs tabs={WALLET_TABS} />
-          <RefreshQuotesButton />
-        </div>
-
-        <Stagger className="flex w-full min-w-0 flex-col items-center gap-5">
-          <StaggerItem className="w-full min-w-0">
-            <StatHero
-              label={t("lookThrough.readCoverage", {
-                share: `${Math.round(lookThrough.classifiedShare * 100)}%`,
-              })}
-              amount={formatEuro(lookThrough.totalValue)}
-              subtitle={
-                /* What the charges come to in euro, directly under the value
+    <Stagger className="flex w-full min-w-0 flex-col items-center gap-5">
+      <StaggerItem className="w-full min-w-0">
+        <StatHero
+          label={t("lookThrough.readCoverage", {
+            share: `${Math.round(lookThrough.classifiedShare * 100)}%`,
+          })}
+          amount={formatEuro(lookThrough.totalValue)}
+          subtitle={
+            /* What the charges come to in euro, directly under the value
                    they are charged on. It used to be "All in · 0.22 %" here
                    and the euro figure was four sections further down, which
                    is the wrong way round: a ratio is the explanation and the
                    amount is the thing. Red because it is money leaving, the
                    same signal the rest of the app spends on an outflow — and
                    never red alone, since the words say "in charges" too. */
-                lookThrough.charges.weightedAllIn !== null ? (
-                  <span className="flex flex-col items-center gap-0.5">
-                    <PrivateAmount className="font-medium text-[var(--destructive)]">
-                      {t("lookThrough.costPerYear", {
-                        amount: formatEuro(lookThrough.charges.allInAnnualCost),
-                      })}
-                    </PrivateAmount>
-                    <span className={cn(MICRO, "text-muted-foreground")}>
-                      {t("lookThrough.costAllIn", {
-                        rate: formatCharge(
-                          lookThrough.charges.weightedAllIn,
-                          locale,
-                        ),
-                      })}
-                    </span>
-                  </span>
-                ) : undefined
-              }
-            />
-          </StaggerItem>
+            lookThrough.charges.weightedAllIn !== null ? (
+              <span className="flex flex-col items-center gap-0.5">
+                <PrivateAmount className="font-medium text-[var(--destructive)]">
+                  {t("lookThrough.costPerYear", {
+                    amount: formatEuro(lookThrough.charges.allInAnnualCost),
+                  })}
+                </PrivateAmount>
+                <span className={cn(MICRO, "text-muted-foreground")}>
+                  {t("lookThrough.costAllIn", {
+                    rate: formatCharge(
+                      lookThrough.charges.weightedAllIn,
+                      locale,
+                    ),
+                  })}
+                </span>
+              </span>
+            ) : undefined
+          }
+        />
+      </StaggerItem>
 
-          {/* What the app cannot see, before anything it can — and split by
+      {/* What the app cannot see, before anything it can — and split by
               what would actually fix it, because the four cases have four
               different answers and one of them has no answer at all. Merging
               them left no action, and listing them twice over left Bitcoin on
               the card three times. */}
-          {unclassified?.kind === "unclassified" ? (
-            <StaggerItem className="w-full min-w-0">
-              <Section
-                icon={<Eye size={ICON.md} weight="light" />}
-                title={t("lookThrough.caveats.notCovered")}
-                tone="warning"
-              >
-                <p className="text-sm text-muted-foreground">
-                  {t("lookThrough.caveats.unclassified", {
-                    share: `${Math.round(unclassified.share * 100)}%`,
-                  })}
-                </p>
+      {unclassified?.kind === "unclassified" ? (
+        <StaggerItem className="w-full min-w-0">
+          <Section
+            icon={<Eye size={ICON.md} weight="light" />}
+            title={t("lookThrough.caveats.notCovered")}
+            tone="warning"
+          >
+            <p className="text-sm text-muted-foreground">
+              {t("lookThrough.caveats.unclassified", {
+                share: `${Math.round(unclassified.share * 100)}%`,
+              })}
+            </p>
 
-                {/* No ISIN: nothing can be read until one is recorded, and the
+            {/* No ISIN: nothing can be read until one is recorded, and the
                     instrument search is the only thing that records it. */}
-                <Uncovered
-                  when={lookThrough.unidentifiedPositions.length > 0}
-                  heading={t("lookThrough.caveats.noIsin")}
-                  body={t("lookThrough.caveats.noIsinBody", {
-                    count: lookThrough.unidentifiedPositions.length,
-                  })}
-                  rows={lookThrough.unidentifiedPositions}
-                  formatEuro={formatEuro}
-                >
-                  {/* A link, not a button with an onClick: this navigates,
+            <Uncovered
+              when={lookThrough.unidentifiedPositions.length > 0}
+              heading={t("lookThrough.caveats.noIsin")}
+              body={t("lookThrough.caveats.noIsinBody", {
+                count: lookThrough.unidentifiedPositions.length,
+              })}
+              rows={lookThrough.unidentifiedPositions}
+              formatEuro={formatEuro}
+            >
+              {/* A link, not a button with an onClick: this navigates,
                       and `buttonVariants` is how the app dresses a link as a
                       control without cloning children. */}
-                  <Link
-                    href="/investments"
-                    className={cn(
-                      buttonVariants({ variant: "outline", size: "sm" }),
-                      "mt-1 self-start",
-                    )}
-                  >
-                    {t("lookThrough.caveats.goToPositions")}
-                  </Link>
-                </Uncovered>
+              <Link
+                href="/investments"
+                className={cn(
+                  buttonVariants({ variant: "outline", size: "sm" }),
+                  "mt-1 self-start",
+                )}
+              >
+                {t("lookThrough.caveats.goToPositions")}
+              </Link>
+            </Uncovered>
 
-                {/* Has an ISIN, never read: this is the only case where
+            {/* Has an ISIN, never read: this is the only case where
                     reading is the action, so it is the only case with the
                     button. The count comes from the queue rather than the
                     list, because the queue is what the button walks and it
                     shrinks under the reader as it goes. */}
-                <Uncovered
-                  when={remaining > 0}
-                  heading={t("lookThrough.caveats.neverRead")}
-                  body={t("lookThrough.caveats.neverReadBody", {
-                    count: remaining,
-                  })}
-                  rows={lookThrough.unreadPositions}
-                  formatEuro={formatEuro}
-                >
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="self-start"
-                    onClick={onReadAll}
-                    disabled={reading}
-                  >
-                    <ArrowsClockwise
-                      size={ICON.sm}
-                      weight="light"
-                      className={cn("mr-2", reading && "animate-spin")}
-                    />
-                    {reading
-                      ? t("lookThrough.readingOne")
-                      : t("lookThrough.readAll")}
-                  </Button>
-                </Uncovered>
+            <Uncovered
+              when={remaining > 0}
+              heading={t("lookThrough.caveats.neverRead")}
+              body={t("lookThrough.caveats.neverReadBody", {
+                count: remaining,
+              })}
+              rows={lookThrough.unreadPositions}
+              formatEuro={formatEuro}
+            >
+              <Button
+                variant="outline"
+                size="sm"
+                className="self-start"
+                onClick={onReadAll}
+                disabled={reading}
+              >
+                <ArrowsClockwise
+                  size={ICON.sm}
+                  weight="light"
+                  className={cn("mr-2", reading && "animate-spin")}
+                />
+                {reading
+                  ? t("lookThrough.readingOne")
+                  : t("lookThrough.readAll")}
+              </Button>
+            </Uncovered>
 
-                {/* Read, and the factsheet published no composition. Its own
+            {/* Read, and the factsheet published no composition. Its own
                     group because pressing the button again is a different
                     proposition here: it may find more, or there may be
                     nothing to find — a gold ETC sits in no country. */}
-                <Uncovered
-                  when={lookThrough.readButUnclassifiedPositions.length > 0}
-                  heading={t("lookThrough.caveats.readNothingUseful")}
-                  body={t("lookThrough.caveats.readNothingUsefulBody", {
-                    count: lookThrough.readButUnclassifiedPositions.length,
-                  })}
-                  rows={lookThrough.readButUnclassifiedPositions}
-                  formatEuro={formatEuro}
-                />
+            <Uncovered
+              when={lookThrough.readButUnclassifiedPositions.length > 0}
+              heading={t("lookThrough.caveats.readNothingUseful")}
+              body={t("lookThrough.caveats.readNothingUsefulBody", {
+                count: lookThrough.readButUnclassifiedPositions.length,
+              })}
+              rows={lookThrough.readButUnclassifiedPositions}
+              formatEuro={formatEuro}
+            />
 
-                {/* Uncovered for a reason nobody can fix — gold and crypto.
+            {/* Uncovered for a reason nobody can fix — gold and crypto.
                     The first group tells the reader to open Positions and
                     choose an instrument, and the second offers to read the
                     instrument again; for a coin the first sends them hunting
                     for an ISIN that was never issued, and for a gold ETC the
                     second promises a breakdown that does not exist. Both
                     complaints land here. */}
-                <Uncovered
-                  when={lookThrough.unresolvablePositions.length > 0}
-                  icon={<Prohibit size={ICON.sm} weight="light" />}
-                  heading={t("lookThrough.caveats.unresolvableHeading")}
-                  body={t("lookThrough.caveats.unresolvable", {
-                    count: lookThrough.unresolvablePositions.length,
-                  })}
-                  rows={lookThrough.unresolvablePositions}
-                  formatEuro={formatEuro}
-                />
-              </Section>
-            </StaggerItem>
-          ) : null}
+            <Uncovered
+              when={lookThrough.unresolvablePositions.length > 0}
+              icon={<Prohibit size={ICON.sm} weight="light" />}
+              heading={t("lookThrough.caveats.unresolvableHeading")}
+              body={t("lookThrough.caveats.unresolvable", {
+                count: lookThrough.unresolvablePositions.length,
+              })}
+              rows={lookThrough.unresolvablePositions}
+              formatEuro={formatEuro}
+            />
+          </Section>
+        </StaggerItem>
+      ) : null}
 
-          {/* The read, when there is one. */}
-          <StaggerItem className="w-full min-w-0">
-            <Section
-              icon={<Books size={ICON.md} weight="light" />}
-              title={t("lookThrough.title")}
-              action={
-                canReview ? (
-                  <Button
-                    size="sm"
-                    onClick={onReview}
-                    // Nothing classified means the read would be refused.
-                    // Disabling with the reason stated below beats a press
-                    // that comes back as a toast explaining what it needed.
-                    disabled={reviewing || !canSayAnything}
-                  >
-                    <span className="mr-1.5 flex shrink-0">
-                      <WriterMark model={writerBrand} />
-                    </span>
-                    {reviewing
-                      ? t("walletRead.reviewing")
-                      : t("walletRead.review", { model: writerBrand })}
-                  </Button>
-                ) : reviewAccount ? (
-                  <ConnectAiInvite />
-                ) : null
-              }
-            >
-              {read === null ? (
-                <div className="flex flex-col gap-2">
-                  <p className="text-sm font-medium">{t("walletRead.empty")}</p>
-                  <p className="text-sm text-muted-foreground">
-                    {canSayAnything
-                      ? t("walletRead.emptyBody")
-                      : t("lookThrough.caveats.needsAReading")}
-                  </p>
-                </div>
-              ) : (
-                <div className="flex flex-col gap-4">
-                  <div className="flex flex-wrap items-center gap-2">
-                    {readAt ? (
-                      <span className={cn(MICRO, "text-muted-foreground")}>
-                        {t("walletRead.readAt", { when: readAt })}
-                      </span>
-                    ) : null}
-                    {/* The model recorded on this read, not the one
+      {/* The read, when there is one. */}
+      <StaggerItem className="w-full min-w-0">
+        <Section
+          icon={<Books size={ICON.md} weight="light" />}
+          title={t("lookThrough.title")}
+          action={
+            canReview ? (
+              <Button
+                size="sm"
+                onClick={onReview}
+                // Nothing classified means the read would be refused.
+                // Disabling with the reason stated below beats a press
+                // that comes back as a toast explaining what it needed.
+                disabled={reviewing || !canSayAnything}
+              >
+                <span className="mr-1.5 flex shrink-0">
+                  <WriterMark model={writerBrand} />
+                </span>
+                {reviewing
+                  ? t("walletRead.reviewing")
+                  : t("walletRead.review", { model: writerBrand })}
+              </Button>
+            ) : reviewAccount ? (
+              <ConnectAiInvite />
+            ) : null
+          }
+        >
+          {read === null ? (
+            <div className="flex flex-col gap-2">
+              <p className="text-sm font-medium">{t("walletRead.empty")}</p>
+              <p className="text-sm text-muted-foreground">
+                {canSayAnything
+                  ? t("walletRead.emptyBody")
+                  : t("lookThrough.caveats.needsAReading")}
+              </p>
+            </div>
+          ) : (
+            <div className="flex flex-col gap-4">
+              <div className="flex flex-wrap items-center gap-2">
+                {readAt ? (
+                  <span className={cn(MICRO, "text-muted-foreground")}>
+                    {t("walletRead.readAt", { when: readAt })}
+                  </span>
+                ) : null}
+                {/* The model recorded on this read, not the one
                         configured today — a read written six weeks ago was
                         written by whatever answered then, and this is the one
                         sentence on the page whose whole job is to be exact. */}
-                    <span className={cn(MICRO, "text-muted-foreground")}>
-                      {readModel === null ? (
-                        t("walletRead.writtenByUnknown")
-                      ) : (
-                        <>
-                          <BylineMark model={readModel} />
-                          {t("walletRead.writtenBy", {
-                            model: exactModelLabel(readModel),
-                          })}
-                        </>
-                      )}
-                    </span>
-                    {stale ? (
-                      <Badge variant="outline" size="sm">
-                        {t("walletRead.stale")}
-                      </Badge>
-                    ) : null}
-                    {canReview && !reviewAccount ? (
-                      <span className={cn(MICRO, "text-muted-foreground")}>
-                        {t("walletRead.reviewHint", { remaining: readsLeft })}
-                      </span>
-                    ) : null}
-                  </div>
-
-                  <p className="text-base font-semibold">
-                    <Segments segments={read.headline} />
-                  </p>
-
-                  <ul className="flex flex-col gap-3">
-                    {read.observations.map((row, index) => (
-                      <li key={index} className="flex gap-2 text-sm">
-                        <span
-                          aria-hidden="true"
-                          className={cn(
-                            "mt-1.5 size-1.5 shrink-0 rounded-full",
-                            row.tone === "good" && "bg-[var(--success)]",
-                            row.tone === "watch" && "bg-[var(--warning)]",
-                            row.tone === "neutral" && "bg-muted-foreground",
-                          )}
-                        />
-                        <span className="min-w-0">
-                          <Segments segments={row.segments} />
-                        </span>
-                      </li>
-                    ))}
-                  </ul>
-
-                  {read.suggestions.length > 0 ? (
-                    <ul className="flex flex-col gap-3 border-t border-border pt-4">
-                      {read.suggestions.map((row) => (
-                        <li key={row.isin} className="flex flex-col gap-1">
-                          <div className="flex flex-wrap items-baseline gap-2">
-                            <span className="text-sm font-semibold">
-                              {row.name}
-                            </span>
-                            <Badge variant="outline" size="sm">
-                              {row.symbol}
-                            </Badge>
-                            <Badge variant="default" size="sm">
-                              {INVESTMENT_WALLET_LABELS[row.wallet]}
-                            </Badge>
-                          </div>
-                          <p className="text-sm text-muted-foreground">
-                            <Segments segments={row.segments} />
-                          </p>
-                        </li>
-                      ))}
-                    </ul>
-                  ) : null}
-                </div>
-              )}
-
-              <div className="mt-4 flex flex-col gap-1 border-t border-border pt-3">
-                {footing.map((line) => (
-                  <p key={line} className={cn(MICRO, "text-muted-foreground")}>
-                    {line}
-                  </p>
-                ))}
+                <span className={cn(MICRO, "text-muted-foreground")}>
+                  {readModel === null ? (
+                    t("walletRead.writtenByUnknown")
+                  ) : (
+                    <>
+                      <BylineMark model={readModel} />
+                      {t("walletRead.writtenBy", {
+                        model: exactModelLabel(readModel),
+                      })}
+                    </>
+                  )}
+                </span>
+                {stale ? (
+                  <Badge variant="outline" size="sm">
+                    {t("walletRead.stale")}
+                  </Badge>
+                ) : null}
+                {canReview && !reviewAccount ? (
+                  <span className={cn(MICRO, "text-muted-foreground")}>
+                    {t("walletRead.reviewHint", { remaining: readsLeft })}
+                  </span>
+                ) : null}
               </div>
-            </Section>
-          </StaggerItem>
 
-          {/* What the money is in, over everything held: the one place
+              <p className="text-base font-semibold">
+                <Segments segments={read.headline} />
+              </p>
+
+              <ul className="flex flex-col gap-3">
+                {read.observations.map((row, index) => (
+                  <li key={index} className="flex gap-2 text-sm">
+                    <span
+                      aria-hidden="true"
+                      className={cn(
+                        "mt-1.5 size-1.5 shrink-0 rounded-full",
+                        row.tone === "good" && "bg-[var(--success)]",
+                        row.tone === "watch" && "bg-[var(--warning)]",
+                        row.tone === "neutral" && "bg-muted-foreground",
+                      )}
+                    />
+                    <span className="min-w-0">
+                      <Segments segments={row.segments} />
+                    </span>
+                  </li>
+                ))}
+              </ul>
+
+              {read.suggestions.length > 0 ? (
+                <ul className="flex flex-col gap-3 border-t border-border pt-4">
+                  {read.suggestions.map((row) => (
+                    <li key={row.isin} className="flex flex-col gap-1">
+                      <div className="flex flex-wrap items-baseline gap-2">
+                        <span className="text-sm font-semibold">
+                          {row.name}
+                        </span>
+                        <Badge variant="outline" size="sm">
+                          {row.symbol}
+                        </Badge>
+                        <Badge variant="default" size="sm">
+                          {INVESTMENT_WALLET_LABELS[row.wallet]}
+                        </Badge>
+                      </div>
+                      <p className="text-sm text-muted-foreground">
+                        <Segments segments={row.segments} />
+                      </p>
+                    </li>
+                  ))}
+                </ul>
+              ) : null}
+            </div>
+          )}
+
+          <div className="mt-4 flex flex-col gap-1 border-t border-border pt-3">
+            {footing.map((line) => (
+              <p key={line} className={cn(MICRO, "text-muted-foreground")}>
+                {line}
+              </p>
+            ))}
+          </div>
+        </Section>
+      </StaggerItem>
+
+      {/* What the money is in, over everything held: the one place
               crypto and gold stand beside the funds rather than outside
               them. */}
-          {holdingsWorthShowing(lookThrough) ? (
-            <StaggerItem className="w-full min-w-0">
-              <Section
-                icon={<Stack size={ICON.md} weight="light" />}
-                title={t("lookThrough.holdings")}
-              >
-                <WeightBars
-                  rows={lookThrough.holdings.map((row) => ({
-                    id: row.id,
-                    label: t(HOLDING_KIND_LABELS[row.id as HoldingKind]),
-                    weight: row.weight,
-                  }))}
-                />
-                <p className={cn(MICRO, "mt-3 text-muted-foreground")}>
-                  {t("lookThrough.holdingsNote")}
-                </p>
-              </Section>
-            </StaggerItem>
-          ) : null}
+      {holdingsWorthShowing(lookThrough) ? (
+        <StaggerItem className="w-full min-w-0">
+          <Section
+            icon={<Stack size={ICON.md} weight="light" />}
+            title={t("lookThrough.holdings")}
+          >
+            <WeightBars
+              rows={lookThrough.holdings.map((row) => ({
+                id: row.id,
+                label: t(HOLDING_KIND_LABELS[row.id as HoldingKind]),
+                weight: row.weight,
+              }))}
+            />
+            <p className={cn(MICRO, "mt-3 text-muted-foreground")}>
+              {t("lookThrough.holdingsNote")}
+            </p>
+          </Section>
+        </StaggerItem>
+      ) : null}
 
-          {/* Geography. */}
-          {lookThrough.countries.length > 0 ? (
-            <StaggerItem className="w-full min-w-0">
-              <Section
-                icon={<Globe size={ICON.md} weight="light" />}
-                title={t("lookThrough.geography")}
-              >
-                <WeightBars
-                  rows={lookThrough.countries.map((row) => ({
-                    id: row.id,
-                    // The reading keys these on ISO codes, because that is
-                    // what a factsheet publishes. "NL" over a bar is a lookup
-                    // the reader has to do, and for a euro-zone portfolio the
-                    // codes worth recognising run well past the handful
-                    // anybody knows by sight.
-                    label: countryName(row.id, locale),
-                    mark: countryFlag(row.id),
-                    weight: row.weight,
-                  }))}
-                  restLabel={(count) =>
-                    t("lookThrough.restCountries", { count })
-                  }
-                  showRestLabel={t("lookThrough.showRest")}
-                  hideRestLabel={t("lookThrough.hideRest")}
-                />
-                <div className="mt-4 flex flex-wrap gap-x-6 gap-y-2 border-t border-border pt-3">
-                  <Bias
-                    label={t("lookThrough.franceShare")}
-                    share={lookThrough.regions.france}
-                    factor={lookThrough.regionBias.france}
-                  />
-                  <Bias
-                    label={t("lookThrough.usShare")}
-                    share={lookThrough.regions.unitedStates}
-                    factor={lookThrough.regionBias.unitedStates}
-                  />
-                  <Bias
-                    label={t("lookThrough.europeShare")}
-                    share={lookThrough.regions.europe}
-                    factor={lookThrough.regionBias.europe}
-                  />
-                </div>
-                <p className={cn(MICRO, "mt-3 text-muted-foreground")}>
-                  {t("lookThrough.caveats.geographyIsNotCurrency")}
-                </p>
-                <PartialAxis
-                  coverage={lookThrough.countryCoverage}
-                  rows={lookThrough.countries.length}
-                />
-              </Section>
-            </StaggerItem>
-          ) : null}
+      {/* Geography. */}
+      {lookThrough.countries.length > 0 ? (
+        <StaggerItem className="w-full min-w-0">
+          <Section
+            icon={<Globe size={ICON.md} weight="light" />}
+            title={t("lookThrough.geography")}
+          >
+            <WeightBars
+              rows={lookThrough.countries.map((row) => ({
+                id: row.id,
+                // The reading keys these on ISO codes, because that is
+                // what a factsheet publishes. "NL" over a bar is a lookup
+                // the reader has to do, and for a euro-zone portfolio the
+                // codes worth recognising run well past the handful
+                // anybody knows by sight.
+                label: countryName(row.id, locale),
+                mark: countryFlag(row.id),
+                weight: row.weight,
+              }))}
+              restLabel={(count) => t("lookThrough.restCountries", { count })}
+              showRestLabel={t("lookThrough.showRest")}
+              hideRestLabel={t("lookThrough.hideRest")}
+            />
+            <div className="mt-4 flex flex-wrap gap-x-6 gap-y-2 border-t border-border pt-3">
+              <Bias
+                label={t("lookThrough.franceShare")}
+                share={lookThrough.regions.france}
+                factor={lookThrough.regionBias.france}
+              />
+              <Bias
+                label={t("lookThrough.usShare")}
+                share={lookThrough.regions.unitedStates}
+                factor={lookThrough.regionBias.unitedStates}
+              />
+              <Bias
+                label={t("lookThrough.europeShare")}
+                share={lookThrough.regions.europe}
+                factor={lookThrough.regionBias.europe}
+              />
+            </div>
+            <p className={cn(MICRO, "mt-3 text-muted-foreground")}>
+              {t("lookThrough.caveats.geographyIsNotCurrency")}
+            </p>
+            <PartialAxis
+              coverage={lookThrough.countryCoverage}
+              rows={lookThrough.countries.length}
+            />
+          </Section>
+        </StaggerItem>
+      ) : null}
 
-          {/* Sectors. */}
-          {lookThrough.sectors.length > 0 ? (
-            <StaggerItem className="w-full min-w-0">
-              <Section
-                icon={<Target size={ICON.md} weight="light" />}
-                title={t("lookThrough.sectors")}
-              >
-                <WeightBars
-                  rows={lookThrough.sectors.map((row) => ({
-                    id: row.id,
-                    label: sectorLabel(t, row.id, row.label),
-                    weight: row.weight,
-                  }))}
-                  restLabel={(count) => t("lookThrough.restSectors", { count })}
-                  showRestLabel={t("lookThrough.showRest")}
-                  hideRestLabel={t("lookThrough.hideRest")}
-                />
-                <PartialAxis
-                  coverage={lookThrough.sectorCoverage}
-                  rows={lookThrough.sectors.length}
-                />
-              </Section>
-            </StaggerItem>
-          ) : null}
+      {/* Sectors. */}
+      {lookThrough.sectors.length > 0 ? (
+        <StaggerItem className="w-full min-w-0">
+          <Section
+            icon={<Target size={ICON.md} weight="light" />}
+            title={t("lookThrough.sectors")}
+          >
+            <WeightBars
+              rows={lookThrough.sectors.map((row) => ({
+                id: row.id,
+                label: sectorLabel(t, row.id, row.label),
+                weight: row.weight,
+              }))}
+              restLabel={(count) => t("lookThrough.restSectors", { count })}
+              showRestLabel={t("lookThrough.showRest")}
+              hideRestLabel={t("lookThrough.hideRest")}
+            />
+            <PartialAxis
+              coverage={lookThrough.sectorCoverage}
+              rows={lookThrough.sectors.length}
+            />
+          </Section>
+        </StaggerItem>
+      ) : null}
 
-          {/* Doubling up. */}
-          {lookThrough.indexCollisions.length > 0 ? (
-            <StaggerItem className="w-full min-w-0">
-              <Section
-                icon={<Warning size={ICON.md} weight="light" />}
-                title={t("lookThrough.doublingUp")}
-                tone="warning"
-              >
-                <ul className="flex flex-col gap-3">
-                  {lookThrough.indexCollisions.map((collision) => (
-                    <li
-                      key={collision.positionIds.join("-")}
-                      className="flex flex-col gap-0.5"
-                    >
-                      <span className="text-sm font-medium">
-                        {collision.names[0]} · {collision.names[1]}
-                      </span>
-                      <span className={cn(MICRO, "text-muted-foreground")}>
-                        {collision.identical
-                          ? t("lookThrough.sameIndex", {
-                              index: collision.indexes[0],
-                            })
-                          : t("lookThrough.nestedIndex", {
-                              outer: collision.indexes[0],
-                              inner: collision.indexes[1],
-                            })}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
+      {/* Doubling up. */}
+      {lookThrough.indexCollisions.length > 0 ? (
+        <StaggerItem className="w-full min-w-0">
+          <Section
+            icon={<Warning size={ICON.md} weight="light" />}
+            title={t("lookThrough.doublingUp")}
+            tone="warning"
+          >
+            <ul className="flex flex-col gap-3">
+              {lookThrough.indexCollisions.map((collision) => (
+                <li
+                  key={collision.positionIds.join("-")}
+                  className="flex flex-col gap-0.5"
+                >
+                  <span className="text-sm font-medium">
+                    {collision.names[0]} · {collision.names[1]}
+                  </span>
+                  <span className={cn(MICRO, "text-muted-foreground")}>
+                    {collision.identical
+                      ? t("lookThrough.sameIndex", {
+                          index: collision.indexes[0],
+                        })
+                      : t("lookThrough.nestedIndex", {
+                          outer: collision.indexes[0],
+                          inner: collision.indexes[1],
+                        })}
+                  </span>
+                </li>
+              ))}
+            </ul>
 
-                {lookThrough.constituentOverlaps.length > 0 ? (
-                  <>
-                    <ul className="mt-4 flex flex-col gap-2 border-t border-border pt-3">
-                      {lookThrough.constituentOverlaps.map((overlap) => (
-                        <li
-                          key={overlap.positionIds.join("-")}
-                          className="text-sm"
-                        >
-                          {t("lookThrough.sharedCompanies", {
-                            count: overlap.sharedNames.length,
-                            other: overlap.names[1],
-                          })}
-                          <span className="text-muted-foreground">
-                            {" — "}
-                            {overlap.sharedNames.slice(0, 5).join(", ")}
-                          </span>
-                        </li>
-                      ))}
-                    </ul>
-                    {/* The limit travels with the figure, always. */}
-                    <p className={cn(MICRO, "mt-3 text-muted-foreground")}>
-                      {t("lookThrough.caveats.overlapIsAFloor")}
-                    </p>
-                  </>
-                ) : null}
-              </Section>
-            </StaggerItem>
-          ) : null}
-
-          {/* Charges. */}
-          <StaggerItem className="w-full min-w-0">
-            <Section
-              icon={<Coins size={ICON.md} weight="light" />}
-              title={t("lookThrough.charges")}
-            >
-              <dl className="flex flex-col gap-2">
-                <Line
-                  label={t("lookThrough.fundCharges")}
-                  value={formatCharge(
-                    lookThrough.charges.weightedAverage,
-                    locale,
-                  )}
-                />
-                {lookThrough.charges.weightedEnvelopeFee !== null ? (
-                  <Line
-                    label={t("lookThrough.envelopeFee")}
-                    value={formatCharge(
-                      lookThrough.charges.weightedEnvelopeFee,
-                      locale,
-                    )}
-                  />
-                ) : null}
-                <Line
-                  label={t("lookThrough.allIn")}
-                  value={formatCharge(
-                    lookThrough.charges.weightedAllIn,
-                    locale,
-                  )}
-                  strong
-                />
-                <Line
-                  label={t("lookThrough.perYear", { amount: "" }).trim()}
-                  value={formatEuro(lookThrough.charges.allInAnnualCost)}
-                  money
-                />
-              </dl>
-              {/* Which fees these are, and which are not counted — the
-                  distinction between a fund's charge and a broker's
-                  commission is not obvious from a number. */}
-              <p className={cn(MICRO, "mt-3 text-muted-foreground")}>
-                {t("lookThrough.chargesNote")}
-              </p>
-            </Section>
-          </StaggerItem>
-
-          {/* Eligibility. */}
-          {lookThrough.eligibility.length > 0 ? (
-            <StaggerItem className="w-full min-w-0">
-              <Section
-                icon={<Warning size={ICON.md} weight="light" />}
-                title={t("lookThrough.wrappers")}
-                tone="warning"
-              >
-                <ul className="flex flex-col gap-2">
-                  {lookThrough.eligibility.map((issue) => (
-                    <li key={issue.positionId} className="text-sm">
-                      {t("lookThrough.cannotSitHere", {
-                        name: issue.name,
-                        wallet: INVESTMENT_WALLET_LABELS[issue.walletId],
+            {lookThrough.constituentOverlaps.length > 0 ? (
+              <>
+                <ul className="mt-4 flex flex-col gap-2 border-t border-border pt-3">
+                  {lookThrough.constituentOverlaps.map((overlap) => (
+                    <li key={overlap.positionIds.join("-")} className="text-sm">
+                      {t("lookThrough.sharedCompanies", {
+                        count: overlap.sharedNames.length,
+                        other: overlap.names[1],
                       })}
                       <span className="text-muted-foreground">
-                        {" "}
-                        {t("lookThrough.couldSitIn", {
-                          wallets: issue.allowedIn
-                            .map((id) => INVESTMENT_WALLET_LABELS[id])
-                            .join(" / "),
-                        })}
+                        {" — "}
+                        {overlap.sharedNames.slice(0, 5).join(", ")}
                       </span>
                     </li>
                   ))}
                 </ul>
-              </Section>
-            </StaggerItem>
-          ) : null}
-
-          {/* The target. */}
-          {target.rows.length > 0 ? (
-            <StaggerItem className="w-full min-w-0">
-              <Section
-                icon={<Target size={ICON.md} weight="light" />}
-                title={t("lookThrough.target")}
-              >
-                <ul className="flex flex-col gap-2">
-                  {target.rows.map((row) => {
-                    const move = arbitrage.find(
-                      (entry) => entry.isin === row.isin,
-                    );
-                    return (
-                      <li
-                        key={row.isin}
-                        className="flex min-w-0 items-baseline justify-between gap-3"
-                      >
-                        <span className="min-w-0">
-                          <span className="truncate text-sm">{row.name}</span>
-                          <span
-                            className={cn(MICRO, "ml-2 text-muted-foreground")}
-                          >
-                            {INVESTMENT_WALLET_LABELS[row.wallet]}
-                          </span>
-                        </span>
-                        <span className="shrink-0 text-right">
-                          <span className="text-sm font-semibold tabular-nums">
-                            {Math.round(row.weight * 100)}%
-                          </span>
-                          {move ? (
-                            // "Buy 240 €" — the figure is inside the phrase,
-                            // so the phrase is what carries the marker.
-                            <span
-                              className={cn(
-                                MICRO,
-                                "privacy-sensitive ml-2",
-                                move.delta > 0
-                                  ? "text-[var(--success)]"
-                                  : "text-[var(--destructive)]",
-                              )}
-                            >
-                              {move.delta > 0
-                                ? t("lookThrough.buy", {
-                                    amount: formatEuro(Math.abs(move.delta)),
-                                  })
-                                : t("lookThrough.sell", {
-                                    amount: formatEuro(Math.abs(move.delta)),
-                                  })}
-                            </span>
-                          ) : null}
-                        </span>
-                      </li>
-                    );
-                  })}
-                </ul>
+                {/* The limit travels with the figure, always. */}
                 <p className={cn(MICRO, "mt-3 text-muted-foreground")}>
-                  {t("lookThrough.rebalanceNote")}
+                  {t("lookThrough.caveats.overlapIsAFloor")}
                 </p>
-              </Section>
-            </StaggerItem>
-          ) : null}
-        </Stagger>
-      </PageContainer>
-    </>
+              </>
+            ) : null}
+          </Section>
+        </StaggerItem>
+      ) : null}
+
+      {/* Charges. */}
+      <StaggerItem className="w-full min-w-0">
+        <Section
+          icon={<Coins size={ICON.md} weight="light" />}
+          title={t("lookThrough.charges")}
+        >
+          <dl className="flex flex-col gap-2">
+            <Line
+              label={t("lookThrough.fundCharges")}
+              value={formatCharge(lookThrough.charges.weightedAverage, locale)}
+            />
+            {lookThrough.charges.weightedEnvelopeFee !== null ? (
+              <Line
+                label={t("lookThrough.envelopeFee")}
+                value={formatCharge(
+                  lookThrough.charges.weightedEnvelopeFee,
+                  locale,
+                )}
+              />
+            ) : null}
+            <Line
+              label={t("lookThrough.allIn")}
+              value={formatCharge(lookThrough.charges.weightedAllIn, locale)}
+              strong
+            />
+            <Line
+              label={t("lookThrough.perYear", { amount: "" }).trim()}
+              value={formatEuro(lookThrough.charges.allInAnnualCost)}
+              money
+            />
+          </dl>
+          {/* Which fees these are, and which are not counted — the
+                  distinction between a fund's charge and a broker's
+                  commission is not obvious from a number. */}
+          <p className={cn(MICRO, "mt-3 text-muted-foreground")}>
+            {t("lookThrough.chargesNote")}
+          </p>
+        </Section>
+      </StaggerItem>
+
+      {/* Eligibility. */}
+      {lookThrough.eligibility.length > 0 ? (
+        <StaggerItem className="w-full min-w-0">
+          <Section
+            icon={<Warning size={ICON.md} weight="light" />}
+            title={t("lookThrough.wrappers")}
+            tone="warning"
+          >
+            <ul className="flex flex-col gap-2">
+              {lookThrough.eligibility.map((issue) => (
+                <li key={issue.positionId} className="text-sm">
+                  {t("lookThrough.cannotSitHere", {
+                    name: issue.name,
+                    wallet: INVESTMENT_WALLET_LABELS[issue.walletId],
+                  })}
+                  <span className="text-muted-foreground">
+                    {" "}
+                    {t("lookThrough.couldSitIn", {
+                      wallets: issue.allowedIn
+                        .map((id) => INVESTMENT_WALLET_LABELS[id])
+                        .join(" / "),
+                    })}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </Section>
+        </StaggerItem>
+      ) : null}
+
+      {/* The target. */}
+      {target.rows.length > 0 ? (
+        <StaggerItem className="w-full min-w-0">
+          <Section
+            icon={<Target size={ICON.md} weight="light" />}
+            title={t("lookThrough.target")}
+          >
+            <ul className="flex flex-col gap-2">
+              {target.rows.map((row) => {
+                const move = arbitrage.find((entry) => entry.isin === row.isin);
+                return (
+                  <li
+                    key={row.isin}
+                    className="flex min-w-0 items-baseline justify-between gap-3"
+                  >
+                    <span className="min-w-0">
+                      <span className="truncate text-sm">{row.name}</span>
+                      <span className={cn(MICRO, "ml-2 text-muted-foreground")}>
+                        {INVESTMENT_WALLET_LABELS[row.wallet]}
+                      </span>
+                    </span>
+                    <span className="shrink-0 text-right">
+                      <span className="text-sm font-semibold tabular-nums">
+                        {Math.round(row.weight * 100)}%
+                      </span>
+                      {move ? (
+                        // "Buy 240 €" — the figure is inside the phrase,
+                        // so the phrase is what carries the marker.
+                        <span
+                          className={cn(
+                            MICRO,
+                            "privacy-sensitive ml-2",
+                            move.delta > 0
+                              ? "text-[var(--success)]"
+                              : "text-[var(--destructive)]",
+                          )}
+                        >
+                          {move.delta > 0
+                            ? t("lookThrough.buy", {
+                                amount: formatEuro(Math.abs(move.delta)),
+                              })
+                            : t("lookThrough.sell", {
+                                amount: formatEuro(Math.abs(move.delta)),
+                              })}
+                        </span>
+                      ) : null}
+                    </span>
+                  </li>
+                );
+              })}
+            </ul>
+            <p className={cn(MICRO, "mt-3 text-muted-foreground")}>
+              {t("lookThrough.rebalanceNote")}
+            </p>
+          </Section>
+        </StaggerItem>
+      ) : null}
+    </Stagger>
   );
 }
 
