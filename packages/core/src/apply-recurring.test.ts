@@ -873,6 +873,38 @@ describe("plannedOccurrences", () => {
       plannedOccurrences([template()], new Set(), 2026, 3, new Set(), TODAY),
     ).toHaveLength(1);
   });
+
+  it("lets the bank decide when one stops being drawn", () => {
+    // Today is the 20th: the 15th is behind, the 25th ahead.
+    const awaitedKey = recurringOccurrenceKey("tpl-1", "2026-01-15");
+    const arrivedKey = recurringOccurrenceKey("tpl-2", "2026-01-25");
+    const templates = [
+      template({ day_of_month: 15 }),
+      template({ id: "tpl-2", day_of_month: 25 }),
+    ];
+    const bank = {
+      awaited: new Set([awaitedKey]),
+      arrived: new Set([arrivedKey]),
+    };
+
+    expect(
+      plannedOccurrences(templates, new Set(), 2026, 1, new Set(), TODAY).map(
+        (item) => item.key,
+      ),
+    ).toEqual([arrivedKey]);
+
+    const planned = plannedOccurrences(
+      templates,
+      new Set(),
+      2026,
+      1,
+      new Set(),
+      TODAY,
+      bank,
+    );
+    expect(planned).toHaveLength(1);
+    expect(planned[0]).toMatchObject({ key: awaitedKey, awaited: true });
+  });
 });
 
 describe("scheduleDatesBefore", () => {

@@ -8,6 +8,7 @@ import {
   spendingByMonth,
   topSpending,
   transactionDelta,
+  upcomingDay,
   upcomingDelta,
 } from "./month-balance";
 import type { TransactionWithCategory } from "./types/database";
@@ -369,5 +370,48 @@ describe("outflowsByDay", () => {
 
   it("marks what the charges still call for as planned", () => {
     expect(days[2]).toMatchObject({ planned: true, total: 85 });
+  });
+});
+
+describe("upcomingDay", () => {
+  it("moves the balance on a charge's own day, ahead of today", () => {
+    expect(upcomingDay({ occurredOn: "2026-10-20" }, "2026-10-05")).toBe(
+      "2026-10-20",
+    );
+  });
+
+  it("moves it from tomorrow for one still awaited from the bank", () => {
+    // The balance read today does not have it: it has not left yet.
+    expect(upcomingDay({ occurredOn: "2026-10-05" }, "2026-10-05")).toBe(
+      "2026-10-06",
+    );
+    expect(upcomingDay({ occurredOn: "2026-10-03" }, "2026-10-05")).toBe(
+      "2026-10-06",
+    );
+  });
+
+  it("marks an awaited charge on the day it moves the curve", () => {
+    const days = outflowsByDay({
+      rows: [],
+      upcoming: [
+        {
+          key: "tpl-loan:2026-10-05",
+          name: "Remboursement de prêt",
+          description: null,
+          occurredOn: "2026-10-05",
+          amount: 909.23,
+          type: "expense",
+          recorded: false,
+          awaited: true,
+        },
+      ],
+      year: 2026,
+      month: 10,
+      today: "2026-10-05",
+      anchored: true,
+    });
+    expect(days).toMatchObject([
+      { date: "2026-10-06", total: 909.23, planned: true },
+    ]);
   });
 });

@@ -347,3 +347,84 @@ describe("fulfilled occurrences", () => {
     expect(fulfilled.leaving).toBe(0);
   });
 });
+
+describe("with a bank feeding the ledger", () => {
+  /**
+   * The regression this exists for: a loan taken on the 5th, looked at on
+   * the 5th before the bank had brought it. Nothing writes an occurrence on
+   * its day with a bank feed, so it fell out of the forecast at midnight and
+   * was not in the actuals yet — the month's end was a loan payment out.
+   */
+  it("still owes an occurrence the bank has not brought yet", () => {
+    const templates = [template("tpl-loan", 5, 932.9, "expense")];
+    const bank = {
+      awaited: new Set(["tpl-loan:2026-10-05"]),
+      arrived: new Set<string>(),
+    };
+
+    const without = buildStillToCome([], templates, 2026, 10, "2026-10-05");
+    const withBank = buildStillToCome(
+      [],
+      templates,
+      2026,
+      10,
+      "2026-10-05",
+      new Set(),
+      new Set(),
+      bank,
+    );
+
+    expect(without.leaving).toBe(0);
+    expect(withBank.leaving).toBe(932.9);
+    expect(withBank.outgoing).toMatchObject([
+      { key: "tpl-loan:2026-10-05", awaited: true, recorded: false },
+    ]);
+  });
+
+  it("does not owe one a movement already looks like, early or late", () => {
+    const templates = [
+      template("tpl-loan", 5, 909.23, "expense"),
+      template("tpl-cover", 8, 23.67, "expense"),
+    ];
+    const bank = {
+      awaited: new Set<string>(),
+      arrived: new Set(["tpl-loan:2026-10-05", "tpl-cover:2026-10-08"]),
+    };
+
+    const result = buildStillToCome(
+      [],
+      templates,
+      2026,
+      10,
+      "2026-10-05",
+      new Set(),
+      new Set(),
+      bank,
+    );
+
+    expect(result.outgoing).toEqual([]);
+  });
+
+  it("still lets a confirmation or a skip settle an awaited one", () => {
+    const templates = [template("tpl-loan", 5, 909.23, "expense")];
+    const bank = {
+      awaited: new Set(["tpl-loan:2026-10-05"]),
+      arrived: new Set<string>(),
+    };
+    const at = (skipped: Set<string>, fulfilled: Set<string>) =>
+      buildStillToCome(
+        [],
+        templates,
+        2026,
+        10,
+        "2026-10-06",
+        skipped,
+        fulfilled,
+        bank,
+      ).leaving;
+
+    expect(at(new Set(), new Set())).toBe(909.23);
+    expect(at(new Set(["tpl-loan:2026-10-05"]), new Set())).toBe(0);
+    expect(at(new Set(), new Set(["tpl-loan:2026-10-05"]))).toBe(0);
+  });
+});
