@@ -14,8 +14,9 @@ import {
   type WeeklyRecap,
 } from "@finance/core/weekly-recap";
 
+import { hasBankFeed } from "./bank-feed";
 import type { Db } from "./client";
-import { getFulfilledKeys } from "./fulfilment";
+import { getBankForecast, getFulfilledKeys } from "./fulfilment";
 import {
   dismissPrompt,
   getNotificationSettings,
@@ -43,7 +44,7 @@ export async function getWeeklyRecap(
   // The same month a year ago: twelve months of normal, and this one.
   const { start: from } = getMonthBounds(year - 1, month);
 
-  const [transactions, templates, skipped, fulfilled, waiting] =
+  const [transactions, templates, skipped, fulfilled, waiting, bankFed] =
     await Promise.all([
       allRows((rangeFrom, rangeTo) =>
         db
@@ -67,6 +68,7 @@ export async function getWeeklyRecap(
         .eq("user_id", userId)
         .eq("status", "pending")
         .then(({ count }) => count ?? 0),
+      hasBankFeed(db, userId),
     ]);
 
   const rows = transactions as TransactionWithCategory[];
@@ -79,6 +81,7 @@ export async function getWeeklyRecap(
     today,
     skipped,
     fulfilled,
+    bankFed ? await getBankForecast(db, userId, templates, today) : null,
   );
 
   return buildWeeklyRecap({

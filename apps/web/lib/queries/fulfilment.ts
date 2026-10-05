@@ -1,6 +1,9 @@
 import type { Db } from "@finance/data/client";
 import * as fulfilment from "@finance/data/fulfilment";
-import type { FulfilmentProposal } from "@finance/core/recurring-fulfilment";
+import type {
+  BankForecast,
+  FulfilmentProposal,
+} from "@finance/core/recurring-fulfilment";
 import type {
   Category,
   RecurringTemplateWithCategory,
@@ -67,6 +70,28 @@ export async function getFulfilmentProposals(
     year,
     month,
   );
+}
+
+/**
+ * What the bank has and has not brought of the charges around today, or
+ * null for a ledger no bank feeds — where the day alone decides, because a
+ * charge is written on it.
+ */
+export async function getBankForecast(
+  userId: string,
+  templates: readonly RecurringTemplateWithCategory[],
+  bankFed: boolean,
+  today: string,
+  client?: Db,
+): Promise<BankForecast | null> {
+  return bankFed
+    ? fulfilment.getBankForecast(
+        client ?? (await createClient()),
+        userId,
+        templates,
+        today,
+      )
+    : null;
 }
 
 export async function countFulfilmentProposals(

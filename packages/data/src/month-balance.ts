@@ -9,6 +9,7 @@ import {
   outflowsByDay,
   type DayOutflows,
   recordedDeltas,
+  upcomingDay,
   upcomingDelta,
   type BalanceAnchor,
   type DatedDelta,
@@ -17,6 +18,7 @@ import {
 import { allRows } from "@finance/core/paging";
 import {
   buildStillToCome,
+  type StillToCome,
   type UpcomingCharge,
 } from "@finance/core/still-to-come";
 import type {
@@ -27,7 +29,7 @@ import type {
 import { readCashBalance } from "./bank-balance";
 import { hasBankFeed } from "./bank-feed";
 import type { Db } from "./client";
-import { getFulfilledKeys } from "./fulfilment";
+import { getBankForecast, getFulfilledKeys } from "./fulfilment";
 import { getMonthCloseOverview, type MonthCloseOverview } from "./month-close";
 import { getMovedBetween } from "./moved-rows";
 import { getRecurringSkipKeys, getRecurringTemplates } from "./templates";
@@ -200,11 +202,28 @@ export async function readMonthBalance(
   });
 
   // What the charges still call for, month by month from this one to the
-  // end of the range — never a month that has ended.
+  // end of the range — never a month that has ended, except for what a bank
+  // still owes of it.
   const planned: DatedDelta[] = [];
   let upcoming: MonthBalanceRead["upcoming"] = null;
   if (rangeEnd > today) {
-    let cursor = { year: current.year, month: current.month };
+    // With a bank feeding the ledger, the bank bringing a charge is what ends
+    // its forecast, not its day (`bankForecast`).
+    const bank = bankFed
+      ? await getBankForecast(db, userId, templates, today)
+      : null;
+    // A charge due at the end of last month that the bank has not brought
+    // yet is still to leave the account this month.
+    const lastMonth = shiftMonth(current.year, current.month, -1);
+    const lastKey = monthKeyOf(lastMonth.year, lastMonth.month);
+    const carriesOver = [...(bank?.awaited ?? [])].some((key) =>
+      key.slice(-10).startsWith(lastKey),
+    );
+    let carried: StillToCome | null = null;
+
+    let cursor = carriesOver
+      ? lastMonth
+      : { year: current.year, month: current.month };
     while (monthKeyOf(cursor.year, cursor.month) <= rangeEnd.slice(0, 7)) {
       const key = monthKeyOf(cursor.year, cursor.month);
       const skipped = await getRecurringSkipKeys(
@@ -221,17 +240,31 @@ export async function readMonthBalance(
         today,
         skipped,
         fulfilledKeys,
+        bank,
       );
-      for (const charge of [...still.outgoing, ...still.incoming]) {
-        planned.push({ date: charge.occurredOn, delta: upcomingDelta(charge) });
+      const charges = [...still.outgoing, ...still.incoming];
+      for (const charge of charges) {
+        planned.push({
+          date: upcomingDay(charge, today),
+          delta: upcomingDelta(charge),
+        });
+      }
+      if (key === lastKey) {
+        carried = still;
       }
       if (cursor.year === year && cursor.month === month) {
+        // Listed with the month in progress, which is when it will leave.
+        const before =
+          carried && year === current.year && month === current.month
+            ? carried
+            : null;
         upcoming = {
-          charges: [...still.outgoing, ...still.incoming].sort((a, b) =>
-            a.occurredOn.localeCompare(b.occurredOn),
-          ),
-          leaving: still.leaving,
-          arriving: still.arriving,
+          charges: [
+            ...(before ? [...before.outgoing, ...before.incoming] : []),
+            ...charges,
+          ].sort((a, b) => a.occurredOn.localeCompare(b.occurredOn)),
+          leaving: still.leaving + (before?.leaving ?? 0),
+          arriving: still.arriving + (before?.arriving ?? 0),
         };
       }
       cursor = shiftMonth(cursor.year, cursor.month, 1);

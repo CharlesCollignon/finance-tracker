@@ -1,11 +1,13 @@
 import { recurringOccurrenceKey } from "@finance/core/apply-recurring";
 import { todayIsoLocal } from "@finance/core/constants";
 import {
+  bankForecast,
   fulfilmentOccurrences,
   fulfilmentScope,
   proposalsForMonth,
   proposeFulfilments,
   refusalKey,
+  type BankForecast,
   type FulfilmentMovement,
   type FulfilmentProposal,
   type ProposeOptions,
@@ -167,6 +169,51 @@ export async function getFulfilmentProposals(
     month,
   );
   return asked ? proposalsForMonth(asked.all, year, month) : [];
+}
+
+/**
+ * What the bank has and has not brought of the charges around today, for a
+ * ledger it feeds — see `bankForecast`. Matched over the month in progress
+ * and its neighbours, as far as a movement can be from its occurrence, so
+ * whichever month a screen shows, its forecast and the questions agree.
+ */
+export async function getBankForecast(
+  db: Db,
+  userId: string,
+  templates: readonly RecurringTemplateWithCategory[],
+  today: string,
+): Promise<BankForecast> {
+  const scope = fulfilmentScope(
+    Number(today.slice(0, 4)),
+    Number(today.slice(5, 7)),
+  );
+  // The templates carry their category; nothing else needs reading.
+  const categories = templates.map((template) => ({
+    id: template.category_id,
+    type: template.categories.type,
+    name: template.categories.name,
+  }));
+  const occurrences = fulfilmentOccurrences(
+    templates,
+    categories,
+    scope.months,
+  );
+  if (occurrences.length === 0) {
+    return { awaited: new Set(), arrived: new Set() };
+  }
+
+  const { movements, options } = await readCandidates(
+    db,
+    userId,
+    scope.from,
+    scope.to,
+  );
+  return bankForecast(
+    templates,
+    occurrences,
+    proposeFulfilments(occurrences, movements, options),
+    today,
+  );
 }
 
 /**

@@ -27,6 +27,7 @@ import { getPendingFeedItems, hasBankFeed } from "@/lib/queries/bank";
 import { getLocale } from "@/lib/locale";
 import type { Locale } from "@finance/core/i18n/locale";
 import {
+  getBankForecast,
   getFulfilledKeys,
   getFulfilmentProposals,
 } from "@/lib/queries/fulfilment";
@@ -118,6 +119,7 @@ export async function gatherMonthFacts(
     today,
     skippedKeys,
     fulfilledKeys,
+    await getBankForecast(userId, templates, bankFed, today, client),
   );
 
   // Measured against the balance, so by the day money moved, as the close
