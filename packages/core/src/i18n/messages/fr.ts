@@ -247,6 +247,7 @@ export const fr: Messages = {
     repeatBody: "Ajoute un autre {category} de {amount} daté d'aujourd'hui.",
     repeatConfirm: "Ajouter pour aujourd'hui",
     planned: "À venir",
+    awaited: "Pas encore passé",
     receivedOn: "Reçu le {date}",
     paidOn: "Payé le {date}",
     recurringEntry: "Opération récurrente",
@@ -496,6 +497,7 @@ export const fr: Messages = {
 
   planned: {
     body: "Prévu le {date}. Il sera enregistré le jour même.",
+    awaitedBody: "Prévu le {date}, pas encore passé à la banque.",
     recordNow: "L'enregistrer maintenant",
     recordNowHint: "C'est déjà arrivé — l'ajoute à la date d'aujourd'hui.",
     skip: "Passer cette date",

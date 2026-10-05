@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   amountsMatch,
+  bankForecast,
   confirmLabel,
   countsForMonthOf,
   describeFulfilment,
@@ -721,5 +722,111 @@ describe("which month asks", () => {
     expect(proposalsForMonth([early, elsewhere], 2026, 9)).toEqual([early]);
     expect(proposalsForMonth([early, elsewhere], 2026, 10)).toEqual([early]);
     expect(proposalsForMonth([early, elsewhere], 2026, 11)).toEqual([]);
+  });
+});
+
+describe("bankForecast", () => {
+  const LOAN = "cat-loan";
+  // Set up long before any of these occurrences.
+  const templates = [
+    { id: "tpl-loan", created_at: "2026-01-01T00:00:00Z" },
+    { id: "tpl-cover", created_at: "2026-01-01T00:00:00Z" },
+    { id: "tpl-salary", created_at: "2026-01-01T00:00:00Z" },
+  ];
+  const loan = occurrence({
+    templateId: "tpl-loan",
+    occurredOn: "2026-10-05",
+    amount: 909.23,
+    categoryId: LOAN,
+  });
+  const cover = occurrence({
+    templateId: "tpl-cover",
+    occurredOn: "2026-10-06",
+    amount: 23.67,
+    categoryId: LOAN,
+  });
+  const forecastOn = (
+    today: string,
+    movements: FulfilmentMovement[] = [],
+    occurrences: FulfilmentOccurrence[] = [loan, cover],
+  ) =>
+    bankForecast(
+      templates,
+      occurrences,
+      proposeFulfilments(occurrences, movements, { today }),
+      today,
+    );
+
+  it("awaits an occurrence whose day has come until the bank brings it", () => {
+    expect([...forecastOn("2026-10-05").awaited]).toEqual([
+      "tpl-loan:2026-10-05",
+    ]);
+
+    const brought = forecastOn("2026-10-05", [
+      movement({
+        transactionId: "tx-loan",
+        occurredOn: "2026-10-05",
+        amount: 909.23,
+        categoryId: LOAN,
+      }),
+    ]);
+    expect([...brought.awaited]).toEqual([]);
+    expect([...brought.arrived]).toEqual(["tpl-loan:2026-10-05"]);
+  });
+
+  it("awaits each of a loan's two debits on its own", () => {
+    // The payment has come on the 5th; the insurance is due on the 6th and
+    // the bank has not brought it on the 7th.
+    const result = forecastOn("2026-10-07", [
+      movement({
+        transactionId: "tx-loan",
+        occurredOn: "2026-10-05",
+        amount: 909.23,
+        categoryId: LOAN,
+      }),
+    ]);
+    expect([...result.arrived]).toEqual(["tpl-loan:2026-10-05"]);
+    expect([...result.awaited]).toEqual(["tpl-cover:2026-10-06"]);
+  });
+
+  it("stops forecasting one the bank brought before its day", () => {
+    const result = forecastOn("2026-10-03", [
+      movement({
+        transactionId: "tx-cover",
+        occurredOn: "2026-10-02",
+        amount: 23.67,
+        categoryId: LOAN,
+      }),
+    ]);
+    expect([...result.arrived]).toEqual(["tpl-cover:2026-10-06"]);
+    expect([...result.awaited]).toEqual([]);
+  });
+
+  it("gives up once no movement could be offered for it any more", () => {
+    // Four days for a charge.
+    expect(forecastOn("2026-10-09", [], [loan]).awaited.size).toBe(1);
+    expect(forecastOn("2026-10-10", [], [loan]).awaited.size).toBe(0);
+
+    // Ten for a salary, which moves.
+    const salary = occurrence({
+      templateId: "tpl-salary",
+      occurredOn: "2026-09-30",
+      amount: 3400,
+      categoryId: SALARY_CATEGORY,
+      categoryType: "income",
+      recurrence: "monthly",
+    });
+    expect(forecastOn("2026-10-10", [], [salary]).awaited.size).toBe(1);
+    expect(forecastOn("2026-10-11", [], [salary]).awaited.size).toBe(0);
+  });
+
+  it("does not await one from before its template was set up", () => {
+    const result = bankForecast(
+      [{ id: "tpl-loan", created_at: "2026-10-06T08:00:00Z" }],
+      [loan],
+      [],
+      "2026-10-06",
+    );
+    expect(result.awaited.size).toBe(0);
   });
 });

@@ -1,4 +1,5 @@
 import { recurringOccurrenceKey } from "./apply-recurring";
+import type { BankForecast } from "./recurring-fulfilment";
 import {
   filterDatesBySchedule,
   getRecurringOccurrenceDates,
@@ -19,6 +20,11 @@ export interface UpcomingCharge {
   type: CategoryType;
   /** A row that already exists, as against one a template still owes. */
   recorded: boolean;
+  /**
+   * An occurrence whose day has come that the bank has not brought yet
+   * (`bankForecast`): still owed, though its date is behind.
+   */
+  awaited?: boolean;
   /**
    * A purchase inside a wallet, in a category that does not count toward the
    * summary: it is tracked, and moves no money on the account, because the
@@ -79,7 +85,10 @@ function countsTowardSummary(template: RecurringTemplateWithCategory): boolean {
  *     salary means a whole month's income added to a figure the user is
  *     about to spend against;
  *   - rows already dated later this month count, because they are real and
- *     they have not happened yet.
+ *     they have not happened yet;
+ *   - with a bank feeding the ledger, an occurrence the bank has not brought
+ *     yet is still owed after its day, and one a movement already looks like
+ *     is not owed again — see `bankForecast`.
  */
 export function buildStillToCome(
   transactions: TransactionWithCategory[],
@@ -95,6 +104,12 @@ export function buildStillToCome(
    * and "already happened" matters to the history, not to the forecast.
    */
   fulfilledKeys: Set<string> = new Set(),
+  /**
+   * For a ledger a bank feeds, what the bank has and has not brought: an
+   * occurrence it has not brought yet is still owed after its day, and one
+   * a movement already looks like is not owed a second time.
+   */
+  bank: BankForecast | null = null,
 ): StillToCome {
   const monthPrefix = `${year}-${String(month).padStart(2, "0")}`;
   const outgoing: UpcomingCharge[] = [];
@@ -173,11 +188,18 @@ export function buildStillToCome(
       ),
       template.starts_on,
       template.ends_on,
-    ).filter((date) => date.startsWith(monthPrefix) && date > today);
+    ).filter((date) => date.startsWith(monthPrefix));
 
     for (const date of dates) {
       const key = recurringOccurrenceKey(template.id, date);
-      if (applied.has(key) || skippedKeys.has(key) || fulfilledKeys.has(key)) {
+      const awaited = date <= today && (bank?.awaited.has(key) ?? false);
+      if (
+        (date <= today && !awaited) ||
+        applied.has(key) ||
+        skippedKeys.has(key) ||
+        fulfilledKeys.has(key) ||
+        bank?.arrived.has(key)
+      ) {
         continue;
       }
 
@@ -190,6 +212,7 @@ export function buildStillToCome(
           amount: Number(template.amount),
           type: template.categories.type,
           recorded: false,
+          ...(awaited ? { awaited } : {}),
         },
         countsTowardSummary(template),
       );

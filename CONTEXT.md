@@ -105,6 +105,20 @@ transaction on its day, and until then it is counted by nothing that describes
 what has happened.
 _Avoid_: forecast row, pending, scheduled transaction
 
+**Awaited occurrence**:
+_En français_ : pas encore passé
+With a bank feeding the ledger, an occurrence whose day has come that the
+bank has not brought yet. Nothing writes it there, so going by the day alone
+it would leave the forecast at midnight while the debit was still on its way
+— the loan taken on the 5th, looked at on the 5th. It stays in the forecast,
+taking the balance down from tomorrow, until a bank movement looks like it,
+until no movement could still be offered for it (four days, ten for the money
+that moves on payday), or until it is confirmed or skipped. The same rule
+works the other way: an occurrence a movement already looks like, early or
+late, is not forecast beside it while « C'est arrivé ? » waits. Nothing is
+confirmed by either (`bankForecast`).
+_Avoid_: overdue, late, pending
+
 **Skip**:
 _En français_ : passer, retirer de ce mois
 The user's decision that one specific occurrence should not exist this month.
@@ -125,7 +139,8 @@ user asks for this month's when creating it. Saving a template is the one thing
 that reaches rows already written: the user chooses whether this month's
 recorded rows follow it ("this month too") or keep what they say ("upcoming
 only"), and past months never change. With a bank feeding the ledger, nothing
-is applied at all: the bank is the record, and a template only forecasts.
+is applied at all: the bank is the record, and a template only forecasts —
+until the bank brings each occurrence (see awaited occurrence).
 _Avoid_: sync, generate, run
 
 **Reprice**:

@@ -7,6 +7,7 @@ import { type Locale } from "./i18n/locale";
 import { translator } from "./i18n/t";
 import { displayNameForRecurringTemplate } from "./investment-positions";
 import type { QuoteSource } from "./market/quote-source";
+import type { BankForecast } from "./recurring-fulfilment";
 import {
   filterDatesBySchedule,
   getRecurringOccurrenceDates,
@@ -511,6 +512,11 @@ export interface PlannedOccurrence {
   categoryName: string;
   categoryType: CategoryType;
   categoryIcon: string | null;
+  /**
+   * Its day has come, and the bank has not brought it yet (`bankForecast`):
+   * still owed, though its date is behind.
+   */
+  awaited?: boolean;
 }
 
 /**
@@ -520,7 +526,10 @@ export interface PlannedOccurrence {
  * Every occurrence dated after today that is neither written, skipped nor
  * already fulfilled by another row. Nothing here is stored — which is the
  * whole reason a future month can show its charges without anything having
- * to be kept in step when a charge changes.
+ * to be kept in step when a charge changes. With a bank feeding the ledger,
+ * the bank decides instead of the day: an occurrence it has not brought yet
+ * is still drawn after its day, and one a movement already looks like is not
+ * drawn beside it.
  */
 export function plannedOccurrences(
   templates: readonly RecurringTemplateWithCategory[],
@@ -529,6 +538,7 @@ export function plannedOccurrences(
   month: number,
   skippedKeys: ReadonlySet<string>,
   today: string,
+  bank: BankForecast | null = null,
 ): PlannedOccurrence[] {
   const planned: PlannedOccurrence[] = [];
   for (const { template, occurredOn, key } of monthOccurrences(
@@ -537,7 +547,13 @@ export function plannedOccurrences(
     month,
     skippedKeys,
   )) {
-    if (!isPlanned(occurredOn, today) || existingKeys.has(key)) {
+    const awaited =
+      !isPlanned(occurredOn, today) && (bank?.awaited.has(key) ?? false);
+    if (
+      (!isPlanned(occurredOn, today) && !awaited) ||
+      existingKeys.has(key) ||
+      bank?.arrived.has(key)
+    ) {
       continue;
     }
     planned.push({
@@ -551,6 +567,7 @@ export function plannedOccurrences(
       categoryName: template.categories.name,
       categoryType: template.categories.type,
       categoryIcon: template.categories.icon,
+      ...(awaited ? { awaited } : {}),
     });
   }
   return planned.sort((a, b) => a.occurredOn.localeCompare(b.occurredOn));

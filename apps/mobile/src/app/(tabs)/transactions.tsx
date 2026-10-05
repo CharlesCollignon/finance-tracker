@@ -19,7 +19,10 @@ import {
   FULFILMENT_STATE_KEY,
   indexFulfilmentStates,
 } from "@finance/core/fulfilment-state";
-import type { FulfilmentProposal } from "@finance/core/recurring-fulfilment";
+import type {
+  BankForecast,
+  FulfilmentProposal,
+} from "@finance/core/recurring-fulfilment";
 import {
   plannedOccurrences,
   recurringOccurrenceKey,
@@ -80,6 +83,7 @@ import {
 } from "@/lib/mutations";
 import {
   countSwallowedFeedItems,
+  getBankForecast,
   getCategories,
   getConfirmedTransactionIds,
   getFulfilledKeys,
@@ -88,6 +92,7 @@ import {
   getRecurringTemplates,
   getSkippedOccurrences,
   getTransactions,
+  hasBankFeed,
   type PendingFeedRow,
   type SkippedOccurrence,
 } from "@/lib/queries";
@@ -201,6 +206,7 @@ export default function TransactionsScreen() {
           fulfilled: new Set<string>(),
           proposals: [] as FulfilmentProposal[],
           swallowed: 0,
+          bank: null as BankForecast | null,
         };
       }
       const [
@@ -212,6 +218,7 @@ export default function TransactionsScreen() {
         confirmed,
         fulfilled,
         swallowed,
+        bankFed,
       ] = await Promise.all([
         getTransactions(user.id, year, month),
         getCategories(user.id),
@@ -231,17 +238,17 @@ export default function TransactionsScreen() {
         // Rows an old sync merged away without asking, offered back above
         // the review as on the web. A count; nothing without a bank.
         countSwallowedFeedItems(user.id),
+        // With a bank, it is the bank bringing a charge that ends its
+        // planned row, not its day.
+        hasBankFeed(user.id),
       ]);
       // Asked after the batch, because it needs the templates and categories
       // the batch fetched. Only the proposals: an absence is a question for
       // the Month screen, which has room to explain it.
-      const proposals = await getFulfilmentProposals(
-        user.id,
-        templates,
-        categories,
-        year,
-        month,
-      );
+      const [proposals, bank] = await Promise.all([
+        getFulfilmentProposals(user.id, templates, categories, year, month),
+        getBankForecast(user.id, templates, bankFed, todayIsoLocal()),
+      ]);
       return {
         transactions,
         categories,
@@ -252,6 +259,7 @@ export default function TransactionsScreen() {
         fulfilled,
         proposals,
         swallowed,
+        bank,
       };
     }, [user?.id, year, month], {
       reads: ["transactions", "templates", "categories", "bank"],
@@ -330,6 +338,7 @@ export default function TransactionsScreen() {
       month,
       notPlanned,
       todayIsoLocal(),
+      data.bank,
     );
   }, [data, transactions, year, month]);
 
@@ -864,6 +873,11 @@ export default function TransactionsScreen() {
         renderItem={({ item: row, index }) => {
           if (row.kind === "planned") {
             const occurrence = row.occurrence;
+            // One whose day has come is not coming up: the bank has not
+            // brought it.
+            const word = t(
+              occurrence.awaited ? "ledger.awaited" : "ledger.planned",
+            );
             return (
               <StaggerItem index={index}>
                 {/* Muted, and the word says why: the dimming alone does not
@@ -871,7 +885,7 @@ export default function TransactionsScreen() {
                     selectable — there is nothing stored to delete or move. */}
                 <Pressable
                   accessibilityRole="button"
-                  accessibilityLabel={`${occurrence.categoryName}, ${t("ledger.planned")}`}
+                  accessibilityLabel={`${occurrence.categoryName}, ${word}`}
                   accessibilityHint={occurrence.name}
                   disabled={selectMode}
                   className="min-h-14 flex-row items-center gap-3 py-3"
@@ -892,7 +906,7 @@ export default function TransactionsScreen() {
                       {occurrence.categoryName}
                     </Text>
                     <Text variant="muted" numberOfLines={1} className="text-xs">
-                      {[t("ledger.planned"), occurrence.note]
+                      {[word, occurrence.note]
                         .filter(Boolean)
                         .join(" · ")}
                     </Text>

@@ -894,16 +894,16 @@ function PlannedRow({
 }) {
   const t = useT();
   const formatEuro = useFormatCurrency();
-  const subtitle = [t("ledger.planned"), occurrence.note]
-    .filter(Boolean)
-    .join(" · ");
+  // One whose day has come is not coming up: the bank has not brought it.
+  const word = t(occurrence.awaited ? "ledger.awaited" : "ledger.planned");
+  const subtitle = [word, occurrence.note].filter(Boolean).join(" · ");
 
   return (
     <button
       type="button"
       onClick={onOpen}
       disabled={disabled}
-      aria-label={`${occurrence.name}, ${t("ledger.planned")}`}
+      aria-label={`${occurrence.name}, ${word}`}
       className={cn(
         "-mx-2 flex w-[calc(100%+1rem)] items-center justify-between gap-3 rounded-control px-2 py-2.5 text-left",
         "transition-colors hover:bg-muted/40 disabled:cursor-default disabled:hover:bg-transparent",

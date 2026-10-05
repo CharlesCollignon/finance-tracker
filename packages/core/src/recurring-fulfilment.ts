@@ -22,7 +22,7 @@ import { translator } from "./i18n/t";
  * Kept free of database concerns so the rules are testable on their own.
  */
 
-import { recurringOccurrenceKey } from "./apply-recurring";
+import { recurringOccurrenceKey, templateSetUpOn } from "./apply-recurring";
 import {
   filterDatesBySchedule,
   getRecurringOccurrenceDates,
@@ -477,6 +477,70 @@ export function proposeFulfilments(
   );
 
   return proposals;
+}
+
+/* ------------------------------------------------- what the bank still owes */
+
+/**
+ * What a ledger a bank feeds still forecasts, as occurrence keys.
+ *
+ * Nothing writes an occurrence there on its day: the bank is the record, and
+ * it brings the debit when it brings it — a loan taken on the 5th shows up
+ * that morning, the next day, or after a weekend. Going by the day alone, a
+ * charge stopped being forecast at midnight and was not yet anywhere else, so
+ * it fell out of the forecast and the ledger both, and the month's end looked
+ * a loan payment better off than it was. So it is the bank bringing it that
+ * ends an occurrence's forecast, either way round:
+ *
+ *   - `awaited`: its day has come, and nothing the bank brought looks like it
+ *     yet. Still forecast for as long as a movement could still be offered
+ *     for it (`windowFor`) — past that, the bank did not take it. Never one
+ *     from before its template was set up: nobody was waiting for that one;
+ *   - `arrived`: a movement already looks like it, early or late — the
+ *     pairing « C'est arrivé ? » asks about. The money is in the actuals, so
+ *     it is not forecast a second time while the question waits. Nothing is
+ *     confirmed by this: the user is still asked.
+ *
+ * Whether one has been confirmed, skipped or written is the caller's to
+ * check, as it already does for the occurrences ahead.
+ */
+export interface BankForecast {
+  awaited: ReadonlySet<string>;
+  arrived: ReadonlySet<string>;
+}
+
+export function bankForecast(
+  templates: readonly Pick<
+    RecurringTemplateWithCategory,
+    "id" | "created_at"
+  >[],
+  occurrences: readonly FulfilmentOccurrence[],
+  proposals: readonly Pick<FulfilmentProposal, "key">[],
+  today: string,
+): BankForecast {
+  const arrived = new Set(proposals.map((proposal) => proposal.key));
+  const setUpOn = new Map(
+    templates.map((template) => [template.id, templateSetUpOn(template)]),
+  );
+  const awaited = new Set<string>();
+
+  for (const occurrence of occurrences) {
+    const key = recurringOccurrenceKey(
+      occurrence.templateId,
+      occurrence.occurredOn,
+    );
+    if (
+      occurrence.occurredOn > today ||
+      arrived.has(key) ||
+      occurrence.occurredOn < (setUpOn.get(occurrence.templateId) ?? today) ||
+      daysBetween(occurrence.occurredOn, today) > windowFor(occurrence, today)
+    ) {
+      continue;
+    }
+    awaited.add(key);
+  }
+
+  return { awaited, arrived };
 }
 
 /**

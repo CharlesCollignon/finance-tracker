@@ -116,6 +116,19 @@ export function upcomingDelta(charge: UpcomingCharge): number {
   return charge.type === "income" ? charge.amount : -charge.amount;
 }
 
+/**
+ * The day one charge still to come moves the balance: its own, ahead of
+ * today. One awaited from the bank (`bankForecast`) has a day behind it and
+ * its money has not moved — the balance read today does not have it — so it
+ * moves the balance from tomorrow.
+ */
+export function upcomingDay(
+  charge: Pick<UpcomingCharge, "occurredOn">,
+  today: string,
+): string {
+  return charge.occurredOn > today ? charge.occurredOn : shiftIsoDate(today, 1);
+}
+
 export type MonthPeriod = "past" | "current" | "future";
 
 export interface MonthBalanceInput {
@@ -204,7 +217,7 @@ const OUTFLOWS_NAMED = 3;
  * markers along its balance curve. Recorded rows go on the day the curve
  * puts them (their cash day against a bank's balance, the day they count
  * for otherwise; see `recordedDeltas`), what the charges still call for on
- * its day. Only what leaves, by the curve's own rule (`transactionDelta`,
+ * the day it moves the curve (`upcomingDay`). Only what leaves, by the curve's own rule (`transactionDelta`,
  * `upcomingDelta`): a purchase inside a wallet moves nothing and is not a
  * marker.
  */
@@ -247,13 +260,11 @@ export function outflowsByDay({
     }
   }
   for (const charge of upcoming) {
-    if (charge.occurredOn > today) {
-      add(
-        charge.occurredOn,
-        charge.description?.trim() || charge.name,
-        -upcomingDelta(charge),
-      );
-    }
+    add(
+      upcomingDay(charge, today),
+      charge.description?.trim() || charge.name,
+      -upcomingDelta(charge),
+    );
   }
 
   return [...byDay.entries()]
