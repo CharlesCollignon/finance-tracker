@@ -6,13 +6,8 @@ import { usePathname } from "next/navigation";
 import { Plus } from "@phosphor-icons/react";
 import { LazyMotion, m, MotionConfig } from "motion/react";
 import { cn } from "@/lib/utils";
-import {
-  activeNavHref,
-  badgeFor,
-  navItems,
-  NO_BADGES,
-  type NavBadges,
-} from "@/lib/navigation";
+import { activeNavHref, navItems } from "@/lib/navigation";
+import { badgeFor, NO_BADGES, type NavBadges } from "@/lib/nav-badges";
 import {
   NOTCH_CENTRE_CLASS,
   NOTCH_ITEM_ACTIVE_CLASS,
