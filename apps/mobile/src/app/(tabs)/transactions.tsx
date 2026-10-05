@@ -11,11 +11,13 @@ import {
 
 import {
   formatShortDate,
+  getCurrentMonth,
   parseMonthParams,
   relativeDayLabel,
   todayIsoLocal,
 } from "@finance/core/constants";
 import {
+  FULFILMENT_DOT_CLASS,
   FULFILMENT_STATE_KEY,
   indexFulfilmentStates,
 } from "@finance/core/fulfilment-state";
@@ -243,10 +245,18 @@ export default function TransactionsScreen() {
         hasBankFeed(user.id),
       ]);
       // Asked after the batch, because it needs the templates and categories
-      // the batch fetched. Only the proposals: an absence is a question for
-      // the Month screen, which has room to explain it.
+      // the batch fetched. Only the proposals Le point asks about, whichever
+      // month is shown: a row marked « À confirmer » is one that can be
+      // confirmed there.
+      const now = getCurrentMonth();
       const [proposals, bank] = await Promise.all([
-        getFulfilmentProposals(user.id, templates, categories, year, month),
+        getFulfilmentProposals(
+          user.id,
+          templates,
+          categories,
+          now.year,
+          now.month,
+        ),
         getBankForecast(user.id, templates, bankFed, todayIsoLocal()),
       ]);
       return {
@@ -289,6 +299,11 @@ export default function TransactionsScreen() {
       ),
     [data?.proposals, data?.confirmed],
   );
+  // The rows here « C'est arrivé ? » asks about. Answered on Le point, whose
+  // card asks it, so the Ledger says how many and leads there.
+  const toConfirm = transactions.filter(
+    (tx) => fulfilmentStates.get(tx.id) === "proposed",
+  ).length;
   const inbox = useMemo(() => data?.inbox ?? [], [data?.inbox]);
   // Without a feed, the place the inbox bar would take invites one instead:
   // this screen is where typing every line in is felt most.
@@ -609,6 +624,36 @@ export default function TransactionsScreen() {
       ) : (
         <ConnectBankInvite surface="ledger" bank={bank} className="mt-3" />
       )}
+
+      {toConfirm > 0 ? (
+        <Pressable
+          accessibilityRole="link"
+          onPress={() => {
+            void hapticLight();
+            // Le point asks on the month in progress, and shares its month
+            // with this screen.
+            const now = getCurrentMonth();
+            setMonth(now.year, now.month);
+            router.navigate("/" as Href);
+          }}
+          className="mt-3 min-h-11 flex-row items-center gap-2.5 px-1"
+        >
+          <View
+            className={cn(
+              "h-2 w-2 rounded-full",
+              FULFILMENT_DOT_CLASS.proposed,
+            )}
+          />
+          <Text className="min-w-0 flex-1 text-sm">
+            {t("ledger.toConfirm", { count: toConfirm })}
+          </Text>
+          <Ionicons
+            name="arrow-forward"
+            size={ICON.sm}
+            color={colors.mutedForeground}
+          />
+        </Pressable>
+      ) : null}
 
       {nothingAtAll ? null : (
         <>

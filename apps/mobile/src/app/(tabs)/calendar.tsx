@@ -4,6 +4,7 @@ import { Pressable, RefreshControl, ScrollView, View } from "react-native";
 import {
   formatLongDate,
   formatMonthLabel,
+  getCurrentMonth,
   todayIsoLocal,
 } from "@finance/core/constants";
 import {
@@ -145,9 +146,17 @@ export default function CalendarScreen() {
         hasBankFeed(user.id),
       ]);
       // Asked after the batch, because they need the templates and
-      // categories the batch fetched.
+      // categories the batch fetched. The proposals Le point asks about, as
+      // the Ledger marks them.
+      const now = getCurrentMonth();
       const [proposals, bank] = await Promise.all([
-        getFulfilmentProposals(user.id, templates, categories, year, month),
+        getFulfilmentProposals(
+          user.id,
+          templates,
+          categories,
+          now.year,
+          now.month,
+        ),
         getBankForecast(user.id, templates, bankFed, todayIsoLocal()),
       ]);
       return {
