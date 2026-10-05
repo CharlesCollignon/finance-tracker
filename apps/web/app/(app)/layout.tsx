@@ -12,6 +12,7 @@ import { getQuickEntryContext } from "@/lib/queries/quick-entry";
 import { accountLabel } from "@/lib/account-label";
 import { bankFeedBelongsTo } from "@/lib/bank/client";
 import { countFulfilmentProposals } from "@/lib/queries/fulfilment";
+import { countPendingFeedItems } from "@/lib/queries/bank";
 import { getRecurringTemplates } from "@/lib/queries/finance";
 import { getCurrentMonth } from "@finance/core/constants";
 import type { PullFreshness } from "@finance/core/bank-pull";
@@ -52,7 +53,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
       ])
     : [false, NO_QUICK_ENTRY, null, null];
 
-  const [freshness, arrivedCount] = await Promise.all([
+  const [freshness, arrivedCount, inboxCount] = await Promise.all([
     // One small read for a control on every surface, and only where there is
     // a bank for it to describe. A failure here would take down every app
     // page to report the age of a figure, which is a poor trade: the control
@@ -64,9 +65,10 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
           )
           .catch((): PullFreshness | null => null)
       : null,
-    // Charges the bank looks to have already paid, for a badge on the Ledger.
-    // Always this month: a question about a month that has ended is not one
-    // the nav should be nagging about.
+    // Charges the bank looks to have already paid, for a badge on the
+    // Bearing, whose card asks about them. Always this month, as the card
+    // does: a question about a month that has ended is not one the nav
+    // should be nagging about.
     user && templates
       ? countFulfilmentProposals(
           user.id,
@@ -76,6 +78,11 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
           getCurrentMonth().month,
         ).catch(() => 0)
       : 0,
+    // Bank rows waiting for a category, for a badge on the Ledger, whose
+    // review files them. Not month-scoped: a coffee from the 29th of last
+    // month still needs one. Whether or not the bank still syncs: rows kept
+    // after a disconnect are reviewed all the same.
+    user ? countPendingFeedItems(user.id).catch(() => 0) : 0,
   ]);
 
   // Different on every render, which is the point: `LiveRefresh` tells a
@@ -100,7 +107,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
           <AppShell
             displayName={name}
             initial={initial}
-            ledgerBadge={arrivedCount}
+            badges={{ bearing: arrivedCount, ledger: inboxCount }}
             showProperty={flags ? isFlagOn(flags, "property.track") : false}
           >
             {children}
