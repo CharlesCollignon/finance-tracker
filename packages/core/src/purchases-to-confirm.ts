@@ -39,12 +39,14 @@ export interface PurchaseToConfirm {
  * it, and no answer records nothing.
  *
  * Never one from before its template was set up, nor one already written,
- * skipped or confirmed.
+ * skipped or confirmed — nor one whose wallet the bank debits, which its
+ * debits settle (`debitedPurchaseForecast`).
  */
 export function purchasesToConfirm({
   templates,
   writtenKeys,
   settledKeys,
+  debited = new Set(),
   today,
 }: {
   templates: readonly RecurringTemplateWithCategory[];
@@ -52,6 +54,8 @@ export function purchasesToConfirm({
   writtenKeys: ReadonlySet<string>;
   /** Occurrences skipped or confirmed, which are not owed again. */
   settledKeys: ReadonlySet<string>;
+  /** The categories of the wallets bought straight from the account. */
+  debited?: ReadonlySet<string>;
   today: string;
 }): PurchaseToConfirm[] {
   const from = shiftIsoDate(today, -PURCHASE_ASK_DAYS);
@@ -65,7 +69,11 @@ export function purchasesToConfirm({
 
   const out: PurchaseToConfirm[] = [];
   for (const template of templates) {
-    if (!template.active || !isPurchaseInsideWallet(template.categories)) {
+    if (
+      !template.active ||
+      !isPurchaseInsideWallet(template.categories) ||
+      debited.has(template.category_id)
+    ) {
       continue;
     }
     const setUpOn = templateSetUpOn(template);

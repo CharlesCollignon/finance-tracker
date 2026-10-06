@@ -137,6 +137,7 @@ export async function gatherBearingMonth(
     rows,
     upcoming: shownUpcoming,
     outflows,
+    debited,
   } = await readMonthBalance(await createClient(), userId, {
     year,
     month,
@@ -199,6 +200,7 @@ export async function gatherBearingMonth(
           ? getPurchasesToConfirm(await createClient(), userId, {
               templates,
               fulfilledKeys,
+              debited,
               today,
             })
           : Promise.resolve([]),

@@ -236,9 +236,10 @@ function shiftIso(iso: string, days: number): string {
  * due on the 5th that the bank paid on the 3rd is still a future occurrence
  * on the 4th, and it is exactly the one worth asking about.
  *
- * Never a purchase inside a wallet: no bank movement can be one, so it is
- * neither awaited from the bank nor offered a pairing — the user is asked
- * whether it went through instead (`purchasesToConfirm`).
+ * Never a purchase inside a wallet. Bought with money already at the broker,
+ * no bank movement can be one, and the user is asked whether it went through
+ * instead (`purchasesToConfirm`); bought from the account, its debits are
+ * taken at whatever they cost and never asked about (`debitedPurchaseForecast`).
  */
 export function fulfilmentOccurrences(
   templates: readonly RecurringTemplateWithCategory[],
@@ -246,47 +247,52 @@ export function fulfilmentOccurrences(
   months: readonly { year: number; month: number }[],
 ): FulfilmentOccurrence[] {
   const byId = new Map(categories.map((c) => [c.id, c] as const));
-  const out: FulfilmentOccurrence[] = [];
-
-  for (const template of templates) {
-    if (!template.active || isPurchaseInsideWallet(template.categories)) {
-      continue;
-    }
+  return templates.flatMap((template) => {
     const category = byId.get(template.category_id);
-    if (!category) {
-      continue;
-    }
-    for (const { year, month } of months) {
-      const monthPrefix = `${year}-${String(month).padStart(2, "0")}`;
-      const dates = filterDatesBySchedule(
-        getRecurringOccurrenceDates(
-          {
-            recurrence: template.recurrence ?? "monthly",
-            day_of_month: template.day_of_month,
-            day_of_week: template.day_of_week,
-            month_of_year: template.month_of_year,
-          },
-          year,
-          month,
-        ),
-        template.starts_on,
-        template.ends_on,
-      ).filter((date) => date.startsWith(monthPrefix));
+    return !template.active ||
+      !category ||
+      isPurchaseInsideWallet(template.categories)
+      ? []
+      : occurrencesOf(template, category, months);
+  });
+}
 
-      for (const date of dates) {
-        out.push({
-          templateId: template.id,
-          occurredOn: date,
-          amount: Number(template.amount),
-          categoryId: template.category_id,
-          categoryType: category.type,
-          label: template.description?.trim() || category.name,
+/** One template's occurrences over some months, as the matcher takes them. */
+function occurrencesOf(
+  template: RecurringTemplateWithCategory,
+  category: Pick<Category, "type" | "name">,
+  months: readonly { year: number; month: number }[],
+): FulfilmentOccurrence[] {
+  const out: FulfilmentOccurrence[] = [];
+  for (const { year, month } of months) {
+    const monthPrefix = `${year}-${String(month).padStart(2, "0")}`;
+    const dates = filterDatesBySchedule(
+      getRecurringOccurrenceDates(
+        {
           recurrence: template.recurrence ?? "monthly",
-        });
-      }
+          day_of_month: template.day_of_month,
+          day_of_week: template.day_of_week,
+          month_of_year: template.month_of_year,
+        },
+        year,
+        month,
+      ),
+      template.starts_on,
+      template.ends_on,
+    ).filter((date) => date.startsWith(monthPrefix));
+
+    for (const date of dates) {
+      out.push({
+        templateId: template.id,
+        occurredOn: date,
+        amount: Number(template.amount),
+        categoryId: template.category_id,
+        categoryType: category.type,
+        label: template.description?.trim() || category.name,
+        recurrence: template.recurrence ?? "monthly",
+      });
     }
   }
-
   return out;
 }
 
@@ -512,6 +518,11 @@ export function proposeFulfilments(
 export interface BankForecast {
   awaited: ReadonlySet<string>;
   arrived: ReadonlySet<string>;
+  /**
+   * The categories of the wallets bought straight from the account, whose
+   * purchases move money like any other debit (`debitedPurchaseForecast`).
+   */
+  debited?: ReadonlySet<string>;
 }
 
 export function bankForecast(
@@ -546,6 +557,66 @@ export function bankForecast(
   }
 
   return { awaited, arrived };
+}
+
+/**
+ * What the bank has and has not brought of the purchases inside a wallet it
+ * debits — Bitstack, which takes its Monday buys from the account by card.
+ *
+ * Their cost is not known ahead: the charge says about 18 €, and the bank
+ * brings a round-up and the week's buy at whatever they came to. So any debit
+ * in the charge's category near its day is it, each to the occurrence it is
+ * nearest, and nothing is asked: the debits are already in the ledger at what
+ * they really cost. Until one comes it is awaited, like any other charge the
+ * bank brings (`bankForecast`).
+ */
+export function debitedPurchaseForecast(
+  templates: readonly RecurringTemplateWithCategory[],
+  debited: ReadonlySet<string>,
+  months: readonly { year: number; month: number }[],
+  movements: readonly Pick<FulfilmentMovement, "occurredOn" | "categoryId">[],
+  today: string,
+): BankForecast {
+  const bought = templates.filter(
+    (template) =>
+      template.active &&
+      isPurchaseInsideWallet(template.categories) &&
+      debited.has(template.category_id),
+  );
+  const occurrences = bought.flatMap((template) =>
+    occurrencesOf(template, template.categories, months),
+  );
+
+  const arrived = new Set<string>();
+  for (const movement of movements) {
+    if (movement.occurredOn > today) {
+      continue;
+    }
+    let nearest: FulfilmentOccurrence | null = null;
+    for (const occurrence of occurrences) {
+      const apart = daysBetween(occurrence.occurredOn, movement.occurredOn);
+      if (
+        occurrence.categoryId === movement.categoryId &&
+        apart <= windowFor(occurrence, movement.occurredOn) &&
+        (!nearest ||
+          apart < daysBetween(nearest.occurredOn, movement.occurredOn))
+      ) {
+        nearest = occurrence;
+      }
+    }
+    if (nearest) {
+      arrived.add(
+        recurringOccurrenceKey(nearest.templateId, nearest.occurredOn),
+      );
+    }
+  }
+
+  return bankForecast(
+    bought,
+    occurrences,
+    [...arrived].map((key) => ({ key })),
+    today,
+  );
 }
 
 /**

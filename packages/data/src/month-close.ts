@@ -19,6 +19,7 @@ import type {
   TransactionWithCategory,
 } from "@finance/core/types/database";
 
+import { walletCategoriesTheBankDebits } from "./bank-feed";
 import type { Db } from "./client";
 import { getMovedBetween } from "./moved-rows";
 
@@ -97,6 +98,7 @@ export async function getRecordedCashFlows(
     { data: transactions, error: txError },
     { data: transfers, error: trError },
     moved,
+    debited,
   ] = await Promise.all([
     db
       .from("transactions")
@@ -113,6 +115,8 @@ export async function getRecordedCashFlows(
     // An income paid early for next month left its mark on this month's
     // balance, whichever month it counts for.
     getMovedBetween(db, userId, start, end),
+    // Bitstack's buys left the account; a DCA PEA's never touched it.
+    walletCategoriesTheBankDebits(db, userId),
   ]);
 
   if (txError) {
@@ -132,6 +136,7 @@ export async function getRecordedCashFlows(
       end,
     ),
     transfers ?? [],
+    debited,
   );
 }
 
@@ -186,7 +191,7 @@ async function cashFlowsByMonth(
   const { start } = getMonthBounds(firstYear!, firstMonth!);
   const { end } = getMonthBounds(lastYear!, lastMonth!);
 
-  const [transactions, { data: transfers, error: trError }, moved] =
+  const [transactions, { data: transfers, error: trError }, moved, debited] =
     await Promise.all([
       // From the first close to the last, so a year of closes is a year of
       // rows — past the server's cap, and paged for it.
@@ -207,6 +212,7 @@ async function cashFlowsByMonth(
         .gte("occurred_on", start)
         .lte("occurred_on", end),
       getMovedBetween(db, userId, start, end),
+      walletCategoriesTheBankDebits(db, userId),
     ]);
 
   if (trError) {
@@ -240,6 +246,7 @@ async function cashFlowsByMonth(
       buildRecordedCashFlows(
         txByMonth.get(key) ?? [],
         transferByMonth.get(key) ?? [],
+        debited,
       ),
     );
   }

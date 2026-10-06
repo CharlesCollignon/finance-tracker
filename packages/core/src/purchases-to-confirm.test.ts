@@ -1,7 +1,12 @@
 import { describe, expect, it } from "vitest";
 
 import { purchasesToConfirm } from "./purchases-to-confirm";
-import { bankForecast, fulfilmentOccurrences } from "./recurring-fulfilment";
+import { buildStillToCome } from "./still-to-come";
+import {
+  bankForecast,
+  debitedPurchaseForecast,
+  fulfilmentOccurrences,
+} from "./recurring-fulfilment";
 import type {
   CategoryType,
   RecurringTemplateWithCategory,
@@ -127,5 +132,102 @@ describe("a purchase inside a wallet and the bank", () => {
     );
     const forecast = bankForecast(templates, occurrences, [], "2026-10-06");
     expect([...forecast.awaited]).toEqual(["transfer:2026-10-02"]);
+  });
+});
+
+describe("a wallet the bank debits", () => {
+  // Bitstack: about 18 € every Monday, taken from the account by card as a
+  // round-up and the week's buy, whatever they came to.
+  const bitstack: RecurringTemplateWithCategory = {
+    ...template("bitstack", 0, "investment", {
+      counts: false,
+      description: "DCA Bitstack",
+    }),
+    amount: 18,
+    recurrence: "weekly",
+    day_of_month: null,
+    day_of_week: 1,
+  };
+  const debited = new Set([bitstack.category_id]);
+  const october = [{ year: 2026, month: 10 }];
+  const debit = (occurredOn: string, categoryId = bitstack.category_id) => ({
+    occurredOn,
+    categoryId,
+  });
+
+  it("is settled by its debits, whatever they came to", () => {
+    // Monday the 5th: 9.62 € and 5.10 €, nowhere near 18 €.
+    const forecast = debitedPurchaseForecast(
+      [bitstack],
+      debited,
+      october,
+      [debit("2026-10-05"), debit("2026-10-05")],
+      "2026-10-06",
+    );
+    expect([...forecast.arrived]).toEqual(["bitstack:2026-10-05"]);
+    expect([...forecast.awaited]).toEqual([]);
+  });
+
+  it("is awaited until a debit comes", () => {
+    const forecast = debitedPurchaseForecast(
+      [bitstack],
+      debited,
+      october,
+      [debit("2026-10-05", "cat-elsewhere")],
+      "2026-10-06",
+    );
+    expect([...forecast.arrived]).toEqual([]);
+    expect([...forecast.awaited]).toEqual(["bitstack:2026-10-05"]);
+  });
+
+  it("gives a debit to the Monday it is nearest", () => {
+    // A Thursday is inside both Mondays' room; the earlier one is nearer.
+    const forecast = debitedPurchaseForecast(
+      [bitstack],
+      debited,
+      october,
+      [debit("2026-10-08")],
+      "2026-10-08",
+    );
+    expect([...forecast.arrived]).toEqual(["bitstack:2026-10-05"]);
+  });
+
+  it("is never asked about", () => {
+    expect(
+      purchasesToConfirm({
+        templates: [bitstack],
+        writtenKeys: new Set(),
+        settledKeys: new Set(),
+        debited,
+        today: "2026-10-06",
+      }),
+    ).toEqual([]);
+  });
+
+  it("takes the balance down while it is still to come", () => {
+    const still = buildStillToCome(
+      [],
+      [bitstack],
+      2026,
+      10,
+      "2026-10-06",
+      new Set(),
+      new Set(),
+      {
+        awaited: new Set(),
+        arrived: new Set(),
+        debited,
+      },
+    );
+    // The 12th, the 19th and the 26th.
+    expect(still.outgoing.map((charge) => charge.tracked ?? false)).toEqual([
+      false,
+      false,
+      false,
+    ]);
+
+    // A DCA PEA, bought with money already at the broker, still does not.
+    const pea = buildStillToCome([], [dca], 2026, 10, "2026-10-01");
+    expect(pea.outgoing[0]?.tracked).toBe(true);
   });
 });

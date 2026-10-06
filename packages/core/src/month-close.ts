@@ -60,6 +60,11 @@ export interface WalletTransferAmount {
 export function buildRecordedCashFlows(
   transactions: readonly TransactionWithCategory[],
   walletTransfers: readonly WalletTransferAmount[] = [],
+  /**
+   * Wallets bought straight from the account (Bitstack's buys by card): their
+   * purchases left it, as a transfer to a broker does.
+   */
+  debited: ReadonlySet<string> = new Set(),
 ): RecordedCashFlows {
   const flows: RecordedCashFlows = {
     income: 0,
@@ -79,7 +84,10 @@ export function buildRecordedCashFlows(
 
     if (type === "investment") {
       // A deployment is movement inside a wallet, not out of the account.
-      if (tx.categories.counts_toward_summary === false) {
+      if (
+        tx.categories.counts_toward_summary === false &&
+        !debited.has(tx.category_id)
+      ) {
         continue;
       }
       flows.transfers += amount;

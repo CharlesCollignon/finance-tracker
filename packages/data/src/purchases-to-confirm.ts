@@ -22,17 +22,22 @@ export async function getPurchasesToConfirm(
   {
     templates,
     fulfilledKeys,
+    debited,
     today,
   }: {
     templates: readonly RecurringTemplateWithCategory[];
     fulfilledKeys: ReadonlySet<string>;
+    /** `walletCategoriesTheBankDebits`: their debits settle them instead. */
+    debited: ReadonlySet<string>;
     today: string;
   },
 ): Promise<PurchaseToConfirm[]> {
   const ids = templates
     .filter(
       (template) =>
-        template.active && isPurchaseInsideWallet(template.categories),
+        template.active &&
+        isPurchaseInsideWallet(template.categories) &&
+        !debited.has(template.category_id),
     )
     .map((template) => template.id);
   if (ids.length === 0) {
@@ -76,6 +81,7 @@ export async function getPurchasesToConfirm(
         recurringOccurrenceKey(row.template_id, row.occurred_on),
       ),
     ]),
+    debited,
     today,
   });
 }

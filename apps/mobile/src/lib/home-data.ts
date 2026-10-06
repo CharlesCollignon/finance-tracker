@@ -186,6 +186,7 @@ export async function gatherHomeMonth(
     rows,
     upcoming: shownUpcoming,
     outflows,
+    debited,
   } = await readMonthBalance(supabase, userId, {
     year,
     month,
@@ -244,6 +245,7 @@ export async function gatherHomeMonth(
           ? getPurchasesToConfirm(supabase, userId, {
               templates,
               fulfilledKeys,
+              debited,
               today,
             })
           : Promise.resolve([]),
