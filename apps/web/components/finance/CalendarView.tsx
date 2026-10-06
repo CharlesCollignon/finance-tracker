@@ -38,6 +38,7 @@ import { computeMonthlyBudget } from "@finance/core/budget";
 import {
   buildCalendarWeeks,
   buildPulseDays,
+  calendarMonthTotals,
   computeDayTotals,
   defaultSelectedDate,
   formatCalendarDate,
@@ -71,6 +72,12 @@ interface CalendarViewProps {
   proposedTransactionIds?: string[];
   year: number;
   month: number;
+  /**
+   * The categories of the wallets the bank debits from the account
+   * (Bitstack), whose buys are money out where a DCA bought at the broker's
+   * is not.
+   */
+  debitedCategoryIds?: string[];
 }
 
 /** Nothing deleted yet: the optimistic set's resting state. */
@@ -85,6 +92,7 @@ export function CalendarView({
   proposedTransactionIds,
   year,
   month,
+  debitedCategoryIds,
 }: CalendarViewProps) {
   const t = useT();
   const quickAdd = useQuickAdd();
@@ -143,9 +151,18 @@ export function CalendarView({
     [transactions],
   );
   const weeks = useMemo(() => buildCalendarWeeks(year, month), [year, month]);
+  const debited = useMemo(
+    () => new Set(debitedCategoryIds ?? []),
+    [debitedCategoryIds],
+  );
   const monthTotals = useMemo(
-    () => computeMonthlyBudget(transactions, recurringTemplates),
-    [transactions, recurringTemplates],
+    () =>
+      calendarMonthTotals(
+        computeMonthlyBudget(transactions, recurringTemplates),
+        transactions,
+        debited,
+      ),
+    [transactions, recurringTemplates, debited],
   );
 
   // Selection is keyed by month so navigating months resets to the
@@ -228,14 +245,14 @@ export function CalendarView({
       leaveSelectMode();
     });
   }
-  const selectedTotals = computeDayTotals(selectedTransactions);
+  const selectedTotals = computeDayTotals(selectedTransactions, debited);
   const monthLabel = formatMonthLabel(year, month, locale);
   // The day the pointer is on, in the strip or in the grid: each lights it
   // in the other.
   const [hoverDate, setHoverDate] = useState<string | null>(null);
   const pulseDays = useMemo(
-    () => buildPulseDays(weeks, byDate, plannedByDate),
-    [weeks, byDate, plannedByDate],
+    () => buildPulseDays(weeks, byDate, plannedByDate, debited),
+    [weeks, byDate, plannedByDate, debited],
   );
 
   // The header, the views and the month are the Ledger layout's
@@ -293,14 +310,17 @@ export function CalendarView({
                 >
                   {week.map((day) => {
                     const dayTxs = byDate.get(day.date) ?? [];
-                    const totals = computeDayTotals(dayTxs);
+                    const totals = computeDayTotals(dayTxs, debited);
                     const isSelected = day.date === selectedDate;
                     // Only on a day with nothing recorded, and muted: a
                     // planned amount is what the day is expected to hold,
                     // not what it did.
                     const dayPlanned =
                       totals.count === 0 && day.isCurrentMonth
-                        ? plannedTotals(plannedByDate.get(day.date) ?? [])
+                        ? plannedTotals(
+                            plannedByDate.get(day.date) ?? [],
+                            debited,
+                          )
                         : null;
 
                     return (

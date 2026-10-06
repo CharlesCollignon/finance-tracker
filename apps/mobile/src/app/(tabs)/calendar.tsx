@@ -10,6 +10,7 @@ import {
 import {
   buildCalendarWeeks,
   buildPulseDays,
+  calendarMonthTotals,
   computeDayTotals,
   defaultSelectedDate,
   groupTransactionsByDate,
@@ -232,9 +233,16 @@ export default function CalendarScreen() {
     return out;
   }, [data, transactions, templates, year, month]);
   const weeks = useMemo(() => buildCalendarWeeks(year, month), [year, month]);
+  // Bitstack's buys leave the account; a DCA bought at the broker does not.
+  const debited = data?.bank?.debited;
   const monthTotals = useMemo(
-    () => computeMonthlyBudget(transactions, templates),
-    [transactions, templates],
+    () =>
+      calendarMonthTotals(
+        computeMonthlyBudget(transactions, templates),
+        transactions,
+        debited,
+      ),
+    [transactions, templates, debited],
   );
 
   // Selection is keyed by month, so a month other than the one picked in
@@ -253,14 +261,14 @@ export default function CalendarScreen() {
   // The day a finger is on in the strip, lit in the grid as well.
   const [focusDate, setFocusDate] = useState<string | null>(null);
   const pulseDays = useMemo(
-    () => buildPulseDays(weeks, byDate, plannedByDate),
-    [weeks, byDate, plannedByDate],
+    () => buildPulseDays(weeks, byDate, plannedByDate, debited),
+    [weeks, byDate, plannedByDate, debited],
   );
 
   const dayTxs = byDate.get(effectiveSelected) ?? [];
   const dayPlanned = plannedByDate.get(effectiveSelected) ?? [];
   // What has happened only: a planned row is not money in or out yet.
-  const dayTotals = computeDayTotals(dayTxs);
+  const dayTotals = computeDayTotals(dayTxs, debited);
 
   const visibleIds = dayTxs.map((tx) => tx.id);
   const onThisDay = rowSelection.date === effectiveSelected;
@@ -374,6 +382,7 @@ export default function CalendarScreen() {
             plannedByDate={plannedByDate}
             selectedDate={effectiveSelected}
             litDate={focusDate}
+            debited={debited}
             onSelect={(date) => {
               setSelection({ monthKey, date });
             }}

@@ -104,6 +104,8 @@ export default async function CalendarPage({
       )}
       year={year}
       month={month}
+      // Bitstack's buys leave the account; a DCA bought at the broker does not.
+      debitedCategoryIds={[...(bankForecast?.debited ?? [])]}
     />
   );
 }

@@ -1,6 +1,12 @@
 import { describe, expect, it } from "vitest";
 import type { PlannedOccurrence } from "./apply-recurring";
-import { buildCalendarWeeks, buildPulseDays, plannedTotals } from "./calendar";
+import {
+  buildCalendarWeeks,
+  buildPulseDays,
+  calendarMonthTotals,
+  computeDayTotals,
+  plannedTotals,
+} from "./calendar";
 import type { TransactionWithCategory } from "./types/database";
 
 function planned(
@@ -67,5 +73,63 @@ describe("buildPulseDays", () => {
       plannedOutflow: 900,
       plannedIncome: 0,
     });
+  });
+});
+
+describe("purchases made at the broker", () => {
+  // A DCA PEA bought with money the transfer already took out of the
+  // account, and Bitstack's buy, which the bank debits from it.
+  const dca = {
+    amount: 400,
+    category_id: "cat-dca",
+    categories: { type: "investment", counts_toward_summary: false },
+  } as unknown as TransactionWithCategory;
+  const bitstack = {
+    amount: 18,
+    category_id: "cat-bitstack",
+    categories: { type: "investment", counts_toward_summary: false },
+  } as unknown as TransactionWithCategory;
+  const transfer = {
+    amount: 1750,
+    category_id: "cat-transfer",
+    categories: { type: "investment", counts_toward_summary: true },
+  } as unknown as TransactionWithCategory;
+  const debited = new Set(["cat-bitstack"]);
+
+  it("are not money out on their day, unless the bank debits them", () => {
+    expect(computeDayTotals([dca, bitstack, transfer], debited)).toMatchObject({
+      income: 0,
+      outflow: 1768,
+      count: 3,
+    });
+  });
+
+  it("are not planned money out either", () => {
+    const plannedDca: PlannedOccurrence = {
+      ...planned(400, "investment"),
+      categoryId: "cat-dca",
+      countsTowardSummary: false,
+    };
+    const plannedBitstack: PlannedOccurrence = {
+      ...planned(18, "investment"),
+      categoryId: "cat-bitstack",
+      countsTowardSummary: false,
+    };
+    expect(
+      plannedTotals(
+        [plannedDca, plannedBitstack, planned(950, "expense")],
+        debited,
+      ),
+    ).toEqual({ income: 0, outflow: 968 });
+  });
+
+  it("come out of the month's « in and out »", () => {
+    expect(
+      calendarMonthTotals(
+        { income: 3200, outflow: 950 + 1750 + 400 + 18 },
+        [dca, bitstack, transfer],
+        debited,
+      ),
+    ).toEqual({ income: 3200, outflow: 2718, net: 482 });
   });
 });

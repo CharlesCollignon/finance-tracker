@@ -3,6 +3,7 @@ import { INTL_LOCALES, type Locale } from "./i18n/locale";
 import { translator } from "./i18n/t";
 import { formatLongDate, relativeDayLabel } from "./constants";
 import type { PlannedOccurrence } from "./apply-recurring";
+import { isPurchaseInsideWallet } from "./categories";
 import type { TransactionWithCategory } from "./types/database";
 
 export interface CalendarDay {
@@ -124,14 +125,43 @@ export function groupTransactionsByDate(
   return groups;
 }
 
+/**
+ * Whether a row is a purchase made at the broker with money already sent
+ * there (a DCA PEA): in the ledger, but never out of the account — the
+ * transfer that funded it already was. A wallet the bank debits from the
+ * account (Bitstack) is the exception.
+ */
+function boughtAtTheBroker(
+  category: { type: string; counts_toward_summary: boolean },
+  categoryId: string,
+  debited: ReadonlySet<string>,
+): boolean {
+  return (
+    isPurchaseInsideWallet({
+      type: category.type as TransactionWithCategory["categories"]["type"],
+      counts_toward_summary: category.counts_toward_summary,
+    }) && !debited.has(categoryId)
+  );
+}
+
+/**
+ * What a day's rows brought in and took out of the account. A purchase made
+ * at the broker is listed on its day and counted in neither: the transfer
+ * that paid for it is the money that went out.
+ */
 export function computeDayTotals(
   transactions: TransactionWithCategory[],
+  /** `walletCategoriesTheBankDebits`. */
+  debited: ReadonlySet<string> = new Set(),
 ): DayTotals {
   let income = 0;
   let outflow = 0;
 
   for (const tx of transactions) {
     const amount = Number(tx.amount);
+    if (boughtAtTheBroker(tx.categories, tx.category_id, debited)) {
+      continue;
+    }
     if (tx.categories.type === "income") {
       income += amount;
     } else {
@@ -147,9 +177,13 @@ export function computeDayTotals(
   };
 }
 
-/** What a day's planned occurrences come to, in and out; null without any. */
+/**
+ * What a day's planned occurrences come to, in and out; null without any. A
+ * purchase planned at the broker is not money out, as with `computeDayTotals`.
+ */
 export function plannedTotals(
   occurrences: readonly PlannedOccurrence[],
+  debited: ReadonlySet<string> = new Set(),
 ): { income: number; outflow: number } | null {
   if (occurrences.length === 0) {
     return null;
@@ -157,6 +191,18 @@ export function plannedTotals(
   let income = 0;
   let outflow = 0;
   for (const occurrence of occurrences) {
+    if (
+      boughtAtTheBroker(
+        {
+          type: occurrence.categoryType,
+          counts_toward_summary: occurrence.countsTowardSummary !== false,
+        },
+        occurrence.categoryId,
+        debited,
+      )
+    ) {
+      continue;
+    }
     if (occurrence.categoryType === "income") {
       income += occurrence.amount;
     } else {
@@ -183,13 +229,14 @@ export function buildPulseDays(
   weeks: readonly CalendarDay[][],
   byDate: ReadonlyMap<string, TransactionWithCategory[]>,
   plannedByDate: ReadonlyMap<string, readonly PlannedOccurrence[]>,
+  debited: ReadonlySet<string> = new Set(),
 ): PulseDay[] {
   return weeks
     .flat()
     .filter((day) => day.isCurrentMonth)
     .map((day) => {
-      const recorded = computeDayTotals(byDate.get(day.date) ?? []);
-      const planned = plannedTotals(plannedByDate.get(day.date) ?? []);
+      const recorded = computeDayTotals(byDate.get(day.date) ?? [], debited);
+      const planned = plannedTotals(plannedByDate.get(day.date) ?? [], debited);
       return {
         date: day.date,
         income: recorded.income,
@@ -199,6 +246,31 @@ export function buildPulseDays(
         isToday: day.isToday,
       };
     });
+}
+
+/**
+ * The month's « in and out » for the calendar's header: the summary's
+ * totals, less the purchases made at the broker, which the summary counts as
+ * outflow and the account never paid — the transfer that funded them did.
+ */
+export function calendarMonthTotals(
+  totals: { income: number; outflow: number },
+  transactions: readonly TransactionWithCategory[],
+  debited: ReadonlySet<string> = new Set(),
+): { income: number; outflow: number; net: number } {
+  const atTheBroker = transactions.reduce(
+    (sum, tx) =>
+      boughtAtTheBroker(tx.categories, tx.category_id, debited)
+        ? sum + Number(tx.amount)
+        : sum,
+    0,
+  );
+  const outflow = Math.round((totals.outflow - atTheBroker) * 100) / 100;
+  return {
+    income: totals.income,
+    outflow,
+    net: Math.round((totals.income - outflow) * 100) / 100,
+  };
 }
 
 export function formatCalendarDate(isoDate: string, locale: Locale): string {
