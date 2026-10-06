@@ -697,16 +697,31 @@ export function UpcomingCard({ data }: { data: HomeMonth }) {
                 accessibilityLabel={formatShortDate(charge.occurredOn, locale)}
                 className="h-10 w-10 items-center justify-center rounded-control border border-hairline-strong"
               >
-                <Text className="text-sm font-semibold tabular-nums">
+                <Text
+                  className={cn(
+                    "text-sm font-semibold tabular-nums",
+                    charge.awaited && "text-muted-foreground",
+                  )}
+                >
                   {String(Number(charge.occurredOn.slice(8, 10)))}
                 </Text>
                 <Text className="text-[10px] uppercase text-muted-foreground">
                   {monthShort(Number(charge.occurredOn.slice(5, 7)), locale)}
                 </Text>
               </View>
-              <Text numberOfLines={1} className="min-w-0 flex-1 text-sm">
-                {charge.description?.trim() || charge.name}
-              </Text>
+              <View className="min-w-0 flex-1">
+                <Text numberOfLines={1} className="text-sm">
+                  {charge.description?.trim() || charge.name}
+                </Text>
+                {/* Its day is behind it and the bank has not brought it: it
+                    is still to leave, but not coming up, and the date alone
+                    would read as the card having fallen behind. */}
+                {charge.awaited ? (
+                  <Text variant="muted" numberOfLines={1} className="text-xs">
+                    {t("ledger.awaited")}
+                  </Text>
+                ) : null}
+              </View>
               <PrivateAmount
                 className={cn("text-sm", TYPE_AMOUNT_CLASS[charge.type])}
               >
