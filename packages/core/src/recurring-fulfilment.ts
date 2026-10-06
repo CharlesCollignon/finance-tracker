@@ -23,6 +23,7 @@ import { translator } from "./i18n/t";
  */
 
 import { recurringOccurrenceKey, templateSetUpOn } from "./apply-recurring";
+import { isPurchaseInsideWallet } from "./categories";
 import {
   filterDatesBySchedule,
   getRecurringOccurrenceDates,
@@ -234,6 +235,10 @@ function shiftIso(iso: string, days: number): string {
  * takes them. The whole of each month rather than only the past: a charge
  * due on the 5th that the bank paid on the 3rd is still a future occurrence
  * on the 4th, and it is exactly the one worth asking about.
+ *
+ * Never a purchase inside a wallet: no bank movement can be one, so it is
+ * neither awaited from the bank nor offered a pairing — the user is asked
+ * whether it went through instead (`purchasesToConfirm`).
  */
 export function fulfilmentOccurrences(
   templates: readonly RecurringTemplateWithCategory[],
@@ -244,7 +249,7 @@ export function fulfilmentOccurrences(
   const out: FulfilmentOccurrence[] = [];
 
   for (const template of templates) {
-    if (!template.active) {
+    if (!template.active || isPurchaseInsideWallet(template.categories)) {
       continue;
     }
     const category = byId.get(template.category_id);

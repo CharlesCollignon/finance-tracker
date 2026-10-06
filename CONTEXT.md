@@ -116,8 +116,19 @@ until no movement could still be offered for it (four days, ten for the money
 that moves on payday), or until it is confirmed or skipped. The same rule
 works the other way: an occurrence a movement already looks like, early or
 late, is not forecast beside it while « C'est arrivé ? » waits. Nothing is
-confirmed by either (`bankForecast`).
+confirmed by either (`bankForecast`). Never a purchase inside a wallet, which
+no bank movement can be: that one is asked about instead (see purchase to
+confirm).
 _Avoid_: overdue, late, pending
+
+**Purchase to confirm**:
+_En français_ : achat à confirmer (« Cet achat est-il passé ? »)
+With a bank feeding the ledger, a purchase inside a wallet whose day has come
+and that nothing records yet. The bank is the record there, but it never sees
+money move inside the broker, so Le point asks for ten days from its day: yes
+writes it on its day, linked to its template, which grows its position; no
+skips it; no answer writes nothing (`purchasesToConfirm`).
+_Avoid_: pending purchase, unconfirmed DCA
 
 **Skip**:
 _En français_ : passer, retirer de ce mois
@@ -140,7 +151,9 @@ that reaches rows already written: the user chooses whether this month's
 recorded rows follow it ("this month too") or keep what they say ("upcoming
 only"), and past months never change. With a bank feeding the ledger, nothing
 is applied at all: the bank is the record, and a template only forecasts —
-until the bank brings each occurrence (see awaited occurrence).
+until the bank brings each occurrence (see awaited occurrence). A purchase
+inside a wallet, which the bank never sees, is applied when the user says it
+went through (see purchase to confirm).
 _Avoid_: sync, generate, run
 
 **Reprice**:

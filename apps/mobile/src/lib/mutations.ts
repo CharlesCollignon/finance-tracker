@@ -263,6 +263,20 @@ export async function skipPlannedOccurrence(
   );
 }
 
+export async function recordPurchaseInsideWallet(
+  templateId: string,
+  occurredOn: string,
+): Promise<ActionResult> {
+  return asUser((userId) =>
+    occurrences.recordPurchaseInsideWallet(
+      supabase,
+      userId,
+      templateId,
+      occurredOn,
+    ),
+  );
+}
+
 export async function updateProfile(fullName: string): Promise<ActionResult> {
   const parsed = profileSchema.safeParse({ fullName });
   if (!parsed.success) {

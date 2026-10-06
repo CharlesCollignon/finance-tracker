@@ -1,5 +1,6 @@
 import type { ActionResult } from "@finance/core/action-result";
 import { recurringOccurrenceKey } from "@finance/core/apply-recurring";
+import { isPurchaseInsideWallet } from "@finance/core/categories";
 import { shiftIsoDate, todayIsoLocal } from "@finance/core/constants";
 import { occurrenceSchema, parseUuid } from "@finance/core/validations/finance";
 
@@ -187,6 +188,55 @@ export async function recordPlannedNow(
   }
 
   return { success: true, transactionId: inserted.id };
+}
+
+/**
+ * A purchase inside a wallet the user says went through, recorded on its own
+ * day — the yes to `purchasesToConfirm`.
+ *
+ * With a bank feeding the ledger nothing writes it otherwise: the bank never
+ * sees the money move inside the broker. Written by the fill, exactly as it
+ * would have been on its day without a bank, so it is priced and linked to
+ * its template like any other and grows the position it feeds. Asked twice,
+ * the unique index on (template, date) keeps it to one row.
+ */
+export async function recordPurchaseInsideWallet(
+  db: Db,
+  userId: string,
+  templateId: string,
+  occurredOn: string,
+): Promise<ActionResult> {
+  const parsed = occurrenceSchema.safeParse({ templateId, occurredOn });
+  const today = todayIsoLocal();
+  if (!parsed.success || parsed.data.occurredOn > today) {
+    return { error: "errors.invalidInput" };
+  }
+
+  const { data: template } = await db
+    .from("recurring_templates")
+    .select("id, categories(type, counts_toward_summary)")
+    .eq("id", parsed.data.templateId)
+    .eq("user_id", userId)
+    .eq("active", true)
+    .maybeSingle();
+
+  if (!template?.categories || !isPurchaseInsideWallet(template.categories)) {
+    return { error: "actions.recurringNotFound" };
+  }
+
+  const [year, month] = parsed.data.occurredOn.split("-").map(Number);
+  const { failures } = await fillMonth(
+    db,
+    userId,
+    year!,
+    month!,
+    today,
+    new Set([recurringOccurrenceKey(template.id, parsed.data.occurredOn)]),
+  );
+
+  return failures.length > 0
+    ? { error: failures[0]! }
+    : { success: true, message: "actions.purchaseRecorded" };
 }
 
 /**

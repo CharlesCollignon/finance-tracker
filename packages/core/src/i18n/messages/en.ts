@@ -2366,6 +2366,19 @@ export const en = {
     /** Fallback for a decision whose server action returned no message of its own. */
     done: "Done",
     /**
+     * A purchase inside a wallet whose day has come: the bank never sees it,
+     * so the user says whether it went through.
+     */
+    purchaseTitle: {
+      one: "Did this purchase go through?",
+      other: "Did these purchases go through?",
+    },
+    purchaseWhy:
+      "Your bank can't see purchases made inside your investment accounts.",
+    purchaseDue: "Planned for {date}",
+    purchaseYes: "It went through",
+    purchaseNo: "Not this time",
+    /**
      * What a ledger row says about itself.
      *
      * Short enough to sit in a row's subtitle beside the note, and worded as

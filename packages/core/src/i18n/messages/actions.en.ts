@@ -44,6 +44,7 @@ export const actionsEn = {
 
   /* Recurring entries and their occurrences. */
   skipRemoved: "Back in the month",
+  purchaseRecorded: "Purchase recorded",
 
   /* Month close. */
   closeTooEarly:

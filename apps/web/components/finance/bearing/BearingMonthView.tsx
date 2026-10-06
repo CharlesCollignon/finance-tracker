@@ -28,6 +28,7 @@ import { CategoryIcon } from "@/components/finance/CategoryIcon";
 import { amountSign } from "@finance/core/amount-sign";
 import { AttentionRow } from "@/components/finance/bearing/AttentionRow";
 import { ArrivedCharges } from "@/components/finance/ArrivedCharges";
+import { PurchasesToConfirm } from "@/components/finance/PurchasesToConfirm";
 import { BankAttentionBanner } from "@/components/finance/bank/BankAttentionBanner";
 import { ConnectBankInvite } from "@/components/finance/bank/ConnectBankInvite";
 import { BalanceCurve } from "@/components/finance/bearing/BalanceCurve";
@@ -102,9 +103,14 @@ export function BearingMonthView({
           confirmed as arrived stops being counted as still to come. */}
       {data.arrived ? (
         <section className={cn(GLASS_CARD, "rounded-card p-card")}>
-          <ArrivedCharges
-            proposals={data.arrived.proposals}
-          />
+          <ArrivedCharges proposals={data.arrived.proposals} />
+        </section>
+      ) : null}
+
+      {/* The same kind of question, for what the bank cannot see. */}
+      {data.purchases.length > 0 ? (
+        <section className={cn(GLASS_CARD, "rounded-card p-card")}>
+          <PurchasesToConfirm purchases={data.purchases} />
         </section>
       ) : null}
 

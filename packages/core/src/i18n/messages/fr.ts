@@ -1717,6 +1717,15 @@ export const fr: Messages = {
     },
     notThis: "Non, ce n'est pas {name}",
     done: "Terminé",
+    purchaseTitle: {
+      one: "Cet achat est-il passé\u00A0?",
+      other: "Ces achats sont-ils passés\u00A0?",
+    },
+    purchaseWhy:
+      "Votre banque ne voit pas les achats faits dans vos placements.",
+    purchaseDue: "Prévu le {date}",
+    purchaseYes: "C'est passé",
+    purchaseNo: "Pas cette fois",
     state: {
       confirmed: "Confirmé",
       toConfirm: "À confirmer",

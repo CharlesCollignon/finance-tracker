@@ -21,6 +21,7 @@ import { buildMonthComparison } from "@finance/core/month-comparison";
 import type { MonthFacts } from "@finance/core/month-facts";
 import { buildMonthPulse } from "@finance/core/month-pulse";
 import type { ReadFreshness } from "@finance/core/month-read-budget";
+import type { PurchaseToConfirm } from "@finance/core/purchases-to-confirm";
 import {
   buildStillToCome,
   type UpcomingCharge,
@@ -30,6 +31,7 @@ import {
   readMonthBalance,
   type BalanceSource,
 } from "@finance/data/month-balance";
+import { getPurchasesToConfirm } from "@finance/data/purchases-to-confirm";
 import { getWeeklyRecapCard } from "@finance/data/weekly-recap";
 
 import {
@@ -115,6 +117,12 @@ export interface HomeMonth {
    * already paid would otherwise count a second time.
    */
   arrived: FulfilmentReport | null;
+  /**
+   * Purchases inside a wallet whose day has come, waiting for the user to say
+   * whether they went through. The month in progress, with a bank feeding
+   * the ledger, only: without one they are written on their day.
+   */
+  purchases: PurchaseToConfirm[];
   /** Nothing recorded, nothing planned and no balance: a first visit. */
   empty: boolean;
 }
@@ -219,10 +227,11 @@ export async function gatherHomeMonth(
   let invested: number | null = null;
   let attention: AttentionItem[] = [];
   let arrived: FulfilmentReport | null = null;
+  let purchases: PurchaseToConfirm[] = [];
 
   if (isCurrent) {
     const categories = await getCategories(userId);
-    const [report, portfolio, pending, swallowed, proposals] =
+    const [report, portfolio, pending, swallowed, proposals, waitingPurchases] =
       await Promise.all([
         getFulfilmentReport(userId, templates, categories, year, month).catch(
           () => null,
@@ -231,8 +240,16 @@ export async function gatherHomeMonth(
         bankFed ? countPendingFeedItems(userId) : Promise.resolve(0),
         bankFed ? countSwallowedFeedItems(userId) : Promise.resolve(0),
         bankFed ? getRecurringProposals(userId, today) : Promise.resolve([]),
+        bankFed
+          ? getPurchasesToConfirm(supabase, userId, {
+              templates,
+              fulfilledKeys,
+              today,
+            })
+          : Promise.resolve([]),
       ]);
     arrived = report;
+    purchases = waitingPurchases;
 
     if (closes.summary.sample > 0) {
       run = {
@@ -286,6 +303,7 @@ export async function gatherHomeMonth(
       arrived && arrived.proposals.length > 0
         ? arrived
         : null,
+    purchases,
     empty:
       source === "none" &&
       rows.length === 0 &&
