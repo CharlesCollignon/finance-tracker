@@ -479,7 +479,7 @@ export function RecurringFormBody({
           {template?.pricing_type === "purchases" && (
             <>
               <input type="hidden" name="amount" value={template.amount} />
-              <p className="privacy-sensitive font-mono text-base font-semibold tabular-nums">
+              <p className="privacy-sensitive text-base font-semibold tabular-nums">
                 {t("recurring.followsPurchasesNow", {
                   amount: formatEuro(Number(template.amount)),
                 })}
