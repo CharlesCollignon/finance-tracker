@@ -1,6 +1,6 @@
 import type { ActionResult } from "@finance/core/action-result";
 import { cashDateOf } from "@finance/core/cash-date";
-import { formatShortDate } from "@finance/core/constants";
+import { formatShortDate, todayIsoLocal } from "@finance/core/constants";
 import { monthLong } from "@finance/core/i18n/calendar-names";
 import type { Locale } from "@finance/core/i18n/locale";
 import { translator } from "@finance/core/i18n/t";
@@ -8,6 +8,7 @@ import { countsForMonthOf } from "@finance/core/recurring-fulfilment";
 import { z } from "zod";
 
 import type { Db } from "./client";
+import { followPurchases } from "./dca-transfer";
 import { isMissingSchema } from "./schema";
 import { dbError } from "./errors";
 
@@ -96,6 +97,10 @@ export async function fulfilOccurrence(
     }
     return { error: dbError(error) };
   }
+
+  // A transfer that follows the DCAs, once confirmed, is settled: the next
+  // one, and the month after it, are the ones it stands for now.
+  await followPurchases(db, userId, todayIsoLocal());
 
   // The month fills itself from its charges, so this occurrence may already
   // have a row the template wrote. The movement just confirmed is the real
@@ -288,6 +293,9 @@ export async function undoFulfilment(
         .eq("user_id", userId);
     }
   }
+
+  // Back in play, a transfer that follows the DCAs covers its month again.
+  await followPurchases(db, userId, todayIsoLocal());
 
   return { success: true, message: "actions.backInForecast" };
 }

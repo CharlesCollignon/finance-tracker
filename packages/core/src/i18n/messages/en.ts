@@ -3338,6 +3338,8 @@ export const en = {
     nameRequiredCustom: "Name is required for custom holdings",
     shareCountRequired: "Share count is required",
     followsPurchasesMonthly: "A transfer that follows your DCAs is monthly",
+    followsPurchasesCategory: "Only a broker transfer can follow your DCAs",
+    noDcaToFollow: "No DCA next month: give this transfer an amount",
     capNotNegative: "A budget cannot be negative",
     zeroOrMore: "Must be 0 or more",
     positiveNumber: "Enter a positive number (comma or dot for decimals)",

@@ -2413,6 +2413,10 @@ export const fr: Messages = {
     nameRequiredCustom: "Le nom est obligatoire pour une ligne personnalisée",
     shareCountRequired: "Le nombre de parts est obligatoire",
     followsPurchasesMonthly: "Un virement qui suit vos DCA est mensuel",
+    followsPurchasesCategory:
+      "Seul un virement vers le courtier peut suivre vos DCA",
+    noDcaToFollow:
+      "Aucun DCA le mois suivant\u00A0: indiquez un montant pour ce virement",
     capNotNegative: "Un budget ne peut pas être négatif",
     zeroOrMore: "Doit être 0 ou plus",
     positiveNumber:
