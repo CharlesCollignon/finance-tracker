@@ -142,6 +142,11 @@ function RecurringItemRow({
               {t("charges.fixedToBitcoin")}
             </p>
           ) : null}
+          {template.pricing_type === "purchases" ? (
+            <p className="mt-0.5 text-xs leading-snug text-muted-foreground break-words">
+              {t("recurring.followsPurchasesRow")}
+            </p>
+          ) : null}
           {template.description ? (
             // The user's own note about the charge, and the only prose on the
             // row. It was `text-muted-foreground/70`, about 3.9:1 at 12px —

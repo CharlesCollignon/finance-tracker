@@ -284,6 +284,11 @@ export async function restoreDeletion(
   return asUser((db, userId) => deletions.restoreDeletion(db, userId, token));
 }
 
+/** The form's pricing, read defensively: anything unknown is a fixed amount. */
+function pricingTypeOf(value: FormDataEntryValue | null) {
+  return value === "shares" || value === "purchases" ? value : "fixed";
+}
+
 export async function upsertRecurringTemplate(
   _prev: FormState,
   formData: FormData,
@@ -297,7 +302,7 @@ export async function upsertRecurringTemplate(
     id: formData.get("id") || undefined,
     categoryId: formData.get("categoryId"),
     amount: formData.get("amount") || undefined,
-    pricingType: formData.get("pricingType") === "shares" ? "shares" : "fixed",
+    pricingType: pricingTypeOf(formData.get("pricingType")),
     shareCount: formData.get("shareCount") || undefined,
     instrumentSymbol: formData.get("instrumentSymbol") || undefined,
     instrumentName: formData.get("instrumentName") || undefined,

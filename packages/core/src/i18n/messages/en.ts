@@ -484,6 +484,12 @@ export const en = {
     amountType: "Amount type",
     fixedAmount: "Fixed EUR",
     sharesTimesPrice: "Shares × price",
+    followsPurchases: "Follows my DCAs",
+    followsPurchasesNote:
+      "What next month's DCAs will cost, 5% more on those bought in shares, rounded up to the next €50. Worked out again every day, and whenever a DCA changes.",
+    followsPurchasesNow: "Today: {amount}",
+    followsPurchasesNew: "Worked out when you save.",
+    followsPurchasesRow: "Follows next month's DCAs",
     shareCount: "Number of shares",
     wholeSharesOnly: "Enter a whole number of shares",
     estimatedAmount: "Estimated amount",

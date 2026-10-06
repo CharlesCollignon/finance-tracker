@@ -549,6 +549,11 @@ function GroupCard({
                     {t("charges.fixedToBitcoin")}
                   </Text>
                 ) : null}
+                {item.pricing_type === "purchases" ? (
+                  <Text variant="muted" className="mt-0.5 text-xs">
+                    {t("recurring.followsPurchasesRow")}
+                  </Text>
+                ) : null}
                 {item.description ? (
                   <Text variant="muted" className="mt-0.5 text-xs">
                     {item.description}

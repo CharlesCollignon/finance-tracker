@@ -350,6 +350,12 @@ export const fr: Messages = {
     amountType: "Type de montant",
     fixedAmount: "Montant fixe en EUR",
     sharesTimesPrice: "Parts × cours",
+    followsPurchases: "Selon vos DCA",
+    followsPurchasesNote:
+      "Ce que vos DCA du mois suivant vont coûter, 5\u00A0% de plus sur ceux achetés en parts, arrondi aux 50\u00A0€ supérieurs. Recalculé chaque jour, et dès qu'un DCA change.",
+    followsPurchasesNow: "Aujourd'hui\u00A0: {amount}",
+    followsPurchasesNew: "Calculé à l'enregistrement.",
+    followsPurchasesRow: "Selon vos DCA du mois suivant",
     shareCount: "Nombre de parts",
     wholeSharesOnly: "Saisissez un nombre entier de parts",
     estimatedAmount: "Montant estimé",
