@@ -2,6 +2,8 @@ import type { ActionResult } from "@finance/core/action-result";
 import { recurringOccurrenceKey } from "@finance/core/apply-recurring";
 import { isPurchaseInsideWallet } from "@finance/core/categories";
 import { shiftIsoDate, todayIsoLocal } from "@finance/core/constants";
+import { purchasesToConfirm } from "@finance/core/purchases-to-confirm";
+import type { RecurringTemplateWithCategory } from "@finance/core/types/database";
 import { occurrenceSchema, parseUuid } from "@finance/core/validations/finance";
 
 import { hasBankFeed } from "./bank-feed";
@@ -199,12 +201,19 @@ export async function recordPlannedNow(
  * would have been on its day without a bank, so it is priced and linked to
  * its template like any other and grows the position it feeds. Asked twice,
  * the unique index on (template, date) keeps it to one row.
+ *
+ * `boughtOn`, one of the purchase's `laterDays`, is the day it went through
+ * instead: the broker turned it down for want of cash, the user sent more
+ * and bought by hand. The row is written as above and then moved there,
+ * which records the skip that moving any template's row does, so its own day
+ * is neither asked about nor written again.
  */
 export async function recordPurchaseInsideWallet(
   db: Db,
   userId: string,
   templateId: string,
   occurredOn: string,
+  boughtOn?: string,
 ): Promise<ActionResult> {
   const parsed = occurrenceSchema.safeParse({ templateId, occurredOn });
   const today = todayIsoLocal();
@@ -214,7 +223,7 @@ export async function recordPurchaseInsideWallet(
 
   const { data: template } = await db
     .from("recurring_templates")
-    .select("id, categories(type, counts_toward_summary)")
+    .select("*, categories(name, type, icon, counts_toward_summary)")
     .eq("id", parsed.data.templateId)
     .eq("user_id", userId)
     .eq("active", true)
@@ -222,6 +231,19 @@ export async function recordPurchaseInsideWallet(
 
   if (!template?.categories || !isPurchaseInsideWallet(template.categories)) {
     return { error: "actions.recurringNotFound" };
+  }
+
+  const later = boughtOn !== undefined && boughtOn !== parsed.data.occurredOn;
+  if (later) {
+    const offered = purchasesToConfirm({
+      templates: [template as RecurringTemplateWithCategory],
+      writtenKeys: new Set(),
+      settledKeys: new Set(),
+      today,
+    }).find((purchase) => purchase.occurredOn === parsed.data.occurredOn);
+    if (!offered?.laterDays.includes(boughtOn)) {
+      return { error: "errors.invalidInput" };
+    }
   }
 
   const [year, month] = parsed.data.occurredOn.split("-").map(Number);
@@ -233,10 +255,29 @@ export async function recordPurchaseInsideWallet(
     today,
     new Set([recurringOccurrenceKey(template.id, parsed.data.occurredOn)]),
   );
+  if (failures.length > 0) {
+    return { error: failures[0]! };
+  }
 
-  return failures.length > 0
-    ? { error: failures[0]! }
-    : { success: true, message: "actions.purchaseRecorded" };
+  if (later) {
+    const skipError = await skipOccurrences(db, userId, [
+      { templateId: template.id, occurredOn: parsed.data.occurredOn },
+    ]);
+    if (skipError) {
+      return { error: skipError };
+    }
+    const { error } = await db
+      .from("transactions")
+      .update({ occurred_on: boughtOn })
+      .eq("user_id", userId)
+      .eq("recurring_template_id", template.id)
+      .eq("occurred_on", parsed.data.occurredOn);
+    if (error) {
+      return { error: dbError(error) };
+    }
+  }
+
+  return { success: true, message: "actions.purchaseRecorded" };
 }
 
 /**

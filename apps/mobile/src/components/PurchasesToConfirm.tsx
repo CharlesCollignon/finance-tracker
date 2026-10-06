@@ -26,7 +26,8 @@ import { useLocale, useT } from "@/providers/LocaleProvider";
  * feeding the ledger. The web twin carries the reasoning: the bank never sees
  * money move inside a broker, so from its day the purchase is asked about
  * here. A yes records it on its day and grows its position, a no skips it,
- * and no answer records nothing.
+ * and no answer records nothing. « Un autre jour » records one bought by
+ * hand later, on a day picked from the days since.
  */
 export function PurchasesToConfirm({
   purchases,
@@ -40,6 +41,8 @@ export function PurchasesToConfirm({
   const formatEuro = useFormatCurrency();
   const [pending, setPending] = useState(false);
   const [answered, setAnswered] = useState<Set<string>>(new Set());
+  // The purchase whose later days are showing, one at a time.
+  const [choosing, setChoosing] = useState<string | null>(null);
 
   // An answer only hides its purchase until the screen's next read says it is
   // gone, so one put back somewhere else is asked about again.
@@ -130,73 +133,153 @@ export function PurchasesToConfirm({
               {t("fulfilment.purchaseDue", { date })}
             </Text>
 
-            <View className="mt-1 flex-row items-center gap-2">
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel={`${t("fulfilment.purchaseYes")} — ${purchase.label}`}
-                accessibilityState={{ disabled: pending }}
-                disabled={pending}
-                onPress={() => {
-                  void hapticLight();
-                  answer(
-                    purchase,
-                    () =>
-                      recordPurchaseInsideWallet(
-                        purchase.templateId,
-                        purchase.occurredOn,
-                      ),
-                    t("fulfilment.done"),
-                    true,
-                  );
-                }}
-                className={cn(
-                  "min-h-11 flex-row items-center gap-1.5 rounded-full bg-primary px-4",
-                  pending && "opacity-60",
-                )}
-              >
-                <Ionicons
-                  name="checkmark"
-                  size={ICON.md}
-                  color={colors.primaryForeground}
-                />
-                <Text className="text-sm font-medium text-primary-foreground">
-                  {t("fulfilment.purchaseYes")}
+            {choosing === purchase.key ? (
+              <View className="mt-1 gap-2">
+                <Text className="text-xs text-muted-foreground">
+                  {t("fulfilment.purchaseLaterWhich")}
                 </Text>
-              </Pressable>
+                <View className="flex-row flex-wrap items-center gap-2">
+                  {purchase.laterDays.map((day) => {
+                    const on = formatShortDate(day, locale);
+                    return (
+                      <Pressable
+                        key={day}
+                        accessibilityRole="button"
+                        accessibilityLabel={`${t("fulfilment.purchaseLaterOn", { date: on })} — ${purchase.label}`}
+                        accessibilityState={{ disabled: pending }}
+                        disabled={pending}
+                        onPress={() => {
+                          void hapticLight();
+                          answer(
+                            purchase,
+                            () =>
+                              recordPurchaseInsideWallet(
+                                purchase.templateId,
+                                purchase.occurredOn,
+                                day,
+                              ),
+                            t("fulfilment.done"),
+                            true,
+                          );
+                        }}
+                        className={cn(
+                          "min-h-11 justify-center rounded-full border border-border px-4",
+                          pending && "opacity-60",
+                        )}
+                      >
+                        <Text className="text-sm">{on}</Text>
+                      </Pressable>
+                    );
+                  })}
+                  <Pressable
+                    accessibilityRole="button"
+                    accessibilityLabel={t("common.cancel")}
+                    onPress={() => setChoosing(null)}
+                    className="min-h-11 min-w-11 items-center justify-center rounded-full"
+                  >
+                    <Ionicons
+                      name="close"
+                      size={ICON.md}
+                      color={colors.mutedForeground}
+                    />
+                  </Pressable>
+                </View>
+              </View>
+            ) : (
+              <View className="mt-1 flex-row flex-wrap items-center gap-2">
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel={`${t("fulfilment.purchaseYes")} — ${purchase.label}`}
+                  accessibilityState={{ disabled: pending }}
+                  disabled={pending}
+                  onPress={() => {
+                    void hapticLight();
+                    answer(
+                      purchase,
+                      () =>
+                        recordPurchaseInsideWallet(
+                          purchase.templateId,
+                          purchase.occurredOn,
+                        ),
+                      t("fulfilment.done"),
+                      true,
+                    );
+                  }}
+                  className={cn(
+                    "min-h-11 flex-row items-center gap-1.5 rounded-full bg-primary px-4",
+                    pending && "opacity-60",
+                  )}
+                >
+                  <Ionicons
+                    name="checkmark"
+                    size={ICON.md}
+                    color={colors.primaryForeground}
+                  />
+                  <Text className="text-sm font-medium text-primary-foreground">
+                    {t("fulfilment.purchaseYes")}
+                  </Text>
+                </Pressable>
 
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel={`${t("fulfilment.purchaseNo")} — ${purchase.label}`}
-                accessibilityState={{ disabled: pending }}
-                disabled={pending}
-                onPress={() => {
-                  void hapticLight();
-                  answer(
-                    purchase,
-                    () =>
-                      skipPlannedOccurrence(
-                        purchase.templateId,
-                        purchase.occurredOn,
-                      ),
-                    t("planned.skipped", { date }),
-                    false,
-                  );
-                }}
-                className={cn(
-                  "min-h-11 flex-row items-center gap-1.5 rounded-full px-4",
-                  pending && "opacity-60",
+                {purchase.laterDays.length > 0 && (
+                  <Pressable
+                    accessibilityRole="button"
+                    accessibilityLabel={`${t("fulfilment.purchaseLater")} — ${purchase.label}`}
+                    accessibilityState={{ disabled: pending }}
+                    disabled={pending}
+                    onPress={() => {
+                      void hapticLight();
+                      setChoosing(purchase.key);
+                    }}
+                    className={cn(
+                      "min-h-11 flex-row items-center gap-1.5 rounded-full px-4",
+                      pending && "opacity-60",
+                    )}
+                  >
+                    <Ionicons
+                      name="calendar-outline"
+                      size={ICON.md}
+                      color={colors.mutedForeground}
+                    />
+                    <Text className="text-sm text-muted-foreground">
+                      {t("fulfilment.purchaseLater")}
+                    </Text>
+                  </Pressable>
                 )}
-              >
-                <Ionicons
-                  name="close"
-                  size={ICON.md}
-                  color={colors.mutedForeground}
-                />
-                <Text className="text-sm text-muted-foreground">
-                  {t("fulfilment.purchaseNo")}
-                </Text>
-              </Pressable>
-            </View>
+
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel={`${t("fulfilment.purchaseNo")} — ${purchase.label}`}
+                  accessibilityState={{ disabled: pending }}
+                  disabled={pending}
+                  onPress={() => {
+                    void hapticLight();
+                    answer(
+                      purchase,
+                      () =>
+                        skipPlannedOccurrence(
+                          purchase.templateId,
+                          purchase.occurredOn,
+                        ),
+                      t("planned.skipped", { date }),
+                      false,
+                    );
+                  }}
+                  className={cn(
+                    "min-h-11 flex-row items-center gap-1.5 rounded-full px-4",
+                    pending && "opacity-60",
+                  )}
+                >
+                  <Ionicons
+                    name="close"
+                    size={ICON.md}
+                    color={colors.mutedForeground}
+                  />
+                  <Text className="text-sm text-muted-foreground">
+                    {t("fulfilment.purchaseNo")}
+                  </Text>
+                </Pressable>
+              </View>
+            )}
           </View>
         );
       })}

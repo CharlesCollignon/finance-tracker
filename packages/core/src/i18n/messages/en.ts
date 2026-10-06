@@ -2197,6 +2197,10 @@ export const en = {
       label: "Payment arrived",
       hint: "When a salary or a planned charge looks like it has gone through.",
     },
+    dca: {
+      label: "Your DCAs",
+      hint: "The day after a purchase inside your investment accounts, to say whether it went through.",
+    },
     review: {
       label: "Transactions to sort",
       hint: "When your bank brought in transactions without a category.",
@@ -2240,6 +2244,15 @@ export const en = {
     dismiss: "Got it",
   },
   push: {
+    dca: {
+      title: "{name}: did it go through?",
+      body: "The {amount} purchase planned for {date} is waiting for your answer on Overview.",
+      titleSeveral: {
+        one: "{count} purchase to confirm",
+        other: "{count} purchases to confirm",
+      },
+      bodySeveral: "{names}: say on Overview whether they went through.",
+    },
     bigCharge: {
       title: "Tomorrow: {name}",
       body: "{amount} to have ready, more than your usual recurring payments.",
@@ -2378,6 +2391,9 @@ export const en = {
     purchaseDue: "Planned for {date}",
     purchaseYes: "It went through",
     purchaseNo: "Not this time",
+    purchaseLater: "Another day",
+    purchaseLaterWhich: "Which day did it go through?",
+    purchaseLaterOn: "Went through on {date}",
     /**
      * What a ledger row says about itself.
      *

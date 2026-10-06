@@ -24,6 +24,13 @@ export interface PurchaseToConfirm {
   label: string;
   /** What the template says; a share-priced one is priced when recorded. */
   amount: number;
+  /**
+   * The days after its own it may have gone through on instead: bought by
+   * hand once the money was there, after the broker turned it down for want
+   * of cash. Up to today, and never as far as the template's next
+   * occurrence, whose row it would otherwise pass for. Empty on its own day.
+   */
+  laterDays: string[];
 }
 
 /**
@@ -35,8 +42,9 @@ export interface PurchaseToConfirm {
  * moves inside the broker, where the bank never looks — so it was awaited
  * from the bank for ten days and then dropped, never recorded, and the
  * position it grows stood still. It is asked about instead, for
- * `PURCHASE_ASK_DAYS` from its day: a yes records it on its day, a no skips
- * it, and no answer records nothing.
+ * `PURCHASE_ASK_DAYS` from its day: a yes records it on its day — or on
+ * one of `laterDays`, when it was bought by hand after the broker turned it
+ * down — a no skips it, and no answer records nothing.
  *
  * Never one from before its template was set up, nor one already written,
  * skipped or confirmed — nor one whose wallet the bank debits, which its
@@ -59,13 +67,18 @@ export function purchasesToConfirm({
   today: string;
 }): PurchaseToConfirm[] {
   const from = shiftIsoDate(today, -PURCHASE_ASK_DAYS);
-  // The window can reach back into last month.
-  const months = [...new Set([from.slice(0, 7), today.slice(0, 7)])].map(
-    (key) => ({
-      year: Number(key.slice(0, 4)),
-      month: Number(key.slice(5, 7)),
-    }),
-  );
+  // The window can reach back into last month, and the next occurrence after
+  // one in it can fall in next month.
+  const months = [
+    ...new Set([
+      from.slice(0, 7),
+      today.slice(0, 7),
+      shiftIsoDate(`${today.slice(0, 7)}-28`, 7).slice(0, 7),
+    ]),
+  ].map((key) => ({
+    year: Number(key.slice(0, 4)),
+    month: Number(key.slice(5, 7)),
+  }));
 
   const out: PurchaseToConfirm[] = [];
   for (const template of templates) {
@@ -77,10 +90,9 @@ export function purchasesToConfirm({
       continue;
     }
     const setUpOn = templateSetUpOn(template);
-
-    for (const { year, month } of months) {
+    const dates = months.flatMap(({ year, month }) => {
       const monthPrefix = `${year}-${String(month).padStart(2, "0")}`;
-      const dates = filterDatesBySchedule(
+      return filterDatesBySchedule(
         getRecurringOccurrenceDates(
           {
             recurrence: template.recurrence ?? "monthly",
@@ -94,27 +106,28 @@ export function purchasesToConfirm({
         template.starts_on,
         template.ends_on,
       ).filter((date) => date.startsWith(monthPrefix));
+    });
 
-      for (const date of dates) {
-        const key = recurringOccurrenceKey(template.id, date);
-        if (
-          date > today ||
-          date < from ||
-          date < setUpOn ||
-          writtenKeys.has(key) ||
-          settledKeys.has(key)
-        ) {
-          continue;
-        }
-        out.push({
-          key,
-          templateId: template.id,
-          occurredOn: date,
-          label: template.description?.trim() || template.categories.name,
-          amount: Number(template.amount),
-        });
+    dates.forEach((date, index) => {
+      const key = recurringOccurrenceKey(template.id, date);
+      if (
+        date > today ||
+        date < from ||
+        date < setUpOn ||
+        writtenKeys.has(key) ||
+        settledKeys.has(key)
+      ) {
+        return;
       }
-    }
+      out.push({
+        key,
+        templateId: template.id,
+        occurredOn: date,
+        label: template.description?.trim() || template.categories.name,
+        amount: Number(template.amount),
+        laterDays: daysAfter(date, today, dates[index + 1]),
+      });
+    });
   }
 
   return out.sort(
@@ -122,4 +135,17 @@ export function purchasesToConfirm({
       a.occurredOn.localeCompare(b.occurredOn) ||
       a.label.localeCompare(b.label),
   );
+}
+
+/** The days after `date` up to `today`, stopping short of `next`. */
+function daysAfter(date: string, today: string, next?: string): string[] {
+  const days: string[] = [];
+  for (
+    let day = shiftIsoDate(date, 1);
+    day <= today && (next === undefined || day < next);
+    day = shiftIsoDate(day, 1)
+  ) {
+    days.push(day);
+  }
+  return days;
 }

@@ -128,8 +128,14 @@ With a bank feeding the ledger, a purchase inside a wallet whose day has come
 and that nothing records yet. The bank is the record there, but it never sees
 money move inside the broker, so Le point asks for ten days from its day: yes
 writes it on its day, linked to its template, which grows its position; no
-skips it; no answer writes nothing (`purchasesToConfirm`). Never one in a
-wallet bought from the account, which its debits settle.
+skips it; no answer writes nothing (`purchasesToConfirm`). « Un autre jour »
+is the yes for one the broker turned down for want of cash and the user
+bought by hand once more money was there: it writes it on the day picked,
+from the day after its own to today and never on the template's next
+occurrence, and skips its own day, as moving any template's row does. The
+morning after its day a push asks too (« Vos DCA »), once for each day a
+purchase fell on. Never one in a wallet bought from the account, which its
+debits settle.
 _Avoid_: pending purchase, unconfirmed DCA
 
 **Skip**:

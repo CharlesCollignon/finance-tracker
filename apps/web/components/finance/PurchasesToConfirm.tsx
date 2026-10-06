@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { Check, X } from "@phosphor-icons/react";
+import { CalendarBlank, Check, X } from "@phosphor-icons/react";
 import { amountSign } from "@finance/core/amount-sign";
 import { TYPE_AMOUNT_CLASS } from "@finance/core/category-styles";
 import { formatShortDate } from "@finance/core/constants";
@@ -26,7 +26,9 @@ import { useLocale, useT } from "@/lib/locale-context";
  * purchase inside a wallet is the one it cannot cover: the money moves inside
  * the broker, where the bank never looks. So from its day it is asked about
  * here — a yes records it on its day, which is what grows the position it
- * feeds, and a no skips it. Left unanswered, nothing is recorded.
+ * feeds, and a no skips it. Left unanswered, nothing is recorded. « Un
+ * autre jour » is the yes for one the broker turned down and the user bought
+ * by hand later: the days since are offered as they are, a tap each.
  *
  * Answered rows leave at once, as on « C'est arrivé ? »: the decision is
  * recorded either way, a failure is toasted and puts the row back.
@@ -42,6 +44,8 @@ export function PurchasesToConfirm({
   const locale = useLocale();
   const [pending, startTransition] = useTransition();
   const [answered, setAnswered] = useState<Set<string>>(new Set());
+  // The purchase whose later days are showing, one at a time.
+  const [choosing, setChoosing] = useState<string | null>(null);
   // Held only while the server still offers the purchase, so one put back
   // somewhere else — a skip undone — is asked about again.
   const [seen, setSeen] = useState(purchases);
@@ -115,51 +119,103 @@ export function PurchasesToConfirm({
                 </p>
               </div>
 
-              <div className="flex shrink-0 items-center gap-2">
-                <Button
-                  type="button"
-                  disabled={pending}
-                  onClick={() =>
-                    answer(
-                      purchase,
-                      () =>
-                        recordPurchaseInsideWallet(
-                          purchase.templateId,
-                          purchase.occurredOn,
-                        ),
-                      t("fulfilment.done"),
-                    )
-                  }
-                  size="sm"
-                  className="gap-1.5 rounded-full"
-                >
-                  <Check size={ICON.sm} weight="bold" />
-                  {t("fulfilment.purchaseYes")}
-                </Button>
-                <button
-                  type="button"
-                  disabled={pending}
-                  onClick={() =>
-                    answer(
-                      purchase,
-                      () =>
-                        skipPlannedOccurrence(
-                          purchase.templateId,
-                          purchase.occurredOn,
-                        ),
-                      t("planned.skipped", { date }),
-                    )
-                  }
-                  className={cn(
-                    "inline-flex min-h-9 items-center gap-1.5 rounded-full px-3 text-sm",
-                    "text-muted-foreground transition-colors hover:bg-muted hover:text-foreground",
-                    "disabled:opacity-60",
+              {choosing === purchase.key ? (
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="text-xs text-muted-foreground">
+                    {t("fulfilment.purchaseLaterWhich")}
+                  </span>
+                  {purchase.laterDays.map((day) => {
+                    const on = formatShortDate(day, locale);
+                    return (
+                      <button
+                        key={day}
+                        type="button"
+                        disabled={pending}
+                        aria-label={`${t("fulfilment.purchaseLaterOn", { date: on })} — ${purchase.label}`}
+                        onClick={() =>
+                          answer(
+                            purchase,
+                            () =>
+                              recordPurchaseInsideWallet(
+                                purchase.templateId,
+                                purchase.occurredOn,
+                                day,
+                              ),
+                            t("fulfilment.done"),
+                          )
+                        }
+                        className={cn(
+                          "inline-flex min-h-9 items-center rounded-full border border-foreground/15 px-3 text-sm tabular-nums",
+                          "transition-colors hover:bg-muted disabled:opacity-60",
+                        )}
+                      >
+                        {on}
+                      </button>
+                    );
+                  })}
+                  <button
+                    type="button"
+                    onClick={() => setChoosing(null)}
+                    aria-label={t("common.cancel")}
+                    className="inline-flex size-9 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                  >
+                    <X size={ICON.sm} />
+                  </button>
+                </div>
+              ) : (
+                <div className="flex shrink-0 flex-wrap items-center gap-2">
+                  <Button
+                    type="button"
+                    disabled={pending}
+                    onClick={() =>
+                      answer(
+                        purchase,
+                        () =>
+                          recordPurchaseInsideWallet(
+                            purchase.templateId,
+                            purchase.occurredOn,
+                          ),
+                        t("fulfilment.done"),
+                      )
+                    }
+                    size="sm"
+                    className="gap-1.5 rounded-full"
+                  >
+                    <Check size={ICON.sm} weight="bold" />
+                    {t("fulfilment.purchaseYes")}
+                  </Button>
+                  {purchase.laterDays.length > 0 && (
+                    <button
+                      type="button"
+                      disabled={pending}
+                      onClick={() => setChoosing(purchase.key)}
+                      className={secondary}
+                    >
+                      <CalendarBlank size={ICON.sm} />
+                      {t("fulfilment.purchaseLater")}
+                    </button>
                   )}
-                >
-                  <X size={ICON.sm} />
-                  {t("fulfilment.purchaseNo")}
-                </button>
-              </div>
+                  <button
+                    type="button"
+                    disabled={pending}
+                    onClick={() =>
+                      answer(
+                        purchase,
+                        () =>
+                          skipPlannedOccurrence(
+                            purchase.templateId,
+                            purchase.occurredOn,
+                          ),
+                        t("planned.skipped", { date }),
+                      )
+                    }
+                    className={secondary}
+                  >
+                    <X size={ICON.sm} />
+                    {t("fulfilment.purchaseNo")}
+                  </button>
+                </div>
+              )}
             </li>
           );
         })}
@@ -167,3 +223,9 @@ export function PurchasesToConfirm({
     </section>
   );
 }
+
+const secondary = cn(
+  "inline-flex min-h-9 items-center gap-1.5 rounded-full px-3 text-sm",
+  "text-muted-foreground transition-colors hover:bg-muted hover:text-foreground",
+  "disabled:opacity-60",
+);

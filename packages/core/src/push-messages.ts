@@ -19,6 +19,7 @@ import {
   formatEuro,
   formatFullDate,
   formatMonthShortYear,
+  formatShortDate,
 } from "./constants";
 import { monthLong } from "./i18n/calendar-names";
 import type { Locale } from "./i18n/locale";
@@ -26,6 +27,7 @@ import type { Translate } from "./i18n/t";
 import type { MonthBalance } from "./month-balance";
 import type { CloseableMonth, MonthCloseResult } from "./month-close";
 import type { LoanMoment } from "./property-moments";
+import type { PurchaseToConfirm } from "./purchases-to-confirm";
 import type { PendingNotification } from "./push-digest";
 import {
   getRecurringOccurrenceDates,
@@ -259,6 +261,54 @@ export function bigChargeHeadsUp({
     body: charges
       .map((charge) => `${charge.name} ${formatEuro(charge.amount, locale)}`)
       .join(" · "),
+  };
+}
+
+/**
+ * The purchases inside a wallet still waiting for a yes or a no
+ * (`purchasesToConfirm`), the morning after their day.
+ *
+ * Not on the day itself: the broker buys during market hours, and asked
+ * before it has, the honest answer is "not yet". The morning after, it is in
+ * the broker's app. A change rather than a state, so keyed by the latest day
+ * a waiting purchase fell on: Monday's DCA is asked about on Tuesday and not
+ * again on Wednesday, and next Monday's brings any still unanswered along.
+ */
+export function purchasesToConfirmNotification({
+  purchases,
+  today,
+  t,
+  locale,
+}: Voice & {
+  purchases: readonly PurchaseToConfirm[];
+  today: string;
+}): PendingNotification | null {
+  const due = purchases.filter((purchase) => purchase.occurredOn < today);
+  if (due.length === 0) {
+    return null;
+  }
+  const latest = due.reduce(
+    (day, purchase) => (purchase.occurredOn > day ? purchase.occurredOn : day),
+    due[0]!.occurredOn,
+  );
+  const base = { kind: "dca" as const, key: `dca:${latest}`, url: "/bearing" };
+  if (due.length === 1) {
+    const [purchase] = due;
+    return {
+      ...base,
+      title: t("push.dca.title", { name: purchase!.label }),
+      body: t("push.dca.body", {
+        amount: formatEuro(purchase!.amount, locale),
+        date: formatShortDate(purchase!.occurredOn, locale),
+      }),
+    };
+  }
+  return {
+    ...base,
+    title: t("push.dca.titleSeveral", { count: due.length }),
+    body: t("push.dca.bodySeveral", {
+      names: [...new Set(due.map((purchase) => purchase.label))].join(", "),
+    }),
   };
 }
 

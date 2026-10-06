@@ -77,8 +77,51 @@ describe("purchasesToConfirm", () => {
         occurredOn: "2026-10-05",
         label: "DCA PEA",
         amount: 200,
+        laterDays: [],
       },
     ]);
+  });
+
+  it("offers the days since, for a purchase bought again by hand", () => {
+    expect(ask("2026-10-08")[0]!.laterDays).toEqual([
+      "2026-10-06",
+      "2026-10-07",
+      "2026-10-08",
+    ]);
+  });
+
+  it("never offers the day of the next occurrence", () => {
+    // Every Monday: the one on the 5th, asked about on Tuesday the 13th,
+    // may have been bought until Sunday the 11th but not on the 12th, which
+    // is the next Monday's own day.
+    const weekly: RecurringTemplateWithCategory = {
+      ...dca,
+      recurrence: "weekly",
+      day_of_month: null,
+      day_of_week: 1,
+    };
+    const [first, second] = ask("2026-10-13", [weekly]);
+    expect(first!.occurredOn).toBe("2026-10-05");
+    expect(first!.laterDays.at(-1)).toBe("2026-10-11");
+    expect(second!.occurredOn).toBe("2026-10-12");
+    expect(second!.laterDays).toEqual(["2026-10-13"]);
+  });
+
+  it("stops short of a next occurrence that falls in next month", () => {
+    const weekly: RecurringTemplateWithCategory = {
+      ...dca,
+      recurrence: "weekly",
+      day_of_month: null,
+      day_of_week: 1,
+    };
+    // Monday 26 October, then Monday 2 November.
+    const asked = ask("2026-11-01", [weekly]);
+    expect(asked.at(-1)!.occurredOn).toBe("2026-10-26");
+    expect(asked.at(-1)!.laterDays.at(-1)).toBe("2026-11-01");
+    const later = ask("2026-11-03", [weekly]).find(
+      (item) => item.occurredOn === "2026-10-26",
+    );
+    expect(later!.laterDays.at(-1)).toBe("2026-11-01");
   });
 
   it("never asks about what the bank can see", () => {
