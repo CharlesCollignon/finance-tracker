@@ -54,21 +54,23 @@ that the rule rather than the exception, which is why Phase 2 exists.
 - **The transfer charge follows the DCAs.** One figure for the charge, the
   forecast, the projection, the push and « C'est arrivé ? ».
 
-## Phase 1 — The weekly answer, pushed (branch `dca-confirm-push`)
+## Phase 1 — The weekly answer, pushed (branch `dca-confirm-push`) — done
 
-- [ ] A new notification kind `dca` (« Vos DCA » / "Your DCAs"), on by default
+- [x] A new notification kind `dca` (« Vos DCA » / "Your DCAs"), on by default
       like every kind, with its switch in Profile on both apps.
-- [ ] The morning after a DCA's day, when `purchasesToConfirm` holds it: « DCA
-      CTO de lundi : c'est passé ? », several in one push (« 2 DCA à
-      confirmer »), keyed by the day so it is said once. The day after rather
-      than the day itself, because the broker buys during market hours. Opens
-      Le point at the card (`push-routes` test for both apps).
-- [ ] A third answer on the card, for the retry by hand: « Passé le … », a
-      date from the occurrence's day to today. It records the purchase and
-      moves it to that day in one action, which records the skip the way
-      moving any template's row does, so it is not asked again.
-- [ ] `push-digest`'s "a change, not a state" note: this is a change (a day
-      passed), said so.
+- [x] The morning after a DCA's day, when `purchasesToConfirm` holds it: « DCA
+      CTO : c'est passé ? », several in one push (« 2 achats à confirmer »),
+      keyed by the latest day one fell on so each day is said once. The day
+      after rather than the day itself, because the broker buys during market
+      hours. Opens Le point, where the card is (`/bearing`, already placed on
+      both apps by `push-routes`).
+- [x] A third answer on the card, for the retry by hand: « Un autre jour »,
+      the days from the one after its own to today offered as one tap each
+      (`laterDays`), never the template's next occurrence. It records the
+      purchase and moves it to that day in one action, which records the skip
+      the way moving any template's row does, so it is not asked again. The
+      server checks the day against the same rule.
+- [x] "A change, not a state": said in `purchasesToConfirmNotification`.
 
 ## Phase 2 — The transfer follows the DCAs (branch `dca-transfer-amount`)
 
