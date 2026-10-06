@@ -21,6 +21,7 @@ import * as feed from "@finance/data/feed-decisions";
 import * as proposals from "@finance/data/recurring-proposals";
 import * as decisions from "@finance/data/fulfilment-decisions";
 import * as deletions from "@finance/data/deletions";
+import * as dcaInvite from "@finance/data/dca-invite";
 import * as ledger from "@finance/data/ledger";
 import * as plans from "@finance/data/wallet-plans";
 import * as occurrences from "@finance/data/occurrences";
@@ -581,6 +582,29 @@ export function dismissWeeklyRecap(
 ): Promise<ActionResult> {
   return asUser((userId) =>
     recap.dismissWeeklyRecap(supabase, userId, weekOf, locale),
+  );
+}
+
+/* ------------------------------------------- the transfer to the broker */
+
+/** Yes to « Faire suivre vos DCA »: see `acceptTransferInvitation`. */
+export function acceptDcaTransferInvite(locale: Locale): Promise<ActionResult> {
+  return asUser((userId) =>
+    dcaInvite.acceptTransferInvitation(
+      supabase,
+      userId,
+      todayIsoLocal(),
+      locale,
+    ),
+  );
+}
+
+/** No thanks to « Faire suivre vos DCA », on every device. */
+export function dismissDcaTransferInvite(
+  locale: Locale,
+): Promise<ActionResult> {
+  return asUser((userId) =>
+    dcaInvite.dismissTransferInvitation(supabase, userId, locale),
   );
 }
 

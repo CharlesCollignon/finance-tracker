@@ -116,8 +116,12 @@ that the rule rather than the exception, which is why Phase 2 exists.
       the month covered (`transferReminder`, `transferReminderNotification`).
 - [x] Le point, both apps: the same line from that day until the transfer is
       confirmed or skipped, leading to Récurrents, where its figure is.
-- [ ] Without a transfer charge at all, offer to create one on the salary's
-      day — an invitation card, left for the owner to decide.
+- [x] « Faire suivre vos DCA » on Le point, both apps (branch
+      `dca-transfer-invite`): for someone whose DCAs no transfer follows,
+      their monthly transfer to the broker switched in one press, or one
+      created on the salary's day (in « Virement vers le courtier », made if
+      missing). The figure offered is the one the charge then shows; « Non
+      merci » puts it away on every device (`transferInvitation`).
 - [x] PRODUCT.md and DESIGN.md: nothing they say changes.
 
 ## Verification

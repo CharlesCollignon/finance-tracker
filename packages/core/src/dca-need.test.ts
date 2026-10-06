@@ -2,9 +2,12 @@ import { describe, expect, it } from "vitest";
 
 import {
   dcaNeedForMonth,
+  describeTransferInvitation,
   transferCoversMonth,
+  transferInvitation,
   transferReminder,
 } from "./dca-need";
+import { translator } from "./i18n/t";
 import type { RecurringTemplateWithCategory } from "./types/database";
 
 function template(
@@ -270,5 +273,85 @@ describe("transferReminder", () => {
     expect(
       transferReminder({ templates: [transfer, salary], today: "2026-10-25" }),
     ).toBeNull();
+  });
+});
+
+describe("transferInvitation", () => {
+  const salary: RecurringTemplateWithCategory = {
+    ...template("salary", "Salaire", { day_of_month: 28, amount: 3200 }),
+    categories: {
+      name: "Salaire",
+      type: "income",
+      icon: null,
+      counts_toward_summary: true,
+    },
+  };
+  const fixedTransfer = template("transfer", "Virement vers le courtier", {
+    counts: true,
+    day_of_month: 28,
+    amount: 2000,
+    description: "Virement Boursorama",
+  });
+  const today = "2026-10-06";
+
+  it("offers to switch the monthly transfer to the broker", () => {
+    // The September transfer confirmed, the next one covers November.
+    const offer = transferInvitation({
+      templates: [cto, pea, salary, fixedTransfer],
+      today,
+      settledKeys: new Set(["transfer:2026-09-28"]),
+    });
+    expect(offer).toMatchObject({
+      kind: "follow",
+      templateId: "transfer",
+      label: "Virement Boursorama",
+      need: { month: 11, amount: 2150 },
+    });
+    expect(describeTransferInvitation(offer!, translator("fr"), "fr")).toBe(
+      "« Virement Boursorama » peut prendre le montant de vos DCA\u00A0: chaque mois, ce qu'ils vont coûter, 5\u00A0% de plus sur ceux achetés en parts, arrondi aux 50\u00A0€ supérieurs. En novembre, ce serait 2\u202F150\u00A0€, et trois jours avant la paie, vous recevrez le montant à envoyer.",
+    );
+  });
+
+  it("offers the month the charge would then cover", () => {
+    // Until the bank brings the September transfer, it covers October, and
+    // that is the figure the charge would show.
+    expect(
+      transferInvitation({
+        templates: [cto, pea, salary, fixedTransfer],
+        today,
+      })?.need,
+    ).toMatchObject({ month: 10, amount: 1800 });
+  });
+
+  it("offers to create one on the salary's day when there is none", () => {
+    expect(
+      transferInvitation({ templates: [cto, pea, salary], today }),
+    ).toMatchObject({ kind: "create", dayOfMonth: 28 });
+  });
+
+  it("offers nothing without DCAs bought at the broker, or once one follows them", () => {
+    const bitstack = template("bitstack", "DCA Bitstack", { amount: 18 });
+    expect(
+      transferInvitation({
+        templates: [bitstack, salary, fixedTransfer],
+        today,
+        debited: new Set([bitstack.category_id]),
+      }),
+    ).toBeNull();
+    expect(
+      transferInvitation({
+        templates: [
+          cto,
+          pea,
+          salary,
+          { ...fixedTransfer, pricing_type: "purchases" },
+        ],
+        today,
+      }),
+    ).toBeNull();
+  });
+
+  it("offers nothing with neither a transfer nor a salary", () => {
+    expect(transferInvitation({ templates: [cto, pea], today })).toBeNull();
   });
 });

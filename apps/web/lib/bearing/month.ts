@@ -30,7 +30,10 @@ import {
   type MonthBalance,
 } from "@finance/core/month-balance";
 import type { PurchaseToConfirm } from "@finance/core/purchases-to-confirm";
-import type { TransferReminder } from "@finance/core/dca-need";
+import type {
+  TransferInvitation,
+  TransferReminder,
+} from "@finance/core/dca-need";
 import type { UpcomingCharge } from "@finance/core/still-to-come";
 import {
   readMonthBalance,
@@ -38,6 +41,7 @@ import {
 } from "@finance/data/month-balance";
 import { getPurchasesToConfirm } from "@finance/data/purchases-to-confirm";
 import { getTransferReminder } from "@finance/data/dca-transfer";
+import { getTransferInvitation } from "@finance/data/dca-invite";
 
 /** How many months the spending bars look back over, the month shown included. */
 const TREND_MONTHS = 6;
@@ -95,6 +99,11 @@ export interface BearingMonth {
    * payday until it is sent (`transferReminder`). The month in progress only.
    */
   transfer: TransferReminder | null;
+  /**
+   * The offer to let a transfer follow the DCAs, for someone whose DCAs no
+   * transfer follows yet (`transferInvitation`). The month in progress only.
+   */
+  transferInvite: TransferInvitation | null;
   /** Nothing recorded, nothing planned and no balance: a first visit. */
   empty: boolean;
 }
@@ -188,6 +197,7 @@ export async function gatherBearingMonth(
   let arrived: FulfilmentReport | null = null;
   let purchases: PurchaseToConfirm[] = [];
   let transfer: TransferReminder | null = null;
+  let transferInvite: TransferInvitation | null = null;
 
   if (isCurrent) {
     const categories = await getCategories(userId);
@@ -214,7 +224,11 @@ export async function gatherBearingMonth(
           : Promise.resolve([]),
       ]);
     purchases = waitingPurchases;
-    transfer = await getTransferReminder(await createClient(), userId, today);
+    const db = await createClient();
+    [transfer, transferInvite] = await Promise.all([
+      getTransferReminder(db, userId, today),
+      getTransferInvitation(db, userId, today),
+    ]);
 
     if (closes.summary.sample > 0) {
       run = {
@@ -272,6 +286,7 @@ export async function gatherBearingMonth(
     arrived: arrived && arrived.proposals.length > 0 ? arrived : null,
     purchases,
     transfer,
+    transferInvite,
     empty:
       source === "none" &&
       rows.length === 0 &&

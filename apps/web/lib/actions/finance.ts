@@ -4,6 +4,7 @@ import { z } from "zod";
 import { getLocale } from "@/lib/locale";
 
 import { revalidateApp } from "@/lib/revalidate-paths";
+import * as dcaInvite from "@finance/data/dca-invite";
 import * as deletions from "@finance/data/deletions";
 import * as ledger from "@finance/data/ledger";
 import * as occurrences from "@finance/data/occurrences";
@@ -15,7 +16,7 @@ import { getSiteUrl } from "@/lib/supabase/env";
 import { getAuthUser } from "@/lib/auth/get-user";
 import { createClient } from "@/lib/supabase/server";
 import { seedDefaultCategories } from "@/lib/queries/categories";
-import { shiftIsoDate } from "@finance/core/constants";
+import { shiftIsoDate, todayIsoLocal } from "@finance/core/constants";
 import { saveRecurringTemplate } from "@finance/data/recurring-templates";
 import {
   authSchema,
@@ -282,6 +283,22 @@ export async function restoreDeletion(
   token: string,
 ): Promise<ActionResult<{ restored: number }>> {
   return asUser((db, userId) => deletions.restoreDeletion(db, userId, token));
+}
+
+/** Yes to « Faire suivre vos DCA »: see `acceptTransferInvitation`. */
+export async function acceptDcaTransferInvite(): Promise<ActionResult> {
+  const locale = await getLocale();
+  return asUser((db, userId) =>
+    dcaInvite.acceptTransferInvitation(db, userId, todayIsoLocal(), locale),
+  );
+}
+
+/** No thanks to « Faire suivre vos DCA », on every device. */
+export async function dismissDcaTransferInvite(): Promise<ActionResult> {
+  const locale = await getLocale();
+  return asUser((db, userId) =>
+    dcaInvite.dismissTransferInvitation(db, userId, locale),
+  );
 }
 
 /** The form's pricing, read defensively: anything unknown is a fixed amount. */

@@ -27,7 +27,7 @@ type TransferSchedule = Pick<
 >;
 
 /** What a transfer's figure is worked out from. */
-interface FollowFacts {
+export interface FollowFacts {
   /** The active charges, the DCAs among them. */
   templates: RecurringTemplateWithCategory[];
   /** Transfer occurrences confirmed, written or skipped. */
@@ -221,9 +221,10 @@ function followedAmount(
 /**
  * The skips, settled transfers and debited wallets the figure depends on.
  * From a month back: the transfer still in play is at most ten days old,
- * and the DCAs it covers are all ahead.
+ * and the DCAs it covers are all ahead. `transferIds` are the templates
+ * whose settled occurrences are read: by default the ones following.
  */
-async function readFollowFacts(
+export async function readFollowFacts(
   db: Db,
   userId: string,
   today: string,
