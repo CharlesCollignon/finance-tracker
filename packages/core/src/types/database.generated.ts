@@ -2393,7 +2393,7 @@ export type Database = {
     Enums: {
       category_type: "income" | "expense" | "savings" | "investment";
       investment_wallet: "pea" | "cto" | "crypto" | "av" | "per";
-      pricing_type: "fixed" | "shares";
+      pricing_type: "fixed" | "shares" | "purchases";
       recurrence_type: "monthly" | "weekly" | "yearly";
     };
     CompositeTypes: {
@@ -2524,7 +2524,7 @@ export const Constants = {
     Enums: {
       category_type: ["income", "expense", "savings", "investment"],
       investment_wallet: ["pea", "cto", "crypto", "av", "per"],
-      pricing_type: ["fixed", "shares"],
+      pricing_type: ["fixed", "shares", "purchases"],
       recurrence_type: ["monthly", "weekly", "yearly"],
     },
   },

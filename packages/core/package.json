@@ -38,6 +38,7 @@
     "./country-names": "./src/country-names.ts",
     "./crypto-holdings": "./src/crypto-holdings.ts",
     "./csv-import": "./src/csv-import.ts",
+    "./dca-need": "./src/dca-need.ts",
     "./flags": "./src/flags.ts",
     "./fulfilment-state": "./src/fulfilment-state.ts",
     "./future-plan": "./src/future-plan.ts",

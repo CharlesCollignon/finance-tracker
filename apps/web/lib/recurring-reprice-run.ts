@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { buildApplyRecurringPlan } from "@finance/core/apply-recurring";
 import { getCurrentMonth } from "@finance/core/constants";
+import { followPurchases } from "@finance/data/dca-transfer";
 import { quoteSource } from "@finance/data/quote-source";
 import {
   loadApplyRecurringData,
@@ -34,13 +35,14 @@ export async function repriceEveryUser(
   const failures: string[] = [];
 
   // Only quote-priced templates can drift, so only their owners are worth
-  // walking. A fixed amount changes when the user changes it, never on its
-  // own.
+  // walking — and the owners of a transfer that follows the DCAs, whose
+  // figure moves with their quotes and with the month it covers. A fixed
+  // amount changes when the user changes it, never on its own.
   const { data: templateRows, error: templateError } = await supabase
     .from("recurring_templates")
     .select("user_id")
     .eq("active", true)
-    .eq("pricing_type", "shares");
+    .in("pricing_type", ["shares", "purchases"]);
 
   if (templateError) {
     return {
@@ -115,6 +117,11 @@ export async function repriceEveryUser(
         if (!quotesRefreshed) {
           refreshed += await refreshTemplateQuotes(supabase, userId, templates);
           quotesRefreshed = true;
+          // After the quotes, which the DCAs it follows are priced at.
+          const followError = await followPurchases(supabase, userId, today);
+          if (followError) {
+            failures.push(followError);
+          }
         }
 
         const plan = await buildApplyRecurringPlan(

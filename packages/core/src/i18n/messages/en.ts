@@ -3337,6 +3337,7 @@ export const en = {
     nameTooLong100: "Name must be 100 characters or less",
     nameRequiredCustom: "Name is required for custom holdings",
     shareCountRequired: "Share count is required",
+    followsPurchasesMonthly: "A transfer that follows your DCAs is monthly",
     capNotNegative: "A budget cannot be negative",
     zeroOrMore: "Must be 0 or more",
     positiveNumber: "Enter a positive number (comma or dot for decimals)",

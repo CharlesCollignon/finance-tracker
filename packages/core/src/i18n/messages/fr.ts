@@ -2412,6 +2412,7 @@ export const fr: Messages = {
     nameTooLong100: "Le nom doit faire 100 caractères ou moins",
     nameRequiredCustom: "Le nom est obligatoire pour une ligne personnalisée",
     shareCountRequired: "Le nombre de parts est obligatoire",
+    followsPurchasesMonthly: "Un virement qui suit vos DCA est mensuel",
     capNotNegative: "Un budget ne peut pas être négatif",
     zeroOrMore: "Doit être 0 ou plus",
     positiveNumber:
