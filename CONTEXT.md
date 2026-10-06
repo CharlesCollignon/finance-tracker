@@ -410,7 +410,10 @@ month is the one after the transfer still in play — the 28 September one
 covers October until the bank brings it or could no longer — and the figure
 is kept in the template's amount, like a last quote, so everything that
 reads a charge reads it (`followPurchases`). A wallet the bank debits, and a
-DCA skipped ahead of time, are not in it.
+DCA skipped ahead of time, are not in it. Offered on Le point to someone
+whose DCAs no transfer follows yet (« Faire suivre vos DCA »): their monthly
+transfer to the broker switched in one press, or one created on the
+salary's day; « Non merci » puts the offer away on every device.
 _Avoid_: DCA budget, top-up, funding estimate
 
 **Last quote**:

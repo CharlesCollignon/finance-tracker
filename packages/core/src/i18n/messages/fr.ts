@@ -1577,6 +1577,18 @@ export const fr: Messages = {
       hint: "Quand il faut la renouveler, ou si elle s'est arrêtée.",
     },
   },
+  dcaInvite: {
+    title: "Faire suivre vos DCA",
+    follow:
+      "« {name} » peut prendre le montant de vos DCA\u00A0: chaque mois, ce qu'ils vont coûter, 5\u00A0% de plus sur ceux achetés en parts, arrondi aux 50\u00A0€ supérieurs.",
+    create:
+      "Un virement mensuel vers le courtier, le {day} comme votre salaire, peut prendre le montant de vos DCA\u00A0: chaque mois, ce qu'ils vont coûter, 5\u00A0% de plus sur ceux achetés en parts, arrondi aux 50\u00A0€ supérieurs.",
+    next: "En {month}, ce serait {amount}, et trois jours avant la paie, vous recevrez le montant à envoyer.",
+    followAction: "Le faire suivre",
+    createAction: "Créer ce virement",
+    dismiss: "Non merci",
+    done: "Votre virement suit maintenant vos DCA",
+  },
   dcaTransfer: {
     title: "À envoyer au courtier",
     for: "Pour les DCA prévus en {month}\u00A0: {wallets}.",

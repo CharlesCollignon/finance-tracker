@@ -22,7 +22,10 @@ import type { MonthFacts } from "@finance/core/month-facts";
 import { buildMonthPulse } from "@finance/core/month-pulse";
 import type { ReadFreshness } from "@finance/core/month-read-budget";
 import type { PurchaseToConfirm } from "@finance/core/purchases-to-confirm";
-import type { TransferReminder } from "@finance/core/dca-need";
+import type {
+  TransferInvitation,
+  TransferReminder,
+} from "@finance/core/dca-need";
 import {
   buildStillToCome,
   type UpcomingCharge,
@@ -34,6 +37,7 @@ import {
 } from "@finance/data/month-balance";
 import { getPurchasesToConfirm } from "@finance/data/purchases-to-confirm";
 import { getTransferReminder } from "@finance/data/dca-transfer";
+import { getTransferInvitation } from "@finance/data/dca-invite";
 import { getWeeklyRecapCard } from "@finance/data/weekly-recap";
 
 import {
@@ -130,6 +134,11 @@ export interface HomeMonth {
    * payday until it is sent. The month in progress only.
    */
   transfer: TransferReminder | null;
+  /**
+   * The offer to let a transfer follow the DCAs, for someone whose DCAs no
+   * transfer follows yet. The month in progress only.
+   */
+  transferInvite: TransferInvitation | null;
   /** Nothing recorded, nothing planned and no balance: a first visit. */
   empty: boolean;
 }
@@ -237,6 +246,7 @@ export async function gatherHomeMonth(
   let arrived: FulfilmentReport | null = null;
   let purchases: PurchaseToConfirm[] = [];
   let transfer: TransferReminder | null = null;
+  let transferInvite: TransferInvitation | null = null;
 
   if (isCurrent) {
     const categories = await getCategories(userId);
@@ -260,7 +270,10 @@ export async function gatherHomeMonth(
       ]);
     arrived = report;
     purchases = waitingPurchases;
-    transfer = await getTransferReminder(supabase, userId, today);
+    [transfer, transferInvite] = await Promise.all([
+      getTransferReminder(supabase, userId, today),
+      getTransferInvitation(supabase, userId, today),
+    ]);
 
     if (closes.summary.sample > 0) {
       run = {
@@ -316,6 +329,7 @@ export async function gatherHomeMonth(
         : null,
     purchases,
     transfer,
+    transferInvite,
     empty:
       source === "none" &&
       rows.length === 0 &&

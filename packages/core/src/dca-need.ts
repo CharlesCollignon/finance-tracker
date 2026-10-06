@@ -1,5 +1,6 @@
 import { recurringOccurrenceKey, templateSetUpOn } from "./apply-recurring";
 import { isPurchaseInsideWallet } from "./categories";
+import { isCryptoCategoryName } from "./crypto-holdings";
 import { formatEuro, shiftIsoDate } from "./constants";
 import { monthLong } from "./i18n/calendar-names";
 import type { Locale } from "./i18n/locale";
@@ -255,14 +256,7 @@ export function transferReminder({
     return null;
   }
 
-  const salary = templates
-    .filter(
-      (template) =>
-        template.active &&
-        template.categories.type === "income" &&
-        (template.recurrence ?? "monthly") === "monthly",
-    )
-    .sort((a, b) => Number(b.amount) - Number(a.amount))[0];
+  const salary = mainSalary(templates);
   const salaryOn = salary
     ? nearestOccurrence(salary, covered.occurredOn, PAYDAY_EARLY_DAYS)
     : null;
@@ -304,6 +298,162 @@ export function describeDcaNeed(
     month: monthLong(need.month, locale),
     wallets,
   })} ${t(need.margin > 0 ? "dcaTransfer.margin" : "dcaTransfer.rounded")}`;
+}
+
+/** Who has not been offered it yet: the prompt it is put away under. */
+export const TRANSFER_INVITATION_PROMPT = "dca-transfer-invite";
+
+export type TransferInvitation =
+  | {
+      /** Their monthly transfer to the broker, to switch. */
+      kind: "follow";
+      templateId: string;
+      label: string;
+      need: DcaNeed;
+    }
+  | {
+      /** No transfer: one to create, on the salary's day. */
+      kind: "create";
+      dayOfMonth: number;
+      need: DcaNeed;
+    };
+
+/**
+ * The offer to let a transfer follow the DCAs, for someone who buys DCAs at
+ * the broker and has none doing so: their monthly transfer to the broker if
+ * they have one — a monthly charge in an investment category the account
+ * pays, the largest — else one to create on the salary's day. `need` is
+ * what it would be, for the month it would cover by `transferCoversMonth`'s
+ * own rule, so the figure offered is the figure the charge then shows.
+ *
+ * Nothing when there is no DCA bought at the broker, one transfer already
+ * follows them, next month holds none, or there is neither a transfer to
+ * switch nor a salary to put a new one on.
+ */
+export function transferInvitation({
+  templates,
+  today,
+  debited = new Set(),
+  settledKeys = new Set(),
+  skippedKeys = new Set(),
+}: {
+  templates: readonly RecurringTemplateWithCategory[];
+  today: string;
+  /** `walletCategoriesTheBankDebits`. */
+  debited?: ReadonlySet<string>;
+  /** Occurrences confirmed against the bank, or written. */
+  settledKeys?: ReadonlySet<string>;
+  skippedKeys?: ReadonlySet<string>;
+}): TransferInvitation | null {
+  const active = templates.filter((template) => template.active);
+  if (
+    active.some((template) => template.pricing_type === "purchases") ||
+    !active.some(
+      (template) =>
+        isPurchaseInsideWallet(template.categories) &&
+        !debited.has(template.category_id),
+    )
+  ) {
+    return null;
+  }
+
+  const needFor = (
+    schedule: Parameters<typeof transferCoversMonth>[0],
+  ): DcaNeed | null => {
+    const covered = transferCoversMonth(
+      schedule,
+      today,
+      new Set([...settledKeys, ...skippedKeys]),
+    );
+    if (!covered) {
+      return null;
+    }
+    const need = dcaNeedForMonth({
+      templates,
+      debited,
+      skippedKeys,
+      year: covered.year,
+      month: covered.month,
+    });
+    return need.amount > 0 ? need : null;
+  };
+
+  const transfer = active
+    .filter(
+      (template) =>
+        (template.recurrence ?? "monthly") === "monthly" &&
+        template.pricing_type === "fixed" &&
+        template.categories.type === "investment" &&
+        template.categories.counts_toward_summary !== false &&
+        !isCryptoCategoryName(template.categories.name),
+    )
+    .sort((a, b) => Number(b.amount) - Number(a.amount))[0];
+  if (transfer) {
+    const need = needFor(transfer);
+    return need
+      ? {
+          kind: "follow",
+          templateId: transfer.id,
+          label: transfer.description?.trim() || transfer.categories.name,
+          need,
+        }
+      : null;
+  }
+
+  const salary = mainSalary(templates);
+  if (!salary?.day_of_month) {
+    return null;
+  }
+  // As it would be, set up today.
+  const need = needFor({
+    id: "",
+    created_at: `${today}T12:00:00Z`,
+    recurrence: "monthly",
+    day_of_month: salary.day_of_month,
+    day_of_week: null,
+    month_of_year: null,
+    starts_on: null,
+    ends_on: null,
+  });
+  return need
+    ? { kind: "create", dayOfMonth: salary.day_of_month, need }
+    : null;
+}
+
+/** What the offer says it would do, in the reader's words. */
+export function describeTransferInvitation(
+  invitation: TransferInvitation,
+  t: Translate,
+  locale: Locale,
+): string {
+  const how =
+    invitation.kind === "follow"
+      ? t("dcaInvite.follow", { name: invitation.label })
+      : t("dcaInvite.create", {
+          day:
+            locale === "fr" && invitation.dayOfMonth === 1
+              ? "1er"
+              : String(invitation.dayOfMonth),
+        });
+  const then = t("dcaInvite.next", {
+    month: monthLong(invitation.need.month, locale),
+    amount: formatEuro(invitation.need.amount, locale),
+  });
+  return `${how} ${then}`;
+}
+
+/** The salary: the largest active monthly income charge. */
+function mainSalary(
+  templates: readonly RecurringTemplateWithCategory[],
+): RecurringTemplateWithCategory | undefined {
+  return templates
+    .filter(
+      (template) =>
+        template.active &&
+        template.categories.type === "income" &&
+        (template.recurrence ?? "monthly") === "monthly",
+    )
+    .sort((a, b) => Number(b.amount) - Number(a.amount))[0];
 }
 
 /** A template's occurrence nearest `date`, no further than `within` days. */
