@@ -56,6 +56,7 @@ import { useQuickAdd } from "@/providers/QuickAddProvider";
 import { toggleRecurringActive } from "@/lib/mutations";
 import {
   getCategories,
+  getDebitedWalletCategories,
   getRecordedChargeDates,
   getRecurringProposals,
   getRecurringTemplates,
@@ -118,6 +119,7 @@ export default function RecurringScreen() {
           recorded: new Map<string, string[]>(),
           properties: [] as { id: string; name: string }[],
           proposals: [] as RecurringProposal[],
+          debited: new Set<string>(),
         };
       }
       const [templates, categories, recorded, properties, bankFed] =
@@ -135,10 +137,14 @@ export default function RecurringScreen() {
       // Only worth asking where there is a statement to read it out of, as
       // on the web. Without one the transactions are the user's own typing,
       // and they already know what repeats.
-      const proposals = bankFed
-        ? await getRecurringProposals(user.id, todayIsoLocal())
-        : [];
-      return { templates, categories, recorded, properties, proposals };
+      // And only a bank can have debited a wallet from the account.
+      const [proposals, debited] = bankFed
+        ? await Promise.all([
+            getRecurringProposals(user.id, todayIsoLocal()),
+            getDebitedWalletCategories(user.id),
+          ])
+        : [[], new Set<string>()];
+      return { templates, categories, recorded, properties, proposals, debited };
     }, [user?.id, showProperty], {
       reads: ["templates", "categories", "transactions", "properties", "bank"],
     });
@@ -175,7 +181,11 @@ export default function RecurringScreen() {
    * Bearing have always meant by the word. What falls out is said below as
    * what is set aside rather than disappearing off the card.
    */
-  const rollup = useMemo(() => rollUpRecurring(templates), [templates]);
+  const debited = data?.debited;
+  const rollup = useMemo(
+    () => rollUpRecurring(templates, { debited }),
+    [templates, debited],
+  );
 
   const groups = useMemo(
     () =>
@@ -313,11 +323,11 @@ export default function RecurringScreen() {
                   {rollup.deployed > 0 ? (
                     <>
                       {" · "}
-                      {t("charges.ofWhichMovedBefore")}{" "}
+                      {t("charges.trackedBefore")}{" "}
                       <PrivateAmount className="text-foreground">
                         {formatEuro(rollup.deployed)}
                       </PrivateAmount>{" "}
-                      {t("charges.ofWhichMovedAfter")}
+                      {t("charges.trackedAfter")}
                     </>
                   ) : null}
                 </Text>

@@ -677,8 +677,9 @@ export const en = {
      * element — that is what lets the privacy blur cover the figure without
      * covering the sentence around it.
      */
-    ofWhichMovedBefore: "of which",
-    ofWhichMovedAfter: "paid into your investments — tracked, but not spent.",
+    trackedBefore: "plus",
+    trackedAfter:
+      "of purchases inside your investments, made with money already sent to the broker — tracked, but not counted.",
     nothingHereYet: "Nothing here yet: “Add charge” creates one.",
     editNamed: "Edit {name}",
     addTo: "Add to {group}",

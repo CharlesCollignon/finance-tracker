@@ -5,7 +5,11 @@ import {
   getRecordedThisMonth,
   getRecurringTemplates,
 } from "@/lib/queries/finance";
-import { getRecurringProposals, hasBankFeed } from "@/lib/queries/bank";
+import {
+  getDebitedWalletCategories,
+  getRecurringProposals,
+  hasBankFeed,
+} from "@/lib/queries/bank";
 import { todayIsoLocal } from "@finance/core/constants";
 import { isFlagOn } from "@finance/core/flags";
 import { getFlags } from "@/lib/flags";
@@ -44,9 +48,13 @@ export default async function RecurringPage({
   // Only worth asking where there is a statement to read it out of. Without
   // one the transactions are the user's own typing, and they already know
   // what repeats.
-  const proposals = bankFed
-    ? await getRecurringProposals(user.id, todayIsoLocal())
-    : [];
+  // And only a bank can have debited a wallet from the account.
+  const [proposals, debited] = bankFed
+    ? await Promise.all([
+        getRecurringProposals(user.id, todayIsoLocal()),
+        getDebitedWalletCategories(user.id),
+      ])
+    : [[], []];
 
   return (
     <RecurringView
@@ -57,6 +65,7 @@ export default async function RecurringPage({
       // A planned row's "Edit the charge" lands here with the editor open.
       initialEditId={params.edit}
       properties={properties}
+      debitedCategoryIds={debited}
     />
   );
 }

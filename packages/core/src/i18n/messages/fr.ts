@@ -469,8 +469,9 @@ export const fr: Messages = {
     perMonth: "Par mois",
     perMonthSuffix: " / mois",
     noIncomeYet: "Aucun revenu récurrent — ajoutez-en un et ceci se remplira.",
-    ofWhichMovedBefore: "dont",
-    ofWhichMovedAfter: "versés sur vos placements — suivis, mais pas dépensés.",
+    trackedBefore: "plus",
+    trackedAfter:
+      "d'achats dans vos placements, faits avec l'argent déjà envoyé au courtier — suivis, mais pas comptés.",
     nothingHereYet:
       "Rien ici pour l'instant\u00A0: « Ajouter une opération récurrente » en crée une.",
     editNamed: "Modifier {name}",

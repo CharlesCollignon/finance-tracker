@@ -1,4 +1,7 @@
-import { hasBankFeed as bankFeeds } from "@finance/data/bank-feed";
+import {
+  hasBankFeed as bankFeeds,
+  walletCategoriesTheBankDebits,
+} from "@finance/data/bank-feed";
 import * as fulfilment from "@finance/data/fulfilment";
 import * as closes from "@finance/data/month-close";
 import { isMissingSchema } from "@finance/data/schema";
@@ -561,6 +564,16 @@ export function countPendingFeedItems(userId: string): Promise<number> {
  */
 export function hasBankFeed(userId: string): Promise<boolean> {
   return bankFeeds(supabase, userId);
+}
+
+/**
+ * The categories of the wallets the bank debits from the account
+ * (Bitstack) — `@finance/data/bank-feed`, with the phone's client.
+ */
+export function getDebitedWalletCategories(
+  userId: string,
+): Promise<Set<string>> {
+  return walletCategoriesTheBankDebits(supabase, userId);
 }
 
 /** How many bank rows an earlier sync merged away without asking. */
