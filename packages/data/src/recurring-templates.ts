@@ -18,6 +18,7 @@ import type { RecurringTemplateInput } from "@finance/core/validations/finance";
 
 import { hasBankFeed } from "./bank-feed";
 import type { Db } from "./client";
+import { followPurchases, transferAmountFor } from "./dca-transfer";
 import { quoteSource } from "./quote-source";
 import { fillMonth, followTemplate } from "./recurring-apply";
 import { syncInvestmentPositionFromRecurring } from "./recurring-positions";
@@ -58,7 +59,11 @@ function firstOfCurrentMonth(): string {
  *
  * A share-priced template is priced from the market as it is saved, so its
  * stored amount — what projections and the recurring list read — is right
- * from the first moment. A fixed template in a crypto category is pinned to
+ * from the first moment, and a transfer that follows the DCAs is worked out
+ * the same way (`transferAmountFor`) — only in a category money leaves the
+ * account by for an investment, the broker transfer's. Any save can move what
+ * such a transfer follows, so they are brought in line after it
+ * (`followPurchases`). A fixed template in a crypto category is pinned to
  * bitcoin, the one instrument such a category tracks. Then the position it
  * feeds is synced, and unless a bank feeds the ledger (where templates only
  * forecast), the rows it has written follow: a new template writes this
@@ -113,6 +118,16 @@ export async function saveRecurringTemplate(
         error: error instanceof Error ? error.message : "actions.couldNotPrice",
       };
     }
+  } else if (data.pricingType === "purchases") {
+    // Its amount is worked out below, once its schedule is known.
+    pricing = {
+      pricing_type: "purchases",
+      share_count: null,
+      instrument_symbol: null,
+      instrument_name: null,
+      last_quote_price: null,
+      last_quote_at: null,
+    };
   } else {
     pricing = {
       pricing_type: "fixed",
@@ -128,10 +143,19 @@ export async function saveRecurringTemplate(
   // to read any category by id and rely on RLS alone.
   const { data: category } = await db
     .from("categories")
-    .select("name")
+    .select("name, type, counts_toward_summary")
     .eq("id", data.categoryId)
     .eq("user_id", userId)
     .maybeSingle();
+
+  // The transfer to the broker is what funds the DCAs: an investment the
+  // account pays, unlike the purchases themselves, which it never sees.
+  if (
+    data.pricingType === "purchases" &&
+    (category?.type !== "investment" || !category.counts_toward_summary)
+  ) {
+    return { error: "errors.followsPurchasesCategory" };
+  }
 
   if (
     category &&
@@ -186,12 +210,39 @@ export async function saveRecurringTemplate(
     ? await db
         .from("recurring_templates")
         .select(
-          "recurrence, day_of_month, day_of_week, month_of_year, starts_on, ends_on, active",
+          "recurrence, day_of_month, day_of_week, month_of_year, starts_on, ends_on, active, created_at",
         )
         .eq("id", data.id)
         .eq("user_id", userId)
         .maybeSingle()
     : { data: null };
+
+  if (data.pricingType === "purchases") {
+    const followed = await transferAmountFor(
+      db,
+      userId,
+      {
+        id: data.id ?? "",
+        created_at: previous?.created_at ?? new Date().toISOString(),
+        recurrence: data.recurrence,
+        day_of_month: schedule.day_of_month ?? null,
+        day_of_week: schedule.day_of_week ?? null,
+        month_of_year: schedule.month_of_year ?? null,
+        starts_on: fields.starts_on,
+        ends_on: fields.ends_on,
+      },
+      todayIsoLocal(),
+    );
+    if ("error" in followed) {
+      return { error: followed.error };
+    }
+    // With no DCA in the month it covers, the figure it had stands.
+    if (followed.amount > 0) {
+      fields.amount = followed.amount;
+    } else if (fields.amount <= 0) {
+      return { error: "errors.noDcaToFollow" };
+    }
+  }
 
   let templateId: string;
   if (data.id) {
@@ -223,6 +274,7 @@ export async function saveRecurringTemplate(
   }
 
   await syncInvestmentPositionFromRecurring(db, userId, templateId);
+  await followPurchases(db, userId, todayIsoLocal());
 
   if (await hasBankFeed(db, userId)) {
     return { templateId };

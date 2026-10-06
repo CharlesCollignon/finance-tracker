@@ -6,7 +6,12 @@ export type CategoryType = "income" | "expense" | "savings" | "investment";
 
 export type Recurrence = "monthly" | "weekly" | "yearly";
 
-export type PricingType = "fixed" | "shares";
+/**
+ * How a template's amount is reached: typed, a share count at the last quote,
+ * or — for a transfer to the broker — what next month's DCAs need (migration
+ * 054, `dcaNeedForMonth`).
+ */
+export type PricingType = "fixed" | "shares" | "purchases";
 
 export type WalletId = "pea" | "cto" | "av" | "per" | "crypto";
 

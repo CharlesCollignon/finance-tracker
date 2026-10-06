@@ -13,6 +13,7 @@
     "./category-screen": "./src/category-screen.ts",
     "./client": "./src/client.ts",
     "./closing": "./src/closing.ts",
+    "./dca-transfer": "./src/dca-transfer.ts",
     "./deletions": "./src/deletions.ts",
     "./errors": "./src/errors.ts",
     "./feed-decisions": "./src/feed-decisions.ts",

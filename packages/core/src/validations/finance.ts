@@ -89,7 +89,11 @@ const recurringCommonSchema = z.object({
   categoryId: z.string().uuid(),
   description: z.string().max(500, "errors.descriptionTooLong").optional(),
   active: z.boolean().optional(),
-  pricingType: z.enum(["fixed", "shares"]).default("fixed"),
+  /**
+   * `purchases`: a transfer to the broker whose amount follows next month's
+   * DCAs (migration 054), worked out by the server, so no amount is typed.
+   */
+  pricingType: z.enum(["fixed", "shares", "purchases"]).default("fixed"),
   amount: z.coerce.number().positive("errors.amountPositive").optional(),
   shareCount: z.coerce.number().int().positive().optional(),
   instrumentSymbol: z.string().min(1).max(32).optional(),
@@ -108,10 +112,24 @@ const recurringCommonSchema = z.object({
     .transform((value) => (value === "" ? null : value)),
 });
 
-function applyPricingRules(
-  data: z.infer<typeof recurringCommonSchema>,
-  ctx: z.RefinementCtx,
-) {
+type RecurringRulesInput = z.infer<typeof recurringCommonSchema> & {
+  recurrence: "monthly" | "weekly" | "yearly";
+};
+
+function applyPricingRules(data: RecurringRulesInput, ctx: z.RefinementCtx) {
+  if (data.pricingType === "purchases") {
+    // Next month's DCAs are the month after the transfer's own, which only
+    // a monthly transfer has.
+    if (data.recurrence !== "monthly") {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "errors.followsPurchasesMonthly",
+        path: ["recurrence"],
+      });
+    }
+    return;
+  }
+
   if (data.pricingType === "fixed") {
     if (!data.amount || data.amount <= 0) {
       ctx.addIssue({
@@ -161,10 +179,7 @@ function applyScheduleRules(
   }
 }
 
-function applyRecurringRules(
-  data: z.infer<typeof recurringCommonSchema>,
-  ctx: z.RefinementCtx,
-) {
+function applyRecurringRules(data: RecurringRulesInput, ctx: z.RefinementCtx) {
   applyPricingRules(data, ctx);
   applyScheduleRules(data, ctx);
 }

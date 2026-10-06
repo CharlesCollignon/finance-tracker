@@ -72,31 +72,36 @@ that the rule rather than the exception, which is why Phase 2 exists.
       server checks the day against the same rule.
 - [x] "A change, not a state": said in `purchasesToConfirmNotification`.
 
-## Phase 2 — The transfer follows the DCAs (branch `dca-transfer-amount`)
+## Phase 2 — The transfer follows the DCAs (branch `dca-transfer-amount`) — done
 
-- [ ] Core, tested: `dcaNeedForMonth({ templates, debited, skippedKeys,
-      quotes, year, month })` → the month's DCA occurrences per wallet, their
-      cost (share count × quote, else the last quote), the 5 % margin on the
-      share-priced ones, and the total rounded up to the next 50 €. Skips
-      already recorded for that month lower it.
-- [ ] Migration 054: `pricing_type` gains `purchases` — « Montant : selon vos
-      DCA ». Allowed only on a template in an investment category that counts
-      toward the summary. The `amount` column keeps the last figure worked out,
-      so nothing that reads it raw is ever handed zero.
-- [ ] One place prices an occurrence of such a template: the fill (a ledger
-      no bank feeds), the forecast, still-to-come, the projection months
-      ahead (last quotes), and the big-charge push — which must not call a
-      November with five Mondays "larger than usual".
-- [ ] Fulfilment: for such a template, a debit in its category inside the
-      payday window is offered whatever its amount, the difference shown on
-      the row. A top-up sent mid-month after it is confirmed is only one more
-      transfer, counted as invested that month.
-- [ ] The charge sheet, web and phone: the amount switch, and under it
-      « 1 750 € pour les DCA de novembre (PEA 400 € · CTO 1 350 €) ». Without
-      a transfer charge at all, Placements offers to create one on the
-      salary's day.
-- [ ] CONTEXT.md: the new pricing, under Standing instructions, and the
-      transfer row's rule under Fulfil.
+- [x] Core, tested: `dcaNeedForMonth` — the month's DCA occurrences per
+      wallet, their cost (a share-priced template's amount is already its
+      last quote), 5 % on the share-priced ones, rounded up to the next 50 €,
+      less the skips recorded ahead. `transferCoversMonth` — the month after
+      the transfer still in play (the first not settled from ten days back,
+      never before the charge was set up).
+- [x] Migration 054: `pricing_type` gains `purchases`, monthly only; the share
+      fields are owed by `shares` alone.
+- [x] Kept in the template's `amount` (`followPurchases`), the way a last
+      quote is, so the fill, the forecast, still-to-come and the projection
+      read it unchanged. Kept by the daily quote refresh. A month with no
+      purchase leaves it as it was (an amount cannot be zero).
+- [x] Fulfilment: such a charge is offered whatever was sent (`anyAmount`).
+- [x] The big-charge push needs nothing: it compares a charge with the median
+      of all the reader's charges, not with its own months.
+- [x] Saving such a charge: accepted only in an investment category that
+      counts toward the summary, its amount worked out before it is written
+      (`transferAmountFor`).
+- [x] Kept when the app opens (after the fill, which prices the DCAs), and
+      when a charge is saved, paused or deleted, a day skipped or brought
+      back, a transfer confirmed or that confirmation undone.
+- [x] The charge sheet, web and phone: « Selon vos DCA » beside « Montant
+      fixe », the amount field giving way to today's figure and how it is
+      reached; the list says « Selon vos DCA du mois suivant ». The month and
+      the split by wallet go to Phase 3's push and card, which name them.
+- [ ] Without a transfer charge at all, offer to create one on the salary's
+      day — moved to Phase 3, beside the push that needs it.
+- [x] CONTEXT.md: « virement selon vos DCA », and the rule under Fulfil.
 
 ## Phase 3 — How much to send (branch `dca-transfer-push`)
 

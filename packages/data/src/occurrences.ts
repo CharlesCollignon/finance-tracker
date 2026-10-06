@@ -8,6 +8,7 @@ import { occurrenceSchema, parseUuid } from "@finance/core/validations/finance";
 
 import { hasBankFeed } from "./bank-feed";
 import type { Db } from "./client";
+import { followPurchases } from "./dca-transfer";
 import {
   fillDue,
   fillMonth,
@@ -59,7 +60,12 @@ export async function deleteRecurringTemplate(
     .eq("id", id)
     .eq("user_id", userId);
 
-  return error ? { error: dbError(error) } : { success: true };
+  if (error) {
+    return { error: dbError(error) };
+  }
+  // A DCA gone is one a transfer that follows them no longer needs.
+  await followPurchases(db, userId, todayIsoLocal());
+  return { success: true };
 }
 
 /**
@@ -102,6 +108,8 @@ export async function toggleRecurringActive(
     }
   }
 
+  // After the fill, which prices the share-priced DCAs it follows.
+  await followPurchases(db, userId, todayIsoLocal());
   return { success: true };
 }
 
@@ -111,18 +119,22 @@ export async function toggleRecurringActive(
  * There is no button for this any more: both apps call it when they open and
  * again when they come back on another day, so the charges the user set up
  * are simply there on their day. Most calls find nothing to write and cost a
- * few small reads.
+ * few small reads. A transfer that follows the DCAs is brought in line after,
+ * with or without a bank: the month it covers moves with the days, and the
+ * fill prices the share-priced DCAs it follows.
  */
 export async function fillThisMonth(
   db: Db,
   userId: string,
 ): Promise<{ created: number; error?: string }> {
   if (await hasBankFeed(db, userId)) {
+    await followPurchases(db, userId, todayIsoLocal());
     return { created: 0 };
   }
 
   try {
     const { created, failures } = await fillDue(db, userId, todayIsoLocal());
+    await followPurchases(db, userId, todayIsoLocal());
     return failures.length > 0 ? { created, error: failures[0] } : { created };
   } catch (error) {
     return {
@@ -351,7 +363,12 @@ export async function skipPlannedOccurrence(
   const skipError = await skipOccurrences(db, userId, [
     { templateId: template.id, occurredOn: parsed.data.occurredOn },
   ]);
-  return skipError ? { error: skipError } : { success: true };
+  if (skipError) {
+    return { error: skipError };
+  }
+  // A DCA taken out of next month is money the transfer no longer sends.
+  await followPurchases(db, userId, todayIsoLocal());
+  return { success: true };
 }
 
 /**
@@ -395,5 +412,7 @@ export async function unskipRecurringOccurrence(
     );
   }
 
+  // After the fill, which prices the share-priced DCAs it follows.
+  await followPurchases(db, userId, todayIsoLocal());
   return { success: true, message: "actions.skipRemoved" };
 }

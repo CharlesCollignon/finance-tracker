@@ -350,6 +350,12 @@ export const fr: Messages = {
     amountType: "Type de montant",
     fixedAmount: "Montant fixe en EUR",
     sharesTimesPrice: "Parts × cours",
+    followsPurchases: "Selon vos DCA",
+    followsPurchasesNote:
+      "Ce que vos DCA du mois suivant vont coûter, 5\u00A0% de plus sur ceux achetés en parts, arrondi aux 50\u00A0€ supérieurs. Recalculé chaque jour, et dès qu'un DCA change.",
+    followsPurchasesNow: "Aujourd'hui\u00A0: {amount}",
+    followsPurchasesNew: "Calculé à l'enregistrement.",
+    followsPurchasesRow: "Selon vos DCA du mois suivant",
     shareCount: "Nombre de parts",
     wholeSharesOnly: "Saisissez un nombre entier de parts",
     estimatedAmount: "Montant estimé",
@@ -2412,6 +2418,11 @@ export const fr: Messages = {
     nameTooLong100: "Le nom doit faire 100 caractères ou moins",
     nameRequiredCustom: "Le nom est obligatoire pour une ligne personnalisée",
     shareCountRequired: "Le nombre de parts est obligatoire",
+    followsPurchasesMonthly: "Un virement qui suit vos DCA est mensuel",
+    followsPurchasesCategory:
+      "Seul un virement vers le courtier peut suivre vos DCA",
+    noDcaToFollow:
+      "Aucun DCA le mois suivant\u00A0: indiquez un montant pour ce virement",
     capNotNegative: "Un budget ne peut pas être négatif",
     zeroOrMore: "Doit être 0 ou plus",
     positiveNumber:

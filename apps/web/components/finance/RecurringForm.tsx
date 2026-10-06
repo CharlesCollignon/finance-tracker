@@ -245,12 +245,37 @@ export function RecurringFormBody({
    */
   const supportsShares =
     selectedCategory?.type === "investment" && !isCryptoCategory;
+  /*
+   * Following the DCAs is the broker transfer's: an investment the account
+   * pays (the purchases themselves never touch it), once a month.
+   */
+  const supportsFollow =
+    supportsShares &&
+    selectedCategory?.counts_toward_summary !== false &&
+    recurrence === "monthly";
 
-  // Categories that don't support share pricing always behave as "fixed",
+  // Categories that don't support a pricing always behave as "fixed",
   // regardless of what the toggle state was before switching category.
-  const effectivePricingType: PricingType = supportsShares
-    ? pricingType
-    : "fixed";
+  const effectivePricingType: PricingType =
+    pricingType === "purchases"
+      ? supportsFollow
+        ? "purchases"
+        : "fixed"
+      : supportsShares
+        ? pricingType
+        : "fixed";
+  const pricingOptions: { value: PricingType; label: string }[] = [
+    { value: "fixed", label: t("recurring.fixedAmount") },
+    { value: "shares", label: t("recurring.sharesTimesPrice") },
+    ...(supportsFollow
+      ? [
+          {
+            value: "purchases" as const,
+            label: t("recurring.followsPurchases"),
+          },
+        ]
+      : []),
+  ];
 
   const parsedShares = Number(shareCount);
   const sharesValid = Number.isInteger(parsedShares) && parsedShares > 0;
@@ -353,31 +378,28 @@ export function RecurringFormBody({
           <span className="text-sm font-medium">
             {t("recurring.amountType")}
           </span>
-          <div className="grid grid-cols-2 gap-2">
-            <button
-              type="button"
-              onClick={() => setPricingType("fixed")}
-              className={cn(
-                "rounded-full border px-3 py-2 text-sm font-medium",
-                effectivePricingType === "fixed"
-                  ? "border-foreground bg-secondary text-foreground"
-                  : "border-border hover:bg-accent",
-              )}
-            >
-              {t("recurring.fixedAmount")}
-            </button>
-            <button
-              type="button"
-              onClick={() => setPricingType("shares")}
-              className={cn(
-                "rounded-full border px-3 py-2 text-sm font-medium",
-                effectivePricingType === "shares"
-                  ? "border-foreground bg-secondary text-foreground"
-                  : "border-border hover:bg-accent",
-              )}
-            >
-              {t("recurring.sharesTimesPrice")}
-            </button>
+          <div
+            className={cn(
+              "grid gap-2",
+              pricingOptions.length === 3 ? "grid-cols-3" : "grid-cols-2",
+            )}
+          >
+            {pricingOptions.map((option) => (
+              <button
+                key={option.value}
+                type="button"
+                onClick={() => setPricingType(option.value)}
+                aria-pressed={effectivePricingType === option.value}
+                className={cn(
+                  "rounded-full border px-3 py-2 text-sm font-medium",
+                  effectivePricingType === option.value
+                    ? "border-foreground bg-secondary text-foreground"
+                    : "border-border hover:bg-accent",
+                )}
+              >
+                {option.label}
+              </button>
+            ))}
           </div>
           {effectivePricingType === "shares" && (
             <Text className="text-xs text-muted-foreground">
@@ -451,6 +473,30 @@ export function RecurringFormBody({
             )}
           </div>
         </>
+      ) : effectivePricingType === "purchases" ? (
+        <div className="rounded-control border border-border bg-muted/20 p-3 text-sm">
+          {/* With no DCA in the month it covers, the figure it had stands. */}
+          {template?.pricing_type === "purchases" && (
+            <>
+              <input type="hidden" name="amount" value={template.amount} />
+              <p className="privacy-sensitive text-base font-semibold tabular-nums">
+                {t("recurring.followsPurchasesNow", {
+                  amount: formatEuro(Number(template.amount)),
+                })}
+              </p>
+            </>
+          )}
+          <p
+            className={cn(
+              "text-xs text-muted-foreground",
+              template?.pricing_type === "purchases" && "mt-1",
+            )}
+          >
+            {t("recurring.followsPurchasesNote")}
+            {template?.pricing_type !== "purchases" &&
+              ` ${t("recurring.followsPurchasesNew")}`}
+          </p>
+        </div>
       ) : (
         <>
           <div className="flex flex-col gap-2">

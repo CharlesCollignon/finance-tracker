@@ -7,6 +7,7 @@ import {
   scheduleDatesBefore,
 } from "@finance/core/apply-recurring";
 import { getCurrentMonth, todayIsoLocal } from "@finance/core/constants";
+import { isCryptoCategoryName } from "@finance/core/crypto-holdings";
 import { dayOfWeekLabels, monthLabels } from "@finance/core/recurrence";
 import type {
   Category,
@@ -182,12 +183,25 @@ export function RecurringFormBody({
   const [monthOfYear, setMonthOfYear] = useState(
     String(template?.month_of_year ?? 10),
   );
+  const selectedCategory = categories.find(
+    (category) => category.id === categoryId,
+  );
   // A yearly charge counts a twelfth each month in what the month leaves:
   // said under the schedule, as the web does.
   const isYearlyExpense =
-    recurrence === "yearly" &&
-    categories.find((category) => category.id === categoryId)?.type ===
-      "expense";
+    recurrence === "yearly" && selectedCategory?.type === "expense";
+  // Following the DCAs is the broker transfer's, as on the web: an
+  // investment the account pays, once a month.
+  const canFollow =
+    !sharePriced &&
+    recurrence === "monthly" &&
+    selectedCategory?.type === "investment" &&
+    selectedCategory.counts_toward_summary !== false &&
+    !isCryptoCategoryName(selectedCategory.name);
+  const [followChosen, setFollowChosen] = useState(
+    template?.pricing_type === "purchases",
+  );
+  const follows = canFollow && followChosen;
   const [startsOn, setStartsOn] = useState(template?.starts_on ?? "");
   const [endsOn, setEndsOn] = useState(template?.ends_on ?? "");
   const [error, setError] = useState<string | null>(null);
@@ -286,6 +300,15 @@ export function RecurringFormBody({
             instrumentSymbol: template?.instrument_symbol ?? undefined,
             instrumentName: template?.instrument_name ?? undefined,
           }
+        : follows
+        ? {
+            pricingType: "purchases",
+            // Worked out by the server; the figure it had stands only when
+            // next month holds no DCA.
+            ...(template?.pricing_type === "purchases"
+              ? { amount: Number(template.amount) }
+              : {}),
+          }
         : {
             pricingType: "fixed",
             // Whichever shape it was typed in, « 1 234,56 » included.
@@ -370,7 +393,48 @@ export function RecurringFormBody({
         className="mb-4"
       />
 
-      {sharePriced ? (
+      {canFollow ? (
+        <>
+          <Text className="mb-2 text-sm font-medium">
+            {t("recurring.amountType")}
+          </Text>
+          <ChoiceChips
+            label={t("recurring.amountType")}
+            fill
+            options={[
+              { value: "fixed", label: t("recurring.fixedAmount") },
+              { value: "purchases", label: t("recurring.followsPurchases") },
+            ]}
+            value={follows ? "purchases" : "fixed"}
+            onChange={(value) => setFollowChosen(value === "purchases")}
+            className="mb-4"
+          />
+        </>
+      ) : null}
+
+      {follows ? (
+        <View className="mb-4 rounded-control border border-border p-3">
+          {template?.pricing_type === "purchases" ? (
+            <Text className="text-base font-semibold">
+              {t("recurring.followsPurchasesNow", {
+                amount: formatEuro(Number(template.amount)),
+              })}
+            </Text>
+          ) : null}
+          <Text
+            variant="muted"
+            className={cn(
+              "text-xs",
+              template?.pricing_type === "purchases" && "mt-1",
+            )}
+          >
+            {t("recurring.followsPurchasesNote")}
+            {template?.pricing_type !== "purchases"
+              ? ` ${t("recurring.followsPurchasesNew")}`
+              : ""}
+          </Text>
+        </View>
+      ) : sharePriced ? (
         <>
           <Text className="mb-2 text-sm font-medium">
             {t("recurring.shareCount")}
