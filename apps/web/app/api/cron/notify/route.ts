@@ -50,6 +50,7 @@ import {
   overdraftWarning,
   plannedChargesOn,
   purchasesToConfirmNotification,
+  transferReminderNotification,
   usualChargeAmount,
   weeklyRecapNotification,
 } from "@finance/core/push-messages";
@@ -64,6 +65,7 @@ import {
   walletCategoriesTheBankDebits,
 } from "@finance/data/bank-feed";
 import { getPurchasesToConfirm } from "@finance/data/purchases-to-confirm";
+import { getTransferReminder } from "@finance/data/dca-transfer";
 
 /**
  * The daily notification run.
@@ -233,16 +235,41 @@ async function notificationsFor(
     t: translator(locale),
   });
 
-  const [heads, purchases] = await Promise.all([
+  const [heads, purchases, transfer] = await Promise.all([
     bigChargeFor(supabase, userId, today, templateRows, locale),
     purchasesFor(supabase, userId, today, templateRows, recipient),
+    transferFor(supabase, userId, today, recipient),
   ]);
   return [
     ...lead,
     ...digest,
     ...(heads ? [heads] : []),
     ...(purchases ? [purchases] : []),
+    ...(transfer ? [transfer] : []),
   ];
+}
+
+/**
+ * How much to send to the broker for next month's DCAs, from three days
+ * before payday — once for each month it covers, by its key.
+ */
+async function transferFor(
+  supabase: AdminClient,
+  userId: string,
+  today: string,
+  { locale, prefs }: Recipient,
+): Promise<PendingNotification | null> {
+  if (!wantsNotification(prefs, "dca")) {
+    return null;
+  }
+  const reminder = await getTransferReminder(supabase, userId, today);
+  return reminder
+    ? transferReminderNotification({
+        reminder,
+        t: translator(locale),
+        locale,
+      })
+    : null;
 }
 
 /**

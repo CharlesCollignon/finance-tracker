@@ -2205,7 +2205,7 @@ export const en = {
     },
     dca: {
       label: "Your DCAs",
-      hint: "The day after a purchase inside your investment accounts, to say whether it went through.",
+      hint: "Before payday, what to send to the broker; the day after a purchase inside your investment accounts, to say whether it went through.",
     },
     review: {
       label: "Transactions to sort",
@@ -2227,6 +2227,15 @@ export const en = {
       label: "Bank connection",
       hint: "When it needs renewing, or has stopped.",
     },
+  },
+  dcaTransfer: {
+    title: "To send to the broker",
+    for: "For the DCAs planned in {month}: {wallets}.",
+    margin: "Rounded up, with 5% room on those bought in shares.",
+    rounded: "Rounded up to the next €50.",
+    due: "Transfer planned for {date}",
+    open: "See the transfer",
+    otherWallet: "Other",
   },
   recap: {
     title: "Your week",
@@ -2250,6 +2259,9 @@ export const en = {
     dismiss: "Got it",
   },
   push: {
+    dcaTransfer: {
+      title: "{name}: {amount}",
+    },
     dca: {
       title: "{name}: did it go through?",
       body: "The {amount} purchase planned for {date} is waiting for your answer on Overview.",

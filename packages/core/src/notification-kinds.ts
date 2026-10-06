@@ -21,7 +21,10 @@ export const NOTIFICATION_KINDS = [
   "bigCharge",
   /** Movements that look like a planned charge or salary has arrived. */
   "arrived",
-  /** The morning after a DCA's day, while nobody has said whether it went through. */
+  /**
+   * The DCAs: before payday, what to send to the broker for next month's;
+   * the morning after one's day, whether it went through.
+   */
   "dca",
   /** Bank rows waiting for a category. */
   "review",

@@ -30,12 +30,14 @@ import {
   type MonthBalance,
 } from "@finance/core/month-balance";
 import type { PurchaseToConfirm } from "@finance/core/purchases-to-confirm";
+import type { TransferReminder } from "@finance/core/dca-need";
 import type { UpcomingCharge } from "@finance/core/still-to-come";
 import {
   readMonthBalance,
   type BalanceSource,
 } from "@finance/data/month-balance";
 import { getPurchasesToConfirm } from "@finance/data/purchases-to-confirm";
+import { getTransferReminder } from "@finance/data/dca-transfer";
 
 /** How many months the spending bars look back over, the month shown included. */
 const TREND_MONTHS = 6;
@@ -88,6 +90,11 @@ export interface BearingMonth {
    * the ledger, only: without one they are written on their day.
    */
   purchases: PurchaseToConfirm[];
+  /**
+   * What to send to the broker for next month's DCAs, from three days before
+   * payday until it is sent (`transferReminder`). The month in progress only.
+   */
+  transfer: TransferReminder | null;
   /** Nothing recorded, nothing planned and no balance: a first visit. */
   empty: boolean;
 }
@@ -180,6 +187,7 @@ export async function gatherBearingMonth(
   let attention: AttentionItem[] = [];
   let arrived: FulfilmentReport | null = null;
   let purchases: PurchaseToConfirm[] = [];
+  let transfer: TransferReminder | null = null;
 
   if (isCurrent) {
     const categories = await getCategories(userId);
@@ -206,6 +214,7 @@ export async function gatherBearingMonth(
           : Promise.resolve([]),
       ]);
     purchases = waitingPurchases;
+    transfer = await getTransferReminder(await createClient(), userId, today);
 
     if (closes.summary.sample > 0) {
       run = {
@@ -262,6 +271,7 @@ export async function gatherBearingMonth(
     attention,
     arrived: arrived && arrived.proposals.length > 0 ? arrived : null,
     purchases,
+    transfer,
     empty:
       source === "none" &&
       rows.length === 0 &&

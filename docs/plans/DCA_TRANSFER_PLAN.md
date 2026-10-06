@@ -105,17 +105,20 @@ that the rule rather than the exception, which is why Phase 2 exists.
 
 ## Phase 3 — How much to send (branch `dca-transfer-push`)
 
-- [ ] Payday: the next occurrence of the largest monthly income charge. No
-      income charge, no push.
-- [ ] The push, 3 days before payday — or the morning the bank brings the
-      salary, if it comes earlier: « Virement vers le courtier : 1 750 € »,
-      « Pour vos DCA de novembre : PEA 400 € · CTO 1 350 €. » The amount is the
-      transfer charge's occurrence, so it is the figure Récurrents shows. Kind
-      `dca`, keyed by the month covered.
-- [ ] Le point: the same line from that day until the transfer is confirmed or
-      skipped, leading to the charge.
-- [ ] PRODUCT.md and DESIGN.md (both apps), if either says anything the push
-      or the card changes.
+- [x] Payday: the largest monthly income charge, on its occurrence nearest
+      the transfer's own day (within the 15 days payday money is given),
+      else the transfer's day. No transfer that follows the DCAs, or nothing
+      to cover, no push.
+- [x] The push, 3 days before payday — or the morning the bank brings the
+      salary, if it comes earlier: « Virement Boursorama : 2 150 € »,
+      « Pour les DCA prévus en novembre : CTO 1 650 € · PEA 400 €. Arrondi,
+      avec 5 % de marge sur ceux achetés en parts. » Kind `dca`, keyed by
+      the month covered (`transferReminder`, `transferReminderNotification`).
+- [x] Le point, both apps: the same line from that day until the transfer is
+      confirmed or skipped, leading to Récurrents, where its figure is.
+- [ ] Without a transfer charge at all, offer to create one on the salary's
+      day — an invitation card, left for the owner to decide.
+- [x] PRODUCT.md and DESIGN.md: nothing they say changes.
 
 ## Verification
 

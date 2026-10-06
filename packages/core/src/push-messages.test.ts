@@ -12,6 +12,7 @@ import {
   overdraftWarning,
   plannedChargesOn,
   purchasesToConfirmNotification,
+  transferReminderNotification,
   usualChargeAmount,
 } from "./push-messages";
 import type { PurchaseToConfirm } from "./purchases-to-confirm";
@@ -270,6 +271,38 @@ describe("purchasesToConfirmNotification", () => {
     expect(nextWeek?.title).toBe("3 achats à confirmer");
     expect(nextWeek?.body).toBe(
       "DCA CTO, DCA PEA\u00A0: dites sur Le point s'ils sont passés.",
+    );
+  });
+});
+
+describe("transferReminderNotification", () => {
+  it("says what to send and what it is made of", () => {
+    const push = transferReminderNotification({
+      ...fr,
+      reminder: {
+        templateId: "transfer",
+        label: "Virement Boursorama",
+        occurredOn: "2026-10-28",
+        payday: "2026-10-28",
+        need: {
+          year: 2026,
+          month: 11,
+          cost: 2050,
+          margin: 82.5,
+          amount: 2150,
+          count: 6,
+          byWallet: [
+            { wallet: "cto", cost: 1650, count: 5 },
+            { wallet: "pea", cost: 400, count: 1 },
+          ],
+        },
+      },
+    });
+    expect(push.kind).toBe("dca");
+    expect(push.key).toBe("dca-transfer:2026-11");
+    expect(push.title).toBe("Virement Boursorama\u00A0: 2\u202F150\u00A0€");
+    expect(push.body).toBe(
+      "Pour les DCA prévus en novembre\u00A0: CTO 1\u202F650\u00A0€ · PEA 400\u00A0€. Arrondi, avec 5\u00A0% de marge sur ceux achetés en parts.",
     );
   });
 });

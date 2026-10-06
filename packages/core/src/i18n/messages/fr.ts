@@ -1554,7 +1554,7 @@ export const fr: Messages = {
     },
     dca: {
       label: "Vos DCA",
-      hint: "Le lendemain d'un achat dans vos placements, pour dire s'il est passé.",
+      hint: "Avant la paie, ce qu'il faut envoyer au courtier\u00A0; le lendemain d'un achat dans vos placements, pour dire s'il est passé.",
     },
     review: {
       label: "Opérations à classer",
@@ -1576,6 +1576,15 @@ export const fr: Messages = {
       label: "Connexion bancaire",
       hint: "Quand il faut la renouveler, ou si elle s'est arrêtée.",
     },
+  },
+  dcaTransfer: {
+    title: "À envoyer au courtier",
+    for: "Pour les DCA prévus en {month}\u00A0: {wallets}.",
+    margin: "Arrondi, avec 5\u00A0% de marge sur ceux achetés en parts.",
+    rounded: "Arrondi aux 50\u00A0€ supérieurs.",
+    due: "Virement prévu le {date}",
+    open: "Voir le virement",
+    otherWallet: "Autres",
   },
   recap: {
     title: "Votre semaine",
@@ -1601,6 +1610,9 @@ export const fr: Messages = {
     dismiss: "Vu",
   },
   push: {
+    dcaTransfer: {
+      title: "{name}\u00A0: {amount}",
+    },
     dca: {
       title: "{name}\u00A0: c'est passé\u00A0?",
       body: "L'achat de {amount} prévu le {date} attend votre réponse sur Le point.",
