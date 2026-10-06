@@ -1,11 +1,17 @@
 import { recurringOccurrenceKey } from "@finance/core/apply-recurring";
 import { shiftIsoDate } from "@finance/core/constants";
-import { dcaNeedForMonth, transferCoversMonth } from "@finance/core/dca-need";
+import {
+  dcaNeedForMonth,
+  transferCoversMonth,
+  transferReminder,
+  type TransferReminder,
+} from "@finance/core/dca-need";
 import type { RecurringTemplateWithCategory } from "@finance/core/types/database";
 
-import { walletCategoriesTheBankDebits } from "./bank-feed";
+import { hasBankFeed, walletCategoriesTheBankDebits } from "./bank-feed";
 import type { Db } from "./client";
 import { dbError } from "./errors";
+import { getBankForecast, getFulfilledKeys } from "./fulfilment";
 
 /** What decides which month a transfer covers. */
 type TransferSchedule = Pick<
@@ -137,6 +143,55 @@ export async function transferAmountFor(
           ? cause.message
           : "actions.couldNotSaveRecurring",
     };
+  }
+}
+
+/**
+ * The transfer to send now, if one is due (`transferReminder`), for the
+ * push before payday and the line on Le point. The salary counts as paid
+ * early once the bank has brought a movement that looks like it, or it was
+ * confirmed. Null when there is nothing to say, or it could not be read.
+ */
+export async function getTransferReminder(
+  db: Db,
+  userId: string,
+  today: string,
+): Promise<TransferReminder | null> {
+  try {
+    const { data: rows, error } = await db
+      .from("recurring_templates")
+      .select("*, categories(name, type, icon, counts_toward_summary)")
+      .eq("user_id", userId)
+      .eq("active", true);
+    if (error) {
+      return null;
+    }
+    const templates = (rows ?? []) as RecurringTemplateWithCategory[];
+    if (!templates.some((template) => template.pricing_type === "purchases")) {
+      return null;
+    }
+
+    const facts = await readFollowFacts(db, userId, today, templates);
+    if ("error" in facts) {
+      return null;
+    }
+    const [fulfilled, forecast] = await Promise.all([
+      getFulfilledKeys(db, userId),
+      (await hasBankFeed(db, userId))
+        ? getBankForecast(db, userId, templates, today, facts.debited)
+        : null,
+    ]);
+
+    return transferReminder({
+      templates,
+      today,
+      settledKeys: facts.settledKeys,
+      skippedKeys: facts.skippedKeys,
+      debited: facts.debited,
+      arrivedKeys: new Set([...fulfilled, ...(forecast?.arrived ?? [])]),
+    });
+  } catch {
+    return null;
   }
 }
 

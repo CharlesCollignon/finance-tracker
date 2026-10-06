@@ -29,6 +29,7 @@ import { amountSign } from "@finance/core/amount-sign";
 import { AttentionRow } from "@/components/finance/bearing/AttentionRow";
 import { ArrivedCharges } from "@/components/finance/ArrivedCharges";
 import { PurchasesToConfirm } from "@/components/finance/PurchasesToConfirm";
+import { TransferToSend } from "@/components/finance/TransferToSend";
 import { BankAttentionBanner } from "@/components/finance/bank/BankAttentionBanner";
 import { ConnectBankInvite } from "@/components/finance/bank/ConnectBankInvite";
 import { BalanceCurve } from "@/components/finance/bearing/BalanceCurve";
@@ -111,6 +112,13 @@ export function BearingMonthView({
       {data.purchases.length > 0 ? (
         <section className={cn(GLASS_CARD, "rounded-card p-card")}>
           <PurchasesToConfirm purchases={data.purchases} />
+        </section>
+      ) : null}
+
+      {/* And what those purchases need sent before payday. */}
+      {data.transfer ? (
+        <section className={cn(GLASS_CARD, "rounded-card p-card")}>
+          <TransferToSend transfer={data.transfer} />
         </section>
       ) : null}
 

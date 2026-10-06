@@ -1,12 +1,19 @@
 import { recurringOccurrenceKey, templateSetUpOn } from "./apply-recurring";
 import { isPurchaseInsideWallet } from "./categories";
-import { shiftIsoDate } from "./constants";
-import { matchWalletId, type InvestmentWalletId } from "./investments";
+import { formatEuro, shiftIsoDate } from "./constants";
+import { monthLong } from "./i18n/calendar-names";
+import type { Locale } from "./i18n/locale";
+import type { Translate } from "./i18n/t";
+import {
+  INVESTMENT_WALLET_LABELS,
+  matchWalletId,
+  type InvestmentWalletId,
+} from "./investments";
 import {
   filterDatesBySchedule,
   getRecurringOccurrenceDates,
 } from "./recurrence";
-import { PAYDAY_LATE_DAYS } from "./recurring-fulfilment";
+import { PAYDAY_EARLY_DAYS, PAYDAY_LATE_DAYS } from "./recurring-fulfilment";
 import { isQuotePriced } from "./recurring-shares";
 import type { RecurringTemplateWithCategory } from "./types/database";
 
@@ -36,6 +43,8 @@ export interface DcaNeed {
   month: number;
   /** What the month's purchases come to, before the margin and rounding. */
   cost: number;
+  /** The room left for the market on the share-priced ones. */
+  margin: number;
   /** What to send: the cost, the margin, rounded up to `DCA_ROUND_TO`. */
   amount: number;
   /** How many purchases the month holds. */
@@ -118,6 +127,7 @@ export function dcaNeedForMonth({
     year,
     month,
     cost: cents(cost),
+    margin: cents(margin),
     amount: roundUp(cents(cost + margin)),
     count,
     byWallet: [...wallets.values()],
@@ -175,6 +185,160 @@ export function transferCoversMonth(
     ({ year, month } = nextMonth(year, month));
   }
   return null;
+}
+
+/** How many days before payday the transfer is announced. */
+export const TRANSFER_NOTICE_DAYS = 3;
+
+export interface TransferReminder {
+  templateId: string;
+  label: string;
+  /** The transfer's own day. */
+  occurredOn: string;
+  /** The day the pay it comes out of is due: the salary's, else its own. */
+  payday: string;
+  /** What it stands for, and the month it covers. */
+  need: DcaNeed;
+}
+
+/**
+ * The transfer to send now, if one is due: from `TRANSFER_NOTICE_DAYS`
+ * before payday — or from the day the bank brings the salary, when it comes
+ * earlier — until the transfer is settled.
+ *
+ * Payday is the salary's: the largest monthly income charge, on its
+ * occurrence nearest the transfer's own day, within the room payday money is
+ * given (`PAYDAY_EARLY_DAYS`). Without one, the transfer's own day. The
+ * figure is `dcaNeedForMonth` for the month it covers, the one its charge
+ * holds; with nothing to cover, there is nothing to send.
+ */
+export function transferReminder({
+  templates,
+  today,
+  settledKeys = new Set(),
+  skippedKeys = new Set(),
+  debited = new Set(),
+  arrivedKeys = new Set(),
+}: {
+  templates: readonly RecurringTemplateWithCategory[];
+  today: string;
+  /** Occurrences confirmed against the bank, or written. */
+  settledKeys?: ReadonlySet<string>;
+  skippedKeys?: ReadonlySet<string>;
+  /** `walletCategoriesTheBankDebits`. */
+  debited?: ReadonlySet<string>;
+  /** Occurrences the bank has brought a movement for, or that were confirmed. */
+  arrivedKeys?: ReadonlySet<string>;
+}): TransferReminder | null {
+  const transfer = templates.find(
+    (template) => template.active && template.pricing_type === "purchases",
+  );
+  if (!transfer) {
+    return null;
+  }
+  const covered = transferCoversMonth(
+    transfer,
+    today,
+    new Set([...settledKeys, ...skippedKeys]),
+  );
+  if (!covered) {
+    return null;
+  }
+  const need = dcaNeedForMonth({
+    templates,
+    debited,
+    skippedKeys,
+    year: covered.year,
+    month: covered.month,
+  });
+  if (need.amount <= 0) {
+    return null;
+  }
+
+  const salary = templates
+    .filter(
+      (template) =>
+        template.active &&
+        template.categories.type === "income" &&
+        (template.recurrence ?? "monthly") === "monthly",
+    )
+    .sort((a, b) => Number(b.amount) - Number(a.amount))[0];
+  const salaryOn = salary
+    ? nearestOccurrence(salary, covered.occurredOn, PAYDAY_EARLY_DAYS)
+    : null;
+  const payday = salaryOn ?? covered.occurredOn;
+  const paid =
+    salary !== undefined &&
+    salaryOn !== null &&
+    arrivedKeys.has(recurringOccurrenceKey(salary.id, salaryOn));
+
+  if (!paid && today < shiftIsoDate(payday, -TRANSFER_NOTICE_DAYS)) {
+    return null;
+  }
+  return {
+    templateId: transfer.id,
+    label: transfer.description?.trim() || transfer.categories.name,
+    occurredOn: covered.occurredOn,
+    payday,
+    need,
+  };
+}
+
+/**
+ * What a transfer's figure is made of, in two sentences: the month and each
+ * wallet's share of it, then how it was rounded. Said the same in the push
+ * and on Le point, so the two can be checked against each other.
+ */
+export function describeDcaNeed(
+  need: DcaNeed,
+  t: Translate,
+  locale: Locale,
+): string {
+  const wallets = need.byWallet
+    .map(
+      ({ wallet, cost }) =>
+        `${wallet ? INVESTMENT_WALLET_LABELS[wallet] : t("dcaTransfer.otherWallet")} ${formatEuro(cost, locale)}`,
+    )
+    .join(" · ");
+  return `${t("dcaTransfer.for", {
+    month: monthLong(need.month, locale),
+    wallets,
+  })} ${t(need.margin > 0 ? "dcaTransfer.margin" : "dcaTransfer.rounded")}`;
+}
+
+/** A template's occurrence nearest `date`, no further than `within` days. */
+function nearestOccurrence(
+  template: RecurringTemplateWithCategory,
+  date: string,
+  within: number,
+): string | null {
+  const year = Number(date.slice(0, 4));
+  const month = Number(date.slice(5, 7));
+  const months = [
+    month === 1 ? { year: year - 1, month: 12 } : { year, month: month - 1 },
+    { year, month },
+    nextMonth(year, month),
+  ];
+  let best: string | null = null;
+  let bestGap = Infinity;
+  for (const at of months) {
+    for (const candidate of occurrencesIn(template, at.year, at.month)) {
+      const gap = Math.abs(daysBetween(candidate, date));
+      if (gap <= within && gap < bestGap) {
+        best = candidate;
+        bestGap = gap;
+      }
+    }
+  }
+  return best;
+}
+
+function daysBetween(from: string, to: string): number {
+  const [fy, fm, fd] = from.split("-").map(Number);
+  const [ty, tm, td] = to.split("-").map(Number);
+  return Math.round(
+    (Date.UTC(ty!, tm! - 1, td!) - Date.UTC(fy!, fm! - 1, fd!)) / 86_400_000,
+  );
 }
 
 function occurrencesIn(

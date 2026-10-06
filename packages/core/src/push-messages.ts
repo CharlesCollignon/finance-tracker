@@ -28,6 +28,7 @@ import type { MonthBalance } from "./month-balance";
 import type { CloseableMonth, MonthCloseResult } from "./month-close";
 import type { LoanMoment } from "./property-moments";
 import type { PurchaseToConfirm } from "./purchases-to-confirm";
+import { describeDcaNeed, type TransferReminder } from "./dca-need";
 import type { PendingNotification } from "./push-digest";
 import {
   getRecurringOccurrenceDates,
@@ -309,6 +310,29 @@ export function purchasesToConfirmNotification({
     body: t("push.dca.bodySeveral", {
       names: [...new Set(due.map((purchase) => purchase.label))].join(", "),
     }),
+  };
+}
+
+/**
+ * How much to send to the broker, before payday (`transferReminder`): the
+ * figure the transfer's charge holds, and what it is made of. Said once for
+ * each month it covers; the card on Le point carries it until it is sent.
+ */
+export function transferReminderNotification({
+  reminder,
+  t,
+  locale,
+}: Voice & { reminder: TransferReminder }): PendingNotification {
+  const { need } = reminder;
+  return {
+    kind: "dca",
+    key: `dca-transfer:${need.year}-${String(need.month).padStart(2, "0")}`,
+    title: t("push.dcaTransfer.title", {
+      name: reminder.label,
+      amount: formatEuro(need.amount, locale),
+    }),
+    body: describeDcaNeed(need, t, locale),
+    url: "/bearing",
   };
 }
 

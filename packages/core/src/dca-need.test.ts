@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 
-import { dcaNeedForMonth, transferCoversMonth } from "./dca-need";
+import {
+  dcaNeedForMonth,
+  transferCoversMonth,
+  transferReminder,
+} from "./dca-need";
 import type { RecurringTemplateWithCategory } from "./types/database";
 
 function template(
@@ -184,6 +188,87 @@ describe("transferCoversMonth", () => {
         { ...transfer, recurrence: "weekly", day_of_week: 1 },
         "2026-10-06",
       ),
+    ).toBeNull();
+  });
+});
+
+describe("transferReminder", () => {
+  const transfer = template("transfer", "Virement vers le courtier", {
+    counts: true,
+    day_of_month: 28,
+    pricing_type: "purchases",
+    description: "Virement Boursorama",
+    amount: 2150,
+  });
+  const salary: RecurringTemplateWithCategory = {
+    ...template("salary", "Salaire", { day_of_month: 28, amount: 3200 }),
+    categories: {
+      name: "Salaire",
+      type: "income",
+      icon: null,
+      counts_toward_summary: true,
+    },
+  };
+  const all = [cto, pea, transfer, salary];
+
+  it("says nothing until three days before payday", () => {
+    expect(
+      transferReminder({ templates: all, today: "2026-10-24" }),
+    ).toBeNull();
+    expect(
+      transferReminder({ templates: all, today: "2026-10-25" }),
+    ).toMatchObject({
+      templateId: "transfer",
+      label: "Virement Boursorama",
+      occurredOn: "2026-10-28",
+      payday: "2026-10-28",
+      need: { year: 2026, month: 11, amount: 2150 },
+    });
+  });
+
+  it("speaks the day the bank brings the salary, when it comes early", () => {
+    expect(
+      transferReminder({
+        templates: all,
+        today: "2026-10-22",
+        arrivedKeys: new Set(["salary:2026-10-28"]),
+      })?.need.month,
+    ).toBe(11);
+  });
+
+  it("counts back from the salary's day, else from the transfer's own", () => {
+    const paidOn25 = { ...salary, day_of_month: 25 };
+    expect(
+      transferReminder({
+        templates: [cto, pea, transfer, paidOn25],
+        today: "2026-10-22",
+      })?.payday,
+    ).toBe("2026-10-25");
+    expect(
+      transferReminder({ templates: [cto, pea, transfer], today: "2026-10-25" })
+        ?.payday,
+    ).toBe("2026-10-28");
+  });
+
+  it("stays until the transfer is settled, then waits for the next payday", () => {
+    expect(
+      transferReminder({ templates: all, today: "2026-10-30" })?.need.month,
+    ).toBe(11);
+    expect(
+      transferReminder({
+        templates: all,
+        today: "2026-10-30",
+        settledKeys: new Set(["transfer:2026-10-28"]),
+      }),
+    ).toBeNull();
+  });
+
+  it("is nothing without a transfer that follows the DCAs, or DCAs to follow", () => {
+    expect(
+      transferReminder({ templates: [cto, pea, salary], today: "2026-10-25" }),
+    ).toBeNull();
+    expect(
+      transferReminder({ templates: [transfer, salary], today: "2026-10-25" }),
     ).toBeNull();
   });
 });
