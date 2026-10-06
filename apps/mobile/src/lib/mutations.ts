@@ -266,6 +266,7 @@ export async function skipPlannedOccurrence(
 export async function recordPurchaseInsideWallet(
   templateId: string,
   occurredOn: string,
+  boughtOn?: string,
 ): Promise<ActionResult> {
   return asUser((userId) =>
     occurrences.recordPurchaseInsideWallet(
@@ -273,6 +274,7 @@ export async function recordPurchaseInsideWallet(
       userId,
       templateId,
       occurredOn,
+      boughtOn,
     ),
   );
 }

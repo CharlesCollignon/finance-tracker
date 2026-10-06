@@ -2378,6 +2378,9 @@ export const en = {
     purchaseDue: "Planned for {date}",
     purchaseYes: "It went through",
     purchaseNo: "Not this time",
+    purchaseLater: "Another day",
+    purchaseLaterWhich: "Which day did it go through?",
+    purchaseLaterOn: "Went through on {date}",
     /**
      * What a ledger row says about itself.
      *

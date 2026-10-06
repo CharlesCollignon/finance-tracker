@@ -428,8 +428,15 @@ export async function unskipRecurringOccurrence(
 export async function recordPurchaseInsideWallet(
   templateId: string,
   occurredOn: string,
+  boughtOn?: string,
 ): Promise<ActionResult> {
   return asUser((db, userId) =>
-    occurrences.recordPurchaseInsideWallet(db, userId, templateId, occurredOn),
+    occurrences.recordPurchaseInsideWallet(
+      db,
+      userId,
+      templateId,
+      occurredOn,
+      boughtOn,
+    ),
   );
 }

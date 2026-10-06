@@ -1726,6 +1726,9 @@ export const fr: Messages = {
     purchaseDue: "Prévu le {date}",
     purchaseYes: "C'est passé",
     purchaseNo: "Pas cette fois",
+    purchaseLater: "Un autre jour",
+    purchaseLaterWhich: "Passé quel jour\u00A0?",
+    purchaseLaterOn: "Passé le {date}",
     state: {
       confirmed: "Confirmé",
       toConfirm: "À confirmer",
