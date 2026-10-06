@@ -11,8 +11,10 @@ import {
   monthClosedByBank,
   overdraftWarning,
   plannedChargesOn,
+  purchasesToConfirmNotification,
   usualChargeAmount,
 } from "./push-messages";
+import type { PurchaseToConfirm } from "./purchases-to-confirm";
 
 const fr = { t: translator("fr"), locale: "fr" as const };
 
@@ -208,6 +210,67 @@ describe("bigChargeHeadsUp", () => {
     expect(
       bigChargeHeadsUp({ ...fr, tomorrow: "2026-10-06", charges: [] }),
     ).toBeNull();
+  });
+});
+
+describe("purchasesToConfirmNotification", () => {
+  const purchase = (
+    templateId: string,
+    occurredOn: string,
+    label: string,
+  ): PurchaseToConfirm => ({
+    key: `${templateId}:${occurredOn}`,
+    templateId,
+    occurredOn,
+    label,
+    amount: 150,
+    laterDays: [],
+  });
+
+  it("asks the morning after, never on the day itself", () => {
+    const monday = [purchase("cto", "2026-10-05", "DCA CTO")];
+    expect(
+      purchasesToConfirmNotification({
+        ...fr,
+        purchases: monday,
+        today: "2026-10-05",
+      }),
+    ).toBeNull();
+
+    const push = purchasesToConfirmNotification({
+      ...fr,
+      purchases: monday,
+      today: "2026-10-06",
+    });
+    expect(push?.kind).toBe("dca");
+    expect(push?.key).toBe("dca:2026-10-05");
+    expect(push?.url).toBe("/bearing");
+    expect(push?.title).toBe("DCA CTO\u00A0: c'est passé\u00A0?");
+    expect(push?.body).toContain("150");
+    expect(push?.body).toContain("lun. 5 oct.");
+  });
+
+  it("is keyed by the latest day, so a new purchase asks again", () => {
+    const tuesday = purchasesToConfirmNotification({
+      ...fr,
+      purchases: [purchase("cto", "2026-10-05", "DCA CTO")],
+      today: "2026-10-07",
+    });
+    const nextWeek = purchasesToConfirmNotification({
+      ...fr,
+      purchases: [
+        purchase("cto", "2026-10-05", "DCA CTO"),
+        purchase("cto", "2026-10-12", "DCA CTO"),
+        purchase("pea", "2026-10-12", "DCA PEA"),
+      ],
+      today: "2026-10-13",
+    });
+    expect(tuesday?.key).toBe("dca:2026-10-05");
+    expect(nextWeek?.key).toBe("dca:2026-10-12");
+    expect(nextWeek?.title).toBe("3 achats à confirmer");
+    expect(nextWeek?.body).toBe(
+      "DCA CTO, DCA PEA\u00A0: dites sur Le point s'ils sont passés.",
+    );
   });
 });
 

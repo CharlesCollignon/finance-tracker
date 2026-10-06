@@ -49,6 +49,7 @@ import {
   milestoneNotification,
   overdraftWarning,
   plannedChargesOn,
+  purchasesToConfirmNotification,
   usualChargeAmount,
   weeklyRecapNotification,
 } from "@finance/core/push-messages";
@@ -58,6 +59,11 @@ import { getWeeklyRecap } from "@finance/data/weekly-recap";
 import { recurringOccurrenceKey } from "@finance/core/apply-recurring";
 import { getFulfilledKeys } from "@finance/data/fulfilment";
 import { getMonthCloseOverview } from "@finance/data/month-close";
+import {
+  hasBankFeed,
+  walletCategoriesTheBankDebits,
+} from "@finance/data/bank-feed";
+import { getPurchasesToConfirm } from "@finance/data/purchases-to-confirm";
 
 /**
  * The daily notification run.
@@ -227,14 +233,56 @@ async function notificationsFor(
     t: translator(locale),
   });
 
-  const heads = await bigChargeFor(
-    supabase,
-    userId,
-    today,
-    templateRows,
-    locale,
-  );
-  return [...lead, ...digest, ...(heads ? [heads] : [])];
+  const [heads, purchases] = await Promise.all([
+    bigChargeFor(supabase, userId, today, templateRows, locale),
+    purchasesFor(supabase, userId, today, templateRows, recipient),
+  ]);
+  return [
+    ...lead,
+    ...digest,
+    ...(heads ? [heads] : []),
+    ...(purchases ? [purchases] : []),
+  ];
+}
+
+/**
+ * The DCAs still waiting for a yes or a no, the morning after their day.
+ * Only with a bank feeding the ledger, the one case where nothing writes
+ * them on its own, and only for someone who wants to hear it: telling which
+ * wallets the bank debits is a look per category.
+ */
+async function purchasesFor(
+  supabase: AdminClient,
+  userId: string,
+  today: string,
+  templates: readonly RecurringTemplateWithCategory[],
+  { locale, prefs }: Recipient,
+): Promise<PendingNotification | null> {
+  if (!wantsNotification(prefs, "dca")) {
+    return null;
+  }
+  try {
+    if (!(await hasBankFeed(supabase, userId))) {
+      return null;
+    }
+    const [fulfilledKeys, debited] = await Promise.all([
+      getFulfilledKeys(supabase, userId),
+      walletCategoriesTheBankDebits(supabase, userId),
+    ]);
+    return purchasesToConfirmNotification({
+      purchases: await getPurchasesToConfirm(supabase, userId, {
+        templates,
+        fulfilledKeys,
+        debited,
+        today,
+      }),
+      today,
+      t: translator(locale),
+      locale,
+    });
+  } catch {
+    return null;
+  }
 }
 
 /**

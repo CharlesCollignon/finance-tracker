@@ -21,6 +21,8 @@ export const NOTIFICATION_KINDS = [
   "bigCharge",
   /** Movements that look like a planned charge or salary has arrived. */
   "arrived",
+  /** The morning after a DCA's day, while nobody has said whether it went through. */
+  "dca",
   /** Bank rows waiting for a category. */
   "review",
   /** A new round amount of savings and investments reached. */

@@ -1546,6 +1546,10 @@ export const fr: Messages = {
       label: "Opération arrivée",
       hint: "Quand un salaire ou une opération prévue semble être passé.",
     },
+    dca: {
+      label: "Vos DCA",
+      hint: "Le lendemain d'un achat dans vos placements, pour dire s'il est passé.",
+    },
     review: {
       label: "Opérations à classer",
       hint: "Quand votre banque a apporté des opérations sans catégorie.",
@@ -1591,6 +1595,15 @@ export const fr: Messages = {
     dismiss: "Vu",
   },
   push: {
+    dca: {
+      title: "{name}\u00A0: c'est passé\u00A0?",
+      body: "L'achat de {amount} prévu le {date} attend votre réponse sur Le point.",
+      titleSeveral: {
+        one: "{count} achat à confirmer",
+        other: "{count} achats à confirmer",
+      },
+      bodySeveral: "{names}\u00A0: dites sur Le point s'ils sont passés.",
+    },
     bigCharge: {
       title: "Demain\u00A0: {name}",
       body: "{amount} à prévoir, plus que vos opérations récurrentes habituelles.",

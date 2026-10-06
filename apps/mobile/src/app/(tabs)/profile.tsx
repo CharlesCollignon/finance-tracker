@@ -56,6 +56,7 @@ const KIND_ICONS: Record<
   close: "checkmark-done-outline",
   bigCharge: "receipt-outline",
   arrived: "cash-outline",
+  dca: "trending-up-outline",
   review: "file-tray-outline",
   milestone: "flag-outline",
   property: "home-outline",
