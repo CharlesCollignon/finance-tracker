@@ -72,7 +72,7 @@ that the rule rather than the exception, which is why Phase 2 exists.
       server checks the day against the same rule.
 - [x] "A change, not a state": said in `purchasesToConfirmNotification`.
 
-## Phase 2 — The transfer follows the DCAs (branch `dca-transfer-amount`)
+## Phase 2 — The transfer follows the DCAs (branch `dca-transfer-amount`) — done
 
 - [x] Core, tested: `dcaNeedForMonth` — the month's DCA occurrences per
       wallet, their cost (a share-priced template's amount is already its
@@ -89,16 +89,18 @@ that the rule rather than the exception, which is why Phase 2 exists.
 - [x] Fulfilment: such a charge is offered whatever was sent (`anyAmount`).
 - [x] The big-charge push needs nothing: it compares a charge with the median
       of all the reader's charges, not with its own months.
-- [ ] Saving such a charge: the template save accepts `purchases` only in an
-      investment category that counts toward the summary, and works the
-      amount out at once.
-- [ ] Kept when the app opens and when a DCA is skipped, brought back,
-      changed, paused or deleted.
-- [ ] The charge sheet, web and phone: the amount switch, and under it
-      « 1 750 € pour les DCA de novembre (PEA 400 € · CTO 1 350 €) ». An
-      existing transfer must not fall back to « fixe » when edited. Without
-      a transfer charge at all, Placements offers to create one on the
-      salary's day (may move to Phase 3).
+- [x] Saving such a charge: accepted only in an investment category that
+      counts toward the summary, its amount worked out before it is written
+      (`transferAmountFor`).
+- [x] Kept when the app opens (after the fill, which prices the DCAs), and
+      when a charge is saved, paused or deleted, a day skipped or brought
+      back, a transfer confirmed or that confirmation undone.
+- [x] The charge sheet, web and phone: « Selon vos DCA » beside « Montant
+      fixe », the amount field giving way to today's figure and how it is
+      reached; the list says « Selon vos DCA du mois suivant ». The month and
+      the split by wallet go to Phase 3's push and card, which name them.
+- [ ] Without a transfer charge at all, offer to create one on the salary's
+      day — moved to Phase 3, beside the push that needs it.
 - [x] CONTEXT.md: « virement selon vos DCA », and the rule under Fulfil.
 
 ## Phase 3 — How much to send (branch `dca-transfer-push`)
