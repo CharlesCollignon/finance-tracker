@@ -96,6 +96,14 @@ export interface FulfilmentOccurrence {
   label: string;
   /** The template's rhythm; a weekly one never gets the early window. */
   recurrence?: "monthly" | "weekly" | "yearly";
+  /**
+   * Whether any amount may be it: a transfer that follows the DCAs
+   * (`pricing_type = 'purchases'`). Its figure changes every month and is
+   * rounded up to be safe, so what was really sent — a little less, a round
+   * figure of the user's own — is still the transfer, and only the category
+   * and the day say so.
+   */
+  anyAmount?: boolean;
 }
 
 export interface FulfilmentMovement {
@@ -290,6 +298,7 @@ function occurrencesOf(
         categoryType: category.type,
         label: template.description?.trim() || category.name,
         recurrence: template.recurrence ?? "monthly",
+        ...(template.pricing_type === "purchases" ? { anyAmount: true } : {}),
       });
     }
   }
@@ -423,7 +432,10 @@ export function proposeFulfilments(
       ) {
         continue;
       }
-      if (!amountsMatch(occurrence.amount, movement.amount)) {
+      if (
+        !occurrence.anyAmount &&
+        !amountsMatch(occurrence.amount, movement.amount)
+      ) {
         continue;
       }
       if (
@@ -803,7 +815,8 @@ export function explainFulfilmentMisses(
       ? "refused"
       : nearest.occurredOn > today
         ? "not-arrived"
-        : !amountsMatch(occurrence.amount, nearest.amount)
+        : !occurrence.anyAmount &&
+            !amountsMatch(occurrence.amount, nearest.amount)
           ? "amount"
           : daysApart > windowFor(occurrence, nearest.occurredOn)
             ? "date"

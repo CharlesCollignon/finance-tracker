@@ -570,6 +570,36 @@ describe("money that moves on payday, early or late", () => {
     expect(confirmLabel(proposal!, "en")).toBe("Count it for October");
   });
 
+  it("offers a transfer that follows the DCAs whatever was sent", () => {
+    // The charge says 1 750 € for November's DCAs; 1 600 € left on the 27th.
+    const transfer = occurrence({
+      templateId: "tpl-transfer",
+      occurredOn: "2026-10-28",
+      amount: 1750,
+      categoryId: "cat-broker",
+      categoryType: "investment",
+      label: "Virement vers le courtier",
+      recurrence: "monthly",
+      anyAmount: true,
+    });
+    const sent = movement({
+      transactionId: "tx-transfer",
+      occurredOn: "2026-10-27",
+      amount: 1600,
+      categoryId: "cat-broker",
+      note: "VIR BOURSORAMA",
+    });
+    expect(
+      proposeFulfilments([transfer], [sent], { today: "2026-10-30" }),
+    ).toMatchObject([{ transactionId: "tx-transfer", difference: -150 }]);
+    // Any other charge still has to be within 5 % of what it says.
+    expect(
+      proposeFulfilments([{ ...transfer, anyAmount: undefined }], [sent], {
+        today: "2026-10-30",
+      }),
+    ).toEqual([]);
+  });
+
   it("moves the savings and the broker transfer put by the same day", () => {
     const savings = occurrence({
       templateId: "tpl-livret",
