@@ -1,5 +1,8 @@
 import { createClient } from "@/lib/supabase/server";
-import { hasBankFeed as bankFeeds } from "@finance/data/bank-feed";
+import {
+  hasBankFeed as bankFeeds,
+  walletCategoriesTheBankDebits,
+} from "@finance/data/bank-feed";
 import * as inbox from "@finance/data/bank-inbox";
 import type { BankMerchantIndex } from "@finance/core/bank-merchant";
 import type { RecurringProposal } from "@finance/core/recurring-detection";
@@ -60,6 +63,18 @@ export async function countSwallowedFeedItems(userId: string): Promise<number> {
  */
 export async function hasBankFeed(userId: string): Promise<boolean> {
   return bankFeeds(await createClient(), userId);
+}
+
+/**
+ * The categories of the wallets the bank debits from the account (Bitstack),
+ * as a list a client component can be handed.
+ */
+export async function getDebitedWalletCategories(
+  userId: string,
+): Promise<string[]> {
+  return [
+    ...(await walletCategoriesTheBankDebits(await createClient(), userId)),
+  ];
 }
 
 /** Standing charges the statement implies but no template covers. */

@@ -513,6 +513,11 @@ export interface PlannedOccurrence {
   categoryType: CategoryType;
   categoryIcon: string | null;
   /**
+   * False for a category the summary does not count — a purchase inside a
+   * wallet among them, which the calendar does not draw as money out.
+   */
+  countsTowardSummary?: false;
+  /**
    * Its day has come, and the bank has not brought it yet (`bankForecast`):
    * still owed, though its date is behind.
    */
@@ -567,6 +572,9 @@ export function plannedOccurrences(
       categoryName: template.categories.name,
       categoryType: template.categories.type,
       categoryIcon: template.categories.icon,
+      ...(template.categories.counts_toward_summary === false
+        ? { countsTowardSummary: false as const }
+        : {}),
       ...(awaited ? { awaited } : {}),
     });
   }

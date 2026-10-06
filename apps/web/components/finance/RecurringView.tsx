@@ -84,6 +84,12 @@ interface RecurringViewProps {
   initialEditId?: string;
   /** The user's properties, which a charge can belong to (migration 049). */
   properties?: { id: string; name: string }[];
+  /**
+   * The categories of the wallets the bank debits from the account
+   * (`walletCategoriesTheBankDebits`): their buys leave it, where a DCA
+   * bought at the broker does not.
+   */
+  debitedCategoryIds?: string[];
 }
 
 /** Each property's name by id, for the row of a charge that belongs to one. */
@@ -456,6 +462,7 @@ export function RecurringView({
   recordedThisMonth = {},
   initialEditId,
   properties = [],
+  debitedCategoryIds = [],
 }: RecurringViewProps) {
   const t = useT();
   const { toast } = useToast();
@@ -526,7 +533,9 @@ export function RecurringView({
    * fact reads that same figure. This page was the outlier. What falls out of
    * the middle column is not lost, it is said beneath as what is set aside.
    */
-  const rollup = rollUpRecurring(templates);
+  const rollup = rollUpRecurring(templates, {
+    debited: new Set(debitedCategoryIds),
+  });
 
   const hasTemplates = templates.length > 0;
   const activeGroup = groups.find((group) => group.type === activeTab);
@@ -572,11 +581,11 @@ export function RecurringView({
               {rollup.deployed > 0 ? (
                 <>
                   {" · "}
-                  {t("charges.ofWhichMovedBefore")}{" "}
+                  {t("charges.trackedBefore")}{" "}
                   <span className="privacy-amount tabular-nums text-foreground">
                     {formatEuro(rollup.deployed)}
                   </span>{" "}
-                  {t("charges.ofWhichMovedAfter")}
+                  {t("charges.trackedAfter")}
                 </>
               ) : null}
             </p>

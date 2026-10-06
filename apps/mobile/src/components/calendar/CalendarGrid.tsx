@@ -25,6 +25,11 @@ interface CalendarGridProps {
   selectedDate: string;
   /** The day a finger is on in the strip above, lit as it would be here. */
   litDate?: string | null;
+  /**
+   * The wallets the bank debits from the account (Bitstack): their buys are
+   * money out, where a DCA bought at the broker's is not.
+   */
+  debited?: ReadonlySet<string>;
   onSelect: (date: string) => void;
 }
 
@@ -76,6 +81,7 @@ export function CalendarGrid({
   plannedByDate,
   selectedDate,
   litDate = null,
+  debited,
   onSelect,
 }: CalendarGridProps) {
   const t = useT();
@@ -110,10 +116,13 @@ export function CalendarGrid({
           )}
         >
           {week.map((day, dayIndex) => {
-            const totals = computeDayTotals(byDate.get(day.date) ?? []);
+            const totals = computeDayTotals(
+              byDate.get(day.date) ?? [],
+              debited,
+            );
             const planned =
               totals.count === 0 && day.isCurrentMonth
-                ? plannedTotals(plannedByDate.get(day.date) ?? [])
+                ? plannedTotals(plannedByDate.get(day.date) ?? [], debited)
                 : null;
             const selected = day.date === selectedDate;
 

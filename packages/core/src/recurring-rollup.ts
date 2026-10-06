@@ -1,3 +1,4 @@
+import { isPurchaseInsideWallet } from "./categories";
 import { estimateMonthlyAmount } from "./recurrence";
 import type {
   CategoryType,
@@ -26,13 +27,20 @@ export interface RecurringRollup {
   income: number;
   /** Recurring expenses, per month. Not savings, not investments. */
   committed: number;
-  /** Savings and investment contributions, per month. */
+  /**
+   * Savings and investment contributions, per month: the transfer to the
+   * broker, and the buys of a wallet the bank debits from the account.
+   */
   setAside: number;
-  /** Templates the summary does not count — a transfer into a broker. */
+  /**
+   * Purchases inside a wallet made with money already sent to the broker —
+   * a DCA PEA, a DCA CTO — per month. Tracked, and never out of the account:
+   * the transfer that funded them already was, in `setAside`.
+   */
   deployed: number;
   /**
-   * The cash the month leaves in the account:
-   * `income - committed - setAside - deployed`.
+   * The cash the month leaves in the account: `income - committed -
+   * setAside`.
    *
    * Every outflow comes out, including the ones that are not spending.
    * `CONTEXT.md` splits Kept into "the cash it left in the account plus
@@ -44,14 +52,16 @@ export interface RecurringRollup {
    * Leaving them out would flatter a saver: someone contributing 400 a month
    * and someone contributing nothing, on the same income with the same rent,
    * would read as having different amounts left when the account says
-   * otherwise.
+   * otherwise. Taking the DCAs out as well would do the opposite: the same
+   * euros twice, once as the transfer and once as what it bought, which is
+   * what this did until October 2026.
    */
   left: number;
   /**
    * Every active template's monthly amount by its category type, counted by
-   * the summary or not: what each group on the Charges page adds up to. A
-   * transfer into a broker is in `deployed` above and here under its own
-   * type, so this is a second view of the same money, not more of it.
+   * the summary or not: what each group on the Charges page adds up to. The
+   * DCAs are in `deployed` above and here under their own type, so this is a
+   * second view of the same money, not more of it.
    */
   byType: Record<CategoryType, number>;
 }
@@ -63,8 +73,16 @@ export interface RecurringRollup {
  */
 export function rollUpRecurring(
   templates: RecurringTemplateWithCategory[],
-  year?: number,
-  month?: number,
+  {
+    debited = new Set(),
+    year,
+    month,
+  }: {
+    /** `walletCategoriesTheBankDebits`: their buys leave the account. */
+    debited?: ReadonlySet<string>;
+    year?: number;
+    month?: number;
+  } = {},
 ): RecurringRollup {
   let income = 0;
   let committed = 0;
@@ -85,11 +103,21 @@ export function rollUpRecurring(
     const monthly = estimateMonthlyAmount(template, year, month);
     byType[template.categories.type] += monthly;
 
-    // Checked before the type, not after: a transfer into a broker is money
-    // that never left the user's own hands, and the summary leaves it out
-    // whatever category carries it.
+    // Checked before the type, not after. A DCA bought with money already
+    // at the broker never leaves the account; one the bank debits from it
+    // (Bitstack) does, like any contribution.
+    if (isPurchaseInsideWallet(template.categories)) {
+      if (debited.has(template.category_id)) {
+        setAside += monthly;
+      } else {
+        deployed += monthly;
+      }
+      continue;
+    }
+    // Anything else the summary does not count — a reimbursement, money
+    // brought back out of savings — is money coming in, not going out: the
+    // summary leaves it out, and so does what is left.
     if (template.categories.counts_toward_summary === false) {
-      deployed += monthly;
       continue;
     }
 
@@ -110,7 +138,7 @@ export function rollUpRecurring(
     committed,
     setAside,
     deployed,
-    left: income - committed - setAside - deployed,
+    left: income - committed - setAside,
     byType,
   };
 }
@@ -126,8 +154,9 @@ export interface AllocationSegment {
 
 /**
  * Where a month's income goes, as the Charges page draws it: expenses,
- * savings and investments by type, the same totals the groups below show,
- * then what is left.
+ * savings and investments by type, the totals the groups below show — less
+ * the DCAs bought at the broker, which the transfer there already is — then
+ * what is left.
  *
  * The bar is as long as everything in it. With money left over that is the
  * income, give or take a non-counting income template; with none, the
@@ -140,7 +169,7 @@ export function allocationSegments(
   const parts: [AllocationKind, number][] = [
     ["expense", rollup.byType.expense],
     ["savings", rollup.byType.savings],
-    ["investment", rollup.byType.investment],
+    ["investment", rollup.byType.investment - rollup.deployed],
     ["left", Math.max(rollup.left, 0)],
   ];
   const total = parts.reduce((sum, [, amount]) => sum + amount, 0);

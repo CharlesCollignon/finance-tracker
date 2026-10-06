@@ -18,6 +18,7 @@ function template({
 }): RecurringTemplateWithCategory {
   return {
     id,
+    category_id: `cat-${id}`,
     amount,
     active,
     recurrence: "monthly",
@@ -61,21 +62,52 @@ describe("rollUpRecurring", () => {
     expect(rollup.left).toBe(1650);
   });
 
-  it("takes a broker transfer out of what is left", () => {
-    // It is not spending, and the monthly summary does not count it — but it
-    // does leave the account, which is what this figure is about.
+  it("takes the broker transfer out of what is left, and not the DCAs it buys", () => {
+    // The transfer leaves the account; the DCA PEA is bought at the broker
+    // with that same money. Taking both out took the same euros twice.
     const rollup = rollUpRecurring([
       template({ id: "salary", amount: 3200, type: "income" }),
       template({ id: "rent", amount: 1150 }),
-      template({
-        id: "transfer",
-        amount: 500,
-        type: "investment",
-        counts: false,
-      }),
+      template({ id: "transfer", amount: 500, type: "investment" }),
+      template({ id: "dca", amount: 450, type: "investment", counts: false }),
     ]);
 
     expect(rollup.left).toBe(1550);
+    expect(rollup.deployed).toBe(450);
+  });
+
+  it("takes out the buys of a wallet the bank debits from the account", () => {
+    // Bitstack takes its buys from the account by card: no transfer funds
+    // them, and they leave it like any contribution.
+    const rollup = rollUpRecurring(
+      [
+        template({ id: "salary", amount: 3200, type: "income" }),
+        template({
+          id: "bitstack",
+          amount: 80,
+          type: "investment",
+          counts: false,
+        }),
+      ],
+      { debited: new Set(["cat-bitstack"]) },
+    );
+
+    expect(rollup.left).toBe(3120);
+    expect(rollup.setAside).toBe(80);
+    expect(rollup.deployed).toBe(0);
+  });
+
+  it("leaves money coming back in out of what is left", () => {
+    // A reimbursement or money brought back out of savings is not counted by
+    // the summary, and it is not an outgoing either.
+    const rollup = rollUpRecurring([
+      template({ id: "salary", amount: 3200, type: "income" }),
+      template({ id: "refund", amount: 20, type: "income", counts: false }),
+      template({ id: "back", amount: 100, type: "savings", counts: false }),
+    ]);
+
+    expect(rollup.left).toBe(3200);
+    expect(rollup.deployed).toBe(0);
   });
 
   it("leaves nothing out of the sum the header shows", () => {
@@ -86,16 +118,13 @@ describe("rollUpRecurring", () => {
       template({ id: "salary", amount: 3200, type: "income" }),
       template({ id: "rent", amount: 1150 }),
       template({ id: "fund", amount: 400, type: "savings" }),
-      template({
-        id: "transfer",
-        amount: 500,
-        type: "investment",
-        counts: false,
-      }),
+      template({ id: "transfer", amount: 500, type: "investment" }),
+      template({ id: "dca", amount: 500, type: "investment", counts: false }),
     ]);
 
-    const putBy = rollup.setAside + rollup.deployed;
-    expect(rollup.income - rollup.committed - putBy).toBe(rollup.left);
+    expect(rollup.income - rollup.committed - rollup.setAside).toBe(
+      rollup.left,
+    );
     expect(rollup.left).toBe(1150);
   });
 
@@ -123,15 +152,10 @@ describe("rollUpRecurring", () => {
     expect(rollup.setAside).toBe(350);
   });
 
-  it("keeps a broker transfer out of every summary figure", () => {
+  it("keeps a DCA bought at the broker out of every summary figure", () => {
     const rollup = rollUpRecurring([
       template({ id: "rent", amount: 1150 }),
-      template({
-        id: "transfer",
-        amount: 500,
-        type: "investment",
-        counts: false,
-      }),
+      template({ id: "dca", amount: 500, type: "investment", counts: false }),
     ]);
 
     expect(rollup.deployed).toBe(500);
@@ -157,7 +181,7 @@ describe("byType", () => {
       template({ id: "rent", amount: 900 }),
       template({ id: "livret", amount: 200, type: "savings" }),
       template({ id: "etf", amount: 150, type: "investment" }),
-      // A transfer into a broker: deployed for the summary, still an
+      // A DCA bought at the broker: deployed for the summary, still an
       // investment for the page.
       template({
         id: "broker",
@@ -192,6 +216,23 @@ describe("allocationSegments", () => {
       { kind: "expense", amount: 1000, share: 0.5 },
       { kind: "savings", amount: 300, share: 0.15 },
       { kind: "investment", amount: 200, share: 0.1 },
+      { kind: "left", amount: 500, share: 0.25 },
+    ]);
+  });
+
+  it("draws the transfer and not the DCAs it buys", () => {
+    const segments = allocationSegments(
+      rollUpRecurring([
+        template({ id: "salary", amount: 2000, type: "income" }),
+        template({ id: "rent", amount: 1000 }),
+        template({ id: "transfer", amount: 500, type: "investment" }),
+        template({ id: "dca", amount: 450, type: "investment", counts: false }),
+      ]),
+    );
+
+    expect(segments).toEqual([
+      { kind: "expense", amount: 1000, share: 0.5 },
+      { kind: "investment", amount: 500, share: 0.25 },
       { kind: "left", amount: 500, share: 0.25 },
     ]);
   });
