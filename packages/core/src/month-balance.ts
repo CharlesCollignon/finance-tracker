@@ -34,6 +34,9 @@ export interface BalanceAnchor {
   balance: number;
 }
 
+/** No wallet bought from the account: what a ledger with no bank has. */
+const NONE_DEBITED: ReadonlySet<string> = new Set();
+
 /** One movement's effect on the account, dated. */
 export interface DatedDelta {
   date: string;
@@ -45,15 +48,22 @@ export interface DatedDelta {
  * rule — see `buildRecordedCashFlows`. Income arrives; spending, saving and
  * transfers to a broker leave; a savings withdrawal comes back; a purchase
  * inside a wallet moves nothing, because its money left when it was
- * transferred in.
+ * transferred in — unless its wallet is bought from the account (`debited`,
+ * see `walletCategoriesTheBankDebits`), as Bitstack takes its buys by card.
  */
-export function transactionDelta(tx: TransactionWithCategory): number {
+export function transactionDelta(
+  tx: TransactionWithCategory,
+  debited: ReadonlySet<string> = NONE_DEBITED,
+): number {
   const amount = Number(tx.amount);
   switch (tx.categories.type) {
     case "income":
       return amount;
     case "investment":
-      return tx.categories.counts_toward_summary === false ? 0 : -amount;
+      return tx.categories.counts_toward_summary === false &&
+        !debited.has(tx.category_id)
+        ? 0
+        : -amount;
     case "savings":
       return tx.categories.counts_toward_summary === false ? amount : -amount;
     default:
@@ -80,11 +90,14 @@ export function recordedDeltas(
     today,
     anchored,
     moved = [],
+    debited = NONE_DEBITED,
   }: {
     from: string;
     today: string;
     anchored: boolean;
     moved?: readonly TransactionWithCategory[];
+    /** Wallets bought from the account — see `transactionDelta`. */
+    debited?: ReadonlySet<string>;
   },
 ): DatedDelta[] {
   const byId = new Map(rows.map((row) => [row.id, row] as const));
@@ -98,7 +111,10 @@ export function recordedDeltas(
     : (row: TransactionWithCategory) => row.occurred_on;
   return [...byId.values()]
     .filter((row) => dateOf(row) >= from && dateOf(row) <= today)
-    .map((row) => ({ date: dateOf(row), delta: transactionDelta(row) }));
+    .map((row) => ({
+      date: dateOf(row),
+      delta: transactionDelta(row, debited),
+    }));
 }
 
 /**
@@ -229,6 +245,7 @@ export function outflowsByDay({
   month,
   today,
   anchored,
+  debited = NONE_DEBITED,
 }: {
   rows: readonly TransactionWithCategory[];
   moved?: readonly TransactionWithCategory[];
@@ -237,6 +254,8 @@ export function outflowsByDay({
   month: number;
   today: string;
   anchored: boolean;
+  /** Wallets bought from the account — see `transactionDelta`. */
+  debited?: ReadonlySet<string>;
 }): DayOutflows[] {
   const { start, end } = getMonthBounds(year, month);
   const byDay = new Map<string, { name: string; amount: number }[]>();
@@ -256,7 +275,11 @@ export function outflowsByDay({
   for (const row of byId.values()) {
     const date = anchored ? cashDateOf(row) : row.occurred_on;
     if (date <= today) {
-      add(date, row.note?.trim() || row.categories.name, -transactionDelta(row));
+      add(
+        date,
+        row.note?.trim() || row.categories.name,
+        -transactionDelta(row, debited),
+      );
     }
   }
   for (const charge of upcoming) {
@@ -276,7 +299,10 @@ export function outflowsByDay({
         total: roundMoney(sorted.reduce((sum, item) => sum + item.amount, 0)),
         items: sorted
           .slice(0, OUTFLOWS_NAMED)
-          .map((item) => ({ name: item.name, amount: roundMoney(item.amount) })),
+          .map((item) => ({
+            name: item.name,
+            amount: roundMoney(item.amount),
+          })),
         more: Math.max(0, sorted.length - OUTFLOWS_NAMED),
         planned: date > today,
       };

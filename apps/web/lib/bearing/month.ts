@@ -29,11 +29,13 @@ import {
   type DayOutflows,
   type MonthBalance,
 } from "@finance/core/month-balance";
+import type { PurchaseToConfirm } from "@finance/core/purchases-to-confirm";
 import type { UpcomingCharge } from "@finance/core/still-to-come";
 import {
   readMonthBalance,
   type BalanceSource,
 } from "@finance/data/month-balance";
+import { getPurchasesToConfirm } from "@finance/data/purchases-to-confirm";
 
 /** How many months the spending bars look back over, the month shown included. */
 const TREND_MONTHS = 6;
@@ -80,6 +82,12 @@ export interface BearingMonth {
    * already paid would otherwise count a second time.
    */
   arrived: FulfilmentReport | null;
+  /**
+   * Purchases inside a wallet whose day has come, waiting for the user to say
+   * whether they went through. The month in progress, with a bank feeding
+   * the ledger, only: without one they are written on their day.
+   */
+  purchases: PurchaseToConfirm[];
   /** Nothing recorded, nothing planned and no balance: a first visit. */
   empty: boolean;
 }
@@ -129,6 +137,7 @@ export async function gatherBearingMonth(
     rows,
     upcoming: shownUpcoming,
     outflows,
+    debited,
   } = await readMonthBalance(await createClient(), userId, {
     year,
     month,
@@ -170,6 +179,7 @@ export async function gatherBearingMonth(
   let invested: number | null = null;
   let attention: AttentionItem[] = [];
   let arrived: FulfilmentReport | null = null;
+  let purchases: PurchaseToConfirm[] = [];
 
   if (isCurrent) {
     const categories = await getCategories(userId);
@@ -180,12 +190,22 @@ export async function gatherBearingMonth(
       year,
       month,
     );
-    const [portfolio, pending, swallowed, proposals] = await Promise.all([
-      getWalletPortfolio(userId, { includeHistory: false }),
-      bankFed ? getPendingFeedItems(userId, locale) : Promise.resolve([]),
-      bankFed ? countSwallowedFeedItems(userId) : Promise.resolve(0),
-      bankFed ? getRecurringProposals(userId, today) : Promise.resolve([]),
-    ]);
+    const [portfolio, pending, swallowed, proposals, waitingPurchases] =
+      await Promise.all([
+        getWalletPortfolio(userId, { includeHistory: false }),
+        bankFed ? getPendingFeedItems(userId, locale) : Promise.resolve([]),
+        bankFed ? countSwallowedFeedItems(userId) : Promise.resolve(0),
+        bankFed ? getRecurringProposals(userId, today) : Promise.resolve([]),
+        bankFed
+          ? getPurchasesToConfirm(await createClient(), userId, {
+              templates,
+              fulfilledKeys,
+              debited,
+              today,
+            })
+          : Promise.resolve([]),
+      ]);
+    purchases = waitingPurchases;
 
     if (closes.summary.sample > 0) {
       run = {
@@ -241,6 +261,7 @@ export async function gatherBearingMonth(
     invested,
     attention,
     arrived: arrived && arrived.proposals.length > 0 ? arrived : null,
+    purchases,
     empty:
       source === "none" &&
       rows.length === 0 &&

@@ -85,6 +85,7 @@
     "./push-messages": "./src/push-messages.ts",
     "./push-digest": "./src/push-digest.ts",
     "./push-routes": "./src/push-routes.ts",
+    "./purchases-to-confirm": "./src/purchases-to-confirm.ts",
     "./recurrence": "./src/recurrence.ts",
     "./recurring-detection": "./src/recurring-detection.ts",
     "./recurring-fulfilment": "./src/recurring-fulfilment.ts",

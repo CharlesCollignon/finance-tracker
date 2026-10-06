@@ -31,6 +31,7 @@
     "./positions": "./src/positions.ts",
     "./preferences": "./src/preferences.ts",
     "./properties": "./src/properties.ts",
+    "./purchases-to-confirm": "./src/purchases-to-confirm.ts",
     "./quote-source": "./src/quote-source.ts",
     "./recurring-apply": "./src/recurring-apply.ts",
     "./recurring-positions": "./src/recurring-positions.ts",

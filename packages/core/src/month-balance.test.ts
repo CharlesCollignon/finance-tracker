@@ -62,6 +62,13 @@ describe("transactionDelta", () => {
     ).toBe(0);
     expect(transactionDelta(tx({ type: "investment", amount: 90 }))).toBe(-90);
   });
+
+  it("takes a buy out of the account when the bank debits its wallet", () => {
+    // Bitstack's Monday buy, taken from the account by card.
+    const buy = tx({ type: "investment", counts: false, name: "Bitstack" });
+    expect(transactionDelta(buy, new Set(["cat-Bitstack"]))).toBe(-10);
+    expect(transactionDelta(buy, new Set(["cat-PEA"]))).toBe(0);
+  });
 });
 
 describe("upcomingDelta", () => {
@@ -328,15 +335,44 @@ describe("outflowsByDay", () => {
     tx({ id: "b", occurred_on: "2026-01-09", amount: 7 }),
     tx({ id: "c", occurred_on: "2026-01-09", amount: 9 }),
     tx({ id: "d", occurred_on: "2026-01-09", amount: 11 }),
-    tx({ id: "salary", occurred_on: "2026-01-01", amount: 2800, type: "income", name: "Salaire" }),
+    tx({
+      id: "salary",
+      occurred_on: "2026-01-01",
+      amount: 2800,
+      type: "income",
+      name: "Salaire",
+    }),
     // A purchase inside a wallet: no money left the account.
-    tx({ id: "etf", occurred_on: "2026-01-12", amount: 200, type: "investment", counts: false, name: "PEA" }),
+    tx({
+      id: "etf",
+      occurred_on: "2026-01-12",
+      amount: 200,
+      type: "investment",
+      counts: false,
+      name: "PEA",
+    }),
   ];
   const days = outflowsByDay({
     rows,
     upcoming: [
-      { key: "k", name: "Électricité", description: null, occurredOn: "2026-01-25", amount: 85, type: "expense", recorded: false },
-      { key: "j", name: "Salaire", description: null, occurredOn: "2026-01-28", amount: 2800, type: "income", recorded: false },
+      {
+        key: "k",
+        name: "Électricité",
+        description: null,
+        occurredOn: "2026-01-25",
+        amount: 85,
+        type: "expense",
+        recorded: false,
+      },
+      {
+        key: "j",
+        name: "Salaire",
+        description: null,
+        occurredOn: "2026-01-28",
+        amount: 2800,
+        type: "income",
+        recorded: false,
+      },
     ],
     year: 2026,
     month: 1,

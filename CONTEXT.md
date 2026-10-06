@@ -116,8 +116,21 @@ until no movement could still be offered for it (four days, ten for the money
 that moves on payday), or until it is confirmed or skipped. The same rule
 works the other way: an occurrence a movement already looks like, early or
 late, is not forecast beside it while « C'est arrivé ? » waits. Nothing is
-confirmed by either (`bankForecast`).
+confirmed by either (`bankForecast`). Never a purchase inside a wallet, which
+no bank movement can be: that one is asked about instead (see purchase to
+confirm) — unless its wallet is bought from the account, whose debits it
+awaits like any other charge.
 _Avoid_: overdue, late, pending
+
+**Purchase to confirm**:
+_En français_ : achat à confirmer (« Cet achat est-il passé ? »)
+With a bank feeding the ledger, a purchase inside a wallet whose day has come
+and that nothing records yet. The bank is the record there, but it never sees
+money move inside the broker, so Le point asks for ten days from its day: yes
+writes it on its day, linked to its template, which grows its position; no
+skips it; no answer writes nothing (`purchasesToConfirm`). Never one in a
+wallet bought from the account, which its debits settle.
+_Avoid_: pending purchase, unconfirmed DCA
 
 **Skip**:
 _En français_ : passer, retirer de ce mois
@@ -140,7 +153,9 @@ that reaches rows already written: the user chooses whether this month's
 recorded rows follow it ("this month too") or keep what they say ("upcoming
 only"), and past months never change. With a bank feeding the ledger, nothing
 is applied at all: the bank is the record, and a template only forecasts —
-until the bank brings each occurrence (see awaited occurrence).
+until the bank brings each occurrence (see awaited occurrence). A purchase
+inside a wallet, which the bank never sees, is applied when the user says it
+went through (see purchase to confirm).
 _Avoid_: sync, generate, run
 
 **Reprice**:
@@ -330,8 +345,22 @@ An investment logged in a category that does not count toward the summary
 already sent to it. It moves nothing on the bank account — the transfer to
 the broker did — so no balance, month-end rest or curve counts it, recorded
 or planned. Counting both would take the same euros out twice, which is what
-happens to an October DCA funded on 22 September if it is.
+happens to an October DCA funded on 22 September if it is. Except in a wallet
+bought from the account.
 _Avoid_: deployment, buy, outflow
+
+**Wallet bought from the account**:
+_En français_ : portefeuille débité sur le compte (Bitstack)
+A wallet whose purchases are taken straight from the current account rather
+than made with money already sent to a broker: Bitstack debits its Monday
+buys by card, as a round-up and the week's buy. Known from what the bank did,
+never set: a purchase-inside-a-wallet category the bank has brought a debit
+into (`walletCategoriesTheBankDebits`). Its purchases leave the account like
+any other debit, recorded or planned, and count in the month close. The bank
+brings them at whatever they came to, so any debit in the category near a
+purchase's day settles it, unasked, and until one comes it is an awaited
+occurrence (`debitedPurchaseForecast`).
+_Avoid_: direct DCA, card DCA
 
 **Investment position**:
 _En français_ : ligne

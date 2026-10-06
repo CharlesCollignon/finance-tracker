@@ -27,7 +27,7 @@ import type {
 } from "@finance/core/types/database";
 
 import { readCashBalance } from "./bank-balance";
-import { hasBankFeed } from "./bank-feed";
+import { hasBankFeed, walletCategoriesTheBankDebits } from "./bank-feed";
 import type { Db } from "./client";
 import { getBankForecast, getFulfilledKeys } from "./fulfilment";
 import { getMonthCloseOverview, type MonthCloseOverview } from "./month-close";
@@ -65,6 +65,12 @@ export interface MonthBalanceRead {
   } | null;
   /** What left the account, or is set to, day by day: the curve's markers. */
   outflows: DayOutflows[];
+  /**
+   * The categories of the wallets bought straight from the account
+   * (`walletCategoriesTheBankDebits`), read once here for the caller's other
+   * cards. Empty without a bank.
+   */
+  debited: ReadonlySet<string>;
 }
 
 function monthKeyOf(year: number, month: number): string {
@@ -139,6 +145,10 @@ export async function readMonthBalance(
 
   let anchor: BalanceAnchor | null = null;
   let source: BalanceSource = "none";
+  // Bitstack's buys leave the account, where a DCA PEA's never touch it.
+  const debited: ReadonlySet<string> = bankFed
+    ? await walletCategoriesTheBankDebits(db, userId)
+    : new Set();
 
   if (bankFed) {
     const onDate = period === "past" ? last : today;
@@ -199,6 +209,7 @@ export async function readMonthBalance(
     today,
     anchored: anchor !== null,
     moved,
+    debited,
   });
 
   // What the charges still call for, month by month from this one to the
@@ -210,7 +221,7 @@ export async function readMonthBalance(
     // With a bank feeding the ledger, the bank bringing a charge is what ends
     // its forecast, not its day (`bankForecast`).
     const bank = bankFed
-      ? await getBankForecast(db, userId, templates, today)
+      ? await getBankForecast(db, userId, templates, today, debited)
       : null;
     // A charge due at the end of last month that the bank has not brought
     // yet is still to leave the account this month.
@@ -288,9 +299,10 @@ export async function readMonthBalance(
     month,
     today,
     anchored: anchor !== null,
+    debited,
   });
 
-  return { balance, source, rows, upcoming, outflows };
+  return { balance, source, rows, upcoming, outflows, debited };
 }
 
 /**

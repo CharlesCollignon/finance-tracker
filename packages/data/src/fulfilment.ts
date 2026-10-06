@@ -2,6 +2,7 @@ import { recurringOccurrenceKey } from "@finance/core/apply-recurring";
 import { todayIsoLocal } from "@finance/core/constants";
 import {
   bankForecast,
+  debitedPurchaseForecast,
   fulfilmentOccurrences,
   fulfilmentScope,
   proposalsForMonth,
@@ -17,6 +18,7 @@ import type {
   RecurringTemplateWithCategory,
 } from "@finance/core/types/database";
 
+import { walletCategoriesTheBankDebits } from "./bank-feed";
 import type { Db } from "./client";
 import { isMissingSchema } from "./schema";
 
@@ -176,12 +178,17 @@ export async function getFulfilmentProposals(
  * ledger it feeds — see `bankForecast`. Matched over the month in progress
  * and its neighbours, as far as a movement can be from its occurrence, so
  * whichever month a screen shows, its forecast and the questions agree.
+ *
+ * The purchases of a wallet bought from the account (Bitstack) are matched
+ * on their own rule, `debitedPurchaseForecast`, and never asked about.
  */
 export async function getBankForecast(
   db: Db,
   userId: string,
   templates: readonly RecurringTemplateWithCategory[],
   today: string,
+  /** `walletCategoriesTheBankDebits`, when the caller has already read it. */
+  debited?: ReadonlySet<string>,
 ): Promise<BankForecast> {
   const scope = fulfilmentScope(
     Number(today.slice(0, 4)),
@@ -198,8 +205,13 @@ export async function getBankForecast(
     categories,
     scope.months,
   );
-  if (occurrences.length === 0) {
-    return { awaited: new Set(), arrived: new Set() };
+  const walletDebits =
+    debited ?? (await walletCategoriesTheBankDebits(db, userId));
+  const buysDebited = templates.some(
+    (template) => template.active && walletDebits.has(template.category_id),
+  );
+  if (occurrences.length === 0 && !buysDebited) {
+    return { awaited: new Set(), arrived: new Set(), debited: walletDebits };
   }
 
   const { movements, options } = await readCandidates(
@@ -208,12 +220,24 @@ export async function getBankForecast(
     scope.from,
     scope.to,
   );
-  return bankForecast(
+  const charges = bankForecast(
     templates,
     occurrences,
     proposeFulfilments(occurrences, movements, options),
     today,
   );
+  const bought = debitedPurchaseForecast(
+    templates,
+    walletDebits,
+    scope.months,
+    movements,
+    today,
+  );
+  return {
+    awaited: new Set([...charges.awaited, ...bought.awaited]),
+    arrived: new Set([...charges.arrived, ...bought.arrived]),
+    debited: walletDebits,
+  };
 }
 
 /**

@@ -5,6 +5,7 @@ import { getMonthBounds, todayIsoLocal } from "@finance/core/constants";
 import { ArrivedCharges } from "@/components/ArrivedCharges";
 import { MonthPicker } from "@/components/MonthPicker";
 import { MonthRead } from "@/components/MonthRead";
+import { PurchasesToConfirm } from "@/components/PurchasesToConfirm";
 import { BankAttentionBanner } from "@/components/bank/BankAttentionBanner";
 import { AttentionRow } from "@/components/bearing/AttentionRow";
 import {
@@ -140,6 +141,13 @@ export default function HomeScreen() {
                 <ArrivedCharges
                   proposals={data.arrived.proposals}
                 />
+              </View>
+            ) : null}
+
+            {/* The same kind of question, for what the bank cannot see. */}
+            {data.purchases.length > 0 ? (
+              <View className="rounded-card border border-border bg-card/70 p-card">
+                <PurchasesToConfirm purchases={data.purchases} />
               </View>
             ) : null}
 

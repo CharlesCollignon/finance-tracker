@@ -28,6 +28,7 @@ import { CategoryIcon } from "@/components/finance/CategoryIcon";
 import { amountSign } from "@finance/core/amount-sign";
 import { AttentionRow } from "@/components/finance/bearing/AttentionRow";
 import { ArrivedCharges } from "@/components/finance/ArrivedCharges";
+import { PurchasesToConfirm } from "@/components/finance/PurchasesToConfirm";
 import { BankAttentionBanner } from "@/components/finance/bank/BankAttentionBanner";
 import { ConnectBankInvite } from "@/components/finance/bank/ConnectBankInvite";
 import { BalanceCurve } from "@/components/finance/bearing/BalanceCurve";
@@ -102,9 +103,14 @@ export function BearingMonthView({
           confirmed as arrived stops being counted as still to come. */}
       {data.arrived ? (
         <section className={cn(GLASS_CARD, "rounded-card p-card")}>
-          <ArrivedCharges
-            proposals={data.arrived.proposals}
-          />
+          <ArrivedCharges proposals={data.arrived.proposals} />
+        </section>
+      ) : null}
+
+      {/* The same kind of question, for what the bank cannot see. */}
+      {data.purchases.length > 0 ? (
+        <section className={cn(GLASS_CARD, "rounded-card p-card")}>
+          <PurchasesToConfirm purchases={data.purchases} />
         </section>
       ) : null}
 
@@ -695,15 +701,30 @@ function UpcomingCard({ data }: { data: BearingMonth }) {
           {shown.map((charge) => (
             <li key={charge.key} className="flex items-center gap-3">
               <span className="flex size-10 shrink-0 flex-col items-center justify-center rounded-control border border-dashed border-hairline-strong leading-none">
-                <span className="text-sm font-semibold tabular-nums">
+                <span
+                  className={cn(
+                    "text-sm font-semibold tabular-nums",
+                    charge.awaited && "text-muted-foreground",
+                  )}
+                >
                   {Number(charge.occurredOn.slice(8, 10))}
                 </span>
                 <span className="mt-0.5 text-[0.625rem] uppercase text-muted-foreground">
                   {formatDayMonth(charge.occurredOn, locale).split(" ")[1]}
                 </span>
               </span>
-              <span className="min-w-0 flex-1 truncate text-sm">
-                {charge.description?.trim() || charge.name}
+              <span className="min-w-0 flex-1">
+                <span className="block truncate text-sm">
+                  {charge.description?.trim() || charge.name}
+                </span>
+                {/* Its day is behind it and the bank has not brought it: it
+                    is still to leave, but not coming up, and the date alone
+                    would read as the card having fallen behind. */}
+                {charge.awaited ? (
+                  <span className="block truncate text-xs text-muted-foreground">
+                    {t("ledger.awaited")}
+                  </span>
+                ) : null}
               </span>
               <PrivateAmount
                 className={cn(

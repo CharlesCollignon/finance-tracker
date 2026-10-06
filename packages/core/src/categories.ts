@@ -10,6 +10,20 @@ export const CATEGORY_TYPE_ORDER: CategoryType[] = [
   "investment",
 ];
 
+/**
+ * A purchase inside a wallet: an investment in a category that does not count
+ * toward the summary (the « suivi » ones) — a DCA PEA, a DCA CTO. Its money
+ * moves inside the broker, so no bank feeding the current account ever sees
+ * it.
+ */
+export function isPurchaseInsideWallet(
+  category: Pick<Category, "type" | "counts_toward_summary">,
+): boolean {
+  return (
+    category.type === "investment" && category.counts_toward_summary === false
+  );
+}
+
 export interface CategoryGroup {
   type: CategoryType;
   label: string;

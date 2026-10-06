@@ -95,6 +95,16 @@ describe("buildRecordedCashFlows", () => {
     expect(recordedOutflow(result)).toBe(0);
   });
 
+  it("counts a buy the bank debited, as Bitstack's are", () => {
+    const result = buildRecordedCashFlows(
+      [tx(15, "investment", { countsTowardSummary: false })],
+      [],
+      new Set(["cat-investment"]),
+    );
+
+    expect(result.transfers).toBe(15);
+  });
+
   it("adds wallet transfers to what left for a broker", () => {
     const result = buildRecordedCashFlows(
       [tx(400, "investment")],

@@ -33,6 +33,7 @@ export const actionsFr: typeof actionsEn = {
     "Toutes vos données financières ont été supprimées. Les catégories par défaut reviendront à votre prochaine visite.",
 
   skipRemoved: "De retour dans le mois",
+  purchaseRecorded: "Achat enregistré",
 
   closeTooEarly:
     "Ce mois pourra être clôturé à partir du {date}, une fois ses dernières dépenses arrivées.",

@@ -28,7 +28,8 @@ export interface UpcomingCharge {
   /**
    * A purchase inside a wallet, in a category that does not count toward the
    * summary: it is tracked, and moves no money on the account, because the
-   * transfer to the broker that paid for it already did.
+   * transfer to the broker that paid for it already did. Never one whose
+   * wallet the bank debits (`BankForecast.debited`): that money leaves.
    */
   tracked?: boolean;
 }
@@ -122,8 +123,17 @@ export function buildStillToCome(
   // because whether a broker deployment counts toward the budget is a fact
   // about the template or the category it came from, and that is only in hand
   // here.
-  function file(charge: UpcomingCharge, counts: boolean): void {
-    if (charge.type === "investment" && !counts) {
+  function file(
+    charge: UpcomingCharge,
+    counts: boolean,
+    categoryId: string,
+  ): void {
+    // Moves nothing on the account, unless its wallet is bought from it.
+    if (
+      charge.type === "investment" &&
+      !counts &&
+      !bank?.debited?.has(categoryId)
+    ) {
       charge.tracked = true;
     }
     if (charge.type === "income") {
@@ -163,6 +173,7 @@ export function buildStillToCome(
         recorded: true,
       },
       tx.categories.counts_toward_summary !== false,
+      tx.category_id,
     );
   }
 
@@ -215,6 +226,7 @@ export function buildStillToCome(
           ...(awaited ? { awaited } : {}),
         },
         countsTowardSummary(template),
+        template.category_id,
       );
     }
   }
