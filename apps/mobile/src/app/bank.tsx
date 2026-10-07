@@ -18,6 +18,7 @@ import { formatShortDate } from "@finance/core/constants";
 import { awaitingRole } from "@finance/core/bank-accounts";
 import { resolveMessage } from "@finance/core/i18n/t";
 
+import { AddBankSheet } from "@/components/bank/AddBankSheet";
 import { BankAccountsSection } from "@/components/bank/BankAccountsSection";
 import { BankImport } from "@/components/bank/BankImport";
 import { ConnectBankSheet } from "@/components/bank/ConnectBankSheet";
@@ -86,6 +87,7 @@ export default function BankScreen() {
 
   const [connectOpen, setConnectOpen] = useState(false);
   const [disconnectOpen, setDisconnectOpen] = useState(false);
+  const [addOpen, setAddOpen] = useState(false);
 
   const refreshAll = useCallback(() => {
     if (user) {
@@ -218,7 +220,7 @@ export default function BankScreen() {
           <BankAccountsSection
             accounts={accounts ?? []}
             livrets={data?.livrets ?? []}
-            onAddBank={null}
+            onAddBank={syncing ? () => setAddOpen(true) : null}
           />
 
           {live ? (
@@ -233,6 +235,7 @@ export default function BankScreen() {
       )}
 
       <ConnectBankSheet open={connectOpen} onOpenChange={setConnectOpen} />
+      <AddBankSheet open={addOpen} onOpenChange={setAddOpen} />
       <DisconnectSheet open={disconnectOpen} onOpenChange={setDisconnectOpen} />
     </Screen>
   );

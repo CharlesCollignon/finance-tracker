@@ -10,6 +10,7 @@ import {
   undoFeedDecision,
 } from "@/lib/mutations";
 import { supabase } from "@/lib/supabase";
+import { notifyDataChanged } from "@/lib/data-version";
 import { callWebApi, webApiAvailable } from "@/lib/web-api";
 import * as preferences from "@finance/data/preferences";
 
@@ -245,6 +246,27 @@ export async function importAccountHistory(
   return result.ok
     ? { imported: result.imported ?? 0, pending: result.pending ?? 0 }
     : { error: result.error };
+}
+
+/**
+ * Look for accounts at a bank added on open-banking.io since, bringing
+ * nothing in, and say how many wait to be told what they are. When some do,
+ * the screens that list accounts read them again.
+ */
+export async function findNewBankAccounts(): Promise<
+  { awaiting: number } | { error: string }
+> {
+  const result = await callWebApi<{ awaiting?: number }>("/api/bank/accounts", {
+    body: {},
+  });
+  if (!result.ok) {
+    return { error: result.error };
+  }
+  const awaiting = result.awaiting ?? 0;
+  if (awaiting > 0) {
+    notifyDataChanged("bank");
+  }
+  return { awaiting };
 }
 
 /** The first import is done: remembered, and the months it explains closed. */
