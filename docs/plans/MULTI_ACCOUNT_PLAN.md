@@ -110,28 +110,32 @@ suivre, and linking a Livret on Placements as Épargne.
       reminder counts only banks with an account that is Courant or Épargne.
 - [x] CONTEXT.md: bank account and its role.
 
-## Phase 2 — Web: your accounts, and adding a bank (branch `accounts-web`)
+## Phase 2 — Web: your accounts, and adding a bank (branch `accounts-web`) — done
 
-- [ ] Core, tested: `guessAccountRole`, `guessSavingsKind` (written in
+- [x] Core, tested: `guessAccountRole`, `guessSavingsKind` (written in
       phase 1, held back until a screen calls them: the reachability gate
       fails on a core export no app uses).
-- [ ] `/bank`: the accounts grouped by bank, each bank with its consent line;
+- [x] `/bank`: the accounts grouped by bank, each bank with its consent line;
       each account with its balance and its role (Courant · Épargne · Ne pas
       suivre). Épargne says which Livret it feeds and lets the user change it.
-- [ ] « Nouveaux comptes trouvés »: the readable accounts with no role yet,
+- [x] « Nouveaux comptes trouvés »: the readable accounts with no role yet,
       pre-filled, and one « C'est bon ». It saves the roles, creates or links
       the Livrets, then brings in the new Courant accounts' history with the
       existing progress list.
-- [ ] A first connection goes through the same card before anything is
+- [x] A first connection goes through the same card before anything is
       imported.
-- [ ] « Ajouter une banque »: a sheet saying to connect it on open-banking.io
+- [x] « Ajouter une banque »: a sheet saying to connect it on open-banking.io
       (1 € a month per extra account, paid to them) and to come back. When
       the tab is back in front, Pluclair looks for new accounts on its own;
       « Vérifier maintenant » does the same. Looking lists accounts and
       imports nothing.
-- [ ] Ne pas suivre says open-banking.io still bills the account until it is
+- [x] Ne pas suivre says open-banking.io still bills the account until it is
       removed there.
-- [ ] Le point: one line while a new account waits for its role, to `/bank`.
+- [x] Le point: one line while a new account waits for its role, to `/bank`.
+- [x] Also: the status card names the bank whose consent ends first, once
+      several are followed; a bank nobody follows is never asked to be
+      renewed; an unreadable account nobody answered for waits, unasked,
+      until it can be read.
 
 ## Phase 3 — Phone (branch `accounts-phone`)
 
