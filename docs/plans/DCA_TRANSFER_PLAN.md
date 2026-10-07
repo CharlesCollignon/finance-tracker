@@ -176,16 +176,21 @@ Decisions:
 - **Moments, no score:** the transfer confirmed, the last DCA of the month
   through, a tick turning the figure up or down, the run extended.
 
-### Phase A — The model (branch `dca-rework-model`)
+### Phase A — The model (branch `dca-rework-model`) — done
 
-- [ ] Migration 055: `recurring_templates.funded_by_transfer`, backfilled on
+- [x] Migration 055: `recurring_templates.funded_by_transfer`, backfilled on
       for DCAs bought at the broker; the transfer moved to the 1st.
-- [ ] Core: the figure from ticked DCAs; the month a transfer covers is the
-      one starting nearest its day; the card's state (to send, seen, sent),
-      the month's DCA progress and the run.
-- [ ] Data: tick and untick, creating, pausing and bringing back the
-      app's transfer; the card's read; the push 5 days before the 1st.
-- [ ] Out: the invitation, « Selon vos DCA » on the sheet, the old line.
+- [x] Core: the figure from ticked DCAs (`isFundedDca`); the month a
+      transfer covers is the one starting nearest its day; the card's state
+      (to send, sent, unseen), the month's DCA progress and the run
+      (`dcaMonth`).
+- [x] Data: tick and untick (`setFundedByTransfer`); the app's transfer made
+      on the first tick — their own « Virement vers le courtier » taken over
+      — paused on the last, brought back on the next (`followPurchases`); a
+      new DCA ticked by default; the card's read (`getDcaMonth`); the push
+      5 days before the 1st.
+- [x] Out: the invitation, « Selon vos DCA » on the sheets (the app's
+      transfer opened through a link says it is kept by Pluclair).
 
 ### Phase B — The surfaces (branch `dca-rework-ui`)
 

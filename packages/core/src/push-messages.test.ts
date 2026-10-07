@@ -282,8 +282,7 @@ describe("transferReminderNotification", () => {
       reminder: {
         templateId: "transfer",
         label: "Virement Boursorama",
-        occurredOn: "2026-10-28",
-        payday: "2026-10-28",
+        occurredOn: "2026-11-01",
         need: {
           year: 2026,
           month: 11,
@@ -300,7 +299,9 @@ describe("transferReminderNotification", () => {
     });
     expect(push.kind).toBe("dca");
     expect(push.key).toBe("dca-transfer:2026-11");
-    expect(push.title).toBe("Virement Boursorama\u00A0: 2\u202F150\u00A0€");
+    expect(push.title).toBe(
+      "À préparer pour novembre\u00A0: 2\u202F150\u00A0€",
+    );
     expect(push.body).toBe(
       "Pour les DCA prévus en novembre\u00A0: CTO 1\u202F650\u00A0€ · PEA 400\u00A0€. Arrondi, avec 5\u00A0% de marge sur ceux achetés en parts.",
     );

@@ -94,6 +94,11 @@ const recurringCommonSchema = z.object({
    * DCAs (migration 054), worked out by the server, so no amount is typed.
    */
   pricingType: z.enum(["fixed", "shares", "purchases"]).default("fixed"),
+  /**
+   * « Payé par le virement au courtier », for a DCA bought at the broker
+   * (migration 055). Absent leaves it as it is, or on for a new one.
+   */
+  fundedByTransfer: z.boolean().optional(),
   amount: z.coerce.number().positive("errors.amountPositive").optional(),
   shareCount: z.coerce.number().int().positive().optional(),
   instrumentSymbol: z.string().min(1).max(32).optional(),

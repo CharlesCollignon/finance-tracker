@@ -14,7 +14,7 @@ import {
   filterDatesBySchedule,
   getRecurringOccurrenceDates,
 } from "./recurrence";
-import { PAYDAY_EARLY_DAYS, PAYDAY_LATE_DAYS } from "./recurring-fulfilment";
+import { PAYDAY_LATE_DAYS } from "./recurring-fulfilment";
 import { isQuotePriced } from "./recurring-shares";
 import type { RecurringTemplateWithCategory } from "./types/database";
 
@@ -59,9 +59,11 @@ export interface DcaNeed {
 }
 
 /**
- * The purchases inside a wallet one month calls for, and what to send for
- * them. Leaves out the ones skipped ahead of time and the wallets the bank
- * debits straight from the account (Bitstack), which no transfer funds.
+ * The DCAs one month calls for that the transfer pays for — ticked
+ * « Payé par le virement au courtier » (`funded_by_transfer`) — and what to
+ * send for them. Leaves out the ones skipped ahead of time and the wallets
+ * the bank debits straight from the account (Bitstack), which no transfer
+ * funds whatever their tick says.
  */
 export function dcaNeedForMonth({
   templates,
@@ -87,11 +89,7 @@ export function dcaNeedForMonth({
   let count = 0;
 
   for (const template of templates) {
-    if (
-      !template.active ||
-      !isPurchaseInsideWallet(template.categories) ||
-      debited.has(template.category_id)
-    ) {
+    if (!isFundedDca(template, debited)) {
       continue;
     }
     const dates = occurrencesIn(template, year, month).filter(
@@ -135,17 +133,55 @@ export function dcaNeedForMonth({
   };
 }
 
+/** Whether the transfer pays for this DCA: ticked, active, bought at the broker. */
+export function isFundedDca(
+  template: Pick<
+    RecurringTemplateWithCategory,
+    "active" | "funded_by_transfer" | "category_id" | "categories"
+  >,
+  debited: ReadonlySet<string> = new Set(),
+): boolean {
+  return (
+    template.active &&
+    template.funded_by_transfer &&
+    isPurchaseInsideWallet(template.categories) &&
+    !debited.has(template.category_id)
+  );
+}
+
+/** Whether a DCA may carry the tick at all: one bought at the broker. */
+export function canBeFundedByTransfer(
+  template: Pick<RecurringTemplateWithCategory, "category_id" | "categories">,
+  debited: ReadonlySet<string> = new Set(),
+): boolean {
+  return (
+    isPurchaseInsideWallet(template.categories) &&
+    !isCryptoCategoryName(template.categories.name) &&
+    !debited.has(template.category_id)
+  );
+}
+
+/** The app's transfer to the broker, if there is one, active or paused. */
+export function brokerTransferOf<
+  T extends Pick<RecurringTemplateWithCategory, "pricing_type" | "active">,
+>(templates: readonly T[]): T | undefined {
+  return (
+    templates.find(
+      (template) => template.pricing_type === "purchases" && template.active,
+    ) ?? templates.find((template) => template.pricing_type === "purchases")
+  );
+}
+
 /**
- * The month a transfer that follows the DCAs covers: the month after its
- * occurrence still in play.
+ * The month a transfer covers: the one that starts nearest its occurrence
+ * still in play — on the 1st, the month it opens; on the 28th, the next.
  *
- * That is the first one from `PAYDAY_LATE_DAYS` ago that nothing has
- * settled yet — confirmed against a bank movement, written, or skipped. A
- * transfer is payday money: until the bank brings the one on the 28th, or
- * could no longer bring it, that is the transfer being sent, for next month.
- * Once it has, the next one is. Never one from before the template was set
- * up, which was never going to be sent. Null when the template has none
- * left, or is not monthly.
+ * In play is the first occurrence from `PAYDAY_LATE_DAYS` ago that nothing
+ * has settled yet — confirmed against a bank movement, written, or skipped.
+ * A transfer sent a few days late is still the one being sent; once it is
+ * settled, or could no longer arrive, the next one is. Never one from before
+ * the template was set up. Null when the template has none left, or is not
+ * monthly.
  */
 export function transferCoversMonth(
   template: Pick<
@@ -180,102 +216,243 @@ export function transferCoversMonth(
         !settledKeys.has(recurringOccurrenceKey(template.id, date)),
     );
     if (occurredOn) {
-      const covered = nextMonth(year, month);
-      return { ...covered, occurredOn };
+      return { ...monthStartingNearest(occurredOn), occurredOn };
     }
     ({ year, month } = nextMonth(year, month));
   }
   return null;
 }
 
-/** How many days before payday the transfer is announced. */
-export const TRANSFER_NOTICE_DAYS = 3;
+/** The calendar month whose 1st is nearest `date`: its own up to the 15th. */
+function monthStartingNearest(date: string): { year: number; month: number } {
+  const year = Number(date.slice(0, 4));
+  const month = Number(date.slice(5, 7));
+  return Number(date.slice(8, 10)) <= 15
+    ? { year, month }
+    : nextMonth(year, month);
+}
 
+/** How many days before the transfer's day the card and the push come. */
+export const TRANSFER_NOTICE_DAYS = 5;
+
+/** The months of a run looked back over, at most. */
+const RUN_MONTHS = 36;
+
+export interface DcaMonth {
+  templateId: string;
+  label: string;
+  /** The transfer's day: the 1st of the month it pays for. */
+  occurredOn: string;
+  /**
+   * Where the transfer stands: to send, from `TRANSFER_NOTICE_DAYS` before
+   * its day until it is settled; sent, once confirmed or written; unseen,
+   * when its day is past and nothing ever showed it.
+   */
+  state: "to-send" | "sent" | "unseen";
+  /** The month's DCAs it pays for, and what to send for them. */
+  need: DcaNeed;
+  /** The month's DCAs that have gone through, of those still due in it. */
+  progress: { done: number; total: number };
+  /** Months in a row the transfer was sent, this one included once it is. */
+  run: number;
+}
+
+/**
+ * What Le point's DCA card says today, for the transfer's own dates: the next
+ * one, from `TRANSFER_NOTICE_DAYS` before its day; otherwise the latest —
+ * still to send for `PAYDAY_LATE_DAYS` after its day, since a transfer a few
+ * days late still counts, then unseen. Sent as soon as it is settled, even
+ * early. With it, the month it pays for — its DCAs going through one by one —
+ * and the months funded in a row. Null without the app's transfer, before
+ * its first, or with nothing ticked to pay for.
+ */
+export function dcaMonth({
+  templates,
+  today,
+  settledKeys = new Set(),
+  skippedKeys = new Set(),
+  writtenKeys = new Set(),
+  debited = new Set(),
+}: {
+  templates: readonly RecurringTemplateWithCategory[];
+  today: string;
+  /** Transfer occurrences confirmed against the bank or written, any month. */
+  settledKeys?: ReadonlySet<string>;
+  skippedKeys?: ReadonlySet<string>;
+  /** DCA occurrences a row records — confirmed, or written by the fill. */
+  writtenKeys?: ReadonlySet<string>;
+  /** `walletCategoriesTheBankDebits`. */
+  debited?: ReadonlySet<string>;
+}): DcaMonth | null {
+  const transfer = brokerTransferOf(templates);
+  if (!transfer?.active) {
+    return null;
+  }
+  const setUpOn = templateSetUpOn(transfer);
+  const year = Number(today.slice(0, 4));
+  const month = Number(today.slice(5, 7));
+  const dates = [
+    previousMonth(year, month),
+    { year, month },
+    nextMonth(year, month),
+  ]
+    .flatMap((at) => occurrencesIn(transfer, at.year, at.month))
+    .filter((date) => date >= setUpOn)
+    .sort();
+  const upcoming = dates.find((date) => date > today);
+  const latest = dates.filter((date) => date <= today).at(-1);
+  const occurredOn =
+    upcoming && today >= shiftIsoDate(upcoming, -TRANSFER_NOTICE_DAYS)
+      ? upcoming
+      : latest;
+  if (!occurredOn) {
+    return null;
+  }
+
+  const covered = monthStartingNearest(occurredOn);
+  const need = dcaNeedForMonth({ templates, debited, skippedKeys, ...covered });
+  if (need.count === 0) {
+    return null;
+  }
+  const key = recurringOccurrenceKey(transfer.id, occurredOn);
+  const sent = settledKeys.has(key);
+  const stillDue =
+    !skippedKeys.has(key) &&
+    occurredOn >= shiftIsoDate(today, -PAYDAY_LATE_DAYS);
+
+  return {
+    templateId: transfer.id,
+    label: transfer.description?.trim() || transfer.categories.name,
+    occurredOn,
+    state: sent ? "sent" : stillDue ? "to-send" : "unseen",
+    need,
+    progress: dcaProgress({
+      templates,
+      debited,
+      skippedKeys,
+      writtenKeys,
+      ...covered,
+    }),
+    run: transferRun(transfer, settledKeys, today, sent ? occurredOn : null),
+  };
+}
+
+/**
+ * How far a month's funded DCAs have got: those a row records, of those it
+ * calls for — skipped ones are not owed, so they are counted in neither.
+ */
+export function dcaProgress({
+  templates,
+  debited = new Set(),
+  skippedKeys = new Set(),
+  writtenKeys = new Set(),
+  year,
+  month,
+}: {
+  templates: readonly RecurringTemplateWithCategory[];
+  debited?: ReadonlySet<string>;
+  skippedKeys?: ReadonlySet<string>;
+  writtenKeys?: ReadonlySet<string>;
+  year: number;
+  month: number;
+}): { done: number; total: number } {
+  const monthPrefix = `${year}-${String(month).padStart(2, "0")}`;
+  let done = 0;
+  let total = 0;
+  for (const template of templates) {
+    if (!isFundedDca(template, debited)) {
+      continue;
+    }
+    for (const date of occurrencesIn(template, year, month)) {
+      const key = recurringOccurrenceKey(template.id, date);
+      if (!date.startsWith(monthPrefix) || skippedKeys.has(key)) {
+        continue;
+      }
+      total += 1;
+      if (writtenKeys.has(key)) {
+        done += 1;
+      }
+    }
+  }
+  return { done, total };
+}
+
+/**
+ * Months in a row the transfer was sent, counted back from `from` — the
+ * occurrence just sent — or else from the last one before today, so a run is
+ * not broken by a month whose transfer is still on its way. Stops at the
+ * first month it was not, or before the template was set up.
+ */
+export function transferRun(
+  transfer: Pick<
+    RecurringTemplateWithCategory,
+    | "id"
+    | "created_at"
+    | "recurrence"
+    | "day_of_month"
+    | "day_of_week"
+    | "month_of_year"
+    | "starts_on"
+    | "ends_on"
+  >,
+  settledKeys: ReadonlySet<string>,
+  today: string,
+  from: string | null = null,
+): number {
+  const setUpOn = templateSetUpOn(transfer);
+  const start = from ?? today;
+  let year = Number(start.slice(0, 4));
+  let month = Number(start.slice(5, 7));
+  let run = 0;
+  for (let step = 0; step < RUN_MONTHS; step += 1) {
+    for (const date of [...occurrencesIn(transfer, year, month)].reverse()) {
+      if (date < setUpOn) {
+        return run;
+      }
+      const latest = from ?? today;
+      if (date > latest) {
+        continue;
+      }
+      if (!settledKeys.has(recurringOccurrenceKey(transfer.id, date))) {
+        // Still on its way, not missed: the run counts from the month before.
+        if (
+          run === 0 &&
+          from === null &&
+          date >= shiftIsoDate(today, -PAYDAY_LATE_DAYS)
+        ) {
+          continue;
+        }
+        return run;
+      }
+      run += 1;
+    }
+    ({ year, month } = previousMonth(year, month));
+  }
+  return run;
+}
+
+/** The push before the 1st: the card's month while it is still to send. */
 export interface TransferReminder {
   templateId: string;
   label: string;
   /** The transfer's own day. */
   occurredOn: string;
-  /** The day the pay it comes out of is due: the salary's, else its own. */
-  payday: string;
   /** What it stands for, and the month it covers. */
   need: DcaNeed;
 }
 
-/**
- * The transfer to send now, if one is due: from `TRANSFER_NOTICE_DAYS`
- * before payday — or from the day the bank brings the salary, when it comes
- * earlier — until the transfer is settled.
- *
- * Payday is the salary's: the largest monthly income charge, on its
- * occurrence nearest the transfer's own day, within the room payday money is
- * given (`PAYDAY_EARLY_DAYS`). Without one, the transfer's own day. The
- * figure is `dcaNeedForMonth` for the month it covers, the one its charge
- * holds; with nothing to cover, there is nothing to send.
- */
-export function transferReminder({
-  templates,
-  today,
-  settledKeys = new Set(),
-  skippedKeys = new Set(),
-  debited = new Set(),
-  arrivedKeys = new Set(),
-}: {
-  templates: readonly RecurringTemplateWithCategory[];
-  today: string;
-  /** Occurrences confirmed against the bank, or written. */
-  settledKeys?: ReadonlySet<string>;
-  skippedKeys?: ReadonlySet<string>;
-  /** `walletCategoriesTheBankDebits`. */
-  debited?: ReadonlySet<string>;
-  /** Occurrences the bank has brought a movement for, or that were confirmed. */
-  arrivedKeys?: ReadonlySet<string>;
-}): TransferReminder | null {
-  const transfer = templates.find(
-    (template) => template.active && template.pricing_type === "purchases",
-  );
-  if (!transfer) {
-    return null;
-  }
-  const covered = transferCoversMonth(
-    transfer,
-    today,
-    new Set([...settledKeys, ...skippedKeys]),
-  );
-  if (!covered) {
-    return null;
-  }
-  const need = dcaNeedForMonth({
-    templates,
-    debited,
-    skippedKeys,
-    year: covered.year,
-    month: covered.month,
-  });
-  if (need.amount <= 0) {
-    return null;
-  }
-
-  const salary = mainSalary(templates);
-  const salaryOn = salary
-    ? nearestOccurrence(salary, covered.occurredOn, PAYDAY_EARLY_DAYS)
+/** What the push says, from the card: only while the transfer is to send. */
+export function transferReminder(
+  month: DcaMonth | null,
+): TransferReminder | null {
+  return month?.state === "to-send"
+    ? {
+        templateId: month.templateId,
+        label: month.label,
+        occurredOn: month.occurredOn,
+        need: month.need,
+      }
     : null;
-  const payday = salaryOn ?? covered.occurredOn;
-  const paid =
-    salary !== undefined &&
-    salaryOn !== null &&
-    arrivedKeys.has(recurringOccurrenceKey(salary.id, salaryOn));
-
-  if (!paid && today < shiftIsoDate(payday, -TRANSFER_NOTICE_DAYS)) {
-    return null;
-  }
-  return {
-    templateId: transfer.id,
-    label: transfer.description?.trim() || transfer.categories.name,
-    occurredOn: covered.occurredOn,
-    payday,
-    need,
-  };
 }
 
 /**
@@ -298,197 +475,6 @@ export function describeDcaNeed(
     month: monthLong(need.month, locale),
     wallets,
   })} ${t(need.margin > 0 ? "dcaTransfer.margin" : "dcaTransfer.rounded")}`;
-}
-
-/** Who has not been offered it yet: the prompt it is put away under. */
-export const TRANSFER_INVITATION_PROMPT = "dca-transfer-invite";
-
-export type TransferInvitation =
-  | {
-      /** Their monthly transfer to the broker, to switch. */
-      kind: "follow";
-      templateId: string;
-      label: string;
-      need: DcaNeed;
-    }
-  | {
-      /** No transfer: one to create, on the salary's day. */
-      kind: "create";
-      dayOfMonth: number;
-      need: DcaNeed;
-    };
-
-/**
- * The offer to let a transfer follow the DCAs, for someone who buys DCAs at
- * the broker and has none doing so: their monthly transfer to the broker if
- * they have one — a monthly charge in an investment category the account
- * pays, the largest — else one to create on the salary's day. `need` is
- * what it would be, for the month it would cover by `transferCoversMonth`'s
- * own rule, so the figure offered is the figure the charge then shows.
- *
- * Nothing when there is no DCA bought at the broker, one transfer already
- * follows them, next month holds none, or there is neither a transfer to
- * switch nor a salary to put a new one on.
- */
-export function transferInvitation({
-  templates,
-  today,
-  debited = new Set(),
-  settledKeys = new Set(),
-  skippedKeys = new Set(),
-}: {
-  templates: readonly RecurringTemplateWithCategory[];
-  today: string;
-  /** `walletCategoriesTheBankDebits`. */
-  debited?: ReadonlySet<string>;
-  /** Occurrences confirmed against the bank, or written. */
-  settledKeys?: ReadonlySet<string>;
-  skippedKeys?: ReadonlySet<string>;
-}): TransferInvitation | null {
-  const active = templates.filter((template) => template.active);
-  if (
-    active.some((template) => template.pricing_type === "purchases") ||
-    !active.some(
-      (template) =>
-        isPurchaseInsideWallet(template.categories) &&
-        !debited.has(template.category_id),
-    )
-  ) {
-    return null;
-  }
-
-  const needFor = (
-    schedule: Parameters<typeof transferCoversMonth>[0],
-  ): DcaNeed | null => {
-    const covered = transferCoversMonth(
-      schedule,
-      today,
-      new Set([...settledKeys, ...skippedKeys]),
-    );
-    if (!covered) {
-      return null;
-    }
-    const need = dcaNeedForMonth({
-      templates,
-      debited,
-      skippedKeys,
-      year: covered.year,
-      month: covered.month,
-    });
-    return need.amount > 0 ? need : null;
-  };
-
-  const transfer = active
-    .filter(
-      (template) =>
-        (template.recurrence ?? "monthly") === "monthly" &&
-        template.pricing_type === "fixed" &&
-        template.categories.type === "investment" &&
-        template.categories.counts_toward_summary !== false &&
-        !isCryptoCategoryName(template.categories.name),
-    )
-    .sort((a, b) => Number(b.amount) - Number(a.amount))[0];
-  if (transfer) {
-    const need = needFor(transfer);
-    return need
-      ? {
-          kind: "follow",
-          templateId: transfer.id,
-          label: transfer.description?.trim() || transfer.categories.name,
-          need,
-        }
-      : null;
-  }
-
-  const salary = mainSalary(templates);
-  if (!salary?.day_of_month) {
-    return null;
-  }
-  // As it would be, set up today.
-  const need = needFor({
-    id: "",
-    created_at: `${today}T12:00:00Z`,
-    recurrence: "monthly",
-    day_of_month: salary.day_of_month,
-    day_of_week: null,
-    month_of_year: null,
-    starts_on: null,
-    ends_on: null,
-  });
-  return need
-    ? { kind: "create", dayOfMonth: salary.day_of_month, need }
-    : null;
-}
-
-/** What the offer says it would do, in the reader's words. */
-export function describeTransferInvitation(
-  invitation: TransferInvitation,
-  t: Translate,
-  locale: Locale,
-): string {
-  const how =
-    invitation.kind === "follow"
-      ? t("dcaInvite.follow", { name: invitation.label })
-      : t("dcaInvite.create", {
-          day:
-            locale === "fr" && invitation.dayOfMonth === 1
-              ? "1er"
-              : String(invitation.dayOfMonth),
-        });
-  const then = t("dcaInvite.next", {
-    month: monthLong(invitation.need.month, locale),
-    amount: formatEuro(invitation.need.amount, locale),
-  });
-  return `${how} ${then}`;
-}
-
-/** The salary: the largest active monthly income charge. */
-function mainSalary(
-  templates: readonly RecurringTemplateWithCategory[],
-): RecurringTemplateWithCategory | undefined {
-  return templates
-    .filter(
-      (template) =>
-        template.active &&
-        template.categories.type === "income" &&
-        (template.recurrence ?? "monthly") === "monthly",
-    )
-    .sort((a, b) => Number(b.amount) - Number(a.amount))[0];
-}
-
-/** A template's occurrence nearest `date`, no further than `within` days. */
-function nearestOccurrence(
-  template: RecurringTemplateWithCategory,
-  date: string,
-  within: number,
-): string | null {
-  const year = Number(date.slice(0, 4));
-  const month = Number(date.slice(5, 7));
-  const months = [
-    month === 1 ? { year: year - 1, month: 12 } : { year, month: month - 1 },
-    { year, month },
-    nextMonth(year, month),
-  ];
-  let best: string | null = null;
-  let bestGap = Infinity;
-  for (const at of months) {
-    for (const candidate of occurrencesIn(template, at.year, at.month)) {
-      const gap = Math.abs(daysBetween(candidate, date));
-      if (gap <= within && gap < bestGap) {
-        best = candidate;
-        bestGap = gap;
-      }
-    }
-  }
-  return best;
-}
-
-function daysBetween(from: string, to: string): number {
-  const [fy, fm, fd] = from.split("-").map(Number);
-  const [ty, tm, td] = to.split("-").map(Number);
-  return Math.round(
-    (Date.UTC(ty!, tm! - 1, td!) - Date.UTC(fy!, fm! - 1, fd!)) / 86_400_000,
-  );
 }
 
 function occurrencesIn(
@@ -518,6 +504,12 @@ function occurrencesIn(
     template.starts_on,
     template.ends_on,
   );
+}
+
+function previousMonth(year: number, month: number) {
+  return month === 1
+    ? { year: year - 1, month: 12 }
+    : { year, month: month - 1 };
 }
 
 function nextMonth(year: number, month: number) {

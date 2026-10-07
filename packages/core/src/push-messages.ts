@@ -314,9 +314,10 @@ export function purchasesToConfirmNotification({
 }
 
 /**
- * How much to send to the broker, before payday (`transferReminder`): the
- * figure the transfer's charge holds, and what it is made of. Said once for
- * each month it covers; the card on Le point carries it until it is sent.
+ * How much to get ready for the broker, five days before the 1st
+ * (`transferReminder`): what next month's ticked DCAs need, and what it is
+ * made of. Said once for each month it covers; the card on Le point carries
+ * it until the bank shows it.
  */
 export function transferReminderNotification({
   reminder,
@@ -328,7 +329,7 @@ export function transferReminderNotification({
     kind: "dca",
     key: `dca-transfer:${need.year}-${String(need.month).padStart(2, "0")}`,
     title: t("push.dcaTransfer.title", {
-      name: reminder.label,
+      month: monthLong(need.month, locale),
       amount: formatEuro(need.amount, locale),
     }),
     body: describeDcaNeed(need, t, locale),

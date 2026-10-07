@@ -401,19 +401,19 @@ quote, rather than a fixed amount. The alternative is a fixed-price template.
 _Avoid_: DCA, variable template
 
 **Transfer that follows the DCAs**:
-_En français_ : virement selon vos DCA
-A monthly transfer to the broker whose amount is what next month's DCAs
-need there: their cost, 5 % more on the share-priced ones for the market,
-rounded up to the next 50 € (`dcaNeedForMonth`). Always the whole month,
-never less what may still be at the broker, which nothing can see. Next
-month is the one after the transfer still in play — the 28 September one
-covers October until the bank brings it or could no longer — and the figure
-is kept in the template's amount, like a last quote, so everything that
-reads a charge reads it (`followPurchases`). A wallet the bank debits, and a
-DCA skipped ahead of time, are not in it. Offered on Le point to someone
-whose DCAs no transfer follows yet (« Faire suivre vos DCA »): their monthly
-transfer to the broker switched in one press, or one created on the
-salary's day; « Non merci » puts the offer away on every device.
+_En français_ : virement au courtier
+The monthly transfer to the broker that pays for the DCAs ticked « Payé par
+le virement au courtier » (`funded_by_transfer`) — every DCA PEA and DCA CTO
+by default, never a wallet the bank debits. Its amount is what the month's
+ticked DCAs need there: their cost, 5 % more on the share-priced ones for the
+market, rounded up to the next 50 € (`dcaNeedForMonth`). Always the whole
+month, never less what may still be at the broker, which nothing can see.
+It is the app's, not the user's: a charge under the hood, so the balance,
+the forecast and « C'est arrivé ? » read it, but never an item to manage —
+the first tick makes it (or takes over their own « Virement vers le
+courtier »), the last untick pauses it (`followPurchases`). Due on the 1st,
+for the month it opens; sent a few days either side, it still counts.
+Le point's DCA card says it from five days before the 1st (`dcaMonth`).
 _Avoid_: DCA budget, top-up, funding estimate
 
 **Last quote**:

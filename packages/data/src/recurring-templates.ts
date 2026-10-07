@@ -12,6 +12,7 @@ import {
   BITCOIN_INSTRUMENT,
   isCryptoCategoryName,
 } from "@finance/core/crypto-holdings";
+import { isPurchaseInsideWallet } from "@finance/core/categories";
 import { resolveRecurringAmount } from "@finance/core/recurring-shares";
 import type { Database } from "@finance/core/types/database";
 import type { RecurringTemplateInput } from "@finance/core/validations/finance";
@@ -191,6 +192,22 @@ export async function saveRecurringTemplate(
             day_of_week: null,
           };
 
+  // Ticked by default on a DCA bought at the broker: the transfer pays for
+  // it unless the user says otherwise. An edit leaves the tick alone unless
+  // the form sent one.
+  const fundable =
+    category !== null &&
+    isPurchaseInsideWallet(category) &&
+    !isCryptoCategoryName(category.name);
+  const funded =
+    data.fundedByTransfer !== undefined
+      ? { funded_by_transfer: fundable && data.fundedByTransfer }
+      : data.id
+        ? fundable
+          ? {}
+          : { funded_by_transfer: false }
+        : { funded_by_transfer: fundable };
+
   const fields = {
     category_id: data.categoryId,
     amount,
@@ -202,6 +219,7 @@ export async function saveRecurringTemplate(
     ...(data.propertyId !== undefined ? { property_id: data.propertyId } : {}),
     ...pricing,
     ...schedule,
+    ...funded,
   };
 
   // What the template said before this save, so the rows it already wrote

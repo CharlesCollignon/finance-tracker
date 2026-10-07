@@ -1,13 +1,11 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  dcaMonth,
   dcaNeedForMonth,
-  describeTransferInvitation,
   transferCoversMonth,
-  transferInvitation,
   transferReminder,
 } from "./dca-need";
-import { translator } from "./i18n/t";
 import type { RecurringTemplateWithCategory } from "./types/database";
 
 function template(
@@ -38,6 +36,8 @@ function template(
     starts_on: null,
     ends_on: null,
     property_id: null,
+    // Ticked, as every DCA bought at the broker is by default.
+    funded_by_transfer: !counts,
     created_at: "2026-01-01T00:00:00Z",
     ...rest,
     categories: {
@@ -195,163 +195,129 @@ describe("transferCoversMonth", () => {
   });
 });
 
-describe("transferReminder", () => {
+describe("the month a transfer on the 1st covers", () => {
+  it("is the month it opens", () => {
+    const onTheFirst = template("transfer", "Virement vers le courtier", {
+      counts: true,
+      day_of_month: 1,
+    });
+    expect(transferCoversMonth(onTheFirst, "2026-10-27")).toEqual({
+      year: 2026,
+      month: 11,
+      occurredOn: "2026-11-01",
+    });
+  });
+});
+
+describe("dcaMonth", () => {
   const transfer = template("transfer", "Virement vers le courtier", {
     counts: true,
-    day_of_month: 28,
+    day_of_month: 1,
     pricing_type: "purchases",
     description: "Virement Boursorama",
     amount: 2150,
   });
-  const salary: RecurringTemplateWithCategory = {
-    ...template("salary", "Salaire", { day_of_month: 28, amount: 3200 }),
-    categories: {
-      name: "Salaire",
-      type: "income",
-      icon: null,
-      counts_toward_summary: true,
-    },
-  };
-  const all = [cto, pea, transfer, salary];
+  const all = [cto, pea, transfer];
+  const sent = (...days: string[]) =>
+    new Set(days.map((day) => `transfer:${day}`));
 
-  it("says nothing until three days before payday", () => {
-    expect(
-      transferReminder({ templates: all, today: "2026-10-24" }),
-    ).toBeNull();
-    expect(
-      transferReminder({ templates: all, today: "2026-10-25" }),
-    ).toMatchObject({
-      templateId: "transfer",
-      label: "Virement Boursorama",
-      occurredOn: "2026-10-28",
-      payday: "2026-10-28",
-      need: { year: 2026, month: 11, amount: 2150 },
+  it("tells the month in progress, before the next one is near", () => {
+    // October: the CTO on four Mondays and the PEA on the 5th; three done.
+    const month = dcaMonth({
+      templates: all,
+      today: "2026-10-20",
+      settledKeys: sent("2026-10-01"),
+      writtenKeys: new Set([
+        "cto:2026-10-05",
+        "cto:2026-10-12",
+        "pea:2026-10-05",
+      ]),
+    });
+    expect(month).toMatchObject({
+      occurredOn: "2026-10-01",
+      state: "sent",
+      need: { month: 10 },
+      progress: { done: 3, total: 5 },
+      run: 1,
     });
   });
 
-  it("speaks the day the bank brings the salary, when it comes early", () => {
-    expect(
-      transferReminder({
-        templates: all,
-        today: "2026-10-22",
-        arrivedKeys: new Set(["salary:2026-10-28"]),
-      })?.need.month,
-    ).toBe(11);
-  });
-
-  it("counts back from the salary's day, else from the transfer's own", () => {
-    const paidOn25 = { ...salary, day_of_month: 25 };
-    expect(
-      transferReminder({
-        templates: [cto, pea, transfer, paidOn25],
-        today: "2026-10-22",
-      })?.payday,
-    ).toBe("2026-10-25");
-    expect(
-      transferReminder({ templates: [cto, pea, transfer], today: "2026-10-25" })
-        ?.payday,
-    ).toBe("2026-10-28");
-  });
-
-  it("stays until the transfer is settled, then waits for the next payday", () => {
-    expect(
-      transferReminder({ templates: all, today: "2026-10-30" })?.need.month,
-    ).toBe(11);
-    expect(
-      transferReminder({
-        templates: all,
-        today: "2026-10-30",
-        settledKeys: new Set(["transfer:2026-10-28"]),
-      }),
-    ).toBeNull();
-  });
-
-  it("is nothing without a transfer that follows the DCAs, or DCAs to follow", () => {
-    expect(
-      transferReminder({ templates: [cto, pea, salary], today: "2026-10-25" }),
-    ).toBeNull();
-    expect(
-      transferReminder({ templates: [transfer, salary], today: "2026-10-25" }),
-    ).toBeNull();
-  });
-});
-
-describe("transferInvitation", () => {
-  const salary: RecurringTemplateWithCategory = {
-    ...template("salary", "Salaire", { day_of_month: 28, amount: 3200 }),
-    categories: {
-      name: "Salaire",
-      type: "income",
-      icon: null,
-      counts_toward_summary: true,
-    },
-  };
-  const fixedTransfer = template("transfer", "Virement vers le courtier", {
-    counts: true,
-    day_of_month: 28,
-    amount: 2000,
-    description: "Virement Boursorama",
-  });
-  const today = "2026-10-06";
-
-  it("offers to switch the monthly transfer to the broker", () => {
-    // The September transfer confirmed, the next one covers November.
-    const offer = transferInvitation({
-      templates: [cto, pea, salary, fixedTransfer],
-      today,
-      settledKeys: new Set(["transfer:2026-09-28"]),
-    });
-    expect(offer).toMatchObject({
-      kind: "follow",
-      templateId: "transfer",
-      label: "Virement Boursorama",
-      need: { month: 11, amount: 2150 },
-    });
-    expect(describeTransferInvitation(offer!, translator("fr"), "fr")).toBe(
-      "« Virement Boursorama » peut prendre le montant de vos DCA\u00A0: chaque mois, ce qu'ils vont coûter, 5\u00A0% de plus sur ceux achetés en parts, arrondi aux 50\u00A0€ supérieurs. En novembre, ce serait 2\u202F150\u00A0€, et trois jours avant la paie, vous recevrez le montant à envoyer.",
+  it("calls a past month's transfer nobody saw unseen", () => {
+    expect(dcaMonth({ templates: all, today: "2026-10-20" })?.state).toBe(
+      "unseen",
     );
   });
 
-  it("offers the month the charge would then cover", () => {
-    // Until the bank brings the September transfer, it covers October, and
-    // that is the figure the charge would show.
-    expect(
-      transferInvitation({
-        templates: [cto, pea, salary, fixedTransfer],
-        today,
-      })?.need,
-    ).toMatchObject({ month: 10, amount: 1800 });
+  it("turns to next month five days before its 1st, to send", () => {
+    expect(dcaMonth({ templates: all, today: "2026-10-26" })?.need.month).toBe(
+      10,
+    );
+    const month = dcaMonth({ templates: all, today: "2026-10-27" });
+    expect(month).toMatchObject({
+      occurredOn: "2026-11-01",
+      state: "to-send",
+      need: { month: 11, amount: 2150 },
+    });
+    expect(transferReminder(month)).toMatchObject({
+      label: "Virement Boursorama",
+      need: { amount: 2150 },
+    });
   });
 
-  it("offers to create one on the salary's day when there is none", () => {
-    expect(
-      transferInvitation({ templates: [cto, pea, salary], today }),
-    ).toMatchObject({ kind: "create", dayOfMonth: 28 });
+  it("says sent as soon as it is, even early, and counts the run", () => {
+    const month = dcaMonth({
+      templates: all,
+      today: "2026-10-30",
+      settledKeys: sent("2026-10-01", "2026-11-01"),
+    });
+    expect(month).toMatchObject({
+      occurredOn: "2026-11-01",
+      state: "sent",
+      run: 2,
+    });
+    expect(transferReminder(month)).toBeNull();
   });
 
-  it("offers nothing without DCAs bought at the broker, or once one follows them", () => {
-    const bitstack = template("bitstack", "DCA Bitstack", { amount: 18 });
+  it("keeps it to send a few days late, then unseen", () => {
+    expect(dcaMonth({ templates: all, today: "2026-11-03" })?.state).toBe(
+      "to-send",
+    );
+    expect(dcaMonth({ templates: all, today: "2026-11-15" })?.state).toBe(
+      "unseen",
+    );
+  });
+
+  it("does not break the run for a transfer still on its way", () => {
     expect(
-      transferInvitation({
-        templates: [bitstack, salary, fixedTransfer],
-        today,
-        debited: new Set([bitstack.category_id]),
+      dcaMonth({
+        templates: all,
+        today: "2026-11-03",
+        settledKeys: sent("2026-09-01", "2026-10-01"),
+      })?.run,
+    ).toBe(2);
+  });
+
+  it("follows the ticks", () => {
+    const unticked = { ...cto, funded_by_transfer: false };
+    expect(
+      dcaMonth({ templates: [unticked, pea, transfer], today: "2026-10-27" })
+        ?.need,
+    ).toMatchObject({ amount: 400, count: 1 });
+    expect(
+      dcaMonth({
+        templates: [unticked, { ...pea, funded_by_transfer: false }, transfer],
+        today: "2026-10-27",
       }),
     ).toBeNull();
-    expect(
-      transferInvitation({
-        templates: [
-          cto,
-          pea,
-          salary,
-          { ...fixedTransfer, pricing_type: "purchases" },
-        ],
-        today,
-      }),
-    ).toBeNull();
   });
 
-  it("offers nothing with neither a transfer nor a salary", () => {
-    expect(transferInvitation({ templates: [cto, pea], today })).toBeNull();
+  it("is nothing without the app's transfer, or with it paused", () => {
+    expect(dcaMonth({ templates: [cto, pea], today: "2026-10-27" })).toBeNull();
+    expect(
+      dcaMonth({
+        templates: [cto, pea, { ...transfer, active: false }],
+        today: "2026-10-27",
+      }),
+    ).toBeNull();
   });
 });
