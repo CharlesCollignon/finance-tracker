@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { Fingerprint } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/Button";
 import { Text } from "@/components/ui/Text";
@@ -17,7 +16,6 @@ interface PasskeySignInButtonProps {
 
 export function PasskeySignInButton({ label }: PasskeySignInButtonProps) {
   const t = useT();
-  const router = useRouter();
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -39,8 +37,14 @@ export function PasskeySignInButton({ label }: PasskeySignInButtonProps) {
       await seedCategoriesForCurrentUser();
     }
 
-    router.push("/bearing");
-    router.refresh();
+    // A full page load, not `router.push` + `router.refresh` as the password
+    // form does. The seed call above resolves before Next's router has
+    // finished with it, so a push here preempts that action and the refresh
+    // is queued behind the preempted one — it never runs, and the screen
+    // stays on the login page until the reader reloads it. A page load also
+    // lets the server render the Bearing with the session the browser has
+    // just stored.
+    window.location.assign("/bearing");
   }
 
   return (
