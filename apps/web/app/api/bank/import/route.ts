@@ -21,7 +21,7 @@ export async function GET(request: Request) {
   if (!session) {
     return Response.json({ error: "errors.notAuthenticated" }, { status: 401 });
   }
-  const result = await listAccountsToImport(session.userId);
+  const result = await listAccountsToImport(session.supabase, session.userId);
   return Response.json(result, { status: result.error ? 502 : 200 });
 }
 

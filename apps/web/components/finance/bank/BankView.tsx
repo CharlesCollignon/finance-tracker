@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useMemo, useState, useTransition } from "react";
 import {
   ArrowSquareOut,
   ArrowsClockwise,
@@ -68,6 +68,28 @@ export function BankView({
   const [disconnectOpen, setDisconnectOpen] = useState(false);
   const live = connection !== null && connection.status !== "revoked";
   const syncing = ownerCredentials || (live && connection.status === "active");
+  const waiting = useMemo(
+    () =>
+      accounts
+        .filter(
+          (account) =>
+            account.role === "spending" &&
+            account.history_imported_at === null &&
+            !account.needs_reconnect,
+        )
+        .map((account) => account.provider_account_id),
+    [accounts],
+  );
+  // The first import, or a current account whose history is not in yet —
+  // one ticked since, or at a bank added since. Kept on screen once shown,
+  // so the walk's last word, what is left to review, outlives the redraw
+  // that finishing it causes.
+  const needsImport =
+    syncing && ((live && !connection.backfilled) || waiting.length > 0);
+  const [importShown, setImportShown] = useState(needsImport);
+  if (needsImport && !importShown) {
+    setImportShown(true);
+  }
 
   return (
     <div className="flex flex-col gap-4 md:gap-5">
@@ -95,9 +117,7 @@ export function BankView({
         />
       ) : null}
 
-      {live && connection.status === "active" && !connection.backfilled ? (
-        <BankImport />
-      ) : null}
+      {syncing && importShown ? <BankImport waiting={waiting} /> : null}
 
       {accounts.length > 0 ? (
         <section
