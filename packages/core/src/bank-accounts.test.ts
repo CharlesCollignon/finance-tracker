@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
+  accountMarks,
+  ledgerAccounts,
   awaitingRole,
   followsMovements,
   groupByBank,
@@ -190,5 +192,79 @@ describe("groupByBank", () => {
       ["Crédit Agricole", "2026-12-01", ["Compte de dépôt", "Livret A"]],
       [null, null, ["Compte"]],
     ]);
+  });
+});
+
+describe("accountMarks", () => {
+  const account = (
+    id: string,
+    bank: string | null,
+    role: "spending" | "savings" | "ignored" | null,
+    label = id,
+  ) => ({ provider_account_id: id, bank_name: bank, role, label });
+
+  it("says nothing while there is one current account", () => {
+    expect(
+      accountMarks([
+        account("cc", "BoursoBank", "spending"),
+        account("livret", "BoursoBank", "savings"),
+      ]),
+    ).toBeNull();
+  });
+
+  it("names each account by its bank, or by itself where one bank holds two", () => {
+    const marks = accountMarks([
+      account("bourso", "BoursoBank", "spending"),
+      account("ca-perso", "Crédit Agricole", "spending", "Compte perso"),
+      account("ca-joint", "Crédit Agricole", "spending", "Compte joint"),
+      account("old", "LCL", "ignored", "Ancien compte"),
+    ]);
+    expect(Object.fromEntries(marks!)).toEqual({
+      bourso: "BoursoBank",
+      "ca-perso": "Compte perso",
+      "ca-joint": "Compte joint",
+      old: "LCL",
+    });
+  });
+});
+
+describe("ledgerAccounts", () => {
+  const account = (
+    id: string,
+    bank: string,
+    role: "spending" | "savings" | "ignored" | null,
+  ) => ({
+    provider_account_id: id,
+    bank_name: bank,
+    role,
+    label: id,
+    consent_valid_until: null,
+  });
+
+  it("offers the current accounts, and any other whose rows are there", () => {
+    const result = ledgerAccounts(
+      [
+        account("ca", "Crédit Agricole", "spending"),
+        account("bourso", "BoursoBank", "spending"),
+        account("livret", "BoursoBank", "savings"),
+        account("old", "LCL", "ignored"),
+      ],
+      new Map([
+        ["tx1", "ca"],
+        ["tx2", "old"],
+      ]),
+    );
+    expect(result?.options).toEqual([
+      { id: "bourso", label: "BoursoBank" },
+      { id: "ca", label: "Crédit Agricole" },
+      { id: "old", label: "LCL" },
+    ]);
+    expect(result?.of).toEqual({ tx1: "ca", tx2: "old" });
+  });
+
+  it("is nothing with one current account", () => {
+    expect(
+      ledgerAccounts([account("ca", "Crédit Agricole", "spending")], new Map()),
+    ).toBeNull();
   });
 });

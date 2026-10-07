@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import {
+  getTransactionAccounts as transactionAccounts,
   hasBankFeed as bankFeeds,
   walletCategoriesTheBankDebits,
 } from "@finance/data/bank-feed";
@@ -63,6 +64,14 @@ export async function countSwallowedFeedItems(userId: string): Promise<number> {
  */
 export async function hasBankFeed(userId: string): Promise<boolean> {
   return bankFeeds(await createClient(), userId);
+}
+
+/** Which bank account brought each of these rows in, by transaction id. */
+export async function getTransactionAccounts(
+  userId: string,
+  transactionIds: readonly string[],
+): Promise<Map<string, string>> {
+  return transactionAccounts(await createClient(), userId, transactionIds);
 }
 
 /**

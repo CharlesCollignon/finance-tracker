@@ -1,4 +1,5 @@
 import {
+  getTransactionAccounts as transactionAccounts,
   hasBankFeed as bankFeeds,
   walletCategoriesTheBankDebits,
 } from "@finance/data/bank-feed";
@@ -30,6 +31,7 @@ import {
   type FulfilmentProposal,
 } from "@finance/core/recurring-fulfilment";
 import {
+  type CloseableMonth,
   type MonthCloseResult,
   type RecordedCashFlows,
 } from "@finance/core/month-close";
@@ -382,6 +384,15 @@ export function getBankAccounts(userId: string): Promise<BankAccount[]> {
 }
 
 /** What the counted accounts held at the end of a given day. */
+/** What the month a close is due for waits on, if a bank should close it. */
+export function readCloseWait(
+  userId: string,
+  next: CloseableMonth | null,
+  today: string,
+): Promise<bankBalance.CloseWaitAccount[]> {
+  return bankBalance.readCloseWait(supabase, userId, next, today);
+}
+
 export function readCashBalance(
   userId: string,
   date: string,
@@ -564,6 +575,14 @@ export function countPendingFeedItems(userId: string): Promise<number> {
  */
 export function hasBankFeed(userId: string): Promise<boolean> {
   return bankFeeds(supabase, userId);
+}
+
+/** Which bank account brought each of these rows in, by transaction id. */
+export function getTransactionAccounts(
+  userId: string,
+  transactionIds: readonly string[],
+): Promise<Map<string, string>> {
+  return transactionAccounts(supabase, userId, transactionIds);
 }
 
 /**

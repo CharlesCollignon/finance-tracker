@@ -146,13 +146,14 @@ suivre, and linking a Livret on Placements as Épargne.
 - [x] Looking for accounts through a route, `/api/bank/accounts`, since the
       server holds the file; roles saved through the phone's own client.
 
-## Phase 4 — Living with several accounts (branch `accounts-everyday`)
+## Phase 4 — Living with several accounts (branch `accounts-everyday`) — done
 
-- [ ] Ledger, both apps: with two or more Courant accounts, a bank row says
+- [x] Ledger, both apps: with two or more Courant accounts, a bank row says
       its bank (« BoursoBank »), and a filter by account.
-- [ ] Le point: the balance is the Courant accounts' total; tapping it shows
+- [x] Le point: the balance is the Courant accounts' total; tapping it shows
       each one.
-- [ ] A month that waits names the account and bank it cannot read.
+- [x] A month that waits names the account and bank it cannot read, and
+      why, on the Plan's run card where the close is offered.
 
 ## Open points
 

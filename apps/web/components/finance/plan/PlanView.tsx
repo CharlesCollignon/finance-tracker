@@ -150,6 +150,7 @@ export function PlanView({ base, wealth, bankInvite }: PlanViewProps) {
         <StaggerItem>
           <RunCard
             closes={base.closes}
+            closeWait={base.closeWait}
             monthlyCommitted={runway.monthlyCommitted}
           />
         </StaggerItem>

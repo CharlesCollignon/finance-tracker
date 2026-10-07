@@ -233,3 +233,88 @@ export function groupByBank<
       ),
     }));
 }
+
+/**
+ * What each account is called on a ledger row: its bank — « BoursoBank » —
+ * or its own name where the user follows two current accounts at that bank.
+ *
+ * Null while there are fewer than two current accounts: one ledger fed by
+ * one account has nothing to tell apart, and a bank's name on every row
+ * would be noise. Every account gets a name once it is shown, current or
+ * not, since rows an account brought in before it was let go stay in the
+ * ledger.
+ */
+export function accountMarks(
+  accounts: readonly Pick<
+    BankAccount,
+    "provider_account_id" | "role" | "bank_name" | "label"
+  >[],
+): Map<string, string> | null {
+  const spending = accounts.filter((account) => account.role === "spending");
+  if (spending.length < 2) {
+    return null;
+  }
+  const marks = new Map<string, string>();
+  for (const account of accounts) {
+    const shared = spending.some(
+      (other) =>
+        other.provider_account_id !== account.provider_account_id &&
+        other.bank_name === account.bank_name,
+    );
+    marks.set(
+      account.provider_account_id,
+      account.bank_name && !shared ? account.bank_name : account.label,
+    );
+  }
+  return marks;
+}
+
+/** What a ledger needs to tell its accounts apart. */
+export interface LedgerAccounts {
+  /** Each account's name on a row, by account id. */
+  names: Record<string, string>;
+  /** The account each row came from, by transaction id. */
+  of: Record<string, string>;
+  /**
+   * The accounts to read one at a time: the current ones, and any other
+   * whose rows are on screen. In the Bank page's order.
+   */
+  options: { id: string; label: string }[];
+}
+
+/**
+ * Everything a ledger needs to say which account each row came from, or
+ * null while there is one current account — see `accountMarks`. Plain
+ * records rather than maps, so a server page can hand it to the browser.
+ */
+export function ledgerAccounts(
+  accounts: readonly Pick<
+    BankAccount,
+    | "provider_account_id"
+    | "role"
+    | "bank_name"
+    | "label"
+    | "consent_valid_until"
+  >[],
+  accountOf: ReadonlyMap<string, string>,
+): LedgerAccounts | null {
+  const marks = accountMarks(accounts);
+  if (!marks) {
+    return null;
+  }
+  const used = new Set(accountOf.values());
+  return {
+    names: Object.fromEntries(marks),
+    of: Object.fromEntries(accountOf),
+    options: groupByBank(accounts)
+      .flatMap((group) => group.accounts)
+      .filter(
+        (account) =>
+          account.role === "spending" || used.has(account.provider_account_id),
+      )
+      .map((account) => ({
+        id: account.provider_account_id,
+        label: marks.get(account.provider_account_id)!,
+      })),
+  };
+}

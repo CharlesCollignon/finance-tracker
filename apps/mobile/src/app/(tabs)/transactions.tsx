@@ -94,6 +94,8 @@ import {
   getRecurringTemplates,
   getSkippedOccurrences,
   getTransactions,
+  getTransactionAccounts,
+  getBankAccounts,
   hasBankFeed,
   type PendingFeedRow,
   type SkippedOccurrence,
@@ -106,6 +108,10 @@ import { useTabBarClearance } from "@/theme/chrome";
 import { useLocale, useT } from "@/providers/LocaleProvider";
 import { plannedOccurrenceNote } from "@finance/core/dca-need";
 import { bringsMoneyIn, isMovedRow } from "@finance/core/cash-date";
+import {
+  ledgerAccounts,
+  type LedgerAccounts,
+} from "@finance/core/bank-accounts";
 import {
   filterLedger,
   filterPlanned,
@@ -150,6 +156,7 @@ export default function TransactionsScreen() {
   const [filter, setFilter] = useState<FilterType>("all");
   const [search, setSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
+  const [accountFilter, setAccountFilter] = useState<string>("all");
   const [optionsOpen, setOptionsOpen] = useState(false);
   const [editing, setEditing] = useState<TransactionWithCategory | null>(null);
   const [duplicating, setDuplicating] =
@@ -210,6 +217,7 @@ export default function TransactionsScreen() {
           proposals: [] as FulfilmentProposal[],
           swallowed: 0,
           bank: null as BankForecast | null,
+          accounts: null as LedgerAccounts | null,
         };
       }
       const [
@@ -250,7 +258,7 @@ export default function TransactionsScreen() {
       // month is shown: a row marked « À confirmer » is one that can be
       // confirmed there.
       const now = getCurrentMonth();
-      const [proposals, bank] = await Promise.all([
+      const [proposals, bank, accounts] = await Promise.all([
         getFulfilmentProposals(
           user.id,
           templates,
@@ -259,6 +267,16 @@ export default function TransactionsScreen() {
           now.month,
         ),
         getBankForecast(user.id, templates, bankFed, todayIsoLocal()),
+        // With several current accounts, which one each row came from.
+        bankFed
+          ? Promise.all([
+              getBankAccounts(user.id),
+              getTransactionAccounts(
+                user.id,
+                transactions.map((tx) => tx.id),
+              ),
+            ]).then(([known, of]) => ledgerAccounts(known, of))
+          : null,
       ]);
       return {
         transactions,
@@ -271,6 +289,7 @@ export default function TransactionsScreen() {
         proposals,
         swallowed,
         bank,
+        accounts,
       };
     }, [user?.id, year, month], {
       reads: ["transactions", "templates", "categories", "bank"],
@@ -377,14 +396,24 @@ export default function TransactionsScreen() {
       .sort((a, b) => a.name.localeCompare(b.name));
   }, [transactions, planned]);
 
+  const bankAccounts = data?.accounts ?? null;
+  const accountOf = useMemo(
+    () => new Map(Object.entries(bankAccounts?.of ?? {})),
+    [bankAccounts],
+  );
   const ledgerFilter = useMemo(
-    () => ({ type: filter, categoryId: categoryFilter, query: search }),
-    [filter, categoryFilter, search],
+    () => ({
+      type: filter,
+      categoryId: categoryFilter,
+      query: search,
+      accountId: bankAccounts ? accountFilter : "all",
+    }),
+    [filter, categoryFilter, search, accountFilter, bankAccounts],
   );
   // Category name and note, each on its own, as on the web.
   const filtered = useMemo(
-    () => filterLedger(transactions, ledgerFilter),
-    [transactions, ledgerFilter],
+    () => filterLedger(transactions, ledgerFilter, accountOf),
+    [transactions, ledgerFilter, accountOf],
   );
   // The same filters over the planned rows, so choosing "Expense" or a
   // category narrows what is to come as well as what has happened.
@@ -538,6 +567,7 @@ export default function TransactionsScreen() {
   function clearFilters() {
     setFilter("all");
     setCategoryFilter("all");
+    setAccountFilter("all");
     setSearch("");
   }
 
@@ -560,9 +590,25 @@ export default function TransactionsScreen() {
     [usedCategories, t],
   );
 
-  // The category is the one filter tucked behind the button, so it is the
-  // one the button has to own up to.
-  const hiddenFilters = categoryFilter === "all" ? 0 : 1;
+  const accountOptions = useMemo(
+    () =>
+      bankAccounts
+        ? [
+            { value: "all", label: t("ledger.allAccounts") },
+            ...bankAccounts.options.map((account) => ({
+              value: account.id,
+              label: account.label,
+            })),
+          ]
+        : [],
+    [bankAccounts, t],
+  );
+
+  // The category and the account are the filters tucked behind the button,
+  // so they are the ones the button has to own up to.
+  const hiddenFilters =
+    (categoryFilter === "all" ? 0 : 1) +
+    (ledgerFilter.accountId === "all" ? 0 : 1);
   const nothingAtAll = transactions.length === 0 && planned.length === 0;
 
   /*
@@ -779,6 +825,14 @@ export default function TransactionsScreen() {
                   onChange={setCategoryFilter}
                 />
               ) : null}
+              {bankAccounts ? (
+                <ChipRow
+                  label={t("ledger.filterByAccount")}
+                  options={accountOptions}
+                  value={accountFilter}
+                  onChange={setAccountFilter}
+                />
+              ) : null}
               <View className="flex-row flex-wrap gap-2">
                 {selectMode ? null : (
                   <Button
@@ -982,6 +1036,8 @@ export default function TransactionsScreen() {
                   { date: formatShortDate(item.cash_on!, locale) },
                 )
               : null,
+            // With several current accounts, which one the row came from.
+            bankAccounts?.names[accountOf.get(item.id) ?? ""] ?? null,
             item.note,
           ]
             .filter(Boolean)

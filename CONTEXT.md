@@ -65,7 +65,9 @@ nothing brought in and nothing counted. A transfer between two current
 accounts is the same money moving and is left out; one to the user's own
 Livret is savings, kept on the current account's side. A current account
 followed later gets its whole history, and the month it starts counting, a
-close adds what it held at the last close rather than calling it kept.
+close adds what it held at the last close rather than calling it kept. Once
+two are current, the ledger says which one each row came from and can be
+read one at a time, and Le point's balance opens onto each.
 _Avoid_: wallet (an investment account), connection (that is the file)
 
 **Consent renewal**:

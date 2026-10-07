@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import type { BankAccount } from "@finance/core/types/database";
 
 import type { Db } from "./client";
-import { readCashBalance } from "./bank-balance";
+import { readCashBalance, readCloseWait } from "./bank-balance";
 
 interface Row {
   provider_account_id: string;
@@ -172,5 +172,54 @@ describe("readCashBalance", () => {
     );
 
     expect(await readCashBalance(db, "u1", "2026-09-30")).toBeNull();
+  });
+});
+
+describe("readCloseWait", () => {
+  const september = {
+    year: 2026,
+    month: 9,
+    monthKey: "2026-09",
+    label: "septembre 2026",
+    observeOn: "2026-10-05",
+    isBaseline: false,
+  };
+
+  it("names each account the month waits on, by bank, and why", async () => {
+    const db = fakeDb(
+      [
+        account("bourso", { bank_name: "BoursoBank", label: "Compte" }),
+        account("ca", {
+          bank_name: "Crédit Agricole",
+          label: "Compte de dépôt",
+          needs_reconnect: true,
+          history_imported_at: null,
+        }),
+      ],
+      [movement("bourso", "2026-09-20", 900)],
+    );
+
+    await expect(
+      readCloseWait(db, "u1", september, "2026-10-07"),
+    ).resolves.toEqual([
+      { name: "Crédit Agricole · Compte de dépôt", reason: "lapsed" },
+    ]);
+  });
+
+  it("waits on nothing before the month is due, or once it reads", async () => {
+    const db = fakeDb(
+      [account("bourso", { bank_name: "BoursoBank" })],
+      [movement("bourso", "2026-09-20", 900)],
+    );
+
+    await expect(
+      readCloseWait(db, "u1", september, "2026-10-04"),
+    ).resolves.toEqual([]);
+    await expect(
+      readCloseWait(db, "u1", september, "2026-10-07"),
+    ).resolves.toEqual([]);
+    await expect(readCloseWait(db, "u1", null, "2026-10-07")).resolves.toEqual(
+      [],
+    );
   });
 });

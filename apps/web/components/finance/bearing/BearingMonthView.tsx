@@ -371,6 +371,36 @@ function BalanceCard({
             )}
           />
           <p className="mt-2 text-xs text-muted-foreground">{caption}</p>
+          {/* With several current accounts, the figure read from the bank
+              taken apart: the day it was read, which is today or the
+              month's last. */}
+          {data.accounts && balance.period !== "future" ? (
+            <details className="mt-1.5 text-xs text-muted-foreground">
+              <summary className="cursor-pointer list-none underline decoration-dotted underline-offset-4 transition-colors duration-hover hover:text-foreground [&::-webkit-details-marker]:hidden">
+                {balance.period === "past"
+                  ? t("bearingMonth.byAccountEnd")
+                  : t("bearingMonth.byAccount")}
+              </summary>
+              <ul className="mt-2 flex max-w-xs flex-col gap-1">
+                {data.accounts.map((account) => (
+                  <li
+                    key={account.name}
+                    className="flex items-baseline justify-between gap-6"
+                  >
+                    <span className="min-w-0 truncate">{account.name}</span>
+                    <PrivateAmount
+                      className={cn(
+                        "shrink-0 tabular-nums text-foreground",
+                        account.amount < 0 && "text-destructive",
+                      )}
+                    >
+                      {format(account.amount)}
+                    </PrivateAmount>
+                  </li>
+                ))}
+              </ul>
+            </details>
+          ) : null}
           {/* Native disclosure: keyboard, screen reader and the open state
               are the browser's. */}
           <details className="mt-1.5 text-xs text-muted-foreground">

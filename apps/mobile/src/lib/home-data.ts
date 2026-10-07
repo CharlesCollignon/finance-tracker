@@ -32,6 +32,7 @@ import type { WeeklyRecap } from "@finance/core/weekly-recap";
 import {
   readMonthBalance,
   type BalanceSource,
+  type MonthBalanceRead,
 } from "@finance/data/month-balance";
 import { getPurchasesToConfirm } from "@finance/data/purchases-to-confirm";
 import { getDcaMonth } from "@finance/data/dca-transfer";
@@ -87,6 +88,8 @@ export interface HomeMonth {
   balance: MonthBalance;
   /** What the balance is pinned to: the bank's statement, a close, or nothing. */
   source: BalanceSource;
+  /** With several current accounts, what each held: the balance taken apart. */
+  accounts: MonthBalanceRead["accounts"];
   spent: {
     total: number;
     /**
@@ -192,6 +195,7 @@ export async function gatherHomeMonth(
   const {
     balance,
     source,
+    accounts,
     rows,
     upcoming: shownUpcoming,
     outflows,
@@ -303,6 +307,7 @@ export async function gatherHomeMonth(
     today,
     balance,
     source,
+    accounts,
     spent: {
       total: byMonth.get(monthKeyOf(year, month)) ?? 0,
       previous: previousSoFar ?? null,

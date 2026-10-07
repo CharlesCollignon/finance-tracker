@@ -20,6 +20,11 @@ export interface LedgerFilter {
   categoryId: string;
   /** What was typed in the search box, as typed. */
   query: string;
+  /**
+   * A bank account's id, or "all": with several current accounts, only the
+   * rows that one brought in. Read through `accountOf`.
+   */
+  accountId?: string;
 }
 
 export interface LedgerDay {
@@ -47,25 +52,32 @@ function anyContains(
 /** The recorded rows a filter keeps. */
 export function filterLedger(
   transactions: readonly TransactionWithCategory[],
-  { type, categoryId, query }: LedgerFilter,
+  { type, categoryId, query, accountId = "all" }: LedgerFilter,
+  /** Which bank account brought each row in, by transaction id. */
+  accountOf: ReadonlyMap<string, string> = new Map(),
 ): TransactionWithCategory[] {
   const needle = query.trim().toLowerCase();
   return transactions.filter(
     (tx) =>
       (type === "all" || tx.categories.type === type) &&
       (categoryId === "all" || tx.category_id === categoryId) &&
+      (accountId === "all" || accountOf.get(tx.id) === accountId) &&
       (!needle || anyContains(needle, tx.categories.name, tx.note)),
   );
 }
 
 /**
  * The planned rows the same filter keeps, so choosing "Income" or a category
- * narrows what is still to come as well as what has happened.
+ * narrows what is still to come as well as what has happened. None under an
+ * account: a row still to come has come from no account yet.
  */
 export function filterPlanned(
   planned: readonly PlannedOccurrence[],
-  { type, categoryId, query }: LedgerFilter,
+  { type, categoryId, query, accountId = "all" }: LedgerFilter,
 ): PlannedOccurrence[] {
+  if (accountId !== "all") {
+    return [];
+  }
   const needle = query.trim().toLowerCase();
   return planned.filter(
     (occurrence) =>

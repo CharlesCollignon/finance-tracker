@@ -3,7 +3,10 @@ import {
   cashBalanceAsOf,
   type AccountRows,
   type CashBalance,
+  type CloseWaitReason,
 } from "@finance/core/bank-balance";
+import { lastDayIsoOfMonth } from "@finance/core/constants";
+import type { CloseableMonth } from "@finance/core/month-close";
 import type { BankAccount } from "@finance/core/types/database";
 
 import type { Db } from "./client";
@@ -161,4 +164,49 @@ export async function readAccountBalances(
   // A lapsed consent stores no rows, so it arrives here with an empty list
   // and is reported as unreadable rather than as an empty account.
   return cashBalanceAsOf(await Promise.all(accounts.map(read)), date);
+}
+
+/** An account a month close waits on, and why it cannot be read. */
+export interface CloseWaitAccount {
+  /** « Crédit Agricole · Compte de dépôt ». */
+  name: string;
+  reason: CloseWaitReason;
+}
+
+/**
+ * Why the month a close is due for has not closed itself: the counted
+ * accounts the statement cannot read on its last day — the day the
+ * automatic close reads — each by bank and name. Empty when nothing waits
+ * on the bank: no month due yet, no counted account, or one the statement
+ * reads in full, which the next sync will close.
+ */
+export async function readCloseWait(
+  db: Db,
+  userId: string,
+  next: CloseableMonth | null,
+  today: string,
+): Promise<CloseWaitAccount[]> {
+  if (!next || today < next.observeOn) {
+    return [];
+  }
+  const cash = await readCashBalance(
+    db,
+    userId,
+    lastDayIsoOfMonth(next.year, next.month),
+  );
+  if (!cash || cash.ok) {
+    return [];
+  }
+  const accounts = await getBankAccounts(db, userId);
+  return cash.missing.map((entry) => {
+    const account = accounts.find(
+      (each) => each.provider_account_id === entry.accountId,
+    );
+    return {
+      name: account?.bank_name
+        ? `${account.bank_name} · ${entry.label}`
+        : entry.label,
+      reason: account?.needs_reconnect ? "lapsed" : entry.reason,
+    };
+  });
 }

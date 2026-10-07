@@ -36,6 +36,7 @@ import type { UpcomingCharge } from "@finance/core/still-to-come";
 import {
   readMonthBalance,
   type BalanceSource,
+  type MonthBalanceRead,
 } from "@finance/data/month-balance";
 import { getPurchasesToConfirm } from "@finance/data/purchases-to-confirm";
 import { getDcaMonth } from "@finance/data/dca-transfer";
@@ -50,6 +51,8 @@ export interface BearingMonth {
   balance: MonthBalance;
   /** What the balance is pinned to: the bank's statement, a close, or nothing. */
   source: BalanceSource;
+  /** With several current accounts, what each held: the balance taken apart. */
+  accounts: MonthBalanceRead["accounts"];
   /** Recorded this month. */
   income: number;
   spent: {
@@ -148,6 +151,7 @@ export async function gatherBearingMonth(
   const {
     balance,
     source,
+    accounts,
     rows,
     upcoming: shownUpcoming,
     outflows,
@@ -265,6 +269,7 @@ export async function gatherBearingMonth(
     today,
     balance,
     source,
+    accounts,
     income,
     spent: {
       total: byMonth.get(monthKeyOf(year, month)) ?? 0,

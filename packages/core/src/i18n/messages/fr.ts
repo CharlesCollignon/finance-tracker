@@ -172,6 +172,8 @@ export const fr: Messages = {
       "Ajoutez ce qui s'est passé. Vos opérations récurrentes remplissent chaque mois d'elles-mêmes.",
     searchPlaceholder: "Chercher une catégorie ou une note…",
     searchLabel: "Chercher dans les opérations",
+    filterByAccount: "Filtrer par compte",
+    allAccounts: "Tous les comptes",
     filterByCategory: "Filtrer par catégorie",
     filterTransactions: "Filtrer les opérations",
     allCategories: "Toutes les catégories",
@@ -816,6 +818,12 @@ export const fr: Messages = {
       "Un mois normal chez vous tourne autour de {amount} que l'application ne voit jamais.",
     inviteBare:
       "Un seul solde, et l'application peut calculer ce qu'elle n'a jamais vu.",
+    waitBody:
+      "{month} ne se fait pas tout seul\u00A0: le solde de ces comptes au {date} ne peut pas être lu.",
+    waitLapsed: "consentement terminé, à renouveler sur open-banking.io",
+    waitNoRows: "pas encore de relevé à cette date",
+    waitNoBalance: "la banque ne donne pas le solde après chaque opération",
+    waitDayIncomplete: "la journée n'est pas complète dans le relevé",
     closeTheMonth: "Faire le bilan du mois",
     filledFromBank:
       "Rempli depuis votre banque. Modifiez-le si le jour de lecture n'est pas aujourd'hui.",
@@ -2335,6 +2343,8 @@ export const fr: Messages = {
         "Le départ est le solde que vous avez noté au dernier bilan de mois. L'application y ajoute les opérations enregistrées depuis, puis ce que vos opérations récurrentes doivent encore faire entrer ou sortir.",
     },
     netCaption: "Ce qui est entré, moins ce qui est sorti.",
+    byAccount: "Par compte",
+    byAccountEnd: "Par compte, à la fin du mois",
     fromBank: "Aujourd'hui, d'après votre banque",
     fromClose: "D'après votre dernier bilan, plus ce que vous avez noté depuis",
     plannedOnly:

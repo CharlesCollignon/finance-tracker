@@ -253,6 +253,8 @@ export const en = {
       "Add what happened. The charges you set up fill each month in on their own.",
     searchPlaceholder: "Search category or note…",
     searchLabel: "Search transactions",
+    filterByAccount: "Filter by account",
+    allAccounts: "All accounts",
     filterByCategory: "Filter by category",
     filterTransactions: "Filter transactions",
     allCategories: "All categories",
@@ -1141,6 +1143,12 @@ export const en = {
       "A normal month for you is around {amount} the app never sees.",
     inviteBare: "One balance, and the app can work out what it never saw.",
     /** The card's own button, which names no month — the heading above it does. */
+    waitBody:
+      "{month} doesn't close on its own: these accounts' balance on {date} can't be read.",
+    waitLapsed: "consent ended, renew it at open-banking.io",
+    waitNoRows: "no statement yet for that day",
+    waitNoBalance: "the bank doesn't give the balance after each movement",
+    waitDayIncomplete: "that day isn't complete in the statement",
     closeTheMonth: "Close the month",
     filledFromBank:
       "Filled in from your bank. Change it if the reading day differs from today.",
@@ -3167,6 +3175,8 @@ export const en = {
         "It starts from the balance you noted at your last month review. The app adds the transactions recorded since, then what your recurring entries still have to bring in or take out.",
     },
     netCaption: "What came in, minus what went out.",
+    byAccount: "By account",
+    byAccountEnd: "By account, at month end",
     fromBank: "Today, from your bank",
     fromClose: "From your last close, plus what you have recorded since",
     plannedOnly: "Your charges only — everyday spending is not in this",
