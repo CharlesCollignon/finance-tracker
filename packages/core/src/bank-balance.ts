@@ -114,6 +114,30 @@ export function balanceAsOf(rows: BalanceRow[], date: string): BalanceLookup {
   };
 }
 
+/**
+ * What an account held just before a movement — so, on any day before its
+ * statement begins, what it held just before the first movement stored.
+ *
+ * Nothing moved between that day and the first movement, or the statement
+ * would hold it. That is only true of a statement brought in whole, which is
+ * the caller's to know: an account read for its last few weeks alone would
+ * report its balance of a few weeks ago as last year's.
+ */
+export function balanceBefore(row: {
+  balanceAfter: number | null;
+  amount: number;
+  direction: "in" | "out";
+}): number | null {
+  if (row.balanceAfter === null) {
+    return null;
+  }
+  const before =
+    row.direction === "in"
+      ? row.balanceAfter - row.amount
+      : row.balanceAfter + row.amount;
+  return Math.round(before * 100) / 100;
+}
+
 export interface AccountRows {
   accountId: string;
   label: string;

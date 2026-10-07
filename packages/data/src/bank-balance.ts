@@ -1,4 +1,5 @@
 import {
+  balanceBefore,
   cashBalanceAsOf,
   type AccountRows,
   type CashBalance,
@@ -57,49 +58,107 @@ export async function readCashBalance(
     return null;
   }
 
-  const { data, error } = await db
-    .from("bank_feed_items")
-    .select("provider_account_id, occurred_on, balance_after, intraday_index")
-    .eq("user_id", userId)
-    .in(
-      "provider_account_id",
-      counted.map((account) => account.provider_account_id),
-    )
-    .lte("occurred_on", date)
-    // Newest first and capped: only the last row of the last day is needed,
-    // and one page of it is far more than enough to find that row for every
-    // account. Ordering by intraday_index second keeps the day's last
-    // movement ahead of the ones before it.
-    .order("occurred_on", { ascending: false })
-    .order("intraday_index", { ascending: true })
-    .limit(400);
-
-  if (error) {
-    if (isMissingSchema(error)) {
+  try {
+    return await readBalances(db, userId, counted, date);
+  } catch (error) {
+    if (isMissingSchema(error as { code?: string; message?: string })) {
       return null;
     }
     throw error;
   }
+}
 
-  const byAccount = new Map<string, AccountRows>();
-  for (const account of counted) {
-    byAccount.set(account.provider_account_id, {
+type StatementRow = {
+  occurred_on: string;
+  balance_after: number | null;
+  intraday_index: number;
+  amount: number;
+  direction: "in" | "out";
+};
+
+/**
+ * What these accounts held at the end of a day, one account at a time.
+ *
+ * One at a time because only one row each is needed — the day's last
+ * movement, on or before it — and a single capped read across them all let a
+ * busy account's movements push a quiet one's out of the page, which then
+ * read as empty and held every close.
+ *
+ * For a day before an account's statement begins, the balance just before
+ * its first movement — once its whole history is in, and never before: an
+ * account the bank has given a few weeks of would read last year as those
+ * weeks' start.
+ */
+async function readBalances(
+  db: Db,
+  userId: string,
+  accounts: readonly BankAccount[],
+  date: string,
+): Promise<CashBalance> {
+  const columns =
+    "occurred_on, balance_after, intraday_index, amount, direction";
+  const read = async (account: BankAccount): Promise<AccountRows> => {
+    const last = await db
+      .from("bank_feed_items")
+      .select(columns)
+      .eq("user_id", userId)
+      .eq("provider_account_id", account.provider_account_id)
+      .lte("occurred_on", date)
+      // The day's last movement is its lowest index: a statement is newest
+      // first within a day.
+      .order("occurred_on", { ascending: false })
+      .order("intraday_index", { ascending: true })
+      .limit(1);
+    if (last.error) {
+      throw last.error;
+    }
+    const rows = (last.data ?? []) as StatementRow[];
+
+    if (rows.length === 0 && account.history_imported_at !== null) {
+      const first = await db
+        .from("bank_feed_items")
+        .select(columns)
+        .eq("user_id", userId)
+        .eq("provider_account_id", account.provider_account_id)
+        .order("occurred_on", { ascending: true })
+        .order("intraday_index", { ascending: false })
+        .limit(1);
+      if (first.error) {
+        throw first.error;
+      }
+      const earliest = (first.data ?? [])[0] as StatementRow | undefined;
+      const before = earliest
+        ? balanceBefore({
+            balanceAfter:
+              earliest.balance_after === null
+                ? null
+                : Number(earliest.balance_after),
+            amount: Number(earliest.amount),
+            direction: earliest.direction,
+          })
+        : null;
+      if (before !== null) {
+        return {
+          accountId: account.provider_account_id,
+          label: account.label,
+          rows: [{ occurredOn: date, balanceAfter: before, intradayIndex: 0 }],
+        };
+      }
+    }
+
+    return {
       accountId: account.provider_account_id,
       label: account.label,
-      rows: [],
-    });
-  }
-
-  for (const row of data ?? []) {
-    byAccount.get(row.provider_account_id)?.rows.push({
-      occurredOn: row.occurred_on,
-      balanceAfter:
-        row.balance_after === null ? null : Number(row.balance_after),
-      intradayIndex: row.intraday_index,
-    });
-  }
+      rows: rows.map((row) => ({
+        occurredOn: row.occurred_on,
+        balanceAfter:
+          row.balance_after === null ? null : Number(row.balance_after),
+        intradayIndex: row.intraday_index,
+      })),
+    };
+  };
 
   // A lapsed consent stores no rows, so it arrives here with an empty list
   // and is reported as unreadable rather than as an empty account.
-  return cashBalanceAsOf([...byAccount.values()], date);
+  return cashBalanceAsOf(await Promise.all(accounts.map(read)), date);
 }
