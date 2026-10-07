@@ -26,7 +26,8 @@ import type {
   TransactionWithCategory,
 } from "@finance/core/types/database";
 
-import { readCashBalance } from "./bank-balance";
+import { accountMarks } from "@finance/core/bank-accounts";
+import { getBankAccounts, readCashBalance } from "./bank-balance";
 import { hasBankFeed, walletCategoriesTheBankDebits } from "./bank-feed";
 import type { Db } from "./client";
 import { getBankForecast, getFulfilledKeys } from "./fulfilment";
@@ -51,6 +52,11 @@ export type BalanceSource = "bank" | "close" | "none";
 export interface MonthBalanceRead {
   balance: MonthBalance;
   source: BalanceSource;
+  /**
+   * With two current accounts or more and the balance read from the bank,
+   * what each held on the day it was read — the total, taken apart.
+   */
+  accounts: { name: string; amount: number }[] | null;
   /**
    * Every row read: from the earlier of the range's start and `readFrom`,
    * to the range's end — so a screen that also wants the months before can
@@ -145,6 +151,7 @@ export async function readMonthBalance(
 
   let anchor: BalanceAnchor | null = null;
   let source: BalanceSource = "none";
+  let accounts: MonthBalanceRead["accounts"] = null;
   // Bitstack's buys leave the account, where a DCA PEA's never touch it.
   const debited: ReadonlySet<string> = bankFed
     ? await walletCategoriesTheBankDebits(db, userId)
@@ -158,6 +165,13 @@ export async function readMonthBalance(
     if (cash?.ok) {
       anchor = { onDate, balance: cash.total };
       source = "bank";
+      if (cash.per.length > 1) {
+        const marks = accountMarks(await getBankAccounts(db, userId));
+        accounts = cash.per.map((entry) => ({
+          name: marks?.get(entry.accountId) ?? entry.label,
+          amount: entry.lookup.ok ? entry.lookup.reading.amount : 0,
+        }));
+      }
     }
   }
 
@@ -302,7 +316,7 @@ export async function readMonthBalance(
     debited,
   });
 
-  return { balance, source, rows, upcoming, outflows, debited };
+  return { balance, source, accounts, rows, upcoming, outflows, debited };
 }
 
 /**

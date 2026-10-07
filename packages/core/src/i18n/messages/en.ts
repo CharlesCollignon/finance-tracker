@@ -3169,6 +3169,8 @@ export const en = {
         "It starts from the balance you noted at your last month review. The app adds the transactions recorded since, then what your recurring entries still have to bring in or take out.",
     },
     netCaption: "What came in, minus what went out.",
+    byAccount: "By account",
+    byAccountEnd: "By account, at month end",
     fromBank: "Today, from your bank",
     fromClose: "From your last close, plus what you have recorded since",
     plannedOnly: "Your charges only — everyday spending is not in this",

@@ -233,6 +233,7 @@ export function BalanceCard({
   const net = balance.basis === "net";
   const monthLabel = formatMonthLabel(data.year, data.month, locale);
   const [howOpen, setHowOpen] = useState(false);
+  const [accountsOpen, setAccountsOpen] = useState(false);
 
   // The two figures, named by what they can claim.
   const figures = ((): {
@@ -339,6 +340,53 @@ export function BalanceCard({
           <Text variant="muted" className="text-xs leading-relaxed">
             {t(`bearingMonth.how.${balanceExplanation(balance, source)}`)}
           </Text>
+        ) : null}
+        {/* With several current accounts, the figure read from the bank
+            taken apart: the day it was read, which is today or the
+            month's last. */}
+        {data.accounts && balance.period !== "future" ? (
+          <>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityState={{ expanded: accountsOpen }}
+              hitSlop={8}
+              onPress={() => setAccountsOpen((open) => !open)}
+              className="self-start"
+            >
+              <Text variant="muted" className="text-xs underline">
+                {balance.period === "past"
+                  ? t("bearingMonth.byAccountEnd")
+                  : t("bearingMonth.byAccount")}
+              </Text>
+            </Pressable>
+            {accountsOpen ? (
+              <View className="gap-1">
+                {data.accounts.map((account) => (
+                  <View
+                    key={account.name}
+                    className="flex-row items-baseline justify-between gap-6"
+                  >
+                    <Text
+                      variant="muted"
+                      numberOfLines={1}
+                      className="min-w-0 flex-1 text-xs"
+                    >
+                      {account.name}
+                    </Text>
+                    <PrivateAmount
+                      className={
+                        account.amount < 0
+                          ? "text-xs text-destructive"
+                          : "text-xs text-foreground"
+                      }
+                    >
+                      {format(account.amount)}
+                    </PrivateAmount>
+                  </View>
+                ))}
+              </View>
+            ) : null}
+          </>
         ) : null}
       </View>
 

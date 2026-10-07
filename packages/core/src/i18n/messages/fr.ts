@@ -2337,6 +2337,8 @@ export const fr: Messages = {
         "Le départ est le solde que vous avez noté au dernier bilan de mois. L'application y ajoute les opérations enregistrées depuis, puis ce que vos opérations récurrentes doivent encore faire entrer ou sortir.",
     },
     netCaption: "Ce qui est entré, moins ce qui est sorti.",
+    byAccount: "Par compte",
+    byAccountEnd: "Par compte, à la fin du mois",
     fromBank: "Aujourd'hui, d'après votre banque",
     fromClose: "D'après votre dernier bilan, plus ce que vous avez noté depuis",
     plannedOnly:
