@@ -6,7 +6,7 @@ import { ArrivedCharges } from "@/components/ArrivedCharges";
 import { MonthPicker } from "@/components/MonthPicker";
 import { MonthRead } from "@/components/MonthRead";
 import { PurchasesToConfirm } from "@/components/PurchasesToConfirm";
-import { TransferToSend } from "@/components/TransferToSend";
+import { DcaMonthCard } from "@/components/DcaMonthCard";
 import { BankAttentionBanner } from "@/components/bank/BankAttentionBanner";
 import { AttentionRow } from "@/components/bearing/AttentionRow";
 import {
@@ -152,10 +152,10 @@ export default function HomeScreen() {
               </View>
             ) : null}
 
-            {/* And what those purchases need sent before payday. */}
-            {data.transfer ? (
+            {/* And the transfer that pays for those purchases, month by month. */}
+            {data.dca ? (
               <View className="rounded-card border border-border bg-card/70 p-card">
-                <TransferToSend transfer={data.transfer} />
+                <DcaMonthCard month={data.dca} proposal={data.dcaProposal} />
               </View>
             ) : null}
 

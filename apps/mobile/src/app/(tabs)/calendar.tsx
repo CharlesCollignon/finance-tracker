@@ -72,6 +72,7 @@ import { useToast } from "@/providers/ToastProvider";
 import { useFormatCurrency } from "@/providers/CurrencyProvider";
 import { useTabBarClearance } from "@/theme/chrome";
 import { useLocale, useT } from "@/providers/LocaleProvider";
+import { plannedOccurrenceNote } from "@finance/core/dca-need";
 import {
   getBankForecast,
   getCategories,
@@ -618,7 +619,7 @@ export default function CalendarScreen() {
                             ? "ledger.awaited"
                             : "ledger.planned",
                         ),
-                        occurrence.note,
+                        plannedOccurrenceNote(occurrence, t, locale),
                       ]
                         .filter(Boolean)
                         .join(" · ")}

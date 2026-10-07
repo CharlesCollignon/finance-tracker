@@ -11,6 +11,7 @@ import type { BankForecast } from "./recurring-fulfilment";
 import {
   filterDatesBySchedule,
   getRecurringOccurrenceDates,
+  monthStartingNearest,
 } from "./recurrence";
 import { isQuotePriced, resolveRecurringAmount } from "./recurring-shares";
 import type {
@@ -518,6 +519,11 @@ export interface PlannedOccurrence {
    */
   countsTowardSummary?: false;
   /**
+   * The app's transfer to the broker: the month whose DCAs it pays for
+   * (`monthStartingNearest`), said under its name instead of a note.
+   */
+  coversDcaMonth?: number;
+  /**
    * Its day has come, and the bank has not brought it yet (`bankForecast`):
    * still owed, though its date is behind.
    */
@@ -574,6 +580,9 @@ export function plannedOccurrences(
       categoryIcon: template.categories.icon,
       ...(template.categories.counts_toward_summary === false
         ? { countsTowardSummary: false as const }
+        : {}),
+      ...(template.pricing_type === "purchases"
+        ? { coversDcaMonth: monthStartingNearest(occurredOn).month }
         : {}),
       ...(awaited ? { awaited } : {}),
     });

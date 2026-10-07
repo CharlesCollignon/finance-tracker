@@ -192,10 +192,18 @@ Decisions:
 - [x] Out: the invitation, « Selon vos DCA » on the sheets (the app's
       transfer opened through a link says it is kept by Pluclair).
 
-### Phase B — The surfaces (branch `dca-rework-ui`)
+### Phase B — The surfaces (branch `dca-rework-ui`) — done
 
-- [ ] Récurrents, both apps: the tick on each DCA, the transfer as the DCA
-      group's header, its figure counting as ticks change.
-- [ ] Le point, both apps: the card, its states, progress and run, with the
-      moments; « C'est bien lui ? » inline when the bank shows a transfer.
-- [ ] Journal: the planned transfer says which month's DCAs it pays for.
+- [x] Récurrents, both apps: « Payé par le virement » on each DCA bought at
+      the broker, turning at once with a pop; the app's transfer off the list
+      and at the head of the investments, « Virement au courtier · le 1er de
+      chaque mois · 8 DCA cochés », its figure counting to its new value.
+- [x] Le point, both apps: the card (`DcaMonthCard`) — « À préparer pour
+      novembre », then « Novembre · envoyé ✓ », or « pas vu sur votre
+      compte »; the figure counting up; what it is made of; « C'est bien
+      lui ? » inline when the bank shows a transfer (and so out of « C'est
+      arrivé ? »); the month's DCAs filling a bar; the run with its flame.
+      Moments once per device: sent, all through, the run grown. A new
+      transfer's first month shows at once.
+- [x] Journal and calendar, both apps: the planned transfer says « Pour les
+      DCA prévus en novembre » (`plannedOccurrenceNote`).

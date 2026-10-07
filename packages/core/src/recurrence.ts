@@ -29,6 +29,24 @@ export function monthLabels(locale: Locale): Record<number, string> {
   );
 }
 
+/**
+ * The calendar month whose 1st is nearest `date`: its own up to the 15th,
+ * the next after. The month a transfer to the broker on that day pays for.
+ */
+export function monthStartingNearest(date: string): {
+  year: number;
+  month: number;
+} {
+  const year = Number(date.slice(0, 4));
+  const month = Number(date.slice(5, 7));
+  if (Number(date.slice(8, 10)) <= 15) {
+    return { year, month };
+  }
+  return month === 12
+    ? { year: year + 1, month: 1 }
+    : { year, month: month + 1 };
+}
+
 /** ISO weekday: Monday = 1 … Sunday = 7 */
 export function toIsoWeekday(date: Date): number {
   const day = date.getDay();
