@@ -71,6 +71,22 @@ describe("filterLedger", () => {
     // "courses lait" spans the name and the note; neither holds it.
     expect(filterLedger(rows, { ...all, query: "courses lait" })).toEqual([]);
   });
+
+  it("keeps what one bank account brought in", () => {
+    const accountOf = new Map([
+      ["a", "bourso"],
+      ["b", "ca"],
+    ]);
+    expect(
+      filterLedger(rows, { ...all, accountId: "bourso" }, accountOf).map(
+        (r) => r.id,
+      ),
+    ).toEqual(["a"]);
+    // A row typed by hand came from no account.
+    expect(
+      filterLedger(rows, { ...all, accountId: "all" }, accountOf),
+    ).toHaveLength(3);
+  });
 });
 
 describe("filterPlanned", () => {
@@ -79,6 +95,11 @@ describe("filterPlanned", () => {
     expect(filterPlanned(list, { ...all, type: "income" })).toEqual([]);
     expect(filterPlanned(list, { ...all, query: "appart" })).toHaveLength(1);
     expect(filterPlanned(list, { ...all, query: "loyer" })).toHaveLength(1);
+  });
+
+  it("keeps nothing still to come under one account", () => {
+    const list = [planned("2026-10-20", "Appartement")];
+    expect(filterPlanned(list, { ...all, accountId: "bourso" })).toEqual([]);
   });
 });
 

@@ -54,6 +54,8 @@ import {
 import { deleteTransactions, moveTransactions } from "@/lib/actions/finance";
 import { RowCheckbox, SelectionBar } from "@/components/finance/SelectionBar";
 import { CategoryPicker } from "@/components/finance/CategoryPicker";
+import { OptionPicker } from "@/components/ui/Picker";
+import type { LedgerAccounts } from "@finance/core/bank-accounts";
 import {
   planSelectionMove,
   pruneSelection,
@@ -91,6 +93,13 @@ interface TransactionsViewProps {
   defaultDate: string;
   /** Bank feed bar, rendered inside the page rather than above its header. */
   bankSlot?: ReactNode;
+  /**
+   * With two current accounts or more, which one brought each row in and
+   * what each is called — the row says it, and the list can be read one
+   * account at a time. Absent with one account: there is nothing to tell
+   * apart.
+   */
+  bankAccounts?: LedgerAccounts | null;
 }
 
 /**
@@ -140,6 +149,7 @@ export function TransactionsView({
   month,
   defaultDate,
   bankSlot,
+  bankAccounts = null,
 }: TransactionsViewProps) {
   const { toast } = useToast();
   const toastDeleted = useDeletedToast();
@@ -155,6 +165,11 @@ export function TransactionsView({
         ? loaded
         : loaded.filter((tx) => !deletedIds.has(tx.id)),
     [loaded, deletedIds],
+  );
+  // Which account each row came from, when there are several to tell apart.
+  const accountOf = useMemo(
+    () => new Map(Object.entries(bankAccounts?.of ?? {})),
+    [bankAccounts],
   );
   const formatEuro = useFormatCurrency();
   const locale = useLocale();
@@ -224,12 +239,14 @@ export function TransactionsView({
               { date: formatShortDate(tx.cash_on!, locale) },
             )
           : null,
+        // With several current accounts, which one the row came from.
+        bankAccounts?.names[accountOf.get(tx.id) ?? ""] ?? null,
         tx.note,
       ]
         .filter(Boolean)
         .join(" · ");
     },
-    [fulfilmentStates, t, locale],
+    [fulfilmentStates, t, locale, bankAccounts, accountOf],
   );
   const [editTransaction, setEditTransaction] =
     useState<TransactionWithCategory | null>(null);
@@ -244,17 +261,23 @@ export function TransactionsView({
   );
   const [deletePending, startDelete] = useTransition();
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
+  const [accountFilter, setAccountFilter] = useState<string>("all");
   // The phone's filters-and-actions panel. On a wider screen everything in it
   // sits in the toolbar, so the flag only means anything below `md`.
   const [optionsOpen, setOptionsOpen] = useState(false);
 
   const ledgerFilter = useMemo(
-    () => ({ type: filter, categoryId: categoryFilter, query: search }),
-    [filter, categoryFilter, search],
+    () => ({
+      type: filter,
+      categoryId: categoryFilter,
+      query: search,
+      accountId: bankAccounts ? accountFilter : "all",
+    }),
+    [filter, categoryFilter, search, accountFilter, bankAccounts],
   );
   const filtered = useMemo(
-    () => filterLedger(transactions, ledgerFilter),
-    [transactions, ledgerFilter],
+    () => filterLedger(transactions, ledgerFilter, accountOf),
+    [transactions, ledgerFilter, accountOf],
   );
   // The same filters, so a planned rent does not survive an "Income" chip.
   const filteredPlanned = useMemo(
@@ -268,9 +291,14 @@ export function TransactionsView({
     [filtered],
   );
 
-  const dropdownFilters = categoryFilter !== "all" ? 1 : 0;
+  const dropdownFilters =
+    (categoryFilter !== "all" ? 1 : 0) +
+    (ledgerFilter.accountId !== "all" ? 1 : 0);
   const hasActiveFilters =
-    filter !== "all" || categoryFilter !== "all" || search.trim().length > 0;
+    filter !== "all" ||
+    categoryFilter !== "all" ||
+    ledgerFilter.accountId !== "all" ||
+    search.trim().length > 0;
 
   const visibleIds = useMemo(() => sortedRows.map((tx) => tx.id), [sortedRows]);
   // A filter can hide rows that are still in the stored set. Pruning here
@@ -386,6 +414,32 @@ export function TransactionsView({
     );
   }
 
+  /** The account dropdown, beside the category one wherever that is drawn. */
+  function renderAccountFilter(stacked: boolean) {
+    if (!bankAccounts) {
+      return null;
+    }
+    const suffix = stacked ? "-panel" : "";
+    return (
+      <OptionPicker
+        id={`ledger-account-filter${suffix}`}
+        panelLabel={t("ledger.filterByAccount")}
+        label={t("ledger.filterByAccount")}
+        value={accountFilter}
+        onValueChange={setAccountFilter}
+        options={[
+          { value: "all", label: t("ledger.allAccounts") },
+          ...bankAccounts.options.map((account) => ({
+            value: account.id,
+            label: account.label,
+          })),
+        ]}
+        className={stacked ? "w-full" : "w-44 flex-none"}
+        triggerClassName="h-9 min-h-11 rounded-full px-3.5 text-sm lg:min-h-0"
+      />
+    );
+  }
+
   // The header, the views, the month and Add are the Ledger layout's
   // (`LedgerToolbar`), so they stay put while the views load.
   return (
@@ -485,6 +539,7 @@ export function TransactionsView({
 
                 <div className="hidden shrink-0 gap-2 md:flex">
                   {renderCategoryFilter(false)}
+                  {renderAccountFilter(false)}
                 </div>
               </div>
 
@@ -590,6 +645,7 @@ export function TransactionsView({
                   className="flex flex-col gap-2 md:hidden"
                 >
                   {renderCategoryFilter(true)}
+                  {renderAccountFilter(true)}
                   <div className="flex flex-wrap gap-2">
                     {selectMode ? null : (
                       <Button
@@ -683,6 +739,7 @@ export function TransactionsView({
                     onClick={() => {
                       setFilter("all");
                       setCategoryFilter("all");
+                      setAccountFilter("all");
                       setSearch("");
                     }}
                   >

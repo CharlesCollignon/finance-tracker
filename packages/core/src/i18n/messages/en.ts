@@ -253,6 +253,8 @@ export const en = {
       "Add what happened. The charges you set up fill each month in on their own.",
     searchPlaceholder: "Search category or note…",
     searchLabel: "Search transactions",
+    filterByAccount: "Filter by account",
+    allAccounts: "All accounts",
     filterByCategory: "Filter by category",
     filterTransactions: "Filter transactions",
     allCategories: "All categories",

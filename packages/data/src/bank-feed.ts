@@ -63,3 +63,34 @@ export async function walletCategoriesTheBankDebits(
 
   return new Set(debited.filter((id): id is string => id !== null));
 }
+
+/**
+ * Which bank account brought each of these rows in, by transaction id — for
+ * a ledger fed by several accounts to say which, and to be read one account
+ * at a time. A row typed by hand, or written by a charge the bank has not
+ * brought, is absent. In slices: an address with a few hundred ids is longer
+ * than PostgREST accepts in one query string.
+ */
+export async function getTransactionAccounts(
+  db: Db,
+  userId: string,
+  transactionIds: readonly string[],
+): Promise<Map<string, string>> {
+  const accounts = new Map<string, string>();
+  for (let start = 0; start < transactionIds.length; start += 200) {
+    const { data, error } = await db
+      .from("bank_feed_items")
+      .select("transaction_id, provider_account_id")
+      .eq("user_id", userId)
+      .in("transaction_id", transactionIds.slice(start, start + 200));
+    if (error) {
+      throw error;
+    }
+    for (const row of data ?? []) {
+      if (row.transaction_id) {
+        accounts.set(row.transaction_id, row.provider_account_id);
+      }
+    }
+  }
+  return accounts;
+}

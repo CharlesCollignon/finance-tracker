@@ -26,8 +26,11 @@ import {
   getBankMerchantIndex,
   getDecidedFeedItems,
   getPendingFeedItems,
+  getTransactionAccounts,
   hasBankFeed,
 } from "@/lib/queries/bank";
+import { getBankAccounts } from "@/lib/queries/bank-balance";
+import { ledgerAccounts } from "@finance/core/bank-accounts";
 import { groupPendingFeed } from "@finance/core/bank-inbox-groups";
 import { SwallowedRecovery } from "@/components/finance/SwallowedRecovery";
 import { ConnectBankInvite } from "@/components/finance/bank/ConnectBankInvite";
@@ -108,6 +111,19 @@ export default async function TransactionsPage({
     bankFed ? false : shouldInviteToConnect(user.id, "ledger"),
     getBankForecast(user.id, recurringTemplates, bankFed, today),
   ]);
+  // With several current accounts, which one each row came from.
+  const ledgerAccountsRead = bankFed
+    ? await Promise.all([
+        getBankAccounts(user.id),
+        getTransactionAccounts(
+          user.id,
+          transactions.map((tx) => tx.id),
+        ),
+      ])
+    : null;
+  const bankAccounts = ledgerAccountsRead
+    ? ledgerAccounts(...ledgerAccountsRead)
+    : null;
   const [feedItems, swallowed, feedSize, decided, bankMerchants] = bank ?? [
     null,
     0,
@@ -158,6 +174,7 @@ export default async function TransactionsPage({
       year={year}
       month={month}
       defaultDate={defaultDate}
+      bankAccounts={bankAccounts}
       bankSlot={
         feedItems ? (
           <div className="flex flex-col gap-3">

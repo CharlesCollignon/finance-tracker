@@ -172,6 +172,8 @@ export const fr: Messages = {
       "Ajoutez ce qui s'est passé. Vos opérations récurrentes remplissent chaque mois d'elles-mêmes.",
     searchPlaceholder: "Chercher une catégorie ou une note…",
     searchLabel: "Chercher dans les opérations",
+    filterByAccount: "Filtrer par compte",
+    allAccounts: "Tous les comptes",
     filterByCategory: "Filtrer par catégorie",
     filterTransactions: "Filtrer les opérations",
     allCategories: "Toutes les catégories",

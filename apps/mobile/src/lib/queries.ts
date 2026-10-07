@@ -1,4 +1,5 @@
 import {
+  getTransactionAccounts as transactionAccounts,
   hasBankFeed as bankFeeds,
   walletCategoriesTheBankDebits,
 } from "@finance/data/bank-feed";
@@ -564,6 +565,14 @@ export function countPendingFeedItems(userId: string): Promise<number> {
  */
 export function hasBankFeed(userId: string): Promise<boolean> {
   return bankFeeds(supabase, userId);
+}
+
+/** Which bank account brought each of these rows in, by transaction id. */
+export function getTransactionAccounts(
+  userId: string,
+  transactionIds: readonly string[],
+): Promise<Map<string, string>> {
+  return transactionAccounts(supabase, userId, transactionIds);
 }
 
 /**
