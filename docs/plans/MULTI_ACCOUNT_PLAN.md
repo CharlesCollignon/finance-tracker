@@ -81,37 +81,40 @@ The guess that pre-fills a role:
   Immobilier.
 - **Courant** otherwise.
 
-## Phase 1 — Roles under the hood (branch `accounts-roles`)
+## Phase 1 — Roles under the hood (branch `accounts-roles`) — done
 
 Works with today's screens: the tick reads as Courant, no tick as Ne pas
 suivre, and linking a Livret on Placements as Épargne.
 
-- [ ] Migration 056: `bank_accounts` gains `role` (null until decided),
-      `bank_name`, `account_type`, `history_imported_at` and
+- [x] Migration 056: `bank_accounts` gains `role` (null until decided),
+      `bank_name`, `account_type`, `product`, `history_imported_at` and
       `consent_valid_until`; `month_closes` gains `bank_accounts`, the
-      accounts a bank close summed. Seeded from today's state: ticked →
+      accounts a bank close summed, and `opening_balance`, set only when
+      those differ from the last close's. Seeded from today's state: ticked →
       Courant, linked to a Livret → Épargne, history in where the first import
       finished. `counts_as_cash` follows the role through a trigger, so every
       reader keeps working, and so do phone builds that still write the tick.
-- [ ] Core, tested: `guessAccountRole`, `guessSavingsKind`.
-- [ ] Sync: only Courant accounts are brought in; the own-transfer IBANs are
+- [x] Sync: only Courant accounts are brought in; the own-transfer IBANs are
       the Courant accounts' alone, whichever accounts a request walks; each
       account's bank and type are kept.
-- [ ] History per account: the import walks the Courant accounts whose
+- [x] History per account: the import walks the Courant accounts whose
       history is not in yet, and the Bank page, web and phone, offers it
       whenever one is waiting — not only before the first import.
-- [ ] Linking a Livret to a bank account makes that account Épargne.
-- [ ] The balance is read account by account.
-- [ ] A close compares like with like: when the accounts it sums differ from
+- [x] Linking a Livret to a bank account makes that account Épargne.
+- [x] The balance is read account by account.
+- [x] A close compares like with like: when the accounts it sums differ from
       the last close's, the opening adds or takes away those accounts'
       balances on the last close's day.
-- [ ] The manual close's suggestion sums the Courant accounts only.
-- [ ] Consent per bank, from `getConnections`, matched by bank name; the
+- [x] The manual close's suggestion sums the Courant accounts only.
+- [x] Consent per bank, from `getConnections`, matched by bank name; the
       reminder counts only banks with an account that is Courant or Épargne.
-- [ ] CONTEXT.md: bank account and its role.
+- [x] CONTEXT.md: bank account and its role.
 
 ## Phase 2 — Web: your accounts, and adding a bank (branch `accounts-web`)
 
+- [ ] Core, tested: `guessAccountRole`, `guessSavingsKind` (written in
+      phase 1, held back until a screen calls them: the reachability gate
+      fails on a core export no app uses).
 - [ ] `/bank`: the accounts grouped by bank, each bank with its consent line;
       each account with its balance and its role (Courant · Épargne · Ne pas
       suivre). Épargne says which Livret it feeds and lets the user change it.
