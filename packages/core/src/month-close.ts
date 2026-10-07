@@ -253,6 +253,28 @@ export function monthWasWon(
   return outcome.unrecorded !== null && outcome.unrecorded <= cap + TOLERANCE;
 }
 
+/**
+ * Which accounts a bank close sums that the last one did not, and which the
+ * last one summed that it does not — null when they are the same, or when
+ * the last close does not say (a figure typed by hand, or one from before
+ * closes said which accounts they read).
+ *
+ * The month an account starts counting, its balance is in the closing figure
+ * and not in the opening one, and without this all of it would read as money
+ * kept that month; the month one stops counting, as money that vanished.
+ */
+export function closeAccountsChange(
+  before: readonly string[] | null,
+  now: readonly string[],
+): { added: string[]; removed: string[] } | null {
+  if (before === null) {
+    return null;
+  }
+  const added = now.filter((id) => !before.includes(id));
+  const removed = before.filter((id) => !now.includes(id));
+  return added.length === 0 && removed.length === 0 ? null : { added, removed };
+}
+
 /** The month before this one, as a key. */
 export function previousMonthKey(monthKey: string): string {
   const [year, month] = monthKey.split("-").map(Number);

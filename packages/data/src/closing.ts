@@ -117,6 +117,11 @@ export async function recordMonthClose(
         month: monthColumnValue(parsed.data.year, parsed.data.month),
         closing_balance: parsed.data.closingBalance,
         observed_on: observeOn,
+        // A figure typed by hand, over a bank close or not: it says nothing
+        // of which accounts it holds.
+        balance_source: "manual",
+        bank_accounts: null,
+        opening_balance: null,
       },
       { onConflict: "user_id,month" },
     );

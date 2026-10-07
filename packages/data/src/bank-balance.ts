@@ -59,7 +59,7 @@ export async function readCashBalance(
   }
 
   try {
-    return await readBalances(db, userId, counted, date);
+    return await readAccountBalances(db, userId, counted, date);
   } catch (error) {
     if (isMissingSchema(error as { code?: string; message?: string })) {
       return null;
@@ -89,7 +89,7 @@ type StatementRow = {
  * account the bank has given a few weeks of would read last year as those
  * weeks' start.
  */
-async function readBalances(
+export async function readAccountBalances(
   db: Db,
   userId: string,
   accounts: readonly BankAccount[],

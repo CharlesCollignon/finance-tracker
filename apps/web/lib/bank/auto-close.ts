@@ -1,6 +1,7 @@
 import {
   buildMonthClose,
   closableMonth,
+  closeAccountsChange,
   monthColumnValue,
   monthKeyOfClose,
   previousMonthKey,
@@ -10,7 +11,11 @@ import { lastDayIsoOfMonth, todayIsoLocal } from "@finance/core/constants";
 import type { Database } from "@finance/core/types/database";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { getRecordedCashFlows } from "@/lib/queries/month-close";
-import { readCashBalance } from "@/lib/queries/bank-balance";
+import {
+  getBankAccounts,
+  readAccountBalances,
+  readCashBalance,
+} from "@/lib/queries/bank-balance";
 import { DEFAULT_LOCALE } from "@finance/core/i18n/locale";
 
 type Client = SupabaseClient<Database>;
@@ -128,11 +133,18 @@ export async function autoCloseMonths(
     // statement again. Reading both ends is what lets the very first month
     // reconcile instead of being spent as a baseline — the whole reason the
     // manual flow needed a throwaway first close.
+    //
+    // When the accounts this close sums are not the ones the last close
+    // summed — one ticked since, or let go — the last close's figure is
+    // corrected by what those accounts held on its day, and kept on this
+    // close so the history compares the same way.
+    const summed = closing.per.map((entry) => entry.accountId).sort();
     let openingBalance: number | null = null;
+    let ownOpening: number | null = null;
     if (lastClosed !== null) {
       const { data: previous } = await supabase
         .from("month_closes")
-        .select("closing_balance")
+        .select("closing_balance, observed_on, bank_accounts")
         .eq("user_id", userId)
         .eq("month", monthColumnValue(...monthKeyParts(lastClosed)))
         .maybeSingle();
@@ -140,6 +152,48 @@ export async function autoCloseMonths(
         previous?.closing_balance === undefined
           ? null
           : Number(previous.closing_balance);
+      const change = previous
+        ? closeAccountsChange(previous.bank_accounts, summed)
+        : null;
+      if (previous && openingBalance !== null && change) {
+        const known = await getBankAccounts(userId, supabase);
+        const ids = [...change.added, ...change.removed];
+        const then = await readAccountBalances(
+          userId,
+          known.filter((account) => ids.includes(account.provider_account_id)),
+          previous.observed_on,
+          supabase,
+        );
+        const unread = ids.filter(
+          (id) =>
+            !then.per.some(
+              (entry) => entry.accountId === id && entry.lookup.ok,
+            ),
+        );
+        if (unread.length > 0) {
+          outcome.blocked = {
+            kind: "unreadable",
+            accounts: unread.map(
+              (id) =>
+                known.find((account) => account.provider_account_id === id)
+                  ?.label ?? id,
+            ),
+          };
+          return outcome;
+        }
+        const heldThen = (id: string) => {
+          const entry = then.per.find((each) => each.accountId === id);
+          return entry?.lookup.ok ? entry.lookup.reading.amount : 0;
+        };
+        ownOpening =
+          Math.round(
+            (openingBalance +
+              change.added.reduce((sum, id) => sum + heldThen(id), 0) -
+              change.removed.reduce((sum, id) => sum + heldThen(id), 0)) *
+              100,
+          ) / 100;
+        openingBalance = ownOpening;
+      }
     } else {
       const priorKey = previousMonthKey(next.monthKey);
       const [priorYear, priorMonth] = monthKeyParts(priorKey);
@@ -170,6 +224,8 @@ export async function autoCloseMonths(
         closing_balance: closing.total,
         observed_on: closesOn,
         balance_source: "bank",
+        bank_accounts: summed,
+        opening_balance: ownOpening,
       },
       { onConflict: "user_id,month" },
     );
