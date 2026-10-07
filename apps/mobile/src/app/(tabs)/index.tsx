@@ -6,7 +6,6 @@ import { ArrivedCharges } from "@/components/ArrivedCharges";
 import { MonthPicker } from "@/components/MonthPicker";
 import { MonthRead } from "@/components/MonthRead";
 import { PurchasesToConfirm } from "@/components/PurchasesToConfirm";
-import { DcaMonthCard } from "@/components/DcaMonthCard";
 import { BankAttentionBanner } from "@/components/bank/BankAttentionBanner";
 import { AttentionRow } from "@/components/bearing/AttentionRow";
 import {
@@ -152,12 +151,6 @@ export default function HomeScreen() {
               </View>
             ) : null}
 
-            {/* And the transfer that pays for those purchases, month by month. */}
-            {data.dca ? (
-              <View className="rounded-card border border-border bg-card/70 p-card">
-                <DcaMonthCard month={data.dca} proposal={data.dcaProposal} />
-              </View>
-            ) : null}
 
             <StaggerItem index={next()}>
               <BalanceCard data={data} bank={bank} />
