@@ -1195,9 +1195,9 @@ export const fr: Messages = {
     actionClose: "Faire le bilan",
     actionStart: "Commencer",
     attentionSwallowed: {
-      one: "{count} opération bancaire a été fusionnée par une synchronisation précédente",
+      one: "{count} opération bancaire a été fusionnée avec une opération récurrente",
       other:
-        "{count} opérations bancaires ont été fusionnées par une synchronisation précédente",
+        "{count} opérations bancaires ont été fusionnées avec des opérations récurrentes",
     },
     attentionInbox: {
       one: "{count} opération attend une catégorie",
@@ -1361,7 +1361,7 @@ export const fr: Messages = {
       one: "{count} ligne bancaire a été fusionnée sans vous demander",
       other: "{count} lignes bancaires ont été fusionnées sans vous demander",
     },
-    body: "Une synchronisation plus ancienne a décidé que c'étaient des opérations récurrentes déjà écrites, sur la seule foi d'un montant identique à cinq jours près. Sur un relevé plein de petites sommes rondes, ça ne suffit pas\u00A0: la plupart sont probablement de vraies dépenses qui ne sont jamais arrivées dans votre journal. Les rouvrir les remet dans la boîte de revue, à vous de juger.",
+    body: "Pluclair a décidé que c'étaient des opérations récurrentes déjà écrites — parfois des achats faits chez le courtier, que la banque ne voit jamais — sur la seule foi d'un montant identique à cinq jours près. Sur un relevé plein de petites sommes rondes, ça ne suffit pas\u00A0: la plupart sont probablement de vraies dépenses qui ne sont jamais arrivées dans votre journal. Les rouvrir les remet dans la boîte de revue, à vous de juger.",
     reopenAll: "Toutes les rouvrir",
     reopening: "Réouverture…",
     reopened: "Rouvertes",

@@ -2,6 +2,7 @@ import {
   MATCH_WINDOW_DAYS,
   type ExistingLedgerRow,
 } from "@finance/core/bank-feed";
+import { isPurchaseInsideWallet } from "@finance/core/categories";
 import { shiftIsoDate } from "@finance/core/constants";
 
 import type { Db } from "./client";
@@ -24,7 +25,7 @@ export async function ledgerRowsAround(
     db
       .from("transactions")
       .select(
-        "id, occurred_on, amount, recurring_template_id, categories!inner(type)",
+        "id, occurred_on, amount, recurring_template_id, category_id, categories!inner(type, counts_toward_summary)",
       )
       .eq("user_id", userId)
       .gte("occurred_on", shiftIsoDate(isoDate, -MATCH_WINDOW_DAYS))
@@ -48,6 +49,8 @@ export async function ledgerRowsAround(
     amount: Number(row.amount),
     isIncome: row.categories.type === "income",
     fromRecurringTemplate: row.recurring_template_id !== null,
+    categoryId: row.category_id,
+    insideWallet: isPurchaseInsideWallet(row.categories),
     // A row the feed already answers for cannot also be the thing a second
     // bank row duplicates.
     alreadyClaimed: claimedIds.has(row.id),

@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   AUTO_MERCHANT_THRESHOLD,
   decide,
+  findLedgerMatch,
   indexCategoriesByName,
   planFeed,
   toCandidate,
@@ -373,6 +374,8 @@ describe("not recording the same movement twice", () => {
     isIncome: false,
     fromRecurringTemplate: true,
     alreadyClaimed: false,
+    categoryId: "cat-groceries",
+    insideWallet: false,
     ...overrides,
   });
 
@@ -419,6 +422,28 @@ describe("not recording the same movement twice", () => {
     });
 
     expect(decision).not.toMatchObject({ why: "possible-duplicate" });
+  });
+
+  it("never takes a bank row for a purchase made at the broker", () => {
+    // A DCA PEA is bought with money already at the broker: the bank never
+    // sees it, so a debit of the same amount is something else.
+    const decision = decide(toCandidate(bank(), { locale: "en" })!, {
+      ...opts,
+      existing: [ledger({ insideWallet: true })],
+    });
+
+    expect(decision).not.toMatchObject({ why: "possible-duplicate" });
+  });
+
+  it("files under a category only against a row in that category", () => {
+    const candidate = toCandidate(bank(), { locale: "en" })!;
+    const row = ledger({ fromRecurringTemplate: false });
+    expect(
+      findLedgerMatch(candidate, [row], { categoryId: "cat-restaurants" }),
+    ).toBeNull();
+    expect(
+      findLedgerMatch(candidate, [row], { categoryId: "cat-groceries" }),
+    ).toBe(row);
   });
 
   it("asks about something entered by hand too", () => {

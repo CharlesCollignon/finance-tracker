@@ -220,14 +220,50 @@ export function countPendingFeedItems(db: Db, userId: string): Promise<number> {
   return countFeed(db, userId, (query) => query.eq("status", "pending"));
 }
 
-/** How many bank rows an earlier sync merged away without asking. */
-export function countSwallowedFeedItems(
+/**
+ * How many bank rows were merged into a transaction already there on the
+ * strength of a matching amount alone: those an earlier sync merged without
+ * asking, and those filed against a purchase made at the broker
+ * (`bankRowsFiledAgainstPurchases`).
+ */
+export async function countSwallowedFeedItems(
   db: Db,
   userId: string,
 ): Promise<number> {
-  return countFeed(db, userId, (query) =>
-    query.eq("decided_by", "match:recurring"),
-  );
+  const [merged, againstPurchases] = await Promise.all([
+    countFeed(db, userId, (query) => query.eq("decided_by", "match:recurring")),
+    bankRowsFiledAgainstPurchases(db, userId),
+  ]);
+  return merged + againstPurchases.length;
+}
+
+/**
+ * Bank rows filed against a purchase inside a wallet — a DCA PEA bought at
+ * the broker — as a copy of it (`match:ledger`) or judged one when asked
+ * (`review:possible-duplicate`). No bank movement is such a purchase: the
+ * transfer that funded it was. Until October 2026 a 12 € lunch filed near a
+ * 12 € DCA became the DCA, and the lunch was never recorded.
+ */
+export async function bankRowsFiledAgainstPurchases(
+  db: Db,
+  userId: string,
+): Promise<string[]> {
+  const { data, error } = await db
+    .from("bank_feed_items")
+    .select(
+      "id, transactions!inner(categories!inner(type, counts_toward_summary))",
+    )
+    .eq("user_id", userId)
+    .in("decided_by", ["match:ledger", "review:possible-duplicate"])
+    .eq("transactions.categories.type", "investment")
+    .eq("transactions.categories.counts_toward_summary", false);
+  if (error) {
+    if (isMissingSchema(error)) {
+      return [];
+    }
+    throw error;
+  }
+  return (data ?? []).map((row) => row.id);
 }
 
 /**

@@ -193,8 +193,8 @@ export function toCandidate(
  * A transaction the ledger already holds, narrowed to what matching needs.
  *
  * The feed is not the only thing that knows about a debit. A recurring
- * template predicts one — the card fee, the rent, the DCA — and applying it
- * writes the row before the bank ever reports it. Importing the bank's copy
+ * template predicts one — the card fee, the rent — and applying it writes the
+ * row before the bank ever reports it. Importing the bank's copy
  * on top would record the money twice and, worse, would make the month close
  * say the account holds less than the ledger allows.
  */
@@ -209,6 +209,16 @@ export interface ExistingLedgerRow {
   fromRecurringTemplate: boolean;
   /** A feed row already claims this one; it cannot answer for a second. */
   alreadyClaimed: boolean;
+  /** Its category, for a row the user files under one. */
+  categoryId: string;
+  /**
+   * A purchase inside a wallet (`isPurchaseInsideWallet`) — a DCA PEA bought
+   * at the broker. No bank movement is ever one: the transfer that funded it
+   * was. A 12 € DCA and a 12 € lunch three days apart look alike to amount
+   * and date, and pairing them swallowed the lunch and taught the app the
+   * DCA's wallet was debited from the account.
+   */
+  insideWallet: boolean;
 }
 
 /**
@@ -228,11 +238,16 @@ function daysBetween(left: string, right: string): number {
  * The ledger row this bank row is probably a copy of.
  *
  * Amount must agree to the cent — a near-miss is a different purchase, not a
- * rounding difference — and the nearest date within the window wins.
+ * rounding difference — and the nearest date within the window wins. Never
+ * a purchase inside a wallet, which no bank movement is. Filed by the user
+ * under a category (`categoryId`), only a row in that category: the coffee
+ * typed by hand under Restaurants is the one filed under Restaurants, and a
+ * row they say is something else is something else.
  */
 export function findLedgerMatch(
   candidate: BankFeedCandidate,
   existing: readonly ExistingLedgerRow[],
+  { categoryId }: { categoryId?: string } = {},
 ): ExistingLedgerRow | null {
   const amount = Number(candidate.amount);
   const wantsIncome = candidate.direction === "in";
@@ -241,7 +256,12 @@ export function findLedgerMatch(
   let bestDistance = Infinity;
 
   for (const row of existing) {
-    if (row.alreadyClaimed || row.isIncome !== wantsIncome) {
+    if (
+      row.alreadyClaimed ||
+      row.insideWallet ||
+      row.isIncome !== wantsIncome ||
+      (categoryId !== undefined && row.categoryId !== categoryId)
+    ) {
       continue;
     }
     if (Math.abs(row.amount - amount) > 0.009) {
