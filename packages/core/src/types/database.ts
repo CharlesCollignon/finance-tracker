@@ -61,6 +61,12 @@ export type AiProvider = "openrouter";
 export type BankConnectionStatus =
   "active" | "expired" | "paused" | "revoked" | "error";
 
+/**
+ * What a bank account is to the user: Courant, Épargne or Ne pas suivre.
+ * Null on a row means not decided yet, which is followed as nothing.
+ */
+export type BankAccountRole = "spending" | "savings" | "ignored";
+
 export type { Json } from "./database.generated";
 
 type Generated = GeneratedDatabase["public"];
@@ -100,6 +106,7 @@ type NarrowTable<
 interface Narrowed {
   ai_connections: { provider: AiProvider };
   ai_connect_flows: { mode: "redirect" | "app" };
+  bank_accounts: { role: BankAccountRole };
   bank_connections: { status: BankConnectionStatus };
   bank_feed_items: {
     direction: "in" | "out";
