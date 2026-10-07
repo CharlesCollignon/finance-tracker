@@ -1445,13 +1445,6 @@ export const fr: Messages = {
       "Après ce qui doit encore partir, et ce qui doit encore arriver.",
   },
 
-  cashAccounts: {
-    noneTicked:
-      "Rien n'est coché\u00A0: le bilan des mois se fait donc encore à la main.",
-    autoCloses:
-      "Le bilan de chaque mois se fait de lui-même une fois que le relevé couvre le jour où il est lu. Un mois dont les comptes cochés ne peuvent pas tous être lus attend, plutôt que de deviner.",
-  },
-
   monthCloseHistory: {
     title: "Bilans des mois",
     normalMonthCost:
@@ -2259,8 +2252,6 @@ export const fr: Messages = {
     importTitle: "Import de votre historique",
     importBody:
       "Gardez cette page ouverte. Si vous la quittez, l'import reprend là où il s'est arrêté la prochaine fois.",
-    importChooseAccounts:
-      "Cochez ci-dessous les comptes que vous utilisez pour dépenser\u00A0: leur historique arrive ensuite.",
     importAccountDone: { one: "{count} ligne", other: "{count} lignes" },
     importDone: "Votre historique est là.",
     reviewCta: { one: "Revoir {count} ligne", other: "Revoir {count} lignes" },
@@ -2292,9 +2283,6 @@ export const fr: Messages = {
       "open-banking.io l'a mise en pause jusqu'à ce que son portefeuille soit approvisionné.",
     errorTitle: "Votre banque n'a pas pu être jointe",
     errorBody: "Nouvel essai à la prochaine synchronisation.",
-    accounts: "Comptes",
-    accountsBody:
-      "Choisissez les comptes qui contiennent votre argent courant. Leur solde est celui affiché dans Le point.",
     disconnect: "Déconnecter",
     disconnectTitle: "Déconnecter votre banque\u00A0?",
     disconnectBody:

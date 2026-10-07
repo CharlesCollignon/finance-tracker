@@ -5,7 +5,6 @@ import {
   Pressable,
   RefreshControl,
   ScrollView,
-  Switch,
   View,
 } from "react-native";
 import { useRouter } from "expo-router";
@@ -16,12 +15,13 @@ import {
   consentIsCurrent,
 } from "@finance/core/bank-consent";
 import { formatShortDate } from "@finance/core/constants";
+import { awaitingRole } from "@finance/core/bank-accounts";
 import { resolveMessage } from "@finance/core/i18n/t";
-import type { BankAccount } from "@finance/core/types/database";
 
+import { BankAccountsSection } from "@/components/bank/BankAccountsSection";
 import { BankImport } from "@/components/bank/BankImport";
 import { ConnectBankSheet } from "@/components/bank/ConnectBankSheet";
-import { PrivateAmount } from "@/components/PrivateAmount";
+import { NewAccountsCard } from "@/components/bank/NewAccountsCard";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Screen } from "@/components/ui/Screen";
@@ -38,10 +38,9 @@ import {
 } from "@/lib/bank-connect";
 import { cn } from "@/lib/cn";
 import { hapticLight, hapticSuccess } from "@/lib/haptics";
-import { setAccountCountsAsCash } from "@/lib/mutations";
 import { getBankAccounts } from "@/lib/queries";
+import { getSavingsState } from "@/lib/savings-accounts";
 import { useAuth } from "@/providers/AuthProvider";
-import { useFormatCurrency } from "@/providers/CurrencyProvider";
 import { useLocale, useT } from "@/providers/LocaleProvider";
 import { useToast } from "@/providers/ToastProvider";
 import { ICON } from "@/theme/tokens";
@@ -63,16 +62,27 @@ export default function BankScreen() {
   const { user } = useAuth();
 
   const { bank, reload } = useBankState();
-  const {
-    data: accounts,
-    loading,
-    refreshing,
-    onRefresh,
-  } = useRefreshable(
-    async () => (user ? await getBankAccounts(user.id) : []),
+  const { data, loading, refreshing, onRefresh } = useRefreshable(
+    async () => {
+      if (!user) {
+        return { accounts: [], livrets: [] };
+      }
+      const [accounts, savings] = await Promise.all([
+        getBankAccounts(user.id),
+        getSavingsState(user.id),
+      ]);
+      return {
+        accounts,
+        livrets: savings.accounts.map(({ account }) => ({
+          kind: account.kind,
+          bankAccountId: account.bank_account_id,
+        })),
+      };
+    },
     [user?.id],
-    { reads: ["bank"] },
+    { reads: ["bank", "accounts"] },
   );
+  const accounts = data?.accounts ?? null;
 
   const [connectOpen, setConnectOpen] = useState(false);
   const [disconnectOpen, setDisconnectOpen] = useState(false);
@@ -102,13 +112,35 @@ export default function BankScreen() {
         .map((account) => account.provider_account_id),
     [accounts],
   );
-  // The first import, or a current account whose history is not in yet —
-  // one ticked since, or at a bank added since. Kept on screen once shown,
-  // so the walk's last word, what is left to review, outlives the reload
-  // that finishing it causes.
+  const awaiting = useMemo(() => awaitingRole(accounts ?? []), [accounts]);
+  // A current account whose history is not in yet — of a first connection,
+  // one made current since, or at a bank added since — or a first import
+  // that has not yet found what to ask about. Not while accounts wait for
+  // their role: nothing of theirs comes in before, and the question is the
+  // new-accounts card's. Kept on screen once shown, so the walk's last word,
+  // what is left to review, outlives the reload that finishing it causes.
   const needsImport =
     syncing &&
-    ((live && connection.backfilled_at === null) || waiting.length > 0);
+    (waiting.length > 0 ||
+      (live && connection.backfilled_at === null && awaiting.length === 0));
+  // The consent the reminder counts down to is the earliest among followed
+  // banks; with more than one bank, the status says which.
+  const consentBank = useMemo(() => {
+    const followed = (accounts ?? []).filter(
+      (account) =>
+        (account.role === "spending" || account.role === "savings") &&
+        account.bank_name,
+    );
+    if (new Set(followed.map((account) => account.bank_name)).size < 2) {
+      return null;
+    }
+    const due = connection?.consent_valid_until?.slice(0, 10);
+    return (
+      followed.find(
+        (account) => account.consent_valid_until?.slice(0, 10) === due,
+      )?.bank_name ?? null
+    );
+  }, [accounts, connection?.consent_valid_until]);
   const [importShown, setImportShown] = useState(needsImport);
   if (needsImport && !importShown) {
     setImportShown(true);
@@ -171,16 +203,23 @@ export default function BankScreen() {
           {syncing ? (
             <StatusCard
               bank={bank}
+              consentBank={consentBank}
               ownerCredentials={ownerCredentials}
               onReplace={bank.available ? () => setConnectOpen(true) : null}
             />
           ) : null}
 
+          {syncing && awaiting.length > 0 ? (
+            <NewAccountsCard accounts={awaiting} />
+          ) : null}
+
           {syncing && importShown ? <BankImport waiting={waiting} /> : null}
 
-          {accounts && accounts.length > 0 ? (
-            <AccountsCard accounts={accounts} />
-          ) : null}
+          <BankAccountsSection
+            accounts={accounts ?? []}
+            livrets={data?.livrets ?? []}
+            onAddBank={null}
+          />
 
           {live ? (
             <Button
@@ -362,10 +401,13 @@ function ProblemCard({
 
 function StatusCard({
   bank,
+  consentBank,
   ownerCredentials,
   onReplace,
 }: {
   bank: BankState;
+  /** The bank whose consent ends first, when the accounts say. */
+  consentBank: string | null;
   ownerCredentials: boolean;
   /** Opens the upload for a new file; null where setup is not offered. */
   onReplace: (() => void) | null;
@@ -415,7 +457,12 @@ function StatusCard({
             style={{ borderColor: colors.warning }}
           >
             <Text className="text-sm">
-              {t("bankConnect.consentSoon", { date: consentDate })}
+              {consentBank
+                ? t("bankConnect.consentSoonAt", {
+                    bank: consentBank,
+                    date: consentDate,
+                  })
+                : t("bankConnect.consentSoon", { date: consentDate })}
             </Text>
             {/* Renewed at open-banking.io, where the consent was given: the
                 file Pluclair holds does not change. */}
@@ -428,7 +475,12 @@ function StatusCard({
           </View>
         ) : (
           <Text variant="muted" className="text-sm">
-            {t("bankConnect.consentUntil", { date: consentDate })}
+            {consentBank
+              ? t("bankConnect.consentUntilAt", {
+                  bank: consentBank,
+                  date: consentDate,
+                })
+              : t("bankConnect.consentUntil", { date: consentDate })}
           </Text>
         )
       ) : null}
@@ -441,91 +493,6 @@ function StatusCard({
           onPress={onReplace}
         />
       ) : null}
-    </Card>
-  );
-}
-
-/**
- * Which accounts hold spending money, and the tick that says so.
- *
- * On the phone now that the phone can connect a bank by itself: someone who
- * never opens the web app still has to say which account is the one they
- * spend from, or the Bearing's balance has nothing to read. The same column
- * the web's card writes, through the user's own row policy.
- */
-function AccountsCard({ accounts }: { accounts: BankAccount[] }) {
-  const t = useT();
-  const colors = useThemeColors();
-  const formatMoney = useFormatCurrency();
-  const { user } = useAuth();
-  const { toast } = useToast();
-  const [pending, setPending] = useState(false);
-  const counted = accounts.filter((account) => account.counts_as_cash).length;
-
-  async function toggle(account: BankAccount, next: boolean) {
-    if (!user || pending) {
-      return;
-    }
-    void hapticLight();
-    setPending(true);
-    const result = await setAccountCountsAsCash(
-      account.provider_account_id,
-      next,
-    );
-    setPending(false);
-    if (result.error) {
-      toast(result.error, "error");
-    }
-  }
-
-  return (
-    <Card className="gap-3">
-      <View className="gap-1">
-        <Text className="text-base font-semibold">
-          {t("bankConnect.accounts")}
-        </Text>
-        <Text variant="muted" className="text-sm">
-          {t("bankConnect.accountsBody")}
-        </Text>
-      </View>
-      <View>
-        {accounts.map((account, index) => (
-          <View
-            key={account.provider_account_id}
-            className={cn(
-              "min-h-14 flex-row items-center gap-3 py-2.5",
-              index < accounts.length - 1 && "border-b border-border",
-            )}
-          >
-            <View className="min-w-0 flex-1 gap-0.5">
-              <Text numberOfLines={1} className="text-sm font-medium">
-                {account.label}
-              </Text>
-              {account.needs_reconnect ? (
-                <Text className="text-xs text-destructive">
-                  {t("bearing.panel.cashAccountsLapsed")}
-                </Text>
-              ) : account.reported_balance !== null ? (
-                <PrivateAmount className="text-xs text-muted-foreground">
-                  {formatMoney(Number(account.reported_balance))}
-                </PrivateAmount>
-              ) : null}
-            </View>
-            <Switch
-              accessibilityLabel={account.label}
-              value={account.counts_as_cash}
-              disabled={pending}
-              trackColor={{ true: colors.primary }}
-              onValueChange={(next) => void toggle(account, next)}
-            />
-          </View>
-        ))}
-      </View>
-      <Text variant="muted" className="text-xs">
-        {counted === 0
-          ? t("cashAccounts.noneTicked")
-          : t("cashAccounts.autoCloses")}
-      </Text>
     </Card>
   );
 }

@@ -2025,19 +2025,6 @@ export const en = {
    * against the unrecorded-spending target.
    */
 
-  /**
-   * `CashAccountsCard`'s own words — the web-only, editable list of which
-   * accounts count as cash. The phone draws the same list read-only inside a
-   * Bearing panel, under `bearing.panel.cashAccounts*`; the heading and the
-   * lapsed-consent line say the same thing there and share those keys, and
-   * only the words unique to being editable live here.
-   */
-  cashAccounts: {
-    noneTicked: "Nothing is ticked, so months are still closed by hand.",
-    autoCloses:
-      "Months close on their own once the statement covers the day they are read on. A month whose ticked accounts cannot all be read waits instead of guessing.",
-  },
-
   /** `RecentOnAccount`'s own words, on both clients. */
 
   /** `StillToCome`'s own words, on both clients. */
@@ -3090,8 +3077,6 @@ export const en = {
     importTitle: "Bringing in your history",
     importBody:
       "Keep this page open. If you leave, it picks up where it stopped next time.",
-    importChooseAccounts:
-      "Tick below the accounts you spend from: their history comes in next.",
     importAccountDone: { one: "{count} entry", other: "{count} entries" },
     importDone: "Your history is in.",
     reviewCta: { one: "Review {count} entry", other: "Review {count} entries" },
@@ -3122,9 +3107,6 @@ export const en = {
     pausedBody: "open-banking.io paused it until its wallet is topped up.",
     errorTitle: "Your bank couldn't be reached",
     errorBody: "It will be tried again at the next sync.",
-    accounts: "Accounts",
-    accountsBody:
-      "Choose which accounts hold your spending money. Their balance is the one on your Overview.",
     disconnect: "Disconnect",
     disconnectTitle: "Disconnect your bank?",
     disconnectBody:

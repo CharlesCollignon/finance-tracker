@@ -23,7 +23,7 @@ import * as decisions from "@finance/data/fulfilment-decisions";
 import * as deletions from "@finance/data/deletions";
 import * as dcaTransfer from "@finance/data/dca-transfer";
 import * as ledger from "@finance/data/ledger";
-import { setBankAccountRole } from "@finance/data/bank-accounts";
+import { fileBankAccount } from "@finance/data/bank-accounts";
 import * as plans from "@finance/data/wallet-plans";
 import * as occurrences from "@finance/data/occurrences";
 import * as recap from "@finance/data/weekly-recap";
@@ -31,6 +31,10 @@ import * as preferences from "@finance/data/preferences";
 import * as aiConnection from "@finance/data/ai-connection";
 import type { NotificationKind } from "@finance/core/notification-kinds";
 import type { ActionResult } from "@finance/core/action-result";
+import type {
+  BankAccountRole,
+  SavingsAccountKind,
+} from "@finance/core/types/database";
 import { supabase } from "@/lib/supabase";
 import type { Locale } from "@finance/core/i18n/locale";
 import { dbError } from "@finance/data/errors";
@@ -547,27 +551,40 @@ export async function dismissRecurringProposal(
 /* ------------------------------------------------- the bank's accounts */
 
 /**
- * Whether one of the bank's accounts is a current account — its money
- * counted in the balance Le point carries and the month close reads, its
- * movements in the ledger — or no longer followed. The web's
- * `setAccountCountsAsCash`; the phone writes it through Supabase like every
- * other mutation here, rather than from the screen that shows the switch.
+ * Say what bank accounts are — one, from its row on the Bank screen, or
+ * every new one at once, from « C'est bon ». The web's `fileBankAccounts`:
+ * as Épargne, the Livret of that kind on Placements reads the account, made
+ * under `livretName` when there is none. What comes back names the Livrets
+ * that already read another account, for the screen to say so.
+ *
+ * Written through Supabase like every mutation here, so every screen that
+ * reads accounts or Livrets hears of it. The months this makes closable are
+ * closed by the next sync, which runs on the server.
  */
-export async function setAccountCountsAsCash(
-  providerAccountId: string,
-  counts: boolean,
-): Promise<ActionResult> {
+export async function fileBankAccounts(
+  filings: {
+    accountId: string;
+    role: BankAccountRole;
+    savingsKind: SavingsAccountKind | null;
+    livretName?: string;
+  }[],
+): Promise<ActionResult<{ taken: string[] }>> {
   const userId = await requireUserId();
   if (!userId) {
     return { error: "errors.notAuthenticated" };
   }
 
-  return setBankAccountRole(
-    supabase,
-    userId,
-    providerAccountId,
-    counts ? "spending" : "ignored",
-  );
+  const taken: string[] = [];
+  for (const filing of filings) {
+    const result = await fileBankAccount(supabase, userId, filing);
+    if (result.error !== undefined) {
+      return { error: result.error };
+    }
+    if (result.livret === "taken" && filing.livretName) {
+      taken.push(filing.livretName);
+    }
+  }
+  return { success: true, taken };
 }
 
 /* ------------------------------------------------------ the week's recap */
