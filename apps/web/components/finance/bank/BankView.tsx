@@ -10,6 +10,7 @@ import {
   Receipt,
   WarningCircle,
 } from "@phosphor-icons/react";
+import { awaitingRole } from "@finance/core/bank-accounts";
 import { bankAttention } from "@finance/core/bank-attention";
 import { BANK_CONSENT_VERSION } from "@finance/core/bank-consent";
 import { resolveMessage } from "@finance/core/i18n/t";
@@ -19,10 +20,15 @@ import type {
   BankConnectionStatus,
 } from "@finance/core/types/database";
 import { Button, buttonVariants } from "@/components/ui/Button";
-import { CashAccountsCard } from "@/components/finance/CashAccountsCard";
 import { MobileSheet } from "@/components/ui/MobileSheet";
 import { useToast } from "@/components/layout/ToastProvider";
+import { AddBankSheet } from "@/components/finance/bank/AddBankSheet";
+import {
+  BankAccountsSection,
+  type LivretLink,
+} from "@/components/finance/bank/BankAccountsSection";
 import { BankImport } from "@/components/finance/bank/BankImport";
+import { NewAccountsCard } from "@/components/finance/bank/NewAccountsCard";
 import { ConnectBankSheet } from "@/components/finance/bank/ConnectBankSheet";
 import { confirmBankConsent, disconnectBank } from "@/lib/actions/bank-connect";
 import { GLASS_CARD, GLASS_HERO } from "@/lib/glass";
@@ -48,6 +54,8 @@ export interface BankViewProps {
   /** The owner still on the deployment's own credentials: syncing, no row. */
   ownerCredentials: boolean;
   accounts: BankAccount[];
+  /** Which Livret on Placements reads which bank account. */
+  livrets: LivretLink[];
   /** Open the upload on arrival (`?setup=1`). */
   startWithSetup?: boolean;
 }
@@ -61,11 +69,13 @@ export function BankView({
   connection,
   ownerCredentials,
   accounts,
+  livrets,
   startWithSetup = false,
 }: BankViewProps) {
   const t = useT();
   const [connectOpen, setConnectOpen] = useState(startWithSetup);
   const [disconnectOpen, setDisconnectOpen] = useState(false);
+  const [addOpen, setAddOpen] = useState(false);
   const live = connection !== null && connection.status !== "revoked";
   const syncing = ownerCredentials || (live && connection.status === "active");
   const waiting = useMemo(
@@ -80,12 +90,35 @@ export function BankView({
         .map((account) => account.provider_account_id),
     [accounts],
   );
-  // The first import, or a current account whose history is not in yet —
-  // one ticked since, or at a bank added since. Kept on screen once shown,
-  // so the walk's last word, what is left to review, outlives the redraw
-  // that finishing it causes.
+  const awaiting = useMemo(() => awaitingRole(accounts), [accounts]);
+  // The consent the reminder counts down to is the earliest among followed
+  // banks; with more than one bank, the line says which.
+  const consentBank = useMemo(() => {
+    const followed = accounts.filter(
+      (account) =>
+        (account.role === "spending" || account.role === "savings") &&
+        account.bank_name,
+    );
+    if (new Set(followed.map((account) => account.bank_name)).size < 2) {
+      return null;
+    }
+    const due = connection?.consentValidUntil?.slice(0, 10);
+    return (
+      followed.find(
+        (account) => account.consent_valid_until?.slice(0, 10) === due,
+      )?.bank_name ?? null
+    );
+  }, [accounts, connection?.consentValidUntil]);
+  // A current account whose history is not in yet — of a first connection,
+  // one made current since, or at a bank added since — or a first import
+  // that has not yet found what to ask about. Not while accounts wait for
+  // their role: nothing of theirs comes in before, and the question is the
+  // new-accounts card's. Kept on screen once shown, so the walk's last word,
+  // what is left to review, outlives the redraw that finishing it causes.
   const needsImport =
-    syncing && ((live && !connection.backfilled) || waiting.length > 0);
+    syncing &&
+    (waiting.length > 0 ||
+      (live && !connection.backfilled && awaiting.length === 0));
   const [importShown, setImportShown] = useState(needsImport);
   if (needsImport && !importShown) {
     setImportShown(true);
@@ -112,28 +145,23 @@ export function BankView({
       {syncing ? (
         <StatusCard
           connection={connection}
+          consentBank={consentBank}
           ownerCredentials={ownerCredentials}
           onReplace={available ? () => setConnectOpen(true) : null}
         />
       ) : null}
 
+      {syncing && awaiting.length > 0 ? (
+        <NewAccountsCard accounts={awaiting} />
+      ) : null}
+
       {syncing && importShown ? <BankImport waiting={waiting} /> : null}
 
-      {accounts.length > 0 ? (
-        <section
-          className={cn(GLASS_CARD, "flex flex-col gap-3 rounded-card p-card")}
-        >
-          <div>
-            <h2 className="text-base font-semibold">
-              {t("bankConnect.accounts")}
-            </h2>
-            <p className="mt-1 text-sm text-muted-foreground">
-              {t("bankConnect.accountsBody")}
-            </p>
-          </div>
-          <CashAccountsCard accounts={accounts} />
-        </section>
-      ) : null}
+      <BankAccountsSection
+        accounts={accounts}
+        livrets={livrets}
+        onAddBank={syncing ? () => setAddOpen(true) : null}
+      />
 
       {live ? (
         <div className="flex justify-center">
@@ -149,6 +177,7 @@ export function BankView({
       ) : null}
 
       <ConnectBankSheet open={connectOpen} onOpenChange={setConnectOpen} />
+      <AddBankSheet open={addOpen} onOpenChange={setAddOpen} />
       <DisconnectSheet open={disconnectOpen} onOpenChange={setDisconnectOpen} />
     </div>
   );
@@ -321,10 +350,13 @@ function ProblemCard({
 
 function StatusCard({
   connection,
+  consentBank,
   ownerCredentials,
   onReplace,
 }: {
   connection: BankViewProps["connection"];
+  /** The bank whose consent ends first, when the accounts say. */
+  consentBank: string | null;
   ownerCredentials: boolean;
   /** Opens the upload for a new file; null where setup is not offered. */
   onReplace: (() => void) | null;
@@ -375,7 +407,12 @@ function StatusCard({
         renewSoon ? (
           <div className="flex flex-wrap items-center justify-between gap-3 rounded-control border border-warning/40 px-3 py-2.5">
             <p className="text-sm">
-              {t("bankConnect.consentSoon", { date: consentDate })}
+              {consentBank
+                ? t("bankConnect.consentSoonAt", {
+                    bank: consentBank,
+                    date: consentDate,
+                  })
+                : t("bankConnect.consentSoon", { date: consentDate })}
             </p>
             {/* Renewed at open-banking.io, where the consent was given: the
                 file Pluclair holds does not change. */}
@@ -391,7 +428,12 @@ function StatusCard({
           </div>
         ) : (
           <p className="text-sm text-muted-foreground">
-            {t("bankConnect.consentUntil", { date: consentDate })}
+            {consentBank
+              ? t("bankConnect.consentUntilAt", {
+                  bank: consentBank,
+                  date: consentDate,
+                })
+              : t("bankConnect.consentUntil", { date: consentDate })}
           </p>
         )
       ) : null}

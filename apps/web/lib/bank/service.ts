@@ -9,6 +9,7 @@ import {
   credentialStore,
   type CredentialsProblem,
 } from "@/lib/bank/credentials";
+import { discoverAccounts } from "@/lib/bank/discover";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 /** Each refusal, in the words both apps show. */
@@ -57,9 +58,16 @@ export async function connectUserBankFile(
       text,
       { version: BANK_CONSENT_VERSION, givenAt: new Date().toISOString() },
     );
-    return "problem" in result
-      ? { error: PROBLEM_MESSAGE[result.problem] }
-      : result;
+    if ("problem" in result) {
+      return { error: PROBLEM_MESSAGE[result.problem] };
+    }
+    // Its accounts recorded straight away, so the Bank page opens on the
+    // question of what each one is rather than on an import with nothing
+    // yet to bring in. A look that fails costs nothing: the page looks again.
+    if (result.outcome === "connected" && result.accounts > 0) {
+      await discoverAccounts(admin, userId);
+    }
+    return result;
   } catch {
     return { error: "bankConnect.saveFailed" };
   }

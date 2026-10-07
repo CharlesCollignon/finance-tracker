@@ -1446,8 +1446,6 @@ export const fr: Messages = {
   },
 
   cashAccounts: {
-    tickHint: "Cochez celles que vous utilisez pour dépenser.",
-    lastRead: "Dernière lecture {when}",
     noneTicked:
       "Rien n'est coché\u00A0: le bilan des mois se fait donc encore à la main.",
     autoCloses:
@@ -2140,6 +2138,59 @@ export const fr: Messages = {
     },
   },
 
+  bankAccounts: {
+    heading: "Vos comptes",
+    body: "Courant\u00A0: ses opérations arrivent dans votre journal et son solde est votre argent pour dépenser. Épargne\u00A0: son solde est celui d'un livret sur Placements. Ne pas suivre\u00A0: rien n'en est importé.",
+    roleGroup: "Ce qu'est {account}",
+    roleSpending: "Courant",
+    roleSavings: "Épargne",
+    roleIgnored: "Ne pas suivre",
+    livretLabel: "Son livret",
+    livretPanel: "Quel livret est-ce\u00A0?",
+    livretTaken: {
+      one: "{names} lit déjà un autre compte\u00A0: choisissez un autre livret pour celui-ci.",
+      other:
+        "{names} lisent déjà d'autres comptes\u00A0: choisissez d'autres livrets pour ceux-ci.",
+    },
+    ignoredBilled: "open-banking.io le facture tant qu'il y est connecté.",
+    otherBank: "Autre banque",
+    consentUntil: "Partagé jusqu'au {date}",
+    consentSoon: "À renouveler avant le {date}",
+    consentEnded:
+      "Consentement terminé\u00A0: à renouveler sur open-banking.io",
+    newTitle: {
+      one: "Un nouveau compte trouvé",
+      other: "{count} nouveaux comptes trouvés",
+    },
+    newBody:
+      "Dites ce qu'est chacun\u00A0: Pluclair n'en importe rien avant. Le plus probable est déjà choisi.",
+    confirm: "C'est bon",
+    confirmed: "Vos comptes sont classés.",
+    bearingLine: {
+      one: "Un nouveau compte attend que vous disiez ce qu'il est.",
+      other:
+        "{count} nouveaux comptes attendent que vous disiez ce qu'ils sont.",
+    },
+    bearingCta: { one: "Le classer", other: "Les classer" },
+    addBank: "Ajouter une banque",
+    addLead:
+      "Votre fichier d'identifiants lit toutes les banques de votre compte open-banking.io\u00A0: inutile d'en déposer un autre.",
+    addStep1Title: "Connectez-la sur open-banking.io",
+    addStep1Body:
+      "Avec l'identification de votre banque, comme la première. Environ 1\u00A0€ par mois par compte en plus, payé à open-banking.io.",
+    addStep2Title: "Revenez ici",
+    addStep2Body:
+      "Pluclair la trouve tout seul et vous demande ce qu'est chaque compte.",
+    addCheck: "Vérifier maintenant",
+    addLooking: "Recherche de vos comptes…",
+    addNothing:
+      "Rien de nouveau pour l'instant. Une fois la banque connectée sur open-banking.io, elle apparaît ici.",
+    addFound: {
+      one: "Un nouveau compte trouvé.",
+      other: "{count} nouveaux comptes trouvés.",
+    },
+  },
+
   bankConnect: {
     sheetTitle: "Connecter votre banque",
     sheetLead:
@@ -2221,6 +2272,9 @@ export const fr: Messages = {
     ownerUpload:
       "Déposez votre fichier d'identifiants pour rattacher cette connexion à votre compte plutôt qu'aux réglages de ce déploiement.",
     ownerUploadCta: "Déposer le fichier",
+    consentUntilAt: "Le consentement chez {bank} court jusqu'au {date}.",
+    consentSoonAt:
+      "Le consentement chez {bank} se termine le {date}. Renouvelez-le sur open-banking.io pour continuer la synchronisation.",
     consentUntil: "Le consentement de votre banque court jusqu'au {date}.",
     consentSoon:
       "Le consentement de votre banque se termine le {date}. Renouvelez-le sur open-banking.io pour continuer la synchronisation.",
@@ -2346,9 +2400,6 @@ export const fr: Messages = {
       wallet: "Placements",
     },
     panel: {
-      cashAccountsHeading: "Quels comptes détiennent vos liquidités",
-      cashAccountsBody:
-        "Faire le bilan d'un mois compare ce que ces comptes détenaient au début et à la fin avec ce que le journal indique.",
       cashAccountsLapsed: "Le consentement a expiré — rien ne peut en être lu",
     },
     spine: {

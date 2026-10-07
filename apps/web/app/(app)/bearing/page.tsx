@@ -2,7 +2,10 @@ import { Suspense } from "react";
 import { redirect } from "next/navigation";
 import { getAuthUser } from "@/lib/auth/get-user";
 import { gatherBearingMonth } from "@/lib/bearing/month";
-import { readBankAttention } from "@/lib/bank/attention";
+import {
+  countAccountsAwaitingRole,
+  readBankAttention,
+} from "@/lib/bank/attention";
 import { shouldInviteToConnect } from "@/lib/bank/invite";
 import { getCurrentMonth, parseMonthParams } from "@finance/core/constants";
 import { PageHeader } from "@/components/layout/PageHeader";
@@ -38,11 +41,14 @@ export default async function BearingPage({ searchParams }: BearingPageProps) {
     params.y && params.m
       ? parseMonthParams(params.y, params.m)
       : getCurrentMonth();
-  const [data, bankInvite, bankAttention] = await Promise.all([
-    gatherBearingMonth(user.id, year, month),
-    shouldInviteToConnect(user.id, "bearing"),
-    readBankAttention(user.id),
-  ]);
+  const [data, bankInvite, bankAttention, awaitingAccounts] = await Promise.all(
+    [
+      gatherBearingMonth(user.id, year, month),
+      shouldInviteToConnect(user.id, "bearing"),
+      readBankAttention(user.id),
+      countAccountsAwaitingRole(user.id),
+    ],
+  );
 
   return (
     <>
@@ -52,6 +58,7 @@ export default async function BearingPage({ searchParams }: BearingPageProps) {
           data={data}
           bankInvite={bankInvite}
           bankAttention={bankAttention}
+          awaitingAccounts={awaitingAccounts}
           // The week is this month's to recap, not a month browsed to.
           recapSlot={
             data.balance.period === "current" ? (
