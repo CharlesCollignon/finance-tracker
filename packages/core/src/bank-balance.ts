@@ -1,3 +1,5 @@
+import type { Key } from "./i18n/t";
+
 /**
  * Reading a past balance off the statement.
  *
@@ -55,6 +57,20 @@ export type BalanceMiss =
    * it was dropped.
    */
   | "day-incomplete";
+
+/**
+ * Why a month close waits on an account: its consent has ended, or what its
+ * statement lacks on the day the close reads.
+ */
+export type CloseWaitReason = "lapsed" | BalanceMiss;
+
+/** Each reason in the words both apps use for it. */
+export const CLOSE_WAIT_REASON_KEYS: Record<CloseWaitReason, Key> = {
+  lapsed: "monthClose.waitLapsed",
+  "no-rows-before": "monthClose.waitNoRows",
+  "no-running-balance": "monthClose.waitNoBalance",
+  "day-incomplete": "monthClose.waitDayIncomplete",
+};
 
 export type BalanceLookup =
   { ok: true; reading: BalanceReading } | { ok: false; reason: BalanceMiss };

@@ -7,7 +7,8 @@ import {
 } from "@finance/core/projection";
 import type { RecurringTemplateWithCategory } from "@finance/core/types/database";
 import { getLocale } from "@/lib/locale";
-import { readCashBalance } from "@/lib/queries/bank-balance";
+import { readCashBalance, readCloseWait } from "@/lib/queries/bank-balance";
+import type { CloseWaitAccount } from "@finance/data/bank-balance";
 import {
   getRecurringTemplates,
   getSavingsReserve,
@@ -61,6 +62,11 @@ export interface PlanBase {
    */
   savingsAccounts: PlanSavingsAccount[];
   closes: MonthCloseOverview;
+  /**
+   * The accounts the month due waits on, when a bank should have closed it
+   * and cannot read one of them. Empty otherwise.
+   */
+  closeWait: CloseWaitAccount[];
   /** The next twelve months, from the recurring templates. */
   projection: ForwardProjection;
   /**
@@ -96,9 +102,14 @@ export async function gatherPlanBase(userId: string): Promise<PlanBase> {
       getNotificationSettings(await createClient(), userId).catch(() => null),
       getFlags(),
     ]);
-  const properties = isFlagOn(flags, "property.track")
-    ? (await getProperties(await createClient(), userId)).properties
-    : null;
+  const [properties, closeWait] = await Promise.all([
+    isFlagOn(flags, "property.track")
+      ? getProperties(await createClient(), userId).then(
+          (read) => read.properties,
+        )
+      : null,
+    readCloseWait(userId, closes.next, today),
+  ]);
 
   return {
     userId,
@@ -119,6 +130,7 @@ export async function gatherPlanBase(userId: string): Promise<PlanBase> {
       categoryId: account.categoryId,
     })),
     closes,
+    closeWait,
     properties,
     projection: buildForwardProjection({
       templates,

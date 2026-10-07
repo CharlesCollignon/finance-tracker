@@ -2,7 +2,13 @@
 
 import { useState, type CSSProperties } from "react";
 import { ArrowRight, ChartBar, Flame, Sparkle } from "@phosphor-icons/react";
-import { formatMonthCompact } from "@finance/core/constants";
+import { CLOSE_WAIT_REASON_KEYS } from "@finance/core/bank-balance";
+import {
+  formatMonthCompact,
+  formatShortDate,
+  lastDayIsoOfMonth,
+} from "@finance/core/constants";
+import type { CloseWaitAccount } from "@finance/data/bank-balance";
 import { monthShort } from "@finance/core/i18n/calendar-names";
 import { closeInvitation, monthWasWon } from "@finance/core/month-close";
 import { MonthCloseSheet } from "@/components/finance/MonthCloseSheet";
@@ -39,9 +45,12 @@ function monthOf(monthKey: string): { year: number; month: number } {
  */
 export function RunCard({
   closes,
+  closeWait = [],
   monthlyCommitted,
 }: {
   closes: MonthCloseOverview;
+  /** The accounts the month due waits on, when the bank should close it. */
+  closeWait?: CloseWaitAccount[];
   monthlyCommitted: number;
 }) {
   const t = useT();
@@ -167,6 +176,30 @@ export function RunCard({
               >
                 {detail}
               </p>
+            ) : null}
+            {/* Why the bank has not closed it: named, so the fix — renewing
+                one bank's consent, as a rule — is obvious. */}
+            {closeWait.length > 0 ? (
+              <div className="mt-2 text-sm text-muted-foreground">
+                <p>
+                  {t("monthClose.waitBody", {
+                    month: next.label,
+                    date: formatShortDate(
+                      lastDayIsoOfMonth(next.year, next.month),
+                      locale,
+                    ),
+                  })}
+                </p>
+                <ul className="mt-1 flex flex-col gap-0.5">
+                  {closeWait.map((account) => (
+                    <li key={account.name}>
+                      <span className="text-foreground">{account.name}</span>
+                      {" · "}
+                      {t(CLOSE_WAIT_REASON_KEYS[account.reason])}
+                    </li>
+                  ))}
+                </ul>
+              </div>
             ) : null}
           </div>
           <Button

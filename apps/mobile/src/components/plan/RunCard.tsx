@@ -16,9 +16,16 @@ import type {
   CloseHistorySummary,
 } from "@finance/core/month-close";
 
+import { CLOSE_WAIT_REASON_KEYS } from "@finance/core/bank-balance";
+import {
+  formatShortDate,
+  lastDayIsoOfMonth,
+} from "@finance/core/constants";
+import type { CloseWaitAccount } from "@finance/data/bank-balance";
+
 import { Button } from "@/components/ui/Button";
 import { Text } from "@/components/ui/Text";
-import { useT } from "@/providers/LocaleProvider";
+import { useLocale, useT } from "@/providers/LocaleProvider";
 import { ICON } from "@/theme/tokens";
 import { useThemeColors } from "@/theme/useThemeColors";
 
@@ -32,14 +39,18 @@ import { PlanCard } from "./PlanCard";
 export function RunCard({
   summary,
   next,
+  closeWait = [],
   onOpen,
 }: {
   summary: CloseHistorySummary;
   /** The month waiting to be closed, if one is. */
   next: CloseableMonth | null;
+  /** The accounts it waits on, when the bank should close it. */
+  closeWait?: CloseWaitAccount[];
   onOpen: () => void;
 }) {
   const t = useT();
+  const locale = useLocale();
   const colors = useThemeColors();
   const alive = summary.streak > 0;
 
@@ -92,6 +103,28 @@ export function RunCard({
       {prompt ? (
         <View className="gap-3 rounded-control border border-border p-3">
           <Text className="text-sm">{prompt}</Text>
+          {/* Why the bank has not closed it: named, so the fix — renewing
+              one bank's consent, as a rule — is obvious. */}
+          {next && closeWait.length > 0 ? (
+            <View className="gap-1">
+              <Text variant="muted" className="text-sm">
+                {t("monthClose.waitBody", {
+                  month: next.label,
+                  date: formatShortDate(
+                    lastDayIsoOfMonth(next.year, next.month),
+                    locale,
+                  ),
+                })}
+              </Text>
+              {closeWait.map((account) => (
+                <Text key={account.name} variant="muted" className="text-sm">
+                  <Text className="text-sm">{account.name}</Text>
+                  {" · "}
+                  {t(CLOSE_WAIT_REASON_KEYS[account.reason])}
+                </Text>
+              ))}
+            </View>
+          ) : null}
           <Button
             label={t("monthClose.closeTheMonth")}
             variant="pill"

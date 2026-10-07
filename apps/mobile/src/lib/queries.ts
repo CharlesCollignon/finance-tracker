@@ -31,6 +31,7 @@ import {
   type FulfilmentProposal,
 } from "@finance/core/recurring-fulfilment";
 import {
+  type CloseableMonth,
   type MonthCloseResult,
   type RecordedCashFlows,
 } from "@finance/core/month-close";
@@ -383,6 +384,15 @@ export function getBankAccounts(userId: string): Promise<BankAccount[]> {
 }
 
 /** What the counted accounts held at the end of a given day. */
+/** What the month a close is due for waits on, if a bank should close it. */
+export function readCloseWait(
+  userId: string,
+  next: CloseableMonth | null,
+  today: string,
+): Promise<bankBalance.CloseWaitAccount[]> {
+  return bankBalance.readCloseWait(supabase, userId, next, today);
+}
+
 export function readCashBalance(
   userId: string,
   date: string,

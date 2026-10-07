@@ -818,6 +818,12 @@ export const fr: Messages = {
       "Un mois normal chez vous tourne autour de {amount} que l'application ne voit jamais.",
     inviteBare:
       "Un seul solde, et l'application peut calculer ce qu'elle n'a jamais vu.",
+    waitBody:
+      "{month} ne se fait pas tout seul\u00A0: le solde de ces comptes au {date} ne peut pas être lu.",
+    waitLapsed: "consentement terminé, à renouveler sur open-banking.io",
+    waitNoRows: "pas encore de relevé à cette date",
+    waitNoBalance: "la banque ne donne pas le solde après chaque opération",
+    waitDayIncomplete: "la journée n'est pas complète dans le relevé",
     closeTheMonth: "Faire le bilan du mois",
     filledFromBank:
       "Rempli depuis votre banque. Modifiez-le si le jour de lecture n'est pas aujourd'hui.",

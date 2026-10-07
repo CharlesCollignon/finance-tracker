@@ -357,6 +357,7 @@ export default function PlanningScreen() {
               <RunCard
                 summary={closes.summary}
                 next={closes.next}
+                closeWait={data?.closeWait}
                 onOpen={() => {
                   if (prompt) {
                     setClosing(prompt);

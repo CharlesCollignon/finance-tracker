@@ -1,5 +1,6 @@
 import { balanceAsOf, type CashBalance } from "@finance/core/bank-balance";
 import type { BankAccount, Database } from "@finance/core/types/database";
+import type { CloseableMonth } from "@finance/core/month-close";
 import * as bankBalance from "@finance/data/bank-balance";
 import { createClient } from "@/lib/supabase/server";
 import type { SupabaseClient } from "@supabase/supabase-js";
@@ -46,6 +47,15 @@ export async function readAccountBalances(
     accounts,
     date,
   );
+}
+
+/** What the month a close is due for waits on, if a bank should close it. */
+export async function readCloseWait(
+  userId: string,
+  next: CloseableMonth | null,
+  today: string,
+): Promise<bankBalance.CloseWaitAccount[]> {
+  return bankBalance.readCloseWait(await createClient(), userId, next, today);
 }
 
 export { balanceAsOf };

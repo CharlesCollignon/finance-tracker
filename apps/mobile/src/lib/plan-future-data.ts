@@ -25,8 +25,10 @@ import {
   getSavingsReserve,
   getWalletPortfolio,
   readCashBalance,
+  readCloseWait,
   type MonthCloseOverview,
 } from "@/lib/queries";
+import type { CloseWaitAccount } from "@finance/data/bank-balance";
 import { supabase } from "@/lib/supabase";
 import {
   getSavingsState,
@@ -54,6 +56,11 @@ export interface PlanBase {
   /** The savings accounts the user declared, with today's balances. */
   savings: SavingsAccountView[];
   closes: MonthCloseOverview;
+  /**
+   * The accounts the month due waits on, when a bank should have closed it
+   * and cannot read one of them. Empty otherwise.
+   */
+  closeWait: CloseWaitAccount[];
   /** The next twelve months, from the recurring templates. */
   projection: ForwardProjection;
 }
@@ -74,6 +81,7 @@ export async function gatherPlanBase(
     readCashBalance(userId, today),
     getSavingsState(userId),
   ]);
+  const closeWait = await readCloseWait(userId, closes.next, today);
 
   return {
     year,
@@ -86,6 +94,7 @@ export async function gatherPlanBase(
     savingsReserve,
     savings: savings.accounts,
     closes,
+    closeWait,
     projection: buildForwardProjection({
       templates,
       year,

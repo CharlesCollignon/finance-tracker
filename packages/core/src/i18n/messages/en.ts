@@ -1143,6 +1143,12 @@ export const en = {
       "A normal month for you is around {amount} the app never sees.",
     inviteBare: "One balance, and the app can work out what it never saw.",
     /** The card's own button, which names no month — the heading above it does. */
+    waitBody:
+      "{month} doesn't close on its own: these accounts' balance on {date} can't be read.",
+    waitLapsed: "consent ended, renew it at open-banking.io",
+    waitNoRows: "no statement yet for that day",
+    waitNoBalance: "the bank doesn't give the balance after each movement",
+    waitDayIncomplete: "that day isn't complete in the statement",
     closeTheMonth: "Close the month",
     filledFromBank:
       "Filled in from your bank. Change it if the reading day differs from today.",
