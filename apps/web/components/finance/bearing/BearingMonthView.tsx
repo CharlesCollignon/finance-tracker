@@ -29,7 +29,7 @@ import { amountSign } from "@finance/core/amount-sign";
 import { AttentionRow } from "@/components/finance/bearing/AttentionRow";
 import { ArrivedCharges } from "@/components/finance/ArrivedCharges";
 import { PurchasesToConfirm } from "@/components/finance/PurchasesToConfirm";
-import { DcaMonthCard } from "@/components/finance/DcaMonthCard";
+import { DcaStrip } from "@/components/finance/DcaStrip";
 import { BankAttentionBanner } from "@/components/finance/bank/BankAttentionBanner";
 import { ConnectBankInvite } from "@/components/finance/bank/ConnectBankInvite";
 import { BalanceCurve } from "@/components/finance/bearing/BalanceCurve";
@@ -112,13 +112,6 @@ export function BearingMonthView({
       {data.purchases.length > 0 ? (
         <section className={cn(GLASS_CARD, "rounded-card p-card")}>
           <PurchasesToConfirm purchases={data.purchases} />
-        </section>
-      ) : null}
-
-      {/* And the transfer that pays for those purchases, month by month. */}
-      {data.dca ? (
-        <section className={cn(GLASS_CARD, "rounded-card p-card")}>
-          <DcaMonthCard month={data.dca} proposal={data.dcaProposal} />
         </section>
       ) : null}
 
@@ -471,6 +464,12 @@ function BalanceCard({
             </span>
           ) : null}
         </div>
+      ) : null}
+
+      {/* The transfer to the broker the DCAs need, one line under the
+          curve it takes money out of. */}
+      {data.dca ? (
+        <DcaStrip month={data.dca} proposal={data.dcaProposal} />
       ) : null}
 
       {/* Where the real balance would be: the strongest place to offer it.

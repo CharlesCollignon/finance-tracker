@@ -32,6 +32,7 @@ import { CategoryIcon } from "@/components/CategoryIcon";
 import { PrivateAmount } from "@/components/PrivateAmount";
 import { ConnectBankInvite } from "@/components/bank/ConnectBankInvite";
 import { BalanceCurve } from "@/components/bearing/BalanceCurve";
+import { DcaStrip } from "@/components/bearing/DcaStrip";
 import { Button } from "@/components/ui/Button";
 import { Text } from "@/components/ui/Text";
 import type { BankState } from "@/hooks/useBankState";
@@ -409,6 +410,12 @@ export function BalanceCard({
             </Pill>
           ) : null}
         </View>
+      ) : null}
+
+      {/* The transfer to the broker the DCAs need, one line under the
+          curve it takes money out of. */}
+      {data.dca ? (
+        <DcaStrip month={data.dca} proposal={data.dcaProposal} />
       ) : null}
 
       {/* Where the real balance would be: the strongest place to offer it.
