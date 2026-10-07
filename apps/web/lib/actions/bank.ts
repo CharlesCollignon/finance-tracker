@@ -16,6 +16,7 @@ import { asUser } from "@/lib/actions/as-user";
 import { autoCloseMonths } from "@/lib/bank/auto-close";
 import { syncBankFeed, type SyncOutcome } from "@/lib/bank/sync";
 import * as proposals from "@finance/data/recurring-proposals";
+import { setBankAccountRole } from "@finance/data/bank-accounts";
 import { todayIsoLocal } from "@finance/core/constants";
 import { getT } from "@/lib/locale";
 
@@ -384,7 +385,9 @@ export async function dismissRecurringProposal(
 }
 
 /**
- * Say whether an account's money is part of "what I have to spend".
+ * Say whether an account is a current account: its money part of "what I
+ * have to spend", its movements in the ledger. Unticked, it is no longer
+ * followed.
  *
  * Nothing is counted until it is said explicitly. A connection can expose
  * accounts nobody spends from, and one whose consent has lapsed reads as an
@@ -401,14 +404,14 @@ export async function setAccountCountsAsCash(
   }
 
   const supabase = await createClient();
-  const { error } = await supabase
-    .from("bank_accounts")
-    .update({ counts_as_cash: counts })
-    .eq("user_id", user.id)
-    .eq("provider_account_id", providerAccountId);
-
-  if (error) {
-    return { error: dbError(error) };
+  const result = await setBankAccountRole(
+    supabase,
+    user.id,
+    providerAccountId,
+    counts ? "spending" : "ignored",
+  );
+  if (result.error !== undefined) {
+    return result;
   }
 
   // Ticking an account can make a month closable that was not before.
