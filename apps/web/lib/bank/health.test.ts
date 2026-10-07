@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { classifyBankError, earliestValidUntil } from "./health";
+import { classifyBankError, consentByBank, consentToWatch } from "./health";
 
 describe("classifyBankError", () => {
   it("reads an ended key out of a 401 or 403", () => {
@@ -36,15 +36,40 @@ describe("classifyBankError", () => {
   });
 });
 
-describe("earliestValidUntil", () => {
-  it("counts down to the consent that ends first", () => {
+describe("consentToWatch", () => {
+  const connections = [
+    { aspspName: "BoursoBank", validUntil: "2027-03-01T00:00:00Z" },
+    { aspspName: "Crédit Agricole", validUntil: null },
+    { aspspName: "Crédit Agricole", validUntil: "2026-12-15T00:00:00Z" },
+    { aspspName: "N26", validUntil: "2026-01-02T00:00:00Z" },
+  ];
+
+  it("counts down to the first consent to end at a bank the user follows", () => {
     expect(
-      earliestValidUntil([
-        { validUntil: "2027-03-01T00:00:00Z" },
-        { validUntil: null },
-        { validUntil: "2026-12-15T00:00:00Z" },
-      ]),
+      consentToWatch(connections, new Set(["BoursoBank", "Crédit Agricole"])),
     ).toBe("2026-12-15T00:00:00Z");
-    expect(earliestValidUntil([])).toBeNull();
+  });
+
+  it("leaves aside a bank nobody follows an account at", () => {
+    expect(consentToWatch(connections, new Set(["BoursoBank"]))).toBe(
+      "2027-03-01T00:00:00Z",
+    );
+  });
+
+  it("watches every bank before any account is followed", () => {
+    expect(consentToWatch(connections, new Set())).toBe("2026-01-02T00:00:00Z");
+    expect(consentToWatch([], new Set())).toBeNull();
+  });
+});
+
+describe("consentByBank", () => {
+  it("keeps each bank's earliest consent", () => {
+    expect(
+      consentByBank([
+        { aspspName: "Crédit Agricole", validUntil: "2027-01-01T00:00:00Z" },
+        { aspspName: "Crédit Agricole", validUntil: "2026-12-15T00:00:00Z" },
+        { aspspName: "BoursoBank", validUntil: null },
+      ]),
+    ).toEqual(new Map([["Crédit Agricole", "2026-12-15T00:00:00Z"]]));
   });
 });

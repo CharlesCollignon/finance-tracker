@@ -23,6 +23,7 @@ import {
 } from "@finance/core/bank-accounts";
 import type { PullKind } from "@finance/core/bank-pull";
 import { getBankConnection } from "@/lib/bank/client";
+import { consentByBank } from "@/lib/bank/health";
 import { pullFromBank } from "@/lib/bank/pull";
 import { DEFAULT_LOCALE } from "@finance/core/i18n/locale";
 import { cashDateOf } from "@finance/core/cash-date";
@@ -133,13 +134,26 @@ export async function syncBankFeed(
   // obtained so a screen can be honest about it.
   const pullOutcome = pull ? await pullFromBank(supabase, userId, pull) : null;
 
-  const allAccounts = await connection.client.getAccounts();
+  const [allAccounts, consents] = await Promise.all([
+    connection.client.getAccounts(),
+    // When each bank stops sharing, for the Bank page to say bank by bank.
+    // Not knowing it this time is not a failed sync: the dates stay.
+    connection.client
+      .getConnections()
+      .then(consentByBank)
+      .catch(() => undefined),
+  ]);
 
   // Every account is recorded, followed or not, readable or not: the Bank
   // page lists them all, a new one is how the user learns a bank was added,
   // and a lapsed one has to be shown to say why it is not counted. What the
   // user said each one is comes back from the same write.
-  const remembered = await rememberAccounts(supabase, userId, allAccounts);
+  const remembered = await rememberAccounts(
+    supabase,
+    userId,
+    allAccounts,
+    consents,
+  );
   const roleOf = (account: { id: string }) =>
     remembered.get(account.id)?.role ?? null;
 
@@ -385,6 +399,8 @@ export async function rememberAccounts(
   supabase: Client,
   userId: string,
   accounts: readonly Account[],
+  /** Each bank's consent end, by name; left as stored when not given. */
+  consents?: ReadonlyMap<string, string>,
 ): Promise<Map<string, RememberedAccount>> {
   if (accounts.length === 0) {
     return new Map();
@@ -410,6 +426,9 @@ export async function rememberAccounts(
           reported_on: booked ? today : null,
           needs_reconnect: account.needsReconnect,
           last_seen_at: now,
+          ...(consents
+            ? { consent_valid_until: consents.get(account.aspspName) ?? null }
+            : {}),
         };
       }),
       { onConflict: "user_id,provider_account_id" },
