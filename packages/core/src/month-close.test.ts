@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   buildMonthClose,
+  closeAccountsChange,
   buildRecordedCashFlows,
   closableMonth,
   closeInvitation,
@@ -215,6 +216,23 @@ describe("buildMonthClose", () => {
 
     expect(result.kept).toBe(-1000);
     expect(result.unrecorded).toBe(600);
+  });
+});
+
+describe("closeAccountsChange", () => {
+  it("names the accounts added and taken away since the last close", () => {
+    expect(closeAccountsChange(["a", "b"], ["b", "c"])).toEqual({
+      added: ["c"],
+      removed: ["a"],
+    });
+  });
+
+  it("is nothing when the accounts are the same, in any order", () => {
+    expect(closeAccountsChange(["a", "b"], ["b", "a"])).toBeNull();
+  });
+
+  it("is nothing when the last close does not say what it read", () => {
+    expect(closeAccountsChange(null, ["a"])).toBeNull();
   });
 });
 

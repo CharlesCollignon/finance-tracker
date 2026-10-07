@@ -33,4 +33,19 @@ export async function readCashBalance(
   );
 }
 
+/** What these accounts held at the end of a given day, counted or not. */
+export async function readAccountBalances(
+  userId: string,
+  accounts: readonly BankAccount[],
+  date: string,
+  client?: Client,
+): Promise<CashBalance> {
+  return bankBalance.readAccountBalances(
+    client ?? (await createClient()),
+    userId,
+    accounts,
+    date,
+  );
+}
+
 export { balanceAsOf };

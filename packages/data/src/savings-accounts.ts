@@ -354,8 +354,28 @@ export async function addSavingsAccount(
       ? { error: "placementsWeb.alreadyAdded" }
       : failure(error);
   }
+  if (input.bankAccountId) {
+    await readAsSavings(db, userId, input.bankAccountId);
+  }
 
   return { success: true, categoryName: category.name };
+}
+
+/**
+ * A bank account a Livret reads its balance from is that Livret: Épargne,
+ * its movements left out and its balance no longer spending money. Without
+ * this the same money counted twice, on Le point and on Placements.
+ */
+async function readAsSavings(
+  db: Db,
+  userId: string,
+  bankAccountId: string,
+): Promise<void> {
+  await db
+    .from("bank_accounts")
+    .update({ role: "savings" })
+    .eq("user_id", userId)
+    .eq("provider_account_id", bankAccountId);
 }
 
 /** The balance as the user reads it today. */
@@ -477,8 +497,14 @@ export async function linkSavingsBank(
     .update({ ...update, updated_at: new Date().toISOString() })
     .eq("id", id)
     .eq("user_id", userId);
+  if (error) {
+    return failure(error);
+  }
+  if (bankAccountId !== null) {
+    await readAsSavings(db, userId, bankAccountId);
+  }
 
-  return error ? failure(error) : { success: true, message: "accounts.saved" };
+  return { success: true, message: "accounts.saved" };
 }
 
 /** The account goes; its category and what was logged in it stay. */

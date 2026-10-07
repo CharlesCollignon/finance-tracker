@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   balanceAsOf,
+  balanceBefore,
   cashBalanceAsOf,
   intradayIndexes,
   type BalanceRow,
@@ -80,6 +81,26 @@ describe("balanceAsOf", () => {
       ok: false,
       reason: "no-running-balance",
     });
+  });
+});
+
+describe("balanceBefore", () => {
+  it("takes back money that came in", () => {
+    expect(
+      balanceBefore({ balanceAfter: 1200, amount: 1000.1, direction: "in" }),
+    ).toBe(199.9);
+  });
+
+  it("puts back money that went out", () => {
+    expect(
+      balanceBefore({ balanceAfter: -20, amount: 35.5, direction: "out" }),
+    ).toBe(15.5);
+  });
+
+  it("cannot say without a running balance", () => {
+    expect(
+      balanceBefore({ balanceAfter: null, amount: 10, direction: "out" }),
+    ).toBeNull();
   });
 });
 

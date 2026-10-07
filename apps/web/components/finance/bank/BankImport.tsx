@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   ArrowSquareOut,
@@ -33,28 +34,48 @@ type AccountState =
  * account as it goes rather than one spinner for the lot, because a history
  * can take a while and a bar that does not move reads as broken.
  *
- * Nothing is lost by leaving: the connection keeps `backfilled_at` empty
- * until the last account is in, so coming back to this page starts it again,
- * and rows already written are recognised and skipped.
+ * Nothing is lost by leaving: an account's history is marked in only once
+ * it is, so coming back to this page starts again with the accounts still
+ * waiting, and rows already written are recognised and skipped.
+ *
+ * Only current accounts come in, and only once the user has said which
+ * accounts those are: with none said yet, this asks for them and waits. The
+ * page draws it again, under a new key, whenever another account starts
+ * waiting for its history — one ticked later, or a bank added since.
  *
  * A file that works on an open-banking.io account with no bank connected yet
  * is not a finished import: it would mark the history as in, and the bank
  * connected afterwards would only ever get the ordinary few days of sync.
  * So an empty list waits, says what is missing, and checks again on request.
  */
-export function BankImport() {
+export function BankImport({
+  waiting,
+}: {
+  /** The current accounts whose history is not in yet, as the page knows. */
+  waiting: readonly string[];
+}) {
   const t = useT();
   const [accounts, setAccounts] = useState<AccountState[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(0);
   const [done, setDone] = useState(false);
   const [empty, setEmpty] = useState(false);
+  const [undecided, setUndecided] = useState(false);
   const [checking, setChecking] = useState(false);
-  const started = useRef(false);
+  // Which accounts a walk has already been started for, and whether one is
+  // under way: a walk is never started beside another, which would bring the
+  // same account in twice.
+  const seen = useRef<Set<string> | null>(null);
+  const running = useRef(false);
+  // Counts finished walks, so an account ticked during one is looked at
+  // once it ends.
+  const [walks, setWalks] = useState(0);
+  const router = useRouter();
 
   const run = useCallback(async () => {
     setError(null);
     setEmpty(false);
+    setUndecided(false);
     setChecking(true);
     const listed = await listImportAccounts();
     setChecking(false);
@@ -63,7 +84,15 @@ export function BankImport() {
       return;
     }
     if (listed.accounts.length === 0) {
-      setEmpty(true);
+      // Accounts the bank shows but the user has not said what they are:
+      // nothing of theirs comes in before that. Listing them just recorded
+      // them, so the page is drawn again to show them.
+      if (listed.undecided > 0) {
+        setUndecided(true);
+        router.refresh();
+      } else {
+        setEmpty(true);
+      }
       return;
     }
     let rows: AccountState[] = listed.accounts.map((account) => ({
@@ -107,15 +136,35 @@ export function BankImport() {
       await finishBankImport();
       setDone(true);
     }
-  }, []);
+  }, [router]);
 
-  useEffect(() => {
-    if (started.current) {
+  const start = useCallback(() => {
+    if (running.current) {
       return;
     }
-    started.current = true;
-    void run();
+    running.current = true;
+    void run().finally(() => {
+      running.current = false;
+      setWalks((count) => count + 1);
+    });
   }, [run]);
+
+  // Once on arrival, then again whenever an account the walks have not seen
+  // starts waiting — the page drawn again after the user ticked one.
+  useEffect(() => {
+    if (running.current) {
+      return;
+    }
+    const first = seen.current === null;
+    const known = (seen.current ??= new Set());
+    if (!first && waiting.every((id) => known.has(id))) {
+      return;
+    }
+    for (const id of waiting) {
+      known.add(id);
+    }
+    start();
+  }, [waiting, walks, start]);
 
   return (
     <section
@@ -137,6 +186,10 @@ export function BankImport() {
         <p className="text-sm text-destructive">{resolveMessage(t, error)}</p>
       ) : null}
 
+      {undecided ? (
+        <p className="text-sm">{t("bankConnect.importChooseAccounts")}</p>
+      ) : null}
+
       {empty ? (
         <div className="flex flex-col gap-3">
           <p className="text-sm">{t("bankConnect.noAccountsYet")}</p>
@@ -154,7 +207,7 @@ export function BankImport() {
               type="button"
               variant="outline"
               disabled={checking}
-              onClick={() => void run()}
+              onClick={start}
             >
               {t("bankConnect.checkAgain")}
             </Button>

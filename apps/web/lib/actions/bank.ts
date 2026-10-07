@@ -5,6 +5,7 @@ import { z } from "zod";
 import { getAuthUser } from "@/lib/auth/get-user";
 import { createClient } from "@/lib/supabase/server";
 import { getBankConnection } from "@/lib/bank/client";
+import { getBankAccounts } from "@/lib/queries/bank-balance";
 import {
   fileFeedItems,
   leaveOutFeedItems,
@@ -16,6 +17,7 @@ import { asUser } from "@/lib/actions/as-user";
 import { autoCloseMonths } from "@/lib/bank/auto-close";
 import { syncBankFeed, type SyncOutcome } from "@/lib/bank/sync";
 import * as proposals from "@finance/data/recurring-proposals";
+import { setBankAccountRole } from "@finance/data/bank-accounts";
 import { todayIsoLocal } from "@finance/core/constants";
 import { getT } from "@/lib/locale";
 
@@ -257,7 +259,17 @@ export async function getBankBalanceSuggestion(): Promise<
   }
 
   try {
-    const accounts = await connection.client.getAccounts();
+    // The current accounts only: a Livret's balance is savings, and an
+    // account the user does not follow is not their spending money.
+    const [accounts, known] = await Promise.all([
+      connection.client.getAccounts(),
+      getBankAccounts(user.id),
+    ]);
+    const spending = new Set(
+      known
+        .filter((account) => account.role === "spending")
+        .map((account) => account.provider_account_id),
+    );
     // Summed as whole cents, so the provider's care with decimal strings is
     // not undone at the last step. A balance in cents is at most about 1e12,
     // which an integer double holds exactly — no BigInt needed.
@@ -268,7 +280,7 @@ export async function getBankBalanceSuggestion(): Promise<
     for (const account of accounts) {
       // A lapsed consent reports zero, and a zero folded into a total reads
       // as money that is not there.
-      if (account.needsReconnect) {
+      if (account.needsReconnect || !spending.has(account.id)) {
         continue;
       }
       const booked =
@@ -384,7 +396,9 @@ export async function dismissRecurringProposal(
 }
 
 /**
- * Say whether an account's money is part of "what I have to spend".
+ * Say whether an account is a current account: its money part of "what I
+ * have to spend", its movements in the ledger. Unticked, it is no longer
+ * followed.
  *
  * Nothing is counted until it is said explicitly. A connection can expose
  * accounts nobody spends from, and one whose consent has lapsed reads as an
@@ -401,14 +415,14 @@ export async function setAccountCountsAsCash(
   }
 
   const supabase = await createClient();
-  const { error } = await supabase
-    .from("bank_accounts")
-    .update({ counts_as_cash: counts })
-    .eq("user_id", user.id)
-    .eq("provider_account_id", providerAccountId);
-
-  if (error) {
-    return { error: dbError(error) };
+  const result = await setBankAccountRole(
+    supabase,
+    user.id,
+    providerAccountId,
+    counts ? "spending" : "ignored",
+  );
+  if (result.error !== undefined) {
+    return result;
   }
 
   // Ticking an account can make a month closable that was not before.

@@ -54,7 +54,7 @@ export function classifyBankError(error: unknown): BankFailure {
 }
 
 /** The earliest consent end across a user's bank connections, if any says. */
-export function earliestValidUntil(
+function earliestValidUntil(
   connections: readonly { validUntil: string | null | undefined }[],
 ): string | null {
   const dates = connections
@@ -64,6 +64,50 @@ export function earliestValidUntil(
   return dates[0] ?? null;
 }
 
+/**
+ * The consent the renewal reminder counts down to: the earliest among the
+ * banks where the user follows an account, as Courant or Épargne. A bank
+ * connected and left aside is not theirs to renew, and one whose consent
+ * lapsed long ago would otherwise keep the reminder on for good. Before any
+ * account is followed, every bank counts.
+ */
+export function consentToWatch(
+  connections: readonly {
+    aspspName: string;
+    validUntil: string | null | undefined;
+  }[],
+  followedBanks: ReadonlySet<string>,
+): string | null {
+  return earliestValidUntil(
+    followedBanks.size === 0
+      ? connections
+      : connections.filter((connection) =>
+          followedBanks.has(connection.aspspName),
+        ),
+  );
+}
+
+/**
+ * When each bank stops sharing, by its name: the earliest of its consents,
+ * when the user gave it more than one.
+ */
+export function consentByBank(
+  connections: readonly {
+    aspspName: string;
+    validUntil: string | null | undefined;
+  }[],
+): Map<string, string> {
+  const byBank = new Map<string, string>();
+  for (const connection of connections) {
+    const until = connection.validUntil;
+    const known = byBank.get(connection.aspspName);
+    if (until && (!known || until < known)) {
+      byBank.set(connection.aspspName, until);
+    }
+  }
+  return byBank;
+}
+
 export async function recordHealthy(
   admin: Client,
   userId: string,
@@ -71,7 +115,22 @@ export async function recordHealthy(
 ): Promise<void> {
   let consentValidUntil: string | null = null;
   try {
-    consentValidUntil = earliestValidUntil(await client.getConnections());
+    const [connections, { data: followed }] = await Promise.all([
+      client.getConnections(),
+      admin
+        .from("bank_accounts")
+        .select("bank_name")
+        .eq("user_id", userId)
+        .in("role", ["spending", "savings"]),
+    ]);
+    consentValidUntil = consentToWatch(
+      connections,
+      new Set(
+        (followed ?? [])
+          .map((account) => account.bank_name)
+          .filter((name): name is string => Boolean(name)),
+      ),
+    );
   } catch {
     // The statement was read; not knowing the consent date this time is not
     // a failed sync. The previous date stays.

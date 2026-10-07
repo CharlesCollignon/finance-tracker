@@ -3042,6 +3042,8 @@ export const en = {
     importTitle: "Bringing in your history",
     importBody:
       "Keep this page open. If you leave, it picks up where it stopped next time.",
+    importChooseAccounts:
+      "Tick below the accounts you spend from: their history comes in next.",
     importAccountDone: { one: "{count} entry", other: "{count} entries" },
     importDone: "Your history is in.",
     reviewCta: { one: "Review {count} entry", other: "Review {count} entries" },

@@ -49,8 +49,24 @@ either app; what the apps may read is its status: active, expired
 back), paused (the user's open-banking.io wallet is empty), revoked (the user
 disconnected) or error. Offered only where the `bank.connect` flag is on.
 Disconnecting asks whether to keep what the bank brought in, and keeps it by
-default.
+default. One file reads every bank in the user's open-banking.io account, so
+a second bank is connected there and found here, with no new file.
 _Avoid_: bank feed (the rows it brings), integration, account link
+
+**Bank account**:
+_En français_ : compte bancaire (« Courant », « Épargne », « Ne pas suivre »)
+One account a bank connection reads — a current account, a Livret, a joint
+account, a card — and what it is to the user, said once and nothing brought
+in before. _Courant_: its movements fill the ledger, and its balance is the
+money to spend, on Le point and in a month close. _Épargne_: its balance is
+a savings account's on Placements, and its movements stay out, since the
+transfer that fed it was recorded on the current account. _Ne pas suivre_:
+nothing brought in and nothing counted. A transfer between two current
+accounts is the same money moving and is left out; one to the user's own
+Livret is savings, kept on the current account's side. A current account
+followed later gets its whole history, and the month it starts counting, a
+close adds what it held at the last close rather than calling it kept.
+_Avoid_: wallet (an investment account), connection (that is the file)
 
 **Consent renewal**:
 _En français_ : renouvellement du consentement
@@ -340,7 +356,8 @@ One of the user's savings accounts, declared on Placements, with its own
 rate, tax on interest, ceiling and balance (`savings_accounts`, migration
 046). The balance is the one the user gave on the day they gave it, plus what
 they logged in the account's own savings category since — or the balance
-their bank reports, when it is linked to a bank account. Savings logged in no
+their bank reports, when it is linked to a bank account, which is then
+Épargne. Savings logged in no
 account's category go to the Livret A, else the first account at hand. A PEL
 is not at hand: a withdrawal closes it, so the cushion leaves it out. With no
 account declared, everything logged as savings stands in as one.

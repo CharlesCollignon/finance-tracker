@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import type { Account } from "@open-banking-io/client";
 import { allRows } from "@finance/core/paging";
 import {
   indexCategoriesByName,
@@ -12,11 +13,17 @@ import { intradayIndexes } from "@finance/core/bank-balance";
 import { buildMerchantIndex } from "@finance/core/merchant-memory";
 import { buildBankMerchantIndex } from "@finance/core/bank-merchant";
 import type {
+  BankAccountRole,
   Database,
   TransactionWithCategory,
 } from "@finance/core/types/database";
+import {
+  followsMovements,
+  ownTransferIbans,
+} from "@finance/core/bank-accounts";
 import type { PullKind } from "@finance/core/bank-pull";
 import { getBankConnection } from "@/lib/bank/client";
+import { consentByBank } from "@/lib/bank/health";
 import { pullFromBank } from "@/lib/bank/pull";
 import { DEFAULT_LOCALE } from "@finance/core/i18n/locale";
 import { cashDateOf } from "@finance/core/cash-date";
@@ -127,20 +134,49 @@ export async function syncBankFeed(
   // obtained so a screen can be honest about it.
   const pullOutcome = pull ? await pullFromBank(supabase, userId, pull) : null;
 
-  const allAccounts = await connection.client.getAccounts();
+  const [allAccounts, consents] = await Promise.all([
+    connection.client.getAccounts(),
+    // When each bank stops sharing, for the Bank page to say bank by bank.
+    // Not knowing it this time is not a failed sync: the dates stay.
+    connection.client
+      .getConnections()
+      .then(consentByBank)
+      .catch(() => undefined),
+  ]);
 
+  // Every account is recorded, followed or not, readable or not: the Bank
+  // page lists them all, a new one is how the user learns a bank was added,
+  // and a lapsed one has to be shown to say why it is not counted. What the
+  // user said each one is comes back from the same write.
+  const remembered = await rememberAccounts(
+    supabase,
+    userId,
+    allAccounts,
+    consents,
+  );
+  const roleOf = (account: { id: string }) =>
+    remembered.get(account.id)?.role ?? null;
+
+  // Only a current account's movements come in. A Livret's are the other
+  // side of transfers the current account already recorded, and an account
+  // with no role yet waits for the user to say what it is.
+  //
   // A consent that has lapsed answers with an empty statement rather than an
   // error, which would read as "nothing happened this month" — the most
   // dangerous possible lie for a ledger. Skipped and counted instead, so the
   // silence is visible. N26 alone contributes a Space per envelope, most of
-  // them empty, so this is not a rare case.
+  // them empty, so this is not a rare case. Counted only where the user
+  // follows the account: one they left aside is not theirs to renew.
   const accounts = allAccounts.filter(
     (account) =>
       !account.needsReconnect &&
+      followsMovements(roleOf(account)) &&
       (!accountIds || accountIds.includes(account.id)),
   );
   const needReconnect = allAccounts.filter(
-    (account) => account.needsReconnect,
+    (account) =>
+      account.needsReconnect &&
+      (roleOf(account) === "spending" || roleOf(account) === "savings"),
   ).length;
   const since = isoDaysAgo(backfill ? BACKFILL_DAYS : LOOKBACK_DAYS);
 
@@ -207,10 +243,14 @@ export async function syncBankFeed(
   }));
   const categoryIdsByName = indexCategoriesByName(categories ?? []);
   const seenProviderIds = new Set(seen.map((row) => row.provider_id as string));
-  const ownIbans = new Set(
-    accounts
-      .map((account) => account.iban?.replace(/\s+/g, "").toUpperCase())
-      .filter((iban): iban is string => Boolean(iban)),
+  // From every account, not only those this request walks: a first import
+  // takes one account at a time, and a transfer between two current
+  // accounts is the same money moving whichever is being read.
+  const ownIbans = ownTransferIbans(
+    allAccounts.map((account) => ({
+      iban: account.iban,
+      role: roleOf(account),
+    })),
   );
 
   const outcome: SyncOutcome = {
@@ -234,28 +274,15 @@ export async function syncBankFeed(
   };
 
   for (const account of accounts) {
-    const label =
-      account.displayName ??
-      account.accountName ??
-      account.iban ??
-      account.aspspName;
     const booked = pickBookedBalance(account);
 
     if (booked) {
       outcome.balances.push({
         accountId: account.id,
-        label,
+        label: accountLabel(account),
         amount: booked.amount,
         currency: booked.currency,
       });
-    }
-
-    // Recorded whether or not it can be read, so the account picker can list
-    // a lapsed connection and say why it is not counted.
-    await rememberAccount(supabase, userId, account, label, booked);
-
-    if (account.needsReconnect) {
-      continue;
     }
 
     // Paged rather than one shot: a busy current account clears 200
@@ -340,36 +367,81 @@ function pickBookedBalance(account: {
   return null;
 }
 
+/** What the provider calls an account, for a list the user can recognise. */
+function accountLabel(account: Account): string {
+  return (
+    account.displayName ??
+    account.accountName ??
+    account.iban ??
+    account.aspspName
+  );
+}
+
 /**
- * Keep a record of the accounts a connection exposes.
+ * Keep a record of every account the connection exposes, and read back what
+ * the user said each one is.
  *
- * The picker that decides which balances a month close counts has to list
- * them before any of their transactions have been stored, and has to be able
- * to show a lapsed connection and say why it is not counted. `counts_as_cash`
- * is deliberately left alone on update: it is the user's answer, not the
- * provider's.
+ * The Bank page has to list them before any of their transactions have been
+ * stored, and has to be able to show a lapsed connection and say why it is
+ * not counted. The role is deliberately not written: it is the user's answer,
+ * not the provider's, and an account seen for the first time has none.
+ *
+ * One request for them all. A failure throws rather than reading as "no
+ * account is followed", which would bring nothing in and say nothing.
  */
-async function rememberAccount(
+export interface RememberedAccount {
+  role: BankAccountRole | null;
+  /** When its whole history was brought in, or null while it has not been. */
+  historyImportedAt: string | null;
+}
+
+export async function rememberAccounts(
   supabase: Client,
   userId: string,
-  account: { id: string; currency: string; needsReconnect: boolean },
-  label: string,
-  booked: { amount: string; currency: string } | null,
-): Promise<void> {
-  await supabase.from("bank_accounts").upsert(
-    {
-      user_id: userId,
-      provider_account_id: account.id,
-      label,
-      currency: account.currency,
-      reported_balance: booked?.amount ?? null,
-      // Today in Paris: a sync just after midnight there is still
-      // yesterday in UTC, and the balance was read today.
-      reported_on: booked ? todayIsoLocal() : null,
-      needs_reconnect: account.needsReconnect,
-      last_seen_at: new Date().toISOString(),
-    },
-    { onConflict: "user_id,provider_account_id" },
+  accounts: readonly Account[],
+  /** Each bank's consent end, by name; left as stored when not given. */
+  consents?: ReadonlyMap<string, string>,
+): Promise<Map<string, RememberedAccount>> {
+  if (accounts.length === 0) {
+    return new Map();
+  }
+  // Today in Paris: a sync just after midnight there is still yesterday in
+  // UTC, and the balance was read today.
+  const today = todayIsoLocal();
+  const now = new Date().toISOString();
+  const { data, error } = await supabase
+    .from("bank_accounts")
+    .upsert(
+      accounts.map((account) => {
+        const booked = pickBookedBalance(account);
+        return {
+          user_id: userId,
+          provider_account_id: account.id,
+          label: accountLabel(account),
+          bank_name: account.aspspName || null,
+          account_type: account.accountType,
+          product: account.product,
+          currency: account.currency,
+          reported_balance: booked?.amount ?? null,
+          reported_on: booked ? today : null,
+          needs_reconnect: account.needsReconnect,
+          last_seen_at: now,
+          ...(consents
+            ? { consent_valid_until: consents.get(account.aspspName) ?? null }
+            : {}),
+        };
+      }),
+      { onConflict: "user_id,provider_account_id" },
+    )
+    .select("provider_account_id, role, history_imported_at");
+  if (error) {
+    throw error;
+  }
+  return new Map(
+    (data ?? []).map((row) => [
+      row.provider_account_id,
+      { role: row.role, historyImportedAt: row.history_imported_at },
+    ]),
   );
 }
 

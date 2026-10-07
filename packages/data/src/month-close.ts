@@ -289,6 +289,11 @@ export async function getMonthCloseOverview(
     const monthKey = monthKeyOfClose(close.month);
     const [year, month] = monthKey.split("-").map(Number);
     const closingBalance = Number(close.closing_balance);
+    // A close whose accounts differ from the last one's kept what its own
+    // accounts held then, so it compares like with like.
+    if (close.opening_balance !== null) {
+      openingBalance = Number(close.opening_balance);
+    }
 
     const result = buildMonthClose({
       openingBalance,

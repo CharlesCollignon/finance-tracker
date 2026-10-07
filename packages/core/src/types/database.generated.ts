@@ -107,39 +107,57 @@ export type Database = {
       };
       bank_accounts: {
         Row: {
+          account_type: string | null;
+          bank_name: string | null;
+          consent_valid_until: string | null;
           counts_as_cash: boolean;
           currency: string;
           first_seen_at: string;
+          history_imported_at: string | null;
           label: string;
           last_seen_at: string;
           needs_reconnect: boolean;
+          product: string | null;
           provider_account_id: string;
           reported_balance: number | null;
           reported_on: string | null;
+          role: string | null;
           user_id: string;
         };
         Insert: {
+          account_type?: string | null;
+          bank_name?: string | null;
+          consent_valid_until?: string | null;
           counts_as_cash?: boolean;
           currency: string;
           first_seen_at?: string;
+          history_imported_at?: string | null;
           label: string;
           last_seen_at?: string;
           needs_reconnect?: boolean;
+          product?: string | null;
           provider_account_id: string;
           reported_balance?: number | null;
           reported_on?: string | null;
+          role?: string | null;
           user_id: string;
         };
         Update: {
+          account_type?: string | null;
+          bank_name?: string | null;
+          consent_valid_until?: string | null;
           counts_as_cash?: boolean;
           currency?: string;
           first_seen_at?: string;
+          history_imported_at?: string | null;
           label?: string;
           last_seen_at?: string;
           needs_reconnect?: boolean;
+          product?: string | null;
           provider_account_id?: string;
           reported_balance?: number | null;
           reported_on?: string | null;
+          role?: string | null;
           user_id?: string;
         };
         Relationships: [];
@@ -807,29 +825,35 @@ export type Database = {
       month_closes: {
         Row: {
           balance_source: string;
+          bank_accounts: string[] | null;
           closing_balance: number;
           created_at: string;
           id: string;
           month: string;
           observed_on: string;
+          opening_balance: number | null;
           user_id: string;
         };
         Insert: {
           balance_source?: string;
+          bank_accounts?: string[] | null;
           closing_balance: number;
           created_at?: string;
           id?: string;
           month: string;
           observed_on: string;
+          opening_balance?: number | null;
           user_id: string;
         };
         Update: {
           balance_source?: string;
+          bank_accounts?: string[] | null;
           closing_balance?: number;
           created_at?: string;
           id?: string;
           month?: string;
           observed_on?: string;
+          opening_balance?: number | null;
           user_id?: string;
         };
         Relationships: [];

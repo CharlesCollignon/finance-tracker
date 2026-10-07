@@ -59,15 +59,15 @@ export async function confirmBankConsent(
   return {};
 }
 
-/** The accounts a first import walks. See `listAccountsToImport`. */
+/** The accounts a history import walks. See `listAccountsToImport`. */
 export async function listImportAccounts(): Promise<
-  Result<{ accounts: { id: string; label: string }[] }>
+  Result<{ accounts: { id: string; label: string }[]; undecided: number }>
 > {
   const user = await getAuthUser();
   if (!user) {
     return { error: "errors.notAuthenticated" };
   }
-  return listAccountsToImport(user.id);
+  return listAccountsToImport(await createClient(), user.id);
 }
 
 /**

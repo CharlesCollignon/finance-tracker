@@ -1,9 +1,10 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { followsMovements } from "@finance/core/bank-accounts";
 import type { Database } from "@finance/core/types/database";
 import { autoCloseMonths } from "@/lib/bank/auto-close";
 import { getBankConnection } from "@/lib/bank/client";
 import { noteSyncFailure, noteSyncHealthy } from "@/lib/bank/health-note";
-import { syncBankFeed } from "@/lib/bank/sync";
+import { rememberAccounts, syncBankFeed } from "@/lib/bank/sync";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 /**
@@ -20,21 +21,33 @@ type Client = SupabaseClient<Database>;
 type Result<T = object> = ({ error?: undefined } & T) | { error: string };
 
 /**
- * The accounts a first import walks, one per request — see `accountIds` in
- * `syncBankFeed`. Labels only: no balance or number leaves the server here.
+ * The accounts a history import walks, one per request — see `accountIds`
+ * in `syncBankFeed`: the current accounts whose history is not in yet, so an
+ * account the user starts following later gets its two years too. Every
+ * account is recorded on the way, which is how the Bank page learns of one
+ * it has to ask about (`undecided`, the readable accounts with no role).
+ * Labels only: no balance or number leaves the server here.
  */
 export async function listAccountsToImport(
+  supabase: Client,
   userId: string,
-): Promise<Result<{ accounts: { id: string; label: string }[] }>> {
+): Promise<
+  Result<{ accounts: { id: string; label: string }[]; undecided: number }>
+> {
   const connection = await getBankConnection(userId);
   if (!connection) {
     return { error: "bankConnect.notConnected" };
   }
   try {
-    const accounts = await connection.client.getAccounts();
+    const all = await connection.client.getAccounts();
+    const remembered = await rememberAccounts(supabase, userId, all);
+    const readable = all.filter((account) => !account.needsReconnect);
     return {
-      accounts: accounts
-        .filter((account) => !account.needsReconnect)
+      accounts: readable
+        .filter((account) => {
+          const known = remembered.get(account.id);
+          return followsMovements(known?.role) && !known?.historyImportedAt;
+        })
         .map((account) => ({
           id: account.id,
           label:
@@ -43,6 +56,9 @@ export async function listAccountsToImport(
             account.aspspName ??
             "",
         })),
+      undecided: readable.filter(
+        (account) => (remembered.get(account.id)?.role ?? null) === null,
+      ).length,
     };
   } catch (error) {
     return { error: (await noteSyncFailure(userId, error)).message };
@@ -60,6 +76,15 @@ export async function importOneAccount(
       backfill: true,
       accountIds: [accountId],
     });
+    // Only once it was walked: an account that is not a current account,
+    // or cannot be read, has had nothing brought in.
+    if (outcome.accounts > 0) {
+      await supabase
+        .from("bank_accounts")
+        .update({ history_imported_at: new Date().toISOString() })
+        .eq("user_id", userId)
+        .eq("provider_account_id", accountId);
+    }
     return { imported: outcome.imported, pending: outcome.pending };
   } catch (error) {
     return { error: (await noteSyncFailure(userId, error)).message };

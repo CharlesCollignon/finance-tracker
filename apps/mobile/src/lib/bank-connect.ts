@@ -218,16 +218,19 @@ export interface ImportAccount {
   label: string;
 }
 
-/** The accounts a first import walks, one request each. */
+/**
+ * The current accounts whose history is not in yet, one request each, and
+ * how many readable accounts still wait for the user to say what they are.
+ */
 export async function listImportAccounts(): Promise<
-  { accounts: ImportAccount[] } | { error: string }
+  { accounts: ImportAccount[]; undecided: number } | { error: string }
 > {
-  const result = await callWebApi<{ accounts?: ImportAccount[] }>(
-    "/api/bank/import",
-    { method: "GET" },
-  );
+  const result = await callWebApi<{
+    accounts?: ImportAccount[];
+    undecided?: number;
+  }>("/api/bank/import", { method: "GET" });
   return result.ok
-    ? { accounts: result.accounts ?? [] }
+    ? { accounts: result.accounts ?? [], undecided: result.undecided ?? 0 }
     : { error: result.error };
 }
 

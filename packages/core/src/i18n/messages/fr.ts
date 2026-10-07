@@ -2208,6 +2208,8 @@ export const fr: Messages = {
     importTitle: "Import de votre historique",
     importBody:
       "Gardez cette page ouverte. Si vous la quittez, l'import reprend là où il s'est arrêté la prochaine fois.",
+    importChooseAccounts:
+      "Cochez ci-dessous les comptes que vous utilisez pour dépenser\u00A0: leur historique arrive ensuite.",
     importAccountDone: { one: "{count} ligne", other: "{count} lignes" },
     importDone: "Votre historique est là.",
     reviewCta: { one: "Revoir {count} ligne", other: "Revoir {count} lignes" },

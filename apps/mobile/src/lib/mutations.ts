@@ -23,6 +23,7 @@ import * as decisions from "@finance/data/fulfilment-decisions";
 import * as deletions from "@finance/data/deletions";
 import * as dcaTransfer from "@finance/data/dca-transfer";
 import * as ledger from "@finance/data/ledger";
+import { setBankAccountRole } from "@finance/data/bank-accounts";
 import * as plans from "@finance/data/wallet-plans";
 import * as occurrences from "@finance/data/occurrences";
 import * as recap from "@finance/data/weekly-recap";
@@ -546,9 +547,9 @@ export async function dismissRecurringProposal(
 /* ------------------------------------------------- the bank's accounts */
 
 /**
- * Whether one of the bank's accounts is spending money — counted in the
- * balance Le point carries and the month close reads — or kept apart, as a
- * savings account the bank happens to hold. The web's
+ * Whether one of the bank's accounts is a current account — its money
+ * counted in the balance Le point carries and the month close reads, its
+ * movements in the ledger — or no longer followed. The web's
  * `setAccountCountsAsCash`; the phone writes it through Supabase like every
  * other mutation here, rather than from the screen that shows the switch.
  */
@@ -561,16 +562,12 @@ export async function setAccountCountsAsCash(
     return { error: "errors.notAuthenticated" };
   }
 
-  const { error } = await supabase
-    .from("bank_accounts")
-    .update({ counts_as_cash: counts })
-    .eq("user_id", userId)
-    .eq("provider_account_id", providerAccountId);
-
-  if (error) {
-    return { error: dbError(error) };
-  }
-  return { success: true };
+  return setBankAccountRole(
+    supabase,
+    userId,
+    providerAccountId,
+    counts ? "spending" : "ignored",
+  );
 }
 
 /* ------------------------------------------------------ the week's recap */

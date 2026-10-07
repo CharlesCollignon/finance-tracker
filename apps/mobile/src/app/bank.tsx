@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import {
   Linking,
   Modal,
@@ -90,6 +90,29 @@ export default function BankScreen() {
   const live = connection !== null && connection.status !== "revoked";
   const ownerCredentials = bank?.ownerCredentials ?? false;
   const syncing = ownerCredentials || (live && connection.status === "active");
+  const waiting = useMemo(
+    () =>
+      (accounts ?? [])
+        .filter(
+          (account) =>
+            account.role === "spending" &&
+            account.history_imported_at === null &&
+            !account.needs_reconnect,
+        )
+        .map((account) => account.provider_account_id),
+    [accounts],
+  );
+  // The first import, or a current account whose history is not in yet —
+  // one ticked since, or at a bank added since. Kept on screen once shown,
+  // so the walk's last word, what is left to review, outlives the reload
+  // that finishing it causes.
+  const needsImport =
+    syncing &&
+    ((live && connection.backfilled_at === null) || waiting.length > 0);
+  const [importShown, setImportShown] = useState(needsImport);
+  if (needsImport && !importShown) {
+    setImportShown(true);
+  }
 
   return (
     <Screen
@@ -153,11 +176,7 @@ export default function BankScreen() {
             />
           ) : null}
 
-          {live &&
-          connection.status === "active" &&
-          connection.backfilled_at === null ? (
-            <BankImport />
-          ) : null}
+          {syncing && importShown ? <BankImport waiting={waiting} /> : null}
 
           {accounts && accounts.length > 0 ? (
             <AccountsCard accounts={accounts} />
