@@ -1,5 +1,107 @@
 import { describe, expect, it } from "vitest";
-import { followsMovements, ownTransferIbans } from "./bank-accounts";
+import {
+  awaitingRole,
+  followsMovements,
+  groupByBank,
+  guessAccountRole,
+  guessSavingsKind,
+  ownTransferIbans,
+  proposeForAccount,
+} from "./bank-accounts";
+
+describe("guessSavingsKind", () => {
+  it.each([
+    ["Livret A", "livret_a"],
+    ["LIVRET A PARTICULIERS", "livret_a"],
+    ["Livret Bleu", "livret_a"],
+    ["LDDS", "ldds"],
+    ["Livret Développement Durable et Solidaire", "ldds"],
+    ["LEP", "lep"],
+    ["Livret d'Épargne Populaire", "lep"],
+    ["PEL", "pel"],
+    ["Plan d'épargne logement", "pel"],
+    ["CEL", "cel"],
+    ["Compte Épargne Logement", "cel"],
+    ["Livret Bourso+", "livret"],
+    ["Livret Jeune", "livret"],
+    ["Compte sur livret", "livret"],
+    ["Compte épargne", "livret"],
+  ] as const)("reads %s as %s", (name, kind) => {
+    expect(guessSavingsKind([name])).toBe(kind);
+  });
+
+  it("finds the kind in any of the names", () => {
+    expect(guessSavingsKind([null, "Mon épargne", "LDDS"])).toBe("ldds");
+  });
+
+  it("says nothing of a current account", () => {
+    expect(guessSavingsKind(["Compte de dépôt"])).toBeNull();
+    expect(guessSavingsKind([null, undefined])).toBeNull();
+  });
+
+  it("never takes an investment account for a Livret", () => {
+    expect(guessSavingsKind(["Plan d'épargne en actions"])).toBeNull();
+    expect(guessSavingsKind(["PER Individuel"])).toBeNull();
+    expect(guessSavingsKind(["Épargne retraite"])).toBeNull();
+  });
+});
+
+describe("guessAccountRole", () => {
+  it("trusts the type the bank gives", () => {
+    expect(guessAccountRole({ accountType: "CACC", names: ["Compte"] })).toBe(
+      "spending",
+    );
+    expect(guessAccountRole({ accountType: "SVGS", names: ["Compte"] })).toBe(
+      "savings",
+    );
+    expect(guessAccountRole({ accountType: "CARD", names: ["Compte"] })).toBe(
+      "ignored",
+    );
+    expect(guessAccountRole({ accountType: "loan", names: [] })).toBe(
+      "ignored",
+    );
+  });
+
+  it("lets a name saying Livret win over a bank that calls it current", () => {
+    expect(guessAccountRole({ accountType: "CACC", names: ["Livret A"] })).toBe(
+      "savings",
+    );
+  });
+
+  it("keeps an investment account out, whatever its type", () => {
+    expect(
+      guessAccountRole({ accountType: "SVGS", names: ["PEA espèces"] }),
+    ).toBe("ignored");
+    expect(
+      guessAccountRole({ accountType: null, names: ["Assurance vie"] }),
+    ).toBe("ignored");
+  });
+
+  it("reads a card or a loan from its name when there is no type", () => {
+    expect(
+      guessAccountRole({ accountType: null, names: ["Carte Visa Premier"] }),
+    ).toBe("ignored");
+    expect(
+      guessAccountRole({ accountType: null, names: ["Prêt immobilier"] }),
+    ).toBe("ignored");
+  });
+
+  it("does not take a bank called Crédit for a loan", () => {
+    expect(
+      guessAccountRole({
+        accountType: null,
+        names: ["Crédit Agricole — Compte de dépôt"],
+      }),
+    ).toBe("spending");
+  });
+
+  it("calls anything else a current account", () => {
+    expect(guessAccountRole({ accountType: null, names: [] })).toBe("spending");
+    expect(
+      guessAccountRole({ accountType: "CACC", names: ["Compte joint"] }),
+    ).toBe("spending");
+  });
+});
 
 describe("followsMovements", () => {
   it("brings in a current account's movements, and nothing else's", () => {
@@ -22,5 +124,71 @@ describe("ownTransferIbans", () => {
       { iban: " ", role: "spending" },
     ]);
     expect([...ibans].sort()).toEqual(["FR7611112222", "FR7633334444"]);
+  });
+});
+
+describe("proposeForAccount", () => {
+  it("reads the product before the label, which may be the holder's name", () => {
+    expect(
+      proposeForAccount({
+        account_type: null,
+        product: "LIVRET A",
+        label: "M CHARLES DUPONT",
+      }),
+    ).toEqual({ role: "savings", savingsKind: "livret_a" });
+  });
+
+  it("offers « Autre livret » when nothing names the Livret", () => {
+    expect(
+      proposeForAccount({
+        account_type: "CACC",
+        product: null,
+        label: "Compte",
+      }),
+    ).toEqual({ role: "spending", savingsKind: "livret" });
+  });
+});
+
+describe("awaitingRole", () => {
+  it("asks about readable accounts with no role, and nothing else", () => {
+    const accounts = [
+      { id: "new", role: null, needs_reconnect: false },
+      { id: "lapsed", role: null, needs_reconnect: true },
+      { id: "known", role: "spending" as const, needs_reconnect: false },
+    ];
+    expect(awaitingRole(accounts).map((account) => account.id)).toEqual([
+      "new",
+    ]);
+  });
+});
+
+describe("groupByBank", () => {
+  const account = (
+    label: string,
+    bank: string | null,
+    role: "spending" | "savings" | "ignored" | null,
+    consent: string | null = null,
+  ) => ({ label, bank_name: bank, role, consent_valid_until: consent });
+
+  it("groups by bank, current accounts first, an unnamed bank last", () => {
+    const groups = groupByBank([
+      account("Livret A", "Crédit Agricole", "savings", "2027-02-01"),
+      account("Compte", null, "spending"),
+      account("Compte de dépôt", "Crédit Agricole", "spending", "2026-12-01"),
+      account("Carte", "BoursoBank", "ignored"),
+      account("Compte joint", "BoursoBank", null),
+      account("Compte", "BoursoBank", "spending"),
+    ]);
+    expect(
+      groups.map((group) => [
+        group.bank,
+        group.consentValidUntil,
+        group.accounts.map((each) => each.label),
+      ]),
+    ).toEqual([
+      ["BoursoBank", null, ["Compte", "Carte", "Compte joint"]],
+      ["Crédit Agricole", "2026-12-01", ["Compte de dépôt", "Livret A"]],
+      [null, null, ["Compte"]],
+    ]);
   });
 });

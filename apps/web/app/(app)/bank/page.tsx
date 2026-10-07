@@ -4,6 +4,7 @@ import { getAuthUser } from "@/lib/auth/get-user";
 import { bankFeedStatus } from "@/lib/bank/client";
 import { bankSetupOffered } from "@/lib/bank/offer";
 import { getBankAccounts } from "@/lib/queries/bank-balance";
+import { getSavingsAccounts } from "@/lib/queries/savings-accounts";
 import { createClient } from "@/lib/supabase/server";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { PageContainer } from "@/components/layout/PageContainer";
@@ -28,19 +29,21 @@ export default async function BankPage({ searchParams }: BankPageProps) {
   }
 
   const supabase = await createClient();
-  const [{ data: row }, accounts, status, params, offered] = await Promise.all([
-    supabase
-      .from("bank_connections")
-      .select(
-        "status, last_synced_at, consent_valid_until, backfilled_at, consent_version",
-      )
-      .eq("user_id", user.id)
-      .maybeSingle(),
-    getBankAccounts(user.id),
-    bankFeedStatus(user.id),
-    searchParams,
-    bankSetupOffered(),
-  ]);
+  const [{ data: row }, accounts, status, params, offered, savings] =
+    await Promise.all([
+      supabase
+        .from("bank_connections")
+        .select(
+          "status, last_synced_at, consent_valid_until, backfilled_at, consent_version",
+        )
+        .eq("user_id", user.id)
+        .maybeSingle(),
+      getBankAccounts(user.id),
+      bankFeedStatus(user.id),
+      searchParams,
+      bankSetupOffered(),
+      getSavingsAccounts(user.id),
+    ]);
 
   const connection = row
     ? {
@@ -63,6 +66,10 @@ export default async function BankPage({ searchParams }: BankPageProps) {
           // deployment's environment bundle, until they upload their own.
           ownerCredentials={!row && status === "connected"}
           accounts={accounts}
+          livrets={savings.accounts.map((account) => ({
+            kind: account.kind,
+            bankAccountId: account.bankAccountId,
+          }))}
           startWithSetup={offered && params.setup === "1"}
         />
       </PageContainer>

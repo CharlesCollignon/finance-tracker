@@ -17,7 +17,15 @@ import { asUser } from "@/lib/actions/as-user";
 import { autoCloseMonths } from "@/lib/bank/auto-close";
 import { syncBankFeed, type SyncOutcome } from "@/lib/bank/sync";
 import * as proposals from "@finance/data/recurring-proposals";
-import { setBankAccountRole } from "@finance/data/bank-accounts";
+import { fileBankAccount } from "@finance/data/bank-accounts";
+import {
+  SAVINGS_KINDS,
+  SAVINGS_KIND_SHORT_KEYS,
+} from "@finance/core/savings-accounts";
+import type {
+  BankAccountRole,
+  SavingsAccountKind,
+} from "@finance/core/types/database";
 import { todayIsoLocal } from "@finance/core/constants";
 import { getT } from "@/lib/locale";
 
@@ -395,43 +403,75 @@ export async function dismissRecurringProposal(
   return result;
 }
 
+const filingSchema = z
+  .array(
+    z.object({
+      accountId: z.string().min(1).max(200),
+      role: z.enum(["spending", "savings", "ignored"]),
+      savingsKind: z
+        .enum(SAVINGS_KINDS as [SavingsAccountKind, ...SavingsAccountKind[]])
+        .nullish(),
+    }),
+  )
+  .min(1)
+  .max(50);
+
 /**
- * Say whether an account is a current account: its money part of "what I
- * have to spend", its movements in the ledger. Unticked, it is no longer
- * followed.
+ * Say what bank accounts are — one, from its row on the Bank page, or every
+ * new one at once, from « C'est bon ». See `fileBankAccount`.
  *
- * Nothing is counted until it is said explicitly. A connection can expose
- * accounts nobody spends from, and one whose consent has lapsed reads as an
- * empty account rather than an unreadable one — so counting by default is how
- * a month close ends up explaining a phantom hole with invented spending.
+ * Nothing is counted until it is said. A connection can expose accounts
+ * nobody spends from, and one whose consent has lapsed reads as an empty
+ * account rather than an unreadable one — so counting by default is how a
+ * month close ends up explaining a phantom hole with invented spending.
+ *
+ * What comes back names the Livrets that already read another account, for
+ * the page to say so: the account was filed as Épargne all the same.
  */
-export async function setAccountCountsAsCash(
-  providerAccountId: string,
-  counts: boolean,
-): Promise<ActionResult> {
+export async function fileBankAccounts(
+  filings: {
+    accountId: string;
+    role: BankAccountRole;
+    savingsKind?: SavingsAccountKind | null;
+  }[],
+): Promise<ActionResult<{ taken: string[] }>> {
   const user = await getAuthUser();
   if (!user) {
     return { error: "errors.notAuthenticated" };
   }
-
-  const supabase = await createClient();
-  const result = await setBankAccountRole(
-    supabase,
-    user.id,
-    providerAccountId,
-    counts ? "spending" : "ignored",
-  );
-  if (result.error !== undefined) {
-    return result;
+  const parsed = filingSchema.safeParse(filings);
+  if (!parsed.success) {
+    return { error: "errors.invalidInput" };
   }
 
-  // Ticking an account can make a month closable that was not before.
+  const t = await getT();
+  const supabase = await createClient();
+  const taken: string[] = [];
+  for (const filing of parsed.data) {
+    const kind = filing.savingsKind ?? null;
+    const livretName = kind ? t(SAVINGS_KIND_SHORT_KEYS[kind]) : undefined;
+    const result = await fileBankAccount(supabase, user.id, {
+      accountId: filing.accountId,
+      role: filing.role,
+      savingsKind: kind,
+      livretName,
+    });
+    if (result.error !== undefined) {
+      revalidateApp();
+      return { error: result.error };
+    }
+    if (result.livret === "taken" && livretName) {
+      taken.push(livretName);
+    }
+  }
+
+  // A current account ticked can make a month closable that was not before.
   try {
     await autoCloseMonths(supabase, user.id);
   } catch {
-    // A close that cannot be worked out is not a reason to reject the tick.
+    // A close that cannot be worked out is not a reason to refuse the answer.
   }
 
   revalidateApp();
-  return { success: true };
+  return { success: true, taken };
 }

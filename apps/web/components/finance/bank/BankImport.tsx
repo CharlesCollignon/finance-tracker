@@ -39,9 +39,10 @@ type AccountState =
  * waiting, and rows already written are recognised and skipped.
  *
  * Only current accounts come in, and only once the user has said which
- * accounts those are: with none said yet, this asks for them and waits. The
- * page draws it again, under a new key, whenever another account starts
- * waiting for its history — one ticked later, or a bank added since.
+ * accounts those are: with none said yet, this steps aside for the
+ * new-accounts card and waits. It walks again whenever another account
+ * starts waiting for its history — one made current later, or at a bank
+ * added since.
  *
  * A file that works on an open-banking.io account with no bank connected yet
  * is not a finished import: it would mark the history as in, and the bank
@@ -166,6 +167,12 @@ export function BankImport({
     start();
   }, [waiting, walks, start]);
 
+  // The accounts it found wait for their role, which the new-accounts card
+  // asks: this walks again once current ones turn up.
+  if (undecided) {
+    return null;
+  }
+
   return (
     <section
       className={cn(GLASS_CARD, "flex flex-col gap-4 rounded-card p-card")}
@@ -184,10 +191,6 @@ export function BankImport({
 
       {error ? (
         <p className="text-sm text-destructive">{resolveMessage(t, error)}</p>
-      ) : null}
-
-      {undecided ? (
-        <p className="text-sm">{t("bankConnect.importChooseAccounts")}</p>
       ) : null}
 
       {empty ? (

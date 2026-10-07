@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import type { Db } from "./client";
-import { setBankAccountRole } from "./bank-accounts";
+import { fileBankAccount, setBankAccountRole } from "./bank-accounts";
 
 const LIVRET_ID = "5f0c6a3e-8a52-4f43-9d0e-2b7f0f6c1a11";
 
@@ -9,6 +9,7 @@ interface Write {
   table: string;
   payload: Record<string, unknown>;
   filters: [string, unknown][];
+  op?: "insert";
 }
 
 /**
@@ -23,6 +24,11 @@ function fakeDb(tables: Record<string, { rows?: unknown[]; one?: unknown }>) {
       select: () => chain,
       update: (payload: Record<string, unknown>) => {
         write = { table, payload, filters: [] };
+        writes.push(write);
+        return chain;
+      },
+      insert: (payload: Record<string, unknown>) => {
+        write = { table, payload, filters: [], op: "insert" };
         writes.push(write);
         return chain;
       },
@@ -96,5 +102,84 @@ describe("setBankAccountRole", () => {
       setBankAccountRole(db, "u1", "acc", "joint" as "ignored"),
     ).resolves.toEqual({ error: "errors.invalidInput" });
     expect(writes).toHaveLength(0);
+  });
+});
+
+describe("fileBankAccount", () => {
+  const livret = (
+    kind: string,
+    bankAccountId: string | null,
+    id = LIVRET_ID,
+  ) => ({ id, kind, bank_account_id: bankAccountId });
+
+  it("links the Livret of that kind when it reads nothing yet", async () => {
+    const { db, writes } = fakeDb({
+      savings_accounts: {
+        rows: [livret("livret_a", null)],
+        one: livret("livret_a", null),
+      },
+      bank_accounts: { one: { reported_balance: 80, reported_on: null } },
+    });
+
+    await expect(
+      fileBankAccount(db, "u1", {
+        accountId: "acc",
+        role: "savings",
+        savingsKind: "livret_a",
+      }),
+    ).resolves.toEqual({ success: true, livret: "linked" });
+    expect(
+      writes.map((write) => [write.table, write.payload.bank_account_id]),
+    ).toContainEqual(["savings_accounts", "acc"]);
+  });
+
+  it("leaves a Livret that reads another account to it", async () => {
+    const { db, writes } = fakeDb({
+      savings_accounts: { rows: [livret("livret_a", "other")] },
+    });
+
+    await expect(
+      fileBankAccount(db, "u1", {
+        accountId: "acc",
+        role: "savings",
+        savingsKind: "livret_a",
+      }),
+    ).resolves.toEqual({ success: true, livret: "taken" });
+    expect(writes.map((write) => write.table)).toEqual(["bank_accounts"]);
+  });
+
+  it("makes the Livret when the user has none of that kind", async () => {
+    const { db, writes } = fakeDb({
+      savings_accounts: { rows: [] },
+      categories: { rows: [{ id: "c1", name: "LDDS", archived: false }] },
+      bank_accounts: {
+        one: { reported_balance: 1200, reported_on: "2026-10-07" },
+      },
+    });
+
+    await expect(
+      fileBankAccount(db, "u1", {
+        accountId: "acc",
+        role: "savings",
+        savingsKind: "ldds",
+        livretName: "LDDS",
+      }),
+    ).resolves.toEqual({ success: true, livret: "created" });
+    expect(
+      writes.find((write) => write.op === "insert")?.payload,
+    ).toMatchObject({
+      kind: "ldds",
+      bank_account_id: "acc",
+      balance: 1200,
+      category_id: "c1",
+    });
+  });
+
+  it("asks nothing of Placements for a current account", async () => {
+    const { db } = fakeDb({ savings_accounts: { rows: [] } });
+
+    await expect(
+      fileBankAccount(db, "u1", { accountId: "acc", role: "spending" }),
+    ).resolves.toEqual({ success: true, livret: null });
   });
 });

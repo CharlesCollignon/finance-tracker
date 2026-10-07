@@ -2033,8 +2033,6 @@ export const en = {
    * only the words unique to being editable live here.
    */
   cashAccounts: {
-    tickHint: "Tick the ones you spend from.",
-    lastRead: "Last read {when}",
     noneTicked: "Nothing is ticked, so months are still closed by hand.",
     autoCloses:
       "Months close on their own once the statement covers the day they are read on. A month whose ticked accounts cannot all be read waits instead of guessing.",
@@ -2969,6 +2967,36 @@ export const en = {
     },
   },
 
+  bankAccounts: {
+    heading: "Your accounts",
+    body: "Current: its movements come into your ledger and its balance is your money to spend. Savings: its balance is a savings account's on Placements. Don't follow: nothing comes in from it.",
+    roleGroup: "What {account} is",
+    roleSpending: "Current",
+    roleSavings: "Savings",
+    roleIgnored: "Don't follow",
+    livretLabel: "Its savings account",
+    livretPanel: "Which savings account is it?",
+    livretTaken: {
+      one: "{names} already reads another account: pick another savings account for this one.",
+      other:
+        "{names} already read other accounts: pick other savings accounts for these.",
+    },
+    ignoredBilled: "open-banking.io bills it as long as it is connected there.",
+    otherBank: "Other bank",
+    consentUntil: "Shared until {date}",
+    consentSoon: "Renew before {date}",
+    consentEnded: "Consent ended: renew it at open-banking.io",
+    newTitle: {
+      one: "A new account found",
+      other: "{count} new accounts found",
+    },
+    newBody:
+      "Say what each one is: Pluclair brings nothing in from it before. The likeliest answer is already picked.",
+    confirm: "Looks right",
+    confirmed: "Your accounts are sorted.",
+    addBank: "Add a bank",
+  },
+
   /**
    * Connecting a bank through open-banking.io, and looking after the
    * connection afterwards.
@@ -3055,6 +3083,9 @@ export const en = {
     ownerUpload:
       "Upload your credentials file to keep this connection on your account rather than in this deployment's settings.",
     ownerUploadCta: "Upload the file",
+    consentUntilAt: "Your consent at {bank} runs until {date}.",
+    consentSoonAt:
+      "Your consent at {bank} ends on {date}. Renew it at open-banking.io to keep syncing.",
     consentUntil: "Your bank's consent runs until {date}.",
     consentSoon:
       "Your bank's consent ends on {date}. Renew it on open-banking.io to keep syncing.",
@@ -3225,9 +3256,6 @@ export const en = {
        * which is why the body's continuation and the "last read" line live
        * under `cashAccounts.*` instead of here.
        */
-      cashAccountsHeading: "Which accounts hold your cash",
-      cashAccountsBody:
-        "Closing a month compares what these held at the start and the end against what the ledger says happened.",
       cashAccountsLapsed: "Consent has lapsed — nothing can be read from it",
     },
     /**
