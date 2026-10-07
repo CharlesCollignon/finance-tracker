@@ -1629,8 +1629,8 @@ export const en = {
     actionClose: "Close",
     actionStart: "Start",
     attentionSwallowed: {
-      one: "{count} bank transaction was merged away by an earlier sync",
-      other: "{count} bank transactions were merged away by an earlier sync",
+      one: "{count} bank transaction was merged into a recurring charge",
+      other: "{count} bank transactions were merged into recurring charges",
     },
     attentionInbox: {
       one: "{count} transaction needs a category",
@@ -1862,7 +1862,7 @@ export const en = {
       one: "{count} bank row was merged away",
       other: "{count} bank rows were merged away",
     },
-    body: "An earlier sync decided these were charges your recurring templates had already written, on nothing more than a matching amount within five days. On a statement of small round figures that is not enough to go on, so most of them are probably real spending that never reached your ledger. Reopening puts them back in the review inbox for you to judge.",
+    body: "Pluclair decided these were charges your recurring templates had already written — sometimes purchases made at the broker, which the bank never sees — on nothing more than a matching amount within five days. On a statement of small round figures that is not enough to go on, so most of them are probably real spending that never reached your ledger. Reopening puts them back in the review inbox for you to judge.",
     reopenAll: "Reopen them all",
     reopening: "Reopening…",
     reopened: "Reopened",

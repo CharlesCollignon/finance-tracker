@@ -2,6 +2,7 @@ import type { ActionResult } from "@finance/core/action-result";
 import { findLedgerMatch } from "@finance/core/bank-feed";
 import { z } from "zod";
 
+import { bankRowsFiledAgainstPurchases } from "./bank-inbox";
 import type { Db } from "./client";
 import { ledgerRowsAround } from "./ledger-duplicates";
 import { dbError } from "./errors";
@@ -264,28 +265,59 @@ export async function reopenFeedItems(
 }
 
 /**
- * Put back every bank row an earlier sync merged away on its own.
+ * Put back every bank row merged into a transaction already there on the
+ * strength of a matching amount: those an earlier sync merged on its own,
+ * and those filed against a purchase made at the broker, which no bank
+ * movement is (`bankRowsFiledAgainstPurchases`).
  *
  * Those rows were filed against a recurring transaction because the amounts
  * matched within five days, which turned out to prove nothing on a statement
  * full of small round figures. They never became transactions, so what is
  * missing is spending rather than duplicated. Reopening returns the decision
- * to the user; the sync no longer makes it.
+ * to the user, and leaves the transaction they were filed against — a DCA
+ * that did happen — where it was.
  */
 export async function reopenSwallowedFeedItems(
   db: Db,
   userId: string,
 ): Promise<ActionResult<{ reopened: number }>> {
-  const { data, error } = await db
-    .from("bank_feed_items")
-    .update({ status: "pending", transaction_id: null, decided_by: null })
-    .eq("user_id", userId)
-    .eq("decided_by", "match:recurring")
-    .select("id");
+  let againstPurchases: string[];
+  try {
+    againstPurchases = await bankRowsFiledAgainstPurchases(db, userId);
+  } catch (error) {
+    return {
+      error: error instanceof Error ? error.message : "errors.invalidInput",
+    };
+  }
+  const reopen = {
+    status: "pending" as const,
+    transaction_id: null,
+    decided_by: null,
+  };
+  const [merged, filed] = await Promise.all([
+    db
+      .from("bank_feed_items")
+      .update(reopen)
+      .eq("user_id", userId)
+      .eq("decided_by", "match:recurring")
+      .select("id"),
+    againstPurchases.length > 0
+      ? db
+          .from("bank_feed_items")
+          .update(reopen)
+          .eq("user_id", userId)
+          .in("id", againstPurchases)
+          .select("id")
+      : Promise.resolve({ data: [], error: null }),
+  ]);
+  const error = merged.error ?? filed.error;
   if (error) {
     return { error: dbError(error) };
   }
-  return { success: true, reopened: data?.length ?? 0 };
+  return {
+    success: true,
+    reopened: (merged.data?.length ?? 0) + (filed.data?.length ?? 0),
+  };
 }
 
 /**
