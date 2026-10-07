@@ -34,7 +34,8 @@ type AccountState =
  * an account's history is marked in only once it is, so the Bank screen
  * starts this again next time and rows already written are recognised and
  * skipped. Only current accounts come in, once the user has said which
- * those are, and the walk runs again when another starts waiting. An empty
+ * those are — until then this steps aside for the new-accounts card — and
+ * the walk runs again when another starts waiting. An empty
  * list — a working file on an open-banking.io account with no bank
  * connected yet — waits rather than finishing, for the reason the web's
  * walk gives.
@@ -160,6 +161,12 @@ export function BankImport({
     start();
   }, [waiting, walks, start]);
 
+  // The accounts it found wait for their role, which the new-accounts card
+  // asks: this walks again once current ones turn up.
+  if (undecided) {
+    return null;
+  }
+
   return (
     <Card bezel innerClassName="gap-4 p-5" accessibilityLiveRegion="polite">
       <View className="gap-1">
@@ -177,10 +184,6 @@ export function BankImport({
         <Text className="text-sm text-destructive">
           {resolveMessage(t, error)}
         </Text>
-      ) : null}
-
-      {undecided ? (
-        <Text className="text-sm">{t("bankConnect.importChooseAccounts")}</Text>
       ) : null}
 
       {empty ? (

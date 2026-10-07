@@ -1,5 +1,6 @@
 import { RefreshControl, ScrollView, View } from "react-native";
 
+import { awaitingRole } from "@finance/core/bank-accounts";
 import { getMonthBounds, todayIsoLocal } from "@finance/core/constants";
 
 import { ArrivedCharges } from "@/components/ArrivedCharges";
@@ -7,6 +8,7 @@ import { MonthPicker } from "@/components/MonthPicker";
 import { MonthRead } from "@/components/MonthRead";
 import { PurchasesToConfirm } from "@/components/PurchasesToConfirm";
 import { BankAttentionBanner } from "@/components/bank/BankAttentionBanner";
+import { NewAccountsLine } from "@/components/bank/NewAccountsLine";
 import { AttentionRow } from "@/components/bearing/AttentionRow";
 import {
   BalanceCard,
@@ -23,6 +25,7 @@ import { ScreenSkeleton } from "@/components/ui/Skeleton";
 import { ScreenError } from "@/components/ScreenError";
 import { useBankState } from "@/hooks/useBankState";
 import { useRefreshable } from "@/hooks/useRefreshable";
+import { getBankAccounts } from "@/lib/queries";
 import {
   gatherHomeMonth,
   gatherHomeRead,
@@ -90,6 +93,15 @@ export default function HomeScreen() {
   // Whether a bank can be connected here at all is the deployment's to say.
   const { bank } = useBankState();
 
+  // Accounts the bank shows that wait to be told what they are: nothing of
+  // theirs comes in until then, so the screen says so.
+  const { data: awaitingAccounts } = useRefreshable(
+    async () =>
+      user ? awaitingRole(await getBankAccounts(user.id)).length : 0,
+    [user?.id],
+    { reads: ["bank"] },
+  );
+
   // Kept on screen while the next month loads, dimmed, so the picker does not
   // flash the screen empty on every step.
   const stale = data !== null && (data.year !== year || data.month !== month);
@@ -120,6 +132,10 @@ export default function HomeScreen() {
             every one of them quietly stale. */}
         {bank?.attention ? (
           <BankAttentionBanner attention={bank.attention} />
+        ) : null}
+
+        {awaitingAccounts ? (
+          <NewAccountsLine count={awaitingAccounts} />
         ) : null}
 
         {data ? (
