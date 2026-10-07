@@ -7,7 +7,6 @@ import {
   scheduleDatesBefore,
 } from "@finance/core/apply-recurring";
 import { getCurrentMonth, todayIsoLocal } from "@finance/core/constants";
-import { isCryptoCategoryName } from "@finance/core/crypto-holdings";
 import { dayOfWeekLabels, monthLabels } from "@finance/core/recurrence";
 import type {
   Category,
@@ -190,18 +189,9 @@ export function RecurringFormBody({
   // said under the schedule, as the web does.
   const isYearlyExpense =
     recurrence === "yearly" && selectedCategory?.type === "expense";
-  // Following the DCAs is the broker transfer's, as on the web: an
-  // investment the account pays, once a month.
-  const canFollow =
-    !sharePriced &&
-    recurrence === "monthly" &&
-    selectedCategory?.type === "investment" &&
-    selectedCategory.counts_toward_summary !== false &&
-    !isCryptoCategoryName(selectedCategory.name);
-  const [followChosen, setFollowChosen] = useState(
-    template?.pricing_type === "purchases",
-  );
-  const follows = canFollow && followChosen;
+  // The app's transfer to the broker, kept from the ticked DCAs, as on the
+  // web: opened here through a link, it says so and keeps its pricing.
+  const follows = template?.pricing_type === "purchases";
   const [startsOn, setStartsOn] = useState(template?.starts_on ?? "");
   const [endsOn, setEndsOn] = useState(template?.ends_on ?? "");
   const [error, setError] = useState<string | null>(null);
@@ -393,45 +383,15 @@ export function RecurringFormBody({
         className="mb-4"
       />
 
-      {canFollow ? (
-        <>
-          <Text className="mb-2 text-sm font-medium">
-            {t("recurring.amountType")}
-          </Text>
-          <ChoiceChips
-            label={t("recurring.amountType")}
-            fill
-            options={[
-              { value: "fixed", label: t("recurring.fixedAmount") },
-              { value: "purchases", label: t("recurring.followsPurchases") },
-            ]}
-            value={follows ? "purchases" : "fixed"}
-            onChange={(value) => setFollowChosen(value === "purchases")}
-            className="mb-4"
-          />
-        </>
-      ) : null}
-
       {follows ? (
         <View className="mb-4 rounded-control border border-border p-3">
-          {template?.pricing_type === "purchases" ? (
-            <Text className="text-base font-semibold">
-              {t("recurring.followsPurchasesNow", {
-                amount: formatEuro(Number(template.amount)),
-              })}
-            </Text>
-          ) : null}
-          <Text
-            variant="muted"
-            className={cn(
-              "text-xs",
-              template?.pricing_type === "purchases" && "mt-1",
-            )}
-          >
+          <Text className="text-base font-semibold">
+            {t("recurring.followsPurchasesNow", {
+              amount: formatEuro(Number(template.amount)),
+            })}
+          </Text>
+          <Text variant="muted" className="mt-1 text-xs">
             {t("recurring.followsPurchasesNote")}
-            {template?.pricing_type !== "purchases"
-              ? ` ${t("recurring.followsPurchasesNew")}`
-              : ""}
           </Text>
         </View>
       ) : sharePriced ? (

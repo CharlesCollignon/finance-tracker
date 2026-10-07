@@ -4,7 +4,7 @@ import { z } from "zod";
 import { getLocale } from "@/lib/locale";
 
 import { revalidateApp } from "@/lib/revalidate-paths";
-import * as dcaInvite from "@finance/data/dca-invite";
+import * as dcaTransfer from "@finance/data/dca-transfer";
 import * as deletions from "@finance/data/deletions";
 import * as ledger from "@finance/data/ledger";
 import * as occurrences from "@finance/data/occurrences";
@@ -285,19 +285,22 @@ export async function restoreDeletion(
   return asUser((db, userId) => deletions.restoreDeletion(db, userId, token));
 }
 
-/** Yes to « Faire suivre vos DCA »: see `acceptTransferInvitation`. */
-export async function acceptDcaTransferInvite(): Promise<ActionResult> {
-  const locale = await getLocale();
+/**
+ * Tick or untick « Payé par le virement au courtier » on a DCA: see
+ * `setFundedByTransfer`.
+ */
+export async function setFundedByTransfer(
+  templateId: string,
+  funded: boolean,
+): Promise<ActionResult> {
   return asUser((db, userId) =>
-    dcaInvite.acceptTransferInvitation(db, userId, todayIsoLocal(), locale),
-  );
-}
-
-/** No thanks to « Faire suivre vos DCA », on every device. */
-export async function dismissDcaTransferInvite(): Promise<ActionResult> {
-  const locale = await getLocale();
-  return asUser((db, userId) =>
-    dcaInvite.dismissTransferInvitation(db, userId, locale),
+    dcaTransfer.setFundedByTransfer(
+      db,
+      userId,
+      templateId,
+      funded,
+      todayIsoLocal(),
+    ),
   );
 }
 

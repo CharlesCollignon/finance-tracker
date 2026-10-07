@@ -1355,6 +1355,7 @@ export type Database = {
           day_of_week: number | null;
           description: string | null;
           ends_on: string | null;
+          funded_by_transfer: boolean;
           id: string;
           instrument_name: string | null;
           instrument_symbol: string | null;
@@ -1377,6 +1378,7 @@ export type Database = {
           day_of_week?: number | null;
           description?: string | null;
           ends_on?: string | null;
+          funded_by_transfer?: boolean;
           id?: string;
           instrument_name?: string | null;
           instrument_symbol?: string | null;
@@ -1399,6 +1401,7 @@ export type Database = {
           day_of_week?: number | null;
           description?: string | null;
           ends_on?: string | null;
+          funded_by_transfer?: boolean;
           id?: string;
           instrument_name?: string | null;
           instrument_symbol?: string | null;

@@ -484,11 +484,9 @@ export const en = {
     amountType: "Amount type",
     fixedAmount: "Fixed EUR",
     sharesTimesPrice: "Shares × price",
-    followsPurchases: "Follows my DCAs",
     followsPurchasesNote:
-      "What next month's DCAs will cost, 5% more on those bought in shares, rounded up to the next €50. Worked out again every day, and whenever a DCA changes.",
+      "Kept by Pluclair: each month, what the DCAs ticked “Paid by the broker transfer” will cost, 5% more on those bought in shares, rounded up to the next €50. Tick or untick them in Recurring.",
     followsPurchasesNow: "Today: {amount}",
-    followsPurchasesNew: "Worked out when you save.",
     followsPurchasesRow: "Follows next month's DCAs",
     shareCount: "Number of shares",
     wholeSharesOnly: "Enter a whole number of shares",
@@ -2229,18 +2227,6 @@ export const en = {
       hint: "When it needs renewing, or has stopped.",
     },
   },
-  dcaInvite: {
-    title: "Let your transfer follow your DCAs",
-    follow:
-      "“{name}” can take its amount from your DCAs: each month, what they will cost, 5% more on those bought in shares, rounded up to the next €50.",
-    create:
-      "A monthly transfer to the broker, on day {day} like your salary, can take its amount from your DCAs: each month, what they will cost, 5% more on those bought in shares, rounded up to the next €50.",
-    next: "In {month} it would be {amount}, and three days before payday you'll get the amount to send.",
-    followAction: "Let it follow",
-    createAction: "Create this transfer",
-    dismiss: "No thanks",
-    done: "Your transfer now follows your DCAs",
-  },
   dcaTransfer: {
     title: "To send to the broker",
     for: "For the DCAs planned in {month}: {wallets}.",
@@ -2273,7 +2259,7 @@ export const en = {
   },
   push: {
     dcaTransfer: {
-      title: "{name}: {amount}",
+      title: "Get {amount} ready for {month}",
     },
     dca: {
       title: "{name}: did it go through?",

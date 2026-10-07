@@ -142,3 +142,60 @@ machine.
   Subtracting it would need a figure the app cannot read, which is why it was
   turned down.
 - Order fees are not modelled; the margin absorbs small ones.
+
+## Rework — one tick per DCA, one card (decided 2026-10-07)
+
+Using it on real data, the owner found the transfer that follows the DCAs
+too much like a thing to manage: a charge of its own in the investments
+column, an amount option on a sheet, an invitation to accept. What they want
+instead is to say, per DCA, that the monthly transfer pays for it, and for
+the app to take it from there — as simply as possible for anyone, and alive
+on both apps.
+
+Decisions:
+
+- **A tick per DCA**, « Payé par le virement au courtier », on every DCA
+  PEA and DCA CTO by default (`funded_by_transfer`, migration 055). Never on
+  a wallet the bank debits (Bitstack). The figure is what the ticked DCAs
+  of the month cost, as before (+5 % on share-priced, up to the next 50 €).
+- **The transfer is the app's.** Kept as a charge under the hood, so the
+  balance, the forecast, the projection and « C'est arrivé ? » go on reading
+  it, but never shown as an item to manage: the DCA group in Récurrents
+  carries it as a header, « Virement au courtier · 2 150 € · 8 DCA ». The
+  first tick creates it, the last untick pauses it. The owner's existing one
+  becomes it. « Selon vos DCA » leaves the charge sheet and « Faire suivre
+  vos DCA » goes.
+- **Due on the 1st**, for the month it opens; sent a few days either side
+  still counts (the payday room, 15 days before and 10 after). The card
+  and the push come 5 days before the 1st, and the card stays until the bank
+  shows it.
+- **One card on Le point** for the DCA month: before it is sent, « À
+  préparer pour novembre : 2 150 € » with what it is made of; once seen on
+  the account, « Envoyé ✓ », the month's DCAs filling (« 3 / 6 passés ») and
+  the months funded in a row.
+- **Moments, no score:** the transfer confirmed, the last DCA of the month
+  through, a tick turning the figure up or down, the run extended.
+
+### Phase A — The model (branch `dca-rework-model`) — done
+
+- [x] Migration 055: `recurring_templates.funded_by_transfer`, backfilled on
+      for DCAs bought at the broker; the transfer moved to the 1st.
+- [x] Core: the figure from ticked DCAs (`isFundedDca`); the month a
+      transfer covers is the one starting nearest its day; the card's state
+      (to send, sent, unseen), the month's DCA progress and the run
+      (`dcaMonth`).
+- [x] Data: tick and untick (`setFundedByTransfer`); the app's transfer made
+      on the first tick — their own « Virement vers le courtier » taken over
+      — paused on the last, brought back on the next (`followPurchases`); a
+      new DCA ticked by default; the card's read (`getDcaMonth`); the push
+      5 days before the 1st.
+- [x] Out: the invitation, « Selon vos DCA » on the sheets (the app's
+      transfer opened through a link says it is kept by Pluclair).
+
+### Phase B — The surfaces (branch `dca-rework-ui`)
+
+- [ ] Récurrents, both apps: the tick on each DCA, the transfer as the DCA
+      group's header, its figure counting as ticks change.
+- [ ] Le point, both apps: the card, its states, progress and run, with the
+      moments; « C'est bien lui ? » inline when the bank shows a transfer.
+- [ ] Journal: the planned transfer says which month's DCAs it pays for.

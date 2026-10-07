@@ -350,11 +350,9 @@ export const fr: Messages = {
     amountType: "Type de montant",
     fixedAmount: "Montant fixe en EUR",
     sharesTimesPrice: "Parts × cours",
-    followsPurchases: "Selon vos DCA",
     followsPurchasesNote:
-      "Ce que vos DCA du mois suivant vont coûter, 5\u00A0% de plus sur ceux achetés en parts, arrondi aux 50\u00A0€ supérieurs. Recalculé chaque jour, et dès qu'un DCA change.",
+      "Gardé par Pluclair\u00A0: chaque mois, ce que vont coûter les DCA cochés « Payé par le virement au courtier », 5\u00A0% de plus sur ceux achetés en parts, arrondi aux 50\u00A0€ supérieurs. Cochez ou décochez-les dans Récurrents.",
     followsPurchasesNow: "Aujourd'hui\u00A0: {amount}",
-    followsPurchasesNew: "Calculé à l'enregistrement.",
     followsPurchasesRow: "Selon vos DCA du mois suivant",
     shareCount: "Nombre de parts",
     wholeSharesOnly: "Saisissez un nombre entier de parts",
@@ -1578,18 +1576,6 @@ export const fr: Messages = {
       hint: "Quand il faut la renouveler, ou si elle s'est arrêtée.",
     },
   },
-  dcaInvite: {
-    title: "Faire suivre vos DCA",
-    follow:
-      "« {name} » peut prendre le montant de vos DCA\u00A0: chaque mois, ce qu'ils vont coûter, 5\u00A0% de plus sur ceux achetés en parts, arrondi aux 50\u00A0€ supérieurs.",
-    create:
-      "Un virement mensuel vers le courtier, le {day} comme votre salaire, peut prendre le montant de vos DCA\u00A0: chaque mois, ce qu'ils vont coûter, 5\u00A0% de plus sur ceux achetés en parts, arrondi aux 50\u00A0€ supérieurs.",
-    next: "En {month}, ce serait {amount}, et trois jours avant la paie, vous recevrez le montant à envoyer.",
-    followAction: "Le faire suivre",
-    createAction: "Créer ce virement",
-    dismiss: "Non merci",
-    done: "Votre virement suit maintenant vos DCA",
-  },
   dcaTransfer: {
     title: "À envoyer au courtier",
     for: "Pour les DCA prévus en {month}\u00A0: {wallets}.",
@@ -1624,7 +1610,7 @@ export const fr: Messages = {
   },
   push: {
     dcaTransfer: {
-      title: "{name}\u00A0: {amount}",
+      title: "À préparer pour {month}\u00A0: {amount}",
     },
     dca: {
       title: "{name}\u00A0: c'est passé\u00A0?",

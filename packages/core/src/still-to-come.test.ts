@@ -71,6 +71,7 @@ function template(
     starts_on: null,
     ends_on: null,
     property_id: null,
+    funded_by_transfer: false,
     created_at: "2026-01-01T00:00:00Z",
     categories: {
       name: options.name ?? type,
