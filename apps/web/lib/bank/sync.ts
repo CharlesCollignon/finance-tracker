@@ -20,6 +20,7 @@ import { getBankConnection } from "@/lib/bank/client";
 import { pullFromBank } from "@/lib/bank/pull";
 import { DEFAULT_LOCALE } from "@finance/core/i18n/locale";
 import { cashDateOf } from "@finance/core/cash-date";
+import { isPurchaseInsideWallet } from "@finance/core/categories";
 import { shiftIsoDate, todayIsoLocal } from "@finance/core/constants";
 
 type Client = SupabaseClient<Database>;
@@ -201,6 +202,8 @@ export async function syncBankFeed(
     isIncome: tx.categories.type === "income",
     fromRecurringTemplate: tx.recurring_template_id !== null,
     alreadyClaimed: claimedIds.has(tx.id),
+    categoryId: tx.category_id,
+    insideWallet: isPurchaseInsideWallet(tx.categories),
   }));
   const categoryIdsByName = indexCategoriesByName(categories ?? []);
   const seenProviderIds = new Set(seen.map((row) => row.provider_id as string));

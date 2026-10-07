@@ -107,6 +107,8 @@ export async function fileFeedItems(
         note: item.note,
       },
       existing,
+      // What the user says it is: a row of another kind is another movement.
+      { categoryId: category.data },
     );
 
     if (already) {
@@ -334,6 +336,8 @@ export async function importFeedItem(
         note: item.note,
       },
       existing,
+      // What the user says it is: a row of another kind is another movement.
+      { categoryId },
     );
 
     if (already) {
