@@ -2994,6 +2994,11 @@ export const en = {
       "Say what each one is: Pluclair brings nothing in from it before. The likeliest answer is already picked.",
     confirm: "Looks right",
     confirmed: "Your accounts are sorted.",
+    bearingLine: {
+      one: "A new account is waiting for you to say what it is.",
+      other: "{count} new accounts are waiting for you to say what they are.",
+    },
+    bearingCta: { one: "Sort it", other: "Sort them" },
     addBank: "Add a bank",
     addLead:
       "Your credentials file reads every bank in your open-banking.io account: no need to upload another.",

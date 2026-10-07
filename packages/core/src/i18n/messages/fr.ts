@@ -2166,6 +2166,12 @@ export const fr: Messages = {
       "Dites ce qu'est chacun\u00A0: Pluclair n'en importe rien avant. Le plus probable est déjà choisi.",
     confirm: "C'est bon",
     confirmed: "Vos comptes sont classés.",
+    bearingLine: {
+      one: "Un nouveau compte attend que vous disiez ce qu'il est.",
+      other:
+        "{count} nouveaux comptes attendent que vous disiez ce qu'ils sont.",
+    },
+    bearingCta: { one: "Le classer", other: "Les classer" },
     addBank: "Ajouter une banque",
     addLead:
       "Votre fichier d'identifiants lit toutes les banques de votre compte open-banking.io\u00A0: inutile d'en déposer un autre.",

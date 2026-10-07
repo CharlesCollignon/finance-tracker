@@ -2,7 +2,9 @@ import {
   bankAttention,
   type BankAttention,
 } from "@finance/core/bank-attention";
+import { awaitingRole } from "@finance/core/bank-accounts";
 import { todayIsoLocal } from "@finance/core/constants";
+import { getBankAccounts } from "@/lib/queries/bank-balance";
 import { createClient } from "@/lib/supabase/server";
 
 /**
@@ -21,4 +23,14 @@ export async function readBankAttention(
     .eq("user_id", userId)
     .maybeSingle();
   return bankAttention(data, todayIsoLocal());
+}
+
+/**
+ * How many accounts the bank shows that this user has not said anything
+ * about yet: nothing of theirs is brought in until they do.
+ */
+export async function countAccountsAwaitingRole(
+  userId: string,
+): Promise<number> {
+  return awaitingRole(await getBankAccounts(userId)).length;
 }

@@ -31,6 +31,7 @@ import { ArrivedCharges } from "@/components/finance/ArrivedCharges";
 import { PurchasesToConfirm } from "@/components/finance/PurchasesToConfirm";
 import { DcaStrip } from "@/components/finance/DcaStrip";
 import { BankAttentionBanner } from "@/components/finance/bank/BankAttentionBanner";
+import { NewAccountsLine } from "@/components/finance/bank/NewAccountsLine";
 import { ConnectBankInvite } from "@/components/finance/bank/ConnectBankInvite";
 import { BalanceCurve } from "@/components/finance/bearing/BalanceCurve";
 import { MonthPicker } from "@/components/layout/MonthPicker";
@@ -67,12 +68,15 @@ export function BearingMonthView({
   readSlot,
   bankInvite = false,
   bankAttention = null,
+  awaitingAccounts = 0,
 }: {
   data: BearingMonth;
   /** Whether to invite this reader to connect a bank, in the balance card. */
   bankInvite?: boolean;
   /** A connected bank about to stop, or stopped: shown above everything. */
   bankAttention?: BankAttention | null;
+  /** Accounts the bank shows that wait to be told what they are. */
+  awaitingAccounts?: number;
   /**
    * The week's recap, early in the week: streamed in like the read, and
    * nothing at all on the days it has nothing to show.
@@ -95,6 +99,10 @@ export function BearingMonthView({
       <MonthPicker basePath="/bearing" className="self-center" />
 
       {bankAttention ? <BankAttentionBanner attention={bankAttention} /> : null}
+
+      {awaitingAccounts > 0 ? (
+        <NewAccountsLine count={awaitingAccounts} />
+      ) : null}
 
       {data.attention.length > 0 ? (
         <AttentionRow attention={data.attention} />
