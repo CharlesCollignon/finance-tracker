@@ -22,7 +22,8 @@ import type { MonthFacts } from "@finance/core/month-facts";
 import { buildMonthPulse } from "@finance/core/month-pulse";
 import type { ReadFreshness } from "@finance/core/month-read-budget";
 import type { PurchaseToConfirm } from "@finance/core/purchases-to-confirm";
-import type { TransferReminder } from "@finance/core/dca-need";
+import type { DcaMonth } from "@finance/core/dca-need";
+import type { FulfilmentProposal } from "@finance/core/recurring-fulfilment";
 import {
   buildStillToCome,
   type UpcomingCharge,
@@ -33,7 +34,7 @@ import {
   type BalanceSource,
 } from "@finance/data/month-balance";
 import { getPurchasesToConfirm } from "@finance/data/purchases-to-confirm";
-import { getTransferReminder } from "@finance/data/dca-transfer";
+import { getDcaMonth } from "@finance/data/dca-transfer";
 import { getWeeklyRecapCard } from "@finance/data/weekly-recap";
 
 import {
@@ -126,10 +127,11 @@ export interface HomeMonth {
    */
   purchases: PurchaseToConfirm[];
   /**
-   * What to send to the broker for next month's DCAs, from three days before
-   * payday until it is sent. The month in progress only.
+   * The DCA card, as on the web (`dcaMonth`). The month in progress only.
    */
-  transfer: TransferReminder | null;
+  dca: DcaMonth | null;
+  /** The bank's movement that looks like the transfer, confirmed on the card. */
+  dcaProposal: FulfilmentProposal | null;
   /** Nothing recorded, nothing planned and no balance: a first visit. */
   empty: boolean;
 }
@@ -236,7 +238,8 @@ export async function gatherHomeMonth(
   let attention: AttentionItem[] = [];
   let arrived: FulfilmentReport | null = null;
   let purchases: PurchaseToConfirm[] = [];
-  let transfer: TransferReminder | null = null;
+  let dca: DcaMonth | null = null;
+  let dcaProposal: FulfilmentProposal | null = null;
 
   if (isCurrent) {
     const categories = await getCategories(userId);
@@ -260,7 +263,16 @@ export async function gatherHomeMonth(
       ]);
     arrived = report;
     purchases = waitingPurchases;
-    transfer = await getTransferReminder(supabase, userId, today);
+    dca = await getDcaMonth(supabase, userId, today);
+    // Confirmed on the card, so left out of « C'est arrivé ? ».
+    if (dca && arrived) {
+      const key = `${dca.templateId}:${dca.occurredOn}`;
+      dcaProposal =
+        arrived.proposals.find((proposal) => proposal.key === key) ?? null;
+      arrived = {
+        proposals: arrived.proposals.filter((proposal) => proposal.key !== key),
+      };
+    }
 
     if (closes.summary.sample > 0) {
       run = {
@@ -315,7 +327,8 @@ export async function gatherHomeMonth(
         ? arrived
         : null,
     purchases,
-    transfer,
+    dca,
+    dcaProposal,
     empty:
       source === "none" &&
       rows.length === 0 &&

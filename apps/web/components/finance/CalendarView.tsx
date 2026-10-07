@@ -56,6 +56,7 @@ import type {
 } from "@finance/core/types/database";
 import { ICON } from "@/lib/icon-scale";
 import { useLocale, useT } from "@/lib/locale-context";
+import { plannedOccurrenceNote } from "@finance/core/dca-need";
 
 /** Stable identity, so the derived selection does not change every render. */
 const EMPTY_SELECTION: ReadonlySet<string> = new Set();
@@ -614,7 +615,7 @@ export function CalendarView({
                               ? "ledger.awaited"
                               : "ledger.planned",
                           ),
-                          occurrence.note,
+                          plannedOccurrenceNote(occurrence, t, locale),
                         ]
                           .filter(Boolean)
                           .join(" · ")}

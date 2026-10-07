@@ -3,9 +3,12 @@ import { describe, expect, it } from "vitest";
 import {
   dcaMonth,
   dcaNeedForMonth,
+  plannedOccurrenceNote,
   transferCoversMonth,
   transferReminder,
 } from "./dca-need";
+import { translator } from "./i18n/t";
+import { monthStartingNearest } from "./recurrence";
 import type { RecurringTemplateWithCategory } from "./types/database";
 
 function template(
@@ -311,6 +314,13 @@ describe("dcaMonth", () => {
     ).toBeNull();
   });
 
+  it("shows a new transfer's first month at once, to prepare", () => {
+    const fresh = { ...transfer, created_at: "2026-10-07T08:00:00Z" };
+    expect(
+      dcaMonth({ templates: [cto, pea, fresh], today: "2026-10-07" }),
+    ).toMatchObject({ occurredOn: "2026-11-01", state: "to-send" });
+  });
+
   it("is nothing without the app's transfer, or with it paused", () => {
     expect(dcaMonth({ templates: [cto, pea], today: "2026-10-27" })).toBeNull();
     expect(
@@ -319,5 +329,30 @@ describe("dcaMonth", () => {
         today: "2026-10-27",
       }),
     ).toBeNull();
+  });
+});
+
+describe("the transfer in the Journal", () => {
+  it("pays for the month that starts nearest its day", () => {
+    expect(monthStartingNearest("2026-11-01")).toEqual({
+      year: 2026,
+      month: 11,
+    });
+    expect(monthStartingNearest("2026-10-28")).toEqual({
+      year: 2026,
+      month: 11,
+    });
+    expect(monthStartingNearest("2026-12-20")).toEqual({
+      year: 2027,
+      month: 1,
+    });
+  });
+
+  it("says which month's DCAs it pays for, instead of a note", () => {
+    const t = translator("fr");
+    expect(
+      plannedOccurrenceNote({ note: null, coversDcaMonth: 11 }, t, "fr"),
+    ).toBe("Pour les DCA prévus en novembre");
+    expect(plannedOccurrenceNote({ note: "Loyer" }, t, "fr")).toBe("Loyer");
   });
 });

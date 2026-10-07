@@ -10,7 +10,7 @@ import {
   useTransition,
 } from "react";
 import Link from "next/link";
-import { House, Plus } from "@phosphor-icons/react";
+import { CheckCircle, Circle, House, Plus } from "@phosphor-icons/react";
 import { Button, ButtonNub } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { RecurringProposals } from "@/components/finance/RecurringProposals";
@@ -22,6 +22,13 @@ import { useToast } from "@/components/layout/ToastProvider";
 import { RecurringForm } from "@/components/finance/RecurringForm";
 import { useQuickAdd } from "@/components/layout/QuickAddProvider";
 import { isCryptoCategoryName } from "@finance/core/crypto-holdings";
+import {
+  brokerTransferOf,
+  canBeFundedByTransfer,
+  isFundedDca,
+} from "@finance/core/dca-need";
+import { AnimatedAmount } from "@/components/finance/AnimatedAmount";
+import moments from "@/components/motion/moments.module.css";
 import { formatRecurrenceSchedule } from "@finance/core/recurrence";
 import {
   allocationSegments,
@@ -36,7 +43,10 @@ import {
 import { formatSharesLabel } from "@finance/core/recurring-shares";
 import { cn } from "@/lib/utils";
 import { useFormatCurrency } from "@/lib/use-currency";
-import { toggleRecurringActive } from "@/lib/actions/finance";
+import {
+  setFundedByTransfer,
+  toggleRecurringActive,
+} from "@/lib/actions/finance";
 import type {
   Category,
   CategoryType,
@@ -95,6 +105,15 @@ interface RecurringViewProps {
 /** Each property's name by id, for the row of a charge that belongs to one. */
 const PropertyNames = createContext<ReadonlyMap<string, string>>(new Map());
 
+/**
+ * What a DCA's « Payé par le virement » tick needs: which wallets the bank
+ * debits, whose DCAs carry none, and what pressing it does.
+ */
+const TransferTicks = createContext<{
+  debited: ReadonlySet<string>;
+  onFund: (template: RecurringTemplateWithCategory) => void;
+} | null>(null);
+
 interface RecurringItemRowProps {
   template: RecurringTemplateWithCategory;
   onEdit: (template: RecurringTemplateWithCategory) => void;
@@ -114,6 +133,12 @@ function RecurringItemRow({
   const propertyName = template.property_id
     ? propertyNames.get(template.property_id)
     : undefined;
+  const ticks = useContext(TransferTicks);
+  const tickable =
+    ticks !== null &&
+    template.active &&
+    canBeFundedByTransfer(template, ticks.debited);
+  const funded = template.funded_by_transfer;
 
   return (
     <li
@@ -148,11 +173,6 @@ function RecurringItemRow({
               {t("charges.fixedToBitcoin")}
             </p>
           ) : null}
-          {template.pricing_type === "purchases" ? (
-            <p className="mt-0.5 text-xs leading-snug text-muted-foreground break-words">
-              {t("recurring.followsPurchasesRow")}
-            </p>
-          ) : null}
           {template.description ? (
             // The user's own note about the charge, and the only prose on the
             // row. It was `text-muted-foreground/70`, about 3.9:1 at 12px —
@@ -167,6 +187,35 @@ function RecurringItemRow({
             {formatRecurrenceSchedule(template, locale)}
           </p>
         </button>
+        {/* The DCA's tick, outside the row's button like the link below:
+            whether the monthly transfer to the broker pays for it. */}
+        {tickable ? (
+          <button
+            type="button"
+            onClick={() => ticks.onFund(template)}
+            aria-pressed={funded}
+            aria-label={t("dcaTransfer.fundedFor", {
+              name: template.description?.trim() || template.categories.name,
+            })}
+            className={cn(
+              "mt-1.5 inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs",
+              "transition-colors duration-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+              funded
+                ? "border-transparent bg-foreground/10 text-foreground"
+                : "border-dashed border-border text-muted-foreground hover:text-foreground",
+            )}
+          >
+            {/* Keyed by the answer, so each press lands with a pop. */}
+            <span key={String(funded)} className={moments.pop} aria-hidden>
+              {funded ? (
+                <CheckCircle size={ICON.xs} weight="fill" />
+              ) : (
+                <Circle size={ICON.xs} />
+              )}
+            </span>
+            {t("dcaTransfer.funded")}
+          </button>
+        ) : null}
         {/* Its own link, outside the row's button: the property it belongs to. */}
         {propertyName && template.property_id ? (
           <Link
@@ -266,6 +315,7 @@ function GroupCard({
   proposals,
   onEdit,
   onToggle,
+  header,
 }: {
   type: CategoryType;
   label: string;
@@ -274,6 +324,8 @@ function GroupCard({
   proposals: RecurringProposal[];
   onEdit: (template: RecurringTemplateWithCategory) => void;
   onToggle: (id: string, active: boolean) => void;
+  /** Drawn under the title: the investments' transfer to the broker. */
+  header?: ReactNode;
 }) {
   const t = useT();
   const formatEuro = useFormatCurrency();
@@ -296,11 +348,47 @@ function GroupCard({
           </span>
         ) : null}
       </div>
+      {header}
       <RecurringProposals
         proposals={proposals.filter((p) => p.categoryType === type)}
       />
       <GroupList items={items} onEdit={onEdit} onToggle={onToggle} />
     </section>
+  );
+}
+
+/**
+ * The app's transfer to the broker, at the head of the investments: what it
+ * comes to and how many DCAs it pays for. Not an item to open — the ticks
+ * below are how it is set — and its figure counts to its new value when a
+ * tick changes it.
+ */
+function BrokerTransferHeader({
+  amount,
+  count,
+}: {
+  amount: number;
+  count: number;
+}) {
+  const t = useT();
+  const formatEuro = useFormatCurrency();
+  return (
+    <div className="flex items-center justify-between gap-3 rounded-control border border-border bg-muted/20 px-3 py-2">
+      <div className="min-w-0">
+        <p className="text-sm font-medium">{t("dcaTransfer.headerTitle")}</p>
+        <p className="text-xs text-muted-foreground">
+          {t("dcaTransfer.headerWhen", { count })}
+        </p>
+      </div>
+      <AnimatedAmount
+        value={amount}
+        format={formatEuro}
+        className={cn(
+          "shrink-0 text-sm font-semibold",
+          TYPE_AMOUNT_CLASS.investment,
+        )}
+      />
+    </div>
   );
 }
 
@@ -475,10 +563,16 @@ export function RecurringView({
   // in that wait sent the same "off" twice.
   const [templates, showToggled] = useOptimistic(
     savedTemplates,
-    (current, change: { id: string; active: boolean }) =>
+    (current, change: { id: string; active?: boolean; funded?: boolean }) =>
       current.map((template) =>
         template.id === change.id
-          ? { ...template, active: change.active }
+          ? {
+              ...template,
+              ...(change.active !== undefined ? { active: change.active } : {}),
+              ...(change.funded !== undefined
+                ? { funded_by_transfer: change.funded }
+                : {}),
+            }
           : template,
       ),
   );
@@ -501,15 +595,34 @@ export function RecurringView({
   }, [initialEditId]);
   const [, startTransition] = useTransition();
 
+  // The app's transfer to the broker is not an item to manage: it heads the
+  // investments instead, set by the DCAs' ticks.
   const groups = useMemo(
     () =>
       GROUP_ORDER.map((type) => ({
         type,
         label: groupLabels(t)[type],
-        items: templates.filter((t) => t.categories.type === type),
+        items: templates.filter(
+          (t) => t.categories.type === type && t.pricing_type !== "purchases",
+        ),
       })),
     [templates, t],
   );
+  const debited = useMemo(
+    () => new Set(debitedCategoryIds),
+    [debitedCategoryIds],
+  );
+  const transfer = brokerTransferOf(templates);
+  const fundedCount = templates.filter((template) =>
+    isFundedDca(template, debited),
+  ).length;
+  const transferHeader =
+    transfer?.active && fundedCount > 0 ? (
+      <BrokerTransferHeader
+        amount={Number(transfer.amount)}
+        count={fundedCount}
+      />
+    ) : null;
 
   const defaultTab = useMemo<CategoryType>(() => {
     const firstNonEmpty = groups.find((group) => group.items.length > 0);
@@ -533,9 +646,7 @@ export function RecurringView({
    * fact reads that same figure. This page was the outlier. What falls out of
    * the middle column is not lost, it is said beneath as what is set aside.
    */
-  const rollup = rollUpRecurring(templates, {
-    debited: new Set(debitedCategoryIds),
-  });
+  const rollup = rollUpRecurring(templates, { debited });
 
   const hasTemplates = templates.length > 0;
   const activeGroup = groups.find((group) => group.type === activeTab);
@@ -549,6 +660,18 @@ export function RecurringView({
 
   function openEdit(template: RecurringTemplateWithCategory) {
     setEditing(template);
+  }
+
+  /** Tick or untick a DCA, at once; the transfer's figure follows. */
+  function handleFund(template: RecurringTemplateWithCategory) {
+    const funded = !template.funded_by_transfer;
+    startTransition(async () => {
+      showToggled({ id: template.id, funded });
+      const result = await setFundedByTransfer(template.id, funded);
+      if (result.error) {
+        toast(result.error, "error");
+      }
+    });
   }
 
   function handleToggle(id: string, active: boolean) {
@@ -567,131 +690,139 @@ export function RecurringView({
     <PropertyNames.Provider
       value={new Map(properties.map(({ id, name }) => [id, name]))}
     >
-      <PageHeader titleKey="nav.charges" />
+      <TransferTicks.Provider value={{ debited, onFund: handleFund }}>
+        <PageHeader titleKey="nav.charges" />
 
-      <PageContainer className="flex flex-col gap-4">
-        <p className="text-sm text-muted-foreground">{t("charges.blurb")}</p>
+        <PageContainer className="flex flex-col gap-4">
+          <p className="text-sm text-muted-foreground">{t("charges.blurb")}</p>
 
-        {hasTemplates ? (
-          <>
-            <WhereItGoes rollup={rollup} />
+          {hasTemplates ? (
+            <>
+              <WhereItGoes rollup={rollup} />
 
-            <p className="-mt-1 px-1 text-xs text-muted-foreground">
-              {t("charges.perMonth")}
-              {rollup.deployed > 0 ? (
-                <>
-                  {" · "}
-                  {t("charges.trackedBefore")}{" "}
-                  <span className="privacy-amount tabular-nums text-foreground">
-                    {formatEuro(rollup.deployed)}
-                  </span>{" "}
-                  {t("charges.trackedAfter")}
-                </>
-              ) : null}
-            </p>
+              <p className="-mt-1 px-1 text-xs text-muted-foreground">
+                {t("charges.perMonth")}
+                {rollup.deployed > 0 ? (
+                  <>
+                    {" · "}
+                    {t("charges.trackedBefore")}{" "}
+                    <span className="privacy-amount tabular-nums text-foreground">
+                      {formatEuro(rollup.deployed)}
+                    </span>{" "}
+                    {t("charges.trackedAfter")}
+                  </>
+                ) : null}
+              </p>
 
-            {/* One column of charges at a time on a phone: four lists stacked
+              {/* One column of charges at a time on a phone: four lists stacked
                 would be a screen and a half of scrolling to reach investments,
                 and the four kinds are rarely read together. */}
-            <div className="flex flex-col gap-3 md:hidden">
-              {/* A group of toggles, not tabs. `role="tablist"` over
+              <div className="flex flex-col gap-3 md:hidden">
+                {/* A group of toggles, not tabs. `role="tablist"` over
                   `role="tab"` was a promise the markup did not keep: the list
                   below is not a `tabpanel`, nothing carries `aria-controls`,
                   and there was neither a roving `tabIndex` nor a key handler —
                   so a screen reader announced a tab set whose arrow keys did
                   nothing. `aria-pressed` on plain buttons says which kind is
                   showing and claims no keys the control does not handle. */}
-              <div
-                className="flex gap-1.5 overflow-x-auto"
-                role="group"
-                aria-label={t("charges.kindOfCharge")}
-              >
-                {groups.map(({ type, label, items }) => (
-                  <button
-                    key={type}
-                    type="button"
-                    aria-pressed={activeTab === type}
-                    onClick={() => setTabOverride(type)}
-                    className={cn(
-                      "shrink-0 rounded-full border px-3 py-1 text-xs font-medium",
-                      "transition-colors duration-hover",
-                      activeTab === type
-                        ? "border-foreground bg-foreground text-background"
-                        : "border-border text-muted-foreground hover:text-foreground",
-                    )}
-                  >
-                    {label}
-                    {items.length > 0 ? ` · ${items.length}` : ""}
-                  </button>
-                ))}
-              </div>
-              {activeGroup ? (
-                <div className="flex flex-col gap-2">
-                  <ColumnAdd
-                    type={activeGroup.type}
-                    label={activeGroup.label}
-                    onAdd={openCreate}
-                  />
-                  <GroupCard
-                    type={activeGroup.type}
-                    label={activeGroup.label}
-                    monthly={rollup.byType[activeGroup.type]}
-                    items={activeGroup.items}
-                    proposals={proposals}
-                    onEdit={openEdit}
-                    onToggle={handleToggle}
-                  />
+                <div
+                  className="flex gap-1.5 overflow-x-auto"
+                  role="group"
+                  aria-label={t("charges.kindOfCharge")}
+                >
+                  {groups.map(({ type, label, items }) => (
+                    <button
+                      key={type}
+                      type="button"
+                      aria-pressed={activeTab === type}
+                      onClick={() => setTabOverride(type)}
+                      className={cn(
+                        "shrink-0 rounded-full border px-3 py-1 text-xs font-medium",
+                        "transition-colors duration-hover",
+                        activeTab === type
+                          ? "border-foreground bg-foreground text-background"
+                          : "border-border text-muted-foreground hover:text-foreground",
+                      )}
+                    >
+                      {label}
+                      {items.length > 0 ? ` · ${items.length}` : ""}
+                    </button>
+                  ))}
                 </div>
-              ) : null}
-            </div>
+                {activeGroup ? (
+                  <div className="flex flex-col gap-2">
+                    <ColumnAdd
+                      type={activeGroup.type}
+                      label={activeGroup.label}
+                      onAdd={openCreate}
+                    />
+                    <GroupCard
+                      type={activeGroup.type}
+                      label={activeGroup.label}
+                      monthly={rollup.byType[activeGroup.type]}
+                      items={activeGroup.items}
+                      proposals={proposals}
+                      onEdit={openEdit}
+                      onToggle={handleToggle}
+                      header={
+                        activeGroup.type === "investment"
+                          ? transferHeader
+                          : null
+                      }
+                    />
+                  </div>
+                ) : null}
+              </div>
 
-            {/* Four columns from xl, in the order of the tiles above. Not from
+              {/* Four columns from xl, in the order of the tiles above. Not from
                 lg: beside the side rail it left about 170px a column, too
                 narrow for a name, an amount and its on/off pill. */}
-            <div className="hidden items-start gap-4 md:grid md:grid-cols-2 xl:grid-cols-4">
-              {groups.map(({ type, label, items }) => (
-                <div key={type} className="flex min-w-0 flex-col gap-2">
-                  <ColumnAdd type={type} label={label} onAdd={openCreate} />
-                  <GroupCard
-                    type={type}
-                    label={label}
-                    monthly={rollup.byType[type]}
-                    items={items}
-                    proposals={proposals}
-                    onEdit={openEdit}
-                    onToggle={handleToggle}
-                  />
-                </div>
-              ))}
-            </div>
-          </>
-        ) : (
-          <EmptyState
-            title={t("charges.emptyTitle")}
-            description={t("charges.emptyBody")}
-          >
-            <Button variant="pill" size="md" onClick={() => openCreate()}>
-              {t("charges.addCharge")}
-              <ButtonNub>
-                <Plus size={ICON.md} weight="bold" />
-              </ButtonNub>
-            </Button>
-          </EmptyState>
-        )}
-      </PageContainer>
+              <div className="hidden items-start gap-4 md:grid md:grid-cols-2 xl:grid-cols-4">
+                {groups.map(({ type, label, items }) => (
+                  <div key={type} className="flex min-w-0 flex-col gap-2">
+                    <ColumnAdd type={type} label={label} onAdd={openCreate} />
+                    <GroupCard
+                      type={type}
+                      label={label}
+                      monthly={rollup.byType[type]}
+                      items={items}
+                      proposals={proposals}
+                      onEdit={openEdit}
+                      onToggle={handleToggle}
+                      header={type === "investment" ? transferHeader : null}
+                    />
+                  </div>
+                ))}
+              </div>
+            </>
+          ) : (
+            <EmptyState
+              title={t("charges.emptyTitle")}
+              description={t("charges.emptyBody")}
+            >
+              <Button variant="pill" size="md" onClick={() => openCreate()}>
+                {t("charges.addCharge")}
+                <ButtonNub>
+                  <Plus size={ICON.md} weight="bold" />
+                </ButtonNub>
+              </Button>
+            </EmptyState>
+          )}
+        </PageContainer>
 
-      <RecurringForm
-        categories={categories}
-        properties={properties}
-        template={editing}
-        recordedDates={editing ? recordedThisMonth[editing.id] : undefined}
-        open={editing !== null}
-        onOpenChange={(open) => {
-          if (!open) {
-            setEditing(null);
-          }
-        }}
-      />
+        <RecurringForm
+          categories={categories}
+          properties={properties}
+          template={editing}
+          recordedDates={editing ? recordedThisMonth[editing.id] : undefined}
+          open={editing !== null}
+          onOpenChange={(open) => {
+            if (!open) {
+              setEditing(null);
+            }
+          }}
+        />
+      </TransferTicks.Provider>
     </PropertyNames.Provider>
   );
 }

@@ -30,14 +30,15 @@ import {
   type MonthBalance,
 } from "@finance/core/month-balance";
 import type { PurchaseToConfirm } from "@finance/core/purchases-to-confirm";
-import type { TransferReminder } from "@finance/core/dca-need";
+import type { DcaMonth } from "@finance/core/dca-need";
+import type { FulfilmentProposal } from "@finance/core/recurring-fulfilment";
 import type { UpcomingCharge } from "@finance/core/still-to-come";
 import {
   readMonthBalance,
   type BalanceSource,
 } from "@finance/data/month-balance";
 import { getPurchasesToConfirm } from "@finance/data/purchases-to-confirm";
-import { getTransferReminder } from "@finance/data/dca-transfer";
+import { getDcaMonth } from "@finance/data/dca-transfer";
 
 /** How many months the spending bars look back over, the month shown included. */
 const TREND_MONTHS = 6;
@@ -91,10 +92,16 @@ export interface BearingMonth {
    */
   purchases: PurchaseToConfirm[];
   /**
-   * What to send to the broker for next month's DCAs, from three days before
-   * payday until it is sent (`transferReminder`). The month in progress only.
+   * The DCA card (`dcaMonth`): the month the transfer to the broker pays
+   * for, whether it was sent, its DCAs going through, the months funded in a
+   * row. The month in progress only.
    */
-  transfer: TransferReminder | null;
+  dca: DcaMonth | null;
+  /**
+   * The bank's movement that looks like that transfer, confirmed on the card
+   * and so left out of `arrived`.
+   */
+  dcaProposal: FulfilmentProposal | null;
   /** Nothing recorded, nothing planned and no balance: a first visit. */
   empty: boolean;
 }
@@ -187,7 +194,8 @@ export async function gatherBearingMonth(
   let attention: AttentionItem[] = [];
   let arrived: FulfilmentReport | null = null;
   let purchases: PurchaseToConfirm[] = [];
-  let transfer: TransferReminder | null = null;
+  let dca: DcaMonth | null = null;
+  let dcaProposal: FulfilmentProposal | null = null;
 
   if (isCurrent) {
     const categories = await getCategories(userId);
@@ -214,7 +222,15 @@ export async function gatherBearingMonth(
           : Promise.resolve([]),
       ]);
     purchases = waitingPurchases;
-    transfer = await getTransferReminder(await createClient(), userId, today);
+    dca = await getDcaMonth(await createClient(), userId, today);
+    if (dca && arrived) {
+      const key = `${dca.templateId}:${dca.occurredOn}`;
+      dcaProposal =
+        arrived.proposals.find((proposal) => proposal.key === key) ?? null;
+      arrived = {
+        proposals: arrived.proposals.filter((proposal) => proposal.key !== key),
+      };
+    }
 
     if (closes.summary.sample > 0) {
       run = {
@@ -271,7 +287,8 @@ export async function gatherBearingMonth(
     attention,
     arrived: arrived && arrived.proposals.length > 0 ? arrived : null,
     purchases,
-    transfer,
+    dca,
+    dcaProposal,
     empty:
       source === "none" &&
       rows.length === 0 &&

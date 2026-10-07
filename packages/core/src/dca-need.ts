@@ -1,4 +1,8 @@
-import { recurringOccurrenceKey, templateSetUpOn } from "./apply-recurring";
+import {
+  recurringOccurrenceKey,
+  templateSetUpOn,
+  type PlannedOccurrence,
+} from "./apply-recurring";
 import { isPurchaseInsideWallet } from "./categories";
 import { isCryptoCategoryName } from "./crypto-holdings";
 import { formatEuro, shiftIsoDate } from "./constants";
@@ -13,6 +17,7 @@ import {
 import {
   filterDatesBySchedule,
   getRecurringOccurrenceDates,
+  monthStartingNearest,
 } from "./recurrence";
 import { PAYDAY_LATE_DAYS } from "./recurring-fulfilment";
 import { isQuotePriced } from "./recurring-shares";
@@ -223,15 +228,6 @@ export function transferCoversMonth(
   return null;
 }
 
-/** The calendar month whose 1st is nearest `date`: its own up to the 15th. */
-function monthStartingNearest(date: string): { year: number; month: number } {
-  const year = Number(date.slice(0, 4));
-  const month = Number(date.slice(5, 7));
-  return Number(date.slice(8, 10)) <= 15
-    ? { year, month }
-    : nextMonth(year, month);
-}
-
 /** How many days before the transfer's day the card and the push come. */
 export const TRANSFER_NOTICE_DAYS = 5;
 
@@ -263,8 +259,8 @@ export interface DcaMonth {
  * still to send for `PAYDAY_LATE_DAYS` after its day, since a transfer a few
  * days late still counts, then unseen. Sent as soon as it is settled, even
  * early. With it, the month it pays for — its DCAs going through one by one —
- * and the months funded in a row. Null without the app's transfer, before
- * its first, or with nothing ticked to pay for.
+ * and the months funded in a row. Null without the app's transfer, or with
+ * nothing ticked to pay for.
  */
 export function dcaMonth({
   templates,
@@ -301,10 +297,12 @@ export function dcaMonth({
     .sort();
   const upcoming = dates.find((date) => date > today);
   const latest = dates.filter((date) => date <= today).at(-1);
+  // A transfer set up since the last 1st has nothing behind it: its first
+  // month is shown straight away, to prepare.
   const occurredOn =
     upcoming && today >= shiftIsoDate(upcoming, -TRANSFER_NOTICE_DAYS)
       ? upcoming
-      : latest;
+      : (latest ?? upcoming);
   if (!occurredOn) {
     return null;
   }
@@ -453,6 +451,22 @@ export function transferReminder(
         need: month.need,
       }
     : null;
+}
+
+/**
+ * What a planned row says under its name: for the app's transfer to the
+ * broker, which month's DCAs it pays for; for anything else, its note.
+ */
+export function plannedOccurrenceNote(
+  occurrence: Pick<PlannedOccurrence, "note" | "coversDcaMonth">,
+  t: Translate,
+  locale: Locale,
+): string | null {
+  return occurrence.coversDcaMonth
+    ? t("dcaTransfer.plannedFor", {
+        month: monthLong(occurrence.coversDcaMonth, locale),
+      })
+    : occurrence.note;
 }
 
 /**

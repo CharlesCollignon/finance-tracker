@@ -104,6 +104,7 @@ import { hapticLight, hapticSuccess, hapticWarning } from "@/lib/haptics";
 import { ICON } from "@/theme/tokens";
 import { useTabBarClearance } from "@/theme/chrome";
 import { useLocale, useT } from "@/providers/LocaleProvider";
+import { plannedOccurrenceNote } from "@finance/core/dca-need";
 import { bringsMoneyIn, isMovedRow } from "@finance/core/cash-date";
 import {
   filterLedger,
@@ -951,7 +952,7 @@ export default function TransactionsScreen() {
                       {occurrence.categoryName}
                     </Text>
                     <Text variant="muted" numberOfLines={1} className="text-xs">
-                      {[word, occurrence.note]
+                      {[word, plannedOccurrenceNote(occurrence, t, locale)]
                         .filter(Boolean)
                         .join(" · ")}
                     </Text>

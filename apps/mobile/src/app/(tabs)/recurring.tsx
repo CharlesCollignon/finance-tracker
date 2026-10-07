@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { Pressable, RefreshControl, ScrollView, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import Animated, {
@@ -6,10 +6,16 @@ import Animated, {
   useReducedMotion,
   useSharedValue,
   withTiming,
+  ZoomIn,
 } from "react-native-reanimated";
 import { useLocalSearchParams, useRouter } from "expo-router";
 
 import { isCryptoCategoryName } from "@finance/core/crypto-holdings";
+import {
+  brokerTransferOf,
+  canBeFundedByTransfer,
+  isFundedDca,
+} from "@finance/core/dca-need";
 import { formatRecurrenceSchedule } from "@finance/core/recurrence";
 import { rollUpRecurring } from "@finance/core/recurring-rollup";
 import { formatSharesLabel } from "@finance/core/recurring-shares";
@@ -53,7 +59,11 @@ import { useAuth } from "@/providers/AuthProvider";
 import { useToast } from "@/providers/ToastProvider";
 import { useFormatCurrency } from "@/providers/CurrencyProvider";
 import { useQuickAdd } from "@/providers/QuickAddProvider";
-import { toggleRecurringActive } from "@/lib/mutations";
+import {
+  setFundedByTransfer,
+  toggleRecurringActive,
+} from "@/lib/mutations";
+import { AnimatedAmount } from "@/components/AnimatedAmount";
 import {
   getCategories,
   getDebitedWalletCategories,
@@ -187,15 +197,49 @@ export default function RecurringScreen() {
     [templates, debited],
   );
 
+  // A tick turns at once; the next read of the charges takes over from it.
+  const [ticks, setTicks] = useState<{
+    of: readonly RecurringTemplateWithCategory[];
+    funded: Record<string, boolean>;
+  }>({ of: templates, funded: {} });
+  if (ticks.of !== templates) {
+    setTicks({ of: templates, funded: {} });
+  }
+  const shown = useMemo(
+    () =>
+      templates.map((template) =>
+        template.id in ticks.funded
+          ? { ...template, funded_by_transfer: ticks.funded[template.id]! }
+          : template,
+      ),
+    [templates, ticks.funded],
+  );
+
+  // The app's transfer to the broker is not an item to manage: it heads the
+  // investments instead, set by the DCAs' ticks — as on the web.
   const groups = useMemo(
     () =>
       GROUP_ORDER.map((type) => ({
         type,
         label: groupLabels(t)[type],
-        items: templates.filter((t) => t.categories.type === type),
+        items: shown.filter(
+          (t) => t.categories.type === type && t.pricing_type !== "purchases",
+        ),
       })),
-    [templates, t],
+    [shown, t],
   );
+  const debitedSet = useMemo(() => debited ?? new Set<string>(), [debited]);
+  const transfer = brokerTransferOf(shown);
+  const fundedCount = shown.filter((template) =>
+    isFundedDca(template, debitedSet),
+  ).length;
+  const transferHeader =
+    transfer?.active && fundedCount > 0 ? (
+      <BrokerTransferHeader
+        amount={Number(transfer.amount)}
+        count={fundedCount}
+      />
+    ) : null;
 
   const defaultTab = useMemo<CategoryType>(
     () => groups.find((group) => group.items.length > 0)?.type ?? "expense",
@@ -253,6 +297,24 @@ export default function RecurringScreen() {
     // the device and work whether or not a server can reach it. Whether it
     // can is Profile's business, where the switch lives.
     toast(t("charges.remindOn"), "success");
+  }
+
+  /** Tick or untick a DCA, at once; the transfer's figure follows. */
+  async function handleFund(item: RecurringTemplateWithCategory) {
+    void hapticLight();
+    const funded = !item.funded_by_transfer;
+    setTicks((current) => ({
+      ...current,
+      funded: { ...current.funded, [item.id]: funded },
+    }));
+    const result = await setFundedByTransfer(item.id, funded);
+    if (result.error) {
+      setTicks((current) => ({
+        ...current,
+        funded: { ...current.funded, [item.id]: !funded },
+      }));
+      toast(result.error, "error");
+    }
   }
 
   async function handleToggle(item: RecurringTemplateWithCategory) {
@@ -366,6 +428,13 @@ export default function RecurringScreen() {
                         setChosen(item);
                       }}
                       onToggle={(item) => void handleToggle(item)}
+                      debited={debitedSet}
+                      onFund={(item) => void handleFund(item)}
+                      header={
+                        activeGroup.type === "investment"
+                          ? transferHeader
+                          : null
+                      }
                     />
                   </View>
                 </StaggerItem>
@@ -472,6 +541,39 @@ function ColumnAdd({
  * figure is the rollup's `byType`, the same number the bar above draws, so
  * the two cannot disagree.
  */
+/**
+ * The app's transfer to the broker, at the head of the investments — the
+ * web's `BrokerTransferHeader`: what it comes to and how many DCAs it pays
+ * for, its figure counting to its new value when a tick changes it.
+ */
+function BrokerTransferHeader({
+  amount,
+  count,
+}: {
+  amount: number;
+  count: number;
+}) {
+  const t = useT();
+  const formatEuro = useFormatCurrency();
+  return (
+    <View className="flex-row items-center justify-between gap-3 rounded-control border border-border px-3 py-2">
+      <View className="min-w-0 flex-1">
+        <Text className="text-sm font-medium">
+          {t("dcaTransfer.headerTitle")}
+        </Text>
+        <Text variant="muted" className="text-xs">
+          {t("dcaTransfer.headerWhen", { count })}
+        </Text>
+      </View>
+      <AnimatedAmount
+        value={amount}
+        format={formatEuro}
+        className={cn("text-sm font-semibold", TYPE_AMOUNT_CLASS.investment)}
+      />
+    </View>
+  );
+}
+
 function GroupCard({
   type,
   label,
@@ -481,6 +583,9 @@ function GroupCard({
   propertyNames,
   onEdit,
   onToggle,
+  debited,
+  onFund,
+  header,
 }: {
   type: CategoryType;
   label: string;
@@ -492,6 +597,12 @@ function GroupCard({
   propertyNames: ReadonlyMap<string, string>;
   onEdit: (item: RecurringTemplateWithCategory) => void;
   onToggle: (item: RecurringTemplateWithCategory) => void;
+  /** The wallets the bank debits, whose DCAs carry no tick. */
+  debited: ReadonlySet<string>;
+  /** « Payé par le virement » pressed on a DCA. */
+  onFund: (item: RecurringTemplateWithCategory) => void;
+  /** Drawn under the title: the investments' transfer to the broker. */
+  header?: ReactNode;
 }) {
   const t = useT();
   const locale = useLocale();
@@ -514,6 +625,8 @@ function GroupCard({
           </Text>
         ) : null}
       </View>
+
+      {header ? <View className="pb-2">{header}</View> : null}
 
       <RecurringProposals proposals={proposals} />
 
@@ -559,11 +672,6 @@ function GroupCard({
                     {t("charges.fixedToBitcoin")}
                   </Text>
                 ) : null}
-                {item.pricing_type === "purchases" ? (
-                  <Text variant="muted" className="mt-0.5 text-xs">
-                    {t("recurring.followsPurchasesRow")}
-                  </Text>
-                ) : null}
                 {item.description ? (
                   <Text variant="muted" className="mt-0.5 text-xs">
                     {item.description}
@@ -573,6 +681,55 @@ function GroupCard({
                   {formatRecurrenceSchedule(item, locale)}
                 </Text>
               </Pressable>
+              {/* The DCA's tick, beside the row's press like the link below:
+                  whether the monthly transfer to the broker pays for it. */}
+              {item.active && canBeFundedByTransfer(item, debited) ? (
+                <Pressable
+                  accessibilityRole="checkbox"
+                  accessibilityState={{ checked: item.funded_by_transfer }}
+                  accessibilityLabel={t("dcaTransfer.fundedFor", {
+                    name: item.description?.trim() || item.categories.name,
+                  })}
+                  onPress={() => onFund(item)}
+                  hitSlop={6}
+                  className={cn(
+                    "mt-1.5 flex-row items-center gap-1 self-start rounded-full border px-2 py-0.5",
+                    item.funded_by_transfer
+                      ? "border-transparent bg-muted"
+                      : "border-dashed border-border",
+                  )}
+                >
+                  {/* Keyed by the answer, so each press lands with a pop. */}
+                  <Animated.View
+                    key={String(item.funded_by_transfer)}
+                    entering={ZoomIn.duration(DURATION.enter)}
+                  >
+                    <Ionicons
+                      name={
+                        item.funded_by_transfer
+                          ? "checkmark-circle"
+                          : "ellipse-outline"
+                      }
+                      size={ICON.xs}
+                      color={
+                        item.funded_by_transfer
+                          ? colors.foreground
+                          : colors.mutedForeground
+                      }
+                    />
+                  </Animated.View>
+                  <Text
+                    className={cn(
+                      "text-xs",
+                      item.funded_by_transfer
+                        ? "text-foreground"
+                        : "text-muted-foreground",
+                    )}
+                  >
+                    {t("dcaTransfer.funded")}
+                  </Text>
+                </Pressable>
+              ) : null}
               {/* Its own press, beside the row's: the property it belongs to. */}
               {item.property_id && propertyNames.has(item.property_id) ? (
                 <Pressable

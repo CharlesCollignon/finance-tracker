@@ -68,6 +68,7 @@ import type {
 } from "@finance/core/types/database";
 import { ICON } from "@/lib/icon-scale";
 import { useLocale, useT } from "@/lib/locale-context";
+import { plannedOccurrenceNote } from "@finance/core/dca-need";
 import { bringsMoneyIn, isMovedRow } from "@finance/core/cash-date";
 
 type FilterType = LedgerTypeFilter;
@@ -882,10 +883,13 @@ function PlannedRow({
   onOpen: () => void;
 }) {
   const t = useT();
+  const locale = useLocale();
   const formatEuro = useFormatCurrency();
   // One whose day has come is not coming up: the bank has not brought it.
   const word = t(occurrence.awaited ? "ledger.awaited" : "ledger.planned");
-  const subtitle = [word, occurrence.note].filter(Boolean).join(" · ");
+  const subtitle = [word, plannedOccurrenceNote(occurrence, t, locale)]
+    .filter(Boolean)
+    .join(" · ");
 
   return (
     <button
