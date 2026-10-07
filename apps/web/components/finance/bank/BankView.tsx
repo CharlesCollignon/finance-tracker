@@ -22,6 +22,7 @@ import type {
 import { Button, buttonVariants } from "@/components/ui/Button";
 import { MobileSheet } from "@/components/ui/MobileSheet";
 import { useToast } from "@/components/layout/ToastProvider";
+import { AddBankSheet } from "@/components/finance/bank/AddBankSheet";
 import {
   BankAccountsSection,
   type LivretLink,
@@ -74,6 +75,7 @@ export function BankView({
   const t = useT();
   const [connectOpen, setConnectOpen] = useState(startWithSetup);
   const [disconnectOpen, setDisconnectOpen] = useState(false);
+  const [addOpen, setAddOpen] = useState(false);
   const live = connection !== null && connection.status !== "revoked";
   const syncing = ownerCredentials || (live && connection.status === "active");
   const waiting = useMemo(
@@ -158,7 +160,7 @@ export function BankView({
       <BankAccountsSection
         accounts={accounts}
         livrets={livrets}
-        onAddBank={null}
+        onAddBank={syncing ? () => setAddOpen(true) : null}
       />
 
       {live ? (
@@ -175,6 +177,7 @@ export function BankView({
       ) : null}
 
       <ConnectBankSheet open={connectOpen} onOpenChange={setConnectOpen} />
+      <AddBankSheet open={addOpen} onOpenChange={setAddOpen} />
       <DisconnectSheet open={disconnectOpen} onOpenChange={setDisconnectOpen} />
     </div>
   );

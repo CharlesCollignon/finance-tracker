@@ -6,6 +6,7 @@ import {
   importOneAccount,
   listAccountsToImport,
 } from "@/lib/bank/first-import";
+import { discoverAccounts } from "@/lib/bank/discover";
 import { bankSetupOffered } from "@/lib/bank/offer";
 import {
   connectUserBankFile,
@@ -38,6 +39,25 @@ export async function connectBankFile(
   }
   const result = await connectUserBankFile(user.id, text, consentVersion);
   if (result.error === undefined) {
+    revalidateApp();
+  }
+  return result;
+}
+
+/**
+ * Look for accounts at a bank added on open-banking.io since — see
+ * `discoverAccounts`. The page is drawn again only when one waits, so a look
+ * that finds nothing leaves it as it is.
+ */
+export async function findNewBankAccounts(): Promise<
+  Result<{ awaiting: number }>
+> {
+  const user = await getAuthUser();
+  if (!user) {
+    return { error: "errors.notAuthenticated" };
+  }
+  const result = await discoverAccounts(await createClient(), user.id);
+  if (result.error === undefined && result.awaiting > 0) {
     revalidateApp();
   }
   return result;

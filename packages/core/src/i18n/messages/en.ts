@@ -2995,6 +2995,21 @@ export const en = {
     confirm: "Looks right",
     confirmed: "Your accounts are sorted.",
     addBank: "Add a bank",
+    addLead:
+      "Your credentials file reads every bank in your open-banking.io account: no need to upload another.",
+    addStep1Title: "Connect it at open-banking.io",
+    addStep1Body:
+      "With your bank's own login, like the first one. About €1 a month per extra account, paid to open-banking.io.",
+    addStep2Title: "Come back here",
+    addStep2Body: "Pluclair finds it on its own and asks what each account is.",
+    addCheck: "Check now",
+    addLooking: "Looking for your accounts…",
+    addNothing:
+      "Nothing new yet. Once the bank is connected at open-banking.io, it shows up here.",
+    addFound: {
+      one: "A new account found.",
+      other: "{count} new accounts found.",
+    },
   },
 
   /**

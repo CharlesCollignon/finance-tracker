@@ -2167,6 +2167,22 @@ export const fr: Messages = {
     confirm: "C'est bon",
     confirmed: "Vos comptes sont classés.",
     addBank: "Ajouter une banque",
+    addLead:
+      "Votre fichier d'identifiants lit toutes les banques de votre compte open-banking.io\u00A0: inutile d'en déposer un autre.",
+    addStep1Title: "Connectez-la sur open-banking.io",
+    addStep1Body:
+      "Avec l'identification de votre banque, comme la première. Environ 1\u00A0€ par mois par compte en plus, payé à open-banking.io.",
+    addStep2Title: "Revenez ici",
+    addStep2Body:
+      "Pluclair la trouve tout seul et vous demande ce qu'est chaque compte.",
+    addCheck: "Vérifier maintenant",
+    addLooking: "Recherche de vos comptes…",
+    addNothing:
+      "Rien de nouveau pour l'instant. Une fois la banque connectée sur open-banking.io, elle apparaît ici.",
+    addFound: {
+      one: "Un nouveau compte trouvé.",
+      other: "{count} nouveaux comptes trouvés.",
+    },
   },
 
   bankConnect: {
