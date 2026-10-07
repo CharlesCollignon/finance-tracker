@@ -116,7 +116,13 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  if (user && isAuthRoute) {
+  // Only a page load is sent on to the Bearing. A Server Function called
+  // from `/login` is a POST to `/login`, and the passkey button calls one
+  // right after the browser has stored the new session — redirecting that
+  // POST hands Next an HTML page where it expects an action reply, the call
+  // throws, and the button is left waiting with the reader still on the
+  // login page until they reload it.
+  if (user && isAuthRoute && request.method === "GET") {
     const url = request.nextUrl.clone();
     url.pathname = "/bearing";
     return NextResponse.redirect(url);
