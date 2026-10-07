@@ -137,13 +137,14 @@ suivre, and linking a Livret on Placements as Épargne.
       renewed; an unreadable account nobody answered for waits, unasked,
       until it can be read.
 
-## Phase 3 — Phone (branch `accounts-phone`)
+## Phase 3 — Phone (branch `accounts-phone`) — done
 
-- [ ] The Bank screen as on the web: grouped list, roles, the new-accounts
+- [x] The Bank screen as on the web: grouped list, roles, the new-accounts
       card, and « Ajouter une banque » through the in-app browser, looking
       again when the app comes back to the front.
-- [ ] Le point's line.
-- [ ] The routes the phone needs: look for accounts, save roles.
+- [x] Le point's line.
+- [x] Looking for accounts through a route, `/api/bank/accounts`, since the
+      server holds the file; roles saved through the phone's own client.
 
 ## Phase 4 — Living with several accounts (branch `accounts-everyday`)
 
