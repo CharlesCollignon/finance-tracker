@@ -32,6 +32,12 @@ import { SheetGrabber } from "@/components/ui/SheetGrabber";
 import { cn } from "@/lib/cn";
 import { hapticLight, hapticSuccess } from "@/lib/haptics";
 import { createTransaction } from "@/lib/mutations";
+import {
+  enableReminders,
+  markRemindersAsked,
+  shouldOfferReminders,
+} from "@/lib/notifications";
+import { useToast } from "@/providers/ToastProvider";
 import { useCurrency } from "@/providers/CurrencyProvider";
 import { useThemeColors } from "@/theme/useThemeColors";
 import { ICON } from "@/theme/tokens";
@@ -236,6 +242,7 @@ function QuickAddFields({
 
   // Before the memos below, which read it while this render runs.
   const locale = useLocale();
+  const { toast } = useToast();
   const merchantIndex = useMemo(
     () => new Map(merchants.map((rule) => [rule.key, rule])),
     [merchants],
@@ -322,6 +329,27 @@ function QuickAddFields({
     void hapticSuccess();
 
     if (!andAnother) {
+      // The first save is when notifications are offered: in context, once,
+      // on a toast (`shouldOfferReminders`).
+      void shouldOfferReminders().then((offer) => {
+        if (!offer) {
+          return;
+        }
+        void markRemindersAsked();
+        toast(t("notifyAsk.question"), "default", {
+          actionLabel: t("notifyAsk.enable"),
+          onAction: () => {
+            void enableReminders(locale).then(({ granted }) => {
+              toast(
+                granted
+                  ? t("profile.notificationsOn")
+                  : t("charges.remindNeedsPermission"),
+                granted ? "success" : "error",
+              );
+            });
+          },
+        });
+      });
       onDone();
       return;
     }

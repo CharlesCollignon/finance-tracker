@@ -2320,6 +2320,11 @@ export const fr: Messages = {
     dismissInvite: "Ne plus afficher",
   },
 
+  notifyAsk: {
+    question:
+      "Recevoir le récap du lundi et une alerte avant un découvert\u00A0?",
+    enable: "Activer",
+  },
   setup: {
     later: "Plus tard",
     withoutBank: "Sans banque",

@@ -3153,6 +3153,10 @@ export const en = {
    * words with a caption saying so; with neither, the screen counts the
    * month's net and says that instead of pretending it is a balance.
    */
+  notifyAsk: {
+    question: "Get the Monday recap, and a warning before an overdraft?",
+    enable: "Turn on",
+  },
   setup: {
     later: "Later",
     withoutBank: "Without a bank",

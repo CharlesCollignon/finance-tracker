@@ -145,3 +145,38 @@ export async function disablePush(): Promise<{ error?: string }> {
 
   return result.error ? { error: result.error } : {};
 }
+
+/** Where this browser remembers it was offered push after a save. */
+const OFFERED_KEY = "push-offered";
+
+/**
+ * Whether to offer push after a save, on the toast that confirms it: once
+ * per browser, where push can work, and only while the browser has not been
+ * asked — a refusal is the browser's settings to undo, not a toast's.
+ */
+export async function shouldOfferPush(publicKey: string): Promise<boolean> {
+  if (
+    !publicKey ||
+    !checkPushSupport().supported ||
+    Notification.permission !== "default"
+  ) {
+    return false;
+  }
+  try {
+    if (localStorage.getItem(OFFERED_KEY) === "1") {
+      return false;
+    }
+  } catch {
+    return false;
+  }
+  return (await currentSubscription()) === null;
+}
+
+/** Remember the offer was made, whatever was answered. */
+export function markPushOffered(): void {
+  try {
+    localStorage.setItem(OFFERED_KEY, "1");
+  } catch {
+    // Offered again on the next save, which is no harm.
+  }
+}

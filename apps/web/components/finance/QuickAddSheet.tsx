@@ -25,6 +25,11 @@ import { MobileSheet } from "@/components/ui/MobileSheet";
 import { RecurringFormBody } from "@/components/finance/RecurringForm";
 import { useToast } from "@/components/layout/ToastProvider";
 import { saveWithOutbox } from "@/lib/offline-outbox";
+import {
+  enablePush,
+  markPushOffered,
+  shouldOfferPush,
+} from "@/lib/push-client";
 import { useCurrency } from "@/lib/use-currency";
 import { cn } from "@/lib/utils";
 import { ICON } from "@/lib/icon-scale";
@@ -290,10 +295,34 @@ function QuickAddFields({
     }
 
     if (!andAnother) {
-      toast(
-        result.queued ? t("quickAdd.savedOffline") : t("quickAdd.saved"),
-        "success",
-      );
+      const saved = result.queued
+        ? t("quickAdd.savedOffline")
+        : t("quickAdd.saved");
+      // The first save is when notifications are offered: in context, once,
+      // on the toast that confirms it (`shouldOfferPush`).
+      const publicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ?? "";
+      if (!result.queued && (await shouldOfferPush(publicKey))) {
+        markPushOffered();
+        toast({
+          title: saved,
+          description: t("notifyAsk.question"),
+          variant: "success",
+          actionLabel: t("notifyAsk.enable"),
+          onAction: () => {
+            void enablePush(publicKey).then((outcome) => {
+              toast(
+                outcome.error
+                  ? resolveMessage(t, outcome.error)
+                  : t("profile.notificationsOn"),
+                outcome.error ? "error" : "success",
+              );
+            });
+          },
+          duration: 12_000,
+        });
+      } else {
+        toast(saved, "success");
+      }
       onDone();
       return;
     }
