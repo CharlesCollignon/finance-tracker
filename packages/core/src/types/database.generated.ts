@@ -2504,6 +2504,10 @@ export type Database = {
         Args: { ids: string[]; target_user: string };
         Returns: number;
       };
+      set_space_share: {
+        Args: { my_share: number; target_space: string };
+        Returns: undefined;
+      };
       soft_delete_category: {
         Args: { target_category: string; target_user: string };
         Returns: string;

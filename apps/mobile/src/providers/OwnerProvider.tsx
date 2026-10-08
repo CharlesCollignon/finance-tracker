@@ -13,7 +13,9 @@ import { getMySpace, type Space } from "@finance/data/spaces";
 import { useDataVersion } from "@/lib/data-version";
 import { hapticSelection } from "@/lib/haptics";
 import {
+  loadMyShare,
   loadOwnerChoice,
+  saveMyShare,
   saveOwnerChoice,
   setShownSpace,
 } from "@/lib/owner";
@@ -35,6 +37,9 @@ interface OwnerContextValue {
    * been read again.
    */
   showSpace: (spaceId: string) => void;
+  /** « Avec ma part du commun » on Le point (6b). */
+  myShare: boolean;
+  setMyShare: (on: boolean) => void;
 }
 
 const OwnerContext = createContext<OwnerContextValue | null>(null);
@@ -57,9 +62,17 @@ export function OwnerProvider({ children }: { children: ReactNode }) {
     space: Space | null;
   } | null>(null);
   const [chosen, setChosen] = useState<string | null>(null);
+  const [myShare, setMyShareState] = useState(false);
 
   useEffect(() => {
     void loadOwnerChoice().then(setChosen);
+    void loadMyShare().then(setMyShareState);
+  }, []);
+
+  const setMyShare = useCallback((on: boolean) => {
+    void hapticSelection();
+    setMyShareState(on);
+    void saveMyShare(on);
   }, []);
 
   useEffect(() => {
@@ -105,8 +118,17 @@ export function OwnerProvider({ children }: { children: ReactNode }) {
   );
 
   const value = useMemo(
-    () => ({ userId, ownerId, space, joint, setJoint, showSpace: choose }),
-    [userId, ownerId, space, joint, setJoint, choose],
+    () => ({
+      userId,
+      ownerId,
+      space,
+      joint,
+      setJoint,
+      showSpace: choose,
+      myShare,
+      setMyShare,
+    }),
+    [userId, ownerId, space, joint, setJoint, choose, myShare, setMyShare],
   );
 
   return (

@@ -44,3 +44,22 @@ export async function saveOwnerChoice(spaceId: string | null): Promise<void> {
     // Not remembered: the switch still holds for this launch.
   }
 }
+
+const MY_SHARE_KEY = "my-share";
+
+/** « Avec ma part du commun » on Le point (6b), remembered on the device. */
+export async function loadMyShare(): Promise<boolean> {
+  try {
+    return (await AsyncStorage.getItem(MY_SHARE_KEY)) === "1";
+  } catch {
+    return false;
+  }
+}
+
+export async function saveMyShare(on: boolean): Promise<void> {
+  try {
+    await AsyncStorage.setItem(MY_SHARE_KEY, on ? "1" : "0");
+  } catch {
+    // Not remembered: the switch still holds for this launch.
+  }
+}

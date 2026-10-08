@@ -23,6 +23,15 @@ export const spaceFr: typeof spaceEn = {
     "Vous et {name} partagez cet espace. Chacun garde son argent à lui.",
   name: "Nom",
 
+  shareRow: "Partage des dépenses",
+  shareHint:
+    "Ce que chacun prend des dépenses communes, pour «\u00A0Avec ma part du commun\u00A0» sur Le point. Le même pour vous deux.",
+  shareYou: "Vous {part}",
+  sharePartner: "{name} {part}",
+  shareLess: "Moins pour moi",
+  shareMore: "Plus pour moi",
+  partner: "Votre partenaire",
+
   leave: "Quitter l'espace",
   leaveBody:
     "Vous perdez l'accès tout de suite ; {name} garde l'espace et ses opérations.",
@@ -52,6 +61,9 @@ export const spaceFr: typeof spaceEn = {
   joinOpen: "L'ouvrir",
   joinElsewhereBody:
     "Quittez-le d'abord depuis votre profil : un espace commun par personne.",
+  myShare: "Avec ma part du commun",
+  myShareCaption:
+    "Votre part du commun ({part}) comptée, vos versements au compte commun retirés.",
   transferCategory: "Versement au compte commun",
   addedBy: "Ajouté par {name}",
 };

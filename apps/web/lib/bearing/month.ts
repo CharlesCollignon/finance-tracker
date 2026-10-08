@@ -46,6 +46,8 @@ import { firstCloseDay, type SetupFacts } from "@finance/core/setup-steps";
 import { readDismissedPrompts } from "@finance/data/preferences";
 import { reviewedYear, yearReviewPrompt } from "@finance/core/year-review";
 import { getDcaMonth } from "@finance/data/dca-transfer";
+import { readMyShare } from "@finance/data/spaces";
+import { withMyShare } from "@finance/core/my-share";
 
 /** How many months the spending bars look back over, the month shown included. */
 const TREND_MONTHS = 6;
@@ -76,6 +78,12 @@ export interface BearingMonth {
     rest: number;
     total: number;
   };
+  /**
+   * « Avec ma part du commun », for someone in a shared space under « Moi »:
+   * whether the spending above counts their part of the space, and that
+   * part. Null where it is not offered.
+   */
+  myShare: { on: boolean; part: number | null } | null;
   /** What left the account, or is set to, day by day: the curve's markers. */
   outflows: DayOutflows[];
   /** Still to come in this month; null for a month that has ended. */
@@ -157,6 +165,12 @@ export async function gatherBearingMonth(
   userId: string,
   year: number,
   month: number,
+  /**
+   * « Avec ma part du commun »: whether the spending figures count the
+   * person's part of their shared space (6b). Null when it is not offered —
+   * someone in no space, or the space itself on screen.
+   */
+  myShare: boolean | null = null,
 ): Promise<BearingMonth> {
   const today = todayIsoLocal();
   const { start: first, end: last } = getMonthBounds(year, month);
@@ -198,7 +212,22 @@ export async function gatherBearingMonth(
 
   /* ------------------------------------------------------- the spending */
 
-  const inMonth = rows.filter(
+  // With the person's part of the space, the spending is counted on their
+  // rows less the transfers to the joint account, plus their part of what
+  // the space spent (`withMyShare`). The balance above is untouched.
+  const shared = myShare
+    ? await readMyShare(
+        await createClient(),
+        userId,
+        getMonthBounds(trendFrom.year, trendFrom.month).start,
+        last,
+      )
+    : null;
+  const spendRows = shared
+    ? withMyShare(rows, shared.rows, shared.share)
+    : rows;
+
+  const inMonth = spendRows.filter(
     (tx) => tx.occurred_on >= first && tx.occurred_on <= last,
   );
   const trendKeys = Array.from({ length: TREND_MONTHS }, (_, index) => {
@@ -206,14 +235,14 @@ export async function gatherBearingMonth(
     return { ...at, key: monthKeyOf(at.year, at.month) };
   });
   const byMonth = spendingByMonth(
-    rows,
+    spendRows,
     trendKeys.map((entry) => entry.key),
   );
   const previousKey = monthKeyOf(previousMonth.year, previousMonth.month);
   const sameDay = today.slice(8, 10);
   const previousSoFar = isCurrent
     ? spendingByMonth(
-        rows.filter((tx) => tx.occurred_on.slice(8, 10) <= sameDay),
+        spendRows.filter((tx) => tx.occurred_on.slice(8, 10) <= sameDay),
         [previousKey],
       ).get(previousKey)
     : byMonth.get(previousKey);
@@ -347,6 +376,10 @@ export async function gatherBearingMonth(
       rest: spending.rest,
       total: spending.total,
     },
+    myShare:
+      myShare === null
+        ? null
+        : { on: shared !== null, part: shared?.share ?? null },
     upcoming: shownUpcoming,
     outflows,
     run,

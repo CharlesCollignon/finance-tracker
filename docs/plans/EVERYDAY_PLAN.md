@@ -261,11 +261,14 @@ browser or on a phone yet.
 - [x] `CONTEXT.md` and `PRODUCT.md`: the scope is one person's money and, for
       a couple, what they share.
 
-### 6b — My share (branch `shared-share`)
+### 6b — My share (branch `shared-share`) — built, waiting on the owner
 
-- [ ] A share per space, set once, 50/50 by default, seen by both. Nothing
+Built 2026-10-09: migration 062 to apply after 060–061; not tried in a
+browser or on a phone yet.
+
+- [x] A share per space, set once, 50/50 by default, seen by both. Nothing
       proportional to income: the partner's income stays private.
-- [ ] « Avec ma part du commun », a switch on Le point and on « Où c'est
+- [x] « Avec ma part du commun », a switch on Le point and on « Où c'est
       parti »: the versement leaves your spending and your share of each joint
       category comes in. Balances, the figure and the closes do not change.
 

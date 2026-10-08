@@ -1,7 +1,9 @@
 import { Suspense } from "react";
 import { redirect } from "next/navigation";
 import { getAuthUser } from "@/lib/auth/get-user";
+import { cookies } from "next/headers";
 import { getOwner } from "@/lib/owner";
+import { MY_SHARE_COOKIE } from "@/lib/owner-cookie";
 import { gatherBearingMonth } from "@/lib/bearing/month";
 import {
   countAccountsAwaitingRole,
@@ -49,7 +51,15 @@ export default async function BearingPage({ searchParams }: BearingPageProps) {
       : getCurrentMonth();
   const [data, bankInvite, bankAttention, awaitingAccounts] = await Promise.all(
     [
-      gatherBearingMonth(ownerId, year, month),
+      gatherBearingMonth(
+        ownerId,
+        year,
+        month,
+        // « Avec ma part du commun »: for someone in a space, under « Moi ».
+        owner?.space && !joint
+          ? (await cookies()).get(MY_SHARE_COOKIE)?.value === "1"
+          : null,
+      ),
       // The bank is the person's: never offered from the joint space.
       joint ? false : shouldInviteToConnect(user.id, "bearing"),
       readBankAttention(user.id),

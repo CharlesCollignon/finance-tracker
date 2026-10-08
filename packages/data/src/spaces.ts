@@ -180,6 +180,56 @@ export async function leaveSpace(
     : { success: true, message: "space.left" };
 }
 
+/**
+ * The person's part of the joint spending, the partner's being the rest
+ * (migration 062). A part, between 0 and 1.
+ */
+export async function setMyShare(
+  db: Db,
+  spaceId: string,
+  share: number,
+): Promise<ActionResult> {
+  if (!Number.isFinite(share) || share < 0 || share > 1) {
+    return { error: "errors.invalidInput" };
+  }
+  const { error } = await db.rpc("set_space_share", {
+    target_space: spaceId,
+    my_share: Math.round(share * 100) / 100,
+  });
+  return error ? { error: spaceError(error) } : { success: true };
+}
+
+/**
+ * What « Avec ma part du commun » needs over a span of days: the person's
+ * part and the space's rows. Null outside a space — or where migration 060
+ * is not run — so the switch is not offered.
+ */
+export async function readMyShare(
+  db: Db,
+  userId: string,
+  from: string,
+  to: string,
+): Promise<{ share: number; rows: TransactionWithCategory[] } | null> {
+  const { data: membership, error } = await db
+    .from("space_members")
+    .select("space_id, share")
+    .eq("user_id", userId)
+    .maybeSingle();
+  if (error) {
+    if (isMissingSchemaOrFunction(error)) {
+      return null;
+    }
+    throw error;
+  }
+  if (!membership) {
+    return null;
+  }
+  return {
+    share: Number(membership.share),
+    rows: await readSpaceRows(db, membership.space_id, { from, to }),
+  };
+}
+
 /** How many rows one request of the export brings back. */
 const EXPORT_PAGE = 1000;
 
@@ -191,13 +241,19 @@ const EXPORT_PAGE = 1000;
 export async function readSpaceRows(
   db: Db,
   spaceId: string,
+  /** Only these days, both ends included; every row without. */
+  span?: { from: string; to: string },
 ): Promise<TransactionWithCategory[]> {
   const rows: TransactionWithCategory[] = [];
   for (let from = 0; ; from += EXPORT_PAGE) {
-    const { data, error } = await db
+    let query = db
       .from("transactions")
       .select("*, categories(name, type, icon, counts_toward_summary)")
-      .eq("user_id", spaceId)
+      .eq("user_id", spaceId);
+    if (span) {
+      query = query.gte("occurred_on", span.from).lte("occurred_on", span.to);
+    }
+    const { data, error } = await query
       .order("occurred_on")
       .order("id")
       .range(from, from + EXPORT_PAGE - 1);

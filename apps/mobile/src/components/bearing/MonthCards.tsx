@@ -20,6 +20,7 @@ import { amountSign } from "@finance/core/amount-sign";
 import { TYPE_AMOUNT_CLASS } from "@finance/core/category-styles";
 import {
   formatMonthLabel,
+  formatPercentLabel,
   formatShortDate,
   shiftMonth,
 } from "@finance/core/constants";
@@ -33,6 +34,7 @@ import { PrivateAmount } from "@/components/PrivateAmount";
 import { BalanceCurve } from "@/components/bearing/BalanceCurve";
 import { DcaStrip } from "@/components/bearing/DcaStrip";
 import { LeftToSpendLine } from "@/components/bearing/LeftToSpendLine";
+import { MyShareToggle } from "@/components/bearing/MyShareToggle";
 import { Text } from "@/components/ui/Text";
 import { cn } from "@/lib/cn";
 import { hapticLight } from "@/lib/haptics";
@@ -64,12 +66,15 @@ function HomeCard({
   title,
   href,
   hrefLabel,
+  action,
   children,
 }: {
   icon: IconName;
   title: string;
   href?: string;
   hrefLabel?: string;
+  /** A control of the card's own, beside its link: a switch. */
+  action?: ReactNode;
   children: ReactNode;
 }) {
   const router = useRouter();
@@ -90,6 +95,7 @@ function HomeCard({
             {title}
           </Text>
         </View>
+        {action}
         {href ? (
           <Pressable
             accessibilityRole="link"
@@ -511,6 +517,7 @@ export function SpentCard({ data }: { data: HomeMonth }) {
       title={t("bearingMonth.spent")}
       href="/transactions"
       hrefLabel={t("bearingMonth.seeInLedger")}
+      action={data.myShare ? <MyShareToggle /> : null}
     >
       <AnimatedAmount
         value={spent.total}
@@ -520,6 +527,13 @@ export function SpentCard({ data }: { data: HomeMonth }) {
         numberOfLines={1}
         adjustsFontSizeToFit
       />
+      {data.myShare?.on && data.myShare.part !== null ? (
+        <Text variant="micro">
+          {t("space.myShareCaption", {
+            part: formatPercentLabel(data.myShare.part * 100, locale),
+          })}
+        </Text>
+      ) : null}
 
       {comparison ? (
         <PrivateAmount
@@ -640,6 +654,7 @@ export function WhereItWentCard({ data }: { data: HomeMonth }) {
       // categories has been going, not this month's rows.
       href="/history"
       hrefLabel={t("bearingMonth.seeInLedger")}
+      action={data.myShare ? <MyShareToggle /> : null}
     >
       <View className="gap-4">
         {spending.top.map((entry) => {

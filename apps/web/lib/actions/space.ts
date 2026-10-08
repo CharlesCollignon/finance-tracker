@@ -7,7 +7,11 @@ import * as spaces from "@finance/data/spaces";
 import { asUser } from "@/lib/actions/as-user";
 import { getLocale } from "@/lib/locale";
 import { getOwner } from "@/lib/owner";
-import { OWNER_COOKIE, OWNER_COOKIE_OPTIONS } from "@/lib/owner-cookie";
+import {
+  MY_SHARE_COOKIE,
+  OWNER_COOKIE,
+  OWNER_COOKIE_OPTIONS,
+} from "@/lib/owner-cookie";
 import { revalidateApp } from "@/lib/revalidate-paths";
 import { createClient } from "@/lib/supabase/server";
 
@@ -39,6 +43,32 @@ export async function showJointAction(joint: boolean): Promise<ActionResult> {
   await rememberOwner(joint ? owner.space!.id : null);
   revalidateApp();
   return { success: true };
+}
+
+/** « Avec ma part du commun » on Le point, remembered like the switch. */
+export async function showMyShareAction(on: boolean): Promise<ActionResult> {
+  const owner = await getOwner();
+  if (!owner?.space) {
+    return { error: "errors.notAllowed" };
+  }
+  const jar = await cookies();
+  if (on) {
+    jar.set(MY_SHARE_COOKIE, "1", OWNER_COOKIE_OPTIONS);
+  } else {
+    jar.delete(MY_SHARE_COOKIE);
+  }
+  revalidateApp();
+  return { success: true };
+}
+
+/** The person's part of the joint spending; the partner's is the rest. */
+export async function setMyShareAction(share: number): Promise<ActionResult> {
+  const owner = await getOwner();
+  if (!owner?.space) {
+    return { error: "errors.notAllowed" };
+  }
+  const spaceId = owner.space.id;
+  return asUser((db) => spaces.setMyShare(db, spaceId, share));
 }
 
 export async function createSpaceAction(): Promise<

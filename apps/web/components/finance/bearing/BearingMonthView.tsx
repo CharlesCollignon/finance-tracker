@@ -15,6 +15,7 @@ import {
 import {
   formatDayMonth,
   formatMonthLabel,
+  formatPercentLabel,
   formatShortDate,
   monthSearchParams,
   shiftMonth,
@@ -25,6 +26,11 @@ import { nextSetupStep } from "@finance/core/setup-steps";
 import type { BankAttention } from "@finance/core/bank-attention";
 import type { BearingMonth } from "@/lib/bearing/month";
 import { AnimatedAmount } from "@/components/finance/AnimatedAmount";
+import {
+  MyShareProvider,
+  MyShareToggle,
+  useMyShare,
+} from "@/components/finance/bearing/MyShareToggle";
 import { CategoryIcon } from "@/components/finance/CategoryIcon";
 import { amountSign } from "@finance/core/amount-sign";
 import { AttentionRow } from "@/components/finance/bearing/AttentionRow";
@@ -105,106 +111,110 @@ export function BearingMonthView({
     data.spent.total > 0 || data.spent.trend.some((entry) => entry.total > 0);
 
   return (
-    <div className="flex min-w-0 flex-col gap-4 md:gap-5">
-      <MonthPicker basePath="/bearing" className="self-center" />
+    <MyShareProvider on={data.myShare?.on ?? false}>
+      <div className="flex min-w-0 flex-col gap-4 md:gap-5">
+        <MonthPicker basePath="/bearing" className="self-center" />
 
-      {bankAttention ? <BankAttentionBanner attention={bankAttention} /> : null}
+        {bankAttention ? (
+          <BankAttentionBanner attention={bankAttention} />
+        ) : null}
 
-      {awaitingAccounts > 0 ? (
-        <NewAccountsLine count={awaitingAccounts} />
-      ) : null}
+        {awaitingAccounts > 0 ? (
+          <NewAccountsLine count={awaitingAccounts} />
+        ) : null}
 
-      {data.attention.length > 0 ? (
-        <AttentionRow attention={data.attention} />
-      ) : null}
+        {data.attention.length > 0 ? (
+          <AttentionRow attention={data.attention} />
+        ) : null}
 
-      {/* Before the figures, because answering one changes them: a salary
+        {/* Before the figures, because answering one changes them: a salary
           confirmed as arrived stops being counted as still to come. */}
-      {data.arrived ? (
-        <section className={cn(GLASS_CARD, "rounded-card p-card")}>
-          <ArrivedCharges proposals={data.arrived.proposals} />
-        </section>
-      ) : null}
-
-      {/* January: the year before, told in a few cards. */}
-      {data.yearReady !== null && !data.empty ? (
-        <YearReadyCard year={data.yearReady} />
-      ) : null}
-
-      {/* The same kind of question, for what the bank cannot see. */}
-      {data.purchases.length > 0 ? (
-        <section className={cn(GLASS_CARD, "rounded-card p-card")}>
-          <PurchasesToConfirm purchases={data.purchases} />
-        </section>
-      ) : null}
-
-      <Stagger
-        // Replayed per month: a new month is a new set of figures arriving.
-        key={`${data.year}-${data.month}`}
-        // One column that may shrink below its content on a phone: a grid
-        // with no columns sizes its one track to the widest thing in it.
-        className="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-5 xl:grid-cols-3"
-        stagger={0.06}
-      >
-        {setupStep && data.setup ? (
-          <StaggerItem className="md:col-span-2 xl:col-span-3">
-            <SetupCard
-              step={setupStep}
-              firstCloseOn={data.setup.firstCloseOn}
-            />
-          </StaggerItem>
+        {data.arrived ? (
+          <section className={cn(GLASS_CARD, "rounded-card p-card")}>
+            <ArrivedCharges proposals={data.arrived.proposals} />
+          </section>
         ) : null}
 
-        {!data.empty ? (
-          <StaggerItem className="md:col-span-2 xl:col-span-3">
-            <BalanceCard data={data} />
-          </StaggerItem>
+        {/* January: the year before, told in a few cards. */}
+        {data.yearReady !== null && !data.empty ? (
+          <YearReadyCard year={data.yearReady} />
         ) : null}
 
-        {recapSlot ? (
-          // Hidden while empty, so a week with no card leaves no gap.
-          <StaggerItem className="empty:hidden md:col-span-2 xl:col-span-3">
-            {recapSlot}
-          </StaggerItem>
+        {/* The same kind of question, for what the bank cannot see. */}
+        {data.purchases.length > 0 ? (
+          <section className={cn(GLASS_CARD, "rounded-card p-card")}>
+            <PurchasesToConfirm purchases={data.purchases} />
+          </section>
         ) : null}
 
-        {hasSpentBefore && data.balance.period !== "future" ? (
-          <StaggerItem>
-            <SpentCard data={data} />
-          </StaggerItem>
-        ) : null}
+        <Stagger
+          // Replayed per month: a new month is a new set of figures arriving.
+          key={`${data.year}-${data.month}`}
+          // One column that may shrink below its content on a phone: a grid
+          // with no columns sizes its one track to the widest thing in it.
+          className="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-5 xl:grid-cols-3"
+          stagger={0.06}
+        >
+          {setupStep && data.setup ? (
+            <StaggerItem className="md:col-span-2 xl:col-span-3">
+              <SetupCard
+                step={setupStep}
+                firstCloseOn={data.setup.firstCloseOn}
+              />
+            </StaggerItem>
+          ) : null}
 
-        {!past && data.upcoming && data.recurring ? (
-          <StaggerItem>
-            <UpcomingCard data={data} />
-          </StaggerItem>
-        ) : null}
+          {!data.empty ? (
+            <StaggerItem className="md:col-span-2 xl:col-span-3">
+              <BalanceCard data={data} />
+            </StaggerItem>
+          ) : null}
 
-        {hasMomentum ? (
-          <StaggerItem>
-            <MomentumCard data={data} />
-          </StaggerItem>
-        ) : null}
+          {recapSlot ? (
+            // Hidden while empty, so a week with no card leaves no gap.
+            <StaggerItem className="empty:hidden md:col-span-2 xl:col-span-3">
+              {recapSlot}
+            </StaggerItem>
+          ) : null}
 
-        {hasSpending ? (
-          <StaggerItem
-            className={cn(
-              "md:col-span-2",
-              // Beside the spent card when nothing else shares the row.
-              current ? "xl:col-span-3" : "xl:col-span-2",
-            )}
-          >
-            <WhereItWentCard data={data} />
-          </StaggerItem>
-        ) : null}
+          {hasSpentBefore && data.balance.period !== "future" ? (
+            <StaggerItem>
+              <SpentCard data={data} />
+            </StaggerItem>
+          ) : null}
 
-        {readSlot ? (
-          <StaggerItem className="md:col-span-2 xl:col-span-3">
-            {readSlot}
-          </StaggerItem>
-        ) : null}
-      </Stagger>
-    </div>
+          {!past && data.upcoming && data.recurring ? (
+            <StaggerItem>
+              <UpcomingCard data={data} />
+            </StaggerItem>
+          ) : null}
+
+          {hasMomentum ? (
+            <StaggerItem>
+              <MomentumCard data={data} />
+            </StaggerItem>
+          ) : null}
+
+          {hasSpending ? (
+            <StaggerItem
+              className={cn(
+                "md:col-span-2",
+                // Beside the spent card when nothing else shares the row.
+                current ? "xl:col-span-3" : "xl:col-span-2",
+              )}
+            >
+              <WhereItWentCard data={data} />
+            </StaggerItem>
+          ) : null}
+
+          {readSlot ? (
+            <StaggerItem className="md:col-span-2 xl:col-span-3">
+              {readSlot}
+            </StaggerItem>
+          ) : null}
+        </Stagger>
+      </div>
+    </MyShareProvider>
   );
 }
 
@@ -220,6 +230,7 @@ function Card({
   title,
   href,
   hrefLabel,
+  action,
   className,
   children,
 }: {
@@ -227,6 +238,8 @@ function Card({
   title: string;
   href?: string;
   hrefLabel?: string;
+  /** A control of the card's own, beside its link: a switch. */
+  action?: ReactNode;
   className?: string;
   children: ReactNode;
 }) {
@@ -247,15 +260,18 @@ function Card({
           </span>
           {title}
         </h2>
-        {href ? (
-          <Link
-            href={href}
-            aria-label={hrefLabel ?? title}
-            className="flex size-9 items-center justify-center rounded-full text-muted-foreground transition-colors duration-hover hover:bg-muted hover:text-foreground"
-          >
-            <ArrowRight size={ICON.md} />
-          </Link>
-        ) : null}
+        <div className="flex items-center gap-1">
+          {action}
+          {href ? (
+            <Link
+              href={href}
+              aria-label={hrefLabel ?? title}
+              className="flex size-9 items-center justify-center rounded-full text-muted-foreground transition-colors duration-hover hover:bg-muted hover:text-foreground"
+            >
+              <ArrowRight size={ICON.md} />
+            </Link>
+          ) : null}
+        </div>
       </header>
       {children}
     </section>
@@ -589,12 +605,14 @@ function SpentCard({ data }: { data: BearingMonth }) {
       title={t("bearingMonth.spent")}
       href={`/transactions${monthSearchParams(data.year, data.month)}`}
       hrefLabel={t("bearingMonth.seeInLedger")}
+      action={data.myShare ? <MyShareToggle /> : null}
     >
       <AnimatedAmount
         value={spent.total}
         format={format}
         className={cn(FIGURE, "block")}
       />
+      <MyShareCaption data={data} />
 
       {comparison ? (
         <p
@@ -640,6 +658,9 @@ function SpentCard({ data }: { data: BearingMonth }) {
                 )}
                 style={{
                   height: `${Math.max(4, (point.total / peak) * 100)}%`,
+                  // Counting the part of the space or not moves every bar:
+                  // they grow or shrink to it rather than jump.
+                  transition: "height 500ms cubic-bezier(0.32, 0.72, 0, 1)",
                 }}
               />
               <span
@@ -659,6 +680,26 @@ function SpentCard({ data }: { data: BearingMonth }) {
   );
 }
 
+/**
+ * Under the spent figure while « Avec ma part du commun » is on: what it
+ * counts, so the figure is never a mystery.
+ */
+function MyShareCaption({ data }: { data: BearingMonth }) {
+  const t = useT();
+  const locale = useLocale();
+  const shown = useMyShare();
+  if (!data.myShare || !shown?.on || data.myShare.part === null) {
+    return null;
+  }
+  return (
+    <p className="text-xs text-muted-foreground">
+      {t("space.myShareCaption", {
+        part: formatPercentLabel(data.myShare.part * 100, locale),
+      })}
+    </p>
+  );
+}
+
 function WhereItWentCard({ data }: { data: BearingMonth }) {
   const t = useT();
   const format = useFormatCurrency();
@@ -670,6 +711,7 @@ function WhereItWentCard({ data }: { data: BearingMonth }) {
       icon={<ChartPieSlice size={ICON.sm} weight="bold" />}
       title={t("bearingMonth.whereItWent")}
       href="/history"
+      action={data.myShare ? <MyShareToggle /> : null}
     >
       <ul className="flex flex-col gap-4">
         {spending.top.map((entry) => {
@@ -693,7 +735,10 @@ function WhereItWentCard({ data }: { data: BearingMonth }) {
                 <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-foreground/10">
                   <div
                     className="grow-in h-full rounded-full bg-foreground/40"
-                    style={{ width: `${Math.min(100, ratio * 100)}%` }}
+                    style={{
+                      width: `${Math.min(100, ratio * 100)}%`,
+                      transition: "width 500ms cubic-bezier(0.32, 0.72, 0, 1)",
+                    }}
                   />
                 </div>
               </div>
