@@ -85,42 +85,55 @@ me permettre ? ».
   move it until the first close, and it turns the overdraft warning on.
 - It reads the personal space only.
 
-## Phase 1 — The daily figure (branch `everyday-figure`)
+## Phase 1 — The daily figure (branch `everyday-figure`) — done
 
-- [ ] Measurement: a table of active days and event counts under a salted
+- [x] Measurement: a table of active days and event counts under a salted
       pseudonymous id (the salt a server secret), written from the server, no
       amounts, shops or text; nothing written for a user who opted out; rows
       older than 13 months deleted by the nightly sweep, and a user's rows on
       deleting the account. An owner-only SQL view gives day-30 retention, the
       share of active users opening on 3 or more days a week, and the share
       closing their month (or emptying the inbox, bank connected).
-- [ ] « Mesure d'audience » switch in Profile, both apps; the privacy policy's
+- [x] « Mesure d'audience » switch in Profile, both apps; the privacy policy's
       « aucune mesure d'audience » rewritten to the purpose, the legal basis
       (legitimate interest), what is kept, for how long, that nothing is
       shared or cross-checked, and how to object.
-- [ ] Core, tested: the figure above, its next income and its per-day amount.
+- [x] Core, tested: the figure above, its next income and its per-day amount.
       `CONTEXT.md` gains the term.
-- [ ] Le point, both apps: the figure on top. Blocks for what is not set up
+- [x] Le point, both apps: the figure on top. Blocks for what is not set up
       are hidden, not invited.
-- [ ] Setup cards, one at a time, « Plus tard » hides it for good: connect
+- [x] Setup cards, one at a time, « Plus tard » hides it for good: connect
       the bank where it is offered (the wizard of phase 2; until then the
       current `/bank`), or « Sans banque » → the balance → the salary → the
       charges → the first close on the reading day. Investments and property
       never get a card.
       Replaces the SetUpCard.
-- [ ] Add sheet, both apps: a shop field just under the amount; a known shop
+- [x] Add sheet, both apps: a shop field just under the amount; a known shop
       fills its category and last amount.
-- [ ] Notification permission asked in context, right after the first saved
+- [x] Notification permission asked in context, right after the first saved
       transaction: « Recevoir le récap du lundi et une alerte avant un
       découvert ? » — web push on the web, the system prompt on the phone.
-- [ ] Phone quick actions on a long press of the icon, iOS and Android:
+- [x] Phone quick actions on a long press of the icon, iOS and Android:
       « Ajouter une dépense » (the add sheet) and « Le point », through our
       own config plugin (`expo-quick-actions` has no SDK 57 release yet).
-- [ ] Web manifest in French.
-- [ ] « Puis-je me permettre ? », both apps: tapping the figure opens it; an
+- [x] Web manifest in French.
+- [x] « Puis-je me permettre ? », both apps: tapping the figure opens it; an
       amount, « une fois » or « chaque mois »; it shows the figure after it,
       the next low point and, for « chaque mois », « Reste chaque mois »
       after it. Nothing is saved: the add sheet stays the one way to write.
+
+Done on 2026-10-08, with three things the plan did not say:
+
+- The balance typed on the setup card is a row of its own
+  (`balance_readings`, migration 057), carried until any close is newer —
+  not only the month before's.
+- The setup cards' salary and charges open the welcome steps on their own
+  (`?from=income`, `?from=recurring`), the one place those are set up from.
+- Measurement is a database function both apps call as the signed-in user
+  (migration 058), since the phone writes to Supabase directly; it counts
+  the visit, a transaction added, a month closed and the question asked.
+
+Not checked on a device: the quick actions and their iOS module.
 
 ## Phase 2 — Money in, bank open (branch `everyday-money-in`)
 
@@ -278,8 +291,8 @@ subscription watch take it as a parameter.
 ## Open points
 
 1. **The « marge » in the figure** is counted for the days until the next
-   income, pro rata. Taking it whole would be simpler and lower; to confirm
-   in phase 1 with the figure's tests.
+   income, pro rata, as built in phase 1. Taking it whole would be simpler
+   and lower; the owner's to change.
 2. **The CNIL's exemption** is written for trackers on a device. Measuring on
    the server for signed-in users is our reading of it (salted pseudonymous
    id, statistics only, 13 months, an opt-out), not a CNIL ruling.

@@ -5,8 +5,8 @@ figure is computed, and what is known to be wrong. Written for whoever works
 on the repository next, human or agent. Every phase of
 `docs/plans/PLUCLAIR_UPGRADE_PLAN.md` updates it before it closes.
 
-Last updated: real estate plan Phase 2, the web (2026-10-02;
-`docs/plans/REAL_ESTATE_PLAN.md`).
+Last updated: Plan du quotidien, phase 1 (2026-10-08;
+`docs/plans/EVERYDAY_PLAN.md`).
 
 ## Shape
 
@@ -16,7 +16,7 @@ Last updated: real estate plan Phase 2, the web (2026-10-02;
 | `apps/mobile`   | Expo 57 with expo-router and NativeWind, dark only. Reads and writes Supabase directly under RLS; calls the web app for the month read (`POST /api/month-read`) and a bank refresh (`POST /api/bank/refresh`) with a bearer token.                                                                                                                                                                                                                                                                                                                                 |
 | `packages/core` | Pure TypeScript shared by both apps and shipped to them as source: every calculation, every zod schema, every string (`src/i18n/messages/en.ts`, `fr.ts`).                                                                                                                                                                                                                                                                                                                                                                                                         |
 | `packages/data` | The Supabase reads and writes both apps make, written once and handed the caller's client (`Db`): recurring templates and occurrences, transactions (`ledger`, `month-ledger`, `history`), deletes and their undo (`deletions`), categories and their seeding, fulfilment, the month close, the month's balance, the bank's balance, the review inbox (`bank-inbox`), positions and wallet plans, instrument readings, savings accounts, properties and their loans (`properties`), preferences, the weekly recap, delete-all. `pnpm --filter @finance/data test`. |
-| `supabase/`     | Migrations `001`–`052`, assertion scripts in `tests/`, one edge function (`delete-account`).                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| `supabase/`     | Migrations `001`–`058`, assertion scripts in `tests/`, one edge function (`delete-account`).                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
 
 Vocabulary is fixed by `CONTEXT.md`; product commitments by
 `apps/web/PRODUCT.md`; visual rules by `apps/web/DESIGN.md` and
@@ -125,6 +125,12 @@ same `@finance/data` reads the screens use (`month-balance`, `weekly-recap`,
 `month-close`), so a push and the screen it opens agree. The overdraft
 warning only speaks on a balance read from the bank or carried from a close.
 
+Permission is offered once, in context: on the toast that confirms the
+first transaction saved from the add sheet, while the browser or the phone
+has not been asked yet (`shouldOfferPush` in `lib/push-client.ts`,
+`shouldOfferReminders` in the phone's `lib/notifications.ts`). Profile, and
+the phone's Récurrents, still turn it on by hand.
+
 A phone with a push token gets everything from the server and schedules
 nothing itself; one without (Expo Go, no project id) falls back to local
 reminders for its charges and the month opening, under the same switches
@@ -154,25 +160,28 @@ today's prices) leaves it unmarked, so the Plan still shows it as new.
 
 ## Where each figure is computed
 
-| Figure                                                                                                      | Core module                                                                                             |
-| ----------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
-| Monthly summary and its `current` / `month_end` views                                                       | `monthly-summary.ts`, `budget.ts`                                                                       |
-| Month close, Kept, Unrecorded spending                                                                      | `month-close.ts` (closes in `month_closes`; reading day in `month_close_settings.close_day`, default 5) |
-| Forward projection, runway                                                                                  | `projection.ts`                                                                                         |
-| Plan: what if, milestones, cushion, long view (2026 French tax)                                             | `future-plan.ts` (rates in `FRENCH_TAX_2026`; revisit each January and August)                          |
-| Savings accounts: balance, rate, interest, ceilings (2026)                                                  | `savings-accounts.ts` (rates in `FRENCH_SAVINGS_2026`; revisit each February and August)                |
-| Bearing cards and tiles                                                                                     | `bearing-cards.ts`, `bearing-tiles.ts`, `bearing-facts.ts`                                              |
-| Category findings                                                                                           | `category-findings.ts`                                                                                  |
-| PEA ceiling and five-year date                                                                              | `pea.ts`                                                                                                |
-| A loan's schedule, outstanding principal, cost                                                              | `loan-schedule.ts`                                                                                      |
-| A property's estimated value, net value, gain, principal repaid                                             | `property.ts` (and `valueSourceLine`, the sentence that says where a value comes from)                  |
-| Net worth; a property at the long view's horizon (2026 tax on a sale's gain); the loans still running       | `property-future.ts` (rates in `FRENCH_PROPERTY_GAINS_2026`; revisit each January)                      |
-| A property's market reading (DVF sales, 500 m or the commune)                                               | `market-reading.ts` (rules in `MARKET_RULES`)                                                           |
-| A let property's month: rent, charges, loans, what it leaves, gross and net yield; the DPE letting calendar | `rental.ts` (dates in `FRENCH_LETTING_2026`; revisit each January)                                      |
-| A let property's asking rents (ANIL « Carte des loyers »)                                                   | `rent-reference.ts` (cautions in `ANIL_RULES`)                                                          |
-| The Notaires–INSEE index, and which series carries a place                                                  | `price-index.ts` (series in `seriesFor`)                                                                |
-| Fund costs, look-through, target trades                                                                     | `fund-costs.ts`, `look-through.ts`, `look-through-target.ts`                                            |
-| Money-weighted return                                                                                       | `xirr.ts`, `investment-returns.ts`                                                                      |
+| Figure                                                                                                      | Core module                                                                                                    |
+| ----------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
+| Monthly summary and its `current` / `month_end` views                                                       | `monthly-summary.ts`, `budget.ts`                                                                              |
+| « Il vous reste » (left to spend) until the next pay day, and per day                                       | `left-to-spend.ts`; read by `@finance/data/left-to-spend` (next month's line too when the pay day falls in it) |
+| « Puis-je me permettre ? »                                                                                  | `afford.ts`                                                                                                    |
+| Le point's setup cards, one at a time                                                                       | `setup-steps.ts`                                                                                               |
+| Month close, Kept, Unrecorded spending                                                                      | `month-close.ts` (closes in `month_closes`; reading day in `month_close_settings.close_day`, default 5)        |
+| Forward projection, runway                                                                                  | `projection.ts`                                                                                                |
+| Plan: what if, milestones, cushion, long view (2026 French tax)                                             | `future-plan.ts` (rates in `FRENCH_TAX_2026`; revisit each January and August)                                 |
+| Savings accounts: balance, rate, interest, ceilings (2026)                                                  | `savings-accounts.ts` (rates in `FRENCH_SAVINGS_2026`; revisit each February and August)                       |
+| Bearing cards and tiles                                                                                     | `bearing-cards.ts`, `bearing-tiles.ts`, `bearing-facts.ts`                                                     |
+| Category findings                                                                                           | `category-findings.ts`                                                                                         |
+| PEA ceiling and five-year date                                                                              | `pea.ts`                                                                                                       |
+| A loan's schedule, outstanding principal, cost                                                              | `loan-schedule.ts`                                                                                             |
+| A property's estimated value, net value, gain, principal repaid                                             | `property.ts` (and `valueSourceLine`, the sentence that says where a value comes from)                         |
+| Net worth; a property at the long view's horizon (2026 tax on a sale's gain); the loans still running       | `property-future.ts` (rates in `FRENCH_PROPERTY_GAINS_2026`; revisit each January)                             |
+| A property's market reading (DVF sales, 500 m or the commune)                                               | `market-reading.ts` (rules in `MARKET_RULES`)                                                                  |
+| A let property's month: rent, charges, loans, what it leaves, gross and net yield; the DPE letting calendar | `rental.ts` (dates in `FRENCH_LETTING_2026`; revisit each January)                                             |
+| A let property's asking rents (ANIL « Carte des loyers »)                                                   | `rent-reference.ts` (cautions in `ANIL_RULES`)                                                                 |
+| The Notaires–INSEE index, and which series carries a place                                                  | `price-index.ts` (series in `seriesFor`)                                                                       |
+| Fund costs, look-through, target trades                                                                     | `fund-costs.ts`, `look-through.ts`, `look-through-target.ts`                                                   |
+| Money-weighted return                                                                                       | `xirr.ts`, `investment-returns.ts`                                                                             |
 
 ## AI features
 
@@ -244,6 +253,49 @@ each loan ends), and the homes at the long view's horizon (each grown at its
 `properties.yearly_growth`, 2 % when unset, less what is still owed and the
 tax a sale would pay; `propertyGainTax`). The milestones and the long view's
 monthly income leave property out.
+
+## Le point, first
+
+« Il vous reste » leads the month in progress, on both apps: what the
+Courant accounts hold, less the charges due before the next pay day, at the
+lowest point until then, less the marge's share of those days. The pay day is
+the next payment of the largest recurring income; with none, the month's
+end. Tapping it opens « Puis-je me permettre ? », which saves nothing.
+
+It needs a balance. Without a bank or a close, the setup card asks for one:
+typed once, it is a reading (`balance_readings`, migration 057) that anchors
+the month until a close is newer (`readMonthBalance`), and the overdraft
+warning speaks on it. The cards come one at a time — the bank where it can
+be connected, else the balance, the salary, the charges, the first close —
+and « Plus tard » puts one away for good (`dismissed_prompts`, `setup:<step>`;
+the bank's own `bank-invite:bearing`). The salary and charges cards open the
+welcome steps on their own (`/welcome?from=` on the web,
+`/onboarding?from=` on the phone). A first visit shows the card, not a row of
+empty cards: the balance card waits for something recorded, the spent card
+for spending, the card of what is to come for a recurring template.
+
+On the phone, a long press of the icon offers « Ajouter une dépense » and
+« Le point » (`plugins/with-quick-actions.js`). Android's open their
+`pluclair://` address; on iOS, `modules/quick-actions` hands the pressed one
+from the app delegate to the router. `/add` opens the add sheet over Le point
+(`?add=1`, read by `QuickAddProvider`). Checked through prebuild and
+autolinking only, not on a device yet.
+
+## Audience measurement
+
+Whether the app is used, never what it is used on (migration 058).
+`record_activity`, called as the signed-in user, keeps one row per person and
+day under a salted SHA-256 of the account (`insights.activity_days`; the salt
+and the rows are in a schema the API does not expose), with how many
+transactions were added, months closed and « Puis-je me permettre ? » asked
+that day. Nothing for an account that turned « Mesure d'audience » off in
+Profile (`user_preferences.measure_audience`). The web records a visit from
+the app layout, after the response (`after`); the phone when the tabs open
+and on each return to the front. Thirteen months, swept by the nightly
+cron (`sweep_activity`); deleting the account deletes its rows (a trigger on
+`auth.users`). The owner reads `select * from insights.figures;` for day-30
+retention, the share of the week's users opening on three days or more, and
+the share who closed a month.
 
 ## Bank feed
 
@@ -353,3 +405,5 @@ assertion script:
   dismissals. Whether a wipe should take those too is the owner's call.
 - The SQL assertion scripts in `supabase/tests/` are run by hand against a
   local stack; CI does not run them.
+- The phone's quick actions and their iOS module have not run on a device:
+  the Swift in `modules/quick-actions` is compiled only by a native build.
