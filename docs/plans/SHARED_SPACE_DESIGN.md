@@ -213,17 +213,18 @@ owner as an argument and filter on it.
   page and screen is listed and checked; an assertion script cannot see the
   apps, so this is the part to look at with care.
 - **The AI reads** are per person (their quota, their account): in the joint
-  space, the month read is left out in 6a.
+  space, the month read counts the space's quota and is written with the
+  asking partner's account (decision 4).
 
-## Decisions for the owner
+## Decisions taken (2026-10-08)
 
-1. **"A space is an owner"** (B above) rather than a `space_id` on every row
-   (A). Recommended: the same safety from the access rules, a fraction of
-   the code changed.
-2. **Inviting by a link the inviter sends**, since the app sends no e-mail
-   of its own. Recommended. The other way is to add an e-mail service
-   (Resend, Brevo), a new processor for the privacy policy.
-3. **The space's name**: « Commun », renameable by either partner.
-   Recommended.
-4. **No month read (AI) in the joint space** in 6a. Recommended: whose
-   quota, and whose AI account, is a question of its own.
+1. **A space is an owner** (B above), not a `space_id` on every row.
+2. **Inviting by a link the inviter sends**: the app sends no e-mail of its
+   own.
+3. **The space is « Commun »**, renameable by either partner.
+4. **The month read (AI) is in the joint space.** It has its own quota — five
+   a month written about, the space's, shared by the two — and is written
+   with the AI account of whichever partner asks when they have one
+   connected, on Pluclair's key otherwise. Only aggregates go, as for a
+   person's: category names and totals, never a row. So `month_reads` is
+   among the tables a space can own.
