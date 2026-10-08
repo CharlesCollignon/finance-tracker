@@ -1610,6 +1610,21 @@ export const fr: Messages = {
     otherWallet: "Autres",
   },
   recap: {
+    subscriptionRise: "{name} est passé de {from} à {to}.",
+    subscriptionNewMonthly:
+      "Nouvel abonnement\u00A0: {name}, {amount} par mois.",
+    subscriptionNewYearly: "Nouvel abonnement\u00A0: {name}, {amount} par an.",
+    subscriptionStoppedMonthly:
+      "{name} n'a plus été prélevé depuis plus d'un mois.",
+    subscriptionStoppedYearly:
+      "{name} n'a plus été prélevé depuis plus d'un an.",
+    subscriptionSameKind: {
+      music: "Plusieurs abonnements de musique\u00A0: {names}.",
+      video: "Plusieurs abonnements vidéo\u00A0: {names}.",
+      cloud: "Plusieurs stockages en ligne\u00A0: {names}.",
+      phone: "Plusieurs forfaits mobiles\u00A0: {names}.",
+      gym: "Plusieurs salles de sport\u00A0: {names}.",
+    },
     title: "Votre semaine",
     lastWeek: "{amount} dépensés la semaine dernière.",
     noSpending: "Aucune dépense notée la semaine dernière.",

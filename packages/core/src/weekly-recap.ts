@@ -14,6 +14,11 @@
  * switch.
  */
 
+import {
+  findingsBetween,
+  watchSubscriptions,
+  type SubscriptionFinding,
+} from "./subscription-watch";
 import { getMonthBounds, shiftIsoDate } from "./constants";
 import { categoryNormal } from "./category-findings";
 import { buildCategoryHistory } from "./category-history";
@@ -51,6 +56,11 @@ export interface WeeklyRecap {
   waiting: number;
   /** Categories that have already spent more than their normal month. */
   aboveNormal: { categoryName: string; spent: number; normal: number }[];
+  /**
+   * What changed in the subscriptions last week (`watchSubscriptions`): a
+   * price that went up, a new one, one that stopped, two of a kind.
+   */
+  subscriptions: SubscriptionFinding[];
 }
 
 /** Days, counted from Monday, that the recap card stays on Le point. */
@@ -152,6 +162,22 @@ export function buildWeeklyRecap({
     ? categoriesAboveNormal(transactions, year, month, locale)
     : [];
 
+  // Last week's news from the subscriptions, read off the same year of rows.
+  const subscriptions = findingsBetween(
+    watchSubscriptions(
+      transactions.map((tx) => ({
+        occurredOn: tx.occurred_on,
+        amount: Number(tx.amount),
+        note: tx.note,
+        categoryName: tx.categories.name,
+        categoryType: tx.categories.type,
+      })),
+      today,
+    ).findings,
+    from,
+    to,
+  );
+
   const recap: WeeklyRecap = {
     weekOf,
     lastWeek: { from, to, spent: spentLastWeek },
@@ -167,13 +193,15 @@ export function buildWeeklyRecap({
     },
     waiting,
     aboveNormal,
+    subscriptions,
   };
 
   const nothing =
     recap.lastWeek.spent === 0 &&
     recap.monthSoFar.spent === 0 &&
     recap.stillToCome.amount === 0 &&
-    recap.waiting === 0;
+    recap.waiting === 0 &&
+    recap.subscriptions.length === 0;
   return nothing ? null : recap;
 }
 
@@ -272,9 +300,47 @@ export function weeklyRecapLines(
     );
   }
 
+  for (const finding of recap.subscriptions) {
+    lines.push(subscriptionLine(finding, t, formatMoney));
+  }
+
   if (recap.waiting > 0) {
     lines.push(t("recap.waiting", { count: recap.waiting }));
   }
 
   return lines;
+}
+
+/** One subscription finding, as the recap says it: a fact, never advice. */
+export function subscriptionLine(
+  finding: SubscriptionFinding,
+  t: Translate,
+  formatMoney: (amount: number) => string,
+): string {
+  switch (finding.type) {
+    case "priceRise":
+      return t("recap.subscriptionRise", {
+        name: finding.label,
+        from: formatMoney(finding.from),
+        to: formatMoney(finding.to),
+      });
+    case "new":
+      return t(
+        finding.cadence === "yearly"
+          ? "recap.subscriptionNewYearly"
+          : "recap.subscriptionNewMonthly",
+        { name: finding.label, amount: formatMoney(finding.amount) },
+      );
+    case "stopped":
+      return t(
+        finding.cadence === "yearly"
+          ? "recap.subscriptionStoppedYearly"
+          : "recap.subscriptionStoppedMonthly",
+        { name: finding.label },
+      );
+    case "sameKind":
+      return t(`recap.subscriptionSameKind.${finding.kind}`, {
+        names: finding.labels.join(", "),
+      });
+  }
 }

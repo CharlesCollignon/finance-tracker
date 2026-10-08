@@ -2256,6 +2256,18 @@ export const en = {
     otherWallet: "Other",
   },
   recap: {
+    subscriptionRise: "{name} went from {from} to {to}.",
+    subscriptionNewMonthly: "New subscription: {name}, {amount} a month.",
+    subscriptionNewYearly: "New subscription: {name}, {amount} a year.",
+    subscriptionStoppedMonthly: "{name} has not been charged for over a month.",
+    subscriptionStoppedYearly: "{name} has not been charged for over a year.",
+    subscriptionSameKind: {
+      music: "More than one music subscription: {names}.",
+      video: "More than one video subscription: {names}.",
+      cloud: "More than one online storage plan: {names}.",
+      phone: "More than one mobile plan: {names}.",
+      gym: "More than one gym: {names}.",
+    },
     title: "Your week",
     lastWeek: "{amount} spent last week.",
     noSpending: "No spending recorded last week.",
