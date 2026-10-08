@@ -74,6 +74,7 @@
     "./model-name": "./src/model-name.ts",
     "./month-close": "./src/month-close.ts",
     "./month-balance": "./src/month-balance.ts",
+    "./my-share": "./src/my-share.ts",
     "./month-comparison": "./src/month-comparison.ts",
     "./month-facts": "./src/month-facts.ts",
     "./monthly-summary": "./src/monthly-summary.ts",
