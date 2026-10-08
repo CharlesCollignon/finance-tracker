@@ -22,11 +22,20 @@ export async function getBankAccounts(
   db: Db,
   userId: string,
 ): Promise<BankAccount[]> {
-  const { data, error } = await db
+  let { data, error } = await db
     .from("bank_accounts")
     .select("*")
     .or(`user_id.eq.${userId},space_id.eq.${userId}`)
     .order("label");
+  // Before migration 060 there is no space to ask about: the person's own,
+  // so a deployment ahead of its migrations still reads the balance.
+  if (error?.code === "42703") {
+    ({ data, error } = await db
+      .from("bank_accounts")
+      .select("*")
+      .eq("user_id", userId)
+      .order("label"));
+  }
 
   // Before migration 021 this table does not exist, and reading balances is
   // an enhancement to a screen that has to work without it. A surface people

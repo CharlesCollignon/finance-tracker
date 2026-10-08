@@ -592,32 +592,41 @@ export async function rememberAccounts(
   // UTC, and the balance was read today.
   const today = todayIsoLocal();
   const now = new Date().toISOString();
-  const { data, error } = await supabase
-    .from("bank_accounts")
-    .upsert(
-      accounts.map((account) => {
-        const booked = pickBookedBalance(account);
-        return {
-          user_id: userId,
-          provider_account_id: account.id,
-          label: accountLabel(account),
-          bank_name: account.aspspName || null,
-          account_type: account.accountType,
-          product: account.product,
-          currency: account.currency,
-          reported_balance: booked?.amount ?? null,
-          reported_on: booked ? today : null,
-          needs_reconnect: account.needsReconnect,
-          iban_hash: ibanHash(account.iban),
-          last_seen_at: now,
-          ...(consents
-            ? { consent_valid_until: consents.get(account.aspspName) ?? null }
-            : {}),
-        };
-      }),
-      { onConflict: "user_id,provider_account_id" },
-    )
-    .select("provider_account_id, role, space_id, history_imported_at");
+  const write = (fingerprint: boolean) =>
+    supabase
+      .from("bank_accounts")
+      .upsert(
+        accounts.map((account) => {
+          const booked = pickBookedBalance(account);
+          return {
+            user_id: userId,
+            provider_account_id: account.id,
+            label: accountLabel(account),
+            bank_name: account.aspspName || null,
+            account_type: account.accountType,
+            product: account.product,
+            currency: account.currency,
+            reported_balance: booked?.amount ?? null,
+            reported_on: booked ? today : null,
+            needs_reconnect: account.needsReconnect,
+            ...(fingerprint ? { iban_hash: ibanHash(account.iban) } : {}),
+            last_seen_at: now,
+            ...(consents
+              ? {
+                  consent_valid_until: consents.get(account.aspspName) ?? null,
+                }
+              : {}),
+          };
+        }),
+        { onConflict: "user_id,provider_account_id" },
+      )
+      .select("*");
+  let { data, error } = await write(true);
+  // Before migration 060 there is no fingerprint to write: the account as
+  // it was, so a deployment ahead of its migrations still syncs.
+  if (error?.code === "42703") {
+    ({ data, error } = await write(false));
+  }
   if (error) {
     throw error;
   }
@@ -627,7 +636,7 @@ export async function rememberAccounts(
       {
         userId,
         role: row.role as BankAccountRole | null,
-        spaceId: row.space_id,
+        spaceId: row.space_id ?? null,
         historyImportedAt: row.history_imported_at,
       },
     ]),

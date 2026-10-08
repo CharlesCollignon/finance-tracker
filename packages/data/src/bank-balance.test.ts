@@ -2,7 +2,11 @@ import { describe, expect, it } from "vitest";
 import type { BankAccount } from "@finance/core/types/database";
 
 import type { Db } from "./client";
-import { readCashBalance, readCloseWait } from "./bank-balance";
+import {
+  getBankAccounts,
+  readCashBalance,
+  readCloseWait,
+} from "./bank-balance";
 
 interface Row {
   provider_account_id: string;
@@ -250,5 +254,38 @@ describe("readCloseWait", () => {
     await expect(readCloseWait(db, "u1", null, "2026-10-07")).resolves.toEqual(
       [],
     );
+  });
+});
+
+describe("getBankAccounts before migration 060", () => {
+  it("reads the person's own accounts when there is no space to ask about", async () => {
+    const asked: string[] = [];
+    const db = {
+      from: () => {
+        let spaces = false;
+        const chain = {
+          select: () => chain,
+          or: () => {
+            spaces = true;
+            return chain;
+          },
+          eq: () => chain,
+          order: () => chain,
+          then: (resolve: (value: unknown) => unknown) => {
+            asked.push(spaces ? "or" : "eq");
+            return resolve(
+              spaces
+                ? { data: null, error: { code: "42703" } }
+                : { data: [account("own")], error: null },
+            );
+          },
+        };
+        return chain;
+      },
+    } as unknown as Db;
+
+    const accounts = await getBankAccounts(db, "u1");
+    expect(asked).toEqual(["or", "eq"]);
+    expect(accounts.map((each) => each.provider_account_id)).toEqual(["own"]);
   });
 });
