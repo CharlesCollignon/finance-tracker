@@ -8,10 +8,12 @@ web
 
 ## Users
 
-One individual managing their own money, in euro. Not a household, not a
-shared account, not an adviser looking at someone else's figures: every
-surface answers to one person's ledger, and `CONTEXT.md` states that scope as
-"one person's money".
+One individual managing their own money, in euro — and, since October 2026,
+a couple managing what they share beside it. Not a household account where
+everyone sees everything, not an adviser looking at someone else's figures:
+every surface answers to one owner's ledger, the person's or the shared
+space's they switch to (« Moi · Commun »), and neither partner ever sees the
+other's own money. `CONTEXT.md` states that scope under "Shared space".
 
 The audience is individuals in France, with French banks, under French law
 (decided October 2026). The `pea`, `cto`, `av` and `per` wallets are French

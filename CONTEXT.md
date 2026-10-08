@@ -1,6 +1,7 @@
 # Finance Tracker
 
-One person's money: what came in, what went out, what is set aside, and what is
+One person's money — and, for a couple, the money they share beside each
+one's own: what came in, what went out, what is set aside, and what is
 invested — reconciled month by month across a web app and a mobile app that
 share the same domain modules.
 
@@ -54,14 +55,17 @@ a second bank is connected there and found here, with no new file.
 _Avoid_: bank feed (the rows it brings), integration, account link
 
 **Bank account**:
-_En français_ : compte bancaire (« Courant », « Épargne », « Ne pas suivre »)
+_En français_ : compte bancaire (« Courant », « Épargne », « Commun », « Ne pas suivre »)
 One account a bank connection reads — a current account, a Livret, a joint
 account, a card — and what it is to the user, said once and nothing brought
 in before. _Courant_: its movements fill the ledger, and its balance is the
 money to spend, on Le point and in a month close. _Épargne_: its balance is
 a savings account's on Placements, and its movements stay out, since the
 transfer that fed it was recorded on the current account. _Ne pas suivre_:
-nothing brought in and nothing counted. A transfer between two current
+nothing brought in and nothing counted. _Commun_, for someone in a shared
+space: the joint account — its movements fill the space's ledger and its
+balance is the space's, and the same account connected by the other partner
+feeds it once. A transfer between two current
 accounts is the same money moving and is left out; one to the user's own
 Livret is savings, kept on the current account's side. A current account
 followed later gets its whole history, and the month it starts counting, a
@@ -706,6 +710,41 @@ where the figure came from, fetched only when someone asks for them. Distinct
 from the card, which is the name and the figure that are true whether or not
 anyone opens it.
 _Avoid_: drawer, expander, detail view
+
+### Shared space
+
+**Shared space**:
+_En français_ : espace commun (« Commun », renommable)
+The money two partners share — groceries, rent, the joint account — kept
+beside each one's own, never mixed with it. It is an owner like a person:
+its rows are the same transactions, categories, charges and closes, owned by
+the space instead of by either partner, so every screen that shows a
+person's money can show the space's. Each partner sees the space and their
+own money, never the other's. Two people at most for now; one space a
+person.
+_Avoid_: household, family, group, joint account (that is the bank account)
+
+**Owner on screen**:
+_En français_ : « Moi · Commun »
+Whose money the shared screens show — Le point, the Journal, Récurrents, the
+close, the review, the categories — chosen with the switch at their top. The
+person's own under « Moi », the space's under « Commun ». The plan, the
+wallets and the profile are always the person's.
+_Avoid_: account switcher, profile, mode
+
+**Invite link**:
+_En français_ : lien d'invitation
+How the second partner comes in: a link the first sends the way they like,
+valid seven days, for one person. Opening it says who invites whom to what
+before anything is joined.
+_Avoid_: invitation e-mail (the app sends none)
+
+**Leaving**:
+_En français_ : quitter l'espace
+The access goes at once, the rows stay with the partner who stays, and the
+space's rows as a CSV are offered first. The last one out takes the space
+and its rows with them.
+_Avoid_: delete the space (it goes only with its last member)
 
 ### Retired
 

@@ -5,8 +5,8 @@ figure is computed, and what is known to be wrong. Written for whoever works
 on the repository next, human or agent. Every phase of
 `docs/plans/PLUCLAIR_UPGRADE_PLAN.md` updates it before it closes.
 
-Last updated: Plan du quotidien, phase 1 (2026-10-08;
-`docs/plans/EVERYDAY_PLAN.md`).
+Last updated: Plan du quotidien, phase 6a — the shared space (2026-10-09;
+`docs/plans/EVERYDAY_PLAN.md`, `docs/plans/SHARED_SPACE_DESIGN.md`).
 
 ## Shape
 
@@ -16,7 +16,7 @@ Last updated: Plan du quotidien, phase 1 (2026-10-08;
 | `apps/mobile`   | Expo 57 with expo-router and NativeWind, dark only. Reads and writes Supabase directly under RLS; calls the web app for the month read (`POST /api/month-read`) and a bank refresh (`POST /api/bank/refresh`) with a bearer token.                                                                                                                                                                                                                                                                                                                                 |
 | `packages/core` | Pure TypeScript shared by both apps and shipped to them as source: every calculation, every zod schema, every string (`src/i18n/messages/en.ts`, `fr.ts`).                                                                                                                                                                                                                                                                                                                                                                                                         |
 | `packages/data` | The Supabase reads and writes both apps make, written once and handed the caller's client (`Db`): recurring templates and occurrences, transactions (`ledger`, `month-ledger`, `history`), deletes and their undo (`deletions`), categories and their seeding, fulfilment, the month close, the month's balance, the bank's balance, the review inbox (`bank-inbox`), positions and wallet plans, instrument readings, savings accounts, properties and their loans (`properties`), preferences, the weekly recap, delete-all. `pnpm --filter @finance/data test`. |
-| `supabase/`     | Migrations `001`–`059`, assertion scripts in `tests/`, one edge function (`delete-account`).                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| `supabase/`     | Migrations `001`–`061`, assertion scripts in `tests/`, one edge function (`delete-account`).                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
 
 Vocabulary is fixed by `CONTEXT.md`; product commitments by
 `apps/web/PRODUCT.md`; visual rules by `apps/web/DESIGN.md` and
@@ -309,6 +309,53 @@ by `/api/year-review/image` for the account asking (cookie or bearer) and
 handed on by the browser's share sheet or the phone's (`expo-sharing`). Le
 point offers it in January until « Vu » (`dismissed_prompts`, `year:<year>`),
 and the notify cron says so once, under the `year` switch.
+
+## Shared space
+
+A couple's joint money beside each partner's own (migrations 060–061,
+`docs/plans/SHARED_SPACE_DESIGN.md`). **A space is an owner**: every money
+table's `user_id` now points at `owners`, which holds a row per person and
+one per space, so a joint transaction, category, charge or close is the same
+row owned by the space's id. The access rules on those tables read "the
+owner is you, or a space you are in" (`my_spaces()`), with the cross-checks
+made against the row's owner — a joint row takes a joint category — and the
+definer functions accept a space through `acting_for`. `created_by` says who
+added a joint transaction or charge.
+
+**Whose money is on screen** is the owner: on the web `getOwner()`
+(`lib/owner.ts`; the `pluclair-owner` cookie, honoured only for a member) and
+`asOwner` for writes; on the phone `OwnerProvider`, remembered on the device,
+with the writes in `mutations.ts` reading it through `lib/owner.ts`. The
+shared screens — Le point, the Journal and its calendar, search and
+categories, Récurrents, the close, the review, the import, the quick add —
+load by it; Plan, Placements, Profile, the bank page and the notification
+settings stay the person's, and the bars drop Plan and Placements under
+« Commun ». The switch takes the title's place on the shared screens
+(`OwnerSwitch`, both apps). The month read of a joint month uses the
+space's figures and its own quota, written with the asking partner's AI
+account (`writeMonthRead(owner, …, writer)`); the category reads are not
+offered there.
+
+Making a space, inviting, joining and leaving are `@finance/data/spaces`
+over the database's functions (`create_space`, `create_space_invite`,
+`peek_space_invite`, `join_space`, `leave_space`, `space_people`), from
+Profile « Espace commun » on both apps. The invite is a link the inviter
+sends (`/join/<token>`, seven days, one person; `pluclair://join/<token>` on
+the phone); opened signed out, the proxy keeps the token in `pluclair-join`
+through any sign-in and comes back to it. Leaving offers the space's rows as
+the Journal's CSV first; the last one out deletes the space and its rows.
+
+**The joint account** is a bank account filed « Commun » (`role = 'joint'`,
+`space_id`): the sync goes owner by owner, so its rows are matched against
+the space's ledger and land there, and its balance is the space's
+(`countedAccounts`). The partner reads the account row, never the
+connection. The same account connected by both partners is told apart by
+`iban_hash` (SHA-256), and the copy seen first feeds (`jointFeeders`). A
+person's transfer to it is filed « Versement au compte commun »
+automatically. The notify cron asks the space the same questions as a person
+— overdraft, tomorrow's big charge, the reading day, the Monday recap — and
+says them to each member under their own switches, keyed
+`space:<id>:…` and opening the space (`forSpace`, `?owner=`).
 
 ## Audience measurement
 
