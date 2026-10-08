@@ -1,4 +1,6 @@
 import type { ReactNode } from "react";
+import { after } from "next/server";
+import { recordActivity } from "@finance/data/activity";
 import { AppShell } from "@/components/layout/AppShell";
 import { LiveRefresh } from "@/components/layout/LiveRefresh";
 import { MonthFill } from "@/components/layout/MonthFill";
@@ -31,6 +33,13 @@ const NO_QUICK_ENTRY = {
 export default async function AppLayout({ children }: { children: ReactNode }) {
   const user = await getAuthUser();
   const { name, initial } = accountLabel(user ?? {});
+
+  // The day the app was opened, for the audience figures (migration 058),
+  // once the page is on its way: it is no reason to keep anyone waiting.
+  if (user) {
+    const db = await createClient();
+    after(() => recordActivity(db));
+  }
 
   // Two stages rather than six reads in a row. This layout renders again
   // after every write, before the page's own reads start, so each read here

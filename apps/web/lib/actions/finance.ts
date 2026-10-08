@@ -1,5 +1,7 @@
 "use server";
 
+import { after } from "next/server";
+import { recordActivity } from "@finance/data/activity";
 import { z } from "zod";
 import { getLocale } from "@/lib/locale";
 
@@ -143,7 +145,14 @@ export interface QuickTransactionInput {
 export async function saveQuickTransaction(
   input: QuickTransactionInput,
 ): Promise<ActionResult> {
-  return asUser((db, userId) => ledger.createTransaction(db, userId, input));
+  return asUser(async (db, userId) => {
+    const result = await ledger.createTransaction(db, userId, input);
+    if (result.success) {
+      // Counted for the audience figures, after the answer is sent.
+      after(() => recordActivity(db, "add"));
+    }
+    return result;
+  });
 }
 
 /**

@@ -1707,6 +1707,7 @@ export type Database = {
           bearing_pins: Json | null;
           dismissed_prompts: string[];
           locale: string;
+          measure_audience: boolean;
           milestone_seen: number | null;
           notification_prefs: NonNullable<Json>;
           updated_at: string;
@@ -1716,6 +1717,7 @@ export type Database = {
           bearing_pins?: Json | null;
           dismissed_prompts?: string[];
           locale?: string;
+          measure_audience?: boolean;
           milestone_seen?: number | null;
           notification_prefs?: NonNullable<Json>;
           updated_at?: string;
@@ -1725,6 +1727,7 @@ export type Database = {
           bearing_pins?: Json | null;
           dismissed_prompts?: string[];
           locale?: string;
+          measure_audience?: boolean;
           milestone_seen?: number | null;
           notification_prefs?: NonNullable<Json>;
           updated_at?: string;
@@ -1864,6 +1867,7 @@ export type Database = {
         Args: { from_tag: string; into_tag: string; target_user: string };
         Returns: number;
       };
+      record_activity: { Args: { event?: string }; Returns: undefined };
       record_bank_pull: {
         Args: { target_user: string; today: string; was_attended: boolean };
         Returns: {
@@ -2436,6 +2440,7 @@ export type Database = {
           isSetofReturn: false;
         };
       };
+      sweep_activity: { Args: Record<PropertyKey, never>; Returns: number };
       sweep_deleted: { Args: { before: string }; Returns: number };
     };
     Enums: {

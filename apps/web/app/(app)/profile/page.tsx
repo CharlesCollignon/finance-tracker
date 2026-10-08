@@ -5,7 +5,10 @@ import { bankFeedStatus } from "@/lib/bank/client";
 import { bankSetupOffered } from "@/lib/bank/offer";
 import { type PasskeyItem } from "@/components/profile/PasskeysPanel";
 import { createClient } from "@/lib/supabase/server";
-import { getNotificationSettings } from "@finance/data/preferences";
+import {
+  getNotificationSettings,
+  readAudienceMeasurement,
+} from "@finance/data/preferences";
 import { getAiConnection } from "@finance/data/ai-connection";
 import { isFlagOn } from "@finance/core/flags";
 import { getFlags } from "@/lib/flags";
@@ -52,17 +55,18 @@ export default async function ProfilePage({ searchParams }: ProfilePageProps) {
 
   // The Bank row only where it leads somewhere: setup is open to this
   // account, or a bank already syncs for it.
-  const [offered, bankStatus, notifications, flags, params] = await Promise.all(
-    [
+  const [offered, bankStatus, notifications, measureAudience, flags, params] =
+    await Promise.all([
       bankSetupOffered(),
       bankFeedStatus(user.id),
       // Every kind on is what a missing row means, and what a failed read
       // shows.
       getNotificationSettings(await createClient(), user.id).catch(() => null),
+      // On unless turned off, and on if it cannot be read.
+      readAudienceMeasurement(await createClient(), user.id).catch(() => true),
       getFlags(),
       searchParams,
-    ],
-  );
+    ]);
 
   const aiAccount = isFlagOn(flags, "ai.account")
     ? {
@@ -89,6 +93,7 @@ export default async function ProfilePage({ searchParams }: ProfilePageProps) {
       initialPasskeys={initialPasskeys}
       pushPublicKey={process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ?? ""}
       notificationPrefs={notifications?.prefs ?? {}}
+      measureAudience={measureAudience}
       showBank={offered || bankStatus !== "unconfigured"}
       showProperty={isFlagOn(flags, "property.track")}
       aiAccount={aiAccount}

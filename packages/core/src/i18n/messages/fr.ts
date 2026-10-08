@@ -88,6 +88,9 @@ export const fr: Messages = {
       "Le premier interrupteur ne concerne que ce téléphone. Les autres valent pour tous vos appareils.",
     onThisPhone: "Sur ce téléphone",
     dataSection: "Données",
+    audience: "Mesure d'audience",
+    audienceHint:
+      "Les jours où vous ouvrez Pluclair, sous un identifiant qui ne vous nomme pas. Aucun montant, aucun commerce.",
     deleteAllData: "Supprimer toutes les données",
     deleteConfirmLabel: "Tapez DELETE pour confirmer",
     deleteConfirmPlaceholder: "Tapez DELETE",

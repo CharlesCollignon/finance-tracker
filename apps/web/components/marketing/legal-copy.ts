@@ -90,7 +90,7 @@ export const legalCopy: LegalCopy = {
         body: [],
         points: [
           "Pluclair holds what you put in it, and what your bank sends if you choose to connect one. Nothing else.",
-          "No advertising, no analytics, no tracking across sites, and nothing is sold or shared for marketing.",
+          "No advertising, no tracking across sites, and nothing is sold or shared for marketing. An audience measurement, made by us alone, counts the days the app is opened without naming you; you can turn it off in Profile.",
           "Connecting a bank is optional and read-only: nothing in Pluclair can move money.",
           "You can correct or delete any entry, disconnect your bank, or delete your account from the app, and deleting the account takes everything with it.",
         ],
@@ -103,6 +103,7 @@ export const legalCopy: LegalCopy = {
           "Your account: your email address and, if you sign in with Google, the name and account identifier Google shares with us. If you add a passkey we keep its public key; the private half never leaves your device.",
           "What you enter or import: transactions, categories, charges, caps, goals, wallets and their positions, month closes and the balances you record, tags and notes. When you import a bank export, the file is read to propose entries and only the entries you keep are stored; the file itself is not.",
           "Your preferences: language, and which invitations you have dismissed.",
+          "The audience measurement, unless you turn it off: the days the app is opened, and how many times that day you added a transaction, closed a month or asked “Can I afford it?”. Under an identifier worked out from your account with a secret key, which does not name you. No amount, no shop, no text.",
           "Notifications, if you turn them on: the delivery address your browser or phone gives us (a push subscription, or a push token for the phone app), the browser's user agent, and a log of which reminders we have sent, so none is sent twice.",
           "Your properties, if you add any: what each cost and how it is used, its area and energy class, your share of it, the loans behind it and their terms, and what it is worth to you. Of its address we keep the town and the point it stands on, to compare it with the sales around it; the full address only if you ask us to.",
           "Your bank, if you connect one: see the next section.",
@@ -135,6 +136,7 @@ export const legalCopy: LegalCopy = {
           "To provide the service you signed up for: storing your records, working out your figures, showing them to you, and syncing your bank if you connected one. The legal basis is the contract between us (GDPR, article 6(1)(b)).",
           "For the bank connection, on the consent you give on screen when you upload your credentials file, and at your bank. It covers the sensitive information your transactions can reveal — health, beliefs, union membership — which is processed only on that explicit consent (articles 6(1)(a) and 9(2)(a)). We keep the date and the version of the words you accepted, and you withdraw it by disconnecting.",
           "To send notifications, only when you turn them on. Turning them off on your device or in your browser stops them.",
+          "To know whether Pluclair is used: the audience measurement serves only to work out three overall figures — how many come back after a month, how many open it on several days a week, how many close their month — never to change what you see, and it is neither shared nor matched with anything else. The basis is our legitimate interest (article 6(1)(f)), and you object at any time by turning off “Audience measurement” in Profile.",
           "To keep the service secure and working: our host keeps short-lived technical logs of requests, and we look at them only to fix a fault or stop an abuse. The basis is our legitimate interest in running a safe service (article 6(1)(f)).",
         ],
         after: [
@@ -171,6 +173,7 @@ export const legalCopy: LegalCopy = {
           "A deleted entry: [[kept for 30 days so the deletion can be undone, then erased — the job that erases them is not scheduled yet]].",
           "When you delete your account (Profile → Delete account), your credentials file is deleted first, then everything is removed from the live database at once. Backups are overwritten within [[the backup retention of the Supabase plan]].",
           "Your credentials file: until you disconnect the bank, replace the file, or delete your account.",
+          "The audience measurement: 13 months, then erased; deleting your account erases it at once.",
           "The log of reminders sent: for as long as the account exists, so none repeats.",
         ],
       },

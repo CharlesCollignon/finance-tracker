@@ -40,10 +40,14 @@ import { useLocaleContext } from "@/providers/LocaleProvider";
 import { LOCALE_LABELS, LOCALES } from "@finance/core/i18n/locale";
 import {
   deleteAllUserData,
+  setAudienceMeasurement,
   setNotificationPref,
   updateProfile,
 } from "@/lib/mutations";
-import { getNotificationSettings } from "@/lib/queries";
+import {
+  getNotificationSettings,
+  readAudienceMeasurement,
+} from "@/lib/queries";
 import { supabase } from "@/lib/supabase";
 import { useTabBarClearance } from "@/theme/chrome";
 
@@ -99,6 +103,13 @@ export default function ProfileScreen() {
   );
   const [flipped, setFlipped] = useState<NotificationPrefs>({});
   const kindPrefs = { ...(notifications?.prefs ?? {}), ...flipped };
+  // « Mesure d'audience », for the account, shown flipped at once.
+  const { data: measured } = useRefreshable(
+    async () => (user ? await readAudienceMeasurement(user.id) : true),
+    [user?.id],
+    { reads: ["preferences"] },
+  );
+  const [audience, setAudience] = useState<boolean | null>(null);
   const [fullName, setFullName] = useState(
     (user?.user_metadata?.full_name as string | undefined) ??
       (user?.user_metadata?.name as string | undefined) ??
@@ -146,6 +157,15 @@ export default function ProfileScreen() {
     const result = await setNotificationPref(kind, next, locale);
     if (!result.success) {
       setFlipped((current) => ({ ...current, [kind]: !next }));
+      toast(resolveMessage(t, result.error), "error");
+    }
+  }
+
+  async function handleAudienceChange(next: boolean) {
+    setAudience(next);
+    const result = await setAudienceMeasurement(next, locale);
+    if (!result.success) {
+      setAudience(!next);
       toast(resolveMessage(t, result.error), "error");
     }
   }
@@ -415,6 +435,18 @@ export default function ProfileScreen() {
         </ListSection>
 
         <ListSection title={t("profile.dataSection")}>
+          <ListRow
+            icon="stats-chart-outline"
+            label={t("profile.audience")}
+            hint={t("profile.audienceHint")}
+            trailing={
+              <Switch
+                accessibilityLabel={t("profile.audience")}
+                value={audience ?? measured ?? true}
+                onValueChange={(next) => void handleAudienceChange(next)}
+              />
+            }
+          />
           <ListRow
             icon="trash-outline"
             label={t("profile.deleteAllData")}

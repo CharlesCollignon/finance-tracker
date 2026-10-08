@@ -619,3 +619,8 @@ export function getNotificationSettings(
 ): Promise<preferences.NotificationSettings> {
   return preferences.getNotificationSettings(supabase, userId);
 }
+
+/** Whether the account is counted in the audience figures (migration 058). */
+export function readAudienceMeasurement(userId: string): Promise<boolean> {
+  return preferences.readAudienceMeasurement(supabase, userId);
+}

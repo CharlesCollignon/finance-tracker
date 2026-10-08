@@ -1,5 +1,7 @@
 "use server";
 
+import { after } from "next/server";
+import { recordActivity } from "@finance/data/activity";
 import type { ActionResult } from "@finance/core/action-result";
 import type { MonthCloseResult, RunMoment } from "@finance/core/month-close";
 import * as closing from "@finance/data/closing";
@@ -37,9 +39,21 @@ export async function recordMonthClose(
   closingBalance: number,
 ): Promise<ActionResult<{ result: MonthCloseResult; run: RunMoment | null }>> {
   const locale = await getLocale();
-  return asUser((db, userId) =>
-    closing.recordMonthClose(db, userId, year, month, closingBalance, locale),
-  );
+  return asUser(async (db, userId) => {
+    const result = await closing.recordMonthClose(
+      db,
+      userId,
+      year,
+      month,
+      closingBalance,
+      locale,
+    );
+    if (result.success) {
+      // Counted for the audience figures, after the answer is sent.
+      after(() => recordActivity(db, "close"));
+    }
+    return result;
+  });
 }
 
 export async function deleteMonthClose(

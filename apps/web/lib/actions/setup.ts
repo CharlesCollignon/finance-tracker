@@ -3,9 +3,11 @@
 import type { ActionResult } from "@finance/core/action-result";
 import { todayIsoLocal } from "@finance/core/constants";
 import { setupPrompt, type SetupStep } from "@finance/core/setup-steps";
+import { recordActivity } from "@finance/data/activity";
 import { saveBalanceReading } from "@finance/data/balance-reading";
 import { dismissPrompt } from "@finance/data/preferences";
 import { asUser } from "@/lib/actions/as-user";
+import { createClient } from "@/lib/supabase/server";
 import { getLocale } from "@/lib/locale";
 
 const STEPS: readonly Exclude<SetupStep, "bank">[] = [
@@ -34,4 +36,9 @@ export async function dismissSetupStep(step: string): Promise<ActionResult> {
   return asUser((db, userId) =>
     dismissPrompt(db, userId, setupPrompt(known), locale),
   );
+}
+
+/** « Puis-je me permettre ? » opened: counted for the audience figures. */
+export async function recordAffordAsked(): Promise<void> {
+  await recordActivity(await createClient(), "afford");
 }

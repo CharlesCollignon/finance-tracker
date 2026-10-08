@@ -165,6 +165,26 @@ auprès desquels l'utilisateur a lui-même ouvert un compte.
   aurait laissé voir à tout compte les quartiers où des utilisateurs
   possèdent un logement.
 
+## 8. Mesure d'audience
+
+- **Finalité** : savoir si l'application sert, par trois chiffres d'ensemble
+  — retour après un mois, ouverture plusieurs jours par semaine, mois
+  clôturés (vue `insights.figures`). Jamais pour adapter ce qu'un utilisateur
+  voit.
+- **Base légale** : intérêt légitime (art. 6.1.f), avec droit d'opposition par
+  l'interrupteur « Mesure d'audience » du Profil
+  (`user_preferences.measure_audience`). Lecture faite de l'exemption de la
+  CNIL pour la mesure d'audience (délibération 2020-091), écrite pour les
+  traceurs sur l'appareil : ici rien n'est déposé sur l'appareil, le comptage
+  est fait par le serveur — [[à confirmer]].
+- **Données** : un identifiant calculé (SHA-256 de l'identifiant du compte et
+  d'un sel propre à la base, que nul client ne lit), le jour, et le nombre
+  d'opérations ajoutées, de mois clôturés et de questions « Puis-je me
+  permettre ? » ce jour-là. Aucun montant, commerce ni texte (migration 058).
+- **Destinataires** : Supabase ; consulté par l'éditeur seul.
+- **Durée** : 13 mois, effacé par la tâche de nuit ; à la suppression du
+  compte, effacé aussitôt.
+
 ## Hors registre : cours de marché, ventes immobilières et indices
 
 Les cours des fonds sont consultés sur Yahoo Finance et sur les pages des

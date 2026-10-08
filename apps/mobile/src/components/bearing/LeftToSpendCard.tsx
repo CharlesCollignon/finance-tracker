@@ -14,6 +14,7 @@ import { Input } from "@/components/ui/Input";
 import { SheetGrabber } from "@/components/ui/SheetGrabber";
 import { Text } from "@/components/ui/Text";
 import { hapticLight } from "@/lib/haptics";
+import { recordAffordAsked } from "@/lib/mutations";
 import { useFormatCurrency } from "@/providers/CurrencyProvider";
 import { useLocale, useT } from "@/providers/LocaleProvider";
 import { TYPE } from "@/theme/tokens";
@@ -69,6 +70,7 @@ export function LeftToSpendCard({
         onPress={() => {
           void hapticLight();
           setAsking(true);
+          recordAffordAsked();
         }}
         className="gap-1.5"
       >

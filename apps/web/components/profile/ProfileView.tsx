@@ -33,6 +33,7 @@ import {
 } from "@finance/core/notification-kinds";
 import { NotificationKindRows } from "@/components/profile/NotificationKindRows";
 import { NotificationsRow } from "@/components/profile/NotificationsRow";
+import { AudienceRow } from "@/components/profile/AudienceRow";
 import {
   AiAccountSection,
   type AiAccountRow,
@@ -63,6 +64,8 @@ interface ProfileViewProps {
   pushPublicKey: string;
   /** Which kinds of notification the account has turned off. */
   notificationPrefs: NotificationPrefs;
+  /** Whether the account is counted in the audience figures (migration 058). */
+  measureAudience: boolean;
   /** Whether the Bank row leads anywhere for this account. */
   showBank: boolean;
   /** Whether the account has the Immobilier tab, and so its notifications. */
@@ -94,6 +97,7 @@ type OpenRow = "name" | "passkeys" | "wipe" | "close" | AiAccountRow | null;
 export function ProfileView({
   pushPublicKey,
   notificationPrefs,
+  measureAudience,
   email,
   fullName,
   provider,
@@ -322,6 +326,7 @@ export function ProfileView({
         </ListSection>
 
         <ListSection title={t("profile.dataSection")}>
+          <AudienceRow on={measureAudience} />
           <ListRow
             icon={Trash}
             label={t("profile.deleteAllData")}

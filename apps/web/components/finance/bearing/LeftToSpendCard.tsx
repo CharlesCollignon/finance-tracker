@@ -11,6 +11,7 @@ import { PrivateAmount } from "@/components/layout/PrivateAmount";
 import { Input } from "@/components/ui/Input";
 import { MobileSheet } from "@/components/ui/MobileSheet";
 import { SegmentedControl } from "@/components/ui/SegmentedControl";
+import { recordAffordAsked } from "@/lib/actions/setup";
 import { GLASS_CARD } from "@/lib/glass";
 import { FIGURE_HERO } from "@/lib/type-scale";
 import { useFormatCurrency } from "@/lib/use-currency";
@@ -65,7 +66,10 @@ export function LeftToSpendCard({
     >
       <button
         type="button"
-        onClick={() => setAsking(true)}
+        onClick={() => {
+          setAsking(true);
+          void recordAffordAsked();
+        }}
         className="-m-2 flex flex-col items-start gap-2 rounded-control p-2 text-left transition-colors duration-hover hover:bg-muted/40"
       >
         <span className="text-sm font-medium text-muted-foreground">
