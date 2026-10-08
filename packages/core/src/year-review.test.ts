@@ -74,6 +74,8 @@ describe("buildYearReview", () => {
       kind: "change",
       name: "Restaurants",
       change: -0.25,
+      before: 400,
+      after: 300,
     });
   });
 
@@ -88,6 +90,7 @@ describe("buildYearReview", () => {
       kind: "share",
       name: "Courses",
       share: 0.76,
+      amount: 950,
     });
   });
 
@@ -118,6 +121,12 @@ describe("buildYearReview", () => {
       milestones: [],
     });
     expect(review?.closes.bestRun).toBe(2);
+    expect(
+      review?.months
+        .filter((month) => month.inBestRun)
+        .map((month) => month.monthKey),
+    ).toEqual(["2026-01", "2026-02"]);
+    expect(review?.months[2]).toMatchObject({ closed: false, won: false });
   });
 });
 

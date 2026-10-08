@@ -815,6 +815,18 @@ only Plan celebrates. The allowance is specific:
   the card around it.
 - The phone adds a success haptic; the web has none to add.
 
+**« Votre année » is a story**, the one surface where motion carries the
+content rather than marking a moment (`YearReviewView`, October 2026, at the
+owner's request for something playful). One slide a screen over the whole
+window, bars filling across the top, tap right for the next and left for the
+one before, swipe, arrow keys, hold to pause, a pause button. Each slide's
+figure counts up, a ring fills to the share of income kept, the twelve months
+light one after the other with the longest run in gold, two bars grow, the
+milestones spring in, and two lights drift behind to a new place each slide.
+Still the one easing curve for everything that is not a spring, still no
+confetti, gold on the figures only — and under reduced motion every slide
+lands on its final state and nothing plays by itself.
+
 **A month closed.** What the month kept counts up from zero in gold and, when
 the close extended the run past one month, a pill with the flame pops in once
 the count has landed: « Série prolongée : 4 mois d'affilée », or « Nouveau

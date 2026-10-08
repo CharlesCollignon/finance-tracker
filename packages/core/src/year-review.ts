@@ -46,12 +46,29 @@ export interface YearReview {
   /** Months closed in the year, and the longest run of them won. */
   closes: { count: number; bestRun: number };
   /**
+   * The twelve months, January first: closed or not, won or not, and
+   * whether the month is in the longest run — what the story lights up.
+   */
+  months: {
+    monthKey: string;
+    closed: boolean;
+    won: boolean;
+    inBestRun: boolean;
+  }[];
+  /**
    * The expense category that moved most against the year before, or — with
    * no year before to compare — the one that took the largest share.
    */
   category:
-    | { kind: "change"; name: string; change: number }
-    | { kind: "share"; name: string; share: number }
+    | {
+        kind: "change";
+        name: string;
+        change: number;
+        /** The year before's total, and this year's. */
+        before: number;
+        after: number;
+      }
+    | { kind: "share"; name: string; share: number; amount: number }
     | null;
   /** The milestones reached in the year, smallest first. */
   milestones: number[];
@@ -104,6 +121,39 @@ function bestRun(closes: readonly YearReviewClose[]): number {
     previous = index;
   }
   return best;
+}
+
+/** The twelve months of a year, lit by its closes and its longest run. */
+function monthsOf(
+  year: number,
+  closes: readonly YearReviewClose[],
+): YearReview["months"] {
+  const byKey = new Map(closes.map((close) => [close.monthKey, close]));
+  const months = Array.from({ length: 12 }, (_, index) => {
+    const monthKey = `${year}-${String(index + 1).padStart(2, "0")}`;
+    const close = byKey.get(monthKey);
+    return {
+      monthKey,
+      closed: close !== undefined,
+      won: close?.won ?? false,
+      inBestRun: false,
+    };
+  });
+  // The longest run, the first of them when two are as long.
+  const best = bestRun(closes);
+  if (best > 0) {
+    let run = 0;
+    for (let index = 0; index < months.length; index += 1) {
+      run = months[index]!.won ? run + 1 : 0;
+      if (run === best) {
+        for (let back = index - best + 1; back <= index; back += 1) {
+          months[back]!.inBestRun = true;
+        }
+        break;
+      }
+    }
+  }
+  return months;
 }
 
 /**
@@ -161,7 +211,12 @@ export function buildYearReview({
   const lastYear = spendingByCategory(rows, year - 1);
   let category: YearReview["category"] = null;
   if (lastYear.size > 0) {
-    let best: { name: string; change: number } | null = null;
+    let best: {
+      name: string;
+      change: number;
+      before: number;
+      after: number;
+    } | null = null;
     for (const [name, total] of thisYear) {
       const before = lastYear.get(name) ?? 0;
       if (total < CATEGORY_FLOOR || before < CATEGORY_FLOOR) {
@@ -172,7 +227,12 @@ export function buildYearReview({
         Math.abs(change) >= CATEGORY_MIN_CHANGE &&
         (best === null || Math.abs(change) > Math.abs(best.change))
       ) {
-        best = { name, change: Math.round(change * 100) / 100 };
+        best = {
+          name,
+          change: Math.round(change * 100) / 100,
+          before: roundMoney(before),
+          after: roundMoney(total),
+        };
       }
     }
     category = best ? { kind: "change", ...best } : null;
@@ -184,6 +244,7 @@ export function buildYearReview({
         kind: "share",
         name,
         share: Math.round((total / spending) * 100) / 100,
+        amount: roundMoney(total),
       };
     }
   }
@@ -192,6 +253,7 @@ export function buildYearReview({
     year,
     kept,
     closes: { count: yearCloses.length, bestRun: bestRun(yearCloses) },
+    months: monthsOf(year, yearCloses),
     category,
     milestones: milestones
       .filter((milestone) => milestone.on.startsWith(prefix))
