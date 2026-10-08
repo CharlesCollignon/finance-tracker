@@ -3,6 +3,11 @@ import {
   hasBankFeed as bankFeeds,
   walletCategoriesTheBankDebits,
 } from "@finance/data/bank-feed";
+import {
+  searchAllMonths,
+  type LedgerSearch,
+} from "@finance/data/ledger-search";
+import { readSubscriptions } from "@finance/data/subscriptions";
 import * as fulfilment from "@finance/data/fulfilment";
 import * as closes from "@finance/data/month-close";
 import { isMissingSchema } from "@finance/data/schema";
@@ -20,6 +25,7 @@ import {
   getCurrentMonth,
   getMonthBounds,
   shiftIsoDate,
+  todayIsoLocal,
   type BudgetViewMode,
 } from "@finance/core/constants";
 
@@ -39,7 +45,6 @@ import {
   buildInvestmentPortfolio,
   portfolioQuoteSymbols,
 } from "@finance/core/investment-positions";
-import { todayIsoLocal } from "@finance/core/constants";
 import {
   fetchMonthlyClosesBySymbolInEur,
   fetchQuotesInEur,
@@ -623,4 +628,19 @@ export function getNotificationSettings(
 /** Whether the account is counted in the audience figures (migration 058). */
 export function readAudienceMeasurement(userId: string): Promise<boolean> {
   return preferences.readAudienceMeasurement(supabase, userId);
+}
+
+/** The Journal's search across every month (`searchAllMonths`). */
+export function searchEveryMonth(
+  userId: string,
+  query: string,
+): Promise<LedgerSearch> {
+  return searchAllMonths(supabase, userId, query);
+}
+
+/** The services the ledger shows being paid, for « Abonnements » (`readSubscriptions`). */
+export function getSubscriptions(
+  userId: string,
+): ReturnType<typeof readSubscriptions> {
+  return readSubscriptions(supabase, userId, todayIsoLocal());
 }

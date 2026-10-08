@@ -25,6 +25,7 @@
     "./history": "./src/history.ts",
     "./instrument-readings": "./src/instrument-readings.ts",
     "./ledger": "./src/ledger.ts",
+    "./ledger-search": "./src/ledger-search.ts",
     "./left-to-spend": "./src/left-to-spend.ts",
     "./ledger-duplicates": "./src/ledger-duplicates.ts",
     "./month-balance": "./src/month-balance.ts",
@@ -44,6 +45,7 @@
     "./recurring-templates": "./src/recurring-templates.ts",
     "./savings-accounts": "./src/savings-accounts.ts",
     "./schema": "./src/schema.ts",
+    "./subscriptions": "./src/subscriptions.ts",
     "./templates": "./src/templates.ts",
     "./wallet-plans": "./src/wallet-plans.ts",
     "./weekly-recap": "./src/weekly-recap.ts"

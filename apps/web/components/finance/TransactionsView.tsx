@@ -20,6 +20,7 @@ import { CategoryIcon } from "@/components/finance/CategoryIcon";
 import { FulfilmentDot } from "@/components/finance/FulfilmentDot";
 import type { ReactNode } from "react";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { EveryMonthResults } from "@/components/finance/EveryMonthResults";
 import { useDeletedToast } from "@/lib/use-deleted-toast";
 import { useToast } from "@/components/layout/ToastProvider";
 import { TransactionForm } from "@/components/finance/TransactionForm";
@@ -77,6 +78,8 @@ type FilterType = LedgerTypeFilter;
 
 interface TransactionsViewProps {
   transactions: TransactionWithCategory[];
+  /** Words to search for on arrival, from a search in another month. */
+  initialQuery?: string;
   /**
    * The month's charges still to come, drawn from their templates rather than
    * stored. Shown among the rows, and never counted in the figures that
@@ -150,6 +153,7 @@ export function TransactionsView({
   defaultDate,
   bankSlot,
   bankAccounts = null,
+  initialQuery = "",
 }: TransactionsViewProps) {
   const { toast } = useToast();
   const toastDeleted = useDeletedToast();
@@ -254,7 +258,8 @@ export function TransactionsView({
     null,
   );
   const [filter, setFilter] = useState<FilterType>("all");
-  const [search, setSearch] = useState("");
+  // A search followed from another month arrives with its words (`?q=`).
+  const [search, setSearch] = useState(initialQuery);
   const [selectMode, setSelectMode] = useState(false);
   const [storedSelection, setSelected] = useState<ReadonlySet<string>>(
     new Set(),
@@ -882,6 +887,8 @@ export function TransactionsView({
                 ))}
               </div>
             )}
+
+            <EveryMonthResults query={search} year={year} month={month} />
           </section>
         )}
       </div>

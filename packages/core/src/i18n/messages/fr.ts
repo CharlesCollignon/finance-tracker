@@ -173,7 +173,15 @@ export const fr: Messages = {
     emptyTitle: "Aucune opération ce mois-ci",
     emptyBody:
       "Ajoutez ce qui s'est passé. Vos opérations récurrentes remplissent chaque mois d'elles-mêmes.",
-    searchPlaceholder: "Chercher une catégorie ou une note…",
+    otherMonths: {
+      one: "Dans les autres mois · {count}",
+      other: "Dans les autres mois · {count}",
+    },
+    otherMonthsMore: {
+      one: "+{count} autre — précisez la recherche pour le trouver",
+      other: "+{count} autres — précisez la recherche pour les trouver",
+    },
+    searchPlaceholder: "Chercher un commerce, une catégorie, un montant…",
     searchLabel: "Chercher dans les opérations",
     filterByAccount: "Filtrer par compte",
     allAccounts: "Tous les comptes",
@@ -1602,6 +1610,21 @@ export const fr: Messages = {
     otherWallet: "Autres",
   },
   recap: {
+    subscriptionRise: "{name} est passé de {from} à {to}.",
+    subscriptionNewMonthly:
+      "Nouvel abonnement\u00A0: {name}, {amount} par mois.",
+    subscriptionNewYearly: "Nouvel abonnement\u00A0: {name}, {amount} par an.",
+    subscriptionStoppedMonthly:
+      "{name} n'a plus été prélevé depuis plus d'un mois.",
+    subscriptionStoppedYearly:
+      "{name} n'a plus été prélevé depuis plus d'un an.",
+    subscriptionSameKind: {
+      music: "Plusieurs abonnements de musique\u00A0: {names}.",
+      video: "Plusieurs abonnements vidéo\u00A0: {names}.",
+      cloud: "Plusieurs stockages en ligne\u00A0: {names}.",
+      phone: "Plusieurs forfaits mobiles\u00A0: {names}.",
+      gym: "Plusieurs salles de sport\u00A0: {names}.",
+    },
     title: "Votre semaine",
     lastWeek: "{amount} dépensés la semaine dernière.",
     noSpending: "Aucune dépense notée la semaine dernière.",
@@ -2359,6 +2382,15 @@ export const fr: Messages = {
       title: "Votre premier bilan, le {date}",
       body: "Ce jour-là, notez le solde de votre compte\u00A0: Pluclair le compare à ce que vous avez noté et retrouve ce qui a filé.",
     },
+  },
+  subscriptions: {
+    title: "Abonnements",
+    hint: "Repérés dans vos opérations\u00A0: ce qui revient chaque mois ou chaque année, au même prix ou presque.",
+    total: "{monthly} par mois · {yearly} par an",
+    perMonth: "{amount}/mois",
+    perYear: "{amount}/an",
+    stopped: "Plus prélevé",
+    changes: "Ce qui a changé",
   },
   afford: {
     title: "Puis-je me permettre\u00A0?",

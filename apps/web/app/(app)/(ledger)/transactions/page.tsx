@@ -38,7 +38,12 @@ import { shouldInviteToConnect } from "@/lib/bank/invite";
 import { getLocale } from "@/lib/locale";
 
 interface TransactionsPageProps {
-  searchParams: Promise<{ y?: string; m?: string; review?: string }>;
+  searchParams: Promise<{
+    y?: string;
+    m?: string;
+    review?: string;
+    q?: string;
+  }>;
 }
 
 export default async function TransactionsPage({
@@ -174,6 +179,7 @@ export default async function TransactionsPage({
       year={year}
       month={month}
       defaultDate={defaultDate}
+      initialQuery={typeof params.q === "string" ? params.q.slice(0, 200) : ""}
       bankAccounts={bankAccounts}
       bankSlot={
         feedItems ? (

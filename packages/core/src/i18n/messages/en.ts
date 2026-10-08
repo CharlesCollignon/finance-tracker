@@ -254,7 +254,15 @@ export const en = {
     emptyTitle: "Nothing recorded this month",
     emptyBody:
       "Add what happened. The charges you set up fill each month in on their own.",
-    searchPlaceholder: "Search category or note…",
+    otherMonths: {
+      one: "In other months · {count}",
+      other: "In other months · {count}",
+    },
+    otherMonthsMore: {
+      one: "+{count} more — narrow the search to find it",
+      other: "+{count} more — narrow the search to find them",
+    },
+    searchPlaceholder: "Search a shop, a category, an amount…",
     searchLabel: "Search transactions",
     filterByAccount: "Filter by account",
     allAccounts: "All accounts",
@@ -2248,6 +2256,18 @@ export const en = {
     otherWallet: "Other",
   },
   recap: {
+    subscriptionRise: "{name} went from {from} to {to}.",
+    subscriptionNewMonthly: "New subscription: {name}, {amount} a month.",
+    subscriptionNewYearly: "New subscription: {name}, {amount} a year.",
+    subscriptionStoppedMonthly: "{name} has not been charged for over a month.",
+    subscriptionStoppedYearly: "{name} has not been charged for over a year.",
+    subscriptionSameKind: {
+      music: "More than one music subscription: {names}.",
+      video: "More than one video subscription: {names}.",
+      cloud: "More than one online storage plan: {names}.",
+      phone: "More than one mobile plan: {names}.",
+      gym: "More than one gym: {names}.",
+    },
     title: "Your week",
     lastWeek: "{amount} spent last week.",
     noSpending: "No spending recorded last week.",
@@ -3191,6 +3211,15 @@ export const en = {
       title: "Your first month review, on {date}",
       body: "That day, note your account's balance: Pluclair compares it with what you recorded and finds what slipped through.",
     },
+  },
+  subscriptions: {
+    title: "Subscriptions",
+    hint: "Found in your transactions: what comes back every month or every year, at about the same price.",
+    total: "{monthly} a month · {yearly} a year",
+    perMonth: "{amount}/month",
+    perYear: "{amount}/year",
+    stopped: "No longer charged",
+    changes: "What changed",
   },
   afford: {
     title: "Can I afford it?",
