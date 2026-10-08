@@ -532,7 +532,7 @@ export const fr: Messages = {
     searchCategories: "Chercher une catégorie",
     searchCategoriesPlaceholder: "Chercher une catégorie…",
     changeCategory: "{name} — changer",
-    notePlaceholder: "C'était pour quoi\u00A0?",
+    notePlaceholder: "Carrefour, boulangerie…",
     saving: "Enregistrement…",
     save: "Enregistrer",
     saveAndAnother: "Enregistrer et en ajouter une autre",
@@ -540,7 +540,7 @@ export const fr: Messages = {
     savedOffline:
       "Enregistrée sur cet appareil — elle sera synchronisée dès le retour en ligne",
     amount: "Montant",
-    note: "Note",
+    note: "Commerce ou note",
     anotherDay: "Un autre jour",
     allCategories: "Toutes les catégories",
     noCategoryMatch: "Aucune catégorie ne correspond à «\u00A0{query}\u00A0».",

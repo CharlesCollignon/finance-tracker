@@ -261,7 +261,11 @@ function QuickAddFields({
 
   const t = useT();
   const display = formatAmountInput(amount, locale);
-  const canSave = isAmountInputComplete(amount) && categoryId !== "";
+  // A shop already filed somewhere is enough without a category picked: it
+  // says where it goes.
+  const knownShop = lookupMerchant(merchantIndex, note);
+  const canSave =
+    isAmountInputComplete(amount) && (categoryId !== "" || knownShop !== null);
   const yesterday = shiftIsoDate(today, -1);
   const dateChoice: "today" | "yesterday" | "other" = showDatePicker
     ? "other"
@@ -298,9 +302,8 @@ function QuickAddFields({
     setPending(true);
     setError(null);
 
-    // A category the user never picked but the app knows for this note.
-    const resolvedCategory =
-      categoryId || lookupMerchant(merchantIndex, note)?.categoryId || "";
+    // A category the user never picked but the app knows for this shop.
+    const resolvedCategory = categoryId || knownShop?.categoryId || "";
 
     const result = await createTransaction({
       categoryId: resolvedCategory,
@@ -411,6 +414,39 @@ function QuickAddFields({
         ))}
       </View>
 
+      {/* ---- shop, under the amount: a known one brings its category */}
+      <Text className="mb-2 text-sm font-medium">{t("quickAdd.note")}</Text>
+      <Input
+        value={note}
+        onChangeText={setNote}
+        placeholder={t("quickAdd.notePlaceholder")}
+        className={noteSuggestions.length > 0 ? "mb-2" : "mb-4"}
+      />
+
+      {noteSuggestions.length > 0 ? (
+        <View className="mb-4 gap-1.5">
+          {noteSuggestions.map((rule) => (
+            <Pressable
+              key={rule.key}
+              accessibilityRole="button"
+              accessibilityLabel={t("formPickers.useSuggestion", {
+                label: rule.label,
+                category: rule.categoryName,
+              })}
+              onPress={() => applyMerchant(rule)}
+              className="min-h-11 flex-row items-center justify-between gap-3 rounded-control border border-border bg-background px-3 py-2"
+            >
+              <Text className="flex-1 text-sm" numberOfLines={1}>
+                {rule.label}
+              </Text>
+              <Text variant="muted" className="text-xs">
+                {rule.categoryName}
+              </Text>
+            </Pressable>
+          ))}
+        </View>
+      ) : null}
+
       {/* ---- date ----------------------------------------------- */}
       <ChoiceChips
         label={t("quickAdd.date")}
@@ -489,39 +525,6 @@ function QuickAddFields({
         onChange={setCategoryId}
         className="mb-4"
       />
-
-      {/* ---- note ----------------------------------------------- */}
-      <Text className="mb-2 text-sm font-medium">{t("quickAdd.note")}</Text>
-      <Input
-        value={note}
-        onChangeText={setNote}
-        placeholder={t("quickAdd.notePlaceholder")}
-        className={noteSuggestions.length > 0 ? "mb-2" : "mb-4"}
-      />
-
-      {noteSuggestions.length > 0 ? (
-        <View className="mb-4 gap-1.5">
-          {noteSuggestions.map((rule) => (
-            <Pressable
-              key={rule.key}
-              accessibilityRole="button"
-              accessibilityLabel={t("formPickers.useSuggestion", {
-                label: rule.label,
-                category: rule.categoryName,
-              })}
-              onPress={() => applyMerchant(rule)}
-              className="min-h-11 flex-row items-center justify-between gap-3 rounded-control border border-border bg-background px-3 py-2"
-            >
-              <Text className="flex-1 text-sm" numberOfLines={1}>
-                {rule.label}
-              </Text>
-              <Text variant="muted" className="text-xs">
-                {rule.categoryName}
-              </Text>
-            </Pressable>
-          ))}
-        </View>
-      ) : null}
 
       {error ? (
         <Text className="mb-3 text-sm text-destructive">

@@ -753,7 +753,7 @@ export const en = {
     searchCategories: "Search categories",
     searchCategoriesPlaceholder: "Search categories…",
     changeCategory: "{name} — change",
-    notePlaceholder: "Where did it go?",
+    notePlaceholder: "Carrefour, bakery…",
     saving: "Saving…",
     save: "Save",
     saveAndAnother: "Save & add another",
@@ -762,7 +762,7 @@ export const en = {
       "Saved on this device — it will sync when you are back online",
     /* The three field names, one of which is only ever heard. */
     amount: "Amount",
-    note: "Note",
+    note: "Shop or note",
     anotherDay: "Another day",
     allCategories: "All categories",
     noCategoryMatch: "No category matches “{query}”.",
