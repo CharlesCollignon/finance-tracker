@@ -1345,6 +1345,32 @@ export type Database = {
           },
         ];
       };
+      property_shares: {
+        Row: {
+          property_id: string;
+          share: number;
+          user_id: string;
+        };
+        Insert: {
+          property_id: string;
+          share: number;
+          user_id: string;
+        };
+        Update: {
+          property_id?: string;
+          share?: number;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "property_shares_property_id_fkey";
+            columns: ["property_id"];
+            isOneToOne: false;
+            referencedRelation: "properties";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       push_subscriptions: {
         Row: {
           auth: string;
@@ -2503,6 +2529,10 @@ export type Database = {
       restore_transactions: {
         Args: { ids: string[]; target_user: string };
         Returns: number;
+      };
+      set_property_share: {
+        Args: { my_share: number; target_property: string };
+        Returns: undefined;
       };
       set_space_share: {
         Args: { my_share: number; target_space: string };
