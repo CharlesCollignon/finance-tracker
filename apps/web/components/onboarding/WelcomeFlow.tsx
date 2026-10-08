@@ -72,6 +72,11 @@ interface WelcomeFlowProps {
   aiOutcome?: AiConnectOutcome | null;
   /** A bank connected and still to bring its history in: where setup ends. */
   bankWaiting?: boolean;
+  /**
+   * A later step to open on, for a setup card on Le point: the salary, or
+   * the charges. The steps after it follow as usual.
+   */
+  startAt?: "income" | "recurring";
 }
 
 /**
@@ -113,6 +118,7 @@ export function WelcomeFlow({
   offerAi = false,
   aiOutcome = null,
   bankWaiting = false,
+  startAt,
 }: WelcomeFlowProps) {
   const t = useT();
   const router = useRouter();
@@ -128,7 +134,7 @@ export function WelcomeFlow({
   const firstStep: Step =
     offerAi && aiOutcome !== null && aiOutcome !== "connected"
       ? "ai"
-      : "currency";
+      : (startAt ?? "currency");
   const [step, setStep] = useState<Step>(firstStep);
   const [bankOpen, setBankOpen] = useState(false);
   // Connected at the bank step: setup then ends on the Bank page, where its
@@ -177,7 +183,9 @@ export function WelcomeFlow({
     function onPopState(event: PopStateEvent) {
       const remembered = (event.state as { welcomeStep?: Step } | null)
         ?.welcomeStep;
-      setStep(remembered && STEPS.includes(remembered) ? remembered : STEPS[0]);
+      setStep(
+        remembered && STEPS.includes(remembered) ? remembered : firstStep,
+      );
     }
 
     window.addEventListener("popstate", onPopState);

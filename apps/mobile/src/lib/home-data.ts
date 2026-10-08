@@ -36,6 +36,17 @@ import {
 } from "@finance/data/month-balance";
 import { getPurchasesToConfirm } from "@finance/data/purchases-to-confirm";
 import { getDcaMonth } from "@finance/data/dca-transfer";
+import { readLeftToSpend } from "@finance/data/left-to-spend";
+import {
+  payTemplate,
+  type LeftToSpend,
+} from "@finance/core/left-to-spend";
+import { rollUpRecurring } from "@finance/core/recurring-rollup";
+import {
+  firstCloseDay,
+  type SetupFacts,
+} from "@finance/core/setup-steps";
+import { readDismissedPrompts } from "@finance/data/preferences";
 import { getWeeklyRecapCard } from "@finance/data/weekly-recap";
 
 import {
@@ -135,6 +146,24 @@ export interface HomeMonth {
   dca: DcaMonth | null;
   /** The bank's movement that looks like the transfer, confirmed on the card. */
   dcaProposal: FulfilmentProposal | null;
+  /**
+   * « Il vous reste », as on the web (`readLeftToSpend`). The month in
+   * progress with a balance only.
+   */
+  left: LeftToSpend | null;
+  /**
+   * « Reste chaque mois »: what a month's income leaves once its recurring
+   * charges are out (`rollUpRecurring`), for « Puis-je me permettre ? ».
+   * Null without a recurring income, and outside the month in progress.
+   */
+  eachMonth: number | null;
+  /**
+   * What Le point's setup cards ask about (`nextSetupStep`), all but the bank
+   * invitation, which the page decides. The month in progress only.
+   */
+  setup: (Omit<SetupFacts, "bankInvited"> & { firstCloseOn: string }) | null;
+  /** Any recurring template active: without one, nothing is ever to come. */
+  recurring: boolean;
   /** Nothing recorded, nothing planned and no balance: a first visit. */
   empty: boolean;
 }
@@ -244,8 +273,34 @@ export async function gatherHomeMonth(
   let purchases: PurchaseToConfirm[] = [];
   let dca: DcaMonth | null = null;
   let dcaProposal: FulfilmentProposal | null = null;
+  let left: LeftToSpend | null = null;
+  let eachMonth: number | null = null;
+  let setup: HomeMonth["setup"] = null;
 
   if (isCurrent) {
+    left = await readLeftToSpend(supabase, userId, {
+      today,
+      read: { balance, upcoming: shownUpcoming },
+      templates,
+      fulfilledKeys,
+      closes,
+      bankFed,
+    });
+    const rollup = rollUpRecurring(templates, { debited, year, month });
+    eachMonth = rollup.income > 0 ? rollup.left : null;
+    setup = {
+      bankFed,
+      hasBalance: source !== "none",
+      hasIncome: payTemplate(templates) !== null,
+      hasCharges: templates.some(
+        (template) =>
+          template.active && template.categories.type === "expense",
+      ),
+      hasClosed: closes.history.length > 0,
+      readyToClose: closes.next !== null,
+      dismissed: await readDismissedPrompts(supabase, userId),
+      firstCloseOn: firstCloseDay(today, closes.settings.closeDay),
+    };
     const categories = await getCategories(userId);
     const [report, portfolio, pending, swallowed, proposals, waitingPurchases] =
       await Promise.all([
@@ -334,6 +389,10 @@ export async function gatherHomeMonth(
     purchases,
     dca,
     dcaProposal,
+    left,
+    eachMonth,
+    setup,
+    recurring: templates.some((template) => template.active),
     empty:
       source === "none" &&
       rows.length === 0 &&

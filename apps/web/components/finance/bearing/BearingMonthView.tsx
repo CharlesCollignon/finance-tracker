@@ -21,6 +21,7 @@ import {
 } from "@finance/core/constants";
 import { TYPE_AMOUNT_CLASS } from "@finance/core/category-styles";
 import { balanceExplanation } from "@finance/core/month-balance";
+import { nextSetupStep } from "@finance/core/setup-steps";
 import type { BankAttention } from "@finance/core/bank-attention";
 import type { BearingMonth } from "@/lib/bearing/month";
 import { AnimatedAmount } from "@/components/finance/AnimatedAmount";
@@ -32,12 +33,12 @@ import { PurchasesToConfirm } from "@/components/finance/PurchasesToConfirm";
 import { DcaStrip } from "@/components/finance/DcaStrip";
 import { BankAttentionBanner } from "@/components/finance/bank/BankAttentionBanner";
 import { NewAccountsLine } from "@/components/finance/bank/NewAccountsLine";
-import { ConnectBankInvite } from "@/components/finance/bank/ConnectBankInvite";
 import { BalanceCurve } from "@/components/finance/bearing/BalanceCurve";
+import { LeftToSpendCard } from "@/components/finance/bearing/LeftToSpendCard";
+import { SetupCard } from "@/components/finance/bearing/SetupCard";
 import { MonthPicker } from "@/components/layout/MonthPicker";
 import { PrivateAmount } from "@/components/layout/PrivateAmount";
 import { Stagger, StaggerItem } from "@/components/motion/Stagger";
-import { buttonVariants } from "@/components/ui/Button";
 import { GLASS_CARD, GLASS_HERO } from "@/lib/glass";
 import { ICON } from "@/lib/icon-scale";
 import { FIGURE, FIGURE_HERO } from "@/lib/type-scale";
@@ -71,7 +72,7 @@ export function BearingMonthView({
   awaitingAccounts = 0,
 }: {
   data: BearingMonth;
-  /** Whether to invite this reader to connect a bank, in the balance card. */
+  /** Whether to invite this reader to connect a bank: the first setup card. */
   bankInvite?: boolean;
   /** A connected bank about to stop, or stopped: shown above everything. */
   bankAttention?: BankAttention | null;
@@ -93,6 +94,14 @@ export function BearingMonthView({
   const past = data.balance.period === "past";
   const hasSpending = data.spending.total > 0;
   const hasMomentum = current && (data.run !== null || data.invested !== null);
+  // One setup card at a time, for the month in progress.
+  const setupStep = data.setup
+    ? nextSetupStep({ ...data.setup, bankInvited: bankInvite })
+    : null;
+  // Only what has something in it: a first visit shows the setup card, not
+  // a row of zeros.
+  const hasSpentBefore =
+    data.spent.total > 0 || data.spent.trend.some((entry) => entry.total > 0);
 
   return (
     <div className="flex min-w-0 flex-col gap-4 md:gap-5">
@@ -131,9 +140,31 @@ export function BearingMonthView({
         className="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-5 xl:grid-cols-3"
         stagger={0.06}
       >
-        <StaggerItem className="md:col-span-2 xl:col-span-3">
-          <BalanceCard data={data} bankInvite={bankInvite} />
-        </StaggerItem>
+        {/* First: the question the screen is opened for at the till. */}
+        {data.left ? (
+          <StaggerItem className="md:col-span-2 xl:col-span-3">
+            <LeftToSpendCard
+              left={data.left}
+              lowest={data.balance.lowest}
+              eachMonth={data.eachMonth}
+            />
+          </StaggerItem>
+        ) : null}
+
+        {setupStep && data.setup ? (
+          <StaggerItem className="md:col-span-2 xl:col-span-3">
+            <SetupCard
+              step={setupStep}
+              firstCloseOn={data.setup.firstCloseOn}
+            />
+          </StaggerItem>
+        ) : null}
+
+        {!data.empty ? (
+          <StaggerItem className="md:col-span-2 xl:col-span-3">
+            <BalanceCard data={data} />
+          </StaggerItem>
+        ) : null}
 
         {recapSlot ? (
           // Hidden while empty, so a week with no card leaves no gap.
@@ -142,19 +173,13 @@ export function BearingMonthView({
           </StaggerItem>
         ) : null}
 
-        {data.empty ? (
-          <StaggerItem className="md:col-span-2 xl:col-span-3">
-            <SetUpCard />
-          </StaggerItem>
-        ) : null}
-
-        {!data.empty && data.balance.period !== "future" ? (
+        {hasSpentBefore && data.balance.period !== "future" ? (
           <StaggerItem>
             <SpentCard data={data} />
           </StaggerItem>
         ) : null}
 
-        {!past && data.upcoming ? (
+        {!past && data.upcoming && data.recurring ? (
           <StaggerItem>
             <UpcomingCard data={data} />
           </StaggerItem>
@@ -271,13 +296,7 @@ function DeltaChip({ value, label }: { value: number; label: string }) {
 
 /* ------------------------------------------------------------ the balance */
 
-function BalanceCard({
-  data,
-  bankInvite,
-}: {
-  data: BearingMonth;
-  bankInvite: boolean;
-}) {
+function BalanceCard({ data }: { data: BearingMonth }) {
   const t = useT();
   const locale = useLocale();
   const format = useFormatCurrency();
@@ -333,7 +352,9 @@ function BalanceCard({
         ? t("bearingMonth.netCaption")
         : source === "bank"
           ? t("bearingMonth.fromBank")
-          : t("bearingMonth.fromClose");
+          : source === "reading"
+            ? t("bearingMonth.fromReading")
+            : t("bearingMonth.fromClose");
 
   // Only for a balance. A month's running net dips below zero every month
   // before payday, and flagging that as the account's lowest point would be
@@ -508,35 +529,6 @@ function BalanceCard({
           curve it takes money out of. */}
       {data.dca ? (
         <DcaStrip month={data.dca} proposal={data.dcaProposal} />
-      ) : null}
-
-      {/* Where the real balance would be: the strongest place to offer it.
-          Typing a balance by hand stays the alternative for anyone who would
-          rather not connect a bank. */}
-      {bankInvite && balance.period !== "future" ? (
-        <div className="flex flex-col gap-2">
-          <ConnectBankInvite surface="bearing" variant="card" />
-          {net ? (
-            <Link
-              href="/plan"
-              className="self-start text-xs text-muted-foreground underline underline-offset-4 hover:text-foreground"
-            >
-              {t("bankConnect.orEnterBalance")}
-            </Link>
-          ) : null}
-        </div>
-      ) : net && balance.period !== "future" ? (
-        <div className="flex flex-wrap items-center justify-between gap-3 rounded-control border border-dashed border-hairline-strong px-4 py-3">
-          <p className="text-sm text-muted-foreground">
-            {t("bearingMonth.setBalanceBody")}
-          </p>
-          <Link
-            href="/plan"
-            className={buttonVariants({ variant: "outline", size: "sm" })}
-          >
-            {t("bearingMonth.setBalance")}
-          </Link>
-        </div>
       ) : null}
     </section>
   );
@@ -853,32 +845,5 @@ function MomentumCard({ data }: { data: BearingMonth }) {
         </Link>
       ) : null}
     </Card>
-  );
-}
-
-/* ------------------------------------------------------------ first visit */
-
-function SetUpCard() {
-  const t = useT();
-  return (
-    <section
-      className={cn(
-        GLASS_CARD,
-        "flex flex-col items-start gap-3 rounded-card p-card md:flex-row md:items-center md:justify-between",
-      )}
-    >
-      <div>
-        <h2 className="text-base font-semibold">{t("month.setUpTitle")}</h2>
-        <p className="mt-1 text-sm text-muted-foreground">
-          {t("month.setUpBody")}
-        </p>
-      </div>
-      <Link
-        href="/welcome"
-        className={buttonVariants({ variant: "default", size: "sm" })}
-      >
-        {t("month.setUpCharges")}
-      </Link>
-    </section>
   );
 }

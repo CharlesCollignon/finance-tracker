@@ -188,6 +188,11 @@
         // which leaves both the config file and `eslint-config-expo` looking
         // unreferenced.
         "eslint.config.js",
+
+        // Our own config plugins, named by path in `app.json`'s `plugins`
+        // and run by prebuild. knip's expo plugin reads that list for
+        // packages, not for paths, so these would read as orphans.
+        "plugins/*.js",
       ],
 
       // knip's metro plugin contributes the platform-suffix entry patterns

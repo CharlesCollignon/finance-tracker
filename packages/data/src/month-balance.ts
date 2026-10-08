@@ -27,6 +27,7 @@ import type {
 } from "@finance/core/types/database";
 
 import { accountMarks } from "@finance/core/bank-accounts";
+import { getBalanceReading } from "./balance-reading";
 import { getBankAccounts, readCashBalance } from "./bank-balance";
 import { hasBankFeed, walletCategoriesTheBankDebits } from "./bank-feed";
 import type { Db } from "./client";
@@ -43,11 +44,16 @@ import { getRecurringSkipKeys, getRecurringTemplates } from "./templates";
  * The balance is only ever carried from something read — the bank's
  * statement, or the close of the month before — and never from further back,
  * for the reason the Month pulse gives: a balance measured against movements
- * from a different window says nothing about either.
+ * from a different window says nothing about either. The one exception is a
+ * balance the user typed before any close (`balance_readings`): it is carried
+ * until a close is newer, because until then it is the only reading there is.
  */
 
-/** What the balance is pinned to: the bank's statement, a close, or nothing. */
-export type BalanceSource = "bank" | "close" | "none";
+/**
+ * What the balance is pinned to: the bank's statement, a close, a balance
+ * the user typed, or nothing.
+ */
+export type BalanceSource = "bank" | "close" | "reading" | "none";
 
 export interface MonthBalanceRead {
   balance: MonthBalance;
@@ -186,11 +192,31 @@ export async function readMonthBalance(
         : previousMonth;
     const before = closeOf(monthKeyOf(opensFrom.year, opensFrom.month));
     const own = period === "past" ? closeOf(monthKeyOf(year, month)) : null;
-    if (before) {
-      anchor = {
-        onDate: getMonthBounds(opensFrom.year, opensFrom.month).end,
-        balance: before.closingBalance,
-      };
+    const closedOn = before
+      ? getMonthBounds(opensFrom.year, opensFrom.month).end
+      : null;
+    // A balance typed on Le point, for the month in progress and those
+    // ahead, while no close is newer than it — any close, not only the
+    // month before's: once one is, closes carry the balance as they always
+    // have.
+    const newest = closes.history[0];
+    const newestClosedOn = newest
+      ? getMonthBounds(
+          Number(newest.monthKey.slice(0, 4)),
+          Number(newest.monthKey.slice(5, 7)),
+        ).end
+      : null;
+    const reading =
+      period === "past" ? null : await getBalanceReading(db, userId);
+    if (
+      reading &&
+      reading.readOn <= today &&
+      (newestClosedOn === null || reading.readOn > newestClosedOn)
+    ) {
+      anchor = { onDate: reading.readOn, balance: reading.amount };
+      source = "reading";
+    } else if (before && closedOn) {
+      anchor = { onDate: closedOn, balance: before.closingBalance };
       source = "close";
     } else if (own) {
       anchor = { onDate: last, balance: own.closingBalance };

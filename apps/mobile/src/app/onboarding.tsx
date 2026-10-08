@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { BackHandler, Pressable, ScrollView, View } from "react-native";
-import { useRouter, type Href } from "expo-router";
+import { useLocalSearchParams, useRouter, type Href } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 
 import { CURRENCY_LABELS, type CurrencyCode } from "@finance/core/constants";
@@ -78,7 +78,11 @@ export default function OnboardingScreen() {
    * the browser's history; here it is state, and Android's back button walks
    * it too.
    */
-  const [history, setHistory] = useState<Step[]>(["currency"]);
+  // A setup card on Le point opens on the salary or the charges (`?from=`).
+  const { from } = useLocalSearchParams<{ from?: string }>();
+  const [history, setHistory] = useState<Step[]>([
+    from === "income" || from === "recurring" ? from : "currency",
+  ]);
   const step = history[history.length - 1]!;
   const [incomeAmount, setIncomeAmount] = useState("");
   const [incomeDay, setIncomeDay] = useState("1");

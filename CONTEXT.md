@@ -277,6 +277,18 @@ A cap on unrecorded spending for a month, set from the user's own history.
 Coming in under it is what a run of months is counted on.
 _Avoid_: budget, target, limit
 
+**Left to spend**:
+_En français_ : « Il vous reste »
+What the day-to-day accounts can still give before the next pay day without
+going below zero: the balance, less what the recurring templates take out
+before then, taken at its lowest point, less the unrecorded allowance's share
+of those days. It runs to the eve of the largest recurring income's next
+payment, or to the month's end when there is none. Only ever on a balance —
+read from the bank or carried from a close — never on a month counted from
+zero.
+_Avoid_: safe to spend, budget, reste à vivre (a bank's word for income less
+fixed charges)
+
 ### Where the months lead
 
 **Forward projection**:

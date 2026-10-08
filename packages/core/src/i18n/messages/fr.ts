@@ -88,6 +88,9 @@ export const fr: Messages = {
       "Le premier interrupteur ne concerne que ce téléphone. Les autres valent pour tous vos appareils.",
     onThisPhone: "Sur ce téléphone",
     dataSection: "Données",
+    audience: "Mesure d'audience",
+    audienceHint:
+      "Les jours où vous ouvrez Pluclair, sous un identifiant qui ne vous nomme pas. Aucun montant, aucun commerce.",
     deleteAllData: "Supprimer toutes les données",
     deleteConfirmLabel: "Tapez DELETE pour confirmer",
     deleteConfirmPlaceholder: "Tapez DELETE",
@@ -532,7 +535,7 @@ export const fr: Messages = {
     searchCategories: "Chercher une catégorie",
     searchCategoriesPlaceholder: "Chercher une catégorie…",
     changeCategory: "{name} — changer",
-    notePlaceholder: "C'était pour quoi\u00A0?",
+    notePlaceholder: "Carrefour, boulangerie…",
     saving: "Enregistrement…",
     save: "Enregistrer",
     saveAndAnother: "Enregistrer et en ajouter une autre",
@@ -540,7 +543,7 @@ export const fr: Messages = {
     savedOffline:
       "Enregistrée sur cet appareil — elle sera synchronisée dès le retour en ligne",
     amount: "Montant",
-    note: "Note",
+    note: "Commerce ou note",
     anotherDay: "Un autre jour",
     allCategories: "Toutes les catégories",
     noCategoryMatch: "Aucune catégorie ne correspond à «\u00A0{query}\u00A0».",
@@ -1187,10 +1190,6 @@ export const fr: Messages = {
   },
 
   month: {
-    setUpTitle: "Configurez votre mois",
-    setUpBody:
-      "Ajoutez une fois ce qui revient. Chaque mois est projeté à partir de là.",
-    setUpCharges: "Configurer vos opérations récurrentes",
     capsAndGoals: "Budgets et objectifs",
     moreThisMonth: "Plus sur ce mois",
     startingBalanceHint:
@@ -2322,9 +2321,69 @@ export const fr: Messages = {
     invitePlan:
       "Votre solde est lu pour vous, et le bilan des mois se fait de lui-même.",
     dismissInvite: "Ne plus afficher",
-    orEnterBalance: "Ou saisissez votre solde à la main",
   },
 
+  notifyAsk: {
+    question:
+      "Recevoir le récap du lundi et une alerte avant un découvert\u00A0?",
+    enable: "Activer",
+  },
+  setup: {
+    later: "Plus tard",
+    withoutBank: "Sans banque",
+    balance: {
+      title: "Combien avez-vous sur votre compte aujourd'hui\u00A0?",
+      body: "Le montant qu'affiche votre banque. Pluclair part de là pour vous dire ce qu'il vous reste jusqu'à votre prochain salaire.",
+      save: "Enregistrer",
+    },
+    salary: {
+      title: "Votre salaire",
+      body: "Son montant et son jour\u00A0: c'est jusque-là que Pluclair compte ce qu'il vous reste.",
+      action: "Ajouter mon salaire",
+    },
+    charges: {
+      title: "Vos charges fixes",
+      body: "Loyer, électricité, box, téléphone… Elles s'ajoutent toutes seules chaque mois.",
+      action: "Ajouter mes charges",
+    },
+    close: {
+      title: "Votre premier bilan, le {date}",
+      body: "Ce jour-là, notez le solde de votre compte\u00A0: Pluclair le compare à ce que vous avez noté et retrouve ce qui a filé.",
+    },
+  },
+  afford: {
+    title: "Puis-je me permettre\u00A0?",
+    amount: "Montant",
+    cadence: "Fréquence",
+    once: "Une fois",
+    monthly: "Chaque mois",
+    leftAfter: "Il vous resterait {amount} {until}",
+    missingAfter: "Il vous manquerait {amount} {until}",
+    lowestAfter: "Point le plus bas à venir\u00A0: {amount} le {date}",
+    eachMonthAfter: "Chaque mois, il resterait {amount}",
+    nothingSaved: "Rien n'est enregistré\u00A0: c'est seulement le calcul.",
+  },
+  leftToSpend: {
+    title: "Il vous reste",
+    missing: "Il vous manque",
+    untilPayDay: "jusqu'au {date}",
+    untilMonthEnd: "jusqu'à la fin du mois",
+    byPayDay: "d'ici le {date}",
+    byMonthEnd: "d'ici la fin du mois",
+    perDay: "soit {amount} par jour",
+    how: {
+      title: "Comment c'est calculé\u00A0?",
+      body: "Ce que vos comptes contiennent aujourd'hui, moins ce que vos opérations récurrentes feront sortir d'ici là, pris au point le plus bas. C'est ce qui reste pour les dépenses du quotidien.",
+      payDay:
+        "Il court jusqu'à la veille de votre prochain revenu, le plus gros de vos revenus récurrents.",
+      monthEnd: "Sans revenu récurrent, il court jusqu'à la fin du mois.",
+      marge: {
+        one: "Votre marge pour les dépenses non notées en retire {amount} pour ce jour.",
+        other:
+          "Votre marge pour les dépenses non notées en retire {amount} pour ces {count} jours.",
+      },
+    },
+  },
   bearingMonth: {
     onAccount: "Sur votre compte",
     expectedEnd: "Prévu en fin de mois",
@@ -2342,12 +2401,16 @@ export const fr: Messages = {
       bank: "Le solde vient de votre banque. Pour le reste du mois, l'application y ajoute ce que vos opérations récurrentes doivent encore faire entrer ou sortir. Les dépenses du quotidien pas encore faites n'y sont pas.",
       close:
         "Le départ est le solde que vous avez noté au dernier bilan de mois. L'application y ajoute les opérations enregistrées depuis, puis ce que vos opérations récurrentes doivent encore faire entrer ou sortir.",
+      reading:
+        "Le départ est le solde que vous avez saisi sur Le point. L'application y ajoute les opérations enregistrées depuis, puis ce que vos opérations récurrentes doivent encore faire entrer ou sortir. Votre premier bilan de mois prendra le relais.",
     },
     netCaption: "Ce qui est entré, moins ce qui est sorti.",
     byAccount: "Par compte",
     byAccountEnd: "Par compte, à la fin du mois",
     fromBank: "Aujourd'hui, d'après votre banque",
     fromClose: "D'après votre dernier bilan, plus ce que vous avez noté depuis",
+    fromReading:
+      "D'après le solde que vous avez saisi, plus ce que vous avez noté depuis",
     plannedOnly:
       "Vos opérations récurrentes seulement — les dépenses du quotidien n'y sont pas",
     fromToday: "{amount} par rapport à aujourd'hui",
@@ -2362,9 +2425,6 @@ export const fr: Messages = {
       other: "+{count} autres",
     },
     recorded: "Enregistré",
-    setBalance: "Saisir votre solde",
-    setBalanceBody:
-      "Saisissez une fois ce que contient votre compte, et ceci devient votre vrai solde.",
     spent: "Dépensé",
     spentLessSoFar: "{amount} de moins qu'en {month} à ce stade",
     spentMoreSoFar: "{amount} de plus qu'en {month} à ce stade",

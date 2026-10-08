@@ -62,7 +62,8 @@
       "@react-native-community/datetimepicker",
       "expo-localization",
       "expo-font",
-      "expo-web-browser"
+      "expo-web-browser",
+      "./plugins/with-quick-actions"
     ],
     "experiments": {
       "typedRoutes": true,

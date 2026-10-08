@@ -148,6 +148,9 @@ export const en = {
       "The first switch is for this phone only. The others apply on all your devices.",
     onThisPhone: "On this phone",
     dataSection: "Data",
+    audience: "Audience measurement",
+    audienceHint:
+      "The days you open Pluclair, under an id that does not name you. No amounts, no shops.",
     deleteAllData: "Delete all data",
     deleteConfirmLabel: "Type DELETE to confirm",
     deleteConfirmPlaceholder: "Type DELETE",
@@ -753,7 +756,7 @@ export const en = {
     searchCategories: "Search categories",
     searchCategoriesPlaceholder: "Search categories…",
     changeCategory: "{name} — change",
-    notePlaceholder: "Where did it go?",
+    notePlaceholder: "Carrefour, bakery…",
     saving: "Saving…",
     save: "Save",
     saveAndAnother: "Save & add another",
@@ -762,7 +765,7 @@ export const en = {
       "Saved on this device — it will sync when you are back online",
     /* The three field names, one of which is only ever heard. */
     amount: "Amount",
-    note: "Note",
+    note: "Shop or note",
     anotherDay: "Another day",
     allCategories: "All categories",
     noCategoryMatch: "No category matches “{query}”.",
@@ -1623,9 +1626,6 @@ export const en = {
    * halves have to be written out per form.
    */
   month: {
-    setUpTitle: "Set up your month",
-    setUpBody: "Add what repeats once. Every month is forecast from it.",
-    setUpCharges: "Set up charges",
     capsAndGoals: "Budgets and goals",
     moreThisMonth: "More this month",
     startingBalanceHint: "Set a starting balance to begin closing months",
@@ -3145,7 +3145,6 @@ export const en = {
       "Stop typing: connect your bank and entries arrive on their own.",
     invitePlan: "Your balance gets read for you, and months close themselves.",
     dismissInvite: "Don't show this again",
-    orEnterBalance: "Or enter your balance by hand",
   },
 
   /**
@@ -3157,6 +3156,66 @@ export const en = {
    * words with a caption saying so; with neither, the screen counts the
    * month's net and says that instead of pretending it is a balance.
    */
+  notifyAsk: {
+    question: "Get the Monday recap, and a warning before an overdraft?",
+    enable: "Turn on",
+  },
+  setup: {
+    later: "Later",
+    withoutBank: "Without a bank",
+    balance: {
+      title: "How much is in your account today?",
+      body: "The amount your bank shows. Pluclair starts from it to tell you what you have left until your next pay day.",
+      save: "Save",
+    },
+    salary: {
+      title: "Your salary",
+      body: "Its amount and its day: that is what Pluclair counts what you have left up to.",
+      action: "Add my salary",
+    },
+    charges: {
+      title: "Your fixed charges",
+      body: "Rent, electricity, internet, phone… They add themselves every month.",
+      action: "Add my charges",
+    },
+    close: {
+      title: "Your first month review, on {date}",
+      body: "That day, note your account's balance: Pluclair compares it with what you recorded and finds what slipped through.",
+    },
+  },
+  afford: {
+    title: "Can I afford it?",
+    amount: "Amount",
+    cadence: "How often",
+    once: "Once",
+    monthly: "Every month",
+    leftAfter: "You would have {amount} {until}",
+    missingAfter: "You would be short {amount} {until}",
+    lowestAfter: "Lowest point ahead: {amount} on {date}",
+    eachMonthAfter: "Each month would leave {amount}",
+    nothingSaved: "Nothing is saved: it is only the arithmetic.",
+  },
+  leftToSpend: {
+    title: "You have",
+    missing: "You are short",
+    untilPayDay: "until {date}",
+    untilMonthEnd: "until the end of the month",
+    byPayDay: "by {date}",
+    byMonthEnd: "by the end of the month",
+    perDay: "that is {amount} a day",
+    how: {
+      title: "How is this worked out?",
+      body: "What your accounts hold today, less what your recurring entries will take out before then, at its lowest point. It is what is left for everyday spending.",
+      payDay:
+        "It runs to the day before your next income, the largest of your recurring ones.",
+      monthEnd: "With no recurring income, it runs to the end of the month.",
+      marge: {
+        one: "Your allowance for unrecorded spending takes {amount} off for this day.",
+        other:
+          "Your allowance for unrecorded spending takes {amount} off for these {count} days.",
+      },
+    },
+  },
   bearingMonth: {
     onAccount: "On your account",
     expectedEnd: "Expected at month end",
@@ -3174,12 +3233,16 @@ export const en = {
       bank: "The balance comes from your bank. For the rest of the month, the app adds what your recurring entries still have to bring in or take out. Everyday spending not done yet is not in it.",
       close:
         "It starts from the balance you noted at your last month review. The app adds the transactions recorded since, then what your recurring entries still have to bring in or take out.",
+      reading:
+        "It starts from the balance you entered on Le point. The app adds the transactions recorded since, then what your recurring entries still have to bring in or take out. Your first month review takes over from it.",
     },
     netCaption: "What came in, minus what went out.",
     byAccount: "By account",
     byAccountEnd: "By account, at month end",
     fromBank: "Today, from your bank",
     fromClose: "From your last close, plus what you have recorded since",
+    fromReading:
+      "From the balance you entered, plus what you have recorded since",
     plannedOnly: "Your charges only — everyday spending is not in this",
     fromToday: "{amount} from today",
     lowestAhead: "Lowest ahead: {amount} on {date}",
@@ -3193,9 +3256,6 @@ export const en = {
       other: "+{count} more",
     },
     recorded: "Recorded",
-    setBalance: "Enter your balance",
-    setBalanceBody:
-      "Type what your account holds once, and this becomes your real balance.",
     spent: "Spent",
     spentLessSoFar: "{amount} less than {month} by now",
     spentMoreSoFar: "{amount} more than {month} by now",

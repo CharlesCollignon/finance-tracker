@@ -3,7 +3,8 @@ import { isMissingSchemaOrFunction } from "@finance/data/schema";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 /**
- * The nightly sweep: deletes for good what was deleted and not taken back.
+ * The nightly sweep: deletes for good what was deleted and not taken back,
+ * and the audience count's days older than thirteen months.
  *
  * A transaction or a category deleted is only marked (migration 036), so the
  * toast's Undo has something to restore. A month is long enough to cover "I
@@ -38,11 +39,25 @@ export async function GET(request: NextRequest) {
   ).toISOString();
   const { data, error } = await supabase.rpc("sweep_deleted", { before });
 
+  // The audience count's rows past thirteen months (migration 058). Its own
+  // answer: a database without that migration still sweeps the rest.
+  const activity = await supabase.rpc("sweep_activity");
+  const activitySwept =
+    activity.error && isMissingSchemaOrFunction(activity.error)
+      ? null
+      : (activity.data ?? 0);
+
   if (error) {
     if (isMissingSchemaOrFunction(error)) {
-      return Response.json({ skipped: "Migration 036 has not run here." });
+      return Response.json({
+        skipped: "Migration 036 has not run here.",
+        activitySwept,
+      });
     }
     return Response.json({ error: error.message }, { status: 500 });
   }
-  return Response.json({ swept: data ?? 0 });
+  if (activity.error && activitySwept !== null) {
+    return Response.json({ error: activity.error.message }, { status: 500 });
+  }
+  return Response.json({ swept: data ?? 0, activitySwept });
 }

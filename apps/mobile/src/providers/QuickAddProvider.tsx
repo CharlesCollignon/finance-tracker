@@ -6,6 +6,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import { useGlobalSearchParams, useRouter } from "expo-router";
 import { Pressable, StyleSheet, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import Animated, {
@@ -98,6 +99,20 @@ export function QuickAddProvider({ children }: { children: ReactNode }) {
     setIsOpen(true);
   }, []);
 
+  // `?add=1`, which `pluclair://add` lands on (`app/add.tsx`): the
+  // home-screen quick action « Ajouter une dépense ». The sheet is open while
+  // the address says so, on a plain transaction, and closing it takes the
+  // parameter off so a later visit does not open it again.
+  const router = useRouter();
+  const { add } = useGlobalSearchParams<{ add?: string }>();
+  const linked = add === "1" && Boolean(user) && !isOpen;
+  const close = useCallback(() => {
+    setIsOpen(false);
+    if (add === "1") {
+      router.setParams({ add: undefined });
+    }
+  }, [add, router]);
+
   const value = useMemo<QuickAddValue>(
     () => ({ open, isOpen }),
     [open, isOpen],
@@ -109,14 +124,14 @@ export function QuickAddProvider({ children }: { children: ReactNode }) {
       {children}
       {user ? <QuickAddFab /> : null}
       <QuickAddSheet
-        open={isOpen}
-        onClose={() => setIsOpen(false)}
+        open={isOpen || linked}
+        onClose={close}
         categories={context.categories}
         recentCategoryIds={context.recentCategoryIds}
         merchants={context.merchants}
-        defaultDate={date}
-        kind={kind}
-        categoryType={categoryType}
+        defaultDate={linked ? undefined : date}
+        kind={linked ? "transaction" : kind}
+        categoryType={linked ? undefined : categoryType}
         openToken={openToken}
       />
     </QuickAddContext.Provider>

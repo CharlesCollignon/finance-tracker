@@ -6,6 +6,7 @@
   "exports": {
     "./action-result": "./src/action-result.ts",
     "./ai-brands": "./src/ai-brands.ts",
+    "./afford": "./src/afford.ts",
     "./ai-models": "./src/ai-models.ts",
     "./allocation": "./src/allocation.ts",
     "./amount-input": "./src/amount-input.ts",
@@ -44,6 +45,7 @@
     "./fulfilment-state": "./src/fulfilment-state.ts",
     "./future-plan": "./src/future-plan.ts",
     "./savings-accounts": "./src/savings-accounts.ts",
+    "./setup-steps": "./src/setup-steps.ts",
     "./fund-costs": "./src/fund-costs.ts",
     "./i18n/calendar-names": "./src/i18n/calendar-names.ts",
     "./i18n/locale": "./src/i18n/locale.ts",
@@ -57,6 +59,7 @@
     "./investments": "./src/investments.ts",
     "./ledger-csv": "./src/ledger-csv.ts",
     "./ledger-view": "./src/ledger-view.ts",
+    "./left-to-spend": "./src/left-to-spend.ts",
     "./investment-upcoming": "./src/investment-upcoming.ts",
     "./look-through": "./src/look-through.ts",
     "./look-through-facts": "./src/look-through-facts.ts",

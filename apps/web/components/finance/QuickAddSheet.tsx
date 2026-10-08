@@ -25,6 +25,11 @@ import { MobileSheet } from "@/components/ui/MobileSheet";
 import { RecurringFormBody } from "@/components/finance/RecurringForm";
 import { useToast } from "@/components/layout/ToastProvider";
 import { saveWithOutbox } from "@/lib/offline-outbox";
+import {
+  enablePush,
+  markPushOffered,
+  shouldOfferPush,
+} from "@/lib/push-client";
 import { useCurrency } from "@/lib/use-currency";
 import { cn } from "@/lib/utils";
 import { ICON } from "@/lib/icon-scale";
@@ -234,7 +239,11 @@ function QuickAddFields({
 
   const t = useT();
   const display = formatAmountInput(amount, locale);
-  const canSave = isAmountInputComplete(amount) && categoryId !== "";
+  // A shop already filed somewhere is enough without a category picked: it
+  // says where it goes.
+  const knownShop = lookupMerchant(merchantIndex, note);
+  const canSave =
+    isAmountInputComplete(amount) && (categoryId !== "" || knownShop !== null);
 
   /** Applies everything a remembered merchant knows, without overwriting
    * anything the user has already decided in this entry. */
@@ -272,7 +281,7 @@ function QuickAddFields({
     setError(null);
 
     const result = await saveWithOutbox({
-      categoryId,
+      categoryId: categoryId || knownShop?.categoryId || "",
       amount: amountInputToNumber(amount),
       occurredOn,
       note: note.trim() || undefined,
@@ -286,10 +295,34 @@ function QuickAddFields({
     }
 
     if (!andAnother) {
-      toast(
-        result.queued ? t("quickAdd.savedOffline") : t("quickAdd.saved"),
-        "success",
-      );
+      const saved = result.queued
+        ? t("quickAdd.savedOffline")
+        : t("quickAdd.saved");
+      // The first save is when notifications are offered: in context, once,
+      // on the toast that confirms it (`shouldOfferPush`).
+      const publicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ?? "";
+      if (!result.queued && (await shouldOfferPush(publicKey))) {
+        markPushOffered();
+        toast({
+          title: saved,
+          description: t("notifyAsk.question"),
+          variant: "success",
+          actionLabel: t("notifyAsk.enable"),
+          onAction: () => {
+            void enablePush(publicKey).then((outcome) => {
+              toast(
+                outcome.error
+                  ? resolveMessage(t, outcome.error)
+                  : t("profile.notificationsOn"),
+                outcome.error ? "error" : "success",
+              );
+            });
+          },
+          duration: 12_000,
+        });
+      } else {
+        toast(saved, "success");
+      }
       onDone();
       return;
     }
@@ -360,6 +393,47 @@ function QuickAddFields({
           </span>
           <span className="text-2xl">{display.fraction}</span>
         </div>
+      </div>
+
+      {/* ---- shop, under the amount: a known one brings its category -- */}
+      <div className="relative flex flex-col gap-2">
+        <label htmlFor="quick-note" className="text-sm font-medium">
+          {t("quickAdd.note")}
+        </label>
+        <input
+          id="quick-note"
+          type="text"
+          autoComplete="off"
+          placeholder={t("quickAdd.notePlaceholder")}
+          value={note}
+          onChange={(event) => setNote(event.target.value)}
+          onFocus={() => setNoteFocused(true)}
+          onBlur={handleNoteBlur}
+          className="min-h-10 w-full rounded-control border border-border bg-background px-3 text-base"
+        />
+        {noteSuggestions.length > 0 ? (
+          <ul className="absolute inset-x-0 top-full z-10 overflow-hidden rounded-control border border-border bg-background shadow-lg">
+            {noteSuggestions.map((rule) => (
+              <li key={rule.key}>
+                <button
+                  type="button"
+                  // onMouseDown fires before the input's blur, so the click
+                  // is not lost to the list unmounting.
+                  onMouseDown={(event) => {
+                    event.preventDefault();
+                    applyMerchant(rule);
+                  }}
+                  className="flex min-h-10 w-full items-center justify-between gap-3 px-3 text-left text-sm hover:bg-muted"
+                >
+                  <span className="truncate">{rule.label}</span>
+                  <span className="shrink-0 text-xs text-muted-foreground">
+                    {rule.categoryName}
+                  </span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        ) : null}
       </div>
 
       {/* ---- date --------------------------------------------------- */}
@@ -498,47 +572,6 @@ function QuickAddFields({
           >
             {t("quickAdd.allCategories")}
           </button>
-        ) : null}
-      </div>
-
-      {/* ---- note --------------------------------------------------- */}
-      <div className="relative flex flex-col gap-2">
-        <label htmlFor="quick-note" className="text-sm font-medium">
-          {t("quickAdd.note")}
-        </label>
-        <input
-          id="quick-note"
-          type="text"
-          autoComplete="off"
-          placeholder={t("quickAdd.notePlaceholder")}
-          value={note}
-          onChange={(event) => setNote(event.target.value)}
-          onFocus={() => setNoteFocused(true)}
-          onBlur={handleNoteBlur}
-          className="min-h-10 w-full rounded-control border border-border bg-background px-3 text-base"
-        />
-        {noteSuggestions.length > 0 ? (
-          <ul className="absolute inset-x-0 top-full z-10 overflow-hidden rounded-control border border-border bg-background shadow-lg">
-            {noteSuggestions.map((rule) => (
-              <li key={rule.key}>
-                <button
-                  type="button"
-                  // onMouseDown fires before the input's blur, so the click
-                  // is not lost to the list unmounting.
-                  onMouseDown={(event) => {
-                    event.preventDefault();
-                    applyMerchant(rule);
-                  }}
-                  className="flex min-h-10 w-full items-center justify-between gap-3 px-3 text-left text-sm hover:bg-muted"
-                >
-                  <span className="truncate">{rule.label}</span>
-                  <span className="shrink-0 text-xs text-muted-foreground">
-                    {rule.categoryName}
-                  </span>
-                </button>
-              </li>
-            ))}
-          </ul>
         ) : null}
       </div>
 

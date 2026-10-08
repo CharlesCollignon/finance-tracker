@@ -1,6 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Tabs } from "expo-router";
-import { useRef, type ComponentProps } from "react";
+import { useEffect, useRef, type ComponentProps } from "react";
 import { StyleSheet, Text } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTabBarHeight } from "@/theme/chrome";
@@ -8,6 +8,7 @@ import { useTabBarHeight } from "@/theme/chrome";
 import { SharedBackdrop } from "@/components/AppBackdrop";
 import { Blur } from "@/components/ui/Blur";
 import { notifyDataChanged } from "@/lib/data-version";
+import { recordAppOpened } from "@/lib/mutations";
 import { MonthProvider } from "@/providers/MonthProvider";
 import { QuickAddProvider } from "@/providers/QuickAddProvider";
 import { ReminderProvider } from "@/providers/ReminderProvider";
@@ -124,8 +125,14 @@ export default function TabsLayout() {
     if (now - lastReturn.current >= RETURN_GAP_MS) {
       lastReturn.current = now;
       notifyDataChanged();
+      recordAppOpened();
     }
   });
+  // And the first time the tabs are shown: opening the app from cold is not
+  // a return to it.
+  useEffect(() => {
+    recordAppOpened();
+  }, []);
 
   return (
     <ReminderProvider>

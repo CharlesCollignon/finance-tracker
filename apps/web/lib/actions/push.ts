@@ -100,6 +100,19 @@ export async function isPushSubscribed(endpoint: string): Promise<boolean> {
 }
 
 /** Turn one kind of notification on or off, for the account. */
+/** « Mesure d'audience »: count this account in the audience figures, or not. */
+export async function setAudienceMeasurement(
+  wanted: boolean,
+): Promise<ActionResult> {
+  if (typeof wanted !== "boolean") {
+    return { error: "errors.invalidInput" };
+  }
+  const locale = await getLocale();
+  return asUser((db, userId) =>
+    preferences.setAudienceMeasurement(db, userId, wanted, locale),
+  );
+}
+
 export async function setNotificationPref(
   kind: NotificationKind,
   wanted: boolean,

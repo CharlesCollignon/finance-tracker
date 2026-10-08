@@ -29,6 +29,9 @@ import * as occurrences from "@finance/data/occurrences";
 import * as recap from "@finance/data/weekly-recap";
 import * as preferences from "@finance/data/preferences";
 import * as aiConnection from "@finance/data/ai-connection";
+import { recordActivity } from "@finance/data/activity";
+import { saveBalanceReading as saveReading } from "@finance/data/balance-reading";
+import { setupPrompt, type SetupStep } from "@finance/core/setup-steps";
 import type { NotificationKind } from "@finance/core/notification-kinds";
 import type { ActionResult } from "@finance/core/action-result";
 import type {
@@ -64,7 +67,14 @@ async function asUser<T extends object>(
 export async function createTransaction(
   input: ledger.NewTransaction,
 ): Promise<ActionResult> {
-  return asUser((userId) => ledger.createTransaction(supabase, userId, input));
+  const result = await asUser((userId) =>
+    ledger.createTransaction(supabase, userId, input),
+  );
+  if (result.success) {
+    // Counted for the audience figures (migration 058); never waited on.
+    void recordActivity(supabase, "add");
+  }
+  return result;
 }
 
 export async function updateTransaction(
@@ -407,7 +417,7 @@ export async function recordMonthClose(
   closingBalance: number,
   locale: Locale,
 ): Promise<ActionResult<{ result: MonthCloseResult; run: RunMoment | null }>> {
-  return asUser((userId) =>
+  const result = await asUser((userId) =>
     closing.recordMonthClose(
       supabase,
       userId,
@@ -417,6 +427,10 @@ export async function recordMonthClose(
       locale,
     ),
   );
+  if (result.success) {
+    void recordActivity(supabase, "close");
+  }
+  return result;
 }
 
 export async function deleteMonthClose(
@@ -599,6 +613,35 @@ export function dismissWeeklyRecap(
   );
 }
 
+/* --------------------------------------------- Le point's setup cards */
+
+/** What the account holds today, typed on Le point's setup card. */
+export function saveBalanceReading(amount: number): Promise<ActionResult> {
+  return asUser((userId) =>
+    saveReading(supabase, userId, { amount, today: todayIsoLocal() }),
+  );
+}
+
+/** The app in front, for the audience figures (migration 058). */
+export function recordAppOpened(): void {
+  void recordActivity(supabase);
+}
+
+/** « Puis-je me permettre ? » opened, for the audience figures. */
+export function recordAffordAsked(): void {
+  void recordActivity(supabase, "afford");
+}
+
+/** « Plus tard »: put one setup card away, for good and on every device. */
+export function dismissSetupStep(
+  step: Exclude<SetupStep, "bank">,
+  locale: Locale,
+): Promise<ActionResult> {
+  return asUser((userId) =>
+    preferences.dismissPrompt(supabase, userId, setupPrompt(step), locale),
+  );
+}
+
 /* ------------------------------------------- the transfer to the broker */
 
 /**
@@ -637,6 +680,16 @@ export function disconnectAiAccount(): Promise<ActionResult> {
 /* --------------------------------------------------- what to be told */
 
 /** Turn one kind of notification on or off, for the account. */
+/** « Mesure d'audience »: count this account in the audience figures, or not. */
+export function setAudienceMeasurement(
+  wanted: boolean,
+  locale: Locale,
+): Promise<ActionResult> {
+  return asUser((userId) =>
+    preferences.setAudienceMeasurement(supabase, userId, wanted, locale),
+  );
+}
+
 export function setNotificationPref(
   kind: NotificationKind,
   wanted: boolean,

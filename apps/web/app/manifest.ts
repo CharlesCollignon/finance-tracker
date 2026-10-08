@@ -8,13 +8,18 @@ import type { MetadataRoute } from "next";
  * that matters more than it would elsewhere: the moment you want to log a
  * purchase is while standing at the till, and opening a browser tab to do it
  * is most of the reason it does not get logged.
+ *
+ * In French, like everything a new reader sees first: a phone shows these
+ * words under the icon and in its long-press menu, where no locale switch
+ * reaches.
  */
 export default function manifest(): MetadataRoute.Manifest {
   return {
     name: "Pluclair",
     short_name: "Pluclair",
     description:
-      "Your money, month by month — what came in, what went out, what is set aside and what is invested.",
+      "Vos revenus, vos dépenses, votre épargne et vos placements au même endroit — vérifiés chaque mois avec votre banque.",
+    lang: "fr",
     start_url: "/bearing",
     scope: "/",
     display: "standalone",
@@ -53,9 +58,9 @@ export default function manifest(): MetadataRoute.Manifest {
     ],
     shortcuts: [
       {
-        name: "Add transaction",
-        short_name: "Add",
-        description: "Log something you just spent",
+        name: "Ajouter une dépense",
+        short_name: "Ajouter",
+        description: "Noter ce que vous venez de dépenser",
         url: "/transactions?add=1",
       },
     ],

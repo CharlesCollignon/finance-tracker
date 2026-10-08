@@ -76,6 +76,8 @@ const TABLE_AREAS: Record<string, readonly DataArea[]> = {
   bank_feed_items: ["bank", "transactions"],
   month_closes: ["closes"],
   month_close_settings: ["closes"],
+  // A balance typed before any close: it anchors the month as a close does.
+  balance_readings: ["closes"],
   user_preferences: ["preferences"],
   profiles: ["preferences"],
   month_reads: ["reads"],
@@ -95,6 +97,13 @@ const TABLE_AREAS: Record<string, readonly DataArea[]> = {
  * everything and reload every screen.
  */
 const READ_RPCS: ReadonlySet<string> = new Set(["evaluated_feature_flags"]);
+
+/**
+ * Database functions that write something no screen draws: the audience
+ * count (migration 058) is written on every return to the app, and reloading
+ * every screen each time would be the opposite of what it is for.
+ */
+const UNDRAWN_RPCS: ReadonlySet<string> = new Set(["record_activity"]);
 
 /** The web routes the phone writes through, by path. */
 const ROUTE_AREAS: Record<string, readonly DataArea[]> = {
@@ -138,6 +147,9 @@ function areasWrittenTo(
   const rest = path.match(/\/rest\/v1\/([^/?]+)(?:\/([^/?]+))?/);
   if (rest) {
     if (rest[1] === "rpc") {
+      if (rest[2] && UNDRAWN_RPCS.has(rest[2])) {
+        return [];
+      }
       return rest[2] && READ_RPCS.has(rest[2]) ? null : ALL_AREAS;
     }
     return TABLE_AREAS[rest[1]] ?? ALL_AREAS;

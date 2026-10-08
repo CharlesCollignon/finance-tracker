@@ -39,7 +39,7 @@ export const legalCopyFr: LegalCopy = {
         body: [],
         points: [
           "Pluclair conserve ce que vous y mettez, et ce que votre banque envoie si vous choisissez de la connecter. Rien d'autre.",
-          "Aucune publicité, aucune mesure d'audience, aucun pistage d'un site à l'autre, et rien n'est vendu ni partagé à des fins commerciales.",
+          "Aucune publicité, aucun pistage d'un site à l'autre, et rien n'est vendu ni partagé à des fins commerciales. Une mesure d'audience, faite par nous seuls, compte les jours où l'application est ouverte sans vous nommer\u00A0; vous pouvez la couper dans Profil.",
           "Connecter une banque est facultatif et en lecture seule : rien dans Pluclair ne peut déplacer d'argent.",
           "Vous pouvez corriger ou supprimer n'importe quelle écriture, déconnecter votre banque ou supprimer votre compte depuis l'application, et supprimer le compte emporte tout avec lui.",
         ],
@@ -52,6 +52,7 @@ export const legalCopyFr: LegalCopy = {
           "Votre compte : votre adresse e-mail et, si vous vous connectez avec Google, le nom et l'identifiant de compte que Google nous transmet. Si vous ajoutez une clé d'accès (passkey), nous gardons sa clé publique ; la partie privée ne quitte jamais votre appareil.",
           "Ce que vous saisissez ou importez : opérations, catégories, charges, plafonds, objectifs, portefeuilles et leurs positions, clôtures de mois et soldes relevés, étiquettes et notes. Quand vous importez un relevé, le fichier est lu pour proposer des écritures et seules celles que vous gardez sont enregistrées ; le fichier lui-même ne l'est pas.",
           "Vos préférences : la langue, et les invitations que vous avez écartées.",
+          "La mesure d'audience, sauf si vous la coupez\u00A0: les jours où l'application est ouverte, et combien de fois ce jour-là vous avez ajouté une opération, clôturé un mois ou demandé «\u00A0Puis-je me permettre\u00A0?\u00A0». Sous un identifiant calculé à partir de votre compte avec une clé secrète, qui ne vous nomme pas. Aucun montant, aucun commerce, aucun texte.",
           "Les notifications, si vous les activez : l'adresse de distribution que votre navigateur ou votre téléphone nous donne (un abonnement push, ou un jeton push pour l'application mobile), l'identifiant du navigateur (user agent), et la liste des rappels déjà envoyés, pour qu'aucun ne parte deux fois.",
           "Vos biens immobiliers, si vous en ajoutez : ce que chacun a coûté et son usage, sa surface et sa classe énergie, votre part, les prêts qui l'ont financé et leurs conditions, et ce qu'il vaut à vos yeux. De son adresse nous gardons la commune et le point où il se trouve, pour le comparer aux ventes alentour ; l'adresse complète seulement si vous le demandez.",
           "Votre banque, si vous la connectez : voir la section suivante.",
@@ -84,6 +85,7 @@ export const legalCopyFr: LegalCopy = {
           "Pour fournir le service auquel vous vous êtes inscrit : conserver vos écritures, calculer vos chiffres, vous les montrer, et synchroniser votre banque si vous l'avez connectée. La base légale est le contrat qui nous lie (RGPD, article 6.1.b).",
           "Pour la connexion bancaire, sur le consentement que vous donnez à l'écran en déposant votre fichier d'identifiants, et auprès de votre banque. Il couvre les informations sensibles que vos opérations peuvent révéler — santé, convictions, appartenance syndicale —, qui ne sont traitées que sur ce consentement explicite (articles 6.1.a et 9.2.a). Nous conservons la date et la version du texte accepté, et vous le retirez en déconnectant votre banque.",
           "Pour envoyer des notifications, seulement si vous les activez. Les désactiver sur votre appareil ou dans votre navigateur les arrête.",
+          "Pour savoir si Pluclair sert\u00A0: la mesure d'audience ne sert qu'à calculer trois chiffres d'ensemble — combien reviennent après un mois, combien l'ouvrent plusieurs jours par semaine, combien clôturent leur mois —, jamais à changer ce que vous voyez, et n'est ni partagée ni croisée avec autre chose. La base est notre intérêt légitime (article 6.1.f), et vous vous y opposez à tout moment en coupant «\u00A0Mesure d'audience\u00A0» dans Profil.",
           "Pour garder le service sûr et en état de marche : notre hébergeur conserve brièvement des journaux techniques des requêtes, que nous ne consultons que pour corriger une panne ou arrêter un abus. La base est notre intérêt légitime à faire fonctionner un service sûr (article 6.1.f).",
         ],
         after: [
@@ -120,6 +122,7 @@ export const legalCopyFr: LegalCopy = {
           "Une écriture supprimée : [[conservée 30 jours pour pouvoir annuler la suppression, puis effacée — la tâche qui les efface n'est pas encore programmée]].",
           "Quand vous supprimez votre compte (Profil → Supprimer le compte), votre fichier d'identifiants est d'abord supprimé, puis tout est retiré de la base en service d'un coup. Les sauvegardes sont écrasées sous [[la durée de conservation des sauvegardes de l'offre Supabase]].",
           "Votre fichier d'identifiants\u00A0: jusqu'à ce que vous déconnectiez la banque, remplaciez le fichier ou supprimiez votre compte.",
+          "La mesure d'audience\u00A0: 13 mois, puis effacée\u00A0; supprimer votre compte l'efface aussitôt.",
           "La liste des rappels envoyés : tant que le compte existe, pour qu'aucun ne se répète.",
         ],
       },

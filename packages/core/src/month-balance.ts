@@ -194,14 +194,15 @@ export interface MonthBalance {
 /**
  * Which explanation answers « Comment c'est calculé ? » under a month's
  * balance, the same on both apps: a net counted from zero, a month ahead
- * that only charges can speak for, or a balance carried from the bank or
- * from a close.
+ * that only charges can speak for, or a balance carried from the bank, from
+ * a close, or from a balance the user typed.
  */
-export type BalanceExplanation = "net" | "planned" | "bank" | "close";
+export type BalanceExplanation =
+  "net" | "planned" | "bank" | "close" | "reading";
 
 export function balanceExplanation(
   balance: Pick<MonthBalance, "basis" | "period">,
-  source: "bank" | "close" | "none",
+  source: "bank" | "close" | "reading" | "none",
 ): BalanceExplanation {
   if (balance.basis === "net" || source === "none") {
     return "net";
@@ -297,12 +298,10 @@ export function outflowsByDay({
       return {
         date,
         total: roundMoney(sorted.reduce((sum, item) => sum + item.amount, 0)),
-        items: sorted
-          .slice(0, OUTFLOWS_NAMED)
-          .map((item) => ({
-            name: item.name,
-            amount: roundMoney(item.amount),
-          })),
+        items: sorted.slice(0, OUTFLOWS_NAMED).map((item) => ({
+          name: item.name,
+          amount: roundMoney(item.amount),
+        })),
         more: Math.max(0, sorted.length - OUTFLOWS_NAMED),
         planned: date > today,
       };

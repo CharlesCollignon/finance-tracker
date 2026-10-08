@@ -66,6 +66,23 @@ export async function remindersAsked(): Promise<boolean> {
   }
 }
 
+/**
+ * Whether to offer notifications after a save, on the toast that confirms
+ * it: once per device, and only while the system can still ask — never where
+ * they are already on or were refused for good.
+ */
+export async function shouldOfferReminders(): Promise<boolean> {
+  if (await remindersAsked()) {
+    return false;
+  }
+  const current = await Notifications.getPermissionsAsync();
+  if (current.granted || !current.canAskAgain) {
+    await markRemindersAsked();
+    return false;
+  }
+  return true;
+}
+
 export async function markRemindersAsked(): Promise<void> {
   try {
     await AsyncStorage.setItem(ASKED_KEY, "1");

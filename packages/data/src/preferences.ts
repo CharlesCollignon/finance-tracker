@@ -123,6 +123,7 @@ async function writePreferences(
     dismissed_prompts?: string[];
     milestone_seen?: number;
     notification_prefs?: NotificationPrefs;
+    measure_audience?: boolean;
   },
 ): Promise<ActionResult> {
   const { data: existing, error: readError } = await db
@@ -217,4 +218,37 @@ export async function setNotificationPref(
   return writePreferences(db, userId, locale, {
     notification_prefs: { ...prefs, [kind]: wanted },
   });
+}
+
+/**
+ * Whether this account is counted in the audience figures (migration 058):
+ * on unless turned off. Before the migration nothing is counted at all, and
+ * the switch reads as on, which is what it will be.
+ */
+export async function readAudienceMeasurement(
+  db: Db,
+  userId: string,
+): Promise<boolean> {
+  const { data, error } = await db
+    .from("user_preferences")
+    .select("measure_audience")
+    .eq("user_id", userId)
+    .maybeSingle();
+  if (error) {
+    if (isMissingSchema(error)) {
+      return true;
+    }
+    throw error;
+  }
+  return data?.measure_audience !== false;
+}
+
+/** « Mesure d'audience » in Profile: on every device, from the next count. */
+export async function setAudienceMeasurement(
+  db: Db,
+  userId: string,
+  wanted: boolean,
+  locale: Locale,
+): Promise<ActionResult> {
+  return writePreferences(db, userId, locale, { measure_audience: wanted });
 }
