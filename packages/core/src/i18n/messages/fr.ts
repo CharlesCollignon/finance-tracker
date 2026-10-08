@@ -185,7 +185,7 @@ export const fr: Messages = {
     clearAll: "Tout désélectionner",
     selectAll: "Tout sélectionner",
     exportCsv: "Exporter ces opérations en CSV",
-    importCsv: "Importer un relevé CSV",
+    importCsv: "Importer un relevé CSV ou OFX",
     optionsToggle: "Filtres et actions",
     filtersOn: {
       one: "{count} filtre actif",
@@ -305,13 +305,13 @@ export const fr: Messages = {
       other: "{count} opérations importées",
     },
     intro:
-      "Exportez un CSV depuis votre banque et déposez-le ici. Le fichier est lu dans votre navigateur — rien n'est envoyé, et rien n'est enregistré tant que vous n'avez pas relu chaque ligne.",
-    dropFile: "Déposez un fichier .csv ici",
+      "Exportez un CSV ou un OFX depuis votre banque et déposez-le ici. Le fichier est lu dans votre navigateur — rien n'est envoyé, et rien n'est enregistré tant que vous n'avez pas relu chaque ligne.",
+    dropFile: "Déposez un fichier .csv ou .ofx ici",
     fileTooLarge: "Ce fichier dépasse 5\u00A0Mo — est-ce le bon export\u00A0?",
     fileNoRows: "Ce fichier ne contient aucune ligne.",
     fileUnreadable: "Ce fichier n'a pas pu être ouvert.",
     introPhone:
-      "Exportez un CSV depuis votre banque et choisissez-le ici. Le fichier est lu sur votre téléphone — rien n'est envoyé, et rien n'est enregistré tant que vous n'avez pas relu chaque ligne.",
+      "Exportez un CSV ou un OFX depuis votre banque et choisissez-le ici. Le fichier est lu sur votre téléphone — rien n'est envoyé, et rien n'est enregistré tant que vous n'avez pas relu chaque ligne.",
     firstRows: "Les premières lignes, telles que lues",
     categoryForRow: "Catégorie pour {description}",
     noRowsRead: "Aucune ligne n'a pu être lue dans ce fichier.",

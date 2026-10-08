@@ -99,6 +99,7 @@
     "./seed-categories": "./src/seed-categories.ts",
     "./selection": "./src/selection.ts",
     "./share-count": "./src/share-count.ts",
+    "./statement-file": "./src/statement-file.ts",
     "./still-to-come": "./src/still-to-come.ts",
     "./types/database": "./src/types/database.ts",
     "./validations/finance": "./src/validations/finance.ts",

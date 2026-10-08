@@ -375,6 +375,20 @@ export function guessColumnMapping(headers: string[]): ColumnMapping {
   };
 }
 
+/**
+ * Whether a row names the columns an import needs: a date, and an amount or
+ * a debit or credit. What tells a header apart from the account's name and
+ * number some banks write above it.
+ */
+export function rowNamesColumns(row: string[]): boolean {
+  const dated = findColumn(row, HEADER_HINTS.date) !== null;
+  const money =
+    findColumn(row, HEADER_HINTS.amount) !== null ||
+    findColumn(row, HEADER_HINTS.debit) !== null ||
+    findColumn(row, HEADER_HINTS.credit) !== null;
+  return dated && money;
+}
+
 /** True when the first row is labels rather than data. */
 export function looksLikeHeaderRow(row: string[]): boolean {
   if (row.length === 0) {

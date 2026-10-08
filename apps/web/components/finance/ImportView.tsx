@@ -5,14 +5,12 @@ import Link from "next/link";
 import { ArrowLeft, UploadSimple, Warning } from "@phosphor-icons/react";
 import {
   buildImportRows,
-  detectDelimiter,
   guessColumnMapping,
-  looksLikeHeaderRow,
-  parseCsv,
   summarizeImportRows,
   type ColumnMapping,
   type ImportRow,
 } from "@finance/core/csv-import";
+import { decodeStatement, readStatement } from "@finance/core/statement-file";
 import {
   guessCategoryForDescription,
   type MerchantRule,
@@ -110,15 +108,15 @@ export function ImportView({ categories, merchants }: ImportViewProps) {
       return;
     }
 
-    const text = await file.text();
-    const parsed = parseCsv(text, detectDelimiter(text));
+    // The bytes, so a Windows-1252 export keeps its accents; a CSV or an
+    // OFX, with whatever its bank wrote above the header dropped.
+    const text = decodeStatement(new Uint8Array(await file.arrayBuffer()));
+    const { table: parsed, hasHeader: header } = readStatement(text);
 
     if (parsed.length === 0) {
       setParseError(t("importer.fileNoRows"));
       return;
     }
-
-    const header = looksLikeHeaderRow(parsed[0]!);
 
     setFileName(file.name);
     setTable(parsed);
@@ -312,7 +310,7 @@ export function ImportView({ categories, merchants }: ImportViewProps) {
               <input
                 ref={fileRef}
                 type="file"
-                accept=".csv,text/csv,text/plain"
+                accept=".csv,.ofx,.qfx,text/csv,text/plain,application/x-ofx"
                 className="sr-only"
                 onChange={(event) => {
                   const file = event.target.files?.[0];

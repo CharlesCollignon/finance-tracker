@@ -266,7 +266,7 @@ export const en = {
     clearAll: "Clear all",
     selectAll: "Select all",
     exportCsv: "Export these transactions as CSV",
-    importCsv: "Import a CSV statement",
+    importCsv: "Import a CSV or OFX statement",
     /** The phone's toolbar button that opens the dropdowns and the actions. */
     optionsToggle: "Filters and actions",
     filtersOn: {
@@ -414,13 +414,13 @@ export const en = {
     },
     /* Reading the file, before there is anything to map. */
     intro:
-      "Export a CSV from your bank and drop it here. The file is read in your browser — nothing is uploaded, and nothing is saved until you have reviewed every row.",
-    dropFile: "Drop a .csv file here",
+      "Export a CSV or an OFX from your bank and drop it here. The file is read in your browser — nothing is uploaded, and nothing is saved until you have reviewed every row.",
+    dropFile: "Drop a .csv or .ofx file here",
     fileTooLarge: "That file is larger than 5 MB — is it the right export?",
     fileNoRows: "That file has no rows in it.",
     fileUnreadable: "That file could not be opened.",
     introPhone:
-      "Export a CSV from your bank and pick it here. The file is read on your phone — nothing is uploaded, and nothing is saved until you have reviewed every row.",
+      "Export a CSV or an OFX from your bank and pick it here. The file is read on your phone — nothing is uploaded, and nothing is saved until you have reviewed every row.",
     firstRows: "First rows as read",
     categoryForRow: "Category for {description}",
     noRowsRead: "No rows could be read from that file.",
