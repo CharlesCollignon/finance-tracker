@@ -59,9 +59,13 @@ export interface RecurringRollup {
   left: number;
   /**
    * Every active template's monthly amount by its category type, counted by
-   * the summary or not: what each group on the Charges page adds up to. The
-   * DCAs are in `deployed` above and here under their own type, so this is a
-   * second view of the same money, not more of it.
+   * the summary or not: what each group on the Charges page adds up to, and
+   * what the bar draws for it.
+   *
+   * Except the DCAs bought at the broker, which are `deployed` alone. The
+   * transfer that pays for them is an investment already, so adding them as
+   * well put the same euros in the investments' total twice — the transfer
+   * and what it buys — until October 2026.
    */
   byType: Record<CategoryType, number>;
 }
@@ -101,7 +105,6 @@ export function rollUpRecurring(
     }
 
     const monthly = estimateMonthlyAmount(template, year, month);
-    byType[template.categories.type] += monthly;
 
     // Checked before the type, not after. A DCA bought with money already
     // at the broker never leaves the account; one the bank debits from it
@@ -109,11 +112,13 @@ export function rollUpRecurring(
     if (isPurchaseInsideWallet(template.categories)) {
       if (debited.has(template.category_id)) {
         setAside += monthly;
+        byType.investment += monthly;
       } else {
         deployed += monthly;
       }
       continue;
     }
+    byType[template.categories.type] += monthly;
     // Anything else the summary does not count — a reimbursement, money
     // brought back out of savings — is money coming in, not going out: the
     // summary leaves it out, and so does what is left.
@@ -154,8 +159,7 @@ export interface AllocationSegment {
 
 /**
  * Where a month's income goes, as the Charges page draws it: expenses,
- * savings and investments by type, the totals the groups below show — less
- * the DCAs bought at the broker, which the transfer there already is — then
+ * savings and investments by type, the totals the groups below show, then
  * what is left.
  *
  * The bar is as long as everything in it. With money left over that is the
@@ -169,7 +173,7 @@ export function allocationSegments(
   const parts: [AllocationKind, number][] = [
     ["expense", rollup.byType.expense],
     ["savings", rollup.byType.savings],
-    ["investment", rollup.byType.investment - rollup.deployed],
+    ["investment", rollup.byType.investment],
     ["left", Math.max(rollup.left, 0)],
   ];
   const total = parts.reduce((sum, [, amount]) => sum + amount, 0);

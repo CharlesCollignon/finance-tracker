@@ -178,26 +178,45 @@ describe("byType", () => {
   it("sums every active template under its category type, counted or not", () => {
     const rollup = rollUpRecurring([
       template({ id: "salary", amount: 3000, type: "income" }),
+      template({ id: "refund", amount: 50, type: "income", counts: false }),
       template({ id: "rent", amount: 900 }),
       template({ id: "livret", amount: 200, type: "savings" }),
       template({ id: "etf", amount: 150, type: "investment" }),
-      // A DCA bought at the broker: deployed for the summary, still an
-      // investment for the page.
-      template({
-        id: "broker",
-        amount: 100,
-        type: "investment",
-        counts: false,
-      }),
       template({ id: "gym", amount: 40, active: false }),
     ]);
 
     expect(rollup.byType).toEqual({
-      income: 3000,
+      income: 3050,
       expense: 900,
       savings: 200,
-      investment: 250,
+      investment: 150,
     });
+  });
+
+  it("counts the transfer to the broker and not the DCAs it buys", () => {
+    // The investments' total on the Charges page added the transfer and the
+    // DCAs it pays for: the same euros twice.
+    const rollup = rollUpRecurring([
+      template({ id: "transfer", amount: 550, type: "investment" }),
+      template({ id: "cto", amount: 480, type: "investment", counts: false }),
+    ]);
+
+    expect(rollup.byType.investment).toBe(550);
+    expect(rollup.deployed).toBe(480);
+  });
+
+  it("counts the buys of a wallet the bank debits", () => {
+    // Bitstack: not paid by the transfer, so its own buys are what leaves.
+    const rollup = rollUpRecurring(
+      [
+        template({ id: "transfer", amount: 550, type: "investment" }),
+        template({ id: "btc", amount: 78, type: "investment", counts: false }),
+      ],
+      { debited: new Set(["cat-btc"]) },
+    );
+
+    expect(rollup.byType.investment).toBe(628);
+    expect(rollup.deployed).toBe(0);
   });
 });
 
