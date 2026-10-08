@@ -89,6 +89,9 @@ const TABLE_AREAS: Record<string, readonly DataArea[]> = {
   ai_connections: ["reads", "positions", "preferences"],
   // This device's push address. Nothing on screen draws it.
   expo_push_tokens: [],
+  // Ask Pluclair's conversations: the Questions screen reloads its own.
+  ask_conversations: [],
+  ask_messages: [],
 };
 
 /**
@@ -119,6 +122,8 @@ const ROUTE_AREAS: Record<string, readonly DataArea[]> = {
   "/api/bank/feed": ["bank", "transactions"],
   "/api/bank/consent": ["bank"],
   "/api/month-read": ["reads"],
+  // A question asked: nothing but the Questions screen draws it.
+  "/api/ask": [],
   "/api/category-read": ["reads"],
   "/api/category-rerank": ["reads"],
   "/api/instrument-reading": ["positions"],
