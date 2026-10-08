@@ -37,7 +37,7 @@ Vocabulary is fixed by `CONTEXT.md`; product commitments by
 | Property — list        | `/property` (flag `property.track`)      | `(tabs)/property` (same flag)                                            |
 | Property — one         | `/property/[id]` (flag `property.track`) | `property/[id]`, pushed over the tabs                                    |
 | Categories             | `/categories`                            | `categories`                                                             |
-| Import (CSV)           | `/import`                                | `import`                                                                 |
+| Import (CSV, OFX)      | `/import`                                | `import`                                                                 |
 | Welcome                | `/welcome`                               | `onboarding`                                                             |
 | Profile                | `/profile`                               | `(tabs)/profile`                                                         |
 | Sign in, sign up       | `/login`, `/signup`                      | `(auth)/login`, `(auth)/signup`                                          |
@@ -305,6 +305,27 @@ Built and reachable by one account per deployment: the one whose id is
 `OPEN_BANKING_OWNER_USER_ID` (`apps/web/lib/bank/client.ts`). Everyone else
 enters balances and transactions by hand or imports a CSV. Rows the matcher
 would not file wait in the review inbox at `?review=inbox`.
+
+Connecting is a four-step wizard on both apps (`ConnectBankSheet`): the
+account at open-banking.io with its price, the bank connected there, the
+credentials file downloaded — with the « Clé de chiffrement » trap drawn —
+and the file given to Pluclair with the consent. The step reached is kept
+for the account among the prompts put away (`bank-wizard:<step>`, only the
+latest), so a setup carries on from another device. A refused file goes back
+to the step where it is put right (`bankWizardStepFor`): a wrong file to the
+download, an account with no bank yet to connecting one.
+
+## Import
+
+A bank's export, CSV or OFX, read on the device and nothing written until
+every row is reviewed (`/import`, the phone's `import`). The file is read as
+bytes (`decodeStatement`): UTF-8 when valid, Windows-1252 otherwise, which is
+what many French banks write. `readStatement` finds a CSV's header as the
+first row naming a date and an amount, dropping the account lines some banks
+put above it, under whichever delimiter finds one; an OFX's transactions come
+in as date, label and signed amount. There are no presets per bank yet: each
+waits for a real export, anonymised with `scripts/anonymise-statement.mjs`
+and kept in `packages/core/fixtures/statements/`.
 
 ## Feature flags
 

@@ -137,19 +137,19 @@ Not checked on a device: the quick actions and their iOS module.
 
 ## Phase 2 — Money in, bank open (branch `everyday-money-in`)
 
-- [ ] Bank wizard, both apps: one screen per step with French screenshots of
+- [x] Bank wizard, both apps: one screen per step with French screenshots of
       open-banking.io and a « C'est fait »; the cost said on the first step
       (3 € a month and 1 € per extra account, paid to them); the « Clé de
       chiffrement » trap with its own picture; the step remembered across
       devices; a refused file sends the user back to the step behind it (no
       bank connected yet → step 2). On the phone, open-banking.io in the
       in-app browser and the file picked from Downloads.
-- [ ] Import: an OFX reader (BNP, Banque Populaire and Caisse d'Épargne, LCL,
+- [x] Import: an OFX reader (BNP, Banque Populaire and Caisse d'Épargne, LCL,
       La Banque Postale and BoursoBank export it), and the import accepts
       `.ofx`.
-- [ ] Import: the CSV reader finds the header row below an export's account
+- [x] Import: the CSV reader finds the header row below an export's account
       lines.
-- [ ] Import: a script that strips names, IBANs and addresses from a real
+- [x] Import: a script that strips names, IBANs and addresses from a real
       export and keeps its layout; the results become test files in
       `packages/core`.
 - [ ] Import: CSV presets for the banks that export CSV only — Crédit
@@ -160,6 +160,19 @@ Not checked on a device: the quick actions and their iOS module.
       « Bientôt » into the present tense; `PRODUCT.md`'s "until launch"
       paragraphs rewritten; the remaining items of `BANK_CONNECT_PLAN.md`'s
       launch checklist.
+
+Built on 2026-10-08, with what the plan did not say:
+
+- The wizard's pictures are not screenshots: they need an open-banking.io
+  account to take, and are the owner's to add. The « Clé de chiffrement »
+  trap is drawn instead, two cards side by side.
+- The step reached is kept among the prompts put away (`bank-wizard:<step>`),
+  so no migration.
+- Files are read as bytes, Windows-1252 when they are not UTF-8: many French
+  banks' CSVs are, and their accents came out as question marks.
+
+Waiting: the presets (each on a real export, anonymised) and the launch (on
+the owner's sign-off of the privacy policy and terms).
 
 ## Phase 3 — The phone in the stores (branch `everyday-stores`)
 
