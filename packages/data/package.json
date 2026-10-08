@@ -23,6 +23,7 @@
     "./history": "./src/history.ts",
     "./instrument-readings": "./src/instrument-readings.ts",
     "./ledger": "./src/ledger.ts",
+    "./left-to-spend": "./src/left-to-spend.ts",
     "./ledger-duplicates": "./src/ledger-duplicates.ts",
     "./month-balance": "./src/month-balance.ts",
     "./month-close": "./src/month-close.ts",

@@ -2325,6 +2325,27 @@ export const fr: Messages = {
     orEnterBalance: "Ou saisissez votre solde à la main",
   },
 
+  leftToSpend: {
+    title: "Il vous reste",
+    missing: "Il vous manque",
+    untilPayDay: "jusqu'au {date}",
+    untilMonthEnd: "jusqu'à la fin du mois",
+    byPayDay: "d'ici le {date}",
+    byMonthEnd: "d'ici la fin du mois",
+    perDay: "soit {amount} par jour",
+    how: {
+      title: "Comment c'est calculé\u00A0?",
+      body: "Ce que vos comptes contiennent aujourd'hui, moins ce que vos opérations récurrentes feront sortir d'ici là, pris au point le plus bas. C'est ce qui reste pour les dépenses du quotidien.",
+      payDay:
+        "Il court jusqu'à la veille de votre prochain revenu, le plus gros de vos revenus récurrents.",
+      monthEnd: "Sans revenu récurrent, il court jusqu'à la fin du mois.",
+      marge: {
+        one: "Votre marge pour les dépenses non notées en retire {amount} pour ce jour.",
+        other:
+          "Votre marge pour les dépenses non notées en retire {amount} pour ces {count} jours.",
+      },
+    },
+  },
   bearingMonth: {
     onAccount: "Sur votre compte",
     expectedEnd: "Prévu en fin de mois",

@@ -39,6 +39,8 @@ import {
   type MonthBalanceRead,
 } from "@finance/data/month-balance";
 import { getPurchasesToConfirm } from "@finance/data/purchases-to-confirm";
+import { readLeftToSpend } from "@finance/data/left-to-spend";
+import type { LeftToSpend } from "@finance/core/left-to-spend";
 import { getDcaMonth } from "@finance/data/dca-transfer";
 
 /** How many months the spending bars look back over, the month shown included. */
@@ -105,6 +107,11 @@ export interface BearingMonth {
    * and so left out of `arrived`.
    */
   dcaProposal: FulfilmentProposal | null;
+  /**
+   * « Il vous reste »: what the account can still give before the next pay
+   * day. The month in progress with a balance only.
+   */
+  left: LeftToSpend | null;
   /** Nothing recorded, nothing planned and no balance: a first visit. */
   empty: boolean;
 }
@@ -200,8 +207,17 @@ export async function gatherBearingMonth(
   let purchases: PurchaseToConfirm[] = [];
   let dca: DcaMonth | null = null;
   let dcaProposal: FulfilmentProposal | null = null;
+  let left: LeftToSpend | null = null;
 
   if (isCurrent) {
+    left = await readLeftToSpend(await createClient(), userId, {
+      today,
+      read: { balance, upcoming: shownUpcoming },
+      templates,
+      fulfilledKeys,
+      closes,
+      bankFed,
+    });
     const categories = await getCategories(userId);
     arrived = await getFulfilmentReport(
       userId,
@@ -294,6 +310,7 @@ export async function gatherBearingMonth(
     purchases,
     dca,
     dcaProposal,
+    left,
     empty:
       source === "none" &&
       rows.length === 0 &&

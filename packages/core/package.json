@@ -57,6 +57,7 @@
     "./investments": "./src/investments.ts",
     "./ledger-csv": "./src/ledger-csv.ts",
     "./ledger-view": "./src/ledger-view.ts",
+    "./left-to-spend": "./src/left-to-spend.ts",
     "./investment-upcoming": "./src/investment-upcoming.ts",
     "./look-through": "./src/look-through.ts",
     "./look-through-facts": "./src/look-through-facts.ts",

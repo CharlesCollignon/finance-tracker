@@ -36,6 +36,8 @@ import {
 } from "@finance/data/month-balance";
 import { getPurchasesToConfirm } from "@finance/data/purchases-to-confirm";
 import { getDcaMonth } from "@finance/data/dca-transfer";
+import { readLeftToSpend } from "@finance/data/left-to-spend";
+import type { LeftToSpend } from "@finance/core/left-to-spend";
 import { getWeeklyRecapCard } from "@finance/data/weekly-recap";
 
 import {
@@ -135,6 +137,11 @@ export interface HomeMonth {
   dca: DcaMonth | null;
   /** The bank's movement that looks like the transfer, confirmed on the card. */
   dcaProposal: FulfilmentProposal | null;
+  /**
+   * « Il vous reste », as on the web (`readLeftToSpend`). The month in
+   * progress with a balance only.
+   */
+  left: LeftToSpend | null;
   /** Nothing recorded, nothing planned and no balance: a first visit. */
   empty: boolean;
 }
@@ -244,8 +251,17 @@ export async function gatherHomeMonth(
   let purchases: PurchaseToConfirm[] = [];
   let dca: DcaMonth | null = null;
   let dcaProposal: FulfilmentProposal | null = null;
+  let left: LeftToSpend | null = null;
 
   if (isCurrent) {
+    left = await readLeftToSpend(supabase, userId, {
+      today,
+      read: { balance, upcoming: shownUpcoming },
+      templates,
+      fulfilledKeys,
+      closes,
+      bankFed,
+    });
     const categories = await getCategories(userId);
     const [report, portfolio, pending, swallowed, proposals, waitingPurchases] =
       await Promise.all([
@@ -334,6 +350,7 @@ export async function gatherHomeMonth(
     purchases,
     dca,
     dcaProposal,
+    left,
     empty:
       source === "none" &&
       rows.length === 0 &&

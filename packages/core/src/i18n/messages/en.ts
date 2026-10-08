@@ -3157,6 +3157,27 @@ export const en = {
    * words with a caption saying so; with neither, the screen counts the
    * month's net and says that instead of pretending it is a balance.
    */
+  leftToSpend: {
+    title: "You have",
+    missing: "You are short",
+    untilPayDay: "until {date}",
+    untilMonthEnd: "until the end of the month",
+    byPayDay: "by {date}",
+    byMonthEnd: "by the end of the month",
+    perDay: "that is {amount} a day",
+    how: {
+      title: "How is this worked out?",
+      body: "What your accounts hold today, less what your recurring entries will take out before then, at its lowest point. It is what is left for everyday spending.",
+      payDay:
+        "It runs to the day before your next income, the largest of your recurring ones.",
+      monthEnd: "With no recurring income, it runs to the end of the month.",
+      marge: {
+        one: "Your allowance for unrecorded spending takes {amount} off for this day.",
+        other:
+          "Your allowance for unrecorded spending takes {amount} off for these {count} days.",
+      },
+    },
+  },
   bearingMonth: {
     onAccount: "On your account",
     expectedEnd: "Expected at month end",

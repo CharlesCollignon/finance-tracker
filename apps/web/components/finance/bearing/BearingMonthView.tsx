@@ -34,6 +34,7 @@ import { BankAttentionBanner } from "@/components/finance/bank/BankAttentionBann
 import { NewAccountsLine } from "@/components/finance/bank/NewAccountsLine";
 import { ConnectBankInvite } from "@/components/finance/bank/ConnectBankInvite";
 import { BalanceCurve } from "@/components/finance/bearing/BalanceCurve";
+import { LeftToSpendCard } from "@/components/finance/bearing/LeftToSpendCard";
 import { MonthPicker } from "@/components/layout/MonthPicker";
 import { PrivateAmount } from "@/components/layout/PrivateAmount";
 import { Stagger, StaggerItem } from "@/components/motion/Stagger";
@@ -131,6 +132,13 @@ export function BearingMonthView({
         className="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-5 xl:grid-cols-3"
         stagger={0.06}
       >
+        {/* First: the question the screen is opened for at the till. */}
+        {data.left ? (
+          <StaggerItem className="md:col-span-2 xl:col-span-3">
+            <LeftToSpendCard left={data.left} />
+          </StaggerItem>
+        ) : null}
+
         <StaggerItem className="md:col-span-2 xl:col-span-3">
           <BalanceCard data={data} bankInvite={bankInvite} />
         </StaggerItem>

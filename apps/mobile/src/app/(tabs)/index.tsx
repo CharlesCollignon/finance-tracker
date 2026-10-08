@@ -10,6 +10,7 @@ import { PurchasesToConfirm } from "@/components/PurchasesToConfirm";
 import { BankAttentionBanner } from "@/components/bank/BankAttentionBanner";
 import { NewAccountsLine } from "@/components/bank/NewAccountsLine";
 import { AttentionRow } from "@/components/bearing/AttentionRow";
+import { LeftToSpendCard } from "@/components/bearing/LeftToSpendCard";
 import {
   BalanceCard,
   MomentumCard,
@@ -167,6 +168,13 @@ export default function HomeScreen() {
               </View>
             ) : null}
 
+
+            {/* First: the question the screen is opened for at the till. */}
+            {data.left ? (
+              <StaggerItem index={next()}>
+                <LeftToSpendCard left={data.left} />
+              </StaggerItem>
+            ) : null}
 
             <StaggerItem index={next()}>
               <BalanceCard data={data} bank={bank} />
