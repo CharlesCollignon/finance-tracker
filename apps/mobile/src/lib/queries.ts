@@ -7,6 +7,7 @@ import {
   searchAllMonths,
   type LedgerSearch,
 } from "@finance/data/ledger-search";
+import { readSubscriptions } from "@finance/data/subscriptions";
 import * as fulfilment from "@finance/data/fulfilment";
 import * as closes from "@finance/data/month-close";
 import { isMissingSchema } from "@finance/data/schema";
@@ -24,6 +25,7 @@ import {
   getCurrentMonth,
   getMonthBounds,
   shiftIsoDate,
+  todayIsoLocal,
   type BudgetViewMode,
 } from "@finance/core/constants";
 
@@ -43,7 +45,6 @@ import {
   buildInvestmentPortfolio,
   portfolioQuoteSymbols,
 } from "@finance/core/investment-positions";
-import { todayIsoLocal } from "@finance/core/constants";
 import {
   fetchMonthlyClosesBySymbolInEur,
   fetchQuotesInEur,
@@ -635,4 +636,11 @@ export function searchEveryMonth(
   query: string,
 ): Promise<LedgerSearch> {
   return searchAllMonths(supabase, userId, query);
+}
+
+/** The services the ledger shows being paid, for « Abonnements » (`readSubscriptions`). */
+export function getSubscriptions(
+  userId: string,
+): ReturnType<typeof readSubscriptions> {
+  return readSubscriptions(supabase, userId, todayIsoLocal());
 }

@@ -3212,6 +3212,15 @@ export const en = {
       body: "That day, note your account's balance: Pluclair compares it with what you recorded and finds what slipped through.",
     },
   },
+  subscriptions: {
+    title: "Subscriptions",
+    hint: "Found in your transactions: what comes back every month or every year, at about the same price.",
+    total: "{monthly} a month · {yearly} a year",
+    perMonth: "{amount}/month",
+    perYear: "{amount}/year",
+    stopped: "No longer charged",
+    changes: "What changed",
+  },
   afford: {
     title: "Can I afford it?",
     amount: "Amount",

@@ -44,6 +44,7 @@ import { RecurringFormModal } from "@/components/RecurringFormModal";
 import { RecurringProposals } from "@/components/RecurringProposals";
 import { PrivateAmount } from "@/components/PrivateAmount";
 import { WhereItGoes } from "@/components/WhereItGoes";
+import { SubscriptionsCard } from "@/components/SubscriptionsCard";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { ChipRow } from "@/components/ui/ChipRow";
@@ -70,6 +71,7 @@ import {
   getRecordedChargeDates,
   getRecurringProposals,
   getRecurringTemplates,
+  getSubscriptions,
   hasBankFeed,
 } from "@/lib/queries";
 import { useTabBarClearance } from "@/theme/chrome";
@@ -120,6 +122,13 @@ export default function RecurringScreen() {
   );
 
   const showProperty = useFlag("property.track");
+  // The services the ledger shows being paid, for « Abonnements »: its own
+  // load, so the charges do not wait on a year of rows.
+  const { data: watched } = useRefreshable(
+    async () => (user ? await getSubscriptions(user.id) : null),
+    [user?.id],
+    { reads: ["transactions"] },
+  );
   const { data, loading, refreshing, onRefreshAll, onRefresh, error } =
     useRefreshable(async () => {
       if (!user) {
@@ -453,6 +462,15 @@ export default function RecurringScreen() {
               />
             </EmptyState>
           )}
+
+          {/* After the charges, and whether or not there are any: a bank
+              shows what is paid every month before anyone has set it up. */}
+          {watched ? (
+            <SubscriptionsCard
+              subscriptions={watched.subscriptions}
+              findings={watched.findings}
+            />
+          ) : null}
         </ScrollView>
       )}
 
