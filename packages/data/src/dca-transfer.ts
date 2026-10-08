@@ -20,9 +20,10 @@ import { DEFAULT_LOCALE, type Locale } from "@finance/core/i18n/locale";
 import type { RecurringTemplateWithCategory } from "@finance/core/types/database";
 import { parseUuid } from "@finance/core/validations/finance";
 
-import { walletCategoriesTheBankDebits } from "./bank-feed";
+import { hasBankFeed, walletCategoriesTheBankDebits } from "./bank-feed";
 import type { Db } from "./client";
 import { dbError } from "./errors";
+import { getBankForecast, getFulfilledKeys } from "./fulfilment";
 
 /**
  * The app's transfer to the broker: the monthly charge that pays for the
@@ -262,7 +263,7 @@ export async function getDcaMonth(
     ).end;
     const nothing = Promise.resolve({ data: [], error: null });
 
-    const [fulfilled, sent, written, skipped] = await Promise.all([
+    const [fulfilled, sent, written, skipped, paidKeys] = await Promise.all([
       // Every month the transfer was confirmed or written, for the run.
       db
         .from("recurring_fulfilments")
@@ -289,6 +290,7 @@ export async function getDcaMonth(
         .eq("user_id", userId)
         .gte("occurred_on", from)
         .lte("occurred_on", to),
+      readPaidKeys(db, userId, templates, today, debited),
     ]);
     for (const result of [fulfilled, sent, written, skipped]) {
       if (result.error) {
@@ -321,13 +323,49 @@ export async function getDcaMonth(
       skippedKeys: keysOf(skipped.data ?? []),
       writtenKeys: keysOf(written.data ?? []),
       debited,
+      paidKeys,
     });
   } catch {
     return null;
   }
 }
 
-/** The push two days before the 1st: the card while it is still to send. */
+/**
+ * The income the bank has brought, or that was confirmed against it: what
+ * tells that the salary a transfer is sent from is in (`paydayKeyOf`). Read
+ * only with a bank feeding the ledger and an income charge to look for —
+ * without one, nothing can say the salary came — and empty if it cannot be
+ * read: the card and the reminder come on their day anyway.
+ */
+async function readPaidKeys(
+  db: Db,
+  userId: string,
+  templates: readonly RecurringTemplateWithCategory[],
+  today: string,
+  debited: ReadonlySet<string>,
+): Promise<Set<string>> {
+  const active = templates.filter((template) => template.active);
+  if (
+    !active.some((template) => template.categories.type === "income") ||
+    !(await hasBankFeed(db, userId))
+  ) {
+    return new Set();
+  }
+  try {
+    const [fulfilled, forecast] = await Promise.all([
+      getFulfilledKeys(db, userId),
+      getBankForecast(db, userId, active, today, debited),
+    ]);
+    return new Set([...fulfilled, ...forecast.arrived]);
+  } catch {
+    return new Set();
+  }
+}
+
+/**
+ * The pushes for the transfer: the card while it is still to send, once the
+ * salary is in and two days before the 1st.
+ */
 export async function getTransferReminder(
   db: Db,
   userId: string,

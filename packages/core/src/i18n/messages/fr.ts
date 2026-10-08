@@ -1551,7 +1551,7 @@ export const fr: Messages = {
     },
     dca: {
       label: "Vos DCA",
-      hint: "Avant la paie, ce qu'il faut envoyer au courtier\u00A0; le lendemain d'un achat dans vos placements, pour dire s'il est passé.",
+      hint: "Quand la paie arrive et deux jours avant le 1er, ce qu'il faut envoyer au courtier\u00A0; le lendemain d'un achat dans vos placements, pour dire s'il est passé.",
     },
     review: {
       label: "Opérations à classer",
@@ -1628,6 +1628,7 @@ export const fr: Messages = {
   push: {
     dcaTransfer: {
       title: "À préparer pour {month}\u00A0: {amount}",
+      paidTitle: "Salaire arrivé\u00A0: {amount} pour le courtier",
     },
     dca: {
       title: "{name}\u00A0: c'est passé\u00A0?",

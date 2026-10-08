@@ -6,6 +6,7 @@ import { monthClosedByBank } from "@finance/core/push-messages";
 import { defaultRecipient, readRecipients } from "@finance/data/preferences";
 import { deliver } from "@/lib/push/deliver";
 import { reviewNotificationFor } from "@/lib/push/review";
+import { transferFor } from "@/lib/push/transfer";
 import { configureWebPush } from "@/lib/push/send";
 import { getBankConnection, syncableUserIds } from "@/lib/bank/client";
 import { autoCloseMonths } from "@/lib/bank/auto-close";
@@ -226,6 +227,9 @@ export async function GET(request: NextRequest) {
       if (review) {
         notices.push(review);
       }
+      // The salary this sync may have brought, and with it the transfer to
+      // the broker it is sent from: said now rather than the next morning.
+      notices.push(...(await transferFor(supabase, userId, today, recipient)));
       if (notices.length > 0) {
         const delivery = await deliver(supabase, userId, recipient, notices, {
           webPushReady,

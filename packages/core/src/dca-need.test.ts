@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   dcaMonth,
   dcaNeedForMonth,
+  paydayKeyOf,
   plannedOccurrenceNote,
   transferCoversMonth,
   transferReminder,
@@ -65,6 +66,21 @@ const cto = template("cto", "DCA CTO", {
   amount: 330,
 });
 const pea = template("pea", "DCA PEA", { amount: 400 });
+
+function income(
+  id: string,
+  options: Partial<RecurringTemplateWithCategory> = {},
+): RecurringTemplateWithCategory {
+  return {
+    ...template(id, "Salaire", { counts: true, ...options }),
+    categories: {
+      name: "Salaire",
+      type: "income",
+      icon: null,
+      counts_toward_summary: true,
+    },
+  };
+}
 
 describe("dcaNeedForMonth", () => {
   it("adds the month's purchases, with room on the share-priced ones, rounded up", () => {
@@ -279,6 +295,37 @@ describe("dcaMonth", () => {
     });
   });
 
+  it("comes early, card and push, once the salary it is sent from is in", () => {
+    // Paid on the 24th: eight days before the 1st, before the card's five.
+    const salary = income("salary", { day_of_month: 24, amount: 3200 });
+    const templates = [...all, salary];
+    expect(dcaMonth({ templates, today: "2026-10-24" })?.need.month).toBe(10);
+    const month = dcaMonth({
+      templates,
+      today: "2026-10-24",
+      paidKeys: new Set(["salary:2026-10-24"]),
+    });
+    expect(month).toMatchObject({
+      occurredOn: "2026-11-01",
+      state: "to-send",
+      paid: true,
+    });
+    expect(transferReminder(month, "2026-10-24")).toMatchObject({
+      due: false,
+      paid: true,
+    });
+    // Two days before, both are due.
+    const later = dcaMonth({
+      templates,
+      today: "2026-10-30",
+      paidKeys: new Set(["salary:2026-10-24"]),
+    });
+    expect(transferReminder(later, "2026-10-30")).toMatchObject({
+      due: true,
+      paid: true,
+    });
+  });
+
   it("says sent as soon as it is, even early, and counts the run", () => {
     const month = dcaMonth({
       templates: all,
@@ -345,6 +392,28 @@ describe("dcaMonth", () => {
         today: "2026-10-27",
       }),
     ).toBeNull();
+  });
+});
+
+describe("paydayKeyOf", () => {
+  it("is the largest salary's occurrence nearest the transfer's day", () => {
+    const salary = income("salary", { day_of_month: 28, amount: 3200 });
+    const bonus = income("bonus", { day_of_month: 30, amount: 150 });
+    expect(paydayKeyOf([salary, bonus], "2026-11-01")).toBe(
+      "salary:2026-10-28",
+    );
+  });
+
+  it("takes a salary kept on the 1st, paid early, as its own", () => {
+    const salary = income("salary", { day_of_month: 1, amount: 3200 });
+    expect(paydayKeyOf([salary], "2026-11-01")).toBe("salary:2026-11-01");
+  });
+
+  it("is nothing without a salary near enough, or any at all", () => {
+    expect(
+      paydayKeyOf([income("salary", { day_of_month: 15 })], "2026-11-01"),
+    ).toBeNull();
+    expect(paydayKeyOf([cto, pea], "2026-11-01")).toBeNull();
   });
 });
 
