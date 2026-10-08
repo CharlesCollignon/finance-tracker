@@ -739,6 +739,15 @@ valid seven days, for one person. Opening it says who invites whom to what
 before anything is joined.
 _Avoid_: invitation e-mail (the app sends none)
 
+**My share**:
+_En français_ : ma part du commun (« Partage des dépenses » dans le profil)
+What of the space's spending is each partner's: 50/50 until either changes
+it, the same for both, the two parts always making the whole — never
+worked out from incomes, which stay each one's own. Switched on, « Avec ma
+part du commun » counts a person's spending as their part of what the space
+spent instead of what they transferred to it; their balance does not move.
+_Avoid_: quota, contribution, split of income
+
 **Leaving**:
 _En français_ : quitter l'espace
 The access goes at once, the rows stay with the partner who stays, and the
