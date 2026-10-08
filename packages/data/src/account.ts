@@ -69,6 +69,8 @@ export async function deleteAllUserData(db: Db, userId: string): Promise<void> {
     "savings_accounts",
     "properties",
     "balance_readings",
+    // The questions asked about all of it (migration 064).
+    "ask_conversations",
   ] as const) {
     const { error } = await db.from(table).delete().eq("user_id", userId);
     if (error && !isMissingSchema(error)) {
