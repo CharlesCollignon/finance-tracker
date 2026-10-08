@@ -143,7 +143,11 @@ export function BearingMonthView({
         {/* First: the question the screen is opened for at the till. */}
         {data.left ? (
           <StaggerItem className="md:col-span-2 xl:col-span-3">
-            <LeftToSpendCard left={data.left} />
+            <LeftToSpendCard
+              left={data.left}
+              lowest={data.balance.lowest}
+              eachMonth={data.eachMonth}
+            />
           </StaggerItem>
         ) : null}
 
@@ -526,7 +530,6 @@ function BalanceCard({ data }: { data: BearingMonth }) {
       {data.dca ? (
         <DcaStrip month={data.dca} proposal={data.dcaProposal} />
       ) : null}
-
     </section>
   );
 }

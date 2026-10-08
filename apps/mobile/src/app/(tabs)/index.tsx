@@ -187,7 +187,11 @@ export default function HomeScreen() {
             {/* First: the question the screen is opened for at the till. */}
             {data.left ? (
               <StaggerItem index={next()}>
-                <LeftToSpendCard left={data.left} />
+                <LeftToSpendCard
+                  left={data.left}
+                  lowest={data.balance.lowest}
+                  eachMonth={data.eachMonth}
+                />
               </StaggerItem>
             ) : null}
 

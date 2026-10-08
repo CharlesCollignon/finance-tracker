@@ -41,6 +41,7 @@ import {
   payTemplate,
   type LeftToSpend,
 } from "@finance/core/left-to-spend";
+import { rollUpRecurring } from "@finance/core/recurring-rollup";
 import {
   firstCloseDay,
   type SetupFacts,
@@ -150,6 +151,12 @@ export interface HomeMonth {
    * progress with a balance only.
    */
   left: LeftToSpend | null;
+  /**
+   * « Reste chaque mois »: what a month's income leaves once its recurring
+   * charges are out (`rollUpRecurring`), for « Puis-je me permettre ? ».
+   * Null without a recurring income, and outside the month in progress.
+   */
+  eachMonth: number | null;
   /**
    * What Le point's setup cards ask about (`nextSetupStep`), all but the bank
    * invitation, which the page decides. The month in progress only.
@@ -267,6 +274,7 @@ export async function gatherHomeMonth(
   let dca: DcaMonth | null = null;
   let dcaProposal: FulfilmentProposal | null = null;
   let left: LeftToSpend | null = null;
+  let eachMonth: number | null = null;
   let setup: HomeMonth["setup"] = null;
 
   if (isCurrent) {
@@ -278,6 +286,8 @@ export async function gatherHomeMonth(
       closes,
       bankFed,
     });
+    const rollup = rollUpRecurring(templates, { debited, year, month });
+    eachMonth = rollup.income > 0 ? rollup.left : null;
     setup = {
       bankFed,
       hasBalance: source !== "none",
@@ -380,6 +390,7 @@ export async function gatherHomeMonth(
     dca,
     dcaProposal,
     left,
+    eachMonth,
     setup,
     recurring: templates.some((template) => template.active),
     empty:

@@ -2348,6 +2348,18 @@ export const fr: Messages = {
       body: "Ce jour-là, notez le solde de votre compte\u00A0: Pluclair le compare à ce que vous avez noté et retrouve ce qui a filé.",
     },
   },
+  afford: {
+    title: "Puis-je me permettre\u00A0?",
+    amount: "Montant",
+    cadence: "Fréquence",
+    once: "Une fois",
+    monthly: "Chaque mois",
+    leftAfter: "Il vous resterait {amount} {until}",
+    missingAfter: "Il vous manquerait {amount} {until}",
+    lowestAfter: "Point le plus bas à venir\u00A0: {amount} le {date}",
+    eachMonthAfter: "Chaque mois, il resterait {amount}",
+    nothingSaved: "Rien n'est enregistré\u00A0: c'est seulement le calcul.",
+  },
   leftToSpend: {
     title: "Il vous reste",
     missing: "Il vous manque",

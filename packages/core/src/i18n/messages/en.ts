@@ -3180,6 +3180,18 @@ export const en = {
       body: "That day, note your account's balance: Pluclair compares it with what you recorded and finds what slipped through.",
     },
   },
+  afford: {
+    title: "Can I afford it?",
+    amount: "Amount",
+    cadence: "How often",
+    once: "Once",
+    monthly: "Every month",
+    leftAfter: "You would have {amount} {until}",
+    missingAfter: "You would be short {amount} {until}",
+    lowestAfter: "Lowest point ahead: {amount} on {date}",
+    eachMonthAfter: "Each month would leave {amount}",
+    nothingSaved: "Nothing is saved: it is only the arithmetic.",
+  },
   leftToSpend: {
     title: "You have",
     missing: "You are short",
