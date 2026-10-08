@@ -95,12 +95,35 @@ describe("setBankAccountRole", () => {
     expect(writes.map((write) => write.table)).toEqual(["bank_accounts"]);
   });
 
-  it("refuses a role that is not one of the three, writing nothing", async () => {
+  it("refuses a role that is not one of the four, writing nothing", async () => {
     const { db, writes } = fakeDb({});
 
     await expect(
-      setBankAccountRole(db, "u1", "acc", "joint" as "ignored"),
+      setBankAccountRole(db, "u1", "acc", "shared" as "ignored"),
     ).resolves.toEqual({ error: "errors.invalidInput" });
+    expect(writes).toHaveLength(0);
+  });
+
+  it("files « Compte commun » for the space the person is in", async () => {
+    const { db, writes } = fakeDb({
+      space_members: { one: { space_id: "space" } },
+    });
+
+    await expect(setBankAccountRole(db, "u1", "acc", "joint")).resolves.toEqual(
+      { success: true },
+    );
+    expect(writes[0]).toMatchObject({
+      table: "bank_accounts",
+      payload: { role: "joint", space_id: "space" },
+    });
+  });
+
+  it("refuses « Compte commun » to someone in no space", async () => {
+    const { db, writes } = fakeDb({});
+
+    await expect(setBankAccountRole(db, "u1", "acc", "joint")).resolves.toEqual(
+      { error: "errors.notAllowed" },
+    );
     expect(writes).toHaveLength(0);
   });
 });

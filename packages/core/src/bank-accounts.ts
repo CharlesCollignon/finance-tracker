@@ -122,8 +122,98 @@ export function followsMovements(
   return role === "spending";
 }
 
+/**
+ * Whether Pluclair follows an account at all — its movements or its
+ * balance — as opposed to one not filed yet or left aside: what a bank's
+ * consent reminder and its lapsed count are about.
+ */
+export function isFollowed(role: BankAccountRole | null | undefined): boolean {
+  return role === "spending" || role === "savings" || role === "joint";
+}
+
+/** Whether an account's movements come into a ledger, a person's or a space's. */
+export function importsMovements(
+  role: BankAccountRole | null | undefined,
+): boolean {
+  return role === "spending" || role === "joint";
+}
+
+/**
+ * The accounts whose balance is an owner's money: a person's current
+ * accounts, or the joint accounts feeding a space — once each.
+ */
+export function countedAccounts<
+  A extends Pick<
+    BankAccount,
+    | "role"
+    | "space_id"
+    | "iban_hash"
+    | "first_seen_at"
+    | "user_id"
+    | "provider_account_id"
+  >,
+>(accounts: readonly A[], ownerId: string): A[] {
+  const joint = new Set(
+    jointFeeders(accounts).filter((account) => account.space_id === ownerId),
+  );
+  return accounts.filter(
+    (account) =>
+      joint.has(account) ||
+      (account.role === "spending" && account.user_id === ownerId),
+  );
+}
+
+/**
+ * Whose rows an account's movements become: the person's for a current
+ * account, their shared space's for a joint one (migration 061), nobody's
+ * for the rest — a Livret, a card, one not followed or not filed yet.
+ */
+export function movementsOwner(
+  account: Pick<BankAccount, "role" | "space_id">,
+  personId: string,
+): string | null {
+  if (account.role === "spending") {
+    return personId;
+  }
+  return account.role === "joint" ? account.space_id : null;
+}
+
+/**
+ * The joint accounts that feed their space: one per account, however many
+ * partners connected it. Two connections show the same joint account as two
+ * rows with one IBAN fingerprint; the first seen feeds, the other is left
+ * out — on both phones and in the sync alike, so it is the same one.
+ */
+export function jointFeeders<
+  A extends Pick<
+    BankAccount,
+    | "role"
+    | "space_id"
+    | "iban_hash"
+    | "first_seen_at"
+    | "user_id"
+    | "provider_account_id"
+  >,
+>(accounts: readonly A[]): A[] {
+  const first = new Map<string, A>();
+  const order = (account: A) =>
+    `${account.first_seen_at}|${account.user_id}|${account.provider_account_id}`;
+  for (const account of accounts) {
+    if (account.role !== "joint" || !account.space_id) {
+      continue;
+    }
+    // Without a fingerprint an account is only ever itself.
+    const key = `${account.space_id}|${account.iban_hash ?? order(account)}`;
+    const held = first.get(key);
+    if (!held || order(account) < order(held)) {
+      first.set(key, account);
+    }
+  }
+  return accounts.filter((account) => [...first.values()].includes(account));
+}
+
 /** An IBAN as two banks would both write it. */
-function cleanIban(iban: string | null | undefined): string | null {
+export function cleanIban(iban: string | null | undefined): string | null {
   const clean = iban?.replace(/\s+/g, "").toUpperCase();
   return clean ? clean : null;
 }
@@ -195,8 +285,9 @@ export interface BankGroup<A> {
 
 const ROLE_ORDER: Record<BankAccountRole, number> = {
   spending: 0,
-  savings: 1,
-  ignored: 2,
+  joint: 1,
+  savings: 2,
+  ignored: 3,
 };
 
 /**

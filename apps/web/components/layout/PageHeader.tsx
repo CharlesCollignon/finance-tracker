@@ -8,6 +8,7 @@ import {
 } from "@/lib/layout-shell";
 import type { Key } from "@finance/core/i18n/t";
 import { HeaderAccountMenu } from "@/components/layout/AccountLabel";
+import { HeaderTitle } from "@/components/layout/OwnerSwitch";
 import { PageTitle } from "@/components/layout/PageTitle";
 import { PrivacyToggle } from "@/components/layout/PrivacyToggle";
 import { RefreshButton } from "@/components/layout/RefreshButton";
@@ -71,9 +72,11 @@ export function PageHeader({ titleKey, children, className }: PageHeaderProps) {
           <span className="flex shrink-0 md:hidden">
             <Orb size="22px" tone="mark" />
           </span>
-          <h1 className="truncate font-head text-lg leading-none md:sr-only">
+          {/* The switch takes the title's place on a shared screen, for
+              someone in a space. */}
+          <HeaderTitle>
             <PageTitle titleKey={titleKey} />
-          </h1>
+          </HeaderTitle>
         </div>
         <div className={SHELL_HEADER_ACTIONS_CLASS}>
           {children}

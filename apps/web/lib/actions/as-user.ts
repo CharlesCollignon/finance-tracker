@@ -1,6 +1,7 @@
 import type { ActionResult } from "@finance/core/action-result";
 import type { Db } from "@finance/data/client";
 import { getAuthUser } from "@/lib/auth/get-user";
+import { getOwner } from "@/lib/owner";
 import { revalidateApp } from "@/lib/revalidate-paths";
 import { createClient } from "@/lib/supabase/server";
 
@@ -34,6 +35,29 @@ export async function asUser<T extends object>(
     return { error: "errors.notAuthenticated" } as ActionResult<T>;
   }
   const result = await work(await createClient(), user.id);
+  if (
+    options.redraw !== "never" &&
+    (result.success || options.redraw === "always")
+  ) {
+    revalidateApp();
+  }
+  return result;
+}
+
+/**
+ * `asUser` for the money a space can own: the work is handed the owner on
+ * screen — the person under « Moi », their space under « Commun » (`getOwner`)
+ * — and who is asking, for what stays a person's.
+ */
+export async function asOwner<T extends object>(
+  work: (db: Db, ownerId: string, userId: string) => Promise<ActionResult<T>>,
+  options: { redraw?: "on-success" | "always" | "never" } = {},
+): Promise<ActionResult<T>> {
+  const owner = await getOwner();
+  if (!owner) {
+    return { error: "errors.notAuthenticated" } as ActionResult<T>;
+  }
+  const result = await work(await createClient(), owner.ownerId, owner.userId);
   if (
     options.redraw !== "never" &&
     (result.success || options.redraw === "always")

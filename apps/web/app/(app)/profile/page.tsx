@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { getAuthUser } from "@/lib/auth/get-user";
+import { getOwner } from "@/lib/owner";
 import { ProfileView } from "@/components/profile/ProfileView";
 import { bankFeedStatus } from "@/lib/bank/client";
 import { bankSetupOffered } from "@/lib/bank/offer";
@@ -55,18 +56,26 @@ export default async function ProfilePage({ searchParams }: ProfilePageProps) {
 
   // The Bank row only where it leads somewhere: setup is open to this
   // account, or a bank already syncs for it.
-  const [offered, bankStatus, notifications, measureAudience, flags, params] =
-    await Promise.all([
-      bankSetupOffered(),
-      bankFeedStatus(user.id),
-      // Every kind on is what a missing row means, and what a failed read
-      // shows.
-      getNotificationSettings(await createClient(), user.id).catch(() => null),
-      // On unless turned off, and on if it cannot be read.
-      readAudienceMeasurement(await createClient(), user.id).catch(() => true),
-      getFlags(),
-      searchParams,
-    ]);
+  const [
+    offered,
+    bankStatus,
+    notifications,
+    measureAudience,
+    flags,
+    params,
+    owner,
+  ] = await Promise.all([
+    bankSetupOffered(),
+    bankFeedStatus(user.id),
+    // Every kind on is what a missing row means, and what a failed read
+    // shows.
+    getNotificationSettings(await createClient(), user.id).catch(() => null),
+    // On unless turned off, and on if it cannot be read.
+    readAudienceMeasurement(await createClient(), user.id).catch(() => true),
+    getFlags(),
+    searchParams,
+    getOwner(),
+  ]);
 
   const aiAccount = isFlagOn(flags, "ai.account")
     ? {
@@ -97,6 +106,8 @@ export default async function ProfilePage({ searchParams }: ProfilePageProps) {
       showBank={offered || bankStatus !== "unconfigured"}
       showProperty={isFlagOn(flags, "property.track")}
       aiAccount={aiAccount}
+      space={owner?.space ?? null}
+      userId={user.id}
     />
   );
 }

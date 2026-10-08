@@ -2,7 +2,11 @@ import { describe, expect, it } from "vitest";
 import type { BankAccount } from "@finance/core/types/database";
 
 import type { Db } from "./client";
-import { readCashBalance, readCloseWait } from "./bank-balance";
+import {
+  getBankAccounts,
+  readCashBalance,
+  readCloseWait,
+} from "./bank-balance";
 
 interface Row {
   provider_account_id: string;
@@ -18,6 +22,7 @@ function account(
   overrides: Partial<BankAccount> = {},
 ): Partial<BankAccount> {
   return {
+    user_id: "u1",
     provider_account_id: id,
     label: id,
     role: "spending",
@@ -60,6 +65,8 @@ function fakeDb(accounts: Partial<BankAccount>[], statement: Row[]) {
     };
     const chain = {
       select: () => chain,
+      // The owner's accounts and the joint ones feeding it: one owner here.
+      or: () => chain,
       eq: (column: string, value: unknown) => {
         filters[column] = value;
         return chain;
@@ -175,6 +182,32 @@ describe("readCashBalance", () => {
   });
 });
 
+describe("readCashBalance for a shared space", () => {
+  it("counts the joint account feeding it, once however many partners connected it", async () => {
+    const joint = (id: string, user: string, seen: string) =>
+      account(id, {
+        user_id: user,
+        role: "joint",
+        counts_as_cash: false,
+        space_id: "space",
+        iban_hash: "same",
+        first_seen_at: seen,
+      });
+    const db = fakeDb(
+      [
+        joint("alice-copy", "alice", "2026-01-01T00:00:00Z"),
+        joint("bob-copy", "bob", "2026-03-01T00:00:00Z"),
+      ],
+      [
+        movement("alice-copy", "2026-09-29", 1200),
+        movement("bob-copy", "2026-09-29", 9999),
+      ],
+    );
+    const balance = await readCashBalance(db, "space", "2026-09-30");
+    expect(balance?.total).toBe(1200);
+  });
+});
+
 describe("readCloseWait", () => {
   const september = {
     year: 2026,
@@ -221,5 +254,38 @@ describe("readCloseWait", () => {
     await expect(readCloseWait(db, "u1", null, "2026-10-07")).resolves.toEqual(
       [],
     );
+  });
+});
+
+describe("getBankAccounts before migration 060", () => {
+  it("reads the person's own accounts when there is no space to ask about", async () => {
+    const asked: string[] = [];
+    const db = {
+      from: () => {
+        let spaces = false;
+        const chain = {
+          select: () => chain,
+          or: () => {
+            spaces = true;
+            return chain;
+          },
+          eq: () => chain,
+          order: () => chain,
+          then: (resolve: (value: unknown) => unknown) => {
+            asked.push(spaces ? "or" : "eq");
+            return resolve(
+              spaces
+                ? { data: null, error: { code: "42703" } }
+                : { data: [account("own")], error: null },
+            );
+          },
+        };
+        return chain;
+      },
+    } as unknown as Db;
+
+    const accounts = await getBankAccounts(db, "u1");
+    expect(asked).toEqual(["or", "eq"]);
+    expect(accounts.map((each) => each.provider_account_id)).toEqual(["own"]);
   });
 });

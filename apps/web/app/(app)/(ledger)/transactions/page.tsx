@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { getAuthUser } from "@/lib/auth/get-user";
+import { getOwner } from "@/lib/owner";
 import { getCategories } from "@/lib/queries/categories";
 import {
   getRecurringSkipKeys,
@@ -55,6 +56,10 @@ export default async function TransactionsPage({
     redirect("/login");
   }
 
+  // Whose money: the person's, or their space's under « Commun ».
+  const owner = await getOwner();
+  const ownerId = owner?.ownerId ?? user.id;
+
   const params = await searchParams;
   // The month the user was last looking at. The proxy has already put
   // it into the address; this reads it back, and falls back to the cookie for
@@ -70,18 +75,18 @@ export default async function TransactionsPage({
     bankFed,
     locale,
   ] = await Promise.all([
-    getTransactions(user.id, year, month),
-    getCategories(user.id),
-    getRecurringTemplates(user.id),
-    getRecurringSkipKeys(user.id, year, month),
+    getTransactions(ownerId, year, month),
+    getCategories(ownerId),
+    getRecurringTemplates(ownerId),
+    getRecurringSkipKeys(ownerId, year, month),
     // Which rows settle a recurring charge. Needs nothing else this batch
     // fetches, so it rides along rather than costing a second round trip.
-    getConfirmedTransactionIds(user.id),
-    getFulfilledKeys(user.id),
+    getConfirmedTransactionIds(ownerId),
+    getFulfilledKeys(ownerId),
     // Per user rather than per deployment now that anyone can connect — and
     // still true after a disconnect that kept the rows, whose decisions can
     // still be taken back.
-    hasBankFeed(user.id),
+    hasBankFeed(ownerId),
     getLocale(),
   ]);
 
@@ -98,7 +103,7 @@ export default async function TransactionsPage({
     // asks about, whichever month is shown: a row marked « À confirmer » is
     // one that can be confirmed there.
     getFulfilmentProposals(
-      user.id,
+      ownerId,
       recurringTemplates,
       categories,
       now.year,
@@ -106,22 +111,26 @@ export default async function TransactionsPage({
     ),
     bankFed
       ? Promise.all([
-          getPendingFeedItems(user.id, locale),
-          countSwallowedFeedItems(user.id),
-          countFeedItems(user.id),
-          getDecidedFeedItems(user.id),
-          getBankMerchantIndex(user.id),
+          getPendingFeedItems(ownerId, locale),
+          countSwallowedFeedItems(ownerId),
+          countFeedItems(ownerId),
+          getDecidedFeedItems(ownerId),
+          getBankMerchantIndex(ownerId),
         ])
       : null,
-    bankFed ? false : shouldInviteToConnect(user.id, "ledger"),
-    getBankForecast(user.id, recurringTemplates, bankFed, today),
+    bankFed
+      ? false
+      : owner?.joint
+        ? false
+        : shouldInviteToConnect(user.id, "ledger"),
+    getBankForecast(ownerId, recurringTemplates, bankFed, today),
   ]);
   // With several current accounts, which one each row came from.
   const ledgerAccountsRead = bankFed
     ? await Promise.all([
-        getBankAccounts(user.id),
+        getBankAccounts(ownerId),
         getTransactionAccounts(
-          user.id,
+          ownerId,
           transactions.map((tx) => tx.id),
         ),
       ])

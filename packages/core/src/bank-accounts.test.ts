@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
+  countedAccounts,
+  jointFeeders,
+  movementsOwner,
   accountMarks,
   ledgerAccounts,
   awaitingRole,
@@ -10,6 +13,7 @@ import {
   ownTransferIbans,
   proposeForAccount,
 } from "./bank-accounts";
+import type { BankAccount } from "./types/database";
 
 describe("guessSavingsKind", () => {
   it.each([
@@ -266,5 +270,66 @@ describe("ledgerAccounts", () => {
     expect(
       ledgerAccounts([account("ca", "Crédit Agricole", "spending")], new Map()),
     ).toBeNull();
+  });
+});
+
+describe("joint accounts (migration 061)", () => {
+  const row = (
+    user: string,
+    id: string,
+    role: BankAccount["role"],
+    extra: Partial<BankAccount> = {},
+  ) =>
+    ({
+      user_id: user,
+      provider_account_id: id,
+      role,
+      space_id: role === "joint" ? "space" : null,
+      iban_hash: null,
+      first_seen_at: "2026-01-01T00:00:00Z",
+      ...extra,
+    }) as Pick<
+      BankAccount,
+      | "user_id"
+      | "provider_account_id"
+      | "role"
+      | "space_id"
+      | "iban_hash"
+      | "first_seen_at"
+    >;
+
+  it("sends a current account's rows to the person, a joint one's to the space", () => {
+    expect(movementsOwner(row("alice", "a", "spending"), "alice")).toBe(
+      "alice",
+    );
+    expect(movementsOwner(row("alice", "j", "joint"), "alice")).toBe("space");
+    expect(movementsOwner(row("alice", "l", "savings"), "alice")).toBeNull();
+    expect(movementsOwner(row("alice", "n", null), "alice")).toBeNull();
+  });
+
+  it("lets the copy seen first feed the space, whoever connected it", () => {
+    const alice = row("alice", "a-joint", "joint", {
+      iban_hash: "same",
+      first_seen_at: "2026-03-01T00:00:00Z",
+    });
+    const bob = row("bob", "b-joint", "joint", {
+      iban_hash: "same",
+      first_seen_at: "2026-01-01T00:00:00Z",
+    });
+    const other = row("alice", "a-other", "joint", { iban_hash: "other" });
+    expect(jointFeeders([alice, bob, other])).toEqual([bob, other]);
+  });
+
+  it("counts a person's current accounts, and a space's joint ones once", () => {
+    const own = row("alice", "own", "spending");
+    const livret = row("alice", "livret", "savings");
+    const first = row("alice", "j1", "joint", { iban_hash: "same" });
+    const copy = row("bob", "j2", "joint", {
+      iban_hash: "same",
+      first_seen_at: "2026-05-01T00:00:00Z",
+    });
+    const accounts = [own, livret, first, copy];
+    expect(countedAccounts(accounts, "alice")).toEqual([own]);
+    expect(countedAccounts(accounts, "space")).toEqual([first]);
   });
 });

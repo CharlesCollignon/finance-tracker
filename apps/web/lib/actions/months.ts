@@ -1,6 +1,6 @@
 "use server";
 
-import { getAuthUser } from "@/lib/auth/get-user";
+import { getOwner } from "@/lib/owner";
 import {
   getMonthAvailability,
   type MonthAvailability,
@@ -17,8 +17,8 @@ import {
 export async function getMonthAvailabilityAction(
   year: number,
 ): Promise<MonthAvailability | null> {
-  const user = await getAuthUser();
-  if (!user) {
+  const owner = await getOwner();
+  if (!owner) {
     return null;
   }
   // Bounded before it reaches date arithmetic: the year arrives from a client
@@ -28,7 +28,7 @@ export async function getMonthAvailabilityAction(
   }
 
   try {
-    return await getMonthAvailability(user.id, year);
+    return await getMonthAvailability(owner.ownerId, year);
   } catch {
     // The grid is still usable without the markers, and a failed decoration
     // must not stop someone changing month.

@@ -26,10 +26,10 @@ import {
 } from "@/lib/mutations";
 import { readCashBalance } from "@/lib/queries";
 import { toTypedAmount } from "@/lib/typed-amount";
-import { useAuth } from "@/providers/AuthProvider";
 import { useFormatCurrency } from "@/providers/CurrencyProvider";
 import { useToast } from "@/providers/ToastProvider";
 import { useLocale, useT } from "@/providers/LocaleProvider";
+import { useOwner } from "@/providers/OwnerProvider";
 import { ICON, TYPE } from "@/theme/tokens";
 import { useThemeColors } from "@/theme/useThemeColors";
 
@@ -92,7 +92,7 @@ export function MonthCloseSheet({
 }: MonthCloseSheetProps) {
   const locale = useLocale();
   const t = useT();
-  const { user } = useAuth();
+  const { ownerId } = useOwner();
   const formatEuro = useFormatCurrency();
   const { toast } = useToast();
   const [balance, setBalance] = useState("");
@@ -117,11 +117,11 @@ export function MonthCloseSheet({
    * typed wins.
    */
   useEffect(() => {
-    if (!open || stage !== "entering" || !user) {
+    if (!open || stage !== "entering" || !ownerId) {
       return;
     }
     let live = true;
-    void readCashBalance(user.id, observeOn)
+    void readCashBalance(ownerId, observeOn)
       .then((cash) => {
         if (!live || !cash?.ok || typed.current) {
           return;
@@ -135,7 +135,7 @@ export function MonthCloseSheet({
     return () => {
       live = false;
     };
-  }, [open, stage, user, observeOn, locale]);
+  }, [open, stage, ownerId, observeOn, locale]);
 
   function dismiss() {
     onOpenChange(false);

@@ -124,7 +124,15 @@ export type Database = {
           read_on?: string;
           user_id?: string;
         };
-        Relationships: [];
+        Relationships: [
+          {
+            foreignKeyName: "balance_readings_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: true;
+            referencedRelation: "owners";
+            referencedColumns: ["id"];
+          },
+        ];
       };
       bank_accounts: {
         Row: {
@@ -135,6 +143,7 @@ export type Database = {
           currency: string;
           first_seen_at: string;
           history_imported_at: string | null;
+          iban_hash: string | null;
           label: string;
           last_seen_at: string;
           needs_reconnect: boolean;
@@ -143,6 +152,7 @@ export type Database = {
           reported_balance: number | null;
           reported_on: string | null;
           role: string | null;
+          space_id: string | null;
           user_id: string;
         };
         Insert: {
@@ -153,6 +163,7 @@ export type Database = {
           currency: string;
           first_seen_at?: string;
           history_imported_at?: string | null;
+          iban_hash?: string | null;
           label: string;
           last_seen_at?: string;
           needs_reconnect?: boolean;
@@ -161,6 +172,7 @@ export type Database = {
           reported_balance?: number | null;
           reported_on?: string | null;
           role?: string | null;
+          space_id?: string | null;
           user_id: string;
         };
         Update: {
@@ -171,6 +183,7 @@ export type Database = {
           currency?: string;
           first_seen_at?: string;
           history_imported_at?: string | null;
+          iban_hash?: string | null;
           label?: string;
           last_seen_at?: string;
           needs_reconnect?: boolean;
@@ -179,9 +192,18 @@ export type Database = {
           reported_balance?: number | null;
           reported_on?: string | null;
           role?: string | null;
+          space_id?: string | null;
           user_id?: string;
         };
-        Relationships: [];
+        Relationships: [
+          {
+            foreignKeyName: "bank_accounts_space_id_fkey";
+            columns: ["space_id"];
+            isOneToOne: false;
+            referencedRelation: "spaces";
+            referencedColumns: ["id"];
+          },
+        ];
       };
       bank_connection_secrets: {
         Row: {
@@ -310,6 +332,13 @@ export type Database = {
             columns: ["transaction_id"];
             isOneToOne: false;
             referencedRelation: "transactions";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "bank_feed_items_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "owners";
             referencedColumns: ["id"];
           },
         ];
@@ -455,7 +484,15 @@ export type Database = {
           type?: Database["public"]["Enums"]["category_type"];
           user_id?: string;
         };
-        Relationships: [];
+        Relationships: [
+          {
+            foreignKeyName: "categories_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "owners";
+            referencedColumns: ["id"];
+          },
+        ];
       };
       category_read_tallies: {
         Row: {
@@ -604,7 +641,15 @@ export type Database = {
           transaction_ids?: string[];
           user_id?: string;
         };
-        Relationships: [];
+        Relationships: [
+          {
+            foreignKeyName: "deletion_undo_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "owners";
+            referencedColumns: ["id"];
+          },
+        ];
       };
       expo_push_tokens: {
         Row: {
@@ -841,7 +886,15 @@ export type Database = {
           updated_at?: string;
           user_id?: string;
         };
-        Relationships: [];
+        Relationships: [
+          {
+            foreignKeyName: "month_close_settings_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: true;
+            referencedRelation: "owners";
+            referencedColumns: ["id"];
+          },
+        ];
       };
       month_closes: {
         Row: {
@@ -877,7 +930,15 @@ export type Database = {
           opening_balance?: number | null;
           user_id?: string;
         };
-        Relationships: [];
+        Relationships: [
+          {
+            foreignKeyName: "month_closes_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "owners";
+            referencedColumns: ["id"];
+          },
+        ];
       };
       month_reads: {
         Row: {
@@ -931,7 +992,15 @@ export type Database = {
           writes?: number;
           written_at?: string | null;
         };
-        Relationships: [];
+        Relationships: [
+          {
+            foreignKeyName: "month_reads_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "owners";
+            referencedColumns: ["id"];
+          },
+        ];
       };
       notification_log: {
         Row: {
@@ -948,6 +1017,24 @@ export type Database = {
           key?: string;
           sent_at?: string;
           user_id?: string;
+        };
+        Relationships: [];
+      };
+      owners: {
+        Row: {
+          created_at: string;
+          id: string;
+          kind: string;
+        };
+        Insert: {
+          created_at?: string;
+          id: string;
+          kind: string;
+        };
+        Update: {
+          created_at?: string;
+          id?: string;
+          kind?: string;
         };
         Relationships: [];
       };
@@ -1030,7 +1117,15 @@ export type Database = {
           works?: number;
           yearly_growth?: number | null;
         };
-        Relationships: [];
+        Relationships: [
+          {
+            foreignKeyName: "properties_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "owners";
+            referencedColumns: ["id"];
+          },
+        ];
       };
       property_loans: {
         Row: {
@@ -1130,6 +1225,13 @@ export type Database = {
             referencedRelation: "recurring_templates";
             referencedColumns: ["id"];
           },
+          {
+            foreignKeyName: "property_loans_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "owners";
+            referencedColumns: ["id"];
+          },
         ];
       };
       property_market_readings: {
@@ -1180,6 +1282,13 @@ export type Database = {
             referencedRelation: "properties";
             referencedColumns: ["id"];
           },
+          {
+            foreignKeyName: "property_market_readings_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "owners";
+            referencedColumns: ["id"];
+          },
         ];
       };
       property_rent_references: {
@@ -1225,6 +1334,13 @@ export type Database = {
             columns: ["property_id"];
             isOneToOne: true;
             referencedRelation: "properties";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "property_rent_references_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "owners";
             referencedColumns: ["id"];
           },
         ];
@@ -1299,6 +1415,13 @@ export type Database = {
             referencedRelation: "transactions";
             referencedColumns: ["id"];
           },
+          {
+            foreignKeyName: "recurring_fulfilment_refusals_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "owners";
+            referencedColumns: ["id"];
+          },
         ];
       };
       recurring_fulfilments: {
@@ -1338,6 +1461,13 @@ export type Database = {
             referencedRelation: "transactions";
             referencedColumns: ["id"];
           },
+          {
+            foreignKeyName: "recurring_fulfilments_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "owners";
+            referencedColumns: ["id"];
+          },
         ];
       };
       recurring_proposal_dismissals: {
@@ -1356,7 +1486,15 @@ export type Database = {
           merchant_key?: string;
           user_id?: string;
         };
-        Relationships: [];
+        Relationships: [
+          {
+            foreignKeyName: "recurring_proposal_dismissals_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "owners";
+            referencedColumns: ["id"];
+          },
+        ];
       };
       recurring_skips: {
         Row: {
@@ -1388,6 +1526,13 @@ export type Database = {
             referencedRelation: "recurring_templates";
             referencedColumns: ["id"];
           },
+          {
+            foreignKeyName: "recurring_skips_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "owners";
+            referencedColumns: ["id"];
+          },
         ];
       };
       recurring_templates: {
@@ -1396,6 +1541,7 @@ export type Database = {
           amount: number;
           category_id: string;
           created_at: string;
+          created_by: string | null;
           day_of_month: number | null;
           day_of_week: number | null;
           description: string | null;
@@ -1419,6 +1565,7 @@ export type Database = {
           amount: number;
           category_id: string;
           created_at?: string;
+          created_by?: string | null;
           day_of_month?: number | null;
           day_of_week?: number | null;
           description?: string | null;
@@ -1442,6 +1589,7 @@ export type Database = {
           amount?: number;
           category_id?: string;
           created_at?: string;
+          created_by?: string | null;
           day_of_month?: number | null;
           day_of_week?: number | null;
           description?: string | null;
@@ -1473,6 +1621,13 @@ export type Database = {
             columns: ["property_id"];
             isOneToOne: false;
             referencedRelation: "properties";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "recurring_templates_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "owners";
             referencedColumns: ["id"];
           },
         ];
@@ -1568,6 +1723,102 @@ export type Database = {
           },
         ];
       };
+      space_invites: {
+        Row: {
+          accepted_at: string | null;
+          accepted_by: string | null;
+          created_at: string;
+          created_by: string | null;
+          expires_at: string;
+          space_id: string;
+          token: string;
+        };
+        Insert: {
+          accepted_at?: string | null;
+          accepted_by?: string | null;
+          created_at?: string;
+          created_by?: string | null;
+          expires_at?: string;
+          space_id: string;
+          token: string;
+        };
+        Update: {
+          accepted_at?: string | null;
+          accepted_by?: string | null;
+          created_at?: string;
+          created_by?: string | null;
+          expires_at?: string;
+          space_id?: string;
+          token?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "space_invites_space_id_fkey";
+            columns: ["space_id"];
+            isOneToOne: false;
+            referencedRelation: "spaces";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      space_members: {
+        Row: {
+          joined_at: string;
+          share: number;
+          space_id: string;
+          user_id: string;
+        };
+        Insert: {
+          joined_at?: string;
+          share?: number;
+          space_id: string;
+          user_id: string;
+        };
+        Update: {
+          joined_at?: string;
+          share?: number;
+          space_id?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "space_members_space_id_fkey";
+            columns: ["space_id"];
+            isOneToOne: false;
+            referencedRelation: "spaces";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      spaces: {
+        Row: {
+          created_at: string;
+          created_by: string | null;
+          id: string;
+          name: string;
+        };
+        Insert: {
+          created_at?: string;
+          created_by?: string | null;
+          id: string;
+          name?: string;
+        };
+        Update: {
+          created_at?: string;
+          created_by?: string | null;
+          id?: string;
+          name?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "spaces_id_fkey";
+            columns: ["id"];
+            isOneToOne: true;
+            referencedRelation: "owners";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       tags: {
         Row: {
           created_at: string;
@@ -1625,6 +1876,7 @@ export type Database = {
           cash_on: string | null;
           category_id: string;
           created_at: string;
+          created_by: string | null;
           deleted_at: string | null;
           id: string;
           note: string | null;
@@ -1637,6 +1889,7 @@ export type Database = {
           cash_on?: string | null;
           category_id: string;
           created_at?: string;
+          created_by?: string | null;
           deleted_at?: string | null;
           id?: string;
           note?: string | null;
@@ -1649,6 +1902,7 @@ export type Database = {
           cash_on?: string | null;
           category_id?: string;
           created_at?: string;
+          created_by?: string | null;
           deleted_at?: string | null;
           id?: string;
           note?: string | null;
@@ -1669,6 +1923,13 @@ export type Database = {
             columns: ["recurring_template_id"];
             isOneToOne: false;
             referencedRelation: "recurring_templates";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "transactions_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "owners";
             referencedColumns: ["id"];
           },
         ];
@@ -1859,6 +2120,8 @@ export type Database = {
     Functions: {
       acting_for: { Args: { target_user: string }; Returns: boolean };
       bearing_pins_valid: { Args: { pins: Json }; Returns: boolean };
+      create_space: { Args: { new_name?: string }; Returns: string };
+      create_space_invite: { Args: { target_space: string }; Returns: string };
       evaluated_feature_flags: {
         Args: Record<PropertyKey, never>;
         Returns: {
@@ -1866,9 +2129,21 @@ export type Database = {
           key: string;
         }[];
       };
+      join_space: { Args: { invite_token: string }; Returns: string };
+      leave_space: { Args: { target_space: string }; Returns: undefined };
       merge_tags: {
         Args: { from_tag: string; into_tag: string; target_user: string };
         Returns: number;
+      };
+      my_spaces: { Args: Record<PropertyKey, never>; Returns: string[] };
+      peek_space_invite: {
+        Args: { invite_token: string };
+        Returns: {
+          invited_by: string;
+          space_id: string;
+          space_name: string;
+          usable: boolean;
+        }[];
       };
       record_activity: { Args: { event?: string }; Returns: undefined };
       record_bank_pull: {
@@ -2041,6 +2316,10 @@ export type Database = {
           isOneToOne: true;
           isSetofReturn: false;
         };
+      };
+      rename_space: {
+        Args: { new_name: string; target_space: string };
+        Returns: undefined;
       };
       reserve_bearing_arrangement: {
         Args: {
@@ -2232,6 +2511,15 @@ export type Database = {
       soft_delete_transactions: {
         Args: { ids: string[]; target_user: string };
         Returns: string;
+      };
+      space_people: {
+        Args: { target_space: string };
+        Returns: {
+          joined_at: string;
+          name: string;
+          share: number;
+          user_id: string;
+        }[];
       };
       store_bearing_arrangement: {
         Args: {

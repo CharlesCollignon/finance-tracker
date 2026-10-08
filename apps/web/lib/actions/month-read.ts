@@ -2,7 +2,7 @@
 
 import { revalidateApp } from "@/lib/revalidate-paths";
 import { monthReadRequestSchema } from "@finance/core/validations/month-read";
-import { getAuthUser } from "@/lib/auth/get-user";
+import { getOwner } from "@/lib/owner";
 import { writeMonthRead } from "@/lib/month-read/write";
 
 /**
@@ -16,8 +16,8 @@ export async function writeMonthReadAction(
   year: number,
   month: number,
 ): Promise<{ written: boolean; message: string | null; writesLeft: number }> {
-  const user = await getAuthUser();
-  if (!user) {
+  const owner = await getOwner();
+  if (!owner) {
     return {
       written: false,
       message: "errors.notAuthenticated",
@@ -30,10 +30,14 @@ export async function writeMonthReadAction(
     return { written: false, message: "errors.invalidInput", writesLeft: 0 };
   }
 
+  // The owner's month — the person's, or their space's — written with the
+  // asking person's AI account.
   const outcome = await writeMonthRead(
-    user.id,
+    owner.ownerId,
     parsed.data.year,
     parsed.data.month,
+    undefined,
+    owner.userId,
   );
 
   if (outcome.written) {

@@ -40,6 +40,8 @@ import {
   type AiConnectOutcome,
 } from "@/components/profile/AiAccountSection";
 import type { AiModel } from "@finance/core/ai-models";
+import type { Space } from "@finance/data/spaces";
+import { SpaceSection } from "@/components/profile/SpaceSection";
 import { setCurrencyPreference, useCurrency } from "@/lib/use-currency";
 import { CURRENCY_LABELS } from "@finance/core/constants";
 import { useLocale, useT } from "@/lib/locale-context";
@@ -79,6 +81,9 @@ interface ProfileViewProps {
     model: AiModel | null;
     outcome: AiConnectOutcome | null;
   } | null;
+  /** The shared space this person is in, or null. */
+  space: Space | null;
+  userId: string;
 }
 
 /** Which row is showing its editor. One at a time, as on the phone. */
@@ -106,6 +111,8 @@ export function ProfileView({
   showBank,
   showProperty,
   aiAccount,
+  space,
+  userId,
 }: ProfileViewProps) {
   const { toast } = useToast();
   const currency = useCurrency();
@@ -285,6 +292,13 @@ export function ProfileView({
             onClick={switchLocale}
           />
         </ListSection>
+
+        {/* Right under the person's money: the money they share. */}
+        <SpaceSection
+          space={space}
+          userId={userId}
+          selfName={fullName || email}
+        />
 
         {/* Beside the money it reads: the written reads are what an AI
             account is for. */}

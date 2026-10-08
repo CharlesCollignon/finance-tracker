@@ -14,6 +14,7 @@ import { SegmentedControl } from "@/components/ui/SegmentedControl";
 import { Text } from "@/components/ui/Text";
 import { cn } from "@/lib/cn";
 import { useT } from "@/providers/LocaleProvider";
+import { useOwner } from "@/providers/OwnerProvider";
 
 export interface AccountChoice {
   role: BankAccountRole;
@@ -42,6 +43,7 @@ export function AccountRoleEditor({
   disabled?: boolean;
 }) {
   const t = useT();
+  const { space } = useOwner();
 
   return (
     <View
@@ -54,6 +56,10 @@ export function AccountRoleEditor({
         onChange={(role) => onChange({ ...value, role })}
         segments={[
           { value: "spending", label: t("bankAccounts.roleSpending") },
+          // « Compte commun », for someone in a shared space (migration 061).
+          ...(space || value.role === "joint"
+            ? [{ value: "joint" as const, label: t("bankAccounts.roleJoint") }]
+            : []),
           { value: "savings", label: t("bankAccounts.roleSavings") },
           { value: "ignored", label: t("bankAccounts.roleIgnored") },
         ]}
@@ -78,6 +84,10 @@ export function AccountRoleEditor({
       ) : value.role === "ignored" ? (
         <Text variant="muted" className="text-xs">
           {t("bankAccounts.ignoredBilled")}
+        </Text>
+      ) : value.role === "joint" && space ? (
+        <Text variant="muted" className="text-xs">
+          {t("bankAccounts.jointHint", { space: space.name })}
         </Text>
       ) : null}
     </View>

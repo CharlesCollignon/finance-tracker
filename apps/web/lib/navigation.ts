@@ -113,10 +113,36 @@ export const PROPERTY_NAV_ITEM = {
 } as const;
 
 /** The surfaces this account is shown, in the order the bars draw them. */
-export function navItems(options: { property: boolean }) {
-  return options.property
+export function navItems(options: { property: boolean; joint?: boolean }) {
+  const items = options.property
     ? [...APP_NAV_ITEMS, PROPERTY_NAV_ITEM]
     : [...APP_NAV_ITEMS];
+  // Under « Commun », only what a shared space has: no plan, no wallets, no
+  // home yet (6c) — those stay a person's.
+  return options.joint
+    ? items.filter((item) => isSharedPath(item.href))
+    : items;
+}
+
+/**
+ * The screens both a person and their shared space have, which read and
+ * write as the owner on screen and draw the « Moi · Commun » switch
+ * (`docs/plans/SHARED_SPACE_DESIGN.md`).
+ */
+const SHARED_PATHS = [
+  "/bearing",
+  "/transactions",
+  "/calendar",
+  "/history",
+  "/recurring",
+  "/categories",
+  "/import",
+] as const;
+
+export function isSharedPath(pathname: string): boolean {
+  return SHARED_PATHS.some(
+    (path) => pathname === path || pathname.startsWith(`${path}/`),
+  );
 }
 
 export const PROFILE_NAV_ITEM = {

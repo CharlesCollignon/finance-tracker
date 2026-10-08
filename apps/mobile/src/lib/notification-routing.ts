@@ -6,6 +6,7 @@ import { mobileRouteForPushUrl } from "@finance/core/push-routes";
 
 import { notifyDataChanged } from "@/lib/data-version";
 import { stampReviewAsk } from "@/lib/review-ask";
+import { useOwner } from "@/providers/OwnerProvider";
 
 /**
  * Takes the user where a tapped notification pointed.
@@ -36,6 +37,7 @@ import { stampReviewAsk } from "@/lib/review-ask";
 export function useNotificationRouting(ready: boolean): void {
   const response = Notifications.useLastNotificationResponse();
   const router = useRouter();
+  const { showSpace } = useOwner();
 
   useEffect(() => {
     const subscription = Notifications.addNotificationReceivedListener(() =>
@@ -52,6 +54,13 @@ export function useNotificationRouting(ready: boolean): void {
     const { url } = response.notification.request.content.data ?? {};
     const route = mobileRouteForPushUrl(url);
     notifyDataChanged();
+
+    // A message about a shared space opens it (`forSpace`): the space is
+    // shown, and the parameter does not travel on to the screen.
+    if (route?.params.owner) {
+      showSpace(route.params.owner);
+      delete route.params.owner;
+    }
 
     // The Bearing when the path cannot be placed — a web-only surface such
     // as /history, or a payload from a build older than the route it names.
@@ -75,5 +84,5 @@ export function useNotificationRouting(ready: boolean): void {
     // expo-notifications marks the async version deprecated in favour of
     // this, which is the reverse of what the published SDK 57 doc page says.
     Notifications.clearLastNotificationResponse();
-  }, [ready, response, router]);
+  }, [ready, response, router, showSpace]);
 }

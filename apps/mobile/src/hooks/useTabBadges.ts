@@ -4,7 +4,7 @@ import { getCurrentMonth } from "@finance/core/constants";
 
 import { countFulfilmentProposals, countPendingFeedItems } from "@/lib/queries";
 import { useDataVersion } from "@/lib/data-version";
-import { useAuth } from "@/providers/AuthProvider";
+import { useOwner } from "@/providers/OwnerProvider";
 
 /** What the two counts are drawn from. */
 const BADGE_READS = ["transactions", "templates", "bank"] as const;
@@ -40,7 +40,7 @@ const NONE: TabBadges = { bearing: 0, ledger: 0 };
 export function useTabBadges(): TabBadges {
   // The id rather than the user object, so the guard and the dependency list
   // name the same thing and the effect does not re-run on an identical user.
-  const userId = useAuth().user?.id;
+  const userId = useOwner().ownerId;
   const dataVersion = useDataVersion(BADGE_READS);
   const [badges, setBadges] = useState<TabBadges>(NONE);
 

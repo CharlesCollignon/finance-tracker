@@ -450,10 +450,13 @@ export interface HomeRead {
  * so a read written on the web renders here against the same figures.
  */
 export async function gatherHomeRead(
+  /** Whose month: the person's, or their space's. */
   userId: string,
   year: number,
   month: number,
   locale: Locale,
+  /** Whose AI account would write it: the person asking, in « Commun » too. */
+  writerId: string = userId,
 ): Promise<HomeRead> {
   const today = todayIsoLocal();
   const current = getCurrentMonth();
@@ -557,7 +560,7 @@ export async function gatherHomeRead(
     writesLeft: 0,
     tracked: false,
   };
-  const writerState = getWriterState(userId);
+  const writerState = getWriterState(writerId);
   try {
     stored = await getMonthRead(userId, year, month, facts, locale);
   } catch {

@@ -5,6 +5,7 @@ import {
   type CashBalance,
   type CloseWaitReason,
 } from "@finance/core/bank-balance";
+import { countedAccounts } from "@finance/core/bank-accounts";
 import { lastDayIsoOfMonth } from "@finance/core/constants";
 import type { CloseableMonth } from "@finance/core/month-close";
 import type { BankAccount } from "@finance/core/types/database";
@@ -12,16 +13,29 @@ import type { BankAccount } from "@finance/core/types/database";
 import type { Db } from "./client";
 import { isMissingSchema } from "./schema";
 
-/** Every account the connection has ever shown, ticked or not. */
+/**
+ * Every account the connection has ever shown, ticked or not — a person's;
+ * or, for a shared space, the joint accounts its partners feed it with
+ * (migration 061).
+ */
 export async function getBankAccounts(
   db: Db,
   userId: string,
 ): Promise<BankAccount[]> {
-  const { data, error } = await db
+  let { data, error } = await db
     .from("bank_accounts")
     .select("*")
-    .eq("user_id", userId)
+    .or(`user_id.eq.${userId},space_id.eq.${userId}`)
     .order("label");
+  // Before migration 060 there is no space to ask about: the person's own,
+  // so a deployment ahead of its migrations still reads the balance.
+  if (error?.code === "42703") {
+    ({ data, error } = await db
+      .from("bank_accounts")
+      .select("*")
+      .eq("user_id", userId)
+      .order("label"));
+  }
 
   // Before migration 021 this table does not exist, and reading balances is
   // an enhancement to a screen that has to work without it. A surface people
@@ -55,7 +69,7 @@ export async function readCashBalance(
   date: string,
 ): Promise<CashBalance | null> {
   const accounts = await getBankAccounts(db, userId);
-  const counted = accounts.filter((account) => account.counts_as_cash);
+  const counted = countedAccounts(accounts, userId);
 
   if (counted.length === 0) {
     return null;

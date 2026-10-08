@@ -26,11 +26,11 @@ import { useDeletedToast } from "@/hooks/useDeletedToast";
 import { hapticLight, hapticWarning } from "@/lib/haptics";
 import { deleteCategory, setCategoryArchived } from "@/lib/mutations";
 import { getCategories } from "@/lib/queries";
-import { useAuth } from "@/providers/AuthProvider";
 import { useToast } from "@/providers/ToastProvider";
 import { useThemeColors } from "@/theme/useThemeColors";
 import { ICON } from "@/theme/tokens";
 import { useLocale, useT } from "@/providers/LocaleProvider";
+import { useOwner } from "@/providers/OwnerProvider";
 
 /**
  * What a category that does not count is, by its kind — the web's badge.
@@ -65,7 +65,7 @@ function notCountingKey(category: {
 export default function CategoriesScreen() {
   const t = useT();
   const locale = useLocale();
-  const { user } = useAuth();
+  const { ownerId } = useOwner();
   const router = useRouter();
   const colors = useThemeColors();
   const { toast } = useToast();
@@ -76,14 +76,14 @@ export default function CategoriesScreen() {
 
   const { data, loading, refreshing, onRefreshAll, onRefresh, error } =
     useRefreshable(async () => {
-      if (!user) {
+      if (!ownerId) {
         return { categories: [] as Category[] };
       }
-      const categories = await getCategories(user.id, {
+      const categories = await getCategories(ownerId, {
         includeArchived: true,
       });
       return { categories };
-    }, [user?.id], { reads: ["categories"] });
+    }, [ownerId], { reads: ["categories"] });
 
   const categories = data?.categories ?? [];
   const groups = groupCategoriesByType(categories, { locale });

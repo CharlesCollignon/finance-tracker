@@ -43,6 +43,7 @@ import type {
 
 import { MonthPicker } from "@/components/MonthPicker";
 import { StaggerItem } from "@/components/motion/Stagger";
+import { AuthorBadge } from "@/components/AuthorBadge";
 import { CategoryIcon } from "@/components/CategoryIcon";
 import { PrivateAmount } from "@/components/PrivateAmount";
 import { FulfilmentDot } from "@/components/FulfilmentDot";
@@ -72,7 +73,6 @@ import { ScreenSkeleton } from "@/components/ui/Skeleton";
 import { ScreenError } from "@/components/ScreenError";
 import { Text } from "@/components/ui/Text";
 import { useRefreshable } from "@/hooks/useRefreshable";
-import { useAuth } from "@/providers/AuthProvider";
 import { useQuickAdd } from "@/providers/QuickAddProvider";
 import { useScreenMonth } from "@/providers/MonthProvider";
 import { useToast } from "@/providers/ToastProvider";
@@ -107,6 +107,7 @@ import { hapticLight, hapticSuccess, hapticWarning } from "@/lib/haptics";
 import { ICON } from "@/theme/tokens";
 import { useTabBarClearance } from "@/theme/chrome";
 import { useLocale, useT } from "@/providers/LocaleProvider";
+import { useOwner } from "@/providers/OwnerProvider";
 import { plannedOccurrenceNote } from "@finance/core/dca-need";
 import { bringsMoneyIn, isMovedRow } from "@finance/core/cash-date";
 import {
@@ -147,7 +148,7 @@ export default function TransactionsScreen() {
   const locale = useLocale();
   const t = useT();
   const tabBarClearance = useTabBarClearance();
-  const { user } = useAuth();
+  const { ownerId } = useOwner();
   const formatEuro = useFormatCurrency();
   const { toast } = useToast();
   const toastDeleted = useDeletedToast();
@@ -206,7 +207,7 @@ export default function TransactionsScreen() {
   const [deletePending, setDeletePending] = useState(false);
   const { data, loading, refreshing, onRefreshAll, onRefresh, error } =
     useRefreshable(async () => {
-      if (!user) {
+      if (!ownerId) {
         return {
           transactions: [] as TransactionWithCategory[],
           categories: [] as Category[],
@@ -232,27 +233,27 @@ export default function TransactionsScreen() {
         swallowed,
         bankFed,
       ] = await Promise.all([
-        getTransactions(user.id, year, month),
-        getCategories(user.id),
-        getSkippedOccurrences(user.id, year, month),
+        getTransactions(ownerId, year, month),
+        getCategories(ownerId),
+        getSkippedOccurrences(ownerId, year, month),
         // For "left at month end": what the rest of the month still owes.
-        getRecurringTemplates(user.id),
+        getRecurringTemplates(ownerId),
         // Not scoped to the month on screen. The inbox is a queue of
         // decisions, not a view of a month: a coffee from the 29th of last
         // month needs a category whichever month you happen to be reading.
-        getPendingFeedItems(user.id, locale),
+        getPendingFeedItems(ownerId, locale),
         // Which rows settle a charge. Needs nothing else the batch fetches,
         // so it rides along rather than costing a second hop.
-        getConfirmedTransactionIds(user.id),
+        getConfirmedTransactionIds(ownerId),
         // Occurrences another row already stands for, which are therefore
         // not planned: the salary the bank delivered is not still to come.
-        getFulfilledKeys(user.id),
+        getFulfilledKeys(ownerId),
         // Rows an old sync merged away without asking, offered back above
         // the review as on the web. A count; nothing without a bank.
-        countSwallowedFeedItems(user.id),
+        countSwallowedFeedItems(ownerId),
         // With a bank, it is the bank bringing a charge that ends its
         // planned row, not its day.
-        hasBankFeed(user.id),
+        hasBankFeed(ownerId),
       ]);
       // Asked after the batch, because it needs the templates and categories
       // the batch fetched. Only the proposals Le point asks about, whichever
@@ -261,19 +262,19 @@ export default function TransactionsScreen() {
       const now = getCurrentMonth();
       const [proposals, bank, accounts] = await Promise.all([
         getFulfilmentProposals(
-          user.id,
+          ownerId,
           templates,
           categories,
           now.year,
           now.month,
         ),
-        getBankForecast(user.id, templates, bankFed, todayIsoLocal()),
+        getBankForecast(ownerId, templates, bankFed, todayIsoLocal()),
         // With several current accounts, which one each row came from.
         bankFed
           ? Promise.all([
-              getBankAccounts(user.id),
+              getBankAccounts(ownerId),
               getTransactionAccounts(
-                user.id,
+                ownerId,
                 transactions.map((tx) => tx.id),
               ),
             ]).then(([known, of]) => ledgerAccounts(known, of))
@@ -292,7 +293,7 @@ export default function TransactionsScreen() {
         bank,
         accounts,
       };
-    }, [user?.id, year, month], {
+    }, [ownerId, year, month], {
       reads: ["transactions", "templates", "categories", "bank"],
     });
 
@@ -897,7 +898,7 @@ export default function TransactionsScreen() {
   );
 
   return (
-    <Screen title={t("nav.ledger")} className="pb-0">
+    <Screen title={t("nav.ledger")} className="pb-0" shared>
       {/* No card around the list, as on the web's phone layout: the days run
           the full width and start right under the figures. */}
       <SectionList
@@ -1107,7 +1108,10 @@ export default function TransactionsScreen() {
                     }
                   />
                 ) : null}
-                <CategoryIcon icon={item.categories.icon} />
+                <View>
+                  <CategoryIcon icon={item.categories.icon} />
+                  <AuthorBadge createdBy={item.created_by} />
+                </View>
                 <View className="min-w-0 flex-1">
                   <View className="flex-row items-center gap-1.5">
                     {/* `shrink` because Yoga defaults flexShrink to 0 and

@@ -11,6 +11,7 @@ import type {
 } from "@finance/core/types/database";
 import { OptionPicker } from "@/components/ui/Picker";
 import { SegmentedControl } from "@/components/ui/SegmentedControl";
+import { useSpace } from "@/components/layout/SpaceContext";
 import { useT } from "@/lib/locale-context";
 
 export interface AccountChoice {
@@ -20,8 +21,9 @@ export interface AccountChoice {
 }
 
 /**
- * What one bank account is — Courant, Épargne or Ne pas suivre — and, as
- * Épargne, which Livret on Placements it is.
+ * What one bank account is — Courant, Épargne or Ne pas suivre, and
+ * « Commun » for someone in a shared space — and, as Épargne, which Livret
+ * on Placements it is.
  *
  * Shared by the question about new accounts and the list of known ones, so
  * an account is described the same way wherever it is answered for. The one
@@ -42,6 +44,7 @@ export function AccountRoleEditor({
 }) {
   const t = useT();
   const pickerId = useId();
+  const space = useSpace();
 
   return (
     <fieldset disabled={disabled} className="flex min-w-0 flex-col gap-2">
@@ -52,6 +55,10 @@ export function AccountRoleEditor({
         onChange={(role) => onChange({ ...value, role })}
         segments={[
           { value: "spending", label: t("bankAccounts.roleSpending") },
+          // « Compte commun », for someone in a shared space (migration 061).
+          ...(space || value.role === "joint"
+            ? [{ value: "joint" as const, label: t("bankAccounts.roleJoint") }]
+            : []),
           { value: "savings", label: t("bankAccounts.roleSavings") },
           { value: "ignored", label: t("bankAccounts.roleIgnored") },
         ]}
@@ -80,6 +87,10 @@ export function AccountRoleEditor({
       ) : value.role === "ignored" ? (
         <p className="text-xs text-muted-foreground">
           {t("bankAccounts.ignoredBilled")}
+        </p>
+      ) : value.role === "joint" && space ? (
+        <p className="text-xs text-muted-foreground">
+          {t("bankAccounts.jointHint", { space: space.name })}
         </p>
       ) : null}
     </fieldset>

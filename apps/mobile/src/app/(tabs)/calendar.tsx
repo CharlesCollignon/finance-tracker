@@ -66,7 +66,6 @@ import { cn } from "@/lib/cn";
 import { useDeletedToast } from "@/hooks/useDeletedToast";
 import { hapticLight, hapticSuccess, hapticWarning } from "@/lib/haptics";
 import { useRefreshable } from "@/hooks/useRefreshable";
-import { useAuth } from "@/providers/AuthProvider";
 import { useQuickAdd } from "@/providers/QuickAddProvider";
 import { useToast } from "@/providers/ToastProvider";
 import { useFormatCurrency } from "@/providers/CurrencyProvider";
@@ -85,6 +84,7 @@ import {
   hasBankFeed,
 } from "@/lib/queries";
 import { useScreenMonth } from "@/providers/MonthProvider";
+import { useOwner } from "@/providers/OwnerProvider";
 
 /** Stable identity, so the derived selection keeps a steady reference. */
 const EMPTY_SELECTION: ReadonlySet<string> = new Set();
@@ -93,7 +93,7 @@ export default function CalendarScreen() {
   const t = useT();
   const locale = useLocale();
   const tabBarClearance = useTabBarClearance();
-  const { user } = useAuth();
+  const { ownerId } = useOwner();
   const { toast } = useToast();
   const toastDeleted = useDeletedToast();
   const formatEuro = useFormatCurrency();
@@ -115,7 +115,7 @@ export default function CalendarScreen() {
 
   const { data, loading, refreshing, onRefreshAll, onRefresh, error } =
     useRefreshable(async () => {
-      if (!user) {
+      if (!ownerId) {
         return {
           transactions: [] as TransactionWithCategory[],
           categories: [] as Category[],
@@ -135,17 +135,17 @@ export default function CalendarScreen() {
         fulfilled,
         bankFed,
       ] = await Promise.all([
-        getTransactions(user.id, year, month),
-        getCategories(user.id),
-        getRecurringTemplates(user.id),
+        getTransactions(ownerId, year, month),
+        getCategories(ownerId),
+        getRecurringTemplates(ownerId),
         // Which rows settle a charge. Needs nothing else the batch fetches,
         // so it rides along rather than costing a second hop.
-        getConfirmedTransactionIds(user.id),
+        getConfirmedTransactionIds(ownerId),
         // What is not planned although a charge calls for it: taken out of
         // the month, or already stood for by another row.
-        getSkippedOccurrences(user.id, year, month),
-        getFulfilledKeys(user.id),
-        hasBankFeed(user.id),
+        getSkippedOccurrences(ownerId, year, month),
+        getFulfilledKeys(ownerId),
+        hasBankFeed(ownerId),
       ]);
       // Asked after the batch, because they need the templates and
       // categories the batch fetched. The proposals Le point asks about, as
@@ -153,13 +153,13 @@ export default function CalendarScreen() {
       const now = getCurrentMonth();
       const [proposals, bank] = await Promise.all([
         getFulfilmentProposals(
-          user.id,
+          ownerId,
           templates,
           categories,
           now.year,
           now.month,
         ),
-        getBankForecast(user.id, templates, bankFed, todayIsoLocal()),
+        getBankForecast(ownerId, templates, bankFed, todayIsoLocal()),
       ]);
       return {
         transactions,
@@ -175,7 +175,7 @@ export default function CalendarScreen() {
         ]),
         bank,
       };
-    }, [user?.id, year, month], {
+    }, [ownerId, year, month], {
       reads: ["transactions", "templates", "categories", "bank"],
     });
 
@@ -340,7 +340,7 @@ export default function CalendarScreen() {
   }
 
   return (
-    <Screen title={t("nav.ledger")}>
+    <Screen title={t("nav.ledger")} shared>
       <SurfaceTabs tabs={LEDGER_TABS} className="mb-3" />
 
       {/* Under the tabs, as on the list: the By category view has no month,

@@ -2,7 +2,7 @@
 
 import type { ActionResult } from "@finance/core/action-result";
 import * as decisions from "@finance/data/fulfilment-decisions";
-import { asUser } from "@/lib/actions/as-user";
+import { asOwner } from "@/lib/actions/as-user";
 import { getLocale } from "@/lib/locale";
 
 /**
@@ -18,7 +18,7 @@ export async function fulfilOccurrence(
   transactionId: string,
 ): Promise<ActionResult> {
   const locale = await getLocale();
-  return asUser(
+  return asOwner(
     (db, userId) =>
       decisions.fulfilOccurrence(
         db,
@@ -36,7 +36,7 @@ export async function moveBackEarlyIncome(
   transactionId: string,
 ): Promise<ActionResult> {
   const locale = await getLocale();
-  return asUser((db, userId) =>
+  return asOwner((db, userId) =>
     decisions.moveBackEarlyIncome(db, userId, transactionId, locale),
   );
 }
@@ -46,7 +46,7 @@ export async function refuseFulfilment(
   occurredOn: string,
   transactionId: string,
 ): Promise<ActionResult> {
-  return asUser((db, userId) =>
+  return asOwner((db, userId) =>
     decisions.refuseFulfilment(
       db,
       userId,
@@ -61,7 +61,7 @@ export async function undoFulfilment(
   templateId: string,
   occurredOn: string,
 ): Promise<ActionResult> {
-  return asUser((db, userId) =>
+  return asOwner((db, userId) =>
     decisions.undoFulfilment(db, userId, templateId, occurredOn),
   );
 }

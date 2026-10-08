@@ -8,6 +8,7 @@ import {
   bigChargeHeadsUp,
   bigCharges,
   closeReminder,
+  forSpace,
   monthClosedByBank,
   overdraftWarning,
   plannedChargesOn,
@@ -479,5 +480,46 @@ describe("overdraftWarning", () => {
         source: "bank",
       }),
     ).toBeNull();
+  });
+});
+
+describe("forSpace", () => {
+  const space = { id: "s1", name: "Commun" };
+
+  it("names the space, keys it apart and opens it", () => {
+    expect(
+      forSpace(
+        {
+          kind: "overdraft",
+          key: "overdraft:2026-10",
+          title: "Sous zéro le 24",
+          body: "…",
+          url: "/bearing",
+        },
+        space,
+      ),
+    ).toEqual({
+      kind: "overdraft",
+      key: "space:s1:overdraft:2026-10",
+      title: "Commun · Sous zéro le 24",
+      body: "…",
+      url: "/bearing?owner=s1",
+    });
+  });
+
+  it("keeps a link's own query, and the keys it covers apart too", () => {
+    const said = forSpace(
+      {
+        kind: "dca",
+        key: "a",
+        title: "t",
+        body: "b",
+        url: "/transactions?review=1",
+        covers: ["b"],
+      },
+      space,
+    );
+    expect(said.url).toBe("/transactions?review=1&owner=s1");
+    expect(said.covers).toEqual(["space:s1:b"]);
   });
 });

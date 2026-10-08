@@ -6,7 +6,7 @@ import { setupPrompt, type SetupStep } from "@finance/core/setup-steps";
 import { recordActivity } from "@finance/data/activity";
 import { saveBalanceReading } from "@finance/data/balance-reading";
 import { dismissPrompt } from "@finance/data/preferences";
-import { asUser } from "@/lib/actions/as-user";
+import { asOwner, asUser } from "@/lib/actions/as-user";
 import { createClient } from "@/lib/supabase/server";
 import { getLocale } from "@/lib/locale";
 
@@ -21,7 +21,7 @@ const STEPS: readonly Exclude<SetupStep, "bank">[] = [
 export async function saveBalanceReadingAction(
   amount: number,
 ): Promise<ActionResult> {
-  return asUser((db, userId) =>
+  return asOwner((db, userId) =>
     saveBalanceReading(db, userId, { amount, today: todayIsoLocal() }),
   );
 }

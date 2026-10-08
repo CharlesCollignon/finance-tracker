@@ -3,8 +3,10 @@
 import { revalidateApp } from "@/lib/revalidate-paths";
 import { z } from "zod";
 import { getAuthUser } from "@/lib/auth/get-user";
+import { getOwner } from "@/lib/owner";
 import { createClient } from "@/lib/supabase/server";
 import { getBankConnection } from "@/lib/bank/client";
+import { countedAccounts } from "@finance/core/bank-accounts";
 import { getBankAccounts } from "@/lib/queries/bank-balance";
 import {
   fileFeedItems,
@@ -13,7 +15,7 @@ import {
   type BatchFeedResult,
 } from "@finance/data/feed-decisions";
 import * as feed from "@finance/data/feed-decisions";
-import { asUser } from "@/lib/actions/as-user";
+import { asOwner } from "@/lib/actions/as-user";
 import { autoCloseMonths } from "@/lib/bank/auto-close";
 import { syncBankFeed, type SyncOutcome } from "@/lib/bank/sync";
 import * as proposals from "@finance/data/recurring-proposals";
@@ -109,7 +111,7 @@ export async function importFeedItem(
   categoryId: string,
   force = false,
 ): Promise<ActionResult<{ duplicateOf?: string }>> {
-  return asUser((db, userId) =>
+  return asOwner((db, userId) =>
     feed.importFeedItem(db, userId, itemId, categoryId, force),
   );
 }
@@ -122,7 +124,7 @@ export async function importFeedItem(
  * window.
  */
 export async function ignoreFeedItem(itemId: string): Promise<ActionResult> {
-  return asUser((db, userId) => feed.ignoreFeedItem(db, userId, itemId));
+  return asOwner((db, userId) => feed.ignoreFeedItem(db, userId, itemId));
 }
 
 /**
@@ -134,7 +136,8 @@ export async function importFeedItems(
   itemIds: string[],
   categoryId: string,
 ): Promise<BatchFeedResult> {
-  const user = await getAuthUser();
+  const owner = await getOwner();
+  const user = owner ? { id: owner.ownerId } : null;
   if (!user) {
     return { error: "errors.notAuthenticated" };
   }
@@ -154,7 +157,8 @@ export async function importFeedItems(
 export async function ignoreFeedItems(
   itemIds: string[],
 ): Promise<BatchFeedResult> {
-  const user = await getAuthUser();
+  const owner = await getOwner();
+  const user = owner ? { id: owner.ownerId } : null;
   if (!user) {
     return { error: "errors.notAuthenticated" };
   }
@@ -176,7 +180,7 @@ export async function ignoreFeedItems(
 export async function undoFeedDecisions(
   itemIds: string[],
 ): Promise<ActionResult<{ reopened: number }>> {
-  return asUser((db, userId) => reopenFeedItems(db, userId, itemIds));
+  return asOwner((db, userId) => reopenFeedItems(db, userId, itemIds));
 }
 
 /**
@@ -190,7 +194,8 @@ export async function recategoriseFeedItem(
   itemId: string,
   categoryId: string,
 ): Promise<ActionResult> {
-  const user = await getAuthUser();
+  const owner = await getOwner();
+  const user = owner ? { id: owner.ownerId } : null;
   if (!user) {
     return { error: "errors.notAuthenticated" };
   }
@@ -243,7 +248,7 @@ export async function recategoriseFeedItem(
  * about the sync's matches and nulled them out; undo did not.
  */
 export async function undoFeedDecision(itemId: string): Promise<ActionResult> {
-  return asUser((db, userId) => feed.undoFeedDecision(db, userId, itemId));
+  return asOwner((db, userId) => feed.undoFeedDecision(db, userId, itemId));
 }
 
 /**
@@ -256,27 +261,29 @@ export async function undoFeedDecision(itemId: string): Promise<ActionResult> {
 export async function getBankBalanceSuggestion(): Promise<
   ActionResult & { total?: string; currency?: string; accounts?: number }
 > {
-  const user = await getAuthUser();
-  if (!user) {
+  const owner = await getOwner();
+  if (!owner) {
     return { error: "errors.notAuthenticated" };
   }
 
-  const connection = await getBankConnection(user.id);
+  // The connection is the person's, whoever's month is being closed.
+  const connection = await getBankConnection(owner.userId);
   if (!connection) {
     return { success: true };
   }
 
   try {
-    // The current accounts only: a Livret's balance is savings, and an
-    // account the user does not follow is not their spending money.
+    // The owner's counted accounts only: the person's current accounts, or
+    // the joint ones feeding their space. A Livret's balance is savings, and
+    // an account the user does not follow is not their spending money.
     const [accounts, known] = await Promise.all([
       connection.client.getAccounts(),
-      getBankAccounts(user.id),
+      getBankAccounts(owner.ownerId),
     ]);
     const spending = new Set(
-      known
-        .filter((account) => account.role === "spending")
-        .map((account) => account.provider_account_id),
+      countedAccounts(known, owner.ownerId).map(
+        (account) => account.provider_account_id,
+      ),
     );
     // Summed as whole cents, so the provider's care with decimal strings is
     // not undone at the last step. A balance in cents is at most about 1e12,
@@ -328,7 +335,8 @@ export async function getBankBalanceSuggestion(): Promise<
 export async function reopenSwallowedFeedItems(): Promise<
   ActionResult & { reopened?: number }
 > {
-  const user = await getAuthUser();
+  const owner = await getOwner();
+  const user = owner ? { id: owner.ownerId } : null;
   if (!user) {
     return { error: "errors.notAuthenticated" };
   }
@@ -360,7 +368,8 @@ export async function reopenSwallowedFeedItems(): Promise<
 export async function acceptRecurringProposal(
   key: string,
 ): Promise<ActionResult> {
-  const user = await getAuthUser();
+  const owner = await getOwner();
+  const user = owner ? { id: owner.ownerId } : null;
   if (!user) {
     return { error: "errors.notAuthenticated" };
   }
@@ -387,7 +396,8 @@ export async function acceptRecurringProposal(
 export async function dismissRecurringProposal(
   key: string,
 ): Promise<ActionResult> {
-  const user = await getAuthUser();
+  const owner = await getOwner();
+  const user = owner ? { id: owner.ownerId } : null;
   if (!user) {
     return { error: "errors.notAuthenticated" };
   }
@@ -407,7 +417,7 @@ const filingSchema = z
   .array(
     z.object({
       accountId: z.string().min(1).max(200),
-      role: z.enum(["spending", "savings", "ignored"]),
+      role: z.enum(["spending", "savings", "ignored", "joint"]),
       savingsKind: z
         .enum(SAVINGS_KINDS as [SavingsAccountKind, ...SavingsAccountKind[]])
         .nullish(),

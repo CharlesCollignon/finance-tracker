@@ -27,6 +27,7 @@ import {
   OnboardingProvider,
   useOnboarding,
 } from "@/providers/OnboardingProvider";
+import { OwnerProvider } from "@/providers/OwnerProvider";
 import { PrivacyProvider } from "@/providers/PrivacyProvider";
 import { RefreshProvider } from "@/providers/RefreshProvider";
 import { ToastProvider } from "@/providers/ToastProvider";
@@ -140,6 +141,7 @@ function RootNavigator({ fontsReady }: { fontsReady: boolean }) {
         <Stack.Screen name="import" />
         <Stack.Screen name="onboarding" />
         <Stack.Screen name="year" />
+        <Stack.Screen name="join/[token]" />
       </Stack>
       {/* The web twin mounts its equivalent at the same level, above every
           page rather than on one screen — it used to live only on the
@@ -230,9 +232,13 @@ export default function RootLayout() {
                           through a toast. Outside the navigator, so one request
                           is in flight at a time whichever screen is showing. */}
                       <RefreshProvider>
-                        <OnboardingProvider>
-                          <RootNavigator fontsReady={fontsReady} />
-                        </OnboardingProvider>
+                        {/* Whose money the shared screens show: the
+                            person's, or their space's under « Commun ». */}
+                        <OwnerProvider>
+                          <OnboardingProvider>
+                            <RootNavigator fontsReady={fontsReady} />
+                          </OnboardingProvider>
+                        </OwnerProvider>
                       </RefreshProvider>
                     </ToastProvider>
                   </CurrencyProvider>

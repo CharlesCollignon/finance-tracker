@@ -224,33 +224,42 @@ belongs to a space and how the access rules follow, agreed before any code;
 the space setting goes in at the data layer, so search, the recap and the
 subscription watch take it as a parameter.
 
-### 6a — A space for two (branch `shared-space`)
+### 6a — A space for two (branch `shared-space`) — built, waiting on the owner
 
-- [ ] A space and its members: a members table (two in the interface, more
-      possible later without a migration); every user has a personal space.
-- [ ] Inviting by an email link; the partner needs their own account.
-- [ ] Each partner sees only the joint space, never the other's personal one.
-- [ ] « Moi · Commun » at the top of the screens both spaces have; the tabs
+Built 2026-10-09 to `docs/plans/SHARED_SPACE_DESIGN.md` and its decisions
+(a space is an owner; a link, not an e-mail; « Commun »; the month read in
+the space on its own quota). Migrations 060 and 061 are to be applied on
+the hosted project, after a backup; nothing of it has been tried in a
+browser or on a phone yet.
+
+- [x] A space and its members: a members table (two in the interface, more
+      possible later without a migration). Not a personal space each: a
+      person is an owner as a space is (migration 060).
+- [x] Inviting by a link the inviter sends; the partner needs their own
+      account.
+- [x] Each partner sees only the joint space, never the other's personal one.
+- [x] « Moi · Commun » at the top of the screens both spaces have; the tabs
       the joint space does not have are hidden while it is on.
-- [ ] The joint space has Le point, Journal, Récurrents, the month close, the
+- [x] The joint space has Le point, Journal, Récurrents, the month close, the
       review inbox (shared: the first answer counts), the subscription watch,
-      and its own categories, copied from the creator's to start.
-- [ ] The « Compte commun » account role, one tap like the others: its rows go
+      and its own categories, copied from the creator's to start; and the
+      month read, on its own quota.
+- [x] The « Compte commun » account role, one tap like the others: its rows go
       to the joint space. The same account connected by the second partner is
       recognised by its IBAN and its copy ignored. Without a bank, either
       partner types or imports into the space. (Closes
       `MULTI_ACCOUNT_PLAN.md`'s third open point.)
-- [ ] In the personal ledger, the money sent to the joint account is a
+- [x] In the personal ledger, the money sent to the joint account is a
       transfer out, « Versement au compte commun ».
-- [ ] Alerts: both partners get the joint account's (overdraft, big charge)
-      under their own switches; the Monday recap gains a « Compte commun »
-      section; either partner closes the joint month and both see the moment;
-      each row shows the initial of who added it.
-- [ ] Leaving — a separation, or deleting one's account: access ends at once,
-      with a CSV export of the space; the space stays with the other, who can
-      invite someone else.
-- [ ] `CONTEXT.md` and `PRODUCT.md`: the scope is one person's money and, for
-      a couple, their joint account.
+- [x] Alerts: both partners get the joint account's (overdraft, big charge,
+      the reading day) under their own switches, and the Monday recap of the
+      space as its own message; either partner closes the joint month; each
+      row shows the initial of who added it.
+- [x] Leaving — a separation, or deleting one's account: access ends at once,
+      with a CSV export of the space offered first; the space stays with the
+      other, who can invite someone else.
+- [x] `CONTEXT.md` and `PRODUCT.md`: the scope is one person's money and, for
+      a couple, what they share.
 
 ### 6b — My share (branch `shared-share`)
 

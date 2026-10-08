@@ -35,12 +35,29 @@ export async function POST(request: Request) {
     return Response.json({ error: "errors.invalidInput" }, { status: 400 });
   }
 
+  // A joint month (migration 060): the space's figures and quota, written
+  // with the asker's own AI account. Refused here, plainly, for someone not
+  // in that space — the database would refuse it too, less legibly.
+  const ownerId = parsed.data.owner ?? session.userId;
+  if (ownerId !== session.userId) {
+    const { data: member } = await session.supabase
+      .from("space_members")
+      .select("space_id")
+      .eq("space_id", ownerId)
+      .eq("user_id", session.userId)
+      .maybeSingle();
+    if (!member) {
+      return Response.json({ error: "errors.notAllowed" }, { status: 403 });
+    }
+  }
+
   try {
     const outcome = await writeMonthRead(
-      session.userId,
+      ownerId,
       parsed.data.year,
       parsed.data.month,
       session.supabase,
+      session.userId,
     );
 
     // Every refusal is a 200 with a reason. The read the app already holds is

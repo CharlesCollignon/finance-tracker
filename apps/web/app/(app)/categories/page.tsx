@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { getAuthUser } from "@/lib/auth/get-user";
+import { getOwner } from "@/lib/owner";
 import { getCategories } from "@/lib/queries/categories";
 import { CategoriesView } from "@/components/finance/CategoriesView";
 
@@ -10,7 +11,8 @@ export default async function CategoriesPage() {
     redirect("/login");
   }
 
-  const categories = await getCategories(user.id, { includeArchived: true });
+  const ownerId = (await getOwner())?.ownerId ?? user.id;
+  const categories = await getCategories(ownerId, { includeArchived: true });
 
   return <CategoriesView categories={categories} />;
 }

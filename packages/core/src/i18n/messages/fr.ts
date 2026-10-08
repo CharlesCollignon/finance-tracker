@@ -13,6 +13,7 @@ import { planScreenFr } from "./plan-screen.fr";
 import { homeScreenFr } from "./home-screen.fr";
 import { actionsFr } from "./actions.fr";
 import { propertyFr } from "./property.fr";
+import { spaceFr } from "./space.fr";
 
 /**
  * What the app says, in French.
@@ -2176,6 +2177,7 @@ export const fr: Messages = {
     body: "Courant\u00A0: ses opérations arrivent dans votre journal et son solde est votre argent pour dépenser. Épargne\u00A0: son solde est celui d'un livret sur Placements. Ne pas suivre\u00A0: rien n'en est importé.",
     roleGroup: "Ce qu'est {account}",
     roleSpending: "Courant",
+    roleJoint: "Commun",
     roleSavings: "Épargne",
     roleIgnored: "Ne pas suivre",
     livretLabel: "Son livret",
@@ -2186,6 +2188,8 @@ export const fr: Messages = {
         "{names} lisent déjà d'autres comptes\u00A0: choisissez d'autres livrets pour ceux-ci.",
     },
     ignoredBilled: "open-banking.io le facture tant qu'il y est connecté.",
+    jointHint:
+      "Ses opérations et son solde vont dans «\u00A0{space}\u00A0», pour vous deux.",
     otherBank: "Autre banque",
     consentUntil: "Partagé jusqu'au {date}",
     consentSoon: "À renouveler avant le {date}",
@@ -2714,4 +2718,5 @@ export const fr: Messages = {
   planScreen: planScreenFr,
   homeScreen: homeScreenFr,
   property: propertyFr,
+  space: spaceFr,
 };

@@ -72,6 +72,8 @@ export interface BankFeedCandidate {
   direction: FeedDirection;
   /** Merchant for money out, payer for money in. */
   counterparty: string | null;
+  /** The other side's IBAN, when the bank gives one, as two banks write it. */
+  counterpartyIban: string | null;
   merchantCategoryCode: string | null;
   /**
    * The running balance after this row, kept as the provider's decimal string
@@ -155,14 +157,11 @@ export function toCandidate(
     return null;
   }
 
-  const own = options.ownIbans;
-  if (own?.size) {
-    const other = cleanIban(
-      direction === "out" ? tx.creditorIban : tx.debtorIban,
-    );
-    if (other && own.has(other)) {
-      return null;
-    }
+  const other = cleanIban(
+    direction === "out" ? tx.creditorIban : tx.debtorIban,
+  );
+  if (other && options.ownIbans?.has(other)) {
+    return null;
   }
 
   const counterparty =
@@ -179,6 +178,7 @@ export function toCandidate(
     currency: tx.currency,
     direction,
     counterparty,
+    counterpartyIban: other,
     merchantCategoryCode: tx.merchantCategoryCode?.trim() || null,
     balanceAfter: tx.balanceAfterTransaction?.trim() || null,
     note,
@@ -280,7 +280,7 @@ export function findLedgerMatch(
   return best;
 }
 
-export type FeedReason = "merchant" | "mcc";
+export type FeedReason = "merchant" | "mcc" | "joint-transfer";
 
 export interface FeedSuggestion {
   categoryId: string;
@@ -333,11 +333,32 @@ export interface DecideOptions {
   existing?: readonly ExistingLedgerRow[];
   /** Category name to id, for resolving what an MCC suggests. */
   categoryIdsByName: ReadonlyMap<string, { id: string; name: string }>;
+  /**
+   * Money sent to a joint account the person feeds a shared space with, by
+   * that account's IBAN: always « Versement au compte commun » — a transfer
+   * out of their own money, not a shop to learn (`docs/plans/EVERYDAY_PLAN.md`,
+   * 6a).
+   */
+  jointTransfer?: {
+    /**
+     * Whether an IBAN is one of the space's joint accounts. A test rather
+     * than a list: the accounts are known by a fingerprint of their IBAN,
+     * which only the server can take.
+     */
+    isJoint: (iban: string) => boolean;
+    category: { id: string; name: string };
+  };
 }
 
 export function decide(
   candidate: BankFeedCandidate,
-  { merchants, bankMerchants, categoryIdsByName, existing = [] }: DecideOptions,
+  {
+    merchants,
+    bankMerchants,
+    categoryIdsByName,
+    existing = [],
+    jointTransfer,
+  }: DecideOptions,
 ): FeedDecision {
   // Whether this movement is already recorded is asked first, because the
   // wrong answer here records the money twice. But it is only ever raised
@@ -358,6 +379,23 @@ export function decide(
       suggestion: null,
       why: "possible-duplicate",
       matchTransactionId: already.transactionId,
+    };
+  }
+
+  // Sent to the joint account: the person's own money going to the space,
+  // filed as such without asking.
+  if (
+    candidate.direction === "out" &&
+    candidate.counterpartyIban &&
+    jointTransfer?.isJoint(candidate.counterpartyIban)
+  ) {
+    return {
+      kind: "auto",
+      suggestion: {
+        categoryId: jointTransfer.category.id,
+        categoryName: jointTransfer.category.name,
+        reason: "joint-transfer",
+      },
     };
   }
 

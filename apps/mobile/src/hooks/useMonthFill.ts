@@ -5,7 +5,7 @@ import { resolveMessage } from "@finance/core/i18n/t";
 
 import { useAppForeground } from "@/hooks/useAppForeground";
 import { fillThisMonth } from "@/lib/mutations";
-import { useAuth } from "@/providers/AuthProvider";
+import { useOwner } from "@/providers/OwnerProvider";
 import { useT } from "@/providers/LocaleProvider";
 import { useToast } from "@/providers/ToastProvider";
 
@@ -24,7 +24,8 @@ import { useToast } from "@/providers/ToastProvider";
  * having typed them are only unsurprising if the app admits to them.
  */
 export function useMonthFill(): void {
-  const { user } = useAuth();
+  // The owner on screen: the person's month, or their space's.
+  const { ownerId } = useOwner();
   const t = useT();
   const { toast } = useToast();
   // Which user and month were last asked about, so a re-render, a second
@@ -40,7 +41,7 @@ export function useMonthFill(): void {
     notify.current = toast;
   });
 
-  const userId = user?.id ?? null;
+  const userId = ownerId;
 
   const fill = useCallback(async () => {
     if (!userId) {
@@ -54,7 +55,7 @@ export function useMonthFill(): void {
     askedFor.current = key;
 
     try {
-      const result = await fillThisMonth();
+      const result = await fillThisMonth(userId);
       if (result.error) {
         notify.current(resolveMessage(translate.current, result.error), "error");
       } else if (result.created > 0) {

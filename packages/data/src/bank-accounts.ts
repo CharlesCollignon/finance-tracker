@@ -10,7 +10,7 @@ import type { Db } from "./client";
 import { dbError } from "./errors";
 import { addSavingsAccount, linkSavingsBank } from "./savings-accounts";
 
-const roleSchema = z.enum(["spending", "savings", "ignored"]);
+const roleSchema = z.enum(["spending", "savings", "ignored", "joint"]);
 const accountIdSchema = z.string().min(1).max(200);
 
 /**
@@ -35,9 +35,24 @@ export async function setBankAccountRole(
     return { error: "errors.invalidInput" };
   }
 
+  // « Compte commun » feeds the space the person is in (migration 061);
+  // without one there is nothing for it to feed.
+  let spaceId: string | null = null;
+  if (role === "joint") {
+    const { data: membership } = await db
+      .from("space_members")
+      .select("space_id")
+      .eq("user_id", userId)
+      .maybeSingle();
+    if (!membership) {
+      return { error: "errors.notAllowed" };
+    }
+    spaceId = membership.space_id;
+  }
+
   const { error } = await db
     .from("bank_accounts")
-    .update({ role })
+    .update(role === "joint" ? { role, space_id: spaceId } : { role })
     .eq("user_id", userId)
     .eq("provider_account_id", providerAccountId);
   if (error) {

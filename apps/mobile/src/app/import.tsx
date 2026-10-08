@@ -27,12 +27,12 @@ import { cn } from "@/lib/cn";
 import { hapticLight, hapticSuccess } from "@/lib/haptics";
 import { importTransactions } from "@/lib/mutations";
 import { getExistingKeysForRange, getQuickEntryContext } from "@/lib/queries";
-import { useAuth } from "@/providers/AuthProvider";
 import { useFormatCurrency } from "@/providers/CurrencyProvider";
 import { useToast } from "@/providers/ToastProvider";
 import { useThemeColors } from "@/theme/useThemeColors";
 import { ICON } from "@/theme/tokens";
 import { useLocale, useT } from "@/providers/LocaleProvider";
+import { useOwner } from "@/providers/OwnerProvider";
 import type { Key } from "@finance/core/i18n/t";
 
 /** A statement bigger than this is almost certainly the wrong file. */
@@ -57,7 +57,7 @@ const STATUS_LABEL: Record<ImportRow["status"], Key> = {
 export default function ImportScreen() {
   const locale = useLocale();
   const t = useT();
-  const { user } = useAuth();
+  const { ownerId } = useOwner();
   const router = useRouter();
   const { toast } = useToast();
   const formatEuro = useFormatCurrency();
@@ -74,14 +74,14 @@ export default function ImportScreen() {
   const [pending, setPending] = useState(false);
 
   const { data } = useRefreshable(async () => {
-    if (!user) {
+    if (!ownerId) {
       return { categories: [] as Category[], merchants: [] };
     }
-    const context = await getQuickEntryContext(user.id);
+    const context = await getQuickEntryContext(ownerId);
     return { categories: context.categories, merchants: context.merchants };
     // Read once for the wizard: a list that moved under a mapping in progress
     // would be a stranger thing than one a minute out of date.
-  }, [user?.id], { reads: [] });
+  }, [ownerId], { reads: [] });
 
   const categories = useMemo(() => data?.categories ?? [], [data?.categories]);
   const merchantIndex = useMemo(
@@ -167,7 +167,7 @@ export default function ImportScreen() {
   }
 
   async function buildReview() {
-    if (!mapping || !user) {
+    if (!mapping || !ownerId) {
       return;
     }
     setPending(true);
@@ -186,7 +186,7 @@ export default function ImportScreen() {
     if (dates.length > 0) {
       try {
         existing = await getExistingKeysForRange(
-          user.id,
+          ownerId,
           dates[0]!,
           dates.at(-1)!,
         );
