@@ -77,6 +77,7 @@ export const en = {
    * matching on the route finds nothing.
    */
   nav: {
+    yearReview: "Your year",
     bearing: "Overview",
     ledger: "Ledger",
     charges: "Recurring",
@@ -3210,6 +3211,42 @@ export const en = {
     close: {
       title: "Your first month review, on {date}",
       body: "That day, note your account's balance: Pluclair compares it with what you recorded and finds what slipped through.",
+    },
+  },
+  yearReview: {
+    title: "Your {year}",
+    lead: "The year gone, in a few figures, all of them from your accounts.",
+    keptCaption: "kept in {year}",
+    keptRate: "that is {rate} of your income",
+    keptFromCloses: "From your month reviews.",
+    keptFromRecorded:
+      "Your income less your recorded spending: with no month review, nothing checks it.",
+    closesCaption: { one: "month reviewed", other: "months reviewed" },
+    bestRun: {
+      one: "Longest run: {count} month",
+      other: "Longest run: {count} months",
+    },
+    categoryChangeCaption: "{name}, against {previous}",
+    categoryShareCaption: "{name}, of your spending",
+    milestonesCaption: {
+      one: "milestone reached",
+      other: "milestones reached",
+    },
+    share: "Share",
+    shareHint: "The image shows no amount: percentages and counts.",
+    download: "Download the image",
+    ready: "Your {year} is ready",
+    readyBody: "What the year kept, your month reviews, what moved most.",
+    open: "See it",
+    seen: "Seen",
+    nothing: "Nothing to tell for {year}: no transaction and no month review.",
+    imageTitle: "My {year}",
+    imageKeptCaption: "of my income kept",
+    imageCategoryChangeCaption: "{name}, against {previous}",
+    imageCategoryShareCaption: "{name}, of my spending",
+    imageRunCaption: {
+      one: "month, my longest run",
+      other: "months, my longest run",
     },
   },
   subscriptions: {

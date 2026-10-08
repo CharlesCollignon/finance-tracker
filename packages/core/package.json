@@ -114,6 +114,7 @@
     "./wallet-read-budget": "./src/wallet-read-budget.ts",
     "./wallet-read-prompt": "./src/wallet-read-prompt.ts",
     "./weekly-recap": "./src/weekly-recap.ts",
+    "./year-review": "./src/year-review.ts",
     "./xirr": "./src/xirr.ts",
     "./loan-schedule": "./src/loan-schedule.ts",
     "./property": "./src/property.ts",

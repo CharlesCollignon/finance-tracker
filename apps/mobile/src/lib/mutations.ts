@@ -32,6 +32,7 @@ import * as aiConnection from "@finance/data/ai-connection";
 import { recordActivity } from "@finance/data/activity";
 import { saveBalanceReading as saveReading } from "@finance/data/balance-reading";
 import { setupPrompt, type SetupStep } from "@finance/core/setup-steps";
+import { yearReviewPrompt } from "@finance/core/year-review";
 import type { NotificationKind } from "@finance/core/notification-kinds";
 import type { ActionResult } from "@finance/core/action-result";
 import type {
@@ -630,6 +631,16 @@ export function recordAppOpened(): void {
 /** « Puis-je me permettre ? » opened, for the audience figures. */
 export function recordAffordAsked(): void {
   void recordActivity(supabase, "afford");
+}
+
+/** « Vu »: put « Votre année » away on Le point, on every device. */
+export function dismissYearReview(
+  year: number,
+  locale: Locale,
+): Promise<ActionResult> {
+  return asUser((userId) =>
+    preferences.dismissPrompt(supabase, userId, yearReviewPrompt(year), locale),
+  );
 }
 
 /** « Plus tard »: put one setup card away, for good and on every device. */
