@@ -39,6 +39,7 @@ import type {
   BankAccountRole,
   SavingsAccountKind,
 } from "@finance/core/types/database";
+import { ownerFor } from "@/lib/owner";
 import { supabase } from "@/lib/supabase";
 import type { Locale } from "@finance/core/i18n/locale";
 import { dbError } from "@finance/data/errors";
@@ -65,10 +66,20 @@ async function asUser<T extends object>(
   return work(userId);
 }
 
+/**
+ * Run a write on the shared screens' owner: the person's own money, or
+ * their space's under « Commun » (`lib/owner.ts`) — the web's `asOwner`.
+ */
+async function asOwner<T extends object>(
+  work: (ownerId: string) => Promise<ActionResult<T>>,
+): Promise<ActionResult<T>> {
+  return asUser((userId) => work(ownerFor(userId)));
+}
+
 export async function createTransaction(
   input: ledger.NewTransaction,
 ): Promise<ActionResult> {
-  const result = await asUser((userId) =>
+  const result = await asOwner((userId) =>
     ledger.createTransaction(supabase, userId, input),
   );
   if (result.success) {
@@ -81,20 +92,20 @@ export async function createTransaction(
 export async function updateTransaction(
   input: ledger.TransactionChange,
 ): Promise<ActionResult> {
-  return asUser((userId) => ledger.updateTransaction(supabase, userId, input));
+  return asOwner((userId) => ledger.updateTransaction(supabase, userId, input));
 }
 
 export async function deleteTransaction(
   id: string,
 ): Promise<ActionResult<{ undo: deletions.UndoToken }>> {
-  return asUser((userId) => ledger.deleteTransaction(supabase, userId, id));
+  return asOwner((userId) => ledger.deleteTransaction(supabase, userId, id));
 }
 
 /** Take back one delete — transactions or a category — by its token. */
 export async function restoreDeletion(
   token: string,
 ): Promise<ActionResult<{ restored: number }>> {
-  return asUser((userId) => deletions.restoreDeletion(supabase, userId, token));
+  return asOwner((userId) => deletions.restoreDeletion(supabase, userId, token));
 }
 
 /**
@@ -163,7 +174,7 @@ export async function removeInvestmentPosition(
 export async function upsertCategory(
   input: Omit<categories.CategoryChange, "icon"> & { icon?: string | null },
 ): Promise<ActionResult> {
-  return asUser((userId) =>
+  return asOwner((userId) =>
     categories.upsertCategory(supabase, userId, {
       ...input,
       icon: input.icon ?? undefined,
@@ -175,7 +186,7 @@ export async function setCategoryArchived(
   id: string,
   archived: boolean,
 ): Promise<ActionResult> {
-  return asUser((userId) =>
+  return asOwner((userId) =>
     categories.setCategoryArchived(supabase, userId, id, archived),
   );
 }
@@ -183,14 +194,14 @@ export async function setCategoryArchived(
 export async function deleteCategory(
   id: string,
 ): Promise<ActionResult<{ undo: deletions.UndoToken }>> {
-  return asUser((userId) => categories.deleteCategory(supabase, userId, id));
+  return asOwner((userId) => categories.deleteCategory(supabase, userId, id));
 }
 
 export async function unskipRecurringOccurrence(
   templateId: string,
   occurredOn: string,
 ): Promise<ActionResult> {
-  return asUser((userId) =>
+  return asOwner((userId) =>
     occurrences.unskipRecurringOccurrence(
       supabase,
       userId,
@@ -213,7 +224,7 @@ export async function upsertRecurringTemplate(
     return { error: parsed.error.issues[0]?.message ?? "errors.invalidInput" };
   }
 
-  const saved = await saveRecurringTemplate(supabase, userId, parsed.data, {
+  const saved = await saveRecurringTemplate(supabase, ownerFor(userId), parsed.data, {
     startThisMonth: input.startThisMonth === true,
     applyToThisMonth: input.applyToThisMonth === true,
   });
@@ -223,7 +234,7 @@ export async function upsertRecurringTemplate(
 export async function deleteRecurringTemplate(
   id: string,
 ): Promise<ActionResult> {
-  return asUser((userId) =>
+  return asOwner((userId) =>
     occurrences.deleteRecurringTemplate(supabase, userId, id),
   );
 }
@@ -232,25 +243,31 @@ export async function toggleRecurringActive(
   id: string,
   active: boolean,
 ): Promise<ActionResult> {
-  return asUser((userId) =>
+  return asOwner((userId) =>
     occurrences.toggleRecurringActive(supabase, userId, id, active),
   );
 }
 
-/** Write the charges whose day has come — `@finance/data/occurrences`. */
-export async function fillThisMonth(): Promise<{
+/**
+ * Write the charges whose day has come — `@finance/data/occurrences` — for
+ * the owner on screen, named by the caller so a switch that has just
+ * happened is the one filled.
+ */
+export async function fillThisMonth(ownerId?: string): Promise<{
   created: number;
   error?: string;
 }> {
   const userId = await requireUserId();
-  return userId ? occurrences.fillThisMonth(supabase, userId) : { created: 0 };
+  return userId
+    ? occurrences.fillThisMonth(supabase, ownerId ?? ownerFor(userId))
+    : { created: 0 };
 }
 
 export async function recordPlannedNow(
   templateId: string,
   occurredOn: string,
 ): Promise<ActionResult<{ transactionId: string }>> {
-  return asUser((userId) =>
+  return asOwner((userId) =>
     occurrences.recordPlannedNow(supabase, userId, templateId, occurredOn),
   );
 }
@@ -260,7 +277,7 @@ export async function undoRecordPlanned(
   templateId: string,
   occurredOn: string,
 ): Promise<ActionResult> {
-  return asUser((userId) =>
+  return asOwner((userId) =>
     occurrences.undoRecordPlanned(
       supabase,
       userId,
@@ -275,7 +292,7 @@ export async function skipPlannedOccurrence(
   templateId: string,
   occurredOn: string,
 ): Promise<ActionResult> {
-  return asUser((userId) =>
+  return asOwner((userId) =>
     occurrences.skipPlannedOccurrence(supabase, userId, templateId, occurredOn),
   );
 }
@@ -366,7 +383,7 @@ export async function saveAccountTargets(
 export async function importTransactions(
   rows: ledger.ImportedRow[],
 ): Promise<ActionResult<{ imported: number }>> {
-  return asUser((userId) => ledger.importTransactions(supabase, userId, rows));
+  return asOwner((userId) => ledger.importTransactions(supabase, userId, rows));
 }
 
 /**
@@ -378,7 +395,7 @@ export async function importTransactions(
 export async function deleteTransactions(
   ids: string[],
 ): Promise<ActionResult<{ deleted: number; undo: deletions.UndoToken }>> {
-  return asUser((userId) => ledger.deleteTransactions(supabase, userId, ids));
+  return asOwner((userId) => ledger.deleteTransactions(supabase, userId, ids));
 }
 
 /**
@@ -393,7 +410,7 @@ export async function moveTransactions(
   ids: string[],
   categoryId: string,
 ): Promise<ActionResult<{ moved: number }>> {
-  return asUser((userId) =>
+  return asOwner((userId) =>
     ledger.moveTransactions(supabase, userId, ids, categoryId),
   );
 }
@@ -407,7 +424,7 @@ export async function previewMonthCloseFor(
   month: number,
   closingBalance: number,
 ): Promise<ActionResult<{ result: MonthCloseResult }>> {
-  return asUser((userId) =>
+  return asOwner((userId) =>
     closing.previewClose(supabase, userId, year, month, closingBalance),
   );
 }
@@ -418,7 +435,7 @@ export async function recordMonthClose(
   closingBalance: number,
   locale: Locale,
 ): Promise<ActionResult<{ result: MonthCloseResult; run: RunMoment | null }>> {
-  const result = await asUser((userId) =>
+  const result = await asOwner((userId) =>
     closing.recordMonthClose(
       supabase,
       userId,
@@ -438,7 +455,7 @@ export async function deleteMonthClose(
   year: number,
   month: number,
 ): Promise<ActionResult> {
-  return asUser((userId) =>
+  return asOwner((userId) =>
     closing.deleteMonthClose(supabase, userId, year, month),
   );
 }
@@ -446,11 +463,11 @@ export async function deleteMonthClose(
 export async function updateUnrecordedCap(
   cap: number | null,
 ): Promise<ActionResult> {
-  return asUser((userId) => closing.updateUnrecordedCap(supabase, userId, cap));
+  return asOwner((userId) => closing.updateUnrecordedCap(supabase, userId, cap));
 }
 
 export async function updateCloseDay(closeDay: number): Promise<ActionResult> {
-  return asUser((userId) => closing.updateCloseDay(supabase, userId, closeDay));
+  return asOwner((userId) => closing.updateCloseDay(supabase, userId, closeDay));
 }
 
 /* ------------------------------------------ charges the bank already paid */
@@ -468,7 +485,7 @@ export async function fulfilOccurrence(
   transactionId: string,
   locale: Locale,
 ): Promise<ActionResult> {
-  return asUser((userId) =>
+  return asOwner((userId) =>
     decisions.fulfilOccurrence(
       supabase,
       userId,
@@ -485,7 +502,7 @@ export async function moveBackEarlyIncome(
   transactionId: string,
   locale: Locale,
 ): Promise<ActionResult> {
-  return asUser((userId) =>
+  return asOwner((userId) =>
     decisions.moveBackEarlyIncome(supabase, userId, transactionId, locale),
   );
 }
@@ -496,7 +513,7 @@ export async function refuseFulfilment(
   occurredOn: string,
   transactionId: string,
 ): Promise<ActionResult> {
-  return asUser((userId) =>
+  return asOwner((userId) =>
     decisions.refuseFulfilment(
       supabase,
       userId,
@@ -520,24 +537,24 @@ export async function importFeedItem(
   categoryId: string,
   force = false,
 ): Promise<ActionResult<{ duplicateOf?: string }>> {
-  return asUser((userId) =>
+  return asOwner((userId) =>
     feed.importFeedItem(supabase, userId, itemId, categoryId, force),
   );
 }
 
 export async function ignoreFeedItem(itemId: string): Promise<ActionResult> {
-  return asUser((userId) => feed.ignoreFeedItem(supabase, userId, itemId));
+  return asOwner((userId) => feed.ignoreFeedItem(supabase, userId, itemId));
 }
 
 export async function undoFeedDecision(itemId: string): Promise<ActionResult> {
-  return asUser((userId) => feed.undoFeedDecision(supabase, userId, itemId));
+  return asOwner((userId) => feed.undoFeedDecision(supabase, userId, itemId));
 }
 
 /** Every row an earlier sync merged away on its own, back in the inbox. */
 export async function reopenSwallowedFeedItems(): Promise<
   ActionResult<{ reopened: number }>
 > {
-  return asUser((userId) => feed.reopenSwallowedFeedItems(supabase, userId));
+  return asOwner((userId) => feed.reopenSwallowedFeedItems(supabase, userId));
 }
 
 /* ------------------------------- what the statement implies, as entries */
@@ -550,7 +567,7 @@ export async function reopenSwallowedFeedItems(): Promise<
 export async function acceptRecurringProposal(
   key: string,
 ): Promise<ActionResult<{ name?: string }>> {
-  return asUser((userId) =>
+  return asOwner((userId) =>
     proposals.acceptRecurringProposal(supabase, userId, key, todayIsoLocal()),
   );
 }
@@ -558,7 +575,7 @@ export async function acceptRecurringProposal(
 export async function dismissRecurringProposal(
   key: string,
 ): Promise<ActionResult> {
-  return asUser((userId) =>
+  return asOwner((userId) =>
     proposals.dismissRecurringProposal(supabase, userId, key),
   );
 }
@@ -618,7 +635,7 @@ export function dismissWeeklyRecap(
 
 /** What the account holds today, typed on Le point's setup card. */
 export function saveBalanceReading(amount: number): Promise<ActionResult> {
-  return asUser((userId) =>
+  return asOwner((userId) =>
     saveReading(supabase, userId, { amount, today: todayIsoLocal() }),
   );
 }

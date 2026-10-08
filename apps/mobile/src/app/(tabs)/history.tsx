@@ -12,8 +12,8 @@ import { Screen } from "@/components/ui/Screen";
 import { ScreenSkeleton } from "@/components/ui/Skeleton";
 import { useRefreshable } from "@/hooks/useRefreshable";
 import { getCategoryScreen } from "@/lib/category-screen";
-import { useAuth } from "@/providers/AuthProvider";
 import { useLocale, useT } from "@/providers/LocaleProvider";
+import { useOwner } from "@/providers/OwnerProvider";
 import { useTabBarClearance } from "@/theme/chrome";
 
 /**
@@ -27,14 +27,16 @@ import { useTabBarClearance } from "@/theme/chrome";
 export default function HistoryScreen() {
   const t = useT();
   const locale = useLocale();
-  const { user } = useAuth();
+  // The category reads and the re-rank stay a person's (their tallies,
+  // their rows): under « Commun » they are not offered.
+  const { ownerId, joint } = useOwner();
   const tabBarClearance = useTabBarClearance();
   const [openId, setOpenId] = useState<string | null>(null);
 
   const { data, loading, refreshing, onRefreshAll, onRefresh, error } =
     useRefreshable(
-      async () => (user ? await getCategoryScreen(user.id, locale) : null),
-      [user?.id, locale],
+      async () => (ownerId ? await getCategoryScreen(ownerId, locale) : null),
+      [ownerId, locale],
       { reads: ["transactions", "categories", "reads"] },
     );
 
@@ -47,7 +49,7 @@ export default function HistoryScreen() {
   );
 
   return (
-    <Screen title={t("nav.ledger")}>
+    <Screen title={t("nav.ledger")} shared>
       <SurfaceTabs tabs={LEDGER_TABS} className="mb-3" />
 
       {loading && !data ? (
@@ -75,7 +77,7 @@ export default function HistoryScreen() {
                   findings={screen.findings}
                   remarks={screen.remarks}
                   rerankState={screen.rerankState}
-                  rerankWritable={data.rerankWritable}
+                  rerankWritable={!joint && data.rerankWritable}
                   rerankWritesLeft={data.rerankWritesLeft}
                   breakdown={screen.breakdown}
                   breakdownTotal={screen.breakdownTotal}
@@ -113,7 +115,7 @@ export default function HistoryScreen() {
                           screen.readThin[openCard.history.categoryId] ?? true
                         }
                         readWritesLeft={data.readWritesLeft}
-                        readWritable={data.readWritable}
+                        readWritable={!joint && data.readWritable}
                         readAccount={data.writer.account}
                         // Pluclair's model or the user's own; which model
                         // wrote a stored read is on the read itself.

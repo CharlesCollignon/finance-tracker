@@ -25,6 +25,7 @@ import { LOCALE_LABELS, type Locale } from "@finance/core/i18n/locale";
 import { exactModelLabel } from "@finance/core/model-name";
 import { BylineMark, WriterMark } from "@/components/AiMark";
 import { useLocale, useT } from "@/providers/LocaleProvider";
+import { useOwner } from "@/providers/OwnerProvider";
 
 interface MonthReadProps {
   year: number;
@@ -94,6 +95,8 @@ export function MonthRead({
 
   const locale = useLocale();
   const t = useT();
+  // Under « Commun », the space's month: its figures, its quota.
+  const { joint, ownerId } = useOwner();
   const rendered = read
     ? renderMonthRead(read, readFacts, formatEuro, readLocale)
     : null;
@@ -118,7 +121,11 @@ export function MonthRead({
     }
     setPending(true);
     void (async () => {
-      const outcome = await writeMonthRead(year, month);
+      const outcome = await writeMonthRead(
+        year,
+        month,
+        joint && ownerId ? ownerId : undefined,
+      );
       setPending(false);
       if (outcome.writesLeft !== null) {
         setLeft(outcome.writesLeft);

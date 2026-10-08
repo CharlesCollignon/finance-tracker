@@ -56,7 +56,6 @@ import { Text } from "@/components/ui/Text";
 import { useFlag } from "@/hooks/useFlag";
 import { useRefreshable } from "@/hooks/useRefreshable";
 import { getPropertyNames } from "@/lib/properties";
-import { useAuth } from "@/providers/AuthProvider";
 import { useToast } from "@/providers/ToastProvider";
 import { useFormatCurrency } from "@/providers/CurrencyProvider";
 import { useQuickAdd } from "@/providers/QuickAddProvider";
@@ -76,6 +75,7 @@ import {
 } from "@/lib/queries";
 import { useTabBarClearance } from "@/theme/chrome";
 import { useLocale, useT } from "@/providers/LocaleProvider";
+import { useOwner } from "@/providers/OwnerProvider";
 import type { Translate } from "@finance/core/i18n/t";
 
 /** Income first, as on the web: it is what the other three are paid from. */
@@ -104,7 +104,7 @@ function groupLabels(t: Translate): Record<CategoryType, string> {
 
 export default function RecurringScreen() {
   const tabBarClearance = useTabBarClearance();
-  const { user } = useAuth();
+  const { ownerId } = useOwner();
   const formatEuro = useFormatCurrency();
   const locale = useLocale();
   const t = useT();
@@ -125,13 +125,13 @@ export default function RecurringScreen() {
   // The services the ledger shows being paid, for « Abonnements »: its own
   // load, so the charges do not wait on a year of rows.
   const { data: watched } = useRefreshable(
-    async () => (user ? await getSubscriptions(user.id) : null),
-    [user?.id],
+    async () => (ownerId ? await getSubscriptions(ownerId) : null),
+    [ownerId],
     { reads: ["transactions"] },
   );
   const { data, loading, refreshing, onRefreshAll, onRefresh, error } =
     useRefreshable(async () => {
-      if (!user) {
+      if (!ownerId) {
         return {
           templates: [] as RecurringTemplateWithCategory[],
           categories: [] as Category[],
@@ -143,15 +143,15 @@ export default function RecurringScreen() {
       }
       const [templates, categories, recorded, properties, bankFed] =
         await Promise.all([
-          getRecurringTemplates(user.id),
-          getCategories(user.id),
+          getRecurringTemplates(ownerId),
+          getCategories(ownerId),
           // Which charges have already been recorded this month, so saving
           // an edit can ask whether those rows change too.
-          getRecordedChargeDates(user.id),
+          getRecordedChargeDates(ownerId),
           // What a charge can belong to, for an account that keeps
           // properties.
-          showProperty ? getPropertyNames(user.id) : Promise.resolve([]),
-          hasBankFeed(user.id),
+          showProperty ? getPropertyNames(ownerId) : Promise.resolve([]),
+          hasBankFeed(ownerId),
         ]);
       // Only worth asking where there is a statement to read it out of, as
       // on the web. Without one the transactions are the user's own typing,
@@ -159,12 +159,12 @@ export default function RecurringScreen() {
       // And only a bank can have debited a wallet from the account.
       const [proposals, debited] = bankFed
         ? await Promise.all([
-            getRecurringProposals(user.id, todayIsoLocal()),
-            getDebitedWalletCategories(user.id),
+            getRecurringProposals(ownerId, todayIsoLocal()),
+            getDebitedWalletCategories(ownerId),
           ])
         : [[], new Set<string>()];
       return { templates, categories, recorded, properties, proposals, debited };
-    }, [user?.id, showProperty], {
+    }, [ownerId, showProperty], {
       reads: ["templates", "categories", "transactions", "properties", "bank"],
     });
   const propertyNames = useMemo(
@@ -341,7 +341,7 @@ export default function RecurringScreen() {
   }));
 
   return (
-    <Screen title={t("nav.charges")} className="pb-0">
+    <Screen title={t("nav.charges")} className="pb-0" shared>
       {loading && !data ? (
         <ScreenSkeleton rows={5} />
       ) : error ? (

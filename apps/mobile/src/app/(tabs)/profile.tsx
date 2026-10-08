@@ -22,6 +22,7 @@ import { disconnectBank } from "@/lib/bank-connect";
 import { Screen } from "@/components/ui/Screen";
 import { Text } from "@/components/ui/Text";
 import { PasskeysPanel } from "@/components/profile/SecurityCards";
+import { SpaceSection } from "@/components/profile/SpaceSection";
 import {
   AiAccountSection,
   type AiAccountRow,
@@ -369,6 +370,9 @@ export default function ProfileScreen() {
             }
           />
         </ListSection>
+
+        {/* Right under the person's money: the money they share. */}
+        <SpaceSection selfName={fullName || user?.email || ""} />
 
         {/* Beside the money it reads: the written reads are what an AI
             account is for. */}

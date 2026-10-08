@@ -184,6 +184,8 @@ const TIMEOUT_MS = 45_000;
 export async function writeMonthRead(
   year: number,
   month: number,
+  /** A shared space's month, read under « Commun »; the person's otherwise. */
+  owner?: string,
 ): Promise<WriteOutcome> {
   const quiet: WriteOutcome = {
     written: false,
@@ -216,7 +218,7 @@ export async function writeMonthRead(
         Authorization: `Bearer ${token}`,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ year, month }),
+      body: JSON.stringify(owner ? { year, month, owner } : { year, month }),
       signal: controller.signal,
     });
 

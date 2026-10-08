@@ -13,9 +13,9 @@ import { Text } from "@/components/ui/Text";
 import { cn } from "@/lib/cn";
 import { hapticLight } from "@/lib/haptics";
 import { searchEveryMonth } from "@/lib/queries";
-import { useAuth } from "@/providers/AuthProvider";
 import { useFormatCurrency } from "@/providers/CurrencyProvider";
 import { useLocale, useT } from "@/providers/LocaleProvider";
+import { useOwner } from "@/providers/OwnerProvider";
 
 /** How many rows from other months are listed before « +N ». */
 const SHOWN = 20;
@@ -41,7 +41,7 @@ export function EveryMonthResults({
   const t = useT();
   const locale = useLocale();
   const format = useFormatCurrency();
-  const { user } = useAuth();
+  const { ownerId } = useOwner();
   const [found, setFound] = useState<{
     query: string;
     rows: TransactionWithCategory[];
@@ -50,12 +50,12 @@ export function EveryMonthResults({
   const wanted = searchesEveryMonth(searchNeedle(query));
 
   useEffect(() => {
-    if (!wanted || !user) {
+    if (!wanted || !ownerId) {
       return;
     }
     let current = true;
     const timer = setTimeout(() => {
-      void searchEveryMonth(user.id, query)
+      void searchEveryMonth(ownerId, query)
         .then((result) => {
           if (current) {
             setFound({ query, ...result });
@@ -69,7 +69,7 @@ export function EveryMonthResults({
       current = false;
       clearTimeout(timer);
     };
-  }, [query, wanted, user]);
+  }, [query, wanted, ownerId]);
 
   if (!wanted || !found || found.query !== query) {
     return null;

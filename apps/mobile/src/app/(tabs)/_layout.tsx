@@ -16,6 +16,7 @@ import { ReminderProvider } from "@/providers/ReminderProvider";
 import { useThemeColors } from "@/theme/useThemeColors";
 import { useAppForeground } from "@/hooks/useAppForeground";
 import { useFlag } from "@/hooks/useFlag";
+import { useOwner } from "@/providers/OwnerProvider";
 import { useTabBadges } from "@/hooks/useTabBadges";
 import { useMonthFill } from "@/hooks/useMonthFill";
 import { useT } from "@/providers/LocaleProvider";
@@ -92,6 +93,9 @@ const TABS: TabConfig[] = [
 ];
 
 /** The sixth surface, drawn only for an account that has the flag. */
+/** The tabs that are a person's alone, hidden under « Commun ». */
+const PERSONAL_TABS: ReadonlySet<string> = new Set(["planning", "investments"]);
+
 const PROPERTY_TAB: TabConfig = {
   name: "property",
   titleKey: "nav.property",
@@ -112,6 +116,9 @@ export default function TabsLayout() {
   const barHeight = useTabBarHeight();
   const badges = useTabBadges();
   const showProperty = useFlag("property.track");
+  // Under « Commun », only the tabs a shared space has: no plan, no wallets,
+  // no home yet — those stay a person's.
+  const { joint } = useOwner();
   // The month's charges, written in when the app opens — there is no Apply
   // button any more.
   useMonthFill();
@@ -196,6 +203,8 @@ export default function TabsLayout() {
                     key={name}
                     name={name}
                     options={{
+                      href:
+                        joint && PERSONAL_TABS.has(name) ? null : undefined,
                       title: t(titleKey),
                       tabBarIcon: ({ focused, color, size }) => (
                         <Ionicons
@@ -230,7 +239,7 @@ export default function TabsLayout() {
                 name={PROPERTY_TAB.name}
                 options={{
                   // Not a tab at all without the flag, so the bar keeps five.
-                  href: showProperty ? undefined : null,
+                  href: showProperty && !joint ? undefined : null,
                   title: t(PROPERTY_TAB.titleKey),
                   tabBarIcon: ({ focused, color, size }) => (
                     <Ionicons

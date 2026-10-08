@@ -20,12 +20,12 @@ import { QuickAddSheet, type AddKind } from "@/components/QuickAddSheet";
 import { useRefreshable } from "@/hooks/useRefreshable";
 import { hapticMedium } from "@/lib/haptics";
 import { getQuickEntryContext, type QuickEntryContext } from "@/lib/queries";
-import { useAuth } from "@/providers/AuthProvider";
 import { Blur } from "@/components/ui/Blur";
 import { useTabBarHeight } from "@/theme/chrome";
 import { useThemeColors } from "@/theme/useThemeColors";
 import { ICON, RADIUS } from "@/theme/tokens";
 import { useT } from "@/providers/LocaleProvider";
+import { useOwner } from "@/providers/OwnerProvider";
 import { DURATION } from "@finance/core/motion";
 import type { CategoryType } from "@finance/core/types/database";
 
@@ -67,7 +67,7 @@ const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
  * whichever button was pressed.
  */
 export function QuickAddProvider({ children }: { children: ReactNode }) {
-  const { user } = useAuth();
+  const { ownerId } = useOwner();
   const [isOpen, setIsOpen] = useState(false);
   const [date, setDate] = useState<string | undefined>(undefined);
   const [kind, setKind] = useState<AddKind>("transaction");
@@ -82,12 +82,12 @@ export function QuickAddProvider({ children }: { children: ReactNode }) {
   // time the sheet opens.
   const { data } = useRefreshable(
     async () => {
-      if (!user) {
+      if (!ownerId) {
         return EMPTY;
       }
-      return getQuickEntryContext(user.id);
+      return getQuickEntryContext(ownerId);
     },
-    [user?.id],
+    [ownerId],
     { reads: ["categories", "transactions"] },
   );
 
@@ -105,7 +105,7 @@ export function QuickAddProvider({ children }: { children: ReactNode }) {
   // parameter off so a later visit does not open it again.
   const router = useRouter();
   const { add } = useGlobalSearchParams<{ add?: string }>();
-  const linked = add === "1" && Boolean(user) && !isOpen;
+  const linked = add === "1" && Boolean(ownerId) && !isOpen;
   const close = useCallback(() => {
     setIsOpen(false);
     if (add === "1") {
@@ -122,7 +122,7 @@ export function QuickAddProvider({ children }: { children: ReactNode }) {
   return (
     <QuickAddContext.Provider value={value}>
       {children}
-      {user ? <QuickAddFab /> : null}
+      {ownerId ? <QuickAddFab /> : null}
       <QuickAddSheet
         open={isOpen || linked}
         onClose={close}

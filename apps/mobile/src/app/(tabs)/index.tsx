@@ -35,6 +35,7 @@ import {
   gatherHomeRecap,
 } from "@/lib/home-data";
 import { useAuth } from "@/providers/AuthProvider";
+import { useOwner } from "@/providers/OwnerProvider";
 import { useLocale, useT } from "@/providers/LocaleProvider";
 import { useTabBarClearance } from "@/theme/chrome";
 import { useThemeColors } from "@/theme/useThemeColors";
@@ -61,6 +62,8 @@ import { useScreenMonth } from "@/providers/MonthProvider";
  */
 export default function HomeScreen() {
   const { user } = useAuth();
+  // Whose month: the person's, or their space's under « Commun ».
+  const { ownerId } = useOwner();
   const t = useT();
   const locale = useLocale();
   const colors = useThemeColors();
@@ -70,8 +73,8 @@ export default function HomeScreen() {
 
   const { data, error, refreshing, onRefresh, onRefreshAll } = useRefreshable(
     async () =>
-      user ? await gatherHomeMonth(user.id, year, month, locale) : null,
-    [user?.id, year, month, locale],
+      ownerId ? await gatherHomeMonth(ownerId, year, month, locale) : null,
+    [ownerId, year, month, locale],
   );
 
   // A month ahead has nothing to read yet: nothing has happened in it.
@@ -80,16 +83,16 @@ export default function HomeScreen() {
   // thing the screen asks for, and the balance should not wait on it.
   const { data: read, reload: reloadRead } = useRefreshable(
     async () =>
-      user && readable
-        ? await gatherHomeRead(user.id, year, month, locale)
+      user && ownerId && readable
+        ? await gatherHomeRead(ownerId, year, month, locale, user.id)
         : null,
-    [user?.id, year, month, locale, readable],
+    [user?.id, ownerId, year, month, locale, readable],
   );
 
   // The week's recap: its own load too, and nothing on most days.
   const { data: recap } = useRefreshable(
-    async () => (user ? await gatherHomeRecap(user.id, locale) : null),
-    [user?.id, locale],
+    async () => (ownerId ? await gatherHomeRecap(ownerId, locale) : null),
+    [ownerId, locale],
     { reads: ["transactions", "templates", "bank", "preferences"] },
   );
 
@@ -129,7 +132,7 @@ export default function HomeScreen() {
   const next = () => index++;
 
   return (
-    <Screen title={t("nav.bearing")} className="px-4 py-0">
+    <Screen title={t("nav.bearing")} className="px-4 py-0" shared>
       <ScrollView
         refreshControl={
           <RefreshControl

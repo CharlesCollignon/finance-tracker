@@ -47,9 +47,9 @@ import {
   wholeStatementWorthFetching,
   type DecidedFeedRow,
 } from "@/lib/review-data";
-import { useAuth } from "@/providers/AuthProvider";
 import { useT } from "@/providers/LocaleProvider";
 import { useToast } from "@/providers/ToastProvider";
+import { useOwner } from "@/providers/OwnerProvider";
 import { ICON } from "@/theme/tokens";
 import { useThemeColors } from "@/theme/useThemeColors";
 
@@ -128,8 +128,8 @@ export function BankInboxSheet({
   const colors = useThemeColors();
   const reduceMotion = useReducedMotion();
   const { toast } = useToast();
-  const { user } = useAuth();
-  const userId = user?.id ?? null;
+  const { ownerId } = useOwner();
+  const userId = ownerId;
 
   /*
    * Keyed by group or by row, like the web inbox's `choices`: a missing key

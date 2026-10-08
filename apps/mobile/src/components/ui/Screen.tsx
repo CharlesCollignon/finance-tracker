@@ -8,6 +8,7 @@ import { AppBackdrop, useSharedBackdrop } from "@/components/AppBackdrop";
 import { FadeIn } from "@/components/motion/FadeIn";
 import { AccountMenu } from "@/components/layout/AccountMenu";
 import { Orb } from "@/components/Orb";
+import { OwnerSwitch } from "@/components/OwnerSwitch";
 import { PrivacyToggle } from "@/components/PrivacyToggle";
 import { RefreshButton } from "@/components/RefreshButton";
 import { Text } from "@/components/ui/Text";
@@ -15,6 +16,7 @@ import { hapticLight } from "@/lib/haptics";
 import { CHROME_MAX_FONT_SCALE, useChromeFontScale } from "@/theme/chrome";
 import { ICON } from "@/theme/tokens";
 import { useThemeColors } from "@/theme/useThemeColors";
+import { useOwner } from "@/providers/OwnerProvider";
 
 export interface ScreenProps {
   title?: string;
@@ -39,6 +41,12 @@ export interface ScreenProps {
    * the title, as a navigation bar puts it.
    */
   back?: { label: string; onPress: () => void };
+  /**
+   * A screen both a person and their shared space have: for someone in a
+   * space, « Moi · Commun » takes the title's place — the tab bar already
+   * names the screen.
+   */
+  shared?: boolean;
 }
 
 /** At the system's default text size; it grows with the setting below. */
@@ -73,8 +81,11 @@ export function Screen({
   showAccountMenu = true,
   showLogo = true,
   back,
+  shared = false,
 }: ScreenProps) {
   const colors = useThemeColors();
+  const { space } = useOwner();
+  const switchShown = shared && space !== null;
   // Under the tabs, the backdrop is the navigator's, drawn once.
   const sharedBackdrop = useSharedBackdrop();
   /*
@@ -142,16 +153,20 @@ export function Screen({
             ) : null}
             {/* A long name — a property's own — shrinks a little before it
                 gives up its end. */}
-            <Text
-              className="min-w-0 shrink font-sans text-foreground"
-              style={{ fontSize: TITLE_SIZE }}
-              maxFontSizeMultiplier={CHROME_MAX_FONT_SCALE}
-              numberOfLines={1}
-              adjustsFontSizeToFit
-              minimumFontScale={0.8}
-            >
-              {title}
-            </Text>
+            {switchShown ? (
+              <OwnerSwitch />
+            ) : (
+              <Text
+                className="min-w-0 shrink font-sans text-foreground"
+                style={{ fontSize: TITLE_SIZE }}
+                maxFontSizeMultiplier={CHROME_MAX_FONT_SCALE}
+                numberOfLines={1}
+                adjustsFontSizeToFit
+                minimumFontScale={0.8}
+              >
+                {title}
+              </Text>
+            )}
           </View>
 
           <View className="absolute inset-y-0 right-4 flex-row items-center gap-2">

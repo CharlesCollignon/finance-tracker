@@ -96,14 +96,23 @@ const TABLE_AREAS: Record<string, readonly DataArea[]> = {
  * so without this list asking which flags are on would read as a write to
  * everything and reload every screen.
  */
-const READ_RPCS: ReadonlySet<string> = new Set(["evaluated_feature_flags"]);
+const READ_RPCS: ReadonlySet<string> = new Set([
+  "evaluated_feature_flags",
+  // The shared space: what a link says, and who is in it.
+  "peek_space_invite",
+  "space_people",
+]);
 
 /**
  * Database functions that write something no screen draws: the audience
  * count (migration 058) is written on every return to the app, and reloading
  * every screen each time would be the opposite of what it is for.
  */
-const UNDRAWN_RPCS: ReadonlySet<string> = new Set(["record_activity"]);
+const UNDRAWN_RPCS: ReadonlySet<string> = new Set([
+  "record_activity",
+  // An invite link: nothing on screen draws one until it is used.
+  "create_space_invite",
+]);
 
 /** The web routes the phone writes through, by path. */
 const ROUTE_AREAS: Record<string, readonly DataArea[]> = {
