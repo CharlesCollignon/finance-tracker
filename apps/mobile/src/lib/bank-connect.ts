@@ -1,6 +1,12 @@
 import * as DocumentPicker from "expo-document-picker";
 import { File } from "expo-file-system";
 
+import {
+  BANK_WIZARD_FAMILY,
+  bankWizardPrompt,
+  bankWizardStepOf,
+  type BankWizardStep,
+} from "@finance/core/bank-wizard";
 import type { Locale } from "@finance/core/i18n/locale";
 import type { BankConnectionStatus } from "@finance/core/types/database";
 
@@ -142,6 +148,30 @@ export function shouldInvite(
     return false;
   }
   return !dismissed.includes(`bank-invite:${surface}`);
+}
+
+/** The step of « Connecter votre banque » this account reached, on any device. */
+export async function readBankWizardStep(
+  userId: string,
+): Promise<BankWizardStep> {
+  return bankWizardStepOf(
+    await preferences.readDismissedPrompts(supabase, userId),
+  );
+}
+
+/** Remember the step reached, for every device, as the web does. */
+export async function saveBankWizardStep(
+  userId: string,
+  step: BankWizardStep,
+  locale: Locale,
+): Promise<void> {
+  await preferences.dismissPrompt(
+    supabase,
+    userId,
+    bankWizardPrompt(step),
+    locale,
+    { replacing: BANK_WIZARD_FAMILY },
+  );
 }
 
 /** Stop inviting on one surface, for good and on every device. */

@@ -7,14 +7,12 @@ import { File } from "expo-file-system";
 
 import {
   buildImportRows,
-  detectDelimiter,
   guessColumnMapping,
-  looksLikeHeaderRow,
-  parseCsv,
   summarizeImportRows,
   type ColumnMapping,
   type ImportRow,
 } from "@finance/core/csv-import";
+import { decodeStatement, readStatement } from "@finance/core/statement-file";
 import { groupCategoriesByType } from "@finance/core/categories";
 import { guessCategoryForDescription } from "@finance/core/merchant-memory";
 import type { Category } from "@finance/core/types/database";
@@ -104,7 +102,13 @@ export default function ImportScreen() {
     const result = await DocumentPicker.getDocumentAsync({
       // Android reports CSV under several types, and some file providers give
       // none at all, so the filter stays wide and the parser decides.
-      type: ["text/csv", "text/comma-separated-values", "text/plain", "*/*"],
+      type: [
+        "text/csv",
+        "text/comma-separated-values",
+        "text/plain",
+        "application/x-ofx",
+        "*/*",
+      ],
       // Required for the file to be readable straight after picking.
       copyToCacheDirectory: true,
     });
@@ -120,21 +124,24 @@ export default function ImportScreen() {
       return;
     }
 
+    // The bytes, so a Windows-1252 export keeps its accents; a CSV or an
+    // OFX, with whatever its bank wrote above the header dropped.
     let text: string;
     try {
-      text = await new File(asset.uri).text();
+      text = decodeStatement(
+        new Uint8Array(await new File(asset.uri).arrayBuffer()),
+      );
     } catch {
       setProblem(t("importer.fileUnreadable"));
       return;
     }
 
-    const parsed = parseCsv(text, detectDelimiter(text));
+    const { table: parsed, hasHeader: header } = readStatement(text);
     if (parsed.length === 0) {
       setProblem(t("importer.fileNoRows"));
       return;
     }
 
-    const header = looksLikeHeaderRow(parsed[0]!);
     setFileName(asset.name);
     setTable(parsed);
     setHasHeader(header);

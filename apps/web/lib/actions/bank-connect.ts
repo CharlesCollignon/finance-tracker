@@ -17,7 +17,13 @@ import type { BankInviteSurface } from "@/lib/bank/invite";
 import { getLocale } from "@/lib/locale";
 import { revalidateApp } from "@/lib/revalidate-paths";
 import { createClient } from "@/lib/supabase/server";
-import { dismissPrompt } from "@finance/data/preferences";
+import { dismissPrompt, readDismissedPrompts } from "@finance/data/preferences";
+import {
+  BANK_WIZARD_FAMILY,
+  bankWizardPrompt,
+  bankWizardStepOf,
+  type BankWizardStep,
+} from "@finance/core/bank-wizard";
 
 type Result<T = object> = ({ error?: undefined } & T) | { error: string };
 
@@ -166,4 +172,30 @@ export async function dismissBankInvite(
   // again from the browser's copy.
   revalidateApp();
   return {};
+}
+
+/** The step of « Connecter votre banque » this account reached, on any device. */
+export async function readBankWizardStep(): Promise<BankWizardStep> {
+  const user = await getAuthUser();
+  if (!user) {
+    return 1;
+  }
+  return bankWizardStepOf(
+    await readDismissedPrompts(await createClient(), user.id),
+  );
+}
+
+/** Remember the step reached, for every device. Nothing on screen redraws. */
+export async function saveBankWizardStep(step: BankWizardStep): Promise<void> {
+  const user = await getAuthUser();
+  if (!user || ![1, 2, 3, 4].includes(step)) {
+    return;
+  }
+  await dismissPrompt(
+    await createClient(),
+    user.id,
+    bankWizardPrompt(step),
+    await getLocale(),
+    { replacing: BANK_WIZARD_FAMILY },
+  );
 }

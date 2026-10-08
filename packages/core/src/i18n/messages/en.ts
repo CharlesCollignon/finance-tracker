@@ -266,7 +266,7 @@ export const en = {
     clearAll: "Clear all",
     selectAll: "Select all",
     exportCsv: "Export these transactions as CSV",
-    importCsv: "Import a CSV statement",
+    importCsv: "Import a CSV or OFX statement",
     /** The phone's toolbar button that opens the dropdowns and the actions. */
     optionsToggle: "Filters and actions",
     filtersOn: {
@@ -414,13 +414,13 @@ export const en = {
     },
     /* Reading the file, before there is anything to map. */
     intro:
-      "Export a CSV from your bank and drop it here. The file is read in your browser — nothing is uploaded, and nothing is saved until you have reviewed every row.",
-    dropFile: "Drop a .csv file here",
+      "Export a CSV or an OFX from your bank and drop it here. The file is read in your browser — nothing is uploaded, and nothing is saved until you have reviewed every row.",
+    dropFile: "Drop a .csv or .ofx file here",
     fileTooLarge: "That file is larger than 5 MB — is it the right export?",
     fileNoRows: "That file has no rows in it.",
     fileUnreadable: "That file could not be opened.",
     introPhone:
-      "Export a CSV from your bank and pick it here. The file is read on your phone — nothing is uploaded, and nothing is saved until you have reviewed every row.",
+      "Export a CSV or an OFX from your bank and pick it here. The file is read on your phone — nothing is uploaded, and nothing is saved until you have reviewed every row.",
     firstRows: "First rows as read",
     categoryForRow: "Category for {description}",
     noRowsRead: "No rows could be read from that file.",
@@ -3023,17 +3023,26 @@ export const en = {
    */
   bankConnect: {
     sheetTitle: "Connect your bank",
+    stepOf: "Step {step} of {total}",
+    done: "Done",
+    previous: "Back",
+    trapTitle: "The right file",
+    trapRight: "Your API key's window",
+    trapRightNote: "This one",
+    trapWrong: "The “Encryption key” card",
+    trapWrongNote: "Same name, no API key: not this one",
+    trapFile: "credentials.json",
     sheetLead:
       "Your transactions and your real balance come straight from your bank each time you refresh. You set it up once, with your own open-banking.io account.",
     step1Title: "Create your open-banking.io account",
     step1Body:
-      "Sign up and top up its wallet. About €3 a month for one bank account and €1 for each extra one — paid to them, not to Pluclair.",
+      "Sign up with your e-mail and a passphrase, then top up its wallet (€10 or €20). About €3 a month for one bank account and €1 for each extra one — paid to them, not to Pluclair.",
     step2Title: "Connect your bank there",
     step2Body:
       "Through your bank's own login. Pluclair never sees your bank password.",
     step3Title: "Download your credentials file",
     step3Body:
-      "On the Developers page, create an API key and choose “Download credentials.json” in the window that shows it. The export under “Encryption key” has the same name but no API key.",
+      "On the Developers page, create an API key and choose “Download credentials.json” in the window that shows it — it is shown only once.",
     step4Title: "Drop it here",
     step4Body:
       "Pluclair checks it, then brings in your history. Whatever it can't file on its own waits for you in one short review.",
