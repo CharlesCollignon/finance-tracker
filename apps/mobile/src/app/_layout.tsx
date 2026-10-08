@@ -31,6 +31,7 @@ import { PrivacyProvider } from "@/providers/PrivacyProvider";
 import { RefreshProvider } from "@/providers/RefreshProvider";
 import { ToastProvider } from "@/providers/ToastProvider";
 import { useNotificationRouting } from "@/lib/notification-routing";
+import { useQuickActionRouting } from "@/lib/quick-action-routing";
 import { initTheme } from "@/lib/theme";
 import { COLORS } from "@/theme/tokens";
 
@@ -65,6 +66,8 @@ function RootNavigator({ fontsReady }: { fontsReady: boolean }) {
   // to the Ledger while signed out would be immediately bounced to /login by
   // the effect below, and the reason for the tap would be lost on the way.
   useNotificationRouting(Boolean(session) && !initializing && fontsReady);
+  // A home-screen quick action, on the same terms.
+  useQuickActionRouting(Boolean(session) && !initializing && fontsReady);
 
   // Pinned rather than read: Pluclair has one palette, and NativeWind
   // resolves `dark:` variants from the scheme, so a phone in light mode would
