@@ -33,6 +33,7 @@ const MOBILE_ROUTES = [
   "/investments",
   "/bank",
   "/property",
+  "/year",
 ] as const;
 
 /** A property's own screen, the same address on both apps. */

@@ -63,6 +63,7 @@ const KIND_ICONS: Record<
   dca: "trending-up-outline",
   review: "file-tray-outline",
   milestone: "flag-outline",
+  year: "sparkles-outline",
   property: "home-outline",
   monthOpen: "calendar-clear-outline",
   bank: "business-outline",

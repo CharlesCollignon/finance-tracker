@@ -449,6 +449,23 @@ export function milestoneNotification({
 }
 
 /**
+ * January: « Votre année » is ready. Once, keyed by the year; it opens the
+ * review, on either app.
+ */
+export function yearReviewNotification({
+  year,
+  t,
+}: Pick<Voice, "t"> & { year: number }): PendingNotification {
+  return {
+    kind: "year",
+    key: `year:${year}`,
+    title: t("push.year.title", { year }),
+    body: t("push.year.body"),
+    url: `/year?y=${year}`,
+  };
+}
+
+/**
  * A loan's moment: half of it repaid, or its last payment made. Keyed by the
  * loan and the moment, so each is said once whichever day it is noticed.
  */

@@ -63,7 +63,8 @@
       "expo-localization",
       "expo-font",
       "expo-web-browser",
-      "./plugins/with-quick-actions"
+      "./plugins/with-quick-actions",
+      "expo-sharing"
     ],
     "experiments": {
       "typedRoutes": true,

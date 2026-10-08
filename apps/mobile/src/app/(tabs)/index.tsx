@@ -11,6 +11,7 @@ import { BankAttentionBanner } from "@/components/bank/BankAttentionBanner";
 import { NewAccountsLine } from "@/components/bank/NewAccountsLine";
 import { AttentionRow } from "@/components/bearing/AttentionRow";
 import { SetupCard } from "@/components/bearing/SetupCard";
+import { YearReadyCard } from "@/components/bearing/YearReadyCard";
 import {
   BalanceCard,
   MomentumCard,
@@ -173,6 +174,11 @@ export default function HomeScreen() {
                   proposals={data.arrived.proposals}
                 />
               </View>
+            ) : null}
+
+            {/* January: the year before, told in a few cards. */}
+            {data.yearReady !== null && !data.empty ? (
+              <YearReadyCard year={data.yearReady} />
             ) : null}
 
             {/* The same kind of question, for what the bank cannot see. */}

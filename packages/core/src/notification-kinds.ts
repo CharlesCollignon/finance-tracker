@@ -30,6 +30,8 @@ export const NOTIFICATION_KINDS = [
   "review",
   /** A new round amount of savings and investments reached. */
   "milestone",
+  /** January: « Votre année », the year before told in a few cards. */
+  "year",
   /**
    * A property's moments: half a loan repaid, its last payment, a new
    * estimate when the public record of sales adds a half-year.

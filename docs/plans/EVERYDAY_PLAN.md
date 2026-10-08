@@ -203,13 +203,19 @@ the same amount on about the same day, three otherwise. A bill that moves
 every month (electricity) is never a price rise. « Two of a kind » knows
 music, video, online storage, mobile plans and gyms by name.
 
-## Phase 5 — « Votre année » (branch `everyday-year`), merged by mid-December
+## Phase 5 — « Votre année » (branch `everyday-year`), merged by mid-December — done
 
-- [ ] Early January, both apps: a few full-screen cards — the year's
+- [x] Early January, both apps: a few full-screen cards — the year's
       « gardé », the months closed, the série, the category that moved most,
       the milestones passed. Personal space only.
-- [ ] An image to share, with no amounts: percentages and counts only.
-- [ ] One push when it is ready, under a new kind with its own switch.
+- [x] An image to share, with no amounts: percentages and counts only.
+- [x] One push when it is ready, under a new kind with its own switch.
+
+Built on 2026-10-08. Nothing recorded when a milestone was reached, so the
+Plan now dates each tier it celebrates after the first (migration 059):
+« Votre année » 2026 shows the ones reached from October. The shared image
+shows the longest run rather than the months closed, and the year's kept as
+a share of its income.
 
 ## Phase 6 — The shared space
 

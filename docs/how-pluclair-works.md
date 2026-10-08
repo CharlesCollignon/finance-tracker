@@ -16,7 +16,7 @@ Last updated: Plan du quotidien, phase 1 (2026-10-08;
 | `apps/mobile`   | Expo 57 with expo-router and NativeWind, dark only. Reads and writes Supabase directly under RLS; calls the web app for the month read (`POST /api/month-read`) and a bank refresh (`POST /api/bank/refresh`) with a bearer token.                                                                                                                                                                                                                                                                                                                                 |
 | `packages/core` | Pure TypeScript shared by both apps and shipped to them as source: every calculation, every zod schema, every string (`src/i18n/messages/en.ts`, `fr.ts`).                                                                                                                                                                                                                                                                                                                                                                                                         |
 | `packages/data` | The Supabase reads and writes both apps make, written once and handed the caller's client (`Db`): recurring templates and occurrences, transactions (`ledger`, `month-ledger`, `history`), deletes and their undo (`deletions`), categories and their seeding, fulfilment, the month close, the month's balance, the bank's balance, the review inbox (`bank-inbox`), positions and wallet plans, instrument readings, savings accounts, properties and their loans (`properties`), preferences, the weekly recap, delete-all. `pnpm --filter @finance/data test`. |
-| `supabase/`     | Migrations `001`–`058`, assertion scripts in `tests/`, one edge function (`delete-account`).                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| `supabase/`     | Migrations `001`–`059`, assertion scripts in `tests/`, one edge function (`delete-account`).                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
 
 Vocabulary is fixed by `CONTEXT.md`; product commitments by
 `apps/web/PRODUCT.md`; visual rules by `apps/web/DESIGN.md` and
@@ -115,6 +115,7 @@ before sending, so nothing is said twice.
 | `arrived`   | Movements that look like a planned charge arrived                                                         | notify cron               | `arrived:<day>`                                                                                                             |
 | `review`    | New bank rows waiting for a category                                                                      | refresh cron              | `bank-review:<day>`                                                                                                         |
 | `milestone` | A new milestone passed since the last one celebrated                                                      | notify cron               | `milestone:<amount>`                                                                                                        |
+| `year`      | January: « Votre année » is ready, for a year with something to tell                                      | notify cron               | `year:<year>`                                                                                                               |
 | `property`  | Half a loan repaid, its last payment, half a home the user's; a home's new estimate after a DVF half-year | notify cron; market cron  | `property:half:<loan>`, `property:last:<loan>`, `property:equity-half:<property>`, `property:market:<property>:<half-year>` |
 | `monthOpen` | A new month has opened                                                                                    | notify cron               | `month-open:<month>`                                                                                                        |
 | `bank`      | The connection needs renewing or has stopped                                                              | notify cron               | `bank-consent:`, `bank-expired:`, `bank-paused:`                                                                            |
@@ -290,6 +291,24 @@ On the phone, a long press of the icon offers « Ajouter une dépense » and
 from the app delegate to the router. `/add` opens the add sheet over Le point
 (`?add=1`, read by `QuickAddProvider`). Checked through prebuild and
 autolinking only, not on a device yet.
+
+## Votre année
+
+The year gone by, in January, on both apps (`/year`, the phone's `year`;
+`?y=` for any year past), told as a story — a slide a screen, bars filling
+across the top, tap or swipe to turn, hold to pause (`DESIGN.md`, Moments):
+what it kept — the closes' sum, or income less
+spending where nothing was closed, said apart — the months closed and the
+longest run of them won, the expense category that moved most against the
+year before (or the largest share without one), and the milestones reached.
+Those are dated as the Plan celebrates them (`milestone_history`, migration
+059), so a year shows only the ones reached since that was built. The cards
+come from `yearReviewCards`, the same on both apps; without a money
+formatter they are the ones to share, with no amount in them, drawn as a PNG
+by `/api/year-review/image` for the account asking (cookie or bearer) and
+handed on by the browser's share sheet or the phone's (`expo-sharing`). Le
+point offers it in January until « Vu » (`dismissed_prompts`, `year:<year>`),
+and the notify cron says so once, under the `year` switch.
 
 ## Audience measurement
 

@@ -1,3 +1,5 @@
+import { todayIsoLocal } from "@finance/core/constants";
+import { MILESTONE_TIERS } from "@finance/core/future-plan";
 import type { ActionResult } from "@finance/core/action-result";
 import {
   DEFAULT_LOCALE,
@@ -124,6 +126,7 @@ async function writePreferences(
     milestone_seen?: number;
     notification_prefs?: NotificationPrefs;
     measure_audience?: boolean;
+    milestone_history?: { amount: number; on: string }[];
   },
 ): Promise<ActionResult> {
   const { data: existing, error: readError } = await db
@@ -200,7 +203,55 @@ export async function markMilestoneSeen(
   if (milestoneSeen !== null && milestoneSeen >= amount) {
     return { success: true };
   }
-  return writePreferences(db, userId, locale, { milestone_seen: amount });
+  // The tiers passed since the last one celebrated, dated today, for
+  // « Votre année » (migration 059). None on the first celebration: the
+  // tiers below it were passed before anyone was there to see.
+  const history = await readMilestoneHistory(db, userId);
+  if (history === null || milestoneSeen === null) {
+    return writePreferences(db, userId, locale, { milestone_seen: amount });
+  }
+  const today = todayIsoLocal();
+  const passed = MILESTONE_TIERS.filter(
+    (tier) => tier > milestoneSeen && tier <= amount,
+  ).map((tier) => ({ amount: tier, on: today }));
+  return writePreferences(db, userId, locale, {
+    milestone_seen: amount,
+    milestone_history: [...history, ...passed],
+  });
+}
+
+/**
+ * When each milestone was reached (migration 059), or null where the
+ * migration is not run — then nothing is dated, and nothing else changes.
+ */
+export async function readMilestoneHistory(
+  db: Db,
+  userId: string,
+): Promise<{ amount: number; on: string }[] | null> {
+  const { data, error } = await db
+    .from("user_preferences")
+    .select("milestone_history")
+    .eq("user_id", userId)
+    .maybeSingle();
+  if (error) {
+    if (isMissingSchema(error)) {
+      return null;
+    }
+    throw error;
+  }
+  const raw = data?.milestone_history;
+  if (!Array.isArray(raw)) {
+    return [];
+  }
+  return raw.flatMap((entry) =>
+    entry !== null &&
+    typeof entry === "object" &&
+    !Array.isArray(entry) &&
+    typeof entry.amount === "number" &&
+    typeof entry.on === "string"
+      ? [{ amount: entry.amount, on: entry.on }]
+      : [],
+  );
 }
 
 /** Turn one kind of notification on or off, on every device. */

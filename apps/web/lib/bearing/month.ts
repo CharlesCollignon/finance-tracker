@@ -44,6 +44,7 @@ import { payTemplate, type LeftToSpend } from "@finance/core/left-to-spend";
 import { rollUpRecurring } from "@finance/core/recurring-rollup";
 import { firstCloseDay, type SetupFacts } from "@finance/core/setup-steps";
 import { readDismissedPrompts } from "@finance/data/preferences";
+import { reviewedYear, yearReviewPrompt } from "@finance/core/year-review";
 import { getDcaMonth } from "@finance/data/dca-transfer";
 
 /** How many months the spending bars look back over, the month shown included. */
@@ -126,6 +127,11 @@ export interface BearingMonth {
    * invitation, which the page decides. The month in progress only.
    */
   setup: (Omit<SetupFacts, "bankInvited"> & { firstCloseOn: string }) | null;
+  /**
+   * The year « Votre année » is ready for, in January until « Vu »; null
+   * otherwise. The month in progress only.
+   */
+  yearReady: number | null;
   /** Any recurring template active: without one, nothing is ever to come. */
   recurring: boolean;
   /** Nothing recorded, nothing planned and no balance: a first visit. */
@@ -225,6 +231,7 @@ export async function gatherBearingMonth(
   let dcaProposal: FulfilmentProposal | null = null;
   let left: LeftToSpend | null = null;
   let eachMonth: number | null = null;
+  let yearReady: number | null = null;
   let setup: BearingMonth["setup"] = null;
 
   if (isCurrent) {
@@ -238,6 +245,13 @@ export async function gatherBearingMonth(
     });
     const rollup = rollUpRecurring(templates, { debited, year, month });
     eachMonth = rollup.income > 0 ? rollup.left : null;
+    const dismissed = await readDismissedPrompts(await createClient(), userId);
+    // « Votre année », in January, until « Vu ».
+    const reviewed = reviewedYear(today);
+    yearReady =
+      reviewed !== null && !dismissed.includes(yearReviewPrompt(reviewed))
+        ? reviewed
+        : null;
     setup = {
       bankFed,
       hasBalance: source !== "none",
@@ -247,7 +261,7 @@ export async function gatherBearingMonth(
       ),
       hasClosed: closes.history.length > 0,
       readyToClose: closes.next !== null,
-      dismissed: await readDismissedPrompts(await createClient(), userId),
+      dismissed,
       firstCloseOn: firstCloseDay(today, closes.settings.closeDay),
     };
     const categories = await getCategories(userId);
@@ -345,6 +359,7 @@ export async function gatherBearingMonth(
     left,
     eachMonth,
     setup,
+    yearReady,
     recurring: templates.some((template) => template.active),
     empty:
       source === "none" &&

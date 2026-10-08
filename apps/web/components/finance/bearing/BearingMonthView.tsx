@@ -36,6 +36,7 @@ import { NewAccountsLine } from "@/components/finance/bank/NewAccountsLine";
 import { BalanceCurve } from "@/components/finance/bearing/BalanceCurve";
 import { LeftToSpendLine } from "@/components/finance/bearing/LeftToSpendLine";
 import { SetupCard } from "@/components/finance/bearing/SetupCard";
+import { YearReadyCard } from "@/components/finance/bearing/YearReadyCard";
 import { MonthPicker } from "@/components/layout/MonthPicker";
 import { PrivateAmount } from "@/components/layout/PrivateAmount";
 import { Stagger, StaggerItem } from "@/components/motion/Stagger";
@@ -123,6 +124,11 @@ export function BearingMonthView({
         <section className={cn(GLASS_CARD, "rounded-card p-card")}>
           <ArrivedCharges proposals={data.arrived.proposals} />
         </section>
+      ) : null}
+
+      {/* January: the year before, told in a few cards. */}
+      {data.yearReady !== null && !data.empty ? (
+        <YearReadyCard year={data.yearReady} />
       ) : null}
 
       {/* The same kind of question, for what the bank cannot see. */}

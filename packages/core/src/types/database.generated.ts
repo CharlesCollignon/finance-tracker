@@ -1708,6 +1708,7 @@ export type Database = {
           dismissed_prompts: string[];
           locale: string;
           measure_audience: boolean;
+          milestone_history: NonNullable<Json>;
           milestone_seen: number | null;
           notification_prefs: NonNullable<Json>;
           updated_at: string;
@@ -1718,6 +1719,7 @@ export type Database = {
           dismissed_prompts?: string[];
           locale?: string;
           measure_audience?: boolean;
+          milestone_history?: NonNullable<Json>;
           milestone_seen?: number | null;
           notification_prefs?: NonNullable<Json>;
           updated_at?: string;
@@ -1728,6 +1730,7 @@ export type Database = {
           dismissed_prompts?: string[];
           locale?: string;
           measure_audience?: boolean;
+          milestone_history?: NonNullable<Json>;
           milestone_seen?: number | null;
           notification_prefs?: NonNullable<Json>;
           updated_at?: string;

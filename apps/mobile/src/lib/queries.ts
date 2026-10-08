@@ -7,6 +7,7 @@ import {
   searchAllMonths,
   type LedgerSearch,
 } from "@finance/data/ledger-search";
+import { readYearReview } from "@finance/data/year-review";
 import { readSubscriptions } from "@finance/data/subscriptions";
 import * as fulfilment from "@finance/data/fulfilment";
 import * as closes from "@finance/data/month-close";
@@ -643,4 +644,16 @@ export function getSubscriptions(
   userId: string,
 ): ReturnType<typeof readSubscriptions> {
   return readSubscriptions(supabase, userId, todayIsoLocal());
+}
+
+/** « Votre année » for one year (`readYearReview`). */
+export function getYearReview(
+  userId: string,
+  year: number,
+  locale: Locale,
+): ReturnType<typeof readYearReview> {
+  return readYearReview(supabase, userId, year, {
+    today: todayIsoLocal(),
+    locale,
+  });
 }

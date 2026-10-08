@@ -37,6 +37,7 @@ import { propertyFr } from "./property.fr";
  */
 export const fr: Messages = {
   nav: {
+    yearReview: "Votre année",
     bearing: "Le point",
     ledger: "Journal",
     charges: "Récurrents",
@@ -1568,6 +1569,10 @@ export const fr: Messages = {
       label: "Nouveau palier",
       hint: "Quand ce que vous avez mis de côté et placé passe un palier.",
     },
+    year: {
+      label: "Votre année",
+      hint: "En janvier, l'année passée en quelques chiffres.",
+    },
     property: {
       label: "Immobilier",
       hint: "La moitié d'un prêt remboursée, sa dernière échéance, une nouvelle estimation d'après les ventes.",
@@ -1685,6 +1690,10 @@ export const fr: Messages = {
         "D'après les dernières ventes publiées, il vaut environ {after}, contre {before} à la lecture précédente.",
       marketBodySame:
         "D'après les dernières ventes publiées, il vaut toujours environ {after}.",
+    },
+    year: {
+      title: "Votre année {year} est prête",
+      body: "Ce que l'année a gardé, vos bilans, ce qui a le plus bougé.",
     },
     milestone: {
       title: "Nouveau palier\u00A0: {amount}",
@@ -2381,6 +2390,55 @@ export const fr: Messages = {
     close: {
       title: "Votre premier bilan, le {date}",
       body: "Ce jour-là, notez le solde de votre compte\u00A0: Pluclair le compare à ce que vous avez noté et retrouve ce qui a filé.",
+    },
+  },
+  yearReview: {
+    tapToStart: "Touchez pour commencer",
+    keptTitle: "Ce que l'année a gardé",
+    closesTitle: "Vos bilans de mois",
+    categoryTitle: "Ce qui a le plus bougé",
+    milestonesTitle: "Les paliers franchis",
+    shareTitle: "Votre année, à partager",
+    rateOfIncome: "de vos revenus",
+    replay: "Revoir",
+    close: "Fermer",
+    pause: "Mettre en pause",
+    play: "Reprendre",
+    next: "Suivant",
+    previous: "Précédent",
+    slideOf: "{step} sur {total}",
+    title: "Votre année {year}",
+    lead: "L'année passée en quelques chiffres, tous tirés de vos comptes.",
+    keptCaption: "gardés en {year}",
+    keptRate: "soit {rate} de vos revenus",
+    keptFromCloses: "D'après vos bilans de mois.",
+    keptFromRecorded:
+      "Vos revenus moins vos dépenses notées\u00A0: sans bilan, rien ne le vérifie.",
+    closesCaption: { one: "mois bilancé", other: "mois bilancés" },
+    bestRun: {
+      one: "Série la plus longue\u00A0: {count} mois",
+      other: "Série la plus longue\u00A0: {count} mois",
+    },
+    categoryChangeCaption: "{name}, par rapport à {previous}",
+    categoryShareCaption: "{name}, de vos dépenses",
+    milestonesCaption: { one: "palier franchi", other: "paliers franchis" },
+    share: "Partager",
+    shareHint:
+      "L'image ne montre aucun montant\u00A0: des pourcentages et des nombres.",
+    download: "Télécharger l'image",
+    ready: "Votre année {year} est prête",
+    readyBody: "Ce que l'année a gardé, vos bilans, ce qui a le plus bougé.",
+    open: "Voir",
+    seen: "Vu",
+    nothing:
+      "Rien à raconter pour {year}\u00A0: aucune opération ni aucun bilan.",
+    imageTitle: "Mon année {year}",
+    imageKeptCaption: "de mes revenus gardés",
+    imageCategoryChangeCaption: "{name}, par rapport à {previous}",
+    imageCategoryShareCaption: "{name}, de mes dépenses",
+    imageRunCaption: {
+      one: "mois de série record",
+      other: "mois de série record",
     },
   },
   subscriptions: {

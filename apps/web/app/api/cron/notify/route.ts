@@ -47,6 +47,7 @@ import {
   equityMomentNotification,
   loanMomentNotification,
   milestoneNotification,
+  yearReviewNotification,
   overdraftWarning,
   plannedChargesOn,
   purchasesToConfirmNotification,
@@ -56,6 +57,8 @@ import {
 import { mondayOf } from "@finance/core/weekly-recap";
 import { readCurrentMonthBalance } from "@finance/data/month-balance";
 import { getWeeklyRecap } from "@finance/data/weekly-recap";
+import { readYearReview } from "@finance/data/year-review";
+import { reviewedYear } from "@finance/core/year-review";
 import { recurringOccurrenceKey } from "@finance/core/apply-recurring";
 import { getFulfilledKeys } from "@finance/data/fulfilment";
 import { getMonthCloseOverview } from "@finance/data/month-close";
@@ -187,14 +190,16 @@ async function notificationsFor(
   // to stop are the things here that get worse by waiting, and neither needs
   // a template. Nor does the reading day, which belongs to anyone who closes
   // their months, or the Monday recap, which belongs to anyone with a ledger.
-  const [overdraft, bank, close, recap, milestone] = await Promise.all([
-    overdraftFor(supabase, userId, today, locale),
-    bankNotificationFor(supabase, userId, today, locale),
-    closeReminderFor(supabase, userId, today, locale),
-    recapFor(supabase, userId, today, locale),
-    milestoneFor(supabase, userId, today, recipient),
-  ]);
-  const lead = [overdraft, bank, close, recap, milestone]
+  const [overdraft, bank, close, recap, milestone, yearReview] =
+    await Promise.all([
+      overdraftFor(supabase, userId, today, locale),
+      bankNotificationFor(supabase, userId, today, locale),
+      closeReminderFor(supabase, userId, today, locale),
+      recapFor(supabase, userId, today, locale),
+      milestoneFor(supabase, userId, today, recipient),
+      yearReviewFor(supabase, userId, today, recipient),
+    ]);
+  const lead = [overdraft, bank, close, recap, milestone, yearReview]
     .filter(
       (notification): notification is PendingNotification =>
         notification !== null,
@@ -410,6 +415,33 @@ async function milestoneFor(
     return amount === null
       ? null
       : milestoneNotification({ amount, t: translator(locale), locale });
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * January: « Votre année » is ready — once, by its key, and only for a year
+ * that has something to tell. Asked only of someone who wants to hear it.
+ */
+async function yearReviewFor(
+  supabase: AdminClient,
+  userId: string,
+  today: string,
+  { locale, prefs }: Recipient,
+): Promise<PendingNotification | null> {
+  const year = reviewedYear(today);
+  if (year === null || !wantsNotification(prefs, "year")) {
+    return null;
+  }
+  try {
+    const review = await readYearReview(supabase, userId, year, {
+      today,
+      locale,
+    });
+    return review
+      ? yearReviewNotification({ year, t: translator(locale) })
+      : null;
   } catch {
     return null;
   }
