@@ -246,11 +246,24 @@ export type InstrumentReadingTallyColumns =
   Tables["instrument_reading_tallies"]["Row"];
 
 export type Category = Database["public"]["Tables"]["categories"]["Row"];
-export type RecurringTemplate =
-  Database["public"]["Tables"]["recurring_templates"]["Row"];
+/**
+ * Who added a row (`created_by`, migration 060), optional here: every row
+ * read carries it, and a row made up in a test or an optimistic update need
+ * not — a joint row without one shows no initial.
+ */
+type WithOptionalAuthor<Row extends { created_by: string | null }> = Omit<
+  Row,
+  "created_by"
+> & { created_by?: string | null };
+
+export type RecurringTemplate = WithOptionalAuthor<
+  Database["public"]["Tables"]["recurring_templates"]["Row"]
+>;
 export type RecurringSkip =
   Database["public"]["Tables"]["recurring_skips"]["Row"];
-export type Transaction = Database["public"]["Tables"]["transactions"]["Row"];
+export type Transaction = WithOptionalAuthor<
+  Database["public"]["Tables"]["transactions"]["Row"]
+>;
 export type InvestmentPosition =
   Database["public"]["Tables"]["investment_positions"]["Row"];
 export type WalletTransfer =
