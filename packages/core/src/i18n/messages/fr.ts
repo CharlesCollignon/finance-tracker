@@ -2194,17 +2194,26 @@ export const fr: Messages = {
 
   bankConnect: {
     sheetTitle: "Connecter votre banque",
+    stepOf: "Étape {step} sur {total}",
+    done: "C'est fait",
+    previous: "Précédent",
+    trapTitle: "Le bon fichier",
+    trapRight: "La fenêtre de votre clé API",
+    trapRightNote: "Celui-ci",
+    trapWrong: "La carte «\u00A0Clé de chiffrement\u00A0»",
+    trapWrongNote: "Même nom, sans clé API\u00A0: pas celui-ci",
+    trapFile: "credentials.json",
     sheetLead:
       "Vos opérations et votre vrai solde viennent directement de votre banque à chaque actualisation. Vous le mettez en place une fois, avec votre propre compte open-banking.io.",
     step1Title: "Créez votre compte open-banking.io",
     step1Body:
-      "Inscrivez-vous et approvisionnez son portefeuille. Environ 3\u00A0€ par mois pour un compte bancaire et 1\u00A0€ par compte supplémentaire — payés à eux, pas à Pluclair.",
+      "Inscrivez-vous avec votre e-mail et une phrase secrète, puis approvisionnez son portefeuille (10 ou 20\u00A0€). Environ 3\u00A0€ par mois pour un compte bancaire et 1\u00A0€ par compte supplémentaire — payés à eux, pas à Pluclair.",
     step2Title: "Connectez-y votre banque",
     step2Body:
       "Avec l'identification de votre banque. Pluclair ne voit jamais votre mot de passe bancaire.",
     step3Title: "Téléchargez votre fichier d'identifiants",
     step3Body:
-      "Sur la page Développeurs, créez une clé API et choisissez «\u00A0Télécharger credentials.json\u00A0» dans la fenêtre qui l'affiche. L'export de la carte «\u00A0Clé de chiffrement\u00A0» porte le même nom, mais sans clé API.",
+      "Sur la page Développeurs, créez une clé API et choisissez «\u00A0Télécharger credentials.json\u00A0» dans la fenêtre qui l'affiche — elle ne s'affiche qu'une fois.",
     step4Title: "Déposez-le ici",
     step4Body:
       "Pluclair le vérifie, puis importe votre historique. Ce qu'il ne sait pas classer seul vous attend dans une courte revue.",
