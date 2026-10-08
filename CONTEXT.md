@@ -432,7 +432,9 @@ the forecast and « C'est arrivé ? » read it, but never an item to manage —
 the first tick makes it (or takes over their own « Virement vers le
 courtier »), the last untick pauses it (`followPurchases`). Due on the 1st,
 for the month it opens; sent a few days either side, it still counts.
-Le point's DCA card says it from five days before the 1st (`dcaMonth`).
+Le point's DCA card says it from five days before the 1st, or from the day
+the salary it is sent from comes in, if sooner (`dcaMonth`). A push says it
+that day (« Salaire arrivé ») and two days before the 1st, each once.
 _Avoid_: DCA budget, top-up, funding estimate
 
 **Last quote**:
