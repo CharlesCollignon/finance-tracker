@@ -52,5 +52,6 @@ export const spaceFr: typeof spaceEn = {
   joinOpen: "L'ouvrir",
   joinElsewhereBody:
     "Quittez-le d'abord depuis votre profil : un espace commun par personne.",
+  transferCategory: "Versement au compte commun",
   addedBy: "Ajouté par {name}",
 };

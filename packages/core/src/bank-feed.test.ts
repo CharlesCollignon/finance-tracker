@@ -191,6 +191,48 @@ describe("decide", () => {
     });
   });
 
+  it("files money sent to the joint account as such, without asking", () => {
+    const toJoint = toCandidate(
+      bank({ creditorName: "M. ET MME DUPONT", creditorIban: "FR76 1111" }),
+      { locale: "fr" },
+    )!;
+    expect(toJoint.counterpartyIban).toBe("FR761111");
+    const jointTransfer = {
+      isJoint: (iban: string) => iban === "FR761111",
+      category: { id: "cat-joint", name: "Versement au compte commun" },
+    };
+    expect(
+      decide(toJoint, {
+        merchants: NO_MERCHANTS,
+        categoryIdsByName: CATEGORIES,
+        jointTransfer,
+      }),
+    ).toEqual({
+      kind: "auto",
+      suggestion: {
+        categoryId: "cat-joint",
+        categoryName: "Versement au compte commun",
+        reason: "joint-transfer",
+      },
+    });
+    // Money coming back from it is still looked at.
+    const fromJoint = toCandidate(
+      bank({
+        creditDebitIndicator: "CRDT",
+        debtorName: "M. ET MME DUPONT",
+        debtorIban: "FR761111",
+      }),
+      { locale: "fr" },
+    )!;
+    expect(
+      decide(fromJoint, {
+        merchants: NO_MERCHANTS,
+        categoryIdsByName: CATEGORIES,
+        jointTransfer,
+      }).kind,
+    ).toBe("review");
+  });
+
   it("still asks after a single sighting", () => {
     expect(AUTO_MERCHANT_THRESHOLD).toBe(2);
     const decision = decide(toCandidate(bank(), { locale: "en" })!, {

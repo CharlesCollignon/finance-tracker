@@ -51,5 +51,6 @@ export const spaceEn = {
   joinOpen: "Open it",
   joinElsewhereBody:
     "Leave it from your profile first: one shared space per person.",
+  transferCategory: "Transfer to the joint account",
   addedBy: "Added by {name}",
 };

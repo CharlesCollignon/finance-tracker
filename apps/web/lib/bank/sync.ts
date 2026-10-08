@@ -6,6 +6,7 @@ import {
   indexCategoriesByName,
   planFeed,
   type BankTransaction,
+  type DecideOptions,
   type ExistingLedgerRow,
   type FeedPlan,
   type PlannedFeedRow,
@@ -30,6 +31,7 @@ import { getBankConnection } from "@/lib/bank/client";
 import { consentByBank } from "@/lib/bank/health";
 import { pullFromBank } from "@/lib/bank/pull";
 import { DEFAULT_LOCALE } from "@finance/core/i18n/locale";
+import { translator } from "@finance/core/i18n/t";
 import { cashDateOf } from "@finance/core/cash-date";
 import { isPurchaseInsideWallet } from "@finance/core/categories";
 import { shiftIsoDate, todayIsoLocal } from "@finance/core/constants";
@@ -237,6 +239,10 @@ export async function syncBankFeed(
         .map((account) => ({ iban: account.iban, role: "spending" as const })),
     );
     const context = await ownerContext(supabase, ownerId);
+    // The person's money sent to their space's joint account, whoever's
+    // connection reads that account: « Versement au compte commun ».
+    const jointTransfer =
+      ownerId === userId ? await jointTransferFor(supabase, userId) : undefined;
 
     for (const account of owned) {
       const booked = pickBookedBalance(account);
@@ -286,6 +292,7 @@ export async function syncBankFeed(
         categoryIdsByName: context.categoryIdsByName,
         seenProviderIds: context.seenProviderIds,
         ownIbans,
+        jointTransfer,
       });
 
       // A row the database already holds is skipped by the planner, which is
@@ -445,6 +452,68 @@ async function jointFeedersOf(
       .filter((row) => row.user_id === owner)
       .map((row) => row.provider_account_id),
   );
+}
+
+/**
+ * What files the person's transfers to their space's joint account: the
+ * account's fingerprints — theirs or the partner's copy — and the category,
+ * made the first time it is needed. Undefined outside a space, or for a
+ * space with no joint account yet.
+ */
+async function jointTransferFor(
+  supabase: Client,
+  userId: string,
+): Promise<DecideOptions["jointTransfer"]> {
+  const { data: membership } = await supabase
+    .from("space_members")
+    .select("space_id")
+    .eq("user_id", userId)
+    .maybeSingle();
+  if (!membership) {
+    return undefined;
+  }
+  const { data: joint } = await supabase
+    .from("bank_accounts")
+    .select("iban_hash")
+    .eq("space_id", membership.space_id)
+    .eq("role", "joint");
+  const hashes = new Set(
+    (joint ?? [])
+      .map((account) => account.iban_hash)
+      .filter((hash): hash is string => Boolean(hash)),
+  );
+  if (hashes.size === 0) {
+    return undefined;
+  }
+
+  // In the product's language, as the stored notes are: a sync often runs
+  // with nobody present.
+  const name = translator(DEFAULT_LOCALE)("space.transferCategory");
+  const { data: found } = await supabase
+    .from("categories")
+    .select("id, name")
+    .eq("user_id", userId)
+    .eq("name", name)
+    .maybeSingle();
+  const category =
+    found ??
+    (
+      await supabase
+        .from("categories")
+        .insert({ user_id: userId, name, type: "expense", icon: "bank" })
+        .select("id, name")
+        .single()
+    ).data;
+  if (!category) {
+    return undefined;
+  }
+  return {
+    isJoint: (iban) => {
+      const hash = ibanHash(iban);
+      return hash !== null && hashes.has(hash);
+    },
+    category,
+  };
 }
 
 /**
