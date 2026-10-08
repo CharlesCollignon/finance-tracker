@@ -2215,6 +2215,10 @@ export const en = {
       label: "New milestone",
       hint: "When what you have saved and invested passes a milestone.",
     },
+    year: {
+      label: "Your year",
+      hint: "In January, the year gone by in a few figures.",
+    },
     property: {
       label: "Property",
       hint: "Half a loan repaid, its last payment, a new estimate from the sales.",
@@ -2326,6 +2330,10 @@ export const en = {
         "From the latest sales published, it is worth about {after}, against {before} at the last reading.",
       marketBodySame:
         "From the latest sales published, it is still worth about {after}.",
+    },
+    year: {
+      title: "Your {year} is ready",
+      body: "What the year kept, your month reviews, what moved most.",
     },
     milestone: {
       title: "New milestone: {amount}",

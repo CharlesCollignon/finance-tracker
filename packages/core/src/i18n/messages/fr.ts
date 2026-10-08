@@ -1569,6 +1569,10 @@ export const fr: Messages = {
       label: "Nouveau palier",
       hint: "Quand ce que vous avez mis de côté et placé passe un palier.",
     },
+    year: {
+      label: "Votre année",
+      hint: "En janvier, l'année passée en quelques chiffres.",
+    },
     property: {
       label: "Immobilier",
       hint: "La moitié d'un prêt remboursée, sa dernière échéance, une nouvelle estimation d'après les ventes.",
@@ -1686,6 +1690,10 @@ export const fr: Messages = {
         "D'après les dernières ventes publiées, il vaut environ {after}, contre {before} à la lecture précédente.",
       marketBodySame:
         "D'après les dernières ventes publiées, il vaut toujours environ {after}.",
+    },
+    year: {
+      title: "Votre année {year} est prête",
+      body: "Ce que l'année a gardé, vos bilans, ce qui a le plus bougé.",
     },
     milestone: {
       title: "Nouveau palier\u00A0: {amount}",
