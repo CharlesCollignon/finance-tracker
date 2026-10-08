@@ -27,6 +27,39 @@ export interface PendingNotification {
   body: string;
   /** Where tapping it should land. */
   url: string;
+  /**
+   * Keys it says as well, logged with it: another push due the same day
+   * that this one makes redundant — the salary's, which carries the
+   * transfer's reminder.
+   */
+  covers?: readonly string[];
+}
+
+/**
+ * Of what is due, what to send and which keys to log: none already said, and
+ * none that another about to be sent says as well (`covers`) — that one is
+ * logged with it instead, so a later run does not say it either.
+ */
+export function notificationsToSay(
+  due: readonly PendingNotification[],
+  said: ReadonlySet<string>,
+): { send: PendingNotification[]; log: string[] } {
+  const unsaid = due.filter((notification) => !said.has(notification.key));
+  const covered = new Set(
+    unsaid.flatMap((notification) => notification.covers ?? []),
+  );
+  const send = unsaid.filter((notification) => !covered.has(notification.key));
+  return {
+    send,
+    log: [
+      ...new Set(
+        send.flatMap((notification) => [
+          notification.key,
+          ...(notification.covers ?? []),
+        ]),
+      ),
+    ],
+  };
 }
 
 export interface BuildDigestOptions {
