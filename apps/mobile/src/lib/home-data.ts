@@ -49,6 +49,8 @@ import {
 import { readDismissedPrompts } from "@finance/data/preferences";
 import { reviewedYear, yearReviewPrompt } from "@finance/core/year-review";
 import { getWeeklyRecapCard } from "@finance/data/weekly-recap";
+import { readMyShare } from "@finance/data/spaces";
+import { withMyShare } from "@finance/core/my-share";
 
 import {
   getMonthRead,
@@ -117,6 +119,12 @@ export interface HomeMonth {
     rest: number;
     total: number;
   };
+  /**
+   * « Avec ma part du commun », for someone in a shared space under « Moi »:
+   * whether the spending counts their part of the space, and that part.
+   * Null where it is not offered.
+   */
+  myShare: { on: boolean; part: number | null } | null;
   /** Still to come in this month; null for a month that has ended. */
   upcoming: {
     charges: UpcomingCharge[];
@@ -208,6 +216,12 @@ export async function gatherHomeMonth(
   year: number,
   month: number,
   locale: Locale,
+  /**
+   * « Avec ma part du commun »: whether the spending counts the person's
+   * part of their shared space (6b). Null where it is not offered — no
+   * space, or the space itself on screen.
+   */
+  myShare: boolean | null = null,
 ): Promise<HomeMonth> {
   const today = todayIsoLocal();
   const { start: first, end: last } = getMonthBounds(year, month);
@@ -248,7 +262,20 @@ export async function gatherHomeMonth(
 
   /* ------------------------------------------------------- the spending */
 
-  const inMonth = rows.filter(
+  // With the person's part of the space, the spending is counted on their
+  // rows less the transfers to the joint account, plus their part of what
+  // the space spent (`withMyShare`). The balance above is untouched.
+  const shared = myShare
+    ? await readMyShare(
+        supabase,
+        userId,
+        getMonthBounds(trendFrom.year, trendFrom.month).start,
+        last,
+      )
+    : null;
+  const spendRows = shared ? withMyShare(rows, shared.rows, shared.share) : rows;
+
+  const inMonth = spendRows.filter(
     (tx) => tx.occurred_on >= first && tx.occurred_on <= last,
   );
   const trendKeys = Array.from({ length: TREND_MONTHS }, (_, index) => {
@@ -256,14 +283,14 @@ export async function gatherHomeMonth(
     return { ...at, key: monthKeyOf(at.year, at.month) };
   });
   const byMonth = spendingByMonth(
-    rows,
+    spendRows,
     trendKeys.map((entry) => entry.key),
   );
   const previousKey = monthKeyOf(previousMonth.year, previousMonth.month);
   const sameDay = today.slice(8, 10);
   const previousSoFar = isCurrent
     ? spendingByMonth(
-        rows.filter((tx) => tx.occurred_on.slice(8, 10) <= sameDay),
+        spendRows.filter((tx) => tx.occurred_on.slice(8, 10) <= sameDay),
         [previousKey],
       ).get(previousKey)
     : byMonth.get(previousKey);
@@ -391,6 +418,10 @@ export async function gatherHomeMonth(
       rest: spending.rest,
       total: spending.total,
     },
+    myShare:
+      myShare === null
+        ? null
+        : { on: shared !== null, part: shared?.share ?? null },
     upcoming: shownUpcoming,
     outflows,
     run,

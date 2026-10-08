@@ -13,3 +13,9 @@ export const OWNER_COOKIE_OPTIONS = {
   path: "/",
   maxAge: 60 * 60 * 24 * 365,
 } as const;
+
+/**
+ * « Avec ma part du commun » on Le point (6b): `1` while the person's
+ * spending counts their part of the shared space.
+ */
+export const MY_SHARE_COOKIE = "pluclair-my-share";

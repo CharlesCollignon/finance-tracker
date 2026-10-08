@@ -9,6 +9,7 @@ import {
   MotionConfig,
 } from "motion/react";
 import {
+  ChartPieSlice,
   Check,
   Copy,
   DownloadSimple,
@@ -30,6 +31,7 @@ import {
   exportSpaceAction,
   leaveSpaceAction,
   renameSpaceAction,
+  setMyShareAction,
 } from "@/lib/actions/space";
 import { ICON } from "@/lib/icon-scale";
 import { useT } from "@/lib/locale-context";
@@ -44,7 +46,7 @@ const MEET_SPRING = { type: "spring", stiffness: 260, damping: 20 } as const;
 /** How long « Copié » stays before the button reads « Copier » again. */
 const COPIED_MS = 1600;
 
-type OpenRow = "name" | "leave" | null;
+type OpenRow = "name" | "share" | "leave" | null;
 
 /**
  * « Espace commun » in Profile: making the space, the link that brings the
@@ -72,6 +74,8 @@ export function SpaceSection({
 
   const partner =
     space?.members.find((member) => member.userId !== userId) ?? null;
+  const myShare =
+    space?.members.find((member) => member.userId === userId)?.share ?? 0.5;
 
   function toggle(row: Exclude<OpenRow, null>) {
     setOpen((current) => (current === row ? null : row));
@@ -124,6 +128,19 @@ export function SpaceSection({
     const name = String(formData.get("name") ?? "");
     startTransition(async () => {
       const result = await renameSpaceAction(name);
+      toast(
+        result.error ?? result.message ?? t("profile.saved"),
+        result.error ? "error" : "success",
+      );
+      if (!result.error) {
+        setOpen(null);
+      }
+    });
+  }
+
+  function saveShare(share: number) {
+    startTransition(async () => {
+      const result = await setMyShareAction(share);
       toast(
         result.error ?? result.message ?? t("profile.saved"),
         result.error ? "error" : "success",
@@ -298,6 +315,26 @@ export function SpaceSection({
                 }
               />
               <ListRow
+                icon={ChartPieSlice}
+                label={t("space.shareRow")}
+                value={
+                  open === "share"
+                    ? undefined
+                    : `${percent(myShare)} · ${percent(1 - myShare)}`
+                }
+                onClick={() => toggle("share")}
+                expanded={
+                  open === "share" ? (
+                    <ShareEditor
+                      initial={myShare}
+                      partnerName={partner?.name ?? t("space.partner")}
+                      pending={pending}
+                      onSave={saveShare}
+                    />
+                  ) : null
+                }
+              />
+              <ListRow
                 icon={SignOut}
                 label={t("space.leave")}
                 destructive
@@ -396,6 +433,74 @@ function Pair({
           </m.span>
         )}
       </AnimatePresence>
+    </div>
+  );
+}
+
+/** A part as a whole percent: « 60 % ». */
+function percent(part: number): string {
+  return `${Math.round(part * 100)}\u00A0%`;
+}
+
+/**
+ * The split, set by sliding: the bar between the two of you moves with the
+ * thumb, each side named and counted, and one press saves it for both.
+ */
+function ShareEditor({
+  initial,
+  partnerName,
+  pending,
+  onSave,
+}: {
+  initial: number;
+  partnerName: string;
+  pending: boolean;
+  onSave: (share: number) => void;
+}) {
+  const t = useT();
+  const [share, setShare] = useState(Math.round(initial * 20) / 20);
+
+  return (
+    <div className="flex flex-col gap-3">
+      <p className={cn("text-muted-foreground", MICRO)}>
+        {t("space.shareHint")}
+      </p>
+      <div className="flex items-baseline justify-between text-sm font-medium">
+        <span>{t("space.shareYou", { part: percent(share) })}</span>
+        <span className="text-muted-foreground">
+          {t("space.sharePartner", {
+            name: partnerName,
+            part: percent(1 - share),
+          })}
+        </span>
+      </div>
+      <div className="flex h-2 overflow-hidden rounded-full bg-muted">
+        <m.span
+          className="h-full bg-foreground"
+          initial={false}
+          animate={{ width: `${share * 100}%` }}
+          transition={{ type: "spring", stiffness: 420, damping: 32 }}
+        />
+      </div>
+      <input
+        type="range"
+        min={0}
+        max={100}
+        step={5}
+        value={Math.round(share * 100)}
+        onChange={(event) => setShare(Number(event.target.value) / 100)}
+        aria-label={t("space.shareRow")}
+        aria-valuetext={`${percent(share)} · ${percent(1 - share)}`}
+        className="w-full accent-foreground"
+      />
+      <Button
+        size="sm"
+        className="self-start"
+        disabled={pending || share === initial}
+        onClick={() => onSave(share)}
+      >
+        {pending ? t("profile.saving") : t("profile.save")}
+      </Button>
     </div>
   );
 }

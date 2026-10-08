@@ -63,7 +63,9 @@ import { useScreenMonth } from "@/providers/MonthProvider";
 export default function HomeScreen() {
   const { user } = useAuth();
   // Whose month: the person's, or their space's under « Commun ».
-  const { ownerId } = useOwner();
+  const { ownerId, space, joint, myShare } = useOwner();
+  // « Avec ma part du commun »: offered to someone in a space, under « Moi ».
+  const withShare = space && !joint ? myShare : null;
   const t = useT();
   const locale = useLocale();
   const colors = useThemeColors();
@@ -73,8 +75,10 @@ export default function HomeScreen() {
 
   const { data, error, refreshing, onRefresh, onRefreshAll } = useRefreshable(
     async () =>
-      ownerId ? await gatherHomeMonth(ownerId, year, month, locale) : null,
-    [ownerId, year, month, locale],
+      ownerId
+        ? await gatherHomeMonth(ownerId, year, month, locale, withShare)
+        : null,
+    [ownerId, year, month, locale, withShare],
   );
 
   // A month ahead has nothing to read yet: nothing has happened in it.

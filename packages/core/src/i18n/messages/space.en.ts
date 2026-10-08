@@ -24,6 +24,15 @@ export const spaceEn = {
     "You and {name} share this space. Each of you keeps their own money.",
   name: "Name",
 
+  shareRow: "Split of the spending",
+  shareHint:
+    "What each of you takes of the shared spending, for « With my share » on Le point. The same for you both.",
+  shareYou: "You {part}",
+  sharePartner: "{name} {part}",
+  shareLess: "Less for me",
+  shareMore: "More for me",
+  partner: "Your partner",
+
   leave: "Leave the space",
   leaveBody: "You lose access at once; {name} keeps the space and its entries.",
   leaveLastBody:
@@ -51,6 +60,9 @@ export const spaceEn = {
   joinOpen: "Open it",
   joinElsewhereBody:
     "Leave it from your profile first: one shared space per person.",
+  myShare: "With my share",
+  myShareCaption:
+    "Your share of the shared space ({part}) counted, your transfers to it taken out.",
   transferCategory: "Transfer to the joint account",
   addedBy: "Added by {name}",
 };
