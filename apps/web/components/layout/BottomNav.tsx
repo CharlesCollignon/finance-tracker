@@ -8,6 +8,7 @@ import { badgeFor, NO_BADGES, type NavBadges } from "@/lib/nav-badges";
 import { GLASS_PANEL } from "@/lib/glass";
 import { ICON } from "@/lib/icon-scale";
 import { useT } from "@/lib/locale-context";
+import { useSpace } from "@/components/layout/SpaceContext";
 
 /**
  * The surfaces, at phone width. The account menu is in the page header, as
@@ -23,6 +24,7 @@ export function BottomNav({
 }) {
   const t = useT();
   const pathname = usePathname();
+  const joint = useSpace()?.joint ?? false;
 
   return (
     <nav
@@ -39,7 +41,7 @@ export function BottomNav({
           GLASS_PANEL,
         )}
       >
-        {navItems({ property: showProperty }).map(
+        {navItems({ property: showProperty, joint }).map(
           ({ href, labelKey, icon: Icon }) => {
             const active = activeNavHref(pathname) === href;
             const waiting = badgeFor(href, badges);

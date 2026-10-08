@@ -17,6 +17,7 @@ import {
 } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/Button";
 import { CategoryIcon } from "@/components/finance/CategoryIcon";
+import { AuthorBadge } from "@/components/layout/SpaceContext";
 import { FulfilmentDot } from "@/components/finance/FulfilmentDot";
 import type { ReactNode } from "react";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -821,10 +822,13 @@ export function TransactionsView({
                                 }
                               />
                             ) : null}
-                            <CategoryIcon
-                              icon={tx.categories.icon}
-                              className="size-9 shrink-0 rounded-control border-0 bg-muted"
-                            />
+                            <span className="relative shrink-0">
+                              <CategoryIcon
+                                icon={tx.categories.icon}
+                                className="size-9 shrink-0 rounded-control border-0 bg-muted"
+                              />
+                              <AuthorBadge createdBy={tx.created_by} />
+                            </span>
                             <span className="min-w-0">
                               <span className="flex items-center gap-1.5">
                                 {/* `min-w-0` because a flex item defaults to

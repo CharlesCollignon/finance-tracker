@@ -4,6 +4,10 @@ import { AppBackdrop } from "@/components/layout/AppBackdrop";
 import { TopNav } from "@/components/layout/TopNav";
 import { BottomNav } from "@/components/layout/BottomNav";
 import { PageEnter } from "@/components/motion/PageEnter";
+import {
+  SpaceProvider,
+  type SpaceView,
+} from "@/components/layout/SpaceContext";
 import { NO_BADGES, type NavBadges } from "@/lib/nav-badges";
 import { SHELL_MAIN_PADDING_BOTTOM } from "@/lib/layout-shell";
 import { cn } from "@/lib/utils";
@@ -16,6 +20,8 @@ interface AppShellProps {
   badges?: NavBadges;
   /** The Immobilier surface, for an account with `property.track`. */
   showProperty?: boolean;
+  /** The shared space this person is in, and whether it is on screen. */
+  space?: SpaceView | null;
 }
 
 export function AppShell({
@@ -24,33 +30,35 @@ export function AppShell({
   initial,
   badges = NO_BADGES,
   showProperty = false,
+  space = null,
 }: AppShellProps) {
   return (
-    <AccountLabelProvider displayName={displayName} initial={initial}>
-      <div className="flex min-h-screen flex-col">
-        {/* Outside the scrolling column and fixed to the viewport, so the veil
+    <SpaceProvider space={space}>
+      <AccountLabelProvider displayName={displayName} initial={initial}>
+        <div className="flex min-h-screen flex-col">
+          {/* Outside the scrolling column and fixed to the viewport, so the veil
           stays put while content moves over it. */}
-        <AppBackdrop />
-        <TopNav
-          displayName={displayName}
-          initial={initial}
-          badges={badges}
-          showProperty={showProperty}
-        />
-        {/* From `md` the notch and the bar either side of it are fixed over the
+          <AppBackdrop />
+          <TopNav
+            displayName={displayName}
+            initial={initial}
+            badges={badges}
+            showProperty={showProperty}
+          />
+          {/* From `md` the notch and the bar either side of it are fixed over the
           page, not in its flow, so the page starts a bezel and a notch down
           to begin below them. */}
-        <div
-          className={cn(
-            "flex min-w-0 flex-1 flex-col",
-            "md:pt-[calc(var(--shell-edge)+var(--shell-notch-height))]",
-            // The scrollbar's room is on the right; the same on the left
-            // keeps the page centred in the frame rather than in the window.
-            "md:pl-[var(--scrollbar-gutter)]",
-            SHELL_MAIN_PADDING_BOTTOM,
-          )}
-        >
-          {/* Transparent rather than `bg-background`, so the veil shows
+          <div
+            className={cn(
+              "flex min-w-0 flex-1 flex-col",
+              "md:pt-[calc(var(--shell-edge)+var(--shell-notch-height))]",
+              // The scrollbar's room is on the right; the same on the left
+              // keeps the page centred in the frame rather than in the window.
+              "md:pl-[var(--scrollbar-gutter)]",
+              SHELL_MAIN_PADDING_BOTTOM,
+            )}
+          >
+            {/* Transparent rather than `bg-background`, so the veil shows
             through. There used to be a hairline down its left edge, the seam
             with the side rail; the rail is the top bar now and there is no
             seam to draw.
@@ -62,12 +70,13 @@ export function AppShell({
             the account menu, and the failure mode is not local: the pane would grow to fit the
             band, the document would grow with the pane, and every card on
             every page would inherit the overflow through its own `w-full`. */}
-          <main className="flex min-h-0 min-w-0 flex-1 flex-col">
-            <PageEnter>{children}</PageEnter>
-          </main>
+            <main className="flex min-h-0 min-w-0 flex-1 flex-col">
+              <PageEnter>{children}</PageEnter>
+            </main>
+          </div>
+          <BottomNav badges={badges} showProperty={showProperty} />
         </div>
-        <BottomNav badges={badges} showProperty={showProperty} />
-      </div>
-    </AccountLabelProvider>
+      </AccountLabelProvider>
+    </SpaceProvider>
   );
 }

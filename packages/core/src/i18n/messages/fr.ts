@@ -13,6 +13,7 @@ import { planScreenFr } from "./plan-screen.fr";
 import { homeScreenFr } from "./home-screen.fr";
 import { actionsFr } from "./actions.fr";
 import { propertyFr } from "./property.fr";
+import { spaceFr } from "./space.fr";
 
 /**
  * What the app says, in French.
@@ -2714,4 +2715,5 @@ export const fr: Messages = {
   planScreen: planScreenFr,
   homeScreen: homeScreenFr,
   property: propertyFr,
+  space: spaceFr,
 };

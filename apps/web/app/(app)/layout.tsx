@@ -125,6 +125,18 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
             initial={initial}
             badges={{ bearing: arrivedCount, ledger: inboxCount }}
             showProperty={flags ? isFlagOn(flags, "property.track") : false}
+            space={
+              owner?.space
+                ? {
+                    name: owner.space.name,
+                    joint: owner.joint,
+                    members: owner.space.members.map(({ userId, name }) => ({
+                      userId,
+                      name,
+                    })),
+                  }
+                : null
+            }
           >
             {children}
           </AppShell>

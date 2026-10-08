@@ -19,6 +19,8 @@ import {
 } from "@/lib/nav-notch";
 import { AccountMenu } from "@/components/layout/AccountMenu";
 import { Logo } from "@/components/layout/Logo";
+import { OwnerSwitch } from "@/components/layout/OwnerSwitch";
+import { useSpace } from "@/components/layout/SpaceContext";
 import { PrivacyToggle } from "@/components/layout/PrivacyToggle";
 import { NotchWing } from "@/components/layout/NotchWing";
 import { useQuickAdd } from "@/components/layout/QuickAddProvider";
@@ -209,7 +211,8 @@ export function TopNav({
   const t = useT();
   const pathname = usePathname();
   const here = activeNavHref(pathname);
-  const items = navItems({ property: showProperty });
+  const joint = useSpace()?.joint ?? false;
+  const items = navItems({ property: showProperty, joint });
   const { sentinelRef, scrolled } = useScrolledPastTop();
 
   return (
@@ -232,6 +235,7 @@ export function TopNav({
       <header className="pointer-events-none fixed left-[var(--shell-edge)] right-[var(--shell-frame)] top-[var(--shell-edge)] z-40">
         <div className={TOPBAR_START_CLASS}>
           <Logo className="md:text-[1.625rem]" />
+          <OwnerSwitch className="ml-4" />
         </div>
 
         <nav className={NOTCH_CENTRE_CLASS}>

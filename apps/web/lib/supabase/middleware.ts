@@ -19,6 +19,13 @@ import { getSupabaseEnv } from "@/lib/supabase/env";
  */
 const MONTH_SCOPED = ["/transactions", "/calendar"];
 
+/** A shared space's invite token, as `create_space_invite` makes it. */
+const TOKEN = /^[0-9a-f]{48}$/;
+const JOIN_PATH = /^\/join\/([0-9a-f]{48})$/;
+const JOIN_COOKIE = "pluclair-join";
+/** As long as the link itself lasts. */
+const JOIN_COOKIE_MAX_AGE = 60 * 60 * 24 * 7;
+
 /**
  * Where to send a month-scoped request that names no month, when one is
  * remembered. Null when there is nothing to do — which is the common case, so
@@ -126,6 +133,33 @@ export async function updateSession(request: NextRequest) {
     const url = request.nextUrl.clone();
     url.pathname = "/bearing";
     return NextResponse.redirect(url);
+  }
+
+  // A link to join a shared space opened signed out is kept through the
+  // sign-in — by password, passkey, Google or a confirmation e-mail, all of
+  // which land on the Bearing — and followed from there.
+  const joining = JOIN_PATH.exec(pathname);
+  const pendingJoin = request.cookies.get(JOIN_COOKIE)?.value;
+  if (!user && joining) {
+    supabaseResponse.cookies.set(JOIN_COOKIE, joining[1]!, {
+      httpOnly: true,
+      sameSite: "lax",
+      secure: process.env.NODE_ENV === "production",
+      path: "/",
+      maxAge: JOIN_COOKIE_MAX_AGE,
+    });
+  }
+  if (user && pendingJoin && request.method === "GET") {
+    if (joining) {
+      supabaseResponse.cookies.delete(JOIN_COOKIE);
+    } else if (pathname === "/bearing" && TOKEN.test(pendingJoin)) {
+      const url = request.nextUrl.clone();
+      url.pathname = `/join/${pendingJoin}`;
+      url.search = "";
+      const response = NextResponse.redirect(url);
+      response.cookies.delete(JOIN_COOKIE);
+      return response;
+    }
   }
 
   // Restoring the month the user was last looking at happens here, before
