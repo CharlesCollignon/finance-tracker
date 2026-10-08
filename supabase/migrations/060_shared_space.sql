@@ -614,14 +614,17 @@ $$;
 
 -- What a link says before it is used: the space's name, who sent it, and
 -- whether it can still be used — for the page that asks « Rejoindre ? ».
-create or replace function public.peek_space_invite(invite_token text)
-returns table (space_name text, invited_by text, usable boolean)
+-- The id too, so someone already in that space is told so.
+drop function if exists public.peek_space_invite(text);
+create function public.peek_space_invite(invite_token text)
+returns table (space_id uuid, space_name text, invited_by text, usable boolean)
 language sql
 stable
 security definer
 set search_path = ''
 as $$
   select
+    s.id,
     s.name,
     coalesce(
       u.raw_user_meta_data ->> 'full_name',
@@ -684,6 +687,35 @@ begin
 end;
 $$;
 
+-- Who is in a space, by name, for its members only: the partner's name for
+-- the members list and the initial on a joint row. Nothing else of their
+-- account is read.
+create or replace function public.space_people(target_space uuid)
+returns table (user_id uuid, name text, share numeric, joined_at timestamptz)
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select
+    m.user_id,
+    coalesce(
+      u.raw_user_meta_data ->> 'full_name',
+      u.raw_user_meta_data ->> 'name',
+      split_part(u.email, '@', 1)
+    ),
+    m.share,
+    m.joined_at
+  from public.space_members m
+  join auth.users u on u.id = m.user_id
+  where m.space_id = target_space
+    and exists (
+      select 1 from public.space_members me
+      where me.space_id = target_space and me.user_id = auth.uid()
+    )
+  order by m.joined_at;
+$$;
+
 -- The last member gone, the space goes, and its rows with it.
 create or replace function public.space_gone_when_empty()
 returns trigger
@@ -710,7 +742,7 @@ begin
   foreach fn in array array[
     'create_space(text)', 'rename_space(uuid, text)',
     'create_space_invite(uuid)', 'peek_space_invite(text)',
-    'join_space(text)', 'leave_space(uuid)'
+    'join_space(text)', 'leave_space(uuid)', 'space_people(uuid)'
   ] loop
     execute format('revoke all on function public.%s from public, anon', fn);
     execute format('grant execute on function public.%s to authenticated', fn);

@@ -2140,6 +2140,7 @@ export type Database = {
         Args: { invite_token: string };
         Returns: {
           invited_by: string;
+          space_id: string;
           space_name: string;
           usable: boolean;
         }[];
@@ -2510,6 +2511,15 @@ export type Database = {
       soft_delete_transactions: {
         Args: { ids: string[]; target_user: string };
         Returns: string;
+      };
+      space_people: {
+        Args: { target_space: string };
+        Returns: {
+          joined_at: string;
+          name: string;
+          share: number;
+          user_id: string;
+        }[];
       };
       store_bearing_arrangement: {
         Args: {

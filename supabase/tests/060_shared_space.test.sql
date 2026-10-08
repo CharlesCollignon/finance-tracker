@@ -124,8 +124,10 @@ select test_assert(
   public.acting_for((select id from ids where name = 'space')),
   'a member acts for the space in the definer functions');
 select test_assert(
-  (select count(*) from space_members) = 2,
-  'and sees who else is in it');
+  (select count(*) from space_members) = 2
+    and (select string_agg(name, ',' order by joined_at)
+         from public.space_people((select id from ids where name = 'space'))) = 'Alice,Bob',
+  'and sees who else is in it, by name');
 
 -- Carol is outside.
 select test_become('c3333333-3333-3333-3333-333333333333');
@@ -140,6 +142,9 @@ select test_assert(
 select test_assert(
   not public.acting_for((select id from ids where name = 'space')),
   'nor acts for it');
+select test_assert(
+  (select count(*) from public.space_people((select id from ids where name = 'space'))) = 0,
+  'nor learns who is in it');
 select test_assert(
   test_refused(format($q$
     insert into categories (user_id, name, type) values (%L, 'Intrus', 'expense')

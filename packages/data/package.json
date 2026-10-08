@@ -45,6 +45,7 @@
     "./recurring-templates": "./src/recurring-templates.ts",
     "./savings-accounts": "./src/savings-accounts.ts",
     "./schema": "./src/schema.ts",
+    "./spaces": "./src/spaces.ts",
     "./subscriptions": "./src/subscriptions.ts",
     "./templates": "./src/templates.ts",
     "./wallet-plans": "./src/wallet-plans.ts",
