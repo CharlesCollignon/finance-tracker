@@ -45,6 +45,7 @@ import {
   bigCharges,
   closeReminder,
   equityMomentNotification,
+  forSpace,
   loanMomentNotification,
   milestoneNotification,
   yearReviewNotification,
@@ -129,6 +130,9 @@ export async function GET(request: NextRequest) {
   // session either, so the preferences row is the only place either can come
   // from.
   const recipients = await readRecipients(supabase, [...byUser.keys()]);
+  // Who is in a shared space: each member hears the space's own messages
+  // too, under their own switches and in their own language.
+  const spaces = await readSpaces(supabase, [...byUser.keys()]);
 
   let sent = 0;
   let held = 0;
@@ -142,10 +146,17 @@ export async function GET(request: NextRequest) {
       monthKey,
       recipient,
     );
-    const delivery = await deliver(supabase, userId, recipient, due, {
-      devices,
-      webPushReady,
-    });
+    const space = spaces.get(userId);
+    const joint = space
+      ? await jointNotificationsFor(supabase, space, today, recipient)
+      : [];
+    const delivery = await deliver(
+      supabase,
+      userId,
+      recipient,
+      [...due, ...joint],
+      { devices, webPushReady },
+    );
     sent += delivery.sent;
     held += delivery.held;
   }
@@ -161,6 +172,68 @@ export async function GET(request: NextRequest) {
 }
 
 type AdminClient = NonNullable<ReturnType<typeof createAdminClient>>;
+
+/** The space each of these people is in, by person. */
+async function readSpaces(
+  supabase: AdminClient,
+  userIds: readonly string[],
+): Promise<Map<string, { id: string; name: string }>> {
+  if (userIds.length === 0) {
+    return new Map();
+  }
+  // Before migration 060 there is no space to be in, which is not a reason
+  // to tell nobody anything.
+  const { data } = await supabase
+    .from("space_members")
+    .select("user_id, space_id, spaces(name)")
+    .in("user_id", [...userIds]);
+  return new Map(
+    (data ?? []).map((row) => [
+      row.user_id,
+      {
+        id: row.space_id,
+        name: (row.spaces as { name: string } | null)?.name ?? "Commun",
+      },
+    ]),
+  );
+}
+
+/**
+ * What a shared space has to say to one of its members today: the same
+ * questions as a person's own — an overdraft ahead, tomorrow's big charge,
+ * the reading day, the Monday recap — asked of the space, each named for
+ * it and keyed apart (`forSpace`).
+ */
+async function jointNotificationsFor(
+  supabase: AdminClient,
+  space: { id: string; name: string },
+  today: string,
+  { locale }: Recipient,
+): Promise<PendingNotification[]> {
+  const { data: templates } = await supabase
+    .from("recurring_templates")
+    .select("*, categories(name, type, icon, counts_toward_summary)")
+    .eq("user_id", space.id)
+    .eq("active", true);
+  const said = await Promise.all([
+    overdraftFor(supabase, space.id, today, locale),
+    bigChargeFor(
+      supabase,
+      space.id,
+      today,
+      (templates ?? []) as RecurringTemplateWithCategory[],
+      locale,
+    ),
+    closeReminderFor(supabase, space.id, today, locale),
+    recapFor(supabase, space.id, today, locale),
+  ]);
+  return said
+    .filter(
+      (notification): notification is PendingNotification =>
+        notification !== null,
+    )
+    .map((notification) => forSpace(notification, space));
+}
 
 /** What this one user should hear about today. */
 async function notificationsFor(

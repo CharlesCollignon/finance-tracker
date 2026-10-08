@@ -3,6 +3,7 @@ import { cache } from "react";
 import { cookies } from "next/headers";
 import { getMySpace, type Space } from "@finance/data/spaces";
 import { getAuthUser } from "@/lib/auth/get-user";
+import { OWNER_COOKIE } from "@/lib/owner-cookie";
 import { createClient } from "@/lib/supabase/server";
 
 /**
@@ -15,7 +16,6 @@ import { createClient } from "@/lib/supabase/server";
  * only while the person is a member of that space: one naming a space they
  * left falls back to them.
  */
-export const OWNER_COOKIE = "pluclair-owner";
 
 export interface Owner {
   /** Who is signed in. */

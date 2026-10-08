@@ -6,6 +6,7 @@ import {
   LOCALE_COOKIE,
   parseLocale,
 } from "@finance/core/i18n/locale";
+import { OWNER_COOKIE, OWNER_COOKIE_OPTIONS } from "@/lib/owner-cookie";
 import { getSupabaseEnv } from "@/lib/supabase/env";
 
 /**
@@ -18,6 +19,9 @@ import { getSupabaseEnv } from "@/lib/supabase/env";
  * this proxy, so it has nothing to restore a month into any more.
  */
 const MONTH_SCOPED = ["/transactions", "/calendar"];
+
+/** A shared space's id, as a notification about it names it. */
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 /** A shared space's invite token, as `create_space_invite` makes it. */
 const TOKEN = /^[0-9a-f]{48}$/;
@@ -160,6 +164,18 @@ export async function updateSession(request: NextRequest) {
       response.cookies.delete(JOIN_COOKIE);
       return response;
     }
+  }
+
+  // A notification about a shared space opens it: `?owner=<space>` becomes
+  // the choice the shared screens read — `getOwner` honours it only for a
+  // member — and leaves the address.
+  const owner = request.nextUrl.searchParams.get("owner");
+  if (user && owner && request.method === "GET" && UUID.test(owner)) {
+    const url = request.nextUrl.clone();
+    url.searchParams.delete("owner");
+    const response = NextResponse.redirect(url);
+    response.cookies.set(OWNER_COOKIE, owner, OWNER_COOKIE_OPTIONS);
+    return response;
   }
 
   // Restoring the month the user was last looking at happens here, before

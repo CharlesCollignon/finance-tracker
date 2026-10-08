@@ -582,3 +582,28 @@ export function equityMomentNotification({
     url: `/property/${property.id}`,
   };
 }
+
+/**
+ * A message computed for a shared space, as one of its members hears it
+ * (`docs/plans/SHARED_SPACE_DESIGN.md`): the space's name ahead of the
+ * title, a key of its own in that person's log — `space:<id>:overdraft:…` —
+ * so the space's overdraft and the person's are said once each, and a link
+ * that opens the space (`?owner=`) rather than the person's own money.
+ */
+export function forSpace(
+  notification: PendingNotification,
+  space: { id: string; name: string },
+): PendingNotification {
+  const prefix = `space:${space.id}:`;
+  const [path = "/", query] = notification.url.split("?");
+  const owner = `owner=${encodeURIComponent(space.id)}`;
+  return {
+    ...notification,
+    key: `${prefix}${notification.key}`,
+    title: `${space.name} · ${notification.title}`,
+    url: `${path}?${query ? `${query}&` : ""}${owner}`,
+    ...(notification.covers
+      ? { covers: notification.covers.map((key) => `${prefix}${key}`) }
+      : {}),
+  };
+}

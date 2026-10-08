@@ -6,7 +6,8 @@ import { buildLedgerCsv } from "@finance/core/ledger-csv";
 import * as spaces from "@finance/data/spaces";
 import { asUser } from "@/lib/actions/as-user";
 import { getLocale } from "@/lib/locale";
-import { getOwner, OWNER_COOKIE } from "@/lib/owner";
+import { getOwner } from "@/lib/owner";
+import { OWNER_COOKIE, OWNER_COOKIE_OPTIONS } from "@/lib/owner-cookie";
 import { revalidateApp } from "@/lib/revalidate-paths";
 import { createClient } from "@/lib/supabase/server";
 
@@ -17,19 +18,10 @@ import { createClient } from "@/lib/supabase/server";
  * who is asking and redraw.
  */
 
-/** A year: the switch is a standing choice, not a session's. */
-const OWNER_COOKIE_MAX_AGE = 60 * 60 * 24 * 365;
-
 async function rememberOwner(spaceId: string | null): Promise<void> {
   const jar = await cookies();
   if (spaceId) {
-    jar.set(OWNER_COOKIE, spaceId, {
-      httpOnly: true,
-      sameSite: "lax",
-      secure: process.env.NODE_ENV === "production",
-      path: "/",
-      maxAge: OWNER_COOKIE_MAX_AGE,
-    });
+    jar.set(OWNER_COOKIE, spaceId, OWNER_COOKIE_OPTIONS);
   } else {
     jar.delete(OWNER_COOKIE);
   }
