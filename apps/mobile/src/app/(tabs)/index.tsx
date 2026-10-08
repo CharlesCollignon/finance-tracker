@@ -11,10 +11,10 @@ import { BankAttentionBanner } from "@/components/bank/BankAttentionBanner";
 import { NewAccountsLine } from "@/components/bank/NewAccountsLine";
 import { AttentionRow } from "@/components/bearing/AttentionRow";
 import { LeftToSpendCard } from "@/components/bearing/LeftToSpendCard";
+import { SetupCard } from "@/components/bearing/SetupCard";
 import {
   BalanceCard,
   MomentumCard,
-  SetUpCard,
   SpentCard,
   UpcomingCard,
   WhereItWentCard,
@@ -27,6 +27,8 @@ import { ScreenError } from "@/components/ScreenError";
 import { useBankState } from "@/hooks/useBankState";
 import { useRefreshable } from "@/hooks/useRefreshable";
 import { getBankAccounts } from "@/lib/queries";
+import { shouldInvite } from "@/lib/bank-connect";
+import { nextSetupStep } from "@finance/core/setup-steps";
 import {
   gatherHomeMonth,
   gatherHomeRead,
@@ -110,6 +112,19 @@ export default function HomeScreen() {
   const current = period === "current";
   const past = period === "past";
 
+  // One setup card at a time, for the month in progress.
+  const setupStep = data?.setup
+    ? nextSetupStep({
+        ...data.setup,
+        bankInvited: bank !== null && shouldInvite("bearing", bank),
+      })
+    : null;
+  // Only what has something in it: a first visit shows the setup card, not
+  // a row of zeros.
+  const hasSpentBefore =
+    data !== null &&
+    (data.spent.total > 0 || data.spent.trend.some((entry) => entry.total > 0));
+
   let index = 0;
   const next = () => index++;
 
@@ -176,28 +191,34 @@ export default function HomeScreen() {
               </StaggerItem>
             ) : null}
 
-            <StaggerItem index={next()}>
-              <BalanceCard data={data} bank={bank} />
-            </StaggerItem>
+            {setupStep && data.setup ? (
+              <StaggerItem index={next()}>
+                <SetupCard
+                  step={setupStep}
+                  firstCloseOn={data.setup.firstCloseOn}
+                  bank={bank}
+                />
+              </StaggerItem>
+            ) : null}
+
+            {!data.empty ? (
+              <StaggerItem index={next()}>
+                <BalanceCard data={data} />
+              </StaggerItem>
+            ) : null}
 
             {/* The week is this month's to recap, not a month browsed to. */}
             {current && recap ? (
               <WeeklyRecapCard key={recap.weekOf} recap={recap} />
             ) : null}
 
-            {data.empty ? (
-              <StaggerItem index={next()}>
-                <SetUpCard />
-              </StaggerItem>
-            ) : null}
-
-            {!data.empty && period !== "future" ? (
+            {hasSpentBefore && period !== "future" ? (
               <StaggerItem index={next()}>
                 <SpentCard data={data} />
               </StaggerItem>
             ) : null}
 
-            {!past && data.upcoming ? (
+            {!past && data.upcoming && data.recurring ? (
               <StaggerItem index={next()}>
                 <UpcomingCard data={data} />
               </StaggerItem>

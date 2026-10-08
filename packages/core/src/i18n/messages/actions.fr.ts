@@ -39,6 +39,7 @@ export const actionsFr: typeof actionsEn = {
     "Ce mois pourra être clôturé à partir du {date}, une fois ses dernières dépenses arrivées.",
   closeRemoved: "Clôture retirée",
   capSet: "Plafond enregistré",
+  balanceSet: "Solde enregistré",
   readingDayUpdated: "Jour de relevé mis à jour",
 
   fulfilmentSetup:

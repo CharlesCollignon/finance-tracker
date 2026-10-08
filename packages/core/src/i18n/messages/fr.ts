@@ -1187,10 +1187,6 @@ export const fr: Messages = {
   },
 
   month: {
-    setUpTitle: "Configurez votre mois",
-    setUpBody:
-      "Ajoutez une fois ce qui revient. Chaque mois est projeté à partir de là.",
-    setUpCharges: "Configurer vos opérations récurrentes",
     capsAndGoals: "Budgets et objectifs",
     moreThisMonth: "Plus sur ce mois",
     startingBalanceHint:
@@ -2322,9 +2318,31 @@ export const fr: Messages = {
     invitePlan:
       "Votre solde est lu pour vous, et le bilan des mois se fait de lui-même.",
     dismissInvite: "Ne plus afficher",
-    orEnterBalance: "Ou saisissez votre solde à la main",
   },
 
+  setup: {
+    later: "Plus tard",
+    withoutBank: "Sans banque",
+    balance: {
+      title: "Combien avez-vous sur votre compte aujourd'hui\u00A0?",
+      body: "Le montant qu'affiche votre banque. Pluclair part de là pour vous dire ce qu'il vous reste jusqu'à votre prochain salaire.",
+      save: "Enregistrer",
+    },
+    salary: {
+      title: "Votre salaire",
+      body: "Son montant et son jour\u00A0: c'est jusque-là que Pluclair compte ce qu'il vous reste.",
+      action: "Ajouter mon salaire",
+    },
+    charges: {
+      title: "Vos charges fixes",
+      body: "Loyer, électricité, box, téléphone… Elles s'ajoutent toutes seules chaque mois.",
+      action: "Ajouter mes charges",
+    },
+    close: {
+      title: "Votre premier bilan, le {date}",
+      body: "Ce jour-là, notez le solde de votre compte\u00A0: Pluclair le compare à ce que vous avez noté et retrouve ce qui a filé.",
+    },
+  },
   leftToSpend: {
     title: "Il vous reste",
     missing: "Il vous manque",
@@ -2363,12 +2381,16 @@ export const fr: Messages = {
       bank: "Le solde vient de votre banque. Pour le reste du mois, l'application y ajoute ce que vos opérations récurrentes doivent encore faire entrer ou sortir. Les dépenses du quotidien pas encore faites n'y sont pas.",
       close:
         "Le départ est le solde que vous avez noté au dernier bilan de mois. L'application y ajoute les opérations enregistrées depuis, puis ce que vos opérations récurrentes doivent encore faire entrer ou sortir.",
+      reading:
+        "Le départ est le solde que vous avez saisi sur Le point. L'application y ajoute les opérations enregistrées depuis, puis ce que vos opérations récurrentes doivent encore faire entrer ou sortir. Votre premier bilan de mois prendra le relais.",
     },
     netCaption: "Ce qui est entré, moins ce qui est sorti.",
     byAccount: "Par compte",
     byAccountEnd: "Par compte, à la fin du mois",
     fromBank: "Aujourd'hui, d'après votre banque",
     fromClose: "D'après votre dernier bilan, plus ce que vous avez noté depuis",
+    fromReading:
+      "D'après le solde que vous avez saisi, plus ce que vous avez noté depuis",
     plannedOnly:
       "Vos opérations récurrentes seulement — les dépenses du quotidien n'y sont pas",
     fromToday: "{amount} par rapport à aujourd'hui",
@@ -2383,9 +2405,6 @@ export const fr: Messages = {
       other: "+{count} autres",
     },
     recorded: "Enregistré",
-    setBalance: "Saisir votre solde",
-    setBalanceBody:
-      "Saisissez une fois ce que contient votre compte, et ceci devient votre vrai solde.",
     spent: "Dépensé",
     spentLessSoFar: "{amount} de moins qu'en {month} à ce stade",
     spentMoreSoFar: "{amount} de plus qu'en {month} à ce stade",

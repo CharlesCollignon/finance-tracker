@@ -14,9 +14,15 @@ const AI_OUTCOMES: readonly AiConnectOutcome[] = [
   "expired",
 ];
 
+/** The steps Le point's setup cards open the wizard on (`?from=`). */
+const STARTS = ["income", "recurring"] as const;
+
 interface WelcomePageProps {
-  /** `?ai=` is where OpenRouter's callback lands a trip begun here. */
-  searchParams: Promise<{ ai?: string }>;
+  /**
+   * `?ai=` is where OpenRouter's callback lands a trip begun here; `?from=`
+   * opens on a later step, for a setup card on Le point.
+   */
+  searchParams: Promise<{ ai?: string; from?: string }>;
 }
 
 export const metadata = {
@@ -51,6 +57,7 @@ export default async function WelcomePage({ searchParams }: WelcomePageProps) {
       offerBank={offerBank}
       offerAi={isFlagOn(flags, "ai.account")}
       aiOutcome={AI_OUTCOMES.find((outcome) => outcome === params.ai) ?? null}
+      startAt={STARTS.find((start) => start === params.from)}
       // Connected at the bank step and still to bring its history in.
       bankWaiting={bank !== null && bank.backfilled_at === null}
     />

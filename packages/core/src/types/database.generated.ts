@@ -105,6 +105,27 @@ export type Database = {
         };
         Relationships: [];
       };
+      balance_readings: {
+        Row: {
+          amount: number;
+          created_at: string;
+          read_on: string;
+          user_id: string;
+        };
+        Insert: {
+          amount: number;
+          created_at?: string;
+          read_on: string;
+          user_id: string;
+        };
+        Update: {
+          amount?: number;
+          created_at?: string;
+          read_on?: string;
+          user_id?: string;
+        };
+        Relationships: [];
+      };
       bank_accounts: {
         Row: {
           account_type: string | null;

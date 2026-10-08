@@ -29,6 +29,8 @@ import * as occurrences from "@finance/data/occurrences";
 import * as recap from "@finance/data/weekly-recap";
 import * as preferences from "@finance/data/preferences";
 import * as aiConnection from "@finance/data/ai-connection";
+import { saveBalanceReading as saveReading } from "@finance/data/balance-reading";
+import { setupPrompt, type SetupStep } from "@finance/core/setup-steps";
 import type { NotificationKind } from "@finance/core/notification-kinds";
 import type { ActionResult } from "@finance/core/action-result";
 import type {
@@ -596,6 +598,25 @@ export function dismissWeeklyRecap(
 ): Promise<ActionResult> {
   return asUser((userId) =>
     recap.dismissWeeklyRecap(supabase, userId, weekOf, locale),
+  );
+}
+
+/* --------------------------------------------- Le point's setup cards */
+
+/** What the account holds today, typed on Le point's setup card. */
+export function saveBalanceReading(amount: number): Promise<ActionResult> {
+  return asUser((userId) =>
+    saveReading(supabase, userId, { amount, today: todayIsoLocal() }),
+  );
+}
+
+/** « Plus tard »: put one setup card away, for good and on every device. */
+export function dismissSetupStep(
+  step: Exclude<SetupStep, "bank">,
+  locale: Locale,
+): Promise<ActionResult> {
+  return asUser((userId) =>
+    preferences.dismissPrompt(supabase, userId, setupPrompt(step), locale),
   );
 }
 

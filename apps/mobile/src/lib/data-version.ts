@@ -76,6 +76,8 @@ const TABLE_AREAS: Record<string, readonly DataArea[]> = {
   bank_feed_items: ["bank", "transactions"],
   month_closes: ["closes"],
   month_close_settings: ["closes"],
+  // A balance typed before any close: it anchors the month as a close does.
+  balance_readings: ["closes"],
   user_preferences: ["preferences"],
   profiles: ["preferences"],
   month_reads: ["reads"],

@@ -39,3 +39,14 @@ export const closeDaySchema = z.object({
     .min(1, "errors.pickDay")
     .max(28, "errors.pickDay"),
 });
+
+/**
+ * A balance typed before any close (`balance_readings`): what the account
+ * holds today, negative too, on the same bounds as a close's.
+ */
+export const balanceReadingSchema = z.object({
+  amount: z.coerce
+    .number()
+    .min(-1_000_000, "errors.notABalance")
+    .max(1_000_000_000, "errors.notABalance"),
+});

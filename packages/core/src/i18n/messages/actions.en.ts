@@ -51,6 +51,7 @@ export const actionsEn = {
     "This month can be closed from {date}, once the last of its spending has landed.",
   closeRemoved: "Close removed",
   capSet: "Cap set",
+  balanceSet: "Balance saved",
   readingDayUpdated: "Reading day updated",
 
   /* Matching bank movements to recurring entries. */

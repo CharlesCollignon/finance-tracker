@@ -40,7 +40,9 @@ import {
 } from "@finance/data/month-balance";
 import { getPurchasesToConfirm } from "@finance/data/purchases-to-confirm";
 import { readLeftToSpend } from "@finance/data/left-to-spend";
-import type { LeftToSpend } from "@finance/core/left-to-spend";
+import { payTemplate, type LeftToSpend } from "@finance/core/left-to-spend";
+import { firstCloseDay, type SetupFacts } from "@finance/core/setup-steps";
+import { readDismissedPrompts } from "@finance/data/preferences";
 import { getDcaMonth } from "@finance/data/dca-transfer";
 
 /** How many months the spending bars look back over, the month shown included. */
@@ -112,6 +114,13 @@ export interface BearingMonth {
    * day. The month in progress with a balance only.
    */
   left: LeftToSpend | null;
+  /**
+   * What Le point's setup cards ask about (`nextSetupStep`), all but the bank
+   * invitation, which the page decides. The month in progress only.
+   */
+  setup: (Omit<SetupFacts, "bankInvited"> & { firstCloseOn: string }) | null;
+  /** Any recurring template active: without one, nothing is ever to come. */
+  recurring: boolean;
   /** Nothing recorded, nothing planned and no balance: a first visit. */
   empty: boolean;
 }
@@ -208,6 +217,7 @@ export async function gatherBearingMonth(
   let dca: DcaMonth | null = null;
   let dcaProposal: FulfilmentProposal | null = null;
   let left: LeftToSpend | null = null;
+  let setup: BearingMonth["setup"] = null;
 
   if (isCurrent) {
     left = await readLeftToSpend(await createClient(), userId, {
@@ -218,6 +228,18 @@ export async function gatherBearingMonth(
       closes,
       bankFed,
     });
+    setup = {
+      bankFed,
+      hasBalance: source !== "none",
+      hasIncome: payTemplate(templates) !== null,
+      hasCharges: templates.some(
+        (template) => template.active && template.categories.type === "expense",
+      ),
+      hasClosed: closes.history.length > 0,
+      readyToClose: closes.next !== null,
+      dismissed: await readDismissedPrompts(await createClient(), userId),
+      firstCloseOn: firstCloseDay(today, closes.settings.closeDay),
+    };
     const categories = await getCategories(userId);
     arrived = await getFulfilmentReport(
       userId,
@@ -311,6 +333,8 @@ export async function gatherBearingMonth(
     dca,
     dcaProposal,
     left,
+    setup,
+    recurring: templates.some((template) => template.active),
     empty:
       source === "none" &&
       rows.length === 0 &&

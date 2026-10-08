@@ -30,13 +30,9 @@ import { EASE_STANDARD } from "@finance/core/motion";
 import { AnimatedAmount } from "@/components/AnimatedAmount";
 import { CategoryIcon } from "@/components/CategoryIcon";
 import { PrivateAmount } from "@/components/PrivateAmount";
-import { ConnectBankInvite } from "@/components/bank/ConnectBankInvite";
 import { BalanceCurve } from "@/components/bearing/BalanceCurve";
 import { DcaStrip } from "@/components/bearing/DcaStrip";
-import { Button } from "@/components/ui/Button";
 import { Text } from "@/components/ui/Text";
-import type { BankState } from "@/hooks/useBankState";
-import { shouldInvite } from "@/lib/bank-connect";
 import { cn } from "@/lib/cn";
 import { hapticLight } from "@/lib/haptics";
 import type { HomeMonth } from "@/lib/home-data";
@@ -217,18 +213,11 @@ function GrowBar({ ratio, color }: { ratio: number; color: string }) {
 
 /* ------------------------------------------------------------ the balance */
 
-export function BalanceCard({
-  data,
-  bank,
-}: {
-  data: HomeMonth;
-  bank: BankState | null;
-}) {
+export function BalanceCard({ data }: { data: HomeMonth }) {
   const t = useT();
   const locale = useLocale();
   const format = useFormatCurrency();
   const colors = useThemeColors();
-  const router = useRouter();
   const { balance, source, upcoming } = data;
   const net = balance.basis === "net";
   const monthLabel = formatMonthLabel(data.year, data.month, locale);
@@ -287,7 +276,9 @@ export function BalanceCard({
         ? t("bearingMonth.netCaption")
         : source === "bank"
           ? t("bearingMonth.fromBank")
-          : t("bearingMonth.fromClose");
+          : source === "reading"
+            ? t("bearingMonth.fromReading")
+            : t("bearingMonth.fromClose");
 
   // Only for a balance. A month's running net dips below zero every month
   // before payday, and flagging that as the account's lowest point would be
@@ -301,10 +292,6 @@ export function BalanceCard({
   // Red only where a balance is below zero — an overdrawn account. A net
   // below zero is spending before income, which is most of every month.
   const overdrawn = (value: number) => !net && value < 0;
-  const inviting =
-    balance.period !== "future" &&
-    bank !== null &&
-    shouldInvite("bearing", bank);
 
   return (
     <View className="gap-5 rounded-card border border-border bg-card/70 p-card">
@@ -466,39 +453,6 @@ export function BalanceCard({
         <DcaStrip month={data.dca} proposal={data.dcaProposal} />
       ) : null}
 
-      {/* Where the real balance would be: the strongest place to offer it.
-          Typing a balance by hand stays the alternative for anyone who would
-          rather not connect a bank. */}
-      {inviting ? (
-        <View className="gap-2">
-          <ConnectBankInvite surface="bearing" bank={bank} />
-          {net ? (
-            <Pressable
-              accessibilityRole="link"
-              hitSlop={6}
-              onPress={() => router.push("/planning" as Href)}
-              className="self-start"
-            >
-              <Text variant="muted" className="text-xs underline">
-                {t("bankConnect.orEnterBalance")}
-              </Text>
-            </Pressable>
-          ) : null}
-        </View>
-      ) : net && balance.period !== "future" ? (
-        <View className="gap-3 rounded-control border border-hairline-strong px-4 py-3">
-          <Text variant="muted" className="text-sm">
-            {t("bearingMonth.setBalanceBody")}
-          </Text>
-          <Button
-            label={t("bearingMonth.setBalance")}
-            variant="outline"
-            size="sm"
-            className="self-start"
-            onPress={() => router.push("/planning" as Href)}
-          />
-        </View>
-      ) : null}
     </View>
   );
 }
@@ -874,28 +828,5 @@ export function MomentumCard({ data }: { data: HomeMonth }) {
         </Pressable>
       ) : null}
     </HomeCard>
-  );
-}
-
-/* ------------------------------------------------------------ first visit */
-
-export function SetUpCard() {
-  const t = useT();
-  const router = useRouter();
-  return (
-    <View className="gap-3 rounded-card border border-border bg-card/70 p-card">
-      <View className="gap-1">
-        <Text className="text-base font-semibold">{t("month.setUpTitle")}</Text>
-        <Text variant="muted" className="text-sm">
-          {t("month.setUpBody")}
-        </Text>
-      </View>
-      <Button
-        label={t("month.setUpCharges")}
-        size="sm"
-        className="self-start"
-        onPress={() => router.push("/onboarding" as Href)}
-      />
-    </View>
   );
 }

@@ -44,6 +44,7 @@
     "./fulfilment-state": "./src/fulfilment-state.ts",
     "./future-plan": "./src/future-plan.ts",
     "./savings-accounts": "./src/savings-accounts.ts",
+    "./setup-steps": "./src/setup-steps.ts",
     "./fund-costs": "./src/fund-costs.ts",
     "./i18n/calendar-names": "./src/i18n/calendar-names.ts",
     "./i18n/locale": "./src/i18n/locale.ts",

@@ -9,7 +9,8 @@ import { isMissingSchema } from "./schema";
  * rows that point at others go first — a transaction's tags before the
  * transaction, the transactions before the templates and categories they
  * belong to. A table only some deployments have yet (`savings_accounts`,
- * migration 046; `properties`, 049, whose loans go with them) is skipped
+ * migration 046; `properties`, 049, whose loans go with them;
+ * `balance_readings`, 057) is skipped
  * where it is missing rather than stopping the rest. Throws on the first
  * refusal, leaving what came before it deleted.
  */
@@ -64,7 +65,11 @@ export async function deleteAllUserData(db: Db, userId: string): Promise<void> {
     }
   }
 
-  for (const table of ["savings_accounts", "properties"] as const) {
+  for (const table of [
+    "savings_accounts",
+    "properties",
+    "balance_readings",
+  ] as const) {
     const { error } = await db.from(table).delete().eq("user_id", userId);
     if (error && !isMissingSchema(error)) {
       throw error;
