@@ -51,6 +51,13 @@ create table if not exists insights.activity_days (
 );
 create index if not exists activity_days_day_idx on insights.activity_days (day);
 
+-- Out of the API's reach already (the schema is not exposed, and its use is
+-- revoked above), and locked as well: row level security with no policy
+-- lets no client role read or write a row. The functions below run as the
+-- tables' owner, which it does not stop.
+alter table insights.salt enable row level security;
+alter table insights.activity_days enable row level security;
+
 -- The switch in Profile. On unless turned off, as the privacy policy says.
 alter table user_preferences
   add column if not exists measure_audience boolean not null default true;
