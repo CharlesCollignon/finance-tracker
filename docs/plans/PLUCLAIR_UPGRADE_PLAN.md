@@ -7,6 +7,8 @@
 >    _"Read `docs/plans/PLUCLAIR_UPGRADE_PLAN.md` in full. We are working on Phase N. Start with the Phase plan (section 1.2) and wait for my go."_
 > 3. Run one phase per session (or per series of sessions). Every phase ends with a checkpoint where I review before we continue.
 > 4. Sections 1 to 5 apply to every phase. Section 6 lists the phases. Section 7 is work only I (the human) can do; never pretend it is done.
+>
+> **October 2026:** `docs/plans/EVERYDAY_PLAN.md` now owns onboarding v2 (Phase 2), the analytics events (§4.10), the subscription detector (Phase 7) and Ask Pluclair (Phase 9). Goals v2 (Phase 5) is on hold. The rest of this plan stands as written.
 
 ---
 
@@ -313,6 +315,8 @@ Retention period to be confirmed in H1. Users can export their records. Nothing 
 
 ### 4.10 Analytics events
 
+> Moved to `docs/plans/EVERYDAY_PLAN.md`, phase 1 (2026-10-08): first-party, a salted pseudonymous id, no third-party tool.
+
 Privacy-friendly, EU-hosted tool (I will choose). Never send amounts, merchant names or free text.
 
 `onboarding_step_viewed | completed | skipped {step}`, `sample_data_entered | exited`, `bank_connect_started | succeeded | failed {provider, bank_id, error_code}`, `import_completed {source, rows}`, `bearing_first_populated {seconds_since_signup}`, `month_review_started | completed | abandoned {step, duration}`, `insight_shown | opened | actioned | dismissed {detector, tier, reason}`, `recommendation_shown | accepted | declined {detector, tier}`, `ai_call {feature, validator_pass, latency_ms}`.
@@ -390,6 +394,8 @@ Acceptance: end-to-end connection with the sandbox on web and mobile; history ba
 
 ### Phase 2 — Onboarding v2 (M)
 
+> Moved to `docs/plans/EVERYDAY_PLAN.md`, phases 1 and 2 (2026-10-08): setup cards on Le point, the bank wizard, the import presets.
+
 **Goal:** a populated, useful Bearing in under three minutes (excluding the bank's own authentication).
 
 Principle: ask only what the app can't infer, show something useful after each answer, postpone the rest.
@@ -439,6 +445,8 @@ Acceptance: a dummy detector flows end to end on web and mobile; gating tests pr
 
 ### Phase 5 — Goals and forecasts (priority 1) (L)
 
+> On hold, 2026-10-08: the owner chose habit through use alone — no goals, budgets or challenges in the interface (`docs/plans/EVERYDAY_PLAN.md`). « Can I afford €X » moved there as « Puis-je me permettre ? ».
+
 **Goal:** users know if they will reach their goals, with honest ranges, and get personal recommendations to get there.
 
 Tasks:
@@ -474,7 +482,7 @@ Acceptance: persona 4 surfaces overlap, fee drag and benchmark gap with sources;
 
 Detectors (all tier 0 to 3):
 
-- **Subscriptions:** creep, duplicates, price increases (merchant normalisation), yearly total.
+- **Subscriptions:** creep, duplicates, price increases (merchant normalisation), yearly total. _Moved to `docs/plans/EVERYDAY_PLAN.md`, phase 4 (2026-10-08)._
 - **Idle cash:** daily balance curve rebuilt from the feed (or closes plus ledger); buffer = N months of essential spending; forgone interest at current regulated rates from the registry. Tier 3: "Move €X to savings" (the user does it; Pluclair never moves money).
 - **Seasonal provisioning** (12+ months): recurring peaks become a suggested monthly provision charge.
 - **Cap suggestions** from category medians (replaces the onboarding cap).
@@ -494,6 +502,8 @@ Acceptance: persona 1 surfaces subscriptions and idle cash; persona 2 surfaces s
 Acceptance: simulations reproduce hand-checked examples for each persona; changing a tax-year parameter in the registry changes results without code changes.
 
 ### Phase 9 — Ask Pluclair (M to L)
+
+> Moved to `docs/plans/EVERYDAY_PLAN.md`, phase 7 (2026-10-08): aggregates only, facts and never advice, conversations kept 30 days.
 
 - Conversational Q&A in EN and FR, web and mobile, with suggested questions.
 - Tool calling over whitelisted, read-only core functions: `getSpending(period, category?)`, `compareMonths`, `getGoalStatus`, `runForecast`, `simulateAffordability(amount, date)`, `simulateSaving`, `getHoldingsSummary`, `getFees`, `explainFigure(figureId)`, `listInsights`.
