@@ -12,6 +12,10 @@ export const propertyEn = {
   netValue: "Net value",
   sourcePurchase: "Purchase price, {date}",
   sourceOwn: "Your estimate, {date}",
+  deedRow: "Shares on the deed",
+  deedEdit: "Change",
+  deedHint:
+    "What the deed of sale gives each of you. Each one's net worth counts their part of the value and of what is still owed.",
   shareLine: "Your share: {share}",
   loans: { one: "{count} loan", other: "{count} loans" },
 
@@ -236,7 +240,8 @@ export const propertyEn = {
   askingScopeMaille: "in the commune and its neighbours",
   askingSource:
     "Listings {series} let unfurnished, charges included, {scope} (rent map {year}). Estimations ANIL, à partir des données du Groupe SeLoger et de leboncoin.",
-  askingFurnished: "Yours is let furnished: these are rents for unfurnished homes.",
+  askingFurnished:
+    "Yours is let furnished: these are rents for unfurnished homes.",
   askingNone: "No reliable asking rents here for now.",
   askingNoAddress: "Add its address to see the asking rents around it.",
   lettingTitle: "DPE and letting",
@@ -280,7 +285,8 @@ export const propertyEn = {
   insuranceSeparateHint:
     "Two debits at the bank, the payment then the insurance: each gets its own recurring entry.",
   insuranceWord: "Insurance",
-  paymentLinkedSeparate: "Its payment, in your recurring entries: {amount} a month",
+  paymentLinkedSeparate:
+    "Its payment, in your recurring entries: {amount} a month",
   paymentNotLinkedSeparate: "Its payment is not in your recurring entries.",
   insuranceLinked: "Its insurance, in your recurring entries: {amount} a month",
   insuranceNotLinked: "Its insurance is not in your recurring entries.",

@@ -116,8 +116,8 @@ export default function TabsLayout() {
   const barHeight = useTabBarHeight();
   const badges = useTabBadges();
   const showProperty = useFlag("property.track");
-  // Under « Commun », only the tabs a shared space has: no plan, no wallets,
-  // no home yet — those stay a person's.
+  // Under « Commun », only the tabs a shared space has: no plan, no wallets
+  // — those stay a person's.
   const { joint } = useOwner();
   // The month's charges, written in when the app opens — there is no Apply
   // button any more.
@@ -239,7 +239,8 @@ export default function TabsLayout() {
                 name={PROPERTY_TAB.name}
                 options={{
                   // Not a tab at all without the flag, so the bar keeps five.
-                  href: showProperty && !joint ? undefined : null,
+                  // A home owned together is the space's too (6c).
+                  href: showProperty ? undefined : null,
                   title: t(PROPERTY_TAB.titleKey),
                   tabBarIcon: ({ focused, color, size }) => (
                     <Ionicons

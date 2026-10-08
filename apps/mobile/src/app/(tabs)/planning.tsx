@@ -51,7 +51,7 @@ import {
   saveSeenMilestone,
   type PlanSettings,
 } from "@/lib/plan-future-data";
-import { getProperties } from "@/lib/properties";
+import { getJointPropertiesFor, getProperties } from "@/lib/properties";
 import { useAuth } from "@/providers/AuthProvider";
 import { useLocale, useT } from "@/providers/LocaleProvider";
 import { useTabBarClearance } from "@/theme/chrome";
@@ -109,7 +109,14 @@ export default function PlanningScreen() {
   const tracksProperty = useFlag("property.track");
   const owned = useRefreshable(
     async () =>
-      user && tracksProperty ? (await getProperties(user.id)).properties : null,
+      user && tracksProperty
+        ? [
+            ...(await getProperties(user.id)).properties,
+            // The homes owned through the shared space, as this person's
+            // part of each (6c).
+            ...(await getJointPropertiesFor(user.id).catch(() => [])),
+          ]
+        : null,
     [user?.id, tracksProperty],
     { reads: ["properties"] },
   );

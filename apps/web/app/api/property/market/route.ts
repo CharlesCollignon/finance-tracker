@@ -25,9 +25,19 @@ export async function POST(request: Request) {
     return Response.json({ error: "errors.invalidInput" }, { status: 400 });
   }
   try {
+    // The person's home, or their space's: whoever owns it, which the row
+    // says — and which it shows only to the person or a partner.
+    const { data: owned } = await session.supabase
+      .from("properties")
+      .select("user_id")
+      .eq("id", parsed.data.propertyId)
+      .maybeSingle();
+    if (!owned) {
+      return Response.json({ error: "errors.notFound" }, { status: 404 });
+    }
     const status = await readPropertyMarket(
       session.supabase,
-      session.userId,
+      owned.user_id,
       parsed.data.propertyId,
     );
     return Response.json({ status });

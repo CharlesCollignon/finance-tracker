@@ -8,7 +8,7 @@ import {
 import { formatEuro, RENT_CATEGORY_NAMES } from "@finance/core/constants";
 import { loanPaymentCategoryName } from "@finance/core/property";
 import * as properties from "@finance/data/properties";
-import { asUser } from "@/lib/actions/as-user";
+import { asOwner } from "@/lib/actions/as-user";
 import {
   readPropertyMarketSoon,
   type MarketOutcome,
@@ -51,7 +51,7 @@ export async function addProperty(input: {
   const t = await getT();
   const locale = await getLocale();
 
-  return asUser<AddedProperty>(async (db, userId) => {
+  return asOwner<AddedProperty>(async (db, userId) => {
     const result = await properties.addPropertyWithLoan(db, userId, {
       property: input.property,
       loan: input.loan,
@@ -91,7 +91,7 @@ export async function setOwnValue(
   value: number | null,
 ): Promise<ActionResult> {
   const t = await getT();
-  return asUser(async (db, userId): Promise<ActionResult> => {
+  return asOwner(async (db, userId): Promise<ActionResult> => {
     const result = await properties.setPropertyValue(
       db,
       userId,
@@ -109,7 +109,7 @@ export async function removeProperty(
   name: string,
 ): Promise<ActionResult> {
   const t = await getT();
-  return asUser(async (db, userId): Promise<ActionResult> => {
+  return asOwner(async (db, userId): Promise<ActionResult> => {
     const result = await properties.deleteProperty(db, userId, propertyId);
     return result.success
       ? { success: true, message: t("property.removed", { name }) }
@@ -123,7 +123,7 @@ export async function updateKnownOutstanding(
   known: { outstanding: number; on: string; keeps: "payment" | "term" } | null,
 ): Promise<ActionResult> {
   const t = await getT();
-  return asUser(async (db, userId): Promise<ActionResult> => {
+  return asOwner(async (db, userId): Promise<ActionResult> => {
     const result = await properties.setLoanKnownOutstanding(
       db,
       userId,
@@ -139,7 +139,7 @@ export async function updateKnownOutstanding(
 /** Bring a loan's payment template in line with its schedule. */
 export async function syncPayment(loanId: string): Promise<ActionResult> {
   const t = await getT();
-  return asUser(async (db, userId): Promise<ActionResult> => {
+  return asOwner(async (db, userId): Promise<ActionResult> => {
     const result = await properties.syncLoanPayment(db, userId, loanId);
     return result.success
       ? { success: true, message: t("property.paymentSynced") }
@@ -154,7 +154,7 @@ export async function addPaymentForLoan(
 ): Promise<ActionResult> {
   const t = await getT();
   const categoryName = loanPaymentCategoryName(await getLocale());
-  return asUser(async (db, userId): Promise<ActionResult> => {
+  return asOwner(async (db, userId): Promise<ActionResult> => {
     const result = await properties.addLoanPayment(db, userId, loanId, {
       categoryName,
       description,
@@ -176,7 +176,7 @@ export async function linkLoanEntry(
   debit: properties.LoanDebit,
 ): Promise<ActionResult> {
   const t = await getT();
-  return asUser(async (db, userId): Promise<ActionResult> => {
+  return asOwner(async (db, userId): Promise<ActionResult> => {
     const result = await properties.linkLoanTemplate(db, userId, {
       loanId,
       templateId,
@@ -196,7 +196,7 @@ export async function addRentForProperty(
 ): Promise<ActionResult> {
   const t = await getT();
   const locale = await getLocale();
-  return asUser(async (db, userId): Promise<ActionResult> => {
+  return asOwner(async (db, userId): Promise<ActionResult> => {
     const result = await properties.addRent(db, userId, {
       propertyId,
       amount,
@@ -210,7 +210,7 @@ export async function addRentForProperty(
 }
 
 export async function removeLoan(loanId: string): Promise<ActionResult> {
-  return asUser((db, userId) => properties.deleteLoan(db, userId, loanId));
+  return asOwner((db, userId) => properties.deleteLoan(db, userId, loanId));
 }
 
 /** Change what was said about a property. */
@@ -218,7 +218,7 @@ export async function updateProperty(
   input: properties.PropertyChange,
 ): Promise<ActionResult<{ reading: MarketOutcome | "later" }>> {
   const t = await getT();
-  return asUser<{ reading: MarketOutcome | "later" }>(async (db, userId) => {
+  return asOwner<{ reading: MarketOutcome | "later" }>(async (db, userId) => {
     const result = await properties.saveProperty(db, userId, input);
     if (!result.success) {
       return { error: result.error };
@@ -240,7 +240,7 @@ export async function saveLoanForProperty(
 ): Promise<ActionResult> {
   const t = await getT();
   const categoryName = loanPaymentCategoryName(await getLocale());
-  return asUser(async (db, userId): Promise<ActionResult> => {
+  return asOwner(async (db, userId): Promise<ActionResult> => {
     const result = await properties.saveLoan(
       db,
       userId,
@@ -278,9 +278,17 @@ export async function setGrowth(
   propertyId: string,
   growth: number | null,
 ): Promise<ActionResult> {
-  return asUser(
+  return asOwner(
     (db, userId) =>
       properties.setPropertyGrowth(db, userId, propertyId, growth),
     { redraw: "never" },
   );
+}
+
+/** My part of a joint home's deed; the partner's is the rest (6c). */
+export async function setPropertyShareAction(
+  propertyId: string,
+  share: number,
+): Promise<ActionResult> {
+  return asOwner((db) => properties.setPropertyShare(db, propertyId, share));
 }

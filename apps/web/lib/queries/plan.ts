@@ -23,7 +23,11 @@ import type { SavingsAccountKind } from "@finance/core/types/database";
 import { getNotificationSettings } from "@finance/data/preferences";
 import { createClient } from "@/lib/supabase/server";
 import { isFlagOn } from "@finance/core/flags";
-import { getProperties, type PropertyRead } from "@finance/data/properties";
+import {
+  getJointPropertiesFor,
+  getProperties,
+  type PropertyRead,
+} from "@finance/data/properties";
 import { getFlags } from "@/lib/flags";
 
 /**
@@ -104,9 +108,12 @@ export async function gatherPlanBase(userId: string): Promise<PlanBase> {
     ]);
   const [properties, closeWait] = await Promise.all([
     isFlagOn(flags, "property.track")
-      ? getProperties(await createClient(), userId).then(
-          (read) => read.properties,
-        )
+      ? Promise.all([
+          getProperties(await createClient(), userId),
+          // The homes owned through the shared space, as this person's part
+          // of each (6c).
+          getJointPropertiesFor(await createClient(), userId).catch(() => []),
+        ]).then(([own, joint]) => [...own.properties, ...joint])
       : null,
     readCloseWait(userId, closes.next, today),
   ]);

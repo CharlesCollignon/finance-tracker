@@ -11,6 +11,10 @@ export const propertyFr: typeof propertyEn = {
   netValue: "Valeur nette",
   sourcePurchase: "Prix d'achat, {date}",
   sourceOwn: "Votre estimation, {date}",
+  deedRow: "Parts de l'acte",
+  deedEdit: "Modifier",
+  deedHint:
+    "Ce que l'acte de vente donne à chacun. Le patrimoine net de chacun compte sa part de la valeur et de ce qu'il reste à rembourser.",
   shareLine: "Votre part : {share}",
   loans: { one: "{count} prêt", other: "{count} prêts" },
 
@@ -245,7 +249,8 @@ export const propertyFr: typeof propertyEn = {
   lettingTitle: "DPE et location",
   lettingClosed:
     "Classé {energy}\u00A0: ne peut plus être loué depuis le {date} — ni nouveau bail, ni renouvellement, ni reconduction.",
-  lettingClosing: "Classé {energy}\u00A0: ne pourra plus être loué à partir du {date}.",
+  lettingClosing:
+    "Classé {energy}\u00A0: ne pourra plus être loué à partir du {date}.",
   lettingOpen: "Classé {energy}\u00A0: aucune date limite pour le louer.",
   lettingUnknown:
     "Indiquez sa classe énergie (DPE) dans «\u00A0Modifier\u00A0» pour voir jusqu'à quand il peut être loué.",
@@ -289,7 +294,8 @@ export const propertyFr: typeof propertyEn = {
     "Son échéance n'est pas dans vos opérations récurrentes.",
   insuranceLinked:
     "Son assurance, dans vos opérations récurrentes\u00A0: {amount} par mois",
-  insuranceNotLinked: "Son assurance n'est pas dans vos opérations récurrentes.",
+  insuranceNotLinked:
+    "Son assurance n'est pas dans vos opérations récurrentes.",
   insuranceMismatch:
     "L'opération de l'assurance dit {template}\u00A0; le tableau dit {schedule}.",
   candidate: "C'est celle-ci\u00A0? {name}, {amount} le {day}",

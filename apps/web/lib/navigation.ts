@@ -117,8 +117,8 @@ export function navItems(options: { property: boolean; joint?: boolean }) {
   const items = options.property
     ? [...APP_NAV_ITEMS, PROPERTY_NAV_ITEM]
     : [...APP_NAV_ITEMS];
-  // Under « Commun », only what a shared space has: no plan, no wallets, no
-  // home yet (6c) — those stay a person's.
+  // Under « Commun », only what a shared space has: no plan, no wallets —
+  // those stay a person's.
   return options.joint
     ? items.filter((item) => isSharedPath(item.href))
     : items;
@@ -137,6 +137,8 @@ const SHARED_PATHS = [
   "/recurring",
   "/categories",
   "/import",
+  // A home owned together (6c).
+  "/property",
 ] as const;
 
 export function isSharedPath(pathname: string): boolean {
