@@ -4,6 +4,7 @@ import { PageContainer } from "@/components/layout/PageContainer";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { PropertyList } from "@/components/finance/property/PropertyList";
 import { getAuthUser } from "@/lib/auth/get-user";
+import { getOwner } from "@/lib/owner";
 import { getFlags } from "@/lib/flags";
 import { getPropertiesView } from "@/lib/queries/properties";
 
@@ -24,7 +25,8 @@ export default async function PropertyPage() {
     notFound();
   }
 
-  const view = await getPropertiesView(user.id);
+  // The person's homes, or their space's under « Commun ».
+  const view = await getPropertiesView((await getOwner())?.ownerId ?? user.id);
 
   return (
     <>

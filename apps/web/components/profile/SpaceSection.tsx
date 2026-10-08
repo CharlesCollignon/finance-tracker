@@ -24,6 +24,7 @@ import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { ListRow, ListSection } from "@/components/ui/ListRow";
 import { initialOf } from "@/components/layout/SpaceContext";
+import { percent, SplitEditor } from "@/components/space/SplitEditor";
 import { useToast } from "@/components/layout/ToastProvider";
 import {
   createSpaceAction,
@@ -325,9 +326,11 @@ export function SpaceSection({
                 onClick={() => toggle("share")}
                 expanded={
                   open === "share" ? (
-                    <ShareEditor
+                    <SplitEditor
                       initial={myShare}
                       partnerName={partner?.name ?? t("space.partner")}
+                      hint={t("space.shareHint")}
+                      label={t("space.shareRow")}
                       pending={pending}
                       onSave={saveShare}
                     />
@@ -433,74 +436,6 @@ function Pair({
           </m.span>
         )}
       </AnimatePresence>
-    </div>
-  );
-}
-
-/** A part as a whole percent: « 60 % ». */
-function percent(part: number): string {
-  return `${Math.round(part * 100)}\u00A0%`;
-}
-
-/**
- * The split, set by sliding: the bar between the two of you moves with the
- * thumb, each side named and counted, and one press saves it for both.
- */
-function ShareEditor({
-  initial,
-  partnerName,
-  pending,
-  onSave,
-}: {
-  initial: number;
-  partnerName: string;
-  pending: boolean;
-  onSave: (share: number) => void;
-}) {
-  const t = useT();
-  const [share, setShare] = useState(Math.round(initial * 20) / 20);
-
-  return (
-    <div className="flex flex-col gap-3">
-      <p className={cn("text-muted-foreground", MICRO)}>
-        {t("space.shareHint")}
-      </p>
-      <div className="flex items-baseline justify-between text-sm font-medium">
-        <span>{t("space.shareYou", { part: percent(share) })}</span>
-        <span className="text-muted-foreground">
-          {t("space.sharePartner", {
-            name: partnerName,
-            part: percent(1 - share),
-          })}
-        </span>
-      </div>
-      <div className="flex h-2 overflow-hidden rounded-full bg-muted">
-        <m.span
-          className="h-full bg-foreground"
-          initial={false}
-          animate={{ width: `${share * 100}%` }}
-          transition={{ type: "spring", stiffness: 420, damping: 32 }}
-        />
-      </div>
-      <input
-        type="range"
-        min={0}
-        max={100}
-        step={5}
-        value={Math.round(share * 100)}
-        onChange={(event) => setShare(Number(event.target.value) / 100)}
-        aria-label={t("space.shareRow")}
-        aria-valuetext={`${percent(share)} · ${percent(1 - share)}`}
-        className="w-full accent-foreground"
-      />
-      <Button
-        size="sm"
-        className="self-start"
-        disabled={pending || share === initial}
-        onClick={() => onSave(share)}
-      >
-        {pending ? t("profile.saving") : t("profile.save")}
-      </Button>
     </div>
   );
 }

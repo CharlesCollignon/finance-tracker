@@ -55,6 +55,7 @@ import { ICON } from "@/lib/icon-scale";
 import { useLocale, useT } from "@/lib/locale-context";
 import { useFormatCurrency } from "@/lib/use-currency";
 import { EditPropertySheet } from "./EditPropertySheet";
+import { JointDeed, type JointDeedView } from "./JointDeed";
 import moments from "@/components/motion/moments.module.css";
 import { useMomentSeen } from "@/components/motion/use-moment-seen";
 import { cn } from "@/lib/utils";
@@ -80,8 +81,11 @@ export function PropertyDetail({
   looseTemplates = [],
   today,
   readingPending = false,
+  deed = null,
 }: {
   detail: PropertyRead;
+  /** A home the space owns: each partner's part of the deed (6c). */
+  deed?: JointDeedView | null;
   /** The user's monthly expense entries no loan stands on yet. */
   looseTemplates?: readonly AttachedTemplate[];
   today: string;
@@ -166,6 +170,8 @@ export function PropertyDetail({
           </div>
 
           <OwnershipBar ownership={ownership(position)} detailed />
+
+          {deed ? <JointDeed propertyId={property.id} deed={deed} /> : null}
 
           <dl className="grid min-w-0 gap-4 sm:grid-cols-2">
             <Fact label={t("property.estimatedValue")}>

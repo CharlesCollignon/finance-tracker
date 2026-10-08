@@ -272,12 +272,18 @@ browser or on a phone yet.
       parti »: the versement leaves your spending and your share of each joint
       category comes in. Balances, the figure and the closes do not change.
 
-### 6c — A home owned together (branch `shared-property`)
+### 6c — A home owned together (branch `shared-property`) — built, waiting on the owner
 
-- [ ] A property in the joint space, its loans paid from the joint account.
-- [ ] A share per partner from the deed, the space's share by default; each
-      partner's net worth and milestones count their share of its net value.
-- [ ] Property opens to everyone: `property.track` on by default, the
+Built 2026-10-09: migration 063 to apply after 062; not tried in a browser
+or on a phone yet. Milestones still leave property out: the real-estate
+plan decided so, and 6c keeps to it — each partner's « Patrimoine net »
+counts their part.
+
+- [x] A property in the joint space, its loans paid from the joint account.
+- [x] A share per partner from the deed, the space's share by default; each
+      partner's net worth counts their share of its net value (milestones
+      leave property out, as for any home).
+- [x] Property opens to everyone: `property.track` on by default, the
       brand promises checked, the landing moves it out of « Bientôt ».
 
 ## Phase 7 — Ask Pluclair (branch `everyday-ask`)

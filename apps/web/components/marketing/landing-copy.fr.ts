@@ -18,8 +18,8 @@ import type { LandingPageId } from "./landing-copy";
  *   votre banque » se vérifie ; « une clarté sans effort », non.
  *
  *   Never promise what the app does not do. Ce qui n'est pas encore ouvert à
- *   tous — la banque, l'immobilier, l'IA de votre choix, l'application
- *   mobile — est dit une fois, sous « Bientôt », au futur.
+ *   tous — la banque, l'IA de votre choix, l'application mobile — est dit
+ *   une fois, sous « Bientôt », au futur.
  *
  * The nouns come from the app, not from the dictionary: « Le point »,
  * « Journal », « Récurrents », « Placements », « Clôture du mois ». A landing
@@ -66,6 +66,11 @@ export const landingCopyFr: LandingCopySections & {
         body: "PEA, assurance vie, compte-titres, PER, crypto : ce que vous avez versé, ce que ça vaut aujourd’hui, et de quoi vos fonds sont faits — actions, obligations, or, crypto, pays, frais. Les cours se mettent à jour tout seuls, et aucun ordre ne part jamais de l’application.",
         link: "Voir les Placements",
       },
+      property: {
+        question: "Et votre logement ?",
+        body: "Le bien que vous possédez ou louez : sa valeur estimée d’après les ventes enregistrées autour, ce qu’il reste sur le crédit, et la part qui est vraiment à vous. La mensualité du crédit rejoint vos Récurrents toute seule.",
+        link: "Voir l’immobilier",
+      },
       "month-read": {
         question: "Et si on vous expliquait votre mois ?",
         body: "Demandez une lecture : une IA écrit quelques phrases sur votre mois — ce qui a changé, ce qui mérite un œil. Les chiffres, eux, viennent toujours de Pluclair : l’IA n’a pas le droit d’en inventer un seul.",
@@ -80,10 +85,6 @@ export const landingCopyFr: LandingCopySections & {
       {
         title: "Votre banque, connectée",
         body: "En lecture seule : vos opérations arriveront toutes seules, et Pluclair ne pourra jamais faire de paiement.",
-      },
-      {
-        title: "Vos biens immobiliers",
-        body: "Leur valeur estimée, ce qu’il reste à rembourser sur le crédit, et ce que ça change à votre patrimoine.",
       },
       {
         title: "L’IA de votre choix",
@@ -112,7 +113,7 @@ export const landingCopyFr: LandingCopySections & {
       {
         question: "Où vont mes données ?",
         answer:
-          "Elles restent sur des serveurs en Europe, derrière votre connexion. Personne d’autre ne peut les lire, rien n’est revendu, et vous pouvez tout effacer quand vous voulez.",
+          "Elles restent sur des serveurs en Europe, derrière votre connexion. Personne d’autre ne peut les lire — sauf, dans un espace commun, la personne que vous y invitez —, rien n’est revendu, et vous pouvez tout effacer quand vous voulez.",
       },
       {
         question: "Faut-il connecter sa banque ?",
@@ -235,6 +236,26 @@ export const landingCopyFr: LandingCopySections & {
         {
           title: "Demandez une revue",
           body: "Une IA lit la Composition et dit ce qu’elle remarque. Elle ne cite que des fonds d’une liste fermée, et n’écrit aucun chiffre d’elle-même.",
+        },
+      ],
+    },
+    property: {
+      title: "Immobilier",
+      body: "Votre logement ou un bien que vous louez — ce qu’il vaut aujourd’hui, ce qu’il reste à rembourser, et la part qui est vraiment à vous.",
+      utility:
+        "Un bien, c’est souvent votre plus gros chiffre, et celui que vous voyez le moins. Pluclair estime sa valeur à partir des ventes enregistrées autour et suit le crédit mois après mois : la part qui est à vous devient un chiffre, plus une impression. À deux, chacun voit sa part de l’acte.",
+      steps: [
+        {
+          title: "Ajoutez-le une fois",
+          body: "L’adresse, le prix payé et sa date, le crédit. Sa mensualité rejoint vos Récurrents : le mois la compte déjà.",
+        },
+        {
+          title: "Voyez ce qu’il vaut",
+          body: "Une estimation à partir des ventes enregistrées autour, ajustée de l’évolution des prix depuis, avec la fourchette où elle se situe. Vous pouvez mettre votre propre chiffre.",
+        },
+        {
+          title: "Regardez votre part grandir",
+          body: "Ce qu’il reste dû baisse à chaque mensualité ; la barre montre quelle part du bien est à vous, et votre patrimoine net, dans le Plan, la compte.",
         },
       ],
     },

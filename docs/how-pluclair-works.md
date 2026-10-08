@@ -5,7 +5,7 @@ figure is computed, and what is known to be wrong. Written for whoever works
 on the repository next, human or agent. Every phase of
 `docs/plans/PLUCLAIR_UPGRADE_PLAN.md` updates it before it closes.
 
-Last updated: Plan du quotidien, phase 6b — my share (2026-10-09;
+Last updated: Plan du quotidien, phase 6c — a home owned together (2026-10-09;
 `docs/plans/EVERYDAY_PLAN.md`, `docs/plans/SHARED_SPACE_DESIGN.md`).
 
 ## Shape
@@ -16,7 +16,7 @@ Last updated: Plan du quotidien, phase 6b — my share (2026-10-09;
 | `apps/mobile`   | Expo 57 with expo-router and NativeWind, dark only. Reads and writes Supabase directly under RLS; calls the web app for the month read (`POST /api/month-read`) and a bank refresh (`POST /api/bank/refresh`) with a bearer token.                                                                                                                                                                                                                                                                                                                                 |
 | `packages/core` | Pure TypeScript shared by both apps and shipped to them as source: every calculation, every zod schema, every string (`src/i18n/messages/en.ts`, `fr.ts`).                                                                                                                                                                                                                                                                                                                                                                                                         |
 | `packages/data` | The Supabase reads and writes both apps make, written once and handed the caller's client (`Db`): recurring templates and occurrences, transactions (`ledger`, `month-ledger`, `history`), deletes and their undo (`deletions`), categories and their seeding, fulfilment, the month close, the month's balance, the bank's balance, the review inbox (`bank-inbox`), positions and wallet plans, instrument readings, savings accounts, properties and their loans (`properties`), preferences, the weekly recap, delete-all. `pnpm --filter @finance/data test`. |
-| `supabase/`     | Migrations `001`–`062`, assertion scripts in `tests/`, one edge function (`delete-account`).                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| `supabase/`     | Migrations `001`–`063`, assertion scripts in `tests/`, one edge function (`delete-account`).                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
 
 Vocabulary is fixed by `CONTEXT.md`; product commitments by
 `apps/web/PRODUCT.md`; visual rules by `apps/web/DESIGN.md` and
@@ -365,6 +365,15 @@ their transfers to the joint account plus their part of the space's
 expenses (`withMyShare`, `readMyShare`); the balance, « Il vous reste » and
 the closes are untouched. Remembered in the `pluclair-my-share` cookie on the
 web and on the device on the phone.
+
+**A home owned together** (migration 063): Immobilier is a shared screen
+like the others, so under « Commun » it lists and adds the space's homes,
+and their loans' payments are the space's charges. Each partner's part of
+the deed is `property_shares` (the space's split until set,
+`set_property_share`), drawn as « Parts de l'acte » on the home's page;
+`getJointPropertiesFor` gives a person their part of each, which the Plan's
+« Patrimoine net » adds to their own homes. Milestones leave property out,
+as for any home. `property.track` is on by default since 063.
 
 ## Audience measurement
 

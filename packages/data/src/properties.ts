@@ -132,6 +132,101 @@ export function indexKindOf(kind: Property["kind"]): IndexKind {
   return kind === "other" ? "all" : kind;
 }
 
+/* ------------------------------------------------- a home owned together */
+
+/**
+ * Each partner's part of the space's homes, from the deed (migration 063):
+ * by property, then by person. A home with no row is split as the space is.
+ */
+export async function getPropertyShares(
+  db: Db,
+  propertyIds: readonly string[],
+): Promise<Map<string, Map<string, number>>> {
+  const shares = new Map<string, Map<string, number>>();
+  if (propertyIds.length === 0) {
+    return shares;
+  }
+  const { data, error } = await db
+    .from("property_shares")
+    .select("property_id, user_id, share")
+    .in("property_id", [...propertyIds]);
+  if (error) {
+    if (isMissingSchema(error)) {
+      return shares;
+    }
+    throw error;
+  }
+  for (const row of data ?? []) {
+    const byPerson = shares.get(row.property_id) ?? new Map<string, number>();
+    byPerson.set(row.user_id, Number(row.share));
+    shares.set(row.property_id, byPerson);
+  }
+  return shares;
+}
+
+/** My part of a joint home's deed; the partner's is the rest. */
+export async function setPropertyShare(
+  db: Db,
+  propertyId: string,
+  share: number,
+): Promise<ActionResult> {
+  if (!Number.isFinite(share) || share < 0 || share > 1) {
+    return { error: "errors.invalidInput" };
+  }
+  const { error } = await db.rpc("set_property_share", {
+    target_property: propertyId,
+    my_share: Math.round(share * 100) / 100,
+  });
+  return error ? { error: dbError(error) } : { success: true };
+}
+
+/**
+ * The homes a person owns through their shared space, as their own part of
+ * each: the deed's share they hold (the space's split until set) applied to
+ * the space's part of the home and to each loan — so a partner's net worth
+ * counts their part of the value and of what is still owed, and nothing of
+ * the other's. Empty outside a space.
+ */
+export async function getJointPropertiesFor(
+  db: Db,
+  userId: string,
+): Promise<PropertyRead[]> {
+  const { data: membership, error } = await db
+    .from("space_members")
+    .select("space_id, share")
+    .eq("user_id", userId)
+    .maybeSingle();
+  if (error) {
+    if (isMissingSchema(error)) {
+      return [];
+    }
+    throw error;
+  }
+  if (!membership) {
+    return [];
+  }
+  const { properties } = await getProperties(db, membership.space_id);
+  const shares = await getPropertyShares(
+    db,
+    properties.map((read) => read.property.id),
+  );
+  return properties.map((read) => {
+    const mine =
+      shares.get(read.property.id)?.get(userId) ?? Number(membership.share);
+    return {
+      ...read,
+      property: {
+        ...read.property,
+        ownership_share: read.property.ownership_share * mine,
+      },
+      loans: read.loans.map((loan) => ({
+        ...loan,
+        borrower_share: loan.borrower_share * mine,
+      })),
+    };
+  });
+}
+
 /** The index for these series, or none before migration 050. */
 export async function getPriceIndex(
   db: Db,
@@ -177,7 +272,10 @@ interface TemplateRow {
   categories: { name: string; type: CategoryType } | null;
 }
 
-function templateFromRow(template: TemplateRow, attached: boolean): AttachedTemplate {
+function templateFromRow(
+  template: TemplateRow,
+  attached: boolean,
+): AttachedTemplate {
   return {
     id: template.id,
     description: template.description,
@@ -485,7 +583,10 @@ export async function setPropertyGrowth(
   if (!uuid.safeParse(propertyId).success) {
     return { error: "errors.invalidInput" };
   }
-  if (growth !== null && !(Number.isFinite(growth) && Math.abs(growth) <= 0.2)) {
+  if (
+    growth !== null &&
+    !(Number.isFinite(growth) && Math.abs(growth) <= 0.2)
+  ) {
     return { error: "errors.growthRange" };
   }
   const { error } = await db

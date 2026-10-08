@@ -264,6 +264,20 @@ export const landingSample = {
     standing: "Written today. Nothing has moved since.",
   },
 
+  /**
+   * Immobilier: a studio the sample person lets — they rent their own home,
+   * as the ledger's « Loyer » says. Net value is `value` less `owed`.
+   */
+  property: {
+    name: "Studio, Lyon 7e",
+    kindLine: "Apartment · Furnished let · 24 m²",
+    value: 168000,
+    low: 159000,
+    high: 177000,
+    owed: 112400,
+    monthly: 690,
+  },
+
   /** Where the month's spending went, largest first. Sums to `spent`. */
   spendByCategory: [
     { label: "Housing", amount: 850, colorVar: "--chart-1" },
@@ -315,6 +329,7 @@ export function landingSampleFor(locale: Locale) {
       suggestions: fr.read.suggestions,
       standing: fr.read.standing,
     },
+    property: { ...landingSample.property, ...fr.property },
     spendByCategory: landingSample.spendByCategory.map((row, index) => ({
       ...row,
       label: fr.spendByCategory[index] ?? row.label,

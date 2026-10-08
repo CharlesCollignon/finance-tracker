@@ -16,7 +16,7 @@ import { landingCopyFr } from "@/components/marketing/landing-copy.fr";
  *   to before can tell the difference in about a second.
  *
  *   Never promise what the app does not do. What is not open to everyone yet
- *   — the bank connection, property, the AI of your choice, the mobile app —
+ *   — the bank connection, the AI of your choice, the mobile app —
  *   is said once, under "Coming soon", in the future tense, and nowhere in
  *   the present (the owner's call, October 2026).
  */
@@ -66,6 +66,11 @@ export const landingCopy = {
         body: "PEA, life insurance, brokerage account, PER, crypto: what you put in, what it is worth today, and what your funds are made of — shares, bonds, gold, crypto, countries, fees. Prices update on their own, and no order ever leaves the app.",
         link: "See Investments",
       },
+      property: {
+        question: "And your home?",
+        body: "The property you own or let: its estimated value from the sales recorded around it, what is left on the loan, and how much of it is really yours. The loan's monthly payment joins your recurring entries on its own.",
+        link: "See Property",
+      },
       "month-read": {
         question: "Want your month explained?",
         body: "Ask for a read and an AI writes a few sentences about your month: what changed, what deserves a look. The figures always come from Pluclair — the AI is not allowed to make up a single one.",
@@ -81,10 +86,6 @@ export const landingCopy = {
       {
         title: "Your bank, connected",
         body: "Read-only: your transactions will arrive on their own, and Pluclair will never be able to make a payment.",
-      },
-      {
-        title: "Your property",
-        body: "Its estimated value, what is left on the loan, and what it changes to your net worth.",
       },
       {
         title: "The AI of your choice",
@@ -114,7 +115,7 @@ export const landingCopy = {
       {
         question: "Where does my data go?",
         answer:
-          "It stays on servers in Europe, behind your login. Nobody else can read it, nothing is sold, and you can delete everything whenever you want.",
+          "It stays on servers in Europe, behind your login. Nobody else can read it — except, in a shared space, the one person you invite into it — nothing is sold, and you can delete everything whenever you want.",
       },
       {
         question: "Do I need to connect my bank?",
@@ -242,6 +243,27 @@ export const landingCopy = {
         {
           title: "Ask for a review",
           body: "An AI reads what is inside and says what it notices. It only names funds from a fixed list, and writes no figure of its own.",
+        },
+      ],
+    },
+    {
+      id: "property",
+      title: "Property",
+      body: "Your home or a place you let — what it is worth today, what is left on the loan, and what is really yours.",
+      utility:
+        "A home is often your largest figure and the one you see least. Pluclair estimates its value from the sales recorded around it and follows the loan month by month, so the part that is yours is a number rather than a feeling. Owned as a couple, each of you sees their part of the deed.",
+      steps: [
+        {
+          title: "Add it once",
+          body: "The address, what you paid and when, the loan. Its monthly payment joins your recurring entries, so the month already counts it.",
+        },
+        {
+          title: "See what it is worth",
+          body: "An estimate from the sales recorded nearby, moved by how prices have changed since, with the range it sits in. You can put your own figure instead.",
+        },
+        {
+          title: "Watch your part grow",
+          body: "What is still owed comes down with each payment; the bar shows how much of the home is yours, and your net worth on the Plan counts it.",
         },
       ],
     },

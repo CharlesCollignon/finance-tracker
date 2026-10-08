@@ -66,6 +66,11 @@ export const landingSampleFr = {
     standing: "Écrit aujourd'hui. Rien n'a bougé depuis.",
   },
 
+  property: {
+    name: "Studio, Lyon 7e",
+    kindLine: "Appartement · Location meublée · 24 m²",
+  },
+
   spendByCategory: [
     "Logement",
     "Investissements",

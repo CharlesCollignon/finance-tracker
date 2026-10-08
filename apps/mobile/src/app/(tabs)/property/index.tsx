@@ -29,7 +29,7 @@ import { Text } from "@/components/ui/Text";
 import { useRefreshable } from "@/hooks/useRefreshable";
 import { hapticLight } from "@/lib/haptics";
 import { getProperties } from "@/lib/properties";
-import { useAuth } from "@/providers/AuthProvider";
+import { useOwner } from "@/providers/OwnerProvider";
 import { useFormatCurrency } from "@/providers/CurrencyProvider";
 import { useLocale, useT } from "@/providers/LocaleProvider";
 import { useTabBarClearance } from "@/theme/chrome";
@@ -57,11 +57,12 @@ export default function PropertyScreen() {
   const format = useFormatCurrency();
   const tabBarClearance = useTabBarClearance();
   const colors = useThemeColors();
-  const { user } = useAuth();
+  // The person's homes, or their space's under « Commun ».
+  const { ownerId } = useOwner();
   const [adding, setAdding] = useState(false);
   const { data, loading, refreshing, onRefreshAll, onRefresh, error } = useRefreshable(
-    async () => (user ? getProperties(user.id) : null),
-    [user?.id],
+    async () => (ownerId ? getProperties(ownerId) : null),
+    [ownerId],
     { reads: ["properties", "templates"] },
   );
 
@@ -76,7 +77,7 @@ export default function PropertyScreen() {
     100;
 
   return (
-    <Screen title={t("nav.property")} className="pb-0">
+    <Screen title={t("nav.property")} className="pb-0" shared>
       {loading && !data ? (
         <ScreenSkeleton rows={2} />
       ) : error ? (

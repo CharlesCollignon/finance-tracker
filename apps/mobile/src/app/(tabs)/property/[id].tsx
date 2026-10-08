@@ -46,6 +46,7 @@ import { AnimatedAmount } from "@/components/AnimatedAmount";
 import { FadeIn } from "@/components/motion/FadeIn";
 import { StaggerItem } from "@/components/motion/Stagger";
 import { LoanTrack, OwnershipBar, PaymentBar } from "@/components/property/ProgressBars";
+import { JointDeed, type JointDeedView } from "@/components/property/JointDeed";
 import { EditPropertySheet, LoanSheet } from "@/components/property/PropertySheets";
 import { RentalSection } from "@/components/property/RentalSection";
 import { PrivateAmount } from "@/components/PrivateAmount";
@@ -65,6 +66,7 @@ import { useMomentSeen } from "@/lib/moments";
 import {
   addLoanPayment,
   getProperties,
+  getPropertyShares,
   isReadingMarket,
   linkLoanTemplate,
   removeLoan,
@@ -75,7 +77,7 @@ import {
   syncLoanPayment,
   type AttachedTemplate,
 } from "@/lib/properties";
-import { useAuth } from "@/providers/AuthProvider";
+import { useOwner } from "@/providers/OwnerProvider";
 import { useFormatCurrency } from "@/providers/CurrencyProvider";
 import { useLocale, useT } from "@/providers/LocaleProvider";
 import { useToast } from "@/providers/ToastProvider";
@@ -97,7 +99,8 @@ export default function PropertyDetailScreen() {
   const format = useFormatCurrency();
   const tabBarClearance = useTabBarClearance();
   const { toast } = useToast();
-  const { user } = useAuth();
+  // The person's homes, or their space's under « Commun ».
+  const { ownerId, userId, space, joint } = useOwner();
   const { id } = useLocalSearchParams<{ id: string }>();
   const [editing, setEditing] = useState(false);
   const [loanSheet, setLoanSheet] = useState<{ loan: PropertyLoan | null } | null>(
@@ -106,8 +109,8 @@ export default function PropertyDetailScreen() {
   const [removing, setRemoving] = useState(false);
   const [removePending, setRemovePending] = useState(false);
   const { data, loading, refreshing, onRefreshAll, onRefresh, error } = useRefreshable(
-    async () => (user ? getProperties(user.id) : null),
-    [user?.id],
+    async () => (ownerId ? getProperties(ownerId) : null),
+    [ownerId],
     // Categories too: an entry attached to it is named by its category.
     { reads: ["properties", "templates", "categories"] },
   );
@@ -117,6 +120,24 @@ export default function PropertyDetailScreen() {
   );
 
   const detail = data?.properties.find(({ property }) => property.id === id) ?? null;
+
+  // A home the space owns: each partner's part of the deed, the space's
+  // split until it is set (6c).
+  const { data: deedShares } = useRefreshable(
+    async () => (joint && id ? (await getPropertyShares([id])).get(id) ?? null : null),
+    [joint, id],
+    { reads: ["properties"] },
+  );
+  const self = space?.members.find((member) => member.userId === userId);
+  const partner = space?.members.find((member) => member.userId !== userId);
+  const deed: JointDeedView | null =
+    joint && space && userId
+      ? {
+          mine: deedShares?.get(userId) ?? self?.share ?? 0.5,
+          selfName: self?.name ?? "",
+          partnerName: partner?.name ?? "",
+        }
+      : null;
   const today = todayIsoLocal();
 
   // Back to the list — or to it, when the property was opened from
@@ -222,6 +243,7 @@ export default function PropertyDetailScreen() {
           </View>
 
           <OwnershipBar ownership={ownership(position)} detailed />
+          {deed ? <JointDeed propertyId={property.id} deed={deed} /> : null}
 
           <View className="flex-row flex-wrap gap-y-4">
             <Fact label={t("property.estimatedValue")}>

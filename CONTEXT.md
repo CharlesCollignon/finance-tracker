@@ -492,7 +492,10 @@ _En français_ : bien (l'onglet : Immobilier)
 A home or premises the user owns, wholly or in part: what it cost, where it
 is, how it is used — main home, second home, let bare or furnished — and the
 share of it that is theirs. Not a wallet: nothing is bought inside it, and
-what it costs month to month are recurring templates attached to it.
+what it costs month to month are recurring templates attached to it. A
+couple's shared space can own one: its loans are then the space's charges,
+and each partner owns their part of the deed (« Parts de l'acte »), the
+space's split until set, counted in their own net worth.
 _Avoid_: asset, real estate investment, home, flat
 
 **Loan**:

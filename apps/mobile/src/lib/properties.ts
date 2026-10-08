@@ -2,6 +2,7 @@ import type { ActionResult } from "@finance/core/action-result";
 import type { AddressMatch } from "@finance/core/address-search";
 import * as properties from "@finance/data/properties";
 
+import { ownerFor } from "@/lib/owner";
 import { supabase } from "@/lib/supabase";
 import { callWebApi, webApiAvailable } from "@/lib/web-api";
 
@@ -23,6 +24,10 @@ async function requireUserId(): Promise<string | null> {
   return user?.id ?? null;
 }
 
+/**
+ * Run a write on Immobilier's owner on screen: the person's own homes, or
+ * their space's under « Commun » (6c, `lib/owner.ts`).
+ */
 async function asUser<T extends object>(
   work: (userId: string) => Promise<ActionResult<T>>,
 ): Promise<ActionResult<T>> {
@@ -30,7 +35,7 @@ async function asUser<T extends object>(
   if (!userId) {
     return { error: "errors.notAuthenticated" } as ActionResult<T>;
   }
-  return work(userId);
+  return work(ownerFor(userId));
 }
 
 /* ------------------------------------------------------------------ reading */
@@ -39,6 +44,25 @@ export function getProperties(
   userId: string,
 ): Promise<properties.PropertiesState> {
   return properties.getProperties(supabase, userId);
+}
+
+/** The homes owned through the shared space, as this person's part (6c). */
+export function getJointPropertiesFor(
+  userId: string,
+): Promise<properties.PropertyRead[]> {
+  return properties.getJointPropertiesFor(supabase, userId);
+}
+
+/** Each partner's part of the space's homes, by property then person. */
+export function getPropertyShares(
+  propertyIds: readonly string[],
+): Promise<Map<string, Map<string, number>>> {
+  return properties.getPropertyShares(supabase, propertyIds);
+}
+
+/** My part of a joint home's deed; the partner's is the rest. */
+export function setPropertyShare(propertyId: string, share: number) {
+  return properties.setPropertyShare(supabase, propertyId, share);
 }
 
 export function getPropertyNames(
