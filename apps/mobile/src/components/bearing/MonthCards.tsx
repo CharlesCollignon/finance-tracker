@@ -32,6 +32,7 @@ import { CategoryIcon } from "@/components/CategoryIcon";
 import { PrivateAmount } from "@/components/PrivateAmount";
 import { BalanceCurve } from "@/components/bearing/BalanceCurve";
 import { DcaStrip } from "@/components/bearing/DcaStrip";
+import { LeftToSpendLine } from "@/components/bearing/LeftToSpendLine";
 import { Text } from "@/components/ui/Text";
 import { cn } from "@/lib/cn";
 import { hapticLight } from "@/lib/haptics";
@@ -403,6 +404,16 @@ export function BalanceCard({ data }: { data: HomeMonth }) {
             />
           ) : null}
         </View>
+      ) : null}
+
+      {/* The question the screen is opened for at the till, in one line
+          between the figures and the line they sit on. */}
+      {data.left ? (
+        <LeftToSpendLine
+          left={data.left}
+          lowest={balance.lowest}
+          eachMonth={data.eachMonth}
+        />
       ) : null}
 
       <BalanceCurve

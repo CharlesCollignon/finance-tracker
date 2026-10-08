@@ -10,7 +10,6 @@ import { PurchasesToConfirm } from "@/components/PurchasesToConfirm";
 import { BankAttentionBanner } from "@/components/bank/BankAttentionBanner";
 import { NewAccountsLine } from "@/components/bank/NewAccountsLine";
 import { AttentionRow } from "@/components/bearing/AttentionRow";
-import { LeftToSpendCard } from "@/components/bearing/LeftToSpendCard";
 import { SetupCard } from "@/components/bearing/SetupCard";
 import {
   BalanceCard,
@@ -183,17 +182,6 @@ export default function HomeScreen() {
               </View>
             ) : null}
 
-
-            {/* First: the question the screen is opened for at the till. */}
-            {data.left ? (
-              <StaggerItem index={next()}>
-                <LeftToSpendCard
-                  left={data.left}
-                  lowest={data.balance.lowest}
-                  eachMonth={data.eachMonth}
-                />
-              </StaggerItem>
-            ) : null}
 
             {setupStep && data.setup ? (
               <StaggerItem index={next()}>

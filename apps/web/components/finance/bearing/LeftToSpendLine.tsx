@@ -6,14 +6,13 @@ import { parseTypedAmount } from "@finance/core/amount-input";
 import { formatDayMonth, formatShortDate } from "@finance/core/constants";
 import type { Locale } from "@finance/core/i18n/locale";
 import type { LeftToSpend } from "@finance/core/left-to-spend";
-import { AnimatedAmount } from "@/components/finance/AnimatedAmount";
+import { CaretRight } from "@phosphor-icons/react";
 import { PrivateAmount } from "@/components/layout/PrivateAmount";
 import { Input } from "@/components/ui/Input";
 import { MobileSheet } from "@/components/ui/MobileSheet";
 import { SegmentedControl } from "@/components/ui/SegmentedControl";
 import { recordAffordAsked } from "@/lib/actions/setup";
-import { GLASS_CARD } from "@/lib/glass";
-import { FIGURE_HERO } from "@/lib/type-scale";
+import { ICON } from "@/lib/icon-scale";
 import { useFormatCurrency } from "@/lib/use-currency";
 import { cn } from "@/lib/utils";
 import { useLocale, useT } from "@/lib/locale-context";
@@ -35,15 +34,17 @@ function untilLabel(
 }
 
 /**
- * « Il vous reste » — the first thing on Le point: what the account can
- * still give before the next pay day, with the charges due by then and the
- * marge already taken off (`@finance/core/left-to-spend`).
+ * « Il vous reste », one line in the balance card, between its figures and
+ * its curve: what the account can still give before the next pay day, with
+ * the charges due by then and the marge already taken off
+ * (`@finance/core/left-to-spend`).
  *
  * Below zero it says what is missing, in the ordinary colour: the overdraft
- * warning is the alarm, and this is the arithmetic behind it. The figure
- * opens « Puis-je me permettre ? ».
+ * warning is the alarm, and this is the arithmetic behind it. The line opens
+ * « Puis-je me permettre ? », where « Comment c'est calculé ? » waits too, so
+ * the card itself stays one sentence.
  */
-export function LeftToSpendCard({
+export function LeftToSpendLine({
   left,
   lowest,
   eachMonth,
@@ -61,26 +62,20 @@ export function LeftToSpendCard({
   const short = left.amount < 0;
 
   return (
-    <section
-      className={cn(GLASS_CARD, "flex flex-col gap-2 rounded-card p-card")}
-    >
+    <>
       <button
         type="button"
         onClick={() => {
           setAsking(true);
           void recordAffordAsked();
         }}
-        className="-m-2 flex flex-col items-start gap-2 rounded-control p-2 text-left transition-colors duration-hover hover:bg-muted/40"
+        className="flex w-full items-center justify-between gap-3 rounded-control border border-border px-3 py-2.5 text-left text-sm transition-colors duration-hover hover:bg-muted/40"
       >
-        <span className="text-sm font-medium text-muted-foreground">
-          {t(short ? "leftToSpend.missing" : "leftToSpend.title")}
-        </span>
-        <AnimatedAmount
-          value={Math.abs(left.amount)}
-          format={format}
-          className={cn(FIGURE_HERO, "block")}
-        />
-        <span className="text-sm text-muted-foreground">
+        <span className="min-w-0 text-muted-foreground">
+          {t(short ? "leftToSpend.missing" : "leftToSpend.title")}{" "}
+          <PrivateAmount className="font-semibold text-foreground tabular-nums">
+            {format(Math.abs(left.amount))}
+          </PrivateAmount>{" "}
           {untilLabel(t, locale, left.payDay, short)}
           {left.perDay !== null ? (
             <>
@@ -91,37 +86,13 @@ export function LeftToSpendCard({
             </>
           ) : null}
         </span>
-        <span className="text-sm font-medium text-foreground underline decoration-dotted underline-offset-4">
-          {t("afford.title")}
-        </span>
+        <CaretRight
+          size={ICON.sm}
+          className="shrink-0 text-muted-foreground"
+          aria-hidden
+        />
+        <span className="sr-only">{t("afford.title")}</span>
       </button>
-      {/* Native disclosure: keyboard, screen reader and the open state are
-          the browser's. */}
-      <details className="text-xs text-muted-foreground">
-        <summary className="cursor-pointer list-none underline decoration-dotted underline-offset-4 transition-colors duration-hover hover:text-foreground [&::-webkit-details-marker]:hidden">
-          {t("leftToSpend.how.title")}
-        </summary>
-        <div className="mt-2 flex max-w-prose flex-col gap-1.5 leading-relaxed">
-          <p>{t("leftToSpend.how.body")}</p>
-          <p>
-            {t(
-              left.payDay
-                ? "leftToSpend.how.payDay"
-                : "leftToSpend.how.monthEnd",
-            )}
-          </p>
-          {left.marge > 0 ? (
-            <p>
-              <PrivateAmount>
-                {t("leftToSpend.how.marge", {
-                  count: left.days,
-                  amount: format(left.marge),
-                })}
-              </PrivateAmount>
-            </p>
-          ) : null}
-        </div>
-      </details>
 
       <MobileSheet
         open={asking}
@@ -129,10 +100,39 @@ export function LeftToSpendCard({
         title={t("afford.title")}
       >
         {asking ? (
-          <AffordForm left={left} lowest={lowest} eachMonth={eachMonth} />
+          <div className="flex flex-col gap-5">
+            <AffordForm left={left} lowest={lowest} eachMonth={eachMonth} />
+            {/* Native disclosure: keyboard, screen reader and the open
+                state are the browser's. */}
+            <details className="text-xs text-muted-foreground">
+              <summary className="cursor-pointer list-none underline decoration-dotted underline-offset-4 transition-colors duration-hover hover:text-foreground [&::-webkit-details-marker]:hidden">
+                {t("leftToSpend.how.title")}
+              </summary>
+              <div className="mt-2 flex max-w-prose flex-col gap-1.5 leading-relaxed">
+                <p>{t("leftToSpend.how.body")}</p>
+                <p>
+                  {t(
+                    left.payDay
+                      ? "leftToSpend.how.payDay"
+                      : "leftToSpend.how.monthEnd",
+                  )}
+                </p>
+                {left.marge > 0 ? (
+                  <p>
+                    <PrivateAmount>
+                      {t("leftToSpend.how.marge", {
+                        count: left.days,
+                        amount: format(left.marge),
+                      })}
+                    </PrivateAmount>
+                  </p>
+                ) : null}
+              </div>
+            </details>
+          </div>
         ) : null}
       </MobileSheet>
-    </section>
+    </>
   );
 }
 
