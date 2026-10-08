@@ -14,7 +14,8 @@ import { Orb } from "@/components/brand/Orb";
 import { CategoryIcon } from "@/components/finance/CategoryIcon";
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
-import { APP_NAV_ITEMS } from "@/lib/navigation";
+import { APP_NAV_ITEMS, PROPERTY_NAV_ITEM } from "@/lib/navigation";
+import { OwnershipBar } from "@/components/finance/property/ProgressBars";
 import {
   NOTCH_CENTRE_CLASS,
   NOTCH_ITEM_ACTIVE_CLASS,
@@ -244,7 +245,15 @@ const ACTIVE_NAV: Record<LandingPageId, Key> = {
   // that is the nav entry their chrome lights.
   "month-close": "nav.plan",
   "month-read": "nav.plan",
+  property: "nav.property",
 };
+
+/** The bar's surfaces: Immobilier joins them on its own screen. */
+function navFor(active: Key) {
+  return active === PROPERTY_NAV_ITEM.labelKey
+    ? [...APP_NAV_ITEMS, PROPERTY_NAV_ITEM]
+    : APP_NAV_ITEMS;
+}
 
 /** The real top bar's structure — the wordmark, the notch holding the same
  * APP_NAV_ITEMS the app renders and the add button, then the refresh, the
@@ -275,7 +284,7 @@ function WebTopNav({ active }: { active: Key }) {
       <nav className={NOTCH_CENTRE_CLASS}>
         <NotchWing side="start" />
         <NotchWing side="end" />
-        {APP_NAV_ITEMS.map(({ labelKey, icon: Icon }) => {
+        {navFor(active).map(({ labelKey, icon: Icon }) => {
           const isActive = labelKey === active;
           return (
             <span
@@ -371,7 +380,7 @@ function WebShell({
  * account is in the page header. */
 function MobileTabBar({ active }: { active: Key }) {
   const t = useT();
-  const items = APP_NAV_ITEMS;
+  const items = navFor(active);
   return (
     <nav className="flex h-14 shrink-0 items-stretch border-t border-border bg-background/95">
       {items.map(({ labelKey, icon: Icon }) => {
@@ -1575,6 +1584,95 @@ export function MonthReadMock({ variant = "web" }: { variant?: Variant }) {
   );
 }
 
+/* ---------------------------------------------------------------- property */
+
+/** The studio's own card: its name, its net value, the bar of what is yours. */
+function PropertyCard({ compact = false }: { compact?: boolean }) {
+  const sample = landingSampleFor(useLocale());
+  const t = useT();
+  const euro = useEuro();
+  const { property } = sample;
+  const net = property.value - property.owed;
+  return (
+    <MockCard
+      innerClassName={cn("flex flex-col gap-5", compact ? "p-4" : "p-6")}
+    >
+      <div className="flex flex-col items-center gap-1 text-center">
+        <p className="font-head text-lg">{property.name}</p>
+        <p className="text-xs text-muted-foreground">{property.kindLine}</p>
+        <p className="mt-3 text-xs font-medium text-muted-foreground">
+          {t("property.netValue")}
+        </p>
+        <p
+          className={cn(
+            "font-serif font-semibold tabular-nums",
+            compact ? "text-4xl" : "text-5xl",
+          )}
+        >
+          {euro(net)}
+        </p>
+      </div>
+      <OwnershipBar
+        ownership={{
+          yours: net,
+          owed: property.owed,
+          share: net / property.value,
+        }}
+        detailed
+      />
+      {compact ? null : (
+        <div className="grid grid-cols-3 gap-4 text-sm">
+          <div>
+            <p className="text-xs text-muted-foreground">
+              {t("property.estimatedValue")}
+            </p>
+            <p className="font-medium tabular-nums">{euro(property.value)}</p>
+            <p className="text-xs tabular-nums text-muted-foreground">
+              {t("property.valueRange", {
+                low: euro(property.low),
+                high: euro(property.high),
+              })}
+            </p>
+          </div>
+          <div>
+            <p className="text-xs text-muted-foreground">
+              {t("property.owed")}
+            </p>
+            <p className="font-medium tabular-nums">{euro(property.owed)}</p>
+          </div>
+          <div>
+            <p className="text-xs text-muted-foreground">
+              {t("property.loansMonthly")}
+            </p>
+            <p className="font-medium tabular-nums">{euro(property.monthly)}</p>
+          </div>
+        </div>
+      )}
+    </MockCard>
+  );
+}
+
+export function PropertyMock({ variant = "web" }: { variant?: Variant }) {
+  if (variant === "mobile") {
+    return (
+      <MockViewport width={MOBILE_WIDTH} height={MOBILE_HEIGHT}>
+        <MobileShell active={ACTIVE_NAV.property}>
+          <PropertyCard compact />
+        </MobileShell>
+      </MockViewport>
+    );
+  }
+  return (
+    <MockViewport width={WEB_WIDTH} height={WEB_HEIGHT}>
+      <WebShell active={ACTIVE_NAV.property}>
+        <div className="mx-auto w-full max-w-2xl">
+          <PropertyCard />
+        </div>
+      </WebShell>
+    </MockViewport>
+  );
+}
+
 const PAGE_MOCKS: Record<LandingPageId, (variant: Variant) => ReactNode> = {
   bearing: (variant) => <BearingMock variant={variant} />,
   ledger: (variant) => <TransactionsMock variant={variant} />,
@@ -1583,6 +1681,7 @@ const PAGE_MOCKS: Record<LandingPageId, (variant: Variant) => ReactNode> = {
   wallets: (variant) => <WalletsMock variant={variant} />,
   "month-close": (variant) => <MonthCloseMock variant={variant} />,
   "month-read": (variant) => <MonthReadMock variant={variant} />,
+  property: (variant) => <PropertyMock variant={variant} />,
 };
 
 /** The right mock for a feature, at its design size, ready to be scaled by

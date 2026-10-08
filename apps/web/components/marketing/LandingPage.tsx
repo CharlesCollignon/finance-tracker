@@ -42,6 +42,7 @@ const HOW_ORDER = [
   "month-close",
   "plan",
   "wallets",
+  "property",
   "month-read",
 ] as const satisfies readonly LandingPageId[];
 
