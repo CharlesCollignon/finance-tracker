@@ -2,13 +2,13 @@
 
 import type { ActionResult, FormState } from "@finance/core/action-result";
 import * as categories from "@finance/data/categories";
-import { asUser } from "@/lib/actions/as-user";
+import { asOwner } from "@/lib/actions/as-user";
 
 export async function upsertCategory(
   _prev: FormState,
   formData: FormData,
 ): Promise<ActionResult> {
-  return asUser((db, userId) =>
+  return asOwner((db, userId) =>
     categories.upsertCategory(db, userId, {
       id: (formData.get("id") as string | null) || undefined,
       name: String(formData.get("name") ?? ""),
@@ -23,7 +23,7 @@ export async function setCategoryArchived(
   id: string,
   archived: boolean,
 ): Promise<ActionResult> {
-  return asUser((db, userId) =>
+  return asOwner((db, userId) =>
     categories.setCategoryArchived(db, userId, id, archived),
   );
 }
@@ -31,5 +31,5 @@ export async function setCategoryArchived(
 export async function deleteCategory(
   id: string,
 ): Promise<ActionResult<{ undo: string | null }>> {
-  return asUser((db, userId) => categories.deleteCategory(db, userId, id));
+  return asOwner((db, userId) => categories.deleteCategory(db, userId, id));
 }

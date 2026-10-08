@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { getAuthUser } from "@/lib/auth/get-user";
+import { getOwner } from "@/lib/owner";
 import { getCategories } from "@/lib/queries/categories";
 import {
   getRecurringSkipKeys,
@@ -34,6 +35,10 @@ export default async function CalendarPage({
     redirect("/login");
   }
 
+  // Whose money: the person's, or their space's under « Commun ».
+  const owner = await getOwner();
+  const ownerId = owner?.ownerId ?? user.id;
+
   const params = await searchParams;
   const { year, month } = await resolveMonthScope(params);
   const [
@@ -45,16 +50,16 @@ export default async function CalendarPage({
     fulfilledKeys,
     bankFed,
   ] = await Promise.all([
-    getTransactions(user.id, year, month),
-    getCategories(user.id),
-    getRecurringTemplates(user.id),
+    getTransactions(ownerId, year, month),
+    getCategories(ownerId),
+    getRecurringTemplates(ownerId),
     // Which rows settle a recurring charge. Needs nothing else this batch
     // fetches, so it rides along rather than costing a second round trip.
-    getConfirmedTransactionIds(user.id),
+    getConfirmedTransactionIds(ownerId),
     // What keeps an occurrence from being drawn as planned.
-    getRecurringSkipKeys(user.id, year, month),
-    getFulfilledKeys(user.id),
-    hasBankFeed(user.id),
+    getRecurringSkipKeys(ownerId, year, month),
+    getFulfilledKeys(ownerId),
+    hasBankFeed(ownerId),
   ]);
 
   // Asked after the batch, because they need the templates and categories
@@ -65,13 +70,13 @@ export default async function CalendarPage({
   const [proposals, bankForecast] = await Promise.all([
     // The ones Le point asks about, as the Ledger marks them.
     getFulfilmentProposals(
-      user.id,
+      ownerId,
       recurringTemplates,
       categories,
       now.year,
       now.month,
     ),
-    getBankForecast(user.id, recurringTemplates, bankFed, today),
+    getBankForecast(ownerId, recurringTemplates, bankFed, today),
   ]);
 
   // The Ledger list draws these too; see its page for why they are drawn

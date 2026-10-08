@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { getAuthUser } from "@/lib/auth/get-user";
+import { getOwner } from "@/lib/owner";
 import { createClient } from "@/lib/supabase/server";
 import {
   MIN_FINDINGS_TO_RANK,
@@ -31,8 +32,13 @@ export default async function HistoryPage() {
   }
 
   const [supabase, locale] = await Promise.all([createClient(), getLocale()]);
+  const owner = await getOwner();
+  const ownerId = owner?.ownerId ?? user.id;
+  // The category reads and the re-rank are a person's (their tallies, their
+  // rows); only the month read was taken into the joint space.
+  const joint = owner?.joint ?? false;
   const [{ screen, readTally, selection }, writer] = await Promise.all([
-    readCategoryScreen(supabase, user.id, locale),
+    readCategoryScreen(supabase, ownerId, locale),
     writerStateFor(user.id, supabase),
   ]);
 
@@ -48,7 +54,7 @@ export default async function HistoryPage() {
    * untouched and the table it would be counted in does not exist, which is
    * both a refusal nobody earned and a sentence that is not true.
    */
-  const readConfigured = writer.writable && readTally.tracked;
+  const readConfigured = !joint && writer.writable && readTally.tracked;
   const readWritesLeft = readTally.tracked
     ? writesRemaining(
         {
@@ -74,6 +80,7 @@ export default async function HistoryPage() {
    * the write path makes, from the same constant.
    */
   const rerankConfigured =
+    !joint &&
     writer.writable &&
     selection.tracked &&
     screen.allFindings.length >= MIN_FINDINGS_TO_RANK;

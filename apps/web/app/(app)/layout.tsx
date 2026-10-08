@@ -10,6 +10,7 @@ import { RefreshProvider } from "@/components/layout/RefreshProvider";
 import { ServiceWorkerRegistration } from "@/components/layout/ServiceWorkerRegistration";
 import { ToastProvider } from "@/components/layout/ToastProvider";
 import { getAuthUser } from "@/lib/auth/get-user";
+import { getOwner } from "@/lib/owner";
 import { getQuickEntryContext } from "@/lib/queries/quick-entry";
 import { accountLabel } from "@/lib/account-label";
 import { bankFeedBelongsTo } from "@/lib/bank/client";
@@ -41,6 +42,12 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
     after(() => recordActivity(db));
   }
 
+  // Whose money the shared surfaces show: the person's, or their space's
+  // under « Commun » (`getOwner`). The quick add, the badges and the inbox
+  // count follow it; the bank's freshness stays the person's.
+  const owner = user ? await getOwner() : null;
+  const ownerId = owner?.ownerId ?? user?.id ?? "";
+
   // Two stages rather than six reads in a row. This layout renders again
   // after every write, before the page's own reads start, so each read here
   // that waited on the one before was a delay every save paid.
@@ -54,9 +61,9 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
         bankFeedBelongsTo(user.id),
         // Fetched here rather than per page so the quick-add sheet —
         // reachable from every screen — opens with no loading state.
-        getQuickEntryContext(user.id),
+        getQuickEntryContext(ownerId),
         // Only for the badge below, which is not worth the whole shell.
-        getRecurringTemplates(user.id).catch(() => null),
+        getRecurringTemplates(ownerId).catch(() => null),
         // Which surfaces the bars draw.
         getFlags(),
       ])
@@ -80,7 +87,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
     // should be nagging about.
     user && templates
       ? countFulfilmentProposals(
-          user.id,
+          ownerId,
           templates,
           quickEntry.categories,
           getCurrentMonth().year,
@@ -91,7 +98,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
     // review files them. Not month-scoped: a coffee from the 29th of last
     // month still needs one. Whether or not the bank still syncs: rows kept
     // after a disconnect are reviewed all the same.
-    user ? countPendingFeedItems(user.id).catch(() => 0) : 0,
+    user ? countPendingFeedItems(ownerId).catch(() => 0) : 0,
   ]);
 
   // Different on every render, which is the point: `LiveRefresh` tells a

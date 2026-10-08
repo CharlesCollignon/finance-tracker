@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import { redirect } from "next/navigation";
 import { getAuthUser } from "@/lib/auth/get-user";
+import { getOwner } from "@/lib/owner";
 import { gatherBearingMonth } from "@/lib/bearing/month";
 import {
   countAccountsAwaitingRole,
@@ -36,6 +37,11 @@ export default async function BearingPage({ searchParams }: BearingPageProps) {
     redirect("/login");
   }
 
+  // Whose money: the person's, or their space's under « Commun ».
+  const owner = await getOwner();
+  const ownerId = owner?.ownerId ?? user.id;
+  const joint = owner?.joint ?? false;
+
   const params = await searchParams;
   const { year, month } =
     params.y && params.m
@@ -43,8 +49,9 @@ export default async function BearingPage({ searchParams }: BearingPageProps) {
       : getCurrentMonth();
   const [data, bankInvite, bankAttention, awaitingAccounts] = await Promise.all(
     [
-      gatherBearingMonth(user.id, year, month),
-      shouldInviteToConnect(user.id, "bearing"),
+      gatherBearingMonth(ownerId, year, month),
+      // The bank is the person's: never offered from the joint space.
+      joint ? false : shouldInviteToConnect(user.id, "bearing"),
       readBankAttention(user.id),
       countAccountsAwaitingRole(user.id),
     ],
@@ -63,7 +70,7 @@ export default async function BearingPage({ searchParams }: BearingPageProps) {
           recapSlot={
             data.balance.period === "current" ? (
               <Suspense fallback={null}>
-                <RecapSlot userId={user.id} />
+                <RecapSlot userId={ownerId} />
               </Suspense>
             ) : null
           }
@@ -71,7 +78,12 @@ export default async function BearingPage({ searchParams }: BearingPageProps) {
           readSlot={
             data.balance.period === "future" ? null : (
               <Suspense fallback={null}>
-                <MonthReadSlot userId={user.id} year={year} month={month} />
+                <MonthReadSlot
+                  userId={ownerId}
+                  writerId={user.id}
+                  year={year}
+                  month={month}
+                />
               </Suspense>
             )
           }

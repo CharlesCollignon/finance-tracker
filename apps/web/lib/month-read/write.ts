@@ -50,17 +50,24 @@ export interface WriteMonthReadOutcome {
 }
 
 export async function writeMonthRead(
+  /** Whose month: a person, or their space (migration 060). */
   userId: string,
   year: number,
   month: number,
   client?: Client,
+  /**
+   * Whose AI account writes it, when not the owner's: a joint month is
+   * written with the account of the partner who asked, on the space's own
+   * quota.
+   */
+  writerId: string = userId,
 ): Promise<WriteMonthReadOutcome> {
   const locale = await getLocale();
   const t = await getT();
   const monthLabel = formatMonthLabel(year, month, locale);
 
   const { writer, account } = await writerFor(
-    userId,
+    writerId,
     client ?? (await createClient()),
   );
   if (!writer) {

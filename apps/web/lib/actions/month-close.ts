@@ -5,8 +5,8 @@ import { recordActivity } from "@finance/data/activity";
 import type { ActionResult } from "@finance/core/action-result";
 import type { MonthCloseResult, RunMoment } from "@finance/core/month-close";
 import * as closing from "@finance/data/closing";
-import { asUser } from "@/lib/actions/as-user";
-import { getAuthUser } from "@/lib/auth/get-user";
+import { asOwner } from "@/lib/actions/as-user";
+import { getOwner } from "@/lib/owner";
 import { getLocale } from "@/lib/locale";
 import { createClient } from "@/lib/supabase/server";
 
@@ -20,13 +20,13 @@ export async function previewMonthCloseAction(
   month: number,
   closingBalance: number,
 ): Promise<ActionResult<{ result: MonthCloseResult }>> {
-  const user = await getAuthUser();
-  if (!user) {
+  const owner = await getOwner();
+  if (!owner) {
     return { error: "errors.notAuthenticated" };
   }
   return closing.previewClose(
     await createClient(),
-    user.id,
+    owner.ownerId,
     year,
     month,
     closingBalance,
@@ -39,7 +39,7 @@ export async function recordMonthClose(
   closingBalance: number,
 ): Promise<ActionResult<{ result: MonthCloseResult; run: RunMoment | null }>> {
   const locale = await getLocale();
-  return asUser(async (db, userId) => {
+  return asOwner(async (db, userId) => {
     const result = await closing.recordMonthClose(
       db,
       userId,
@@ -60,7 +60,7 @@ export async function deleteMonthClose(
   year: number,
   month: number,
 ): Promise<ActionResult> {
-  return asUser((db, userId) =>
+  return asOwner((db, userId) =>
     closing.deleteMonthClose(db, userId, year, month),
   );
 }
@@ -68,9 +68,9 @@ export async function deleteMonthClose(
 export async function updateUnrecordedCap(
   cap: number | null,
 ): Promise<ActionResult> {
-  return asUser((db, userId) => closing.updateUnrecordedCap(db, userId, cap));
+  return asOwner((db, userId) => closing.updateUnrecordedCap(db, userId, cap));
 }
 
 export async function updateCloseDay(closeDay: number): Promise<ActionResult> {
-  return asUser((db, userId) => closing.updateCloseDay(db, userId, closeDay));
+  return asOwner((db, userId) => closing.updateCloseDay(db, userId, closeDay));
 }

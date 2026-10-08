@@ -25,10 +25,14 @@ import { cn } from "@/lib/utils";
  */
 export async function MonthReadSlot({
   userId,
+  writerId = userId,
   year,
   month,
 }: {
+  /** Whose month: the person's, or their space's. */
   userId: string;
+  /** Whose AI account writes it: the person asking, in the joint space too. */
+  writerId?: string;
   year: number;
   month: number;
 }) {
@@ -38,7 +42,7 @@ export async function MonthReadSlot({
   const [view, { stored }, writer] = await Promise.all([
     getMonthRead(userId, year, month, facts),
     readMonthReadState(userId, year, month),
-    writerStateFor(userId, await createClient()),
+    writerStateFor(writerId, await createClient()),
   ]);
 
   const readFacts =

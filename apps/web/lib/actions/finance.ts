@@ -12,12 +12,13 @@ import * as ledger from "@finance/data/ledger";
 import * as occurrences from "@finance/data/occurrences";
 import type { ActionResult, FormState } from "@finance/core/action-result";
 import { signInErrorKey, signUpErrorKey } from "@finance/core/auth-errors";
-import { asUser } from "@/lib/actions/as-user";
+import { asOwner } from "@/lib/actions/as-user";
 import { redirect } from "next/navigation";
 import { getSiteUrl } from "@/lib/supabase/env";
 import { getAuthUser } from "@/lib/auth/get-user";
 import { createClient } from "@/lib/supabase/server";
 import { seedDefaultCategories } from "@/lib/queries/categories";
+import { getOwner } from "@/lib/owner";
 import { shiftIsoDate, todayIsoLocal } from "@finance/core/constants";
 import { saveRecurringTemplate } from "@finance/data/recurring-templates";
 import {
@@ -27,14 +28,13 @@ import {
 import { cashDateOf, movedBetween } from "@finance/core/cash-date";
 import { dbError } from "@finance/data/errors";
 
-async function getUser() {
-  const user = await getAuthUser();
-
-  if (!user) {
-    return null;
-  }
-
-  return user;
+/**
+ * Whose money an action here writes: the owner on screen (`getOwner`) — the
+ * person under « Moi », their space under « Commun ».
+ */
+async function getUser(): Promise<{ id: string } | null> {
+  const owner = await getOwner();
+  return owner ? { id: owner.ownerId } : null;
 }
 
 export async function signUp(
@@ -145,7 +145,7 @@ export interface QuickTransactionInput {
 export async function saveQuickTransaction(
   input: QuickTransactionInput,
 ): Promise<ActionResult> {
-  return asUser(async (db, userId) => {
+  return asOwner(async (db, userId) => {
     const result = await ledger.createTransaction(db, userId, input);
     if (result.success) {
       // Counted for the audience figures, after the answer is sent.
@@ -170,7 +170,7 @@ export async function importTransactions(
     note?: string;
   }[],
 ): Promise<ActionResult<{ imported: number }>> {
-  return asUser((db, userId) => ledger.importTransactions(db, userId, rows));
+  return asOwner((db, userId) => ledger.importTransactions(db, userId, rows));
 }
 
 /**
@@ -239,7 +239,7 @@ export async function getExistingKeysForRange(
 export async function deleteTransactions(
   ids: string[],
 ): Promise<ActionResult<{ deleted: number; undo: deletions.UndoToken }>> {
-  return asUser((db, userId) => ledger.deleteTransactions(db, userId, ids));
+  return asOwner((db, userId) => ledger.deleteTransactions(db, userId, ids));
 }
 
 /**
@@ -261,7 +261,7 @@ export async function moveTransactions(
   ids: string[],
   categoryId: string,
 ): Promise<ActionResult<{ moved: number }>> {
-  return asUser((db, userId) =>
+  return asOwner((db, userId) =>
     ledger.moveTransactions(db, userId, ids, categoryId),
   );
 }
@@ -270,7 +270,7 @@ export async function updateTransaction(
   _prev: FormState,
   formData: FormData,
 ): Promise<ActionResult> {
-  return asUser((db, userId) =>
+  return asOwner((db, userId) =>
     ledger.updateTransaction(db, userId, {
       id: String(formData.get("id") ?? ""),
       categoryId: String(formData.get("categoryId") ?? ""),
@@ -284,14 +284,14 @@ export async function updateTransaction(
 export async function deleteTransaction(
   id: string,
 ): Promise<ActionResult<{ undo: deletions.UndoToken }>> {
-  return asUser((db, userId) => ledger.deleteTransaction(db, userId, id));
+  return asOwner((db, userId) => ledger.deleteTransaction(db, userId, id));
 }
 
 /** Take back one delete — transactions or a category — by its token. */
 export async function restoreDeletion(
   token: string,
 ): Promise<ActionResult<{ restored: number }>> {
-  return asUser((db, userId) => deletions.restoreDeletion(db, userId, token));
+  return asOwner((db, userId) => deletions.restoreDeletion(db, userId, token));
 }
 
 /**
@@ -302,7 +302,7 @@ export async function setFundedByTransfer(
   templateId: string,
   funded: boolean,
 ): Promise<ActionResult> {
-  return asUser((db, userId) =>
+  return asOwner((db, userId) =>
     dcaTransfer.setFundedByTransfer(
       db,
       userId,
@@ -372,7 +372,7 @@ export async function upsertRecurringTemplate(
 export async function deleteRecurringTemplate(
   id: string,
 ): Promise<ActionResult> {
-  return asUser((db, userId) =>
+  return asOwner((db, userId) =>
     occurrences.deleteRecurringTemplate(db, userId, id),
   );
 }
@@ -381,7 +381,7 @@ export async function toggleRecurringActive(
   id: string,
   active: boolean,
 ): Promise<ActionResult> {
-  return asUser((db, userId) =>
+  return asOwner((db, userId) =>
     occurrences.toggleRecurringActive(db, userId, id, active),
   );
 }
@@ -411,7 +411,7 @@ export async function recordPlannedNow(
   templateId: string,
   occurredOn: string,
 ): Promise<ActionResult<{ transactionId: string }>> {
-  return asUser((db, userId) =>
+  return asOwner((db, userId) =>
     occurrences.recordPlannedNow(db, userId, templateId, occurredOn),
   );
 }
@@ -445,7 +445,7 @@ export async function skipPlannedOccurrence(
   templateId: string,
   occurredOn: string,
 ): Promise<ActionResult> {
-  return asUser((db, userId) =>
+  return asOwner((db, userId) =>
     occurrences.skipPlannedOccurrence(db, userId, templateId, occurredOn),
   );
 }
@@ -454,7 +454,7 @@ export async function unskipRecurringOccurrence(
   templateId: string,
   occurredOn: string,
 ): Promise<ActionResult> {
-  return asUser((db, userId) =>
+  return asOwner((db, userId) =>
     occurrences.unskipRecurringOccurrence(db, userId, templateId, occurredOn),
   );
 }
@@ -464,7 +464,7 @@ export async function recordPurchaseInsideWallet(
   occurredOn: string,
   boughtOn?: string,
 ): Promise<ActionResult> {
-  return asUser((db, userId) =>
+  return asOwner((db, userId) =>
     occurrences.recordPurchaseInsideWallet(
       db,
       userId,

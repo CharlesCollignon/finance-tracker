@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { getAuthUser } from "@/lib/auth/get-user";
+import { getOwner } from "@/lib/owner";
 import { getCategories } from "@/lib/queries/categories";
 import {
   getRecordedThisMonth,
@@ -31,6 +32,10 @@ export default async function RecurringPage({
     redirect("/login");
   }
 
+  // Whose money: the person's, or their space's under « Commun ».
+  const owner = await getOwner();
+  const ownerId = owner?.ownerId ?? user.id;
+
   const [
     templates,
     categories,
@@ -40,22 +45,22 @@ export default async function RecurringPage({
     flags,
     watched,
   ] = await Promise.all([
-    getRecurringTemplates(user.id),
-    getCategories(user.id),
-    hasBankFeed(user.id),
+    getRecurringTemplates(ownerId),
+    getCategories(ownerId),
+    hasBankFeed(ownerId),
     // What editing a charge asks about: the days it is already recorded on
     // this month.
-    getRecordedThisMonth(user.id),
+    getRecordedThisMonth(ownerId),
     searchParams,
     getFlags(),
     // The services the ledger shows being paid, for « Abonnements ».
-    readSubscriptions(await createClient(), user.id, todayIsoLocal()).catch(
+    readSubscriptions(await createClient(), ownerId, todayIsoLocal()).catch(
       () => ({ subscriptions: [], findings: [] }),
     ),
   ]);
   // What a charge can belong to, for an account that keeps properties.
   const properties = isFlagOn(flags, "property.track")
-    ? await getPropertyNames(user.id)
+    ? await getPropertyNames(ownerId)
     : [];
 
   // Only worth asking where there is a statement to read it out of. Without
@@ -64,8 +69,8 @@ export default async function RecurringPage({
   // And only a bank can have debited a wallet from the account.
   const [proposals, debited] = bankFed
     ? await Promise.all([
-        getRecurringProposals(user.id, todayIsoLocal()),
-        getDebitedWalletCategories(user.id),
+        getRecurringProposals(ownerId, todayIsoLocal()),
+        getDebitedWalletCategories(ownerId),
       ])
     : [[], []];
 
