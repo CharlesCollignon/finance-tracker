@@ -121,7 +121,7 @@ export async function recordHealthy(
         .from("bank_accounts")
         .select("bank_name")
         .eq("user_id", userId)
-        .in("role", ["spending", "savings"]),
+        .in("role", ["spending", "savings", "joint"]),
     ]);
     consentValidUntil = consentToWatch(
       connections,

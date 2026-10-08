@@ -15,7 +15,11 @@ import {
   consentIsCurrent,
 } from "@finance/core/bank-consent";
 import { formatShortDate } from "@finance/core/constants";
-import { awaitingRole } from "@finance/core/bank-accounts";
+import {
+  awaitingRole,
+  importsMovements,
+  isFollowed,
+} from "@finance/core/bank-accounts";
 import { resolveMessage } from "@finance/core/i18n/t";
 
 import { AddBankSheet } from "@/components/bank/AddBankSheet";
@@ -107,7 +111,7 @@ export default function BankScreen() {
       (accounts ?? [])
         .filter(
           (account) =>
-            account.role === "spending" &&
+            importsMovements(account.role) &&
             account.history_imported_at === null &&
             !account.needs_reconnect,
         )
@@ -130,7 +134,7 @@ export default function BankScreen() {
   const consentBank = useMemo(() => {
     const followed = (accounts ?? []).filter(
       (account) =>
-        (account.role === "spending" || account.role === "savings") &&
+        isFollowed(account.role) &&
         account.bank_name,
     );
     if (new Set(followed.map((account) => account.bank_name)).size < 2) {

@@ -2998,6 +2998,7 @@ export const en = {
     body: "Current: its movements come into your ledger and its balance is your money to spend. Savings: its balance is a savings account's on Placements. Don't follow: nothing comes in from it.",
     roleGroup: "What {account} is",
     roleSpending: "Current",
+    roleJoint: "Shared",
     roleSavings: "Savings",
     roleIgnored: "Don't follow",
     livretLabel: "Its savings account",
@@ -3008,6 +3009,8 @@ export const en = {
         "{names} already read other accounts: pick other savings accounts for these.",
     },
     ignoredBilled: "open-banking.io bills it as long as it is connected there.",
+    jointHint:
+      "Its movements and its balance go to « {space} », for you both.",
     otherBank: "Other bank",
     consentUntil: "Shared until {date}",
     consentSoon: "Renew before {date}",

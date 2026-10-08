@@ -65,7 +65,7 @@ export type BankConnectionStatus =
  * What a bank account is to the user: Courant, Épargne or Ne pas suivre.
  * Null on a row means not decided yet, which is followed as nothing.
  */
-export type BankAccountRole = "spending" | "savings" | "ignored";
+export type BankAccountRole = "spending" | "savings" | "ignored" | "joint";
 
 export type { Json } from "./database.generated";
 

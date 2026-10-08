@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Account } from "@open-banking-io/client";
 import { allRows } from "@finance/core/paging";
@@ -18,7 +19,10 @@ import type {
   TransactionWithCategory,
 } from "@finance/core/types/database";
 import {
-  followsMovements,
+  cleanIban,
+  isFollowed,
+  jointFeeders,
+  movementsOwner,
   ownTransferIbans,
 } from "@finance/core/bank-accounts";
 import type { PullKind } from "@finance/core/bank-pull";
@@ -157,10 +161,26 @@ export async function syncBankFeed(
   const roleOf = (account: { id: string }) =>
     remembered.get(account.id)?.role ?? null;
 
-  // Only a current account's movements come in. A Livret's are the other
-  // side of transfers the current account already recorded, and an account
-  // with no role yet waits for the user to say what it is.
+  // Whose rows each account's movements become: the person's for a current
+  // account, their shared space's for a joint one (migration 061), nobody's
+  // for a Livret or an account with no role yet — a Livret's movements are
+  // the other side of transfers the current account already recorded.
   //
+  // A joint account both partners connected feeds the space once: the copy
+  // seen first does, the other is left out (`jointFeeders`).
+  const feeders = await jointFeedersOf(supabase, [...remembered.values()]);
+  const ownerOf = (account: { id: string }): string | null => {
+    const known = remembered.get(account.id);
+    if (!known) {
+      return null;
+    }
+    const owner = movementsOwner(
+      { role: known.role, space_id: known.spaceId },
+      userId,
+    );
+    return known.role === "joint" && !feeders.has(account.id) ? null : owner;
+  };
+
   // A consent that has lapsed answers with an empty statement rather than an
   // error, which would read as "nothing happened this month" — the most
   // dangerous possible lie for a ledger. Skipped and counted instead, so the
@@ -170,88 +190,13 @@ export async function syncBankFeed(
   const accounts = allAccounts.filter(
     (account) =>
       !account.needsReconnect &&
-      followsMovements(roleOf(account)) &&
+      ownerOf(account) !== null &&
       (!accountIds || accountIds.includes(account.id)),
   );
   const needReconnect = allAccounts.filter(
-    (account) =>
-      account.needsReconnect &&
-      (roleOf(account) === "spending" || roleOf(account) === "savings"),
+    (account) => account.needsReconnect && isFollowed(roleOf(account)),
   ).length;
   const since = isoDaysAgo(backfill ? BACKFILL_DAYS : LOOKBACK_DAYS);
-
-  // The user's own answers are what make a sync mostly automatic, and the
-  // categories are what an MCC has to resolve against.
-  //
-  // Both lists are paged: the server stops at 1,000 rows without saying so,
-  // which left a `.limit(2000)` at half of what it asked for, and every bank
-  // row past the thousandth looking unseen — its balance never refreshed and
-  // the ledger row it had claimed free to be claimed again.
-  const [history, { data: categories }, seen] = await Promise.all([
-    allRows(
-      (from, to) =>
-        supabase
-          .from("transactions")
-          .select("*, categories(name, type, icon, counts_toward_summary)")
-          .eq("user_id", userId)
-          .order("occurred_on", { ascending: false })
-          .order("id")
-          .range(from, to),
-      { max: 2000 },
-    ),
-    supabase
-      .from("categories")
-      .select("id, name")
-      .eq("user_id", userId)
-      .eq("archived", false),
-    allRows((from, to) =>
-      supabase
-        .from("bank_feed_items")
-        .select("provider_id, transaction_id")
-        .eq("user_id", userId)
-        .order("id")
-        .range(from, to),
-    ),
-  ]);
-
-  const past = history as TransactionWithCategory[];
-  const merchants = buildMerchantIndex(past);
-  // Measured on a real Crédit Agricole statement, the coarse key answers for
-  // 85% of card payments against 65% for exact matching: the same shop split
-  // across keys by a trailing branch or street was most of the difference.
-  const bankMerchants = buildBankMerchantIndex(past);
-
-  // Which ledger rows a bank row could be a copy of. A feed item that already
-  // points at a transaction has claimed it, so a later sync cannot file a
-  // second bank row against the same one.
-  const claimedIds = new Set(
-    seen
-      .map((row) => row.transaction_id)
-      .filter((id): id is string => Boolean(id)),
-  );
-  const existing: ExistingLedgerRow[] = past.map((tx) => ({
-    transactionId: tx.id,
-    // The bank dates a row by the day its money moved, so a copy is looked
-    // for on that day — not the day an early salary was moved to count for.
-    occurredOn: cashDateOf(tx),
-    amount: Number(tx.amount),
-    isIncome: tx.categories.type === "income",
-    fromRecurringTemplate: tx.recurring_template_id !== null,
-    alreadyClaimed: claimedIds.has(tx.id),
-    categoryId: tx.category_id,
-    insideWallet: isPurchaseInsideWallet(tx.categories),
-  }));
-  const categoryIdsByName = indexCategoriesByName(categories ?? []);
-  const seenProviderIds = new Set(seen.map((row) => row.provider_id as string));
-  // From every account, not only those this request walks: a first import
-  // takes one account at a time, and a transfer between two current
-  // accounts is the same money moving whichever is being read.
-  const ownIbans = ownTransferIbans(
-    allAccounts.map((account) => ({
-      iban: account.iban,
-      role: roleOf(account),
-    })),
-  );
 
   const outcome: SyncOutcome = {
     accounts: accounts.length,
@@ -273,77 +218,242 @@ export async function syncBankFeed(
     balances: [],
   };
 
+  // One owner at a time: what a bank row is matched against — the ledger's
+  // own rows, its categories, the bank rows already seen — is that owner's.
+  const owners = new Map<string, Account[]>();
   for (const account of accounts) {
-    const booked = pickBookedBalance(account);
+    const owner = ownerOf(account)!;
+    owners.set(owner, [...(owners.get(owner) ?? []), account]);
+  }
 
-    if (booked) {
-      outcome.balances.push({
-        accountId: account.id,
-        label: accountLabel(account),
-        amount: booked.amount,
-        currency: booked.currency,
-      });
-    }
+  for (const [ownerId, owned] of owners) {
+    // Transfers between an owner's own accounts are money that did not move:
+    // between the person's current accounts, or the space's joint ones. From
+    // every account, not only those this request walks: a first import takes
+    // one account at a time.
+    const ownIbans = ownTransferIbans(
+      allAccounts
+        .filter((account) => ownerOf(account) === ownerId)
+        .map((account) => ({ iban: account.iban, role: "spending" as const })),
+    );
+    const context = await ownerContext(supabase, ownerId);
 
-    // Paged rather than one shot: a busy current account clears 200
-    // transactions in well under the lookback window, and silently keeping
-    // only the newest page would leave permanent holes in the ledger.
-    const items: BankTransaction[] = [];
-    for (let offset = 0; ; offset += PAGE_LIMIT) {
-      const page = await connection.client.getTransactions(account.id, {
-        from: since,
-        limit: PAGE_LIMIT,
-        offset,
-      });
-      items.push(...(page.items as BankTransaction[]));
-      if (page.items.length < PAGE_LIMIT || items.length >= MAX_TRANSACTIONS) {
-        break;
+    for (const account of owned) {
+      const booked = pickBookedBalance(account);
+
+      if (booked) {
+        outcome.balances.push({
+          accountId: account.id,
+          label: accountLabel(account),
+          amount: booked.amount,
+          currency: booked.currency,
+        });
       }
+
+      // Paged rather than one shot: a busy current account clears 200
+      // transactions in well under the lookback window, and silently keeping
+      // only the newest page would leave permanent holes in the ledger.
+      const items: BankTransaction[] = [];
+      for (let offset = 0; ; offset += PAGE_LIMIT) {
+        const page = await connection.client.getTransactions(account.id, {
+          from: since,
+          limit: PAGE_LIMIT,
+          offset,
+        });
+        items.push(...(page.items as BankTransaction[]));
+        if (
+          page.items.length < PAGE_LIMIT ||
+          items.length >= MAX_TRANSACTIONS
+        ) {
+          break;
+        }
+      }
+
+      const positions = intradayIndexes(
+        items.map((tx) => ({
+          id: tx.id,
+          date: tx.bookingDate ?? tx.valueDate ?? tx.transactionDate,
+        })),
+      );
+
+      // Written into the stored rows (the note of a row with no description),
+      // so in the product's language: a sync often runs with nobody present.
+      const plan = planFeed(items, {
+        locale: DEFAULT_LOCALE,
+        merchants: context.merchants,
+        bankMerchants: context.bankMerchants,
+        existing: context.existing,
+        categoryIdsByName: context.categoryIdsByName,
+        seenProviderIds: context.seenProviderIds,
+        ownIbans,
+      });
+
+      // A row the database already holds is skipped by the planner, which is
+      // right for the ledger and wrong for the balance: the running figure is
+      // a fact about the account that arrived with this fetch, and the rows
+      // that carry it are overwhelmingly ones seen on an earlier sync.
+      // Without this, adding the column would have left it null on every row
+      // already stored and no amount of syncing would ever fill it.
+      await refreshBalances(
+        supabase,
+        ownerId,
+        items,
+        context.seenProviderIds,
+        positions,
+      );
+
+      outcome.duplicates += plan.duplicates;
+      outcome.discarded += plan.discarded;
+
+      const written = await writePlan(
+        supabase,
+        ownerId,
+        account.id,
+        plan,
+        positions,
+      );
+      outcome.imported += written.imported;
+      outcome.pending += written.pending;
+      outcome.matched += written.matched;
     }
-
-    const positions = intradayIndexes(
-      items.map((tx) => ({
-        id: tx.id,
-        date: tx.bookingDate ?? tx.valueDate ?? tx.transactionDate,
-      })),
-    );
-
-    // Written into the stored rows (the note of a row with no description),
-    // so in the product's language: a sync often runs with nobody present.
-    const plan = planFeed(items, {
-      locale: DEFAULT_LOCALE,
-      merchants,
-      bankMerchants,
-      existing,
-      categoryIdsByName,
-      seenProviderIds,
-      ownIbans,
-    });
-
-    // A row the database already holds is skipped by the planner, which is
-    // right for the ledger and wrong for the balance: the running figure is a
-    // fact about the account that arrived with this fetch, and the rows that
-    // carry it are overwhelmingly ones seen on an earlier sync. Without this,
-    // adding the column would have left it null on every row already stored
-    // and no amount of syncing would ever fill it.
-    await refreshBalances(supabase, userId, items, seenProviderIds, positions);
-
-    outcome.duplicates += plan.duplicates;
-    outcome.discarded += plan.discarded;
-
-    const written = await writePlan(
-      supabase,
-      userId,
-      account.id,
-      plan,
-      positions,
-    );
-    outcome.imported += written.imported;
-    outcome.pending += written.pending;
-    outcome.matched += written.matched;
   }
 
   return outcome;
+}
+
+/** What a bank row is matched against, for one owner. */
+interface OwnerContext {
+  merchants: ReturnType<typeof buildMerchantIndex>;
+  bankMerchants: ReturnType<typeof buildBankMerchantIndex>;
+  existing: ExistingLedgerRow[];
+  categoryIdsByName: ReturnType<typeof indexCategoriesByName>;
+  seenProviderIds: Set<string>;
+}
+
+/**
+ * The owner's answers — what makes a sync mostly automatic — and the
+ * categories an MCC has to resolve against, with the bank rows already seen.
+ *
+ * Both lists are paged: the server stops at 1,000 rows without saying so,
+ * which left a `.limit(2000)` at half of what it asked for, and every bank
+ * row past the thousandth looking unseen — its balance never refreshed and
+ * the ledger row it had claimed free to be claimed again.
+ */
+async function ownerContext(
+  supabase: Client,
+  ownerId: string,
+): Promise<OwnerContext> {
+  const [history, { data: categories }, seen] = await Promise.all([
+    allRows(
+      (from, to) =>
+        supabase
+          .from("transactions")
+          .select("*, categories(name, type, icon, counts_toward_summary)")
+          .eq("user_id", ownerId)
+          .order("occurred_on", { ascending: false })
+          .order("id")
+          .range(from, to),
+      { max: 2000 },
+    ),
+    supabase
+      .from("categories")
+      .select("id, name")
+      .eq("user_id", ownerId)
+      .eq("archived", false),
+    allRows((from, to) =>
+      supabase
+        .from("bank_feed_items")
+        .select("provider_id, transaction_id")
+        .eq("user_id", ownerId)
+        .order("id")
+        .range(from, to),
+    ),
+  ]);
+
+  const past = history as TransactionWithCategory[];
+  // Which ledger rows a bank row could be a copy of. A feed item that already
+  // points at a transaction has claimed it, so a later sync cannot file a
+  // second bank row against the same one.
+  const claimedIds = new Set(
+    seen
+      .map((row) => row.transaction_id)
+      .filter((id): id is string => Boolean(id)),
+  );
+  return {
+    merchants: buildMerchantIndex(past),
+    // Measured on a real Crédit Agricole statement, the coarse key answers
+    // for 85% of card payments against 65% for exact matching: the same shop
+    // split across keys by a trailing branch or street was most of the
+    // difference.
+    bankMerchants: buildBankMerchantIndex(past),
+    existing: past.map((tx) => ({
+      transactionId: tx.id,
+      // The bank dates a row by the day its money moved, so a copy is looked
+      // for on that day — not the day an early salary was moved to count for.
+      occurredOn: cashDateOf(tx),
+      amount: Number(tx.amount),
+      isIncome: tx.categories.type === "income",
+      fromRecurringTemplate: tx.recurring_template_id !== null,
+      alreadyClaimed: claimedIds.has(tx.id),
+      categoryId: tx.category_id,
+      insideWallet: isPurchaseInsideWallet(tx.categories),
+    })),
+    categoryIdsByName: indexCategoriesByName(categories ?? []),
+    seenProviderIds: new Set(seen.map((row) => row.provider_id as string)),
+  };
+}
+
+/**
+ * Which of this person's joint accounts feed their space: all of them, but a
+ * copy of one the partner connected first (same IBAN fingerprint). The
+ * partner's copies are readable for exactly this (migration 061).
+ */
+async function jointFeedersOf(
+  supabase: Client,
+  mine: readonly RememberedAccount[],
+): Promise<Set<string>> {
+  const spaces = [
+    ...new Set(
+      mine
+        .filter((account) => account.role === "joint" && account.spaceId)
+        .map((account) => account.spaceId!),
+    ),
+  ];
+  if (spaces.length === 0) {
+    return new Set();
+  }
+  const { data, error } = await supabase
+    .from("bank_accounts")
+    .select(
+      "user_id, provider_account_id, role, space_id, iban_hash, first_seen_at",
+    )
+    .in("space_id", spaces);
+  if (error) {
+    throw error;
+  }
+  const rows = (data ?? []) as {
+    user_id: string;
+    provider_account_id: string;
+    role: BankAccountRole | null;
+    space_id: string | null;
+    iban_hash: string | null;
+    first_seen_at: string;
+  }[];
+  const owner = mine[0]?.userId;
+  return new Set(
+    jointFeeders(rows)
+      .filter((row) => row.user_id === owner)
+      .map((row) => row.provider_account_id),
+  );
+}
+
+/**
+ * A fingerprint of an IBAN, never the IBAN: what tells the second partner's
+ * copy of a joint account apart (migration 060).
+ */
+function ibanHash(iban: string | null | undefined): string | null {
+  const clean = cleanIban(iban);
+  return clean ? createHash("sha256").update(clean).digest("hex") : null;
 }
 
 /**
@@ -390,7 +500,11 @@ function accountLabel(account: Account): string {
  * account is followed", which would bring nothing in and say nothing.
  */
 export interface RememberedAccount {
+  /** Whose connection shows it. */
+  userId: string;
   role: BankAccountRole | null;
+  /** The shared space a « Compte commun » feeds. */
+  spaceId: string | null;
   /** When its whole history was brought in, or null while it has not been. */
   historyImportedAt: string | null;
 }
@@ -425,6 +539,7 @@ export async function rememberAccounts(
           reported_balance: booked?.amount ?? null,
           reported_on: booked ? today : null,
           needs_reconnect: account.needsReconnect,
+          iban_hash: ibanHash(account.iban),
           last_seen_at: now,
           ...(consents
             ? { consent_valid_until: consents.get(account.aspspName) ?? null }
@@ -433,14 +548,19 @@ export async function rememberAccounts(
       }),
       { onConflict: "user_id,provider_account_id" },
     )
-    .select("provider_account_id, role, history_imported_at");
+    .select("provider_account_id, role, space_id, history_imported_at");
   if (error) {
     throw error;
   }
   return new Map(
     (data ?? []).map((row) => [
       row.provider_account_id,
-      { role: row.role, historyImportedAt: row.history_imported_at },
+      {
+        userId,
+        role: row.role as BankAccountRole | null,
+        spaceId: row.space_id,
+        historyImportedAt: row.history_imported_at,
+      },
     ]),
   );
 }

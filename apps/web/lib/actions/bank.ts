@@ -6,6 +6,7 @@ import { getAuthUser } from "@/lib/auth/get-user";
 import { getOwner } from "@/lib/owner";
 import { createClient } from "@/lib/supabase/server";
 import { getBankConnection } from "@/lib/bank/client";
+import { countedAccounts } from "@finance/core/bank-accounts";
 import { getBankAccounts } from "@/lib/queries/bank-balance";
 import {
   fileFeedItems,
@@ -261,27 +262,28 @@ export async function getBankBalanceSuggestion(): Promise<
   ActionResult & { total?: string; currency?: string; accounts?: number }
 > {
   const owner = await getOwner();
-  const user = owner ? { id: owner.ownerId } : null;
-  if (!user) {
+  if (!owner) {
     return { error: "errors.notAuthenticated" };
   }
 
-  const connection = await getBankConnection(user.id);
+  // The connection is the person's, whoever's month is being closed.
+  const connection = await getBankConnection(owner.userId);
   if (!connection) {
     return { success: true };
   }
 
   try {
-    // The current accounts only: a Livret's balance is savings, and an
-    // account the user does not follow is not their spending money.
+    // The owner's counted accounts only: the person's current accounts, or
+    // the joint ones feeding their space. A Livret's balance is savings, and
+    // an account the user does not follow is not their spending money.
     const [accounts, known] = await Promise.all([
       connection.client.getAccounts(),
-      getBankAccounts(user.id),
+      getBankAccounts(owner.ownerId),
     ]);
     const spending = new Set(
-      known
-        .filter((account) => account.role === "spending")
-        .map((account) => account.provider_account_id),
+      countedAccounts(known, owner.ownerId).map(
+        (account) => account.provider_account_id,
+      ),
     );
     // Summed as whole cents, so the provider's care with decimal strings is
     // not undone at the last step. A balance in cents is at most about 1e12,
@@ -415,7 +417,7 @@ const filingSchema = z
   .array(
     z.object({
       accountId: z.string().min(1).max(200),
-      role: z.enum(["spending", "savings", "ignored"]),
+      role: z.enum(["spending", "savings", "ignored", "joint"]),
       savingsKind: z
         .enum(SAVINGS_KINDS as [SavingsAccountKind, ...SavingsAccountKind[]])
         .nullish(),

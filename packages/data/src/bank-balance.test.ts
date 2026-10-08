@@ -18,6 +18,7 @@ function account(
   overrides: Partial<BankAccount> = {},
 ): Partial<BankAccount> {
   return {
+    user_id: "u1",
     provider_account_id: id,
     label: id,
     role: "spending",
@@ -60,6 +61,8 @@ function fakeDb(accounts: Partial<BankAccount>[], statement: Row[]) {
     };
     const chain = {
       select: () => chain,
+      // The owner's accounts and the joint ones feeding it: one owner here.
+      or: () => chain,
       eq: (column: string, value: unknown) => {
         filters[column] = value;
         return chain;
@@ -172,6 +175,32 @@ describe("readCashBalance", () => {
     );
 
     expect(await readCashBalance(db, "u1", "2026-09-30")).toBeNull();
+  });
+});
+
+describe("readCashBalance for a shared space", () => {
+  it("counts the joint account feeding it, once however many partners connected it", async () => {
+    const joint = (id: string, user: string, seen: string) =>
+      account(id, {
+        user_id: user,
+        role: "joint",
+        counts_as_cash: false,
+        space_id: "space",
+        iban_hash: "same",
+        first_seen_at: seen,
+      });
+    const db = fakeDb(
+      [
+        joint("alice-copy", "alice", "2026-01-01T00:00:00Z"),
+        joint("bob-copy", "bob", "2026-03-01T00:00:00Z"),
+      ],
+      [
+        movement("alice-copy", "2026-09-29", 1200),
+        movement("bob-copy", "2026-09-29", 9999),
+      ],
+    );
+    const balance = await readCashBalance(db, "space", "2026-09-30");
+    expect(balance?.total).toBe(1200);
   });
 });
 

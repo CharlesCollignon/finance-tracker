@@ -6,6 +6,7 @@ import { bankAttention } from "@finance/core/bank-attention";
 import {
   awaitingRole,
   groupByBank,
+  isFollowed,
   proposeForAccount,
 } from "@finance/core/bank-accounts";
 import { formatShortDate, todayIsoLocal } from "@finance/core/constants";
@@ -80,9 +81,8 @@ export function BankAccountsSection({
           <BankHeading
             bank={group.bank}
             consentValidUntil={group.consentValidUntil}
-            followed={group.accounts.some(
-              (account) =>
-                account.role === "spending" || account.role === "savings",
+            followed={group.accounts.some((account) =>
+              isFollowed(account.role),
             )}
           />
           <ul className="flex flex-col">

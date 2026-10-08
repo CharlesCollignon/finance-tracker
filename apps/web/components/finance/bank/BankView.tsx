@@ -10,7 +10,11 @@ import {
   Receipt,
   WarningCircle,
 } from "@phosphor-icons/react";
-import { awaitingRole } from "@finance/core/bank-accounts";
+import {
+  awaitingRole,
+  importsMovements,
+  isFollowed,
+} from "@finance/core/bank-accounts";
 import { bankAttention } from "@finance/core/bank-attention";
 import { BANK_CONSENT_VERSION } from "@finance/core/bank-consent";
 import { resolveMessage } from "@finance/core/i18n/t";
@@ -83,7 +87,7 @@ export function BankView({
       accounts
         .filter(
           (account) =>
-            account.role === "spending" &&
+            importsMovements(account.role) &&
             account.history_imported_at === null &&
             !account.needs_reconnect,
         )
@@ -95,9 +99,7 @@ export function BankView({
   // banks; with more than one bank, the line says which.
   const consentBank = useMemo(() => {
     const followed = accounts.filter(
-      (account) =>
-        (account.role === "spending" || account.role === "savings") &&
-        account.bank_name,
+      (account) => isFollowed(account.role) && account.bank_name,
     );
     if (new Set(followed.map((account) => account.bank_name)).size < 2) {
       return null;

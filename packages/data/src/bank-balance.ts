@@ -5,6 +5,7 @@ import {
   type CashBalance,
   type CloseWaitReason,
 } from "@finance/core/bank-balance";
+import { countedAccounts } from "@finance/core/bank-accounts";
 import { lastDayIsoOfMonth } from "@finance/core/constants";
 import type { CloseableMonth } from "@finance/core/month-close";
 import type { BankAccount } from "@finance/core/types/database";
@@ -12,7 +13,11 @@ import type { BankAccount } from "@finance/core/types/database";
 import type { Db } from "./client";
 import { isMissingSchema } from "./schema";
 
-/** Every account the connection has ever shown, ticked or not. */
+/**
+ * Every account the connection has ever shown, ticked or not — a person's;
+ * or, for a shared space, the joint accounts its partners feed it with
+ * (migration 061).
+ */
 export async function getBankAccounts(
   db: Db,
   userId: string,
@@ -20,7 +25,7 @@ export async function getBankAccounts(
   const { data, error } = await db
     .from("bank_accounts")
     .select("*")
-    .eq("user_id", userId)
+    .or(`user_id.eq.${userId},space_id.eq.${userId}`)
     .order("label");
 
   // Before migration 021 this table does not exist, and reading balances is
@@ -55,7 +60,7 @@ export async function readCashBalance(
   date: string,
 ): Promise<CashBalance | null> {
   const accounts = await getBankAccounts(db, userId);
-  const counted = accounts.filter((account) => account.counts_as_cash);
+  const counted = countedAccounts(accounts, userId);
 
   if (counted.length === 0) {
     return null;

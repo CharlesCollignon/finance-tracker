@@ -1,5 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { followsMovements } from "@finance/core/bank-accounts";
+import { importsMovements } from "@finance/core/bank-accounts";
 import type { Database } from "@finance/core/types/database";
 import { autoCloseMonths } from "@/lib/bank/auto-close";
 import { getBankConnection } from "@/lib/bank/client";
@@ -46,7 +46,7 @@ export async function listAccountsToImport(
       accounts: readable
         .filter((account) => {
           const known = remembered.get(account.id);
-          return followsMovements(known?.role) && !known?.historyImportedAt;
+          return importsMovements(known?.role) && !known?.historyImportedAt;
         })
         .map((account) => ({
           id: account.id,
@@ -77,8 +77,16 @@ export async function importOneAccount(
       accountIds: [accountId],
     });
     // Only once it was walked: an account that is not a current account,
-    // or cannot be read, has had nothing brought in.
-    if (outcome.accounts > 0) {
+    // or cannot be read, has had nothing brought in. A joint account the
+    // partner connected first is done too: its copy feeds the space, this
+    // one never will (`jointFeeders`).
+    const { data: filed } = await supabase
+      .from("bank_accounts")
+      .select("role")
+      .eq("user_id", userId)
+      .eq("provider_account_id", accountId)
+      .maybeSingle();
+    if (outcome.accounts > 0 || filed?.role === "joint") {
       await supabase
         .from("bank_accounts")
         .update({ history_imported_at: new Date().toISOString() })
