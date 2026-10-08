@@ -261,9 +261,21 @@ describe("dcaMonth", () => {
       state: "to-send",
       need: { month: 11, amount: 2150 },
     });
-    expect(transferReminder(month)).toMatchObject({
+    // The card, not yet the push.
+    expect(transferReminder(month, "2026-10-27")).toBeNull();
+  });
+
+  it("pushes two days before its 1st, not with the card", () => {
+    const month = dcaMonth({ templates: all, today: "2026-10-30" });
+    expect(transferReminder(month, "2026-10-30")).toMatchObject({
       label: "Virement Boursorama",
+      occurredOn: "2026-11-01",
       need: { amount: 2150 },
+    });
+    // Still said if it is late: the transfer counts for ten days after.
+    const late = dcaMonth({ templates: all, today: "2026-11-03" });
+    expect(transferReminder(late, "2026-11-03")).toMatchObject({
+      occurredOn: "2026-11-01",
     });
   });
 
@@ -278,7 +290,7 @@ describe("dcaMonth", () => {
       state: "sent",
       run: 2,
     });
-    expect(transferReminder(month)).toBeNull();
+    expect(transferReminder(month, "2026-10-30")).toBeNull();
   });
 
   it("keeps it to send a few days late, then unseen", () => {
@@ -314,11 +326,15 @@ describe("dcaMonth", () => {
     ).toBeNull();
   });
 
-  it("shows a new transfer's first month at once, to prepare", () => {
+  it("shows a new transfer's first month at once, but pushes it on its day", () => {
     const fresh = { ...transfer, created_at: "2026-10-07T08:00:00Z" };
-    expect(
-      dcaMonth({ templates: [cto, pea, fresh], today: "2026-10-07" }),
-    ).toMatchObject({ occurredOn: "2026-11-01", state: "to-send" });
+    const month = dcaMonth({
+      templates: [cto, pea, fresh],
+      today: "2026-10-08",
+    });
+    expect(month).toMatchObject({ occurredOn: "2026-11-01", state: "to-send" });
+    // What happened on 8 October 2026: the push came with the card.
+    expect(transferReminder(month, "2026-10-08")).toBeNull();
   });
 
   it("is nothing without the app's transfer, or with it paused", () => {

@@ -250,8 +250,8 @@ async function notificationsFor(
 }
 
 /**
- * How much to send to the broker for next month's DCAs, from three days
- * before payday — once for each month it covers, by its key.
+ * How much to send to the broker for next month's DCAs, from two days
+ * before the 1st — once for each month it covers, by its key.
  */
 async function transferFor(
   supabase: AdminClient,

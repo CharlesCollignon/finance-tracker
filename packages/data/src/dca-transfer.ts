@@ -327,13 +327,13 @@ export async function getDcaMonth(
   }
 }
 
-/** The push five days before the 1st: the card while it is still to send. */
+/** The push two days before the 1st: the card while it is still to send. */
 export async function getTransferReminder(
   db: Db,
   userId: string,
   today: string,
 ): Promise<TransferReminder | null> {
-  return transferReminder(await getDcaMonth(db, userId, today));
+  return transferReminder(await getDcaMonth(db, userId, today), today);
 }
 
 /**

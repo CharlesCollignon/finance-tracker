@@ -228,8 +228,14 @@ export function transferCoversMonth(
   return null;
 }
 
-/** How many days before the transfer's day the card and the push come. */
+/** How many days before the transfer's day the card comes. */
 export const TRANSFER_NOTICE_DAYS = 5;
+
+/**
+ * How many days before the transfer's day the push comes: later than the
+ * card, which is there to look at, while a push is there to act on.
+ */
+export const TRANSFER_PUSH_DAYS = 2;
 
 /** The months of a run looked back over, at most. */
 const RUN_MONTHS = 36;
@@ -439,11 +445,17 @@ export interface TransferReminder {
   need: DcaNeed;
 }
 
-/** What the push says, from the card: only while the transfer is to send. */
+/**
+ * What the push says, from the card: only while the transfer is to send, and
+ * from `TRANSFER_PUSH_DAYS` before its day. Not as soon as the card shows
+ * it, which for a new transfer is weeks ahead.
+ */
 export function transferReminder(
   month: DcaMonth | null,
+  today: string,
 ): TransferReminder | null {
-  return month?.state === "to-send"
+  return month?.state === "to-send" &&
+    today >= shiftIsoDate(month.occurredOn, -TRANSFER_PUSH_DAYS)
     ? {
         templateId: month.templateId,
         label: month.label,

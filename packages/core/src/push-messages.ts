@@ -314,10 +314,14 @@ export function purchasesToConfirmNotification({
 }
 
 /**
- * How much to get ready for the broker, five days before the 1st
+ * How much to get ready for the broker, two days before the 1st
  * (`transferReminder`): what next month's ticked DCAs need, and what it is
  * made of. Said once for each month it covers; the card on Le point carries
  * it until the bank shows it.
+ *
+ * Keyed `dca-transfer-soon:`, not `dca-transfer:` as when it followed the
+ * card: November 2026's went out under the old key on 8 October, weeks
+ * early, and would otherwise not be said again on its day.
  */
 export function transferReminderNotification({
   reminder,
@@ -327,7 +331,7 @@ export function transferReminderNotification({
   const { need } = reminder;
   return {
     kind: "dca",
-    key: `dca-transfer:${need.year}-${String(need.month).padStart(2, "0")}`,
+    key: `dca-transfer-soon:${need.year}-${String(need.month).padStart(2, "0")}`,
     title: t("push.dcaTransfer.title", {
       month: monthLong(need.month, locale),
       amount: formatEuro(need.amount, locale),

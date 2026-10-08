@@ -298,7 +298,7 @@ describe("transferReminderNotification", () => {
       },
     });
     expect(push.kind).toBe("dca");
-    expect(push.key).toBe("dca-transfer:2026-11");
+    expect(push.key).toBe("dca-transfer-soon:2026-11");
     expect(push.title).toBe(
       "À préparer pour novembre\u00A0: 2\u202F150\u00A0€",
     );
