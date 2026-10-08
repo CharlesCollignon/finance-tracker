@@ -142,6 +142,7 @@ function RootNavigator({ fontsReady }: { fontsReady: boolean }) {
         <Stack.Screen name="onboarding" />
         <Stack.Screen name="year" />
         <Stack.Screen name="join/[token]" />
+        <Stack.Screen name="ask" />
       </Stack>
       {/* The web twin mounts its equivalent at the same level, above every
           page rather than on one screen — it used to live only on the

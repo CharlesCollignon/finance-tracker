@@ -47,11 +47,17 @@ export async function GET(request: NextRequest) {
       ? null
       : (activity.data ?? 0);
 
+  // Ask Pluclair's conversations past thirty days (migration 064). Its own
+  // answer too, and never the reason the rest is not swept.
+  const ask = await supabase.rpc("sweep_ask");
+  const askSwept = ask.error ? null : (ask.data ?? 0);
+
   if (error) {
     if (isMissingSchemaOrFunction(error)) {
       return Response.json({
         skipped: "Migration 036 has not run here.",
         activitySwept,
+        askSwept,
       });
     }
     return Response.json({ error: error.message }, { status: 500 });
@@ -59,5 +65,5 @@ export async function GET(request: NextRequest) {
   if (activity.error && activitySwept !== null) {
     return Response.json({ error: activity.error.message }, { status: 500 });
   }
-  return Response.json({ swept: data ?? 0, activitySwept });
+  return Response.json({ swept: data ?? 0, activitySwept, askSwept });
 }

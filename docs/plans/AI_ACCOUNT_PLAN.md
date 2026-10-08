@@ -16,6 +16,9 @@ the reads are written with.
 - **No AI without a connected account.** The reads appear only for a user
   who has connected one; Pluclair's Mistral key no longer writes them.
   Reads already stored stay readable.
+  _Superseded 2026-10-09 (`EVERYDAY_PLAN.md`, phase 7, migration 065):
+  `ai.account` is on for everyone and means the person's own account when
+  connected, Pluclair's key with its allowances otherwise._
 - **No monthly ceiling on one's own account.** The user pays for every
   call, so a connected account has no monthly allowance; the cooldown
   between two presses and the guard against a double press stay.

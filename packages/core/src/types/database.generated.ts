@@ -105,6 +105,83 @@ export type Database = {
         };
         Relationships: [];
       };
+      ask_conversations: {
+        Row: {
+          created_at: string;
+          id: string;
+          title: string;
+          updated_at: string;
+          user_id: string;
+        };
+        Insert: {
+          created_at?: string;
+          id?: string;
+          title: string;
+          updated_at?: string;
+          user_id: string;
+        };
+        Update: {
+          created_at?: string;
+          id?: string;
+          title?: string;
+          updated_at?: string;
+          user_id?: string;
+        };
+        Relationships: [];
+      };
+      ask_messages: {
+        Row: {
+          body: NonNullable<Json>;
+          conversation_id: string;
+          created_at: string;
+          id: string;
+          role: string;
+          user_id: string;
+        };
+        Insert: {
+          body: NonNullable<Json>;
+          conversation_id: string;
+          created_at?: string;
+          id?: string;
+          role: string;
+          user_id: string;
+        };
+        Update: {
+          body?: NonNullable<Json>;
+          conversation_id?: string;
+          created_at?: string;
+          id?: string;
+          role?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "ask_messages_conversation_id_fkey";
+            columns: ["conversation_id"];
+            isOneToOne: false;
+            referencedRelation: "ask_conversations";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      ask_tallies: {
+        Row: {
+          month: string;
+          questions: number;
+          user_id: string;
+        };
+        Insert: {
+          month: string;
+          questions?: number;
+          user_id: string;
+        };
+        Update: {
+          month?: string;
+          questions?: number;
+          user_id?: string;
+        };
+        Relationships: [];
+      };
       balance_readings: {
         Row: {
           amount: number;
@@ -2188,6 +2265,7 @@ export type Database = {
           isSetofReturn: false;
         };
       };
+      refund_ask: { Args: { target_month: string }; Returns: undefined };
       refund_bearing_arrangement: {
         Args: { target_user: string };
         Returns: {
@@ -2346,6 +2424,10 @@ export type Database = {
       rename_space: {
         Args: { new_name: string; target_space: string };
         Returns: undefined;
+      };
+      reserve_ask: {
+        Args: { allowance: number; target_month: string };
+        Returns: number;
       };
       reserve_bearing_arrangement: {
         Args: {
@@ -2766,6 +2848,7 @@ export type Database = {
         };
       };
       sweep_activity: { Args: Record<PropertyKey, never>; Returns: number };
+      sweep_ask: { Args: Record<PropertyKey, never>; Returns: number };
       sweep_deleted: { Args: { before: string }; Returns: number };
     };
     Enums: {

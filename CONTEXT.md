@@ -649,6 +649,14 @@ several writers. A writer chooses words and which figures to point at, and
 writes no figure of its own.
 _Avoid_: AI, assistant, bot, author, agent
 
+**Question**:
+_En français_ : question (l'écran : Questions)
+Something a person asks about their own money in their own words, answered
+in a few sentences whose every figure is the app's — the model only says
+which figures it needs and writes around them — and never with advice. A
+question about a shop is answered by the search. Kept thirty days.
+_Avoid_: chat, assistant, conversation (that is the thread of questions), advice
+
 ### What a category has been doing
 
 **Finding**:

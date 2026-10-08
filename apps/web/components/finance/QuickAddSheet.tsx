@@ -32,6 +32,7 @@ import {
 } from "@/lib/push-client";
 import { useCurrency } from "@/lib/use-currency";
 import { cn } from "@/lib/utils";
+import { AskLink } from "@/components/ask/AskLink";
 import { ICON } from "@/lib/icon-scale";
 import { useLocale, useT } from "@/lib/locale-context";
 import { resolveMessage } from "@finance/core/i18n/t";
@@ -136,6 +137,8 @@ function AddSheet({
               ? t("add.transactionHint")
               : t("add.chargeHint")}
           </p>
+          {/* Cmd+K is the way to do something; asking is one of them. */}
+          <AskLink className="-ml-2" onNavigate={close} />
         </div>
 
         {kind === "transaction" ? (

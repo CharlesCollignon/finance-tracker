@@ -286,25 +286,31 @@ counts their part.
 - [x] Property opens to everyone: `property.track` on by default, the
       brand promises checked, the landing moves it out of « Bientôt ».
 
-## Phase 7 — Ask Pluclair (branch `everyday-ask`)
+## Phase 7 — Ask Pluclair (branch `everyday-ask`) — built
 
-- [ ] A « Questions » screen, both apps, reached from a button beside the
-      month read on Le point and, on the web, from Cmd+K.
-- [ ] The model sees aggregates only — category totals by month, charges,
-      balances, wallets — through tools that return facts by name, and the app
-      writes every number. A question about a shop is answered by the search,
-      not the model. The question itself goes to the model as typed, and the
-      privacy policy says so.
-- [ ] Never advice: a question like « Dois-je rembourser mon prêt par
-      anticipation ? » gets the facts (capital left, rate, what the loan still
-      costs, the cushion) and a line saying Pluclair does not advise. A check
-      drops any recommending sentence (« vous devriez ») before it is shown.
-- [ ] About 20 questions a month on Pluclair's key; unlimited with the user's
-      own AI account.
-- [ ] Conversations kept 30 days, each one deletable, swept nightly, gone with
-      the account. Personal space only, to begin.
-- [ ] « L'IA de votre choix » opens to everyone: `ai.account` on by default,
-      out of « Bientôt ».
+Built 2026-10-09: migrations 064 and 065; not tried in a browser, on a phone
+or against a live model yet.
+
+- [x] A « Questions » screen, both apps, reached from a link under the
+      month read on Le point and, on the web, from the sheet Cmd+K opens
+      (Cmd+K was already the quick add's; the sheet now offers the
+      question too).
+- [x] The model sees aggregates only — the month, spending by month and
+      category, charges, the cushion, wallets, loans — through families it
+      asks for by name, and the app writes every number. A question about a
+      shop is answered by the search, not the model. The question itself
+      goes to the model as typed, and the privacy policy draft says so.
+- [x] Never advice: an advice question gets the facts and a line saying
+      Pluclair does not advise; a check drops any recommending sentence
+      (« vous devriez », « je vous conseille », « you should »…).
+- [x] About 20 questions a month on Pluclair's key; unlimited with the
+      user's own AI account.
+- [x] Conversations kept 30 days, each one deletable, swept nightly, gone
+      with the account. Personal space only, to begin.
+- [x] « L'IA de votre choix » opens to everyone (migration 065): the
+      owner chose, 2026-10-09, that `ai.account` means « the person's own
+      account if connected, Pluclair's key otherwise » — nobody loses the AI,
+      anyone may bring their own. Out of « Bientôt » on the landing.
 
 ## Phase 8 — Tax time and PDF statements (branch `everyday-tax-pdf`)
 

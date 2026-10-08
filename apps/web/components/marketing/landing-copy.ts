@@ -16,7 +16,7 @@ import { landingCopyFr } from "@/components/marketing/landing-copy.fr";
  *   to before can tell the difference in about a second.
  *
  *   Never promise what the app does not do. What is not open to everyone yet
- *   — the bank connection, the AI of your choice, the mobile app —
+ *   — the bank connection, the mobile app —
  *   is said once, under "Coming soon", in the future tense, and nowhere in
  *   the present (the owner's call, October 2026).
  */
@@ -73,7 +73,7 @@ export const landingCopy = {
       },
       "month-read": {
         question: "Want your month explained?",
-        body: "Ask for a read and an AI writes a few sentences about your month: what changed, what deserves a look. The figures always come from Pluclair — the AI is not allowed to make up a single one.",
+        body: "Ask for a read and an AI writes a few sentences about your month: what changed, what deserves a look. Or ask your own question in Questions. The figures always come from Pluclair — the AI is not allowed to make up a single one, nor to tell you what to do.",
         link: "See written reads",
       },
     },
@@ -86,10 +86,6 @@ export const landingCopy = {
       {
         title: "Your bank, connected",
         body: "Read-only: your transactions will arrive on their own, and Pluclair will never be able to make a payment.",
-      },
-      {
-        title: "The AI of your choice",
-        body: "Mistral, ChatGPT or Claude, on your own OpenRouter account: you pick the model and pay for your reads, a few cents each.",
       },
       {
         title: "The mobile app",
@@ -105,7 +101,7 @@ export const landingCopy = {
       {
         question: "Does it cost anything?",
         answer:
-          "No. Creating an account and everything described above is free, and no card is asked for. Only the coming features that go through an outside service — the bank connection, the AI of your choice — will be paid to that service.",
+          "No. Creating an account and everything described above is free, and no card is asked for. Reads and questions are offered within a monthly limit; with the AI of your choice — Mistral, ChatGPT or Claude on your own OpenRouter account — you pay that service for them, a few cents each, with no limit. The bank connection, when it comes, will be paid to its service.",
       },
       {
         question: "Can Pluclair touch my money?",
@@ -125,7 +121,7 @@ export const landingCopy = {
       {
         question: "What does the AI see?",
         answer:
-          "Only the figures of the page you ask it to read: totals, category names, the lines of your investments. Never your name, your email or your bank details — and nothing is written until you ask.",
+          "Only the figures of the page you ask it to read, or those a question needs: totals, category names, the lines of your investments — and a question as you typed it. Never your name, your email or your bank details — and nothing is written until you ask.",
       },
       {
         question: "Can I hide my figures in public?",
@@ -293,7 +289,7 @@ export const landingCopy = {
       title: "Written reads",
       body: "A few sentences about your month or your investments. The words are the AI’s; every figure is Pluclair’s.",
       utility:
-        "The other screens give you figures and lists. A read puts them together and says what stands out — without being allowed to invent a number. Useful in months where the totals look normal and something underneath is not.",
+        "The other screens give you figures and lists. A read puts them together and says what stands out — without being allowed to invent a number. Useful in months where the totals look normal and something underneath is not. Written on Pluclair’s key within a monthly limit, or on your own OpenRouter account with the model you choose — Mistral, ChatGPT or Claude — at your expense.",
       steps: [
         {
           title: "Ask for one",

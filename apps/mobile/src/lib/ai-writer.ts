@@ -9,11 +9,11 @@ import { supabase } from "@/lib/supabase";
  * Who would write this user's reads, as a screen needs to know it — the
  * web's `writerStateFor`, read straight from Supabase.
  *
- * Behind `ai.account`. Off, Pluclair's key writes through the web, with its
- * allowances, wherever this build can reach the web at all. On, the user's
- * own AI account does: writable once one is connected, named by its model,
- * with no monthly count. Never the key: the phone only ever learns which
- * model, and whether there is one.
+ * The user's own AI account when `ai.account` is on and one is connected —
+ * named by its model, with no monthly count; Pluclair's key otherwise,
+ * through the web and with its allowances, wherever this build can reach
+ * the web at all. Never the key: the phone only ever learns which model,
+ * and whether there is one.
  */
 export async function getWriterState(userId: string): Promise<WriterState> {
   const [{ data: rows }, { data: connection }] = await Promise.all([
@@ -25,7 +25,7 @@ export async function getWriterState(userId: string): Promise<WriterState> {
       .maybeSingle(),
   ]);
   const reachable = WEB_APP_URL !== null;
-  if (!isFlagOn(flagsFromRows(rows), "ai.account")) {
+  if (!isFlagOn(flagsFromRows(rows), "ai.account") || connection === null) {
     return {
       account: false,
       writable: reachable,
@@ -34,7 +34,7 @@ export async function getWriterState(userId: string): Promise<WriterState> {
   }
   return {
     account: true,
-    writable: reachable && connection !== null,
-    name: aiModel(connection?.model).name,
+    writable: reachable,
+    name: aiModel(connection.model).name,
   };
 }
