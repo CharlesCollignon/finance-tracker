@@ -187,15 +187,21 @@ the owner's sign-off of the privacy policy and terms).
 - [ ] The landing moves the phone app out of « Bientôt », with the store
       links.
 
-## Phase 4 — Find and watch (branch `everyday-search`)
+## Phase 4 — Find and watch (branch `everyday-search`) — done
 
-- [ ] Search across every month, both apps: notes, shops, categories and
+- [x] Search across every month, both apps: notes, shops, categories and
       amounts.
-- [ ] Core, tested: the subscription watch — a price that went up, a new
+- [x] Core, tested: the subscription watch — a price that went up, a new
       subscription, two of a kind (two music services), one that stopped.
-- [ ] Its findings as « constats » in the Monday recap, and an « Abonnements »
+- [x] Its findings as « constats » in the Monday recap, and an « Abonnements »
       block on Récurrents listing each subscription and its changes. No push
       of its own.
+
+Done on 2026-10-08. A subscription is a shop charged about every month or
+year at about the same price — two charges for a service known by name or
+the same amount on about the same day, three otherwise. A bill that moves
+every month (electricity) is never a price rise. « Two of a kind » knows
+music, video, online storage, mobile plans and gyms by name.
 
 ## Phase 5 — « Votre année » (branch `everyday-year`), merged by mid-December
 

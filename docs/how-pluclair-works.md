@@ -150,6 +150,12 @@ one opens the property on the phone too (`push-routes.ts`). On the loan's
 card, the moment is a gold pill that pops the first time a device sees it
 (`use-moment-seen.ts` on the web, `lib/moments.ts` on the phone).
 
+The recap says, of last week, what changed in the subscriptions too: a price
+that went up, a new one, one that stopped, two of a kind
+(`watchSubscriptions`, worked out from the year of rows the recap already
+reads, no push of its own). Récurrents lists them all under « Abonnements »,
+with what they cost a month and a year.
+
 The recap is also a card on Le point, Monday to Wednesday, until « Vu »
 (`dismissed_prompts`, `recap:<monday>`); the `recap` switch hides both. On
 the web the card offers the Monday push to a browser that has not taken
@@ -166,6 +172,8 @@ today's prices) leaves it unmarked, so the Plan still shows it as new.
 | « Il vous reste » (left to spend) until the next pay day, and per day                                       | `left-to-spend.ts`; read by `@finance/data/left-to-spend` (next month's line too when the pay day falls in it) |
 | « Puis-je me permettre ? »                                                                                  | `afford.ts`                                                                                                    |
 | Le point's setup cards, one at a time                                                                       | `setup-steps.ts`                                                                                               |
+| The Journal's search: words in a note or a category name, or an amount                                      | `ledger-search.ts`; every month through `@finance/data/ledger-search`                                          |
+| Subscriptions: what is paid every month or year, a price up, a new one, one stopped, two of a kind          | `subscription-watch.ts`; read by `@finance/data/subscriptions`, and in the recap (`weekly-recap.ts`)           |
 | Month close, Kept, Unrecorded spending                                                                      | `month-close.ts` (closes in `month_closes`; reading day in `month_close_settings.close_day`, default 5)        |
 | Forward projection, runway                                                                                  | `projection.ts`                                                                                                |
 | Plan: what if, milestones, cushion, long view (2026 French tax)                                             | `future-plan.ts` (rates in `FRENCH_TAX_2026`; revisit each January and August)                                 |
@@ -326,6 +334,15 @@ put above it, under whichever delimiter finds one; an OFX's transactions come
 in as date, label and signed amount. There are no presets per bank yet: each
 waits for a real export, anonymised with `scripts/anonymise-statement.mjs`
 and kept in `packages/core/fixtures/statements/`.
+
+## Search
+
+The Journal's search filters the month on screen and, under it, lists the
+rows of every other month the same query finds (`searchAllMonths`, a
+hundred at most, after a 300 ms pause in the typing). A query looks in the
+note — where a bank puts the shop — and the category's name, and, when it
+reads as an amount (« 12,30 »), at the amount too. A row from another month
+opens that month with the query kept (`?q=` on the web).
 
 ## Feature flags
 
