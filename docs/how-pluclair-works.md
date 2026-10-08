@@ -295,7 +295,9 @@ autolinking only, not on a device yet.
 ## Votre année
 
 The year gone by, in January, on both apps (`/year`, the phone's `year`;
-`?y=` for any year past): what it kept — the closes' sum, or income less
+`?y=` for any year past), told as a story — a slide a screen, bars filling
+across the top, tap or swipe to turn, hold to pause (`DESIGN.md`, Moments):
+what it kept — the closes' sum, or income less
 spending where nothing was closed, said apart — the months closed and the
 longest run of them won, the expense category that moved most against the
 year before (or the largest share without one), and the milestones reached.
