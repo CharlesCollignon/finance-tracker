@@ -254,7 +254,15 @@ export const en = {
     emptyTitle: "Nothing recorded this month",
     emptyBody:
       "Add what happened. The charges you set up fill each month in on their own.",
-    searchPlaceholder: "Search category or note…",
+    otherMonths: {
+      one: "In other months · {count}",
+      other: "In other months · {count}",
+    },
+    otherMonthsMore: {
+      one: "+{count} more — narrow the search to find it",
+      other: "+{count} more — narrow the search to find them",
+    },
+    searchPlaceholder: "Search a shop, a category, an amount…",
     searchLabel: "Search transactions",
     filterByAccount: "Filter by account",
     allAccounts: "All accounts",

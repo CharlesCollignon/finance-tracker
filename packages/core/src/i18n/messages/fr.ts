@@ -173,7 +173,15 @@ export const fr: Messages = {
     emptyTitle: "Aucune opération ce mois-ci",
     emptyBody:
       "Ajoutez ce qui s'est passé. Vos opérations récurrentes remplissent chaque mois d'elles-mêmes.",
-    searchPlaceholder: "Chercher une catégorie ou une note…",
+    otherMonths: {
+      one: "Dans les autres mois · {count}",
+      other: "Dans les autres mois · {count}",
+    },
+    otherMonthsMore: {
+      one: "+{count} autre — précisez la recherche pour le trouver",
+      other: "+{count} autres — précisez la recherche pour les trouver",
+    },
+    searchPlaceholder: "Chercher un commerce, une catégorie, un montant…",
     searchLabel: "Chercher dans les opérations",
     filterByAccount: "Filtrer par compte",
     allAccounts: "Tous les comptes",

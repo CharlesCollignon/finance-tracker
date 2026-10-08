@@ -6,10 +6,12 @@
  * The two Journals had each written these for themselves, and had drifted:
  * the web searched the category name and the note as one joined string, so
  * a query could match across the seam between them, while the phone looked
- * in each on its own. Each field on its own is the rule now.
+ * in each on its own. Each field on its own is the rule now, and an amount
+ * typed finds the rows of that amount (`@finance/core/ledger-search`).
  */
 
 import type { PlannedOccurrence } from "./apply-recurring";
+import { matchesNeedle, searchNeedle } from "./ledger-search";
 import type { CategoryType, TransactionWithCategory } from "./types/database";
 
 export type LedgerTypeFilter = "all" | CategoryType;
@@ -41,14 +43,6 @@ export interface LedgerDay {
   net: number;
 }
 
-/** Any field containing the query, ignoring case. */
-function anyContains(
-  query: string,
-  ...fields: (string | null | undefined)[]
-): boolean {
-  return fields.some((field) => (field ?? "").toLowerCase().includes(query));
-}
-
 /** The recorded rows a filter keeps. */
 export function filterLedger(
   transactions: readonly TransactionWithCategory[],
@@ -56,13 +50,18 @@ export function filterLedger(
   /** Which bank account brought each row in, by transaction id. */
   accountOf: ReadonlyMap<string, string> = new Map(),
 ): TransactionWithCategory[] {
-  const needle = query.trim().toLowerCase();
+  const needle = searchNeedle(query);
   return transactions.filter(
     (tx) =>
       (type === "all" || tx.categories.type === type) &&
       (categoryId === "all" || tx.category_id === categoryId) &&
       (accountId === "all" || accountOf.get(tx.id) === accountId) &&
-      (!needle || anyContains(needle, tx.categories.name, tx.note)),
+      (!needle ||
+        matchesNeedle(
+          needle,
+          [tx.categories.name, tx.note],
+          Number(tx.amount),
+        )),
   );
 }
 
@@ -78,17 +77,16 @@ export function filterPlanned(
   if (accountId !== "all") {
     return [];
   }
-  const needle = query.trim().toLowerCase();
+  const needle = searchNeedle(query);
   return planned.filter(
     (occurrence) =>
       (type === "all" || occurrence.categoryType === type) &&
       (categoryId === "all" || occurrence.categoryId === categoryId) &&
       (!needle ||
-        anyContains(
+        matchesNeedle(
           needle,
-          occurrence.categoryName,
-          occurrence.name,
-          occurrence.note,
+          [occurrence.categoryName, occurrence.name, occurrence.note],
+          Number(occurrence.amount),
         )),
   );
 }

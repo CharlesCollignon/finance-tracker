@@ -59,6 +59,7 @@
     "./investment-streak": "./src/investment-streak.ts",
     "./investments": "./src/investments.ts",
     "./ledger-csv": "./src/ledger-csv.ts",
+    "./ledger-search": "./src/ledger-search.ts",
     "./ledger-view": "./src/ledger-view.ts",
     "./left-to-spend": "./src/left-to-spend.ts",
     "./investment-upcoming": "./src/investment-upcoming.ts",

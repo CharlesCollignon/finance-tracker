@@ -3,6 +3,10 @@ import {
   hasBankFeed as bankFeeds,
   walletCategoriesTheBankDebits,
 } from "@finance/data/bank-feed";
+import {
+  searchAllMonths,
+  type LedgerSearch,
+} from "@finance/data/ledger-search";
 import * as fulfilment from "@finance/data/fulfilment";
 import * as closes from "@finance/data/month-close";
 import { isMissingSchema } from "@finance/data/schema";
@@ -623,4 +627,12 @@ export function getNotificationSettings(
 /** Whether the account is counted in the audience figures (migration 058). */
 export function readAudienceMeasurement(userId: string): Promise<boolean> {
   return preferences.readAudienceMeasurement(supabase, userId);
+}
+
+/** The Journal's search across every month (`searchAllMonths`). */
+export function searchEveryMonth(
+  userId: string,
+  query: string,
+): Promise<LedgerSearch> {
+  return searchAllMonths(supabase, userId, query);
 }

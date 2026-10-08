@@ -65,6 +65,7 @@ import {
 import { Button } from "@/components/ui/Button";
 import { ChipRow } from "@/components/ui/ChipRow";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { EveryMonthResults } from "@/components/EveryMonthResults";
 import { LEDGER_TABS, SurfaceTabs } from "@/components/layout/SurfaceTabs";
 import { Screen } from "@/components/ui/Screen";
 import { ScreenSkeleton } from "@/components/ui/Skeleton";
@@ -962,11 +963,21 @@ export default function TransactionsScreen() {
         }
         contentContainerStyle={{ paddingBottom: tabBarClearance }}
         ListFooterComponent={
-          filtered.length > 0 ? (
-            <Text variant="muted" className="py-4 text-center text-xs">
-              {selectMode ? t("ledger.selectHint") : t("ledger.editHint")}
-            </Text>
-          ) : null
+          <>
+            {filtered.length > 0 ? (
+              <Text variant="muted" className="py-4 text-center text-xs">
+                {selectMode ? t("ledger.selectHint") : t("ledger.editHint")}
+              </Text>
+            ) : null}
+            {/* The same search, in every other month. Its month, opened,
+                keeps the words, so the row is found there in its place. */}
+            <EveryMonthResults
+              query={search}
+              year={year}
+              month={month}
+              onOpenMonth={setMonth}
+            />
+          </>
         }
         ItemSeparatorComponent={() => <View className="h-px bg-border" />}
         SectionSeparatorComponent={null}
