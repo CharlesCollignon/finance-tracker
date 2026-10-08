@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 
-import { buildDueNotifications, isGoneStatus } from "./push-digest";
+import {
+  buildDueNotifications,
+  isGoneStatus,
+  notificationsToSay,
+  type PendingNotification,
+} from "./push-digest";
 import { translator } from "./i18n/t";
 
 // English by default so the assertions below read as the sentences a reader
@@ -43,6 +48,59 @@ describe("buildDueNotifications", () => {
       alreadySent: new Set(["month-open:2026-09"]),
     });
     expect(due).toEqual([]);
+  });
+});
+
+describe("notificationsToSay", () => {
+  const push = (
+    key: string,
+    covers?: readonly string[],
+  ): PendingNotification => ({
+    kind: "dca",
+    key,
+    title: key,
+    body: "",
+    url: "/bearing",
+    ...(covers ? { covers } : {}),
+  });
+  const keys = (pushes: readonly PendingNotification[]) =>
+    pushes.map((one) => one.key);
+
+  it("leaves out what was said already", () => {
+    const { send, log } = notificationsToSay(
+      [push("a"), push("b")],
+      new Set(["a"]),
+    );
+    expect(keys(send)).toEqual(["b"]);
+    expect(log).toEqual(["b"]);
+  });
+
+  it("sends one that says another due with it, and logs both", () => {
+    // The salary came in on the reminder's day: one push, not two.
+    const { send, log } = notificationsToSay(
+      [
+        push("dca-transfer-paid:2026-11", ["dca-transfer-soon:2026-11"]),
+        push("dca-transfer-soon:2026-11"),
+      ],
+      new Set(),
+    );
+    expect(keys(send)).toEqual(["dca-transfer-paid:2026-11"]);
+    expect(log).toEqual([
+      "dca-transfer-paid:2026-11",
+      "dca-transfer-soon:2026-11",
+    ]);
+  });
+
+  it("still sends the other when the one that covers it went earlier", () => {
+    // The salary's push went days before; the reminder is its own news.
+    const { send } = notificationsToSay(
+      [
+        push("dca-transfer-paid:2026-11", ["dca-transfer-soon:2026-11"]),
+        push("dca-transfer-soon:2026-11"),
+      ],
+      new Set(["dca-transfer-paid:2026-11"]),
+    );
+    expect(keys(send)).toEqual(["dca-transfer-soon:2026-11"]);
   });
 });
 

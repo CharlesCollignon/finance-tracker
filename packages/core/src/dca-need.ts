@@ -19,7 +19,7 @@ import {
   getRecurringOccurrenceDates,
   monthStartingNearest,
 } from "./recurrence";
-import { PAYDAY_LATE_DAYS } from "./recurring-fulfilment";
+import { PAYDAY_EARLY_DAYS, PAYDAY_LATE_DAYS } from "./recurring-fulfilment";
 import { isQuotePriced } from "./recurring-shares";
 import type { RecurringTemplateWithCategory } from "./types/database";
 
@@ -228,8 +228,54 @@ export function transferCoversMonth(
   return null;
 }
 
-/** How many days before the transfer's day the card and the push come. */
+/** How many days before the transfer's day the card comes. */
 export const TRANSFER_NOTICE_DAYS = 5;
+
+/**
+ * How many days before the transfer's day the push comes: later than the
+ * card, which is there to look at, while a push is there to act on.
+ */
+export const TRANSFER_PUSH_DAYS = 2;
+
+/**
+ * The salary a transfer is sent from, as an occurrence key: the largest
+ * monthly income charge, on its occurrence nearest the transfer's day and no
+ * further from it than pay moves (`PAYDAY_EARLY_DAYS` before,
+ * `PAYDAY_LATE_DAYS` after) — the 28 October salary for a transfer on
+ * 1 November, or a November salary paid early and kept on the 1st. Null
+ * without one.
+ */
+export function paydayKeyOf(
+  templates: readonly RecurringTemplateWithCategory[],
+  transferOn: string,
+): string | null {
+  const salary = templates
+    .filter(
+      (template) =>
+        template.active &&
+        template.categories.type === "income" &&
+        (template.recurrence ?? "monthly") === "monthly",
+    )
+    .sort((a, b) => Number(b.amount) - Number(a.amount))[0];
+  if (!salary) {
+    return null;
+  }
+  const year = Number(transferOn.slice(0, 4));
+  const month = Number(transferOn.slice(5, 7));
+  const from = shiftIsoDate(transferOn, -PAYDAY_EARLY_DAYS);
+  const to = shiftIsoDate(transferOn, PAYDAY_LATE_DAYS);
+  const gap = (date: string) =>
+    Math.abs(Date.parse(date) - Date.parse(transferOn));
+  const nearest = [
+    previousMonth(year, month),
+    { year, month },
+    nextMonth(year, month),
+  ]
+    .flatMap((at) => occurrencesIn(salary, at.year, at.month))
+    .filter((date) => date >= from && date <= to)
+    .sort((a, b) => gap(a) - gap(b))[0];
+  return nearest ? recurringOccurrenceKey(salary.id, nearest) : null;
+}
 
 /** The months of a run looked back over, at most. */
 const RUN_MONTHS = 36;
@@ -251,16 +297,19 @@ export interface DcaMonth {
   progress: { done: number; total: number };
   /** Months in a row the transfer was sent, this one included once it is. */
   run: number;
+  /** The salary it is sent from is in (`paydayKeyOf`). */
+  paid: boolean;
 }
 
 /**
  * What Le point's DCA card says today, for the transfer's own dates: the next
- * one, from `TRANSFER_NOTICE_DAYS` before its day; otherwise the latest —
- * still to send for `PAYDAY_LATE_DAYS` after its day, since a transfer a few
- * days late still counts, then unseen. Sent as soon as it is settled, even
- * early. With it, the month it pays for — its DCAs going through one by one —
- * and the months funded in a row. Null without the app's transfer, or with
- * nothing ticked to pay for.
+ * one, from `TRANSFER_NOTICE_DAYS` before its day or from the day the salary
+ * it is sent from comes in, if sooner; otherwise the latest — still to send
+ * for `PAYDAY_LATE_DAYS` after its day, since a transfer a few days late
+ * still counts, then unseen. Sent as soon as it is settled, even early. With
+ * it, the month it pays for — its DCAs going through one by one — and the
+ * months funded in a row. Null without the app's transfer, or with nothing
+ * ticked to pay for.
  */
 export function dcaMonth({
   templates,
@@ -269,6 +318,7 @@ export function dcaMonth({
   skippedKeys = new Set(),
   writtenKeys = new Set(),
   debited = new Set(),
+  paidKeys = new Set(),
 }: {
   templates: readonly RecurringTemplateWithCategory[];
   today: string;
@@ -279,6 +329,11 @@ export function dcaMonth({
   writtenKeys?: ReadonlySet<string>;
   /** `walletCategoriesTheBankDebits`. */
   debited?: ReadonlySet<string>;
+  /**
+   * Income occurrences the bank has brought a movement for, or that were
+   * confirmed: what tells that the salary is in.
+   */
+  paidKeys?: ReadonlySet<string>;
 }): DcaMonth | null {
   const transfer = brokerTransferOf(templates);
   if (!transfer?.active) {
@@ -297,10 +352,16 @@ export function dcaMonth({
     .sort();
   const upcoming = dates.find((date) => date > today);
   const latest = dates.filter((date) => date <= today).at(-1);
+  const paid = (date: string) => {
+    const key = paydayKeyOf(templates, date);
+    return key !== null && paidKeys.has(key);
+  };
   // A transfer set up since the last 1st has nothing behind it: its first
-  // month is shown straight away, to prepare.
+  // month is shown straight away, to prepare. The next one comes early once
+  // the salary it is sent from is in, which is when it can be sent.
   const occurredOn =
-    upcoming && today >= shiftIsoDate(upcoming, -TRANSFER_NOTICE_DAYS)
+    upcoming &&
+    (today >= shiftIsoDate(upcoming, -TRANSFER_NOTICE_DAYS) || paid(upcoming))
       ? upcoming
       : (latest ?? upcoming);
   if (!occurredOn) {
@@ -332,6 +393,7 @@ export function dcaMonth({
       ...covered,
     }),
     run: transferRun(transfer, settledKeys, today, sent ? occurredOn : null),
+    paid: paid(occurredOn),
   };
 }
 
@@ -429,7 +491,7 @@ export function transferRun(
   return run;
 }
 
-/** The push before the 1st: the card's month while it is still to send. */
+/** The pushes before the 1st: the card's month while it is still to send. */
 export interface TransferReminder {
   templateId: string;
   label: string;
@@ -437,18 +499,34 @@ export interface TransferReminder {
   occurredOn: string;
   /** What it stands for, and the month it covers. */
   need: DcaNeed;
+  /** Its day is `TRANSFER_PUSH_DAYS` off, or nearer: the reminder is due. */
+  due: boolean;
+  /** The salary it is sent from is in: the push that says so is due. */
+  paid: boolean;
 }
 
-/** What the push says, from the card: only while the transfer is to send. */
+/**
+ * What the pushes say, from the card: only while the transfer is to send,
+ * once the salary it is sent from is in, and from `TRANSFER_PUSH_DAYS`
+ * before its day. Not as soon as the card shows it, which for a new
+ * transfer is weeks ahead.
+ */
 export function transferReminder(
   month: DcaMonth | null,
+  today: string,
 ): TransferReminder | null {
-  return month?.state === "to-send"
+  if (month?.state !== "to-send") {
+    return null;
+  }
+  const due = today >= shiftIsoDate(month.occurredOn, -TRANSFER_PUSH_DAYS);
+  return due || month.paid
     ? {
         templateId: month.templateId,
         label: month.label,
         occurredOn: month.occurredOn,
         need: month.need,
+        due,
+        paid: month.paid,
       }
     : null;
 }

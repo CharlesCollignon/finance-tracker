@@ -12,7 +12,7 @@ import {
   overdraftWarning,
   plannedChargesOn,
   purchasesToConfirmNotification,
-  transferReminderNotification,
+  transferReminderNotifications,
   usualChargeAmount,
 } from "./push-messages";
 import type { PurchaseToConfirm } from "./purchases-to-confirm";
@@ -275,36 +275,65 @@ describe("purchasesToConfirmNotification", () => {
   });
 });
 
-describe("transferReminderNotification", () => {
-  it("says what to send and what it is made of", () => {
-    const push = transferReminderNotification({
-      ...fr,
-      reminder: {
-        templateId: "transfer",
-        label: "Virement Boursorama",
-        occurredOn: "2026-11-01",
-        need: {
-          year: 2026,
-          month: 11,
-          cost: 2050,
-          margin: 82.5,
-          amount: 2150,
-          count: 6,
-          byWallet: [
-            { wallet: "cto", cost: 1650, count: 5 },
-            { wallet: "pea", cost: 400, count: 1 },
-          ],
-        },
-      },
-    });
-    expect(push.kind).toBe("dca");
-    expect(push.key).toBe("dca-transfer:2026-11");
-    expect(push.title).toBe(
+describe("transferReminderNotifications", () => {
+  const reminder = {
+    templateId: "transfer",
+    label: "Virement Boursorama",
+    occurredOn: "2026-11-01",
+    need: {
+      year: 2026,
+      month: 11,
+      cost: 2050,
+      margin: 82.5,
+      amount: 2150,
+      count: 6,
+      byWallet: [
+        { wallet: "cto" as const, cost: 1650, count: 5 },
+        { wallet: "pea" as const, cost: 400, count: 1 },
+      ],
+    },
+    due: true,
+    paid: false,
+  };
+
+  it("says what to send and what it is made of, two days before", () => {
+    const [push, ...rest] = transferReminderNotifications({ ...fr, reminder });
+    expect(rest).toEqual([]);
+    expect(push?.kind).toBe("dca");
+    expect(push?.key).toBe("dca-transfer-soon:2026-11");
+    expect(push?.title).toBe(
       "À préparer pour novembre\u00A0: 2\u202F150\u00A0€",
     );
-    expect(push.body).toBe(
+    expect(push?.body).toBe(
       "Pour les DCA prévus en novembre\u00A0: CTO 1\u202F650\u00A0€ · PEA 400\u00A0€. Arrondi, avec 5\u00A0% de marge sur ceux achetés en parts.",
     );
+  });
+
+  it("says it when the salary comes in, on its own key", () => {
+    const pushes = transferReminderNotifications({
+      ...fr,
+      reminder: { ...reminder, due: false, paid: true },
+    });
+    expect(pushes).toHaveLength(1);
+    expect(pushes[0]).toMatchObject({
+      kind: "dca",
+      key: "dca-transfer-paid:2026-11",
+      title: "Salaire arrivé\u00A0: 2\u202F150\u00A0€ pour le courtier",
+      url: "/bearing",
+    });
+    expect(pushes[0]?.covers).toBeUndefined();
+  });
+
+  it("lets the salary's say the reminder too when both are due", () => {
+    const pushes = transferReminderNotifications({
+      ...fr,
+      reminder: { ...reminder, paid: true },
+    });
+    expect(pushes.map((push) => push.key)).toEqual([
+      "dca-transfer-paid:2026-11",
+      "dca-transfer-soon:2026-11",
+    ]);
+    expect(pushes[0]?.covers).toEqual(["dca-transfer-soon:2026-11"]);
   });
 });
 

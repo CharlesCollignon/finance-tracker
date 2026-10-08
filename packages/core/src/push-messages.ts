@@ -314,27 +314,50 @@ export function purchasesToConfirmNotification({
 }
 
 /**
- * How much to get ready for the broker, five days before the 1st
- * (`transferReminder`): what next month's ticked DCAs need, and what it is
- * made of. Said once for each month it covers; the card on Le point carries
- * it until the bank shows it.
+ * How much to send to the broker (`transferReminder`): what next month's
+ * ticked DCAs need, and what it is made of. Said twice for each month it
+ * covers, each once: when the salary it is sent from comes in, and two days
+ * before the 1st. On the same day, the salary's says both. The card on Le
+ * point carries it until the bank shows it.
+ *
+ * The reminder is keyed `dca-transfer-soon:`, not `dca-transfer:` as when it
+ * followed the card: November 2026's went out under the old key on
+ * 8 October, weeks early, and would otherwise not be said again on its day.
  */
-export function transferReminderNotification({
+export function transferReminderNotifications({
   reminder,
   t,
   locale,
-}: Voice & { reminder: TransferReminder }): PendingNotification {
+}: Voice & { reminder: TransferReminder }): PendingNotification[] {
   const { need } = reminder;
-  return {
-    kind: "dca",
-    key: `dca-transfer:${need.year}-${String(need.month).padStart(2, "0")}`,
-    title: t("push.dcaTransfer.title", {
-      month: monthLong(need.month, locale),
-      amount: formatEuro(need.amount, locale),
-    }),
-    body: describeDcaNeed(need, t, locale),
-    url: "/bearing",
-  };
+  const month = `${need.year}-${String(need.month).padStart(2, "0")}`;
+  const soon = `dca-transfer-soon:${month}`;
+  const amount = formatEuro(need.amount, locale);
+  const body = describeDcaNeed(need, t, locale);
+  const pushes: PendingNotification[] = [];
+  if (reminder.paid) {
+    pushes.push({
+      kind: "dca",
+      key: `dca-transfer-paid:${month}`,
+      title: t("push.dcaTransfer.paidTitle", { amount }),
+      body,
+      url: "/bearing",
+      ...(reminder.due ? { covers: [soon] } : {}),
+    });
+  }
+  if (reminder.due) {
+    pushes.push({
+      kind: "dca",
+      key: soon,
+      title: t("push.dcaTransfer.title", {
+        month: monthLong(need.month, locale),
+        amount,
+      }),
+      body,
+      url: "/bearing",
+    });
+  }
+  return pushes;
 }
 
 /** The Monday recap, as one push: the card's lines, joined. */

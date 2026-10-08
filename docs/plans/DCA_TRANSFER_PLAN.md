@@ -207,3 +207,31 @@ Decisions:
       transfer's first month shows at once.
 - [x] Journal and calendar, both apps: the planned transfer says « Pour les
       DCA prévus en novembre » (`plannedOccurrenceNote`).
+
+## Follow-up — when the push comes (2026-10-08, branch `dca-transfer-push-timing`)
+
+On 8 October the owner got « À préparer pour novembre » on their phone,
+24 days before the 1st. The push followed the card, and the card shows a
+new transfer's first month at once: one set up after 1 October has no
+October behind it. Their call: about two days before, and another push
+when the salary that triggers it comes in.
+
+- [x] The push two days before the 1st (`TRANSFER_PUSH_DAYS`), whatever
+      the card shows; still said if the transfer is late. Keyed
+      `dca-transfer-soon:`, since November's went out under the old key.
+- [x] A push the run the bank brings the salary (`dca-transfer-paid:`):
+      « Salaire arrivé : 2 150 € pour le courtier ». The salary is the
+      largest monthly income charge, on its occurrence nearest the
+      transfer's day, 15 days before to 10 after (`paydayKeyOf`); in once
+      the bank brought a movement that looks like it, or it was
+      confirmed. Sent by the refresh cron right after the sync, and by the
+      daily run.
+- [x] Never two on one morning: on the reminder's day, the salary's push
+      says both (`covers`, `notificationsToSay`).
+- [x] The card moves to next month the day the salary comes in, if that
+      is before its five days, so the push opens on its figure.
+- [x] The « Vos DCA » switch says when it comes; CONTEXT.md too.
+
+Checked against local Supabase with a throwaway account: no November push
+before the salary; once the bank brings it, the card turns to November and
+the salary's push is built.

@@ -2196,7 +2196,7 @@ export const en = {
     },
     dca: {
       label: "Your DCAs",
-      hint: "Before payday, what to send to the broker; the day after a purchase inside your investment accounts, to say whether it went through.",
+      hint: "When your pay comes in and two days before the 1st, what to send to the broker; the day after a purchase inside your investment accounts, to say whether it went through.",
     },
     review: {
       label: "Transactions to sort",
@@ -2271,6 +2271,7 @@ export const en = {
   push: {
     dcaTransfer: {
       title: "Get {amount} ready for {month}",
+      paidTitle: "Pay's in: {amount} for the broker",
     },
     dca: {
       title: "{name}: did it go through?",

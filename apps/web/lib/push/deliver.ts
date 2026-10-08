@@ -2,7 +2,10 @@ import {
   isQuietHour,
   wantsNotification,
 } from "@finance/core/notification-kinds";
-import type { PendingNotification } from "@finance/core/push-digest";
+import {
+  notificationsToSay,
+  type PendingNotification,
+} from "@finance/core/push-digest";
 import type { Recipient } from "@finance/data/preferences";
 import type { createAdminClient } from "@/lib/supabase/admin";
 import { fanOut, readDevicesFor, type UserDevices } from "@/lib/push/send";
@@ -26,7 +29,8 @@ export interface Delivery {
  *   not logged, so whatever produced it is free to produce it again on the
  *   next run in the day — which is why the rules feeding this one describe a
  *   change since the person was last told rather than the moment it happened;
- * - a key already in `notification_log` is not said twice;
+ * - a key already in `notification_log` is not said twice, nor one another
+ *   push sent with it says as well (`covers`);
  * - what is about to be sent is logged first. A duplicate is a worse outcome
  *   than a miss, and a crash mid-send would otherwise repeat it tomorrow.
  *   One row per user rather than per device, so "said once" holds across a
@@ -62,8 +66,10 @@ export async function deliver(
       "key",
       wanted.map((notification) => notification.key),
     );
-  const said = new Set((already ?? []).map((row) => row.key));
-  const fresh = wanted.filter((notification) => !said.has(notification.key));
+  const { send: fresh, log } = notificationsToSay(
+    wanted,
+    new Set((already ?? []).map((row) => row.key)),
+  );
   if (fresh.length === 0) {
     return { sent: 0, held: notifications.length };
   }
@@ -74,7 +80,7 @@ export async function deliver(
   }
 
   await supabase.from("notification_log").upsert(
-    fresh.map((notification) => ({ user_id: userId, key: notification.key })),
+    log.map((key) => ({ user_id: userId, key })),
     { onConflict: "user_id,key", ignoreDuplicates: true },
   );
 
