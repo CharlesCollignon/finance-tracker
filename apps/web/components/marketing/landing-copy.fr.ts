@@ -18,8 +18,8 @@ import type { LandingPageId } from "./landing-copy";
  *   votre banque » se vérifie ; « une clarté sans effort », non.
  *
  *   Never promise what the app does not do. Ce qui n'est pas encore ouvert à
- *   tous — la banque, l'IA de votre choix, l'application mobile — est dit
- *   une fois, sous « Bientôt », au futur.
+ *   tous — la banque, l'application mobile — est dit une fois, sous
+ *   « Bientôt », au futur.
  *
  * The nouns come from the app, not from the dictionary: « Le point »,
  * « Journal », « Récurrents », « Placements », « Clôture du mois ». A landing
@@ -87,10 +87,6 @@ export const landingCopyFr: LandingCopySections & {
         body: "En lecture seule : vos opérations arriveront toutes seules, et Pluclair ne pourra jamais faire de paiement.",
       },
       {
-        title: "L’IA de votre choix",
-        body: "Mistral, ChatGPT ou Claude, sur votre propre compte OpenRouter : vous choisissez le modèle et vous payez vos lectures, quelques centimes chacune.",
-      },
-      {
         title: "L’application mobile",
         body: "Pluclair dans votre poche, avec les mêmes chiffres que sur l’ordinateur.",
       },
@@ -103,7 +99,7 @@ export const landingCopyFr: LandingCopySections & {
       {
         question: "C’est payant ?",
         answer:
-          "Non. Créer un compte et tout ce qui est décrit plus haut est gratuit, sans carte bancaire. Seules les nouveautés qui passent par un service extérieur — la connexion bancaire, l’IA de votre choix — se paieront chez ce service.",
+          "Non. Créer un compte et tout ce qui est décrit plus haut est gratuit, sans carte bancaire. Les lectures et les questions sont offertes dans une limite par mois ; avec l’IA de votre choix — Mistral, ChatGPT ou Claude sur votre propre compte OpenRouter — vous les payez à ce service, quelques centimes chacune, sans limite. La connexion bancaire, quand elle arrivera, se paiera chez son service.",
       },
       {
         question: "Pluclair peut-il toucher à mon argent ?",
@@ -283,7 +279,7 @@ export const landingCopyFr: LandingCopySections & {
       title: "Lectures écrites",
       body: "Quelques phrases sur votre mois ou vos placements. Les mots sont ceux de l’IA ; chaque chiffre est celui de Pluclair.",
       utility:
-        "Les autres écrans vous donnent des chiffres et des listes. Une lecture les rassemble et dit ce qui ressort — sans avoir le droit d’inventer un nombre. Utile les mois où les totaux ont l’air normaux et où quelque chose en dessous ne l’est pas.",
+        "Les autres écrans vous donnent des chiffres et des listes. Une lecture les rassemble et dit ce qui ressort — sans avoir le droit d’inventer un nombre. Utile les mois où les totaux ont l’air normaux et où quelque chose en dessous ne l’est pas. Les lectures sont écrites sur la clé de Pluclair dans une limite par mois, ou sur votre propre compte OpenRouter avec le modèle de votre choix — Mistral, ChatGPT ou Claude — à vos frais.",
       steps: [
         {
           title: "Demandez-en une",

@@ -286,9 +286,9 @@ counts their part.
 - [x] Property opens to everyone: `property.track` on by default, the
       brand promises checked, the landing moves it out of « Bientôt ».
 
-## Phase 7 — Ask Pluclair (branch `everyday-ask`) — built, one question open
+## Phase 7 — Ask Pluclair (branch `everyday-ask`) — built
 
-Built 2026-10-09: migration 064 to apply; not tried in a browser, on a phone
+Built 2026-10-09: migrations 064 and 065; not tried in a browser, on a phone
 or against a live model yet.
 
 - [x] A « Questions » screen, both apps, reached from a link under the
@@ -307,14 +307,10 @@ or against a live model yet.
       user's own AI account.
 - [x] Conversations kept 30 days, each one deletable, swept nightly, gone
       with the account. Personal space only, to begin.
-- [ ] « L'IA de votre choix » opens to everyone — **not done, waiting on the
-      owner.** Under the AI-account plan's decision (2026-10-04), turning
-      `ai.account` on means the reads run only on the person's own
-      connected account and Pluclair's key stops writing them; on for
-      everyone, nobody without a connection would have AI at all, which
-      contradicts the 20 questions on Pluclair's key above. Either the flag
-      becomes « the person's account if connected, Pluclair's otherwise »,
-      or the AI goes account-only for everyone.
+- [x] « L'IA de votre choix » opens to everyone (migration 065): the
+      owner chose, 2026-10-09, that `ai.account` means « the person's own
+      account if connected, Pluclair's key otherwise » — nobody loses the AI,
+      anyone may bring their own. Out of « Bientôt » on the landing.
 
 ## Phase 8 — Tax time and PDF statements (branch `everyday-tax-pdf`)
 

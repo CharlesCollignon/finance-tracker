@@ -181,8 +181,9 @@ async function onAccount(
 
 /**
  * The writer for this user's next read. `account` says which rules apply:
- * true, the user's own account — no monthly allowance, and no writer at all
- * without a connection; false, Pluclair's key and its allowances.
+ * true, the user's own connected account — no monthly allowance; false,
+ * Pluclair's key and its allowances, which is also what someone with
+ * `ai.account` on but nothing connected gets.
  */
 export async function writerFor(
   userId: string,
@@ -194,10 +195,16 @@ export async function writerFor(
     service?: boolean;
   } = {},
 ): Promise<{ writer: Writer | null; account: boolean }> {
-  if (!(await onAccount(userId, client, service))) {
-    return { writer: pluclairWriter(), account: false };
+  // The person's own account when they have connected one; Pluclair's key,
+  // with its allowances, otherwise (the owner's call, 2026-10-09: « L'IA de
+  // votre choix » for everyone without taking the AI from anyone).
+  if (await onAccount(userId, client, service)) {
+    const own = await accountWriter(userId);
+    if (own) {
+      return { writer: own, account: true };
+    }
   }
-  return { writer: await accountWriter(userId), account: true };
+  return { writer: pluclairWriter(), account: false };
 }
 
 export async function writerStateFor(
@@ -216,9 +223,13 @@ export async function writerStateFor(
     .select("model")
     .eq("user_id", userId)
     .maybeSingle();
-  return {
-    account: true,
-    writable: data !== null && aiSealer.configured(),
-    name: aiModel(data?.model).name,
-  };
+  // No account connected, or none this server can open: Pluclair's key.
+  if (!data || !aiSealer.configured()) {
+    return {
+      account: false,
+      writable: pluclairWriter() !== null,
+      name: describeModel(pluclairModel()).brand,
+    };
+  }
+  return { account: true, writable: true, name: aiModel(data.model).name };
 }
