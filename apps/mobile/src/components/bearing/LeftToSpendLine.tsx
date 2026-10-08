@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Modal, Pressable, ScrollView, View } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 
 import { affordAnswer, type AffordCadence } from "@finance/core/afford";
 import { parseTypedAmount } from "@finance/core/amount-input";
@@ -7,7 +8,6 @@ import { formatDayMonth, formatShortDate } from "@finance/core/constants";
 import type { Locale } from "@finance/core/i18n/locale";
 import type { LeftToSpend } from "@finance/core/left-to-spend";
 
-import { AnimatedAmount } from "@/components/AnimatedAmount";
 import { PrivateAmount } from "@/components/PrivateAmount";
 import { ChoiceChips } from "@/components/pickers/ChoiceChips";
 import { Input } from "@/components/ui/Input";
@@ -17,7 +17,8 @@ import { hapticLight } from "@/lib/haptics";
 import { recordAffordAsked } from "@/lib/mutations";
 import { useFormatCurrency } from "@/providers/CurrencyProvider";
 import { useLocale, useT } from "@/providers/LocaleProvider";
-import { TYPE } from "@/theme/tokens";
+import { ICON } from "@/theme/tokens";
+import { useThemeColors } from "@/theme/useThemeColors";
 
 type T = ReturnType<typeof useT>;
 
@@ -36,15 +37,15 @@ function untilLabel(
 }
 
 /**
- * « Il vous reste », as on the web: what the account can still give before
- * the next pay day, with the charges due by then and the marge already taken
- * off (`@finance/core/left-to-spend`).
+ * « Il vous reste », one line in the balance card, as on the web: what the
+ * account can still give before the next pay day, with the charges due by
+ * then and the marge already taken off (`@finance/core/left-to-spend`).
  *
  * Below zero it says what is missing, in the ordinary colour: the overdraft
- * warning is the alarm, and this is the arithmetic behind it. The figure
- * opens « Puis-je me permettre ? ».
+ * warning is the alarm, and this is the arithmetic behind it. The line opens
+ * « Puis-je me permettre ? », where « Comment c'est calculé ? » waits too.
  */
-export function LeftToSpendCard({
+export function LeftToSpendLine({
   left,
   lowest,
   eachMonth,
@@ -58,12 +59,13 @@ export function LeftToSpendCard({
   const t = useT();
   const locale = useLocale();
   const format = useFormatCurrency();
+  const colors = useThemeColors();
   const [howOpen, setHowOpen] = useState(false);
   const [asking, setAsking] = useState(false);
   const short = left.amount < 0;
 
   return (
-    <View className="gap-1.5 rounded-card border border-border bg-card/70 p-card">
+    <>
       <Pressable
         accessibilityRole="button"
         accessibilityHint={t("afford.title")}
@@ -72,59 +74,27 @@ export function LeftToSpendCard({
           setAsking(true);
           recordAffordAsked();
         }}
-        className="gap-1.5"
+        className="flex-row items-center justify-between gap-3 rounded-control border border-border px-3 py-2.5"
       >
-        <Text className="text-sm font-medium text-muted-foreground">
-          {t(short ? "leftToSpend.missing" : "leftToSpend.title")}
-        </Text>
-        <AnimatedAmount
-          value={Math.abs(left.amount)}
-          format={format}
-          style={TYPE.hero}
-          numberOfLines={1}
-          adjustsFontSizeToFit
-        />
-        <Text variant="muted" className="text-sm">
+        <Text variant="muted" className="min-w-0 flex-1 text-sm">
+          {t(short ? "leftToSpend.missing" : "leftToSpend.title")}{" "}
+          <PrivateAmount className="text-sm font-semibold text-foreground">
+            {format(Math.abs(left.amount))}
+          </PrivateAmount>{" "}
           {untilLabel(t, locale, left.payDay, short)}
-        </Text>
-        {left.perDay !== null ? (
-          <PrivateAmount className="text-sm text-muted-foreground">
-            {t("leftToSpend.perDay", { amount: format(left.perDay) })}
-          </PrivateAmount>
-        ) : null}
-        <Text className="text-sm font-medium underline">
-          {t("afford.title")}
-        </Text>
-      </Pressable>
-      <Pressable
-        accessibilityRole="button"
-        accessibilityState={{ expanded: howOpen }}
-        hitSlop={8}
-        onPress={() => setHowOpen((open) => !open)}
-        className="self-start"
-      >
-        <Text variant="muted" className="text-xs underline">
-          {t("leftToSpend.how.title")}
-        </Text>
-      </Pressable>
-      {howOpen ? (
-        <View className="gap-1.5">
-          <Text variant="muted" className="text-xs leading-relaxed">
-            {t("leftToSpend.how.body")}
-          </Text>
-          <Text variant="muted" className="text-xs leading-relaxed">
-            {t(left.payDay ? "leftToSpend.how.payDay" : "leftToSpend.how.monthEnd")}
-          </Text>
-          {left.marge > 0 ? (
-            <PrivateAmount className="text-xs leading-relaxed text-muted-foreground">
-              {t("leftToSpend.how.marge", {
-                count: left.days,
-                amount: format(left.marge),
-              })}
+          {left.perDay !== null ? " · " : null}
+          {left.perDay !== null ? (
+            <PrivateAmount className="text-sm text-muted-foreground">
+              {t("leftToSpend.perDay", { amount: format(left.perDay) })}
             </PrivateAmount>
           ) : null}
-        </View>
-      ) : null}
+        </Text>
+        <Ionicons
+          name="chevron-forward"
+          size={ICON.sm}
+          color={colors.mutedForeground}
+        />
+      </Pressable>
 
       <Modal
         visible={asking}
@@ -167,11 +137,42 @@ export function LeftToSpendCard({
               {asking ? (
                 <AffordForm left={left} lowest={lowest} eachMonth={eachMonth} />
               ) : null}
+              <View className="gap-1.5 pb-10">
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityState={{ expanded: howOpen }}
+                  hitSlop={8}
+                  onPress={() => setHowOpen((open) => !open)}
+                  className="self-start"
+                >
+                  <Text variant="muted" className="text-xs underline">
+                    {t("leftToSpend.how.title")}
+                  </Text>
+                </Pressable>
+                {howOpen ? (
+                  <View className="gap-1.5">
+                    <Text variant="muted" className="text-xs leading-relaxed">
+                      {t("leftToSpend.how.body")}
+                    </Text>
+                    <Text variant="muted" className="text-xs leading-relaxed">
+                      {t(left.payDay ? "leftToSpend.how.payDay" : "leftToSpend.how.monthEnd")}
+                    </Text>
+                    {left.marge > 0 ? (
+                      <PrivateAmount className="text-xs leading-relaxed text-muted-foreground">
+                        {t("leftToSpend.how.marge", {
+                          count: left.days,
+                          amount: format(left.marge),
+                        })}
+                      </PrivateAmount>
+                    ) : null}
+                  </View>
+                ) : null}
+              </View>
             </ScrollView>
           </View>
         </View>
       </Modal>
-    </View>
+    </>
   );
 }
 
@@ -198,7 +199,7 @@ function AffordForm({
   const short = answer !== null && answer.leftAfter < 0;
 
   return (
-    <View className="gap-4 pb-10 pt-3">
+    <View className="gap-4 pb-5 pt-3">
       <View className="gap-1.5">
         <Text className="text-sm font-medium">{t("afford.amount")}</Text>
         <Input

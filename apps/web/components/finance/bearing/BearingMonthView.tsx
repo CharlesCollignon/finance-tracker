@@ -34,7 +34,7 @@ import { DcaStrip } from "@/components/finance/DcaStrip";
 import { BankAttentionBanner } from "@/components/finance/bank/BankAttentionBanner";
 import { NewAccountsLine } from "@/components/finance/bank/NewAccountsLine";
 import { BalanceCurve } from "@/components/finance/bearing/BalanceCurve";
-import { LeftToSpendCard } from "@/components/finance/bearing/LeftToSpendCard";
+import { LeftToSpendLine } from "@/components/finance/bearing/LeftToSpendLine";
 import { SetupCard } from "@/components/finance/bearing/SetupCard";
 import { MonthPicker } from "@/components/layout/MonthPicker";
 import { PrivateAmount } from "@/components/layout/PrivateAmount";
@@ -140,17 +140,6 @@ export function BearingMonthView({
         className="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-5 xl:grid-cols-3"
         stagger={0.06}
       >
-        {/* First: the question the screen is opened for at the till. */}
-        {data.left ? (
-          <StaggerItem className="md:col-span-2 xl:col-span-3">
-            <LeftToSpendCard
-              left={data.left}
-              lowest={data.balance.lowest}
-              eachMonth={data.eachMonth}
-            />
-          </StaggerItem>
-        ) : null}
-
         {setupStep && data.setup ? (
           <StaggerItem className="md:col-span-2 xl:col-span-3">
             <SetupCard
@@ -459,6 +448,16 @@ function BalanceCard({ data }: { data: BearingMonth }) {
           </div>
         ) : null}
       </div>
+
+      {/* The question the screen is opened for at the till, in one line
+          between the figures and the line they sit on. */}
+      {data.left ? (
+        <LeftToSpendLine
+          left={data.left}
+          lowest={balance.lowest}
+          eachMonth={data.eachMonth}
+        />
+      ) : null}
 
       <BalanceCurve
         key={`${data.year}-${data.month}`}

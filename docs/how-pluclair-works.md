@@ -256,11 +256,13 @@ monthly income leave property out.
 
 ## Le point, first
 
-« Il vous reste » leads the month in progress, on both apps: what the
-Courant accounts hold, less the charges due before the next pay day, at the
-lowest point until then, less the marge's share of those days. The pay day is
-the next payment of the largest recurring income; with none, the month's
-end. Tapping it opens « Puis-je me permettre ? », which saves nothing.
+« Il vous reste » is one line of the month in progress's balance card, on
+both apps, between its two figures and its curve (`LeftToSpendLine`): what
+the Courant accounts hold, less the charges due before the next pay day, at
+the lowest point until then, less the marge's share of those days. The pay
+day is the next payment of the largest recurring income; with none, the
+month's end. Tapping the line opens « Puis-je me permettre ? », which saves
+nothing, with « Comment c'est calculé ? » under it.
 
 It needs a balance. Without a bank or a close, the setup card asks for one:
 typed once, it is a reading (`balance_readings`, migration 057) that anchors
