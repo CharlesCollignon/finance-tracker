@@ -119,6 +119,7 @@ export async function updateSession(request: NextRequest) {
     pathname.startsWith("/plan") ||
     pathname.startsWith("/budgets") ||
     pathname.startsWith("/profile") ||
+    pathname.startsWith("/ask") ||
     pathname.startsWith("/bank");
 
   if (!user && isProtected) {
