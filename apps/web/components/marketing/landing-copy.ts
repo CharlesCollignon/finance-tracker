@@ -73,7 +73,7 @@ export const landingCopy = {
       },
       "month-read": {
         question: "Want your month explained?",
-        body: "Ask for a read and an AI writes a few sentences about your month: what changed, what deserves a look. The figures always come from Pluclair — the AI is not allowed to make up a single one.",
+        body: "Ask for a read and an AI writes a few sentences about your month: what changed, what deserves a look. Or ask your own question in Questions. The figures always come from Pluclair — the AI is not allowed to make up a single one, nor to tell you what to do.",
         link: "See written reads",
       },
     },
@@ -125,7 +125,7 @@ export const landingCopy = {
       {
         question: "What does the AI see?",
         answer:
-          "Only the figures of the page you ask it to read: totals, category names, the lines of your investments. Never your name, your email or your bank details — and nothing is written until you ask.",
+          "Only the figures of the page you ask it to read, or those a question needs: totals, category names, the lines of your investments — and a question as you typed it. Never your name, your email or your bank details — and nothing is written until you ask.",
       },
       {
         question: "Can I hide my figures in public?",

@@ -73,7 +73,7 @@ export const landingCopyFr: LandingCopySections & {
       },
       "month-read": {
         question: "Et si on vous expliquait votre mois ?",
-        body: "Demandez une lecture : une IA écrit quelques phrases sur votre mois — ce qui a changé, ce qui mérite un œil. Les chiffres, eux, viennent toujours de Pluclair : l’IA n’a pas le droit d’en inventer un seul.",
+        body: "Demandez une lecture : une IA écrit quelques phrases sur votre mois — ce qui a changé, ce qui mérite un œil. Ou posez votre propre question dans Questions. Les chiffres, eux, viennent toujours de Pluclair : l’IA n’a pas le droit d’en inventer un seul, ni de vous dire quoi faire.",
         link: "Voir les lectures écrites",
       },
     },
@@ -123,7 +123,7 @@ export const landingCopyFr: LandingCopySections & {
       {
         question: "Que voit l’IA ?",
         answer:
-          "Seulement les chiffres de la page que vous lui demandez de lire : des totaux, des noms de catégories, les lignes de vos placements. Jamais votre nom, votre e-mail ni vos identifiants bancaires — et rien n’est écrit tant que vous ne le demandez pas.",
+          "Seulement les chiffres de la page que vous lui demandez de lire, ou ceux qu’une question demande : des totaux, des noms de catégories, les lignes de vos placements — et une question telle que vous l’avez tapée. Jamais votre nom, votre e-mail ni vos identifiants bancaires — et rien n’est écrit tant que vous ne le demandez pas.",
       },
       {
         question: "Je peux masquer mes chiffres en public ?",

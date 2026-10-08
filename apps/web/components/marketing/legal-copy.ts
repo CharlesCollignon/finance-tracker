@@ -152,8 +152,8 @@ export const legalCopy: LegalCopy = {
         points: [
           "Supabase: the database and sign-in, in the European Union ([[the exact EU region of the Supabase project]]).",
           "Vercel: hosting for the website and the server, with the server functions running in Paris, France.",
-          "Mistral AI (France): writes the short reads of your month and of your wallets. It receives only the figures a read is written from — category names and monthly totals, or the funds in a wallet and their values — and never your name, your email or your individual entries.",
-          "OpenRouter (United States), if you connect your own AI account: your reads are then written by the model you chose, on your account and at your expense, no longer by Mistral AI on our behalf. OpenRouter receives the same figures — category names and monthly totals, the funds in a wallet and their values, the name and identifier of a fund to read — and passes them to the model's provider (Mistral, OpenAI or Anthropic). Never your name, your email, your individual entries or your bank credentials. The account's key is kept encrypted on our server, and you can disconnect it at any time.",
+          "Mistral AI (France): writes the short reads of your month and of your wallets. It receives only the figures a read is written from — category names and monthly totals, or the funds in a wallet and their values — and never your name, your email or your individual entries. For a question asked in « Questions », it also receives the question as you typed it — what you write there reaches it as it is — with only the totals needed to answer it.",
+          "OpenRouter (United States), if you connect your own AI account: your reads are then written by the model you chose, on your account and at your expense, no longer by Mistral AI on our behalf. OpenRouter receives the same figures — category names and monthly totals, the funds in a wallet and their values, the name and identifier of a fund to read, a question asked in « Questions » as you typed it — and passes them to the model's provider (Mistral, OpenAI or Anthropic). Never your name, your email, your individual entries or your bank credentials. The account's key is kept encrypted on our server, and you can disconnect it at any time.",
           "Google: only if you sign in with Google.",
           "Notification delivery: web notifications are encrypted so that your browser's push service (Apple, Google, Microsoft or Mozilla, depending on the browser) cannot read them. Phone notifications go through Expo's push service and then Apple or Google.",
           "Market prices: to value your funds, we look up their prices from Yahoo Finance and from fund publishers' pages (justETF, iShares). We send only the fund's identifier, never anything about you.",
@@ -174,6 +174,7 @@ export const legalCopy: LegalCopy = {
           "When you delete your account (Profile → Delete account), your credentials file is deleted first, then everything is removed from the live database at once. Backups are overwritten within [[the backup retention of the Supabase plan]].",
           "Your credentials file: until you disconnect the bank, replace the file, or delete your account.",
           "The audience measurement: 13 months, then erased; deleting your account erases it at once.",
+          "Your questions and their answers (« Questions »): 30 days, then erased; each can be deleted sooner, and deleting your account erases them at once.",
           "The log of reminders sent: for as long as the account exists, so none repeats.",
         ],
       },
