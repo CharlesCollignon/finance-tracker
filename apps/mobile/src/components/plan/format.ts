@@ -1,10 +1,6 @@
 import { useCallback } from "react";
 
-import {
-  formatMonthCompact,
-  formatMonthLabel,
-  formatPercent,
-} from "@finance/core/constants";
+import { formatMonthLabel, formatPercent } from "@finance/core/constants";
 import type { Locale } from "@finance/core/i18n/locale";
 
 import { useFormatCurrency } from "@/providers/CurrencyProvider";
@@ -53,15 +49,6 @@ export function monthAheadLabel(
 ): string {
   const at = monthAhead(year, month, ahead);
   return formatMonthLabel(at.year, at.month, locale);
-}
-
-/** "oct. 26" from a YYYY-MM key, for an axis. */
-export function compactMonthOfKey(monthKey: string, locale: Locale): string {
-  return formatMonthCompact(
-    Number(monthKey.slice(0, 4)),
-    Number(monthKey.slice(5, 7)),
-    locale,
-  );
 }
 
 /** A fraction as the digits of a percentage, for a field: 0.186 → "18,6". */

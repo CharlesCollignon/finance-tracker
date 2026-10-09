@@ -10,10 +10,8 @@ export const futurePlanEn = {
   /* A year from now */
   yearTitle: "A year from now",
   yearGrounded: "in your accounts and put aside, by {month}",
-  yearAdded: "put aside by {month}, on top of what you have today",
   scrubHint: "Drag across the curve to see each month",
   scrubPoint: "{month}: {amount}",
-  scrubWithExtra: "{amount} with the extra",
 
   /* The year ahead, account by account */
   inMonthsTitle: "In {count} months",
@@ -71,7 +69,6 @@ export const futurePlanEn = {
   whatIfLabel: "Put aside more each month",
   whatIfPerMonth: "+{amount} a month",
   whatIfNone: "Slide to see what a little more each month changes.",
-  whatIfResult: "{amount} more in a year",
   whatIfSooner: {
     one: "{milestone} reached {count} month sooner",
     other: "{milestone} reached {count} months sooner",

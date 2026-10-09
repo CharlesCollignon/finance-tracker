@@ -10,11 +10,19 @@ import {
   monthsUntil,
   projectEnvelopes,
   wealthToday,
+  type Envelope,
 } from "@finance/core/future-plan";
 import { todayIsoLocal } from "@finance/core/constants";
 import { resolveMessage } from "@finance/core/i18n/t";
 import type { CloseableMonth } from "@finance/core/month-close";
 import { buildRunway } from "@finance/core/projection";
+import { isSavingsKind } from "@finance/core/savings-accounts";
+import {
+  resolveExtraTarget,
+  YEAR_AHEAD_DEFAULT_SETTINGS,
+  type YearAheadAccountId,
+  type YearAheadSettings,
+} from "@finance/core/year-ahead";
 
 import { ConnectBankInvite } from "@/components/bank/ConnectBankInvite";
 import { MonthCloseHistoryCard } from "@/components/MonthCloseHistoryCard";
@@ -46,9 +54,11 @@ import {
   gatherPlanWealth,
   loadPlanSettings,
   loadSeenMilestone,
+  loadYearAheadSettings,
   planEnvelopes,
   savePlanSettings,
   saveSeenMilestone,
+  saveYearAheadSettings,
   type PlanSettings,
 } from "@/lib/plan-future-data";
 import { getJointPropertiesFor, getProperties } from "@/lib/properties";
@@ -74,8 +84,8 @@ interface ClosePrompt {
 /**
  * Plan: where the money is heading, and the reasons to come back and look.
  *
- * A year from now first, counting up over the curve that gets there, with a
- * "what if" to slide; then the milestones on the way and the cushion the
+ * The months ahead first, every account counting up over the bands that
+ * get there, with why and a "what if" to slide; then the milestones on the way and the cushion the
  * savings make; then the long view after French tax, prefilled from the
  * user's own figures; and last the run of month-ends, with the close that
  * keeps it going and the months it is made of. With a property, net worth
@@ -124,15 +134,22 @@ export default function PlanningScreen() {
     owned.data && owned.data.length > 0 ? owned.data : null;
 
   const [settings, setSettings] = useState<PlanSettings>(DEFAULT_PLAN_SETTINGS);
+  const [yearAhead, setYearAhead] = useState<YearAheadSettings>(
+    YEAR_AHEAD_DEFAULT_SETTINGS,
+  );
   const [settingsUser, setSettingsUser] = useState<string | null>(null);
   useEffect(() => {
     if (!user) {
       return;
     }
     let cancelled = false;
-    void loadPlanSettings(user.id).then((stored) => {
+    void Promise.all([
+      loadPlanSettings(user.id),
+      loadYearAheadSettings(user.id),
+    ]).then(([stored, ahead]) => {
       if (!cancelled) {
         setSettings(stored);
+        setYearAhead(ahead);
         setSettingsUser(user.id);
       }
     });
@@ -149,6 +166,13 @@ export default function PlanningScreen() {
     }
   }
 
+  function changeYearAhead(next: YearAheadSettings) {
+    setYearAhead(next);
+    if (user) {
+      void saveYearAheadSettings(user.id, next);
+    }
+  }
+
   const [extra, setExtra] = useState(0);
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [closing, setClosing] = useState<ClosePrompt | null>(null);
@@ -160,6 +184,19 @@ export default function PlanningScreen() {
     [data, wealth.data],
   );
   const envelopes = settings.envelopes ?? dataEnvelopes;
+  // The year ahead is drawn at once on the savings; the wallets join it when
+  // their market value arrives, rising into the chart. The web does the same.
+  const yearEnvelopes = useMemo(
+    () =>
+      wealthSettled
+        ? dataEnvelopes
+        : dataEnvelopes.filter(
+            (envelope) =>
+              envelope.id === "savings" || isSavingsKind(envelope.id),
+          ),
+    [dataEnvelopes, wealthSettled],
+  );
+  const target = resolveExtraTarget(yearAhead.to, yearEnvelopes);
   // The long view's net at the horizon, for the homes' card to add to.
   const liquidNet = useMemo(
     () =>
@@ -191,9 +228,19 @@ export default function PlanningScreen() {
     () => buildMilestones(current, milestoneSeries),
     [current, milestoneSeries],
   );
-  const sooner = wealthSettled
-    ? milestoneSooner(milestones, milestoneSeries, extra)
-    : null;
+  const sooner = useMemo(
+    () =>
+      wealthSettled
+        ? milestoneSooner(
+            milestones,
+            milestoneSeries,
+            dataEnvelopes,
+            extra,
+            target,
+          )
+        : null,
+    [wealthSettled, milestones, milestoneSeries, dataEnvelopes, extra, target],
+  );
 
   // A milestone passed since the last visit, celebrated once. Judged on the
   // user's own figures, not on an edit in the long view — typing a bigger
@@ -290,6 +337,11 @@ export default function PlanningScreen() {
               hasTemplates={data.hasTemplates}
               year={data.year}
               month={data.month}
+              envelopes={yearEnvelopes}
+              pending={!wealthSettled}
+              settings={yearAhead}
+              onSettingsChange={changeYearAhead}
+              target={target}
               extra={extra}
               onExtraChange={setExtra}
               sooner={sooner}
@@ -424,20 +476,37 @@ export default function PlanningScreen() {
 
 /**
  * The first milestone ahead that the extra brings closer — not only the
- * next one, which the extra may leave where it was. The web reads it the
- * same way.
+ * next one, which the extra may leave where it was. The extra goes into the
+ * account picked and compounds there, so the series is projected again with
+ * it in; on the current account it moves no milestone, which counts savings
+ * and investments. The web reads it the same way.
  */
 function milestoneSooner(
   milestones: readonly { amount: number; reached: boolean }[],
   series: readonly number[],
+  envelopes: readonly Envelope[],
   extra: number,
+  target: YearAheadAccountId,
 ): MilestoneSooner | null {
+  if (extra <= 0 || !envelopes.some((envelope) => envelope.id === target)) {
+    return null;
+  }
+  const boosted = projectEnvelopes({
+    envelopes: envelopes.map((envelope) =>
+      envelope.id === target
+        ? { ...envelope, monthly: envelope.monthly + extra }
+        : envelope,
+    ),
+    years: MAX_YEARS,
+    inflation: 0,
+    withdrawalRate: 0,
+  }).monthly;
   for (const milestone of milestones) {
     if (milestone.reached) {
       continue;
     }
     const without = monthsUntil(milestone.amount, series);
-    const withExtra = monthsUntil(milestone.amount, series, extra);
+    const withExtra = monthsUntil(milestone.amount, boosted);
     if (withExtra !== null && (without === null || withExtra < without)) {
       return { amount: milestone.amount, without, with: withExtra };
     }
