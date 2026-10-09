@@ -6,7 +6,6 @@ export const futurePlanFr: typeof futurePlanEn = {
   estimate: "Une estimation à partir de vos propres chiffres, pas un conseil.",
 
   yearTitle: "Dans un an",
-  yearGrounded: "sur vos comptes et de côté, d'ici {month}",
   scrubHint: "Faites glisser sur la courbe pour voir chaque mois",
   scrubPoint: "{month} : {amount}",
 

@@ -9,7 +9,6 @@ export const futurePlanEn = {
 
   /* A year from now */
   yearTitle: "A year from now",
-  yearGrounded: "in your accounts and put aside, by {month}",
   scrubHint: "Drag across the curve to see each month",
   scrubPoint: "{month}: {amount}",
 
