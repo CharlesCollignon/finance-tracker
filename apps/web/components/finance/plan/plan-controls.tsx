@@ -35,7 +35,7 @@ export function PlanCard({
         className,
       )}
     >
-      <header className="flex items-center justify-between gap-3">
+      <header className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
         <h2 className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
           <span
             aria-hidden
@@ -116,9 +116,12 @@ export function NumberField({
   suffix,
   hint,
   sensitive = false,
+  labelHidden = false,
   className,
 }: {
   label: string;
+  /** Said to a screen reader only, where the row already shows what it is. */
+  labelHidden?: boolean;
   value: number;
   onChange: (value: number) => void;
   min?: number;
@@ -136,7 +139,10 @@ export function NumberField({
 
   return (
     <div className={cn("flex min-w-0 flex-col gap-1", className)}>
-      <label htmlFor={id} className="text-xs text-muted-foreground">
+      <label
+        htmlFor={id}
+        className={labelHidden ? "sr-only" : "text-xs text-muted-foreground"}
+      >
         {label}
       </label>
       <div className="relative">

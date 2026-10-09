@@ -15,6 +15,57 @@ export const futurePlanEn = {
   scrubPoint: "{month}: {amount}",
   scrubWithExtra: "{amount} with the extra",
 
+  /* The year ahead, account by account */
+  inMonthsTitle: "In {count} months",
+  inYearsTitle: { one: "A year from now", other: "{count} years from now" },
+  horizonMonths: "{count} months",
+  yearAllGrounded: "across all your accounts, by {month}",
+  yearAllAdded:
+    "in your savings and investments by {month}, plus what the months leave on your current account",
+  yearShownOnly: "in the accounts shown, by {month}",
+  accountCurrent: "Current account",
+  accountElsewhere: "Other savings",
+  accountsPending: "Investments…",
+  accountToggle: "Show or hide {name}",
+  currentNoBank:
+    "With no bank connected, the current account starts at zero: it shows what the months add to it.",
+  elsewhereHint:
+    "Put aside from the current account with no account of yours receiving it, like the margin left at a broker above the purchases it pays for.",
+
+  /* Why */
+  whyLeadIncome: "Each month, out of {amount} coming in",
+  flowGrowthLine: "Plus {amount} of interest and estimated returns by {month}.",
+  eventAdd: "An event",
+  detailsLabel: "The details",
+  whyTitle: "Why",
+  flowCommitted: "Fixed costs",
+  flowEveryday: "Everyday spending",
+  flowEverydayUnmeasured:
+    "Everyday spending isn't measured yet. Wrap up a few months and it will be taken off here.",
+  flowCurrentStays: "Stays on the current account",
+  flowCurrentFalls: "Comes out of the current account",
+
+  /* What if, aimed */
+  whatIfTo: "Into",
+  whatIfToLabel: "Where the extra goes",
+  whatIfResultBy: "{amount} more by {month}",
+  whatIfClear: "Clear all",
+
+  /* Events */
+  eventsHint: "Drag a marker along the curve to change its month.",
+  eventRaise: "A raise",
+  eventBonus: "A bonus",
+  eventExpense: "A big expense",
+  eventRaiseLine: "+{amount} a month from {month}",
+  eventBonusLine: "+{amount} in {month}",
+  eventExpenseLine: "−{amount} in {month}",
+  eventRaiseAmount: "More each month",
+  eventAmount: "Amount",
+  eventMonth: "Month",
+  eventRemove: "Remove {name}",
+  eventBeyond: "beyond the horizon",
+  eventMarker: "{name}, {line}. Left and right arrows change the month.",
+
   /* What if */
   whatIfTitle: "What if…",
   whatIfLabel: "Put aside more each month",

@@ -6,10 +6,15 @@ import {
   type Envelope,
   type EnvelopeId,
 } from "@finance/core/future-plan";
+import {
+  parseYearAheadSettings,
+  YEAR_AHEAD_DEFAULT_SETTINGS,
+  type YearAheadSettings,
+} from "@finance/core/year-ahead";
 
 /**
  * What the Plan page remembers in this browser: the reader's own version of
- * the long view. The milestone already celebrated is the account's, not the
+ * the long view, and how they left the year ahead. The milestone already celebrated is the account's, not the
  * browser's (`user_preferences.milestone_seen`), so every device agrees.
  *
  * This browser's only, and a convenience rather than a record. The long view
@@ -125,4 +130,39 @@ export function saveLongViewDraft(userId: string, draft: LongViewDraft): void {
 
 export function clearLongViewDraft(userId: string): void {
   write(DRAFT_KEY + userId, null);
+}
+
+/* ------------------------------------------------------------ year ahead */
+
+const YEAR_AHEAD_KEY = "pluclair.plan.year-ahead:v1:";
+
+/**
+ * How the reader last left the year ahead: its window, where « Et si… »
+ * goes, the accounts taken out, the events added. The extra itself is not
+ * kept: it is something to play with, and a figure that opens inflated by
+ * last week's play would be one nobody trusts.
+ */
+export function useYearAheadSettings(userId: string): YearAheadSettings {
+  const raw = useSyncExternalStore(
+    subscribe,
+    () => read(YEAR_AHEAD_KEY + userId),
+    () => null,
+  );
+  return useMemo(() => {
+    if (!raw) {
+      return YEAR_AHEAD_DEFAULT_SETTINGS;
+    }
+    try {
+      return parseYearAheadSettings(JSON.parse(raw));
+    } catch {
+      return YEAR_AHEAD_DEFAULT_SETTINGS;
+    }
+  }, [raw]);
+}
+
+export function saveYearAheadSettings(
+  userId: string,
+  settings: YearAheadSettings,
+): void {
+  write(YEAR_AHEAD_KEY + userId, JSON.stringify(settings));
 }

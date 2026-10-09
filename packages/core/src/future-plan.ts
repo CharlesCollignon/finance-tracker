@@ -226,6 +226,13 @@ export interface EnvelopeProjection {
   years: EnvelopeYear[];
   /** The gross value at the end of each month, for milestones. */
   monthly: number[];
+  /**
+   * The same, account by account, in the envelopes' order: what each one
+   * holds at the end of each month, before tax. The year ahead draws one
+   * band per account from these. `paid` is what has gone in so far, which
+   * falls short of the payments once a livret is full.
+   */
+  monthlyByAccount: { id: EnvelopeId; values: number[]; paid: number[] }[];
   futureValue: number;
   gains: number;
   taxes: number;
@@ -292,10 +299,15 @@ export function projectEnvelopes(
 
   const years: EnvelopeYear[] = [snapshot(0)];
   const monthly: number[] = [];
+  const monthlyByAccount = accounts.map((account) => ({
+    id: account.id,
+    values: [] as number[],
+    paid: [] as number[],
+  }));
 
   for (let month = 1; month <= months; month += 1) {
     let total = 0;
-    for (const account of accounts) {
+    for (const [index, account] of accounts.entries()) {
       // A full account takes no more: the payment stops at its ceiling.
       const room =
         account.ceiling === null
@@ -307,6 +319,8 @@ export function projectEnvelopes(
       account.value = account.value * (1 + account.rate) + room;
       account.paidIn += room;
       total += account.value;
+      monthlyByAccount[index]!.values.push(roundMoney(account.value));
+      monthlyByAccount[index]!.paid.push(roundMoney(account.paidIn));
     }
     monthly.push(roundMoney(total));
     if (month % 12 === 0) {
@@ -329,6 +343,7 @@ export function projectEnvelopes(
   return {
     years,
     monthly,
+    monthlyByAccount,
     futureValue: roundMoney(futureValue),
     gains: roundMoney(gains),
     taxes: roundMoney(taxes),

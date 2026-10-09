@@ -1,6 +1,14 @@
 "use client";
 
-import { Suspense, use, useEffect, useMemo, useState } from "react";
+import {
+  Suspense,
+  use,
+  useEffect,
+  useMemo,
+  useState,
+  type ReactNode,
+} from "react";
+import { domAnimation, LazyMotion, m, MotionConfig } from "motion/react";
 import { CaretDown, GearSix, Sparkle } from "@phosphor-icons/react";
 import {
   buildCushion,
@@ -13,10 +21,15 @@ import {
   type EnvelopeId,
   wealthToday,
 } from "@finance/core/future-plan";
+import { EASE_STANDARD } from "@finance/core/motion";
 import { buildRunway } from "@finance/core/projection";
+import { isSavingsKind } from "@finance/core/savings-accounts";
+import {
+  resolveExtraTarget,
+  type YearAheadAccountId,
+} from "@finance/core/year-ahead";
 import { MonthCloseHistory } from "@/components/finance/MonthCloseHistory";
 import { ConnectBankInvite } from "@/components/finance/bank/ConnectBankInvite";
-import { Stagger, StaggerItem } from "@/components/motion/Stagger";
 import { markMilestoneSeen } from "@/lib/actions/plan";
 import { GLASS_CARD } from "@/lib/glass";
 import { ICON } from "@/lib/icon-scale";
@@ -32,7 +45,9 @@ import { NetWorthCard, PropertyLongViewCard } from "./PropertyPlanCards";
 import {
   clearLongViewDraft,
   saveLongViewDraft,
+  saveYearAheadSettings,
   useLongViewDraft,
+  useYearAheadSettings,
   type LongViewDraft,
 } from "./plan-storage";
 import { MonthsCard, RunCard } from "./RunCard";
@@ -62,6 +77,8 @@ interface PlanViewProps {
  * savings and investments, never counted in them. Budgets, goals and tags used to live here and are
  * gone; the month-close settings stay, folded away under the months.
  *
+ * Each card rises into place as it first scrolls into view.
+ *
  * Drawn in two loads, as the phone draws it. The year ahead, the cushion and
  * the run need only the ledger and are here at once; the milestones and the
  * long view need the market value of the investment accounts, so they stream
@@ -69,7 +86,22 @@ interface PlanViewProps {
  */
 export function PlanView({ base, wealth, bankInvite }: PlanViewProps) {
   const draft = useLongViewDraft(base.userId);
+  const yearAhead = useYearAheadSettings(base.userId);
   const [extra, setExtra] = useState(0);
+
+  // The year ahead is drawn at once on the savings, and the wallets join it
+  // when their market value arrives — rising into the chart rather than
+  // holding the whole card back.
+  const { done: wealthDone, value: wealthValue } = useSettled(wealth);
+  const yearEnvelopes = useMemo(() => {
+    const all = planEnvelopes(base, wealthValue);
+    return wealthDone
+      ? all
+      : all.filter(
+          (envelope) => envelope.id === "savings" || isSavingsKind(envelope.id),
+        );
+  }, [base, wealthDone, wealthValue]);
+  const target = resolveExtraTarget(yearAhead.to, yearEnvelopes);
 
   // The cushion is the savings at hand — every declared account but a PEL,
   // or everything saved in one — the reader's corrections in the long view
@@ -91,88 +123,162 @@ export function PlanView({ base, wealth, bankInvite }: PlanViewProps) {
   );
 
   return (
-    <div className="flex flex-col gap-4 md:gap-5">
-      <Intro />
+    <LazyMotion features={domAnimation} strict>
+      <MotionConfig reducedMotion="user">
+        <div className="flex flex-col gap-4 md:gap-5">
+          <Intro />
 
-      <Stagger
-        className="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-5"
-        stagger={0.06}
-      >
-        <StaggerItem className="md:col-span-2">
-          <YearAheadCard
-            projection={base.projection}
-            hasTemplates={base.hasTemplates}
-            extra={extra}
-            onExtraChange={setExtra}
-            milestoneLine={
-              extra > 0 ? (
-                <Suspense fallback={null}>
-                  <WhatIfMilestone base={base} wealth={wealth} extra={extra} />
-                </Suspense>
-              ) : null
-            }
-          />
-        </StaggerItem>
-
-        <StaggerItem>
-          <Suspense fallback={<CardPlaceholder rows={3} />}>
-            <Milestones base={base} wealth={wealth} />
-          </Suspense>
-        </StaggerItem>
-
-        <StaggerItem>
-          <CushionCard cushion={buildCushion(runway.months)} />
-        </StaggerItem>
-
-        {base.properties && base.properties.length > 0 ? (
-          <StaggerItem className="md:col-span-2">
-            <Suspense fallback={<CardPlaceholder rows={3} />}>
-              <NetWorth
-                base={base}
-                wealth={wealth}
-                properties={base.properties}
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-5">
+            <Reveal className="md:col-span-2">
+              <YearAheadCard
+                projection={base.projection}
+                hasTemplates={base.hasTemplates}
+                envelopes={yearEnvelopes}
+                pending={!wealthDone}
+                settings={yearAhead}
+                onSettingsChange={(next) =>
+                  saveYearAheadSettings(base.userId, next)
+                }
+                target={target}
+                extra={extra}
+                onExtraChange={setExtra}
+                milestoneLine={
+                  extra > 0 ? (
+                    <Suspense fallback={null}>
+                      <WhatIfMilestone
+                        base={base}
+                        wealth={wealth}
+                        extra={extra}
+                        target={target}
+                      />
+                    </Suspense>
+                  ) : null
+                }
               />
-            </Suspense>
-          </StaggerItem>
-        ) : null}
+            </Reveal>
 
-        <StaggerItem className="md:col-span-2">
-          <Suspense fallback={<CardPlaceholder rows={5} />}>
-            <LongView
-              base={base}
-              wealth={wealth}
-              draft={draft}
-              offerable={offerable}
-            />
-          </Suspense>
-        </StaggerItem>
+            <Reveal>
+              <Suspense fallback={<CardPlaceholder rows={3} />}>
+                <Milestones base={base} wealth={wealth} />
+              </Suspense>
+            </Reveal>
 
-        <StaggerItem>
-          <RunCard
-            closes={base.closes}
-            closeWait={base.closeWait}
-            monthlyCommitted={runway.monthlyCommitted}
-          />
-        </StaggerItem>
+            <Reveal>
+              <CushionCard cushion={buildCushion(runway.months)} />
+            </Reveal>
 
-        <StaggerItem>
-          <MonthsCard history={base.closes.history} />
-        </StaggerItem>
+            {base.properties && base.properties.length > 0 ? (
+              <Reveal className="md:col-span-2">
+                <Suspense fallback={<CardPlaceholder rows={3} />}>
+                  <NetWorth
+                    base={base}
+                    wealth={wealth}
+                    properties={base.properties}
+                  />
+                </Suspense>
+              </Reveal>
+            ) : null}
 
-        <StaggerItem className="md:col-span-2">
-          <CloseDetails base={base} />
-        </StaggerItem>
+            <Reveal className="md:col-span-2">
+              <Suspense fallback={<CardPlaceholder rows={5} />}>
+                <LongView
+                  base={base}
+                  wealth={wealth}
+                  draft={draft}
+                  offerable={offerable}
+                />
+              </Suspense>
+            </Reveal>
 
-        {/* Under the run, because a connected bank is what makes the month's
+            <Reveal>
+              <RunCard
+                closes={base.closes}
+                closeWait={base.closeWait}
+                monthlyCommitted={runway.monthlyCommitted}
+              />
+            </Reveal>
+
+            <Reveal>
+              <MonthsCard history={base.closes.history} />
+            </Reveal>
+
+            <Reveal className="md:col-span-2">
+              <CloseDetails base={base} />
+            </Reveal>
+
+            {/* Under the run, because a connected bank is what makes the month's
             bilan do itself. */}
-        {bankInvite ? (
-          <StaggerItem className="md:col-span-2">
-            <ConnectBankInvite surface="plan" />
-          </StaggerItem>
-        ) : null}
-      </Stagger>
-    </div>
+            {bankInvite ? (
+              <Reveal className="md:col-span-2">
+                <ConnectBankInvite surface="plan" />
+              </Reveal>
+            ) : null}
+          </div>
+        </div>
+      </MotionConfig>
+    </LazyMotion>
   );
+}
+
+/** How a card rises into place: the page entrance's duration, on the one curve. */
+const REVEAL = {
+  duration: 0.55,
+  ease: [...EASE_STANDARD] as [number, number, number, number],
+};
+
+/**
+ * A card rising into place the first time it scrolls into view. The page is
+ * long, and an entrance played on load has finished before the reader ever
+ * reaches the run; this one waits for them. Under reduced motion it only
+ * fades.
+ */
+function Reveal({
+  className,
+  children,
+}: {
+  className?: string;
+  children: ReactNode;
+}) {
+  return (
+    <m.div
+      className={className}
+      initial={{ opacity: 0, y: 28, scale: 0.98 }}
+      whileInView={{ opacity: 1, y: 0, scale: 1 }}
+      viewport={{ once: true, amount: 0.12 }}
+      transition={REVEAL}
+    >
+      {children}
+    </m.div>
+  );
+}
+
+/**
+ * A promise's value without suspending: `done` turns true when it settles,
+ * and a rejection reads as null, as `gatherPlanWealth` itself does.
+ */
+function useSettled<T>(promise: Promise<T | null>): {
+  done: boolean;
+  value: T | null;
+} {
+  const [settled, setSettled] = useState<{
+    promise: Promise<T | null>;
+    value: T | null;
+  } | null>(null);
+
+  useEffect(() => {
+    let live = true;
+    promise.then(
+      (value) => live && setSettled({ promise, value }),
+      () => live && setSettled({ promise, value: null }),
+    );
+    return () => {
+      live = false;
+    };
+  }, [promise]);
+
+  return settled?.promise === promise
+    ? { done: true, value: settled.value }
+    : { done: false, value: null };
 }
 
 function Intro() {
@@ -269,28 +375,50 @@ function NetWorth({
   );
 }
 
-/** What the "Et si…" extra does to the next milestone it moves, if any. */
+/**
+ * What the "Et si…" extra does to the next milestone it moves, if any.
+ *
+ * The extra goes into the account picked, so the milestones' series is
+ * projected again with it there, compounding at that account's return. On
+ * the current account it moves no milestone: they count savings and
+ * investments.
+ */
 function WhatIfMilestone({
   base,
   wealth,
   extra,
+  target,
 }: {
   base: PlanBase;
   wealth: Promise<PlanWealth | null>;
   extra: number;
+  target: YearAheadAccountId;
 }) {
   const t = useT();
   const locale = useLocale();
   const format = useFormatCurrency();
-  const { current, series } = useFromData(base, wealth);
+  const { envelopes, current, series } = useFromData(base, wealth);
 
   const line = useMemo(() => {
+    if (!envelopes.some((envelope) => envelope.id === target)) {
+      return null;
+    }
+    const boosted = projectEnvelopes({
+      envelopes: envelopes.map((envelope) =>
+        envelope.id === target
+          ? { ...envelope, monthly: envelope.monthly + extra }
+          : envelope,
+      ),
+      years: HORIZON_MAX,
+      inflation: DEFAULT_INFLATION,
+      withdrawalRate: DEFAULT_WITHDRAWAL,
+    }).monthly;
     for (const milestone of buildMilestones(current, series)) {
       if (milestone.reached) {
         continue;
       }
       const before = monthsUntil(milestone.amount, series);
-      const after = monthsUntil(milestone.amount, series, extra);
+      const after = monthsUntil(milestone.amount, boosted);
       if (after === null) {
         continue;
       }
@@ -308,7 +436,18 @@ function WhatIfMilestone({
       }
     }
     return null;
-  }, [current, series, extra, t, format, locale, base.year, base.month]);
+  }, [
+    envelopes,
+    current,
+    series,
+    extra,
+    target,
+    t,
+    format,
+    locale,
+    base.year,
+    base.month,
+  ]);
 
   if (!line) {
     return null;

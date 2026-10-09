@@ -5,8 +5,8 @@ export const planWebFr: typeof planWebEn = {
   yearEmpty:
     "Ajoutez ce qui entre et sort chaque mois dans Récurrents, et votre année à venir s'affichera ici.",
   yearEmptyCta: "Ouvrir Récurrents",
-  yearChartLabel:
-    "Ce que vous gardez, mois par mois, sur les douze prochains mois",
+  yearChartLabel: "Votre argent, compte par compte, mois par mois",
+  scrubTotal: "En tout",
   asItStands: "Comme aujourd'hui",
 
   horizonLess: "Un an de moins",

@@ -12,6 +12,54 @@ export const futurePlanFr: typeof futurePlanEn = {
   scrubPoint: "{month} : {amount}",
   scrubWithExtra: "{amount} avec le supplément",
 
+  inMonthsTitle: "Dans {count} mois",
+  inYearsTitle: { one: "Dans un an", other: "Dans {count} ans" },
+  horizonMonths: "{count} mois",
+  yearAllGrounded: "sur tous vos comptes, d'ici {month}",
+  yearAllAdded:
+    "sur votre épargne et vos placements d'ici {month}, plus ce que les mois laissent sur le compte courant",
+  yearShownOnly: "sur les comptes affichés, d'ici {month}",
+  accountCurrent: "Compte courant",
+  accountElsewhere: "Autre épargne",
+  accountsPending: "Placements…",
+  accountToggle: "Afficher ou masquer {name}",
+  currentNoBank:
+    "Sans banque connectée, le compte courant part de zéro\u00A0: il montre ce que les mois y ajoutent.",
+  elsewhereHint:
+    "Mis de côté depuis le compte courant sans qu'un de vos comptes le reçoive, comme la marge laissée chez un courtier au-delà des achats qu'elle paie.",
+
+  whyLeadIncome: "Chaque mois, sur {amount} de revenus",
+  flowGrowthLine:
+    "S'y ajoutent {amount} d'intérêts et de rendement estimés d'ici {month}.",
+  eventAdd: "Un événement",
+  detailsLabel: "Le détail",
+  whyTitle: "Pourquoi",
+  flowCommitted: "Charges fixes",
+  flowEveryday: "Dépenses courantes",
+  flowEverydayUnmeasured:
+    "Les dépenses courantes ne sont pas encore mesurées. Faites le bilan de quelques mois et elles seront déduites ici.",
+  flowCurrentStays: "Reste sur le compte courant",
+  flowCurrentFalls: "Sort du compte courant",
+
+  whatIfTo: "Sur",
+  whatIfToLabel: "Où va le supplément",
+  whatIfResultBy: "{amount} de plus d'ici {month}",
+  whatIfClear: "Tout effacer",
+
+  eventsHint: "Faites glisser un repère sur la courbe pour changer son mois.",
+  eventRaise: "Une augmentation",
+  eventBonus: "Une prime",
+  eventExpense: "Une grosse dépense",
+  eventRaiseLine: "+{amount} par mois dès {month}",
+  eventBonusLine: "+{amount} en {month}",
+  eventExpenseLine: "−{amount} en {month}",
+  eventRaiseAmount: "En plus chaque mois",
+  eventAmount: "Montant",
+  eventMonth: "Mois",
+  eventRemove: "Retirer {name}",
+  eventBeyond: "après l'horizon",
+  eventMarker: "{name}, {line}. Les flèches gauche et droite changent le mois.",
+
   whatIfTitle: "Et si…",
   whatIfLabel: "Mettre de côté en plus chaque mois",
   whatIfPerMonth: "+{amount} par mois",
