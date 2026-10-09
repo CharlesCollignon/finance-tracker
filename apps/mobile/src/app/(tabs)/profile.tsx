@@ -19,6 +19,8 @@ import { useBankState } from "@/hooks/useBankState";
 import { useFlag } from "@/hooks/useFlag";
 import { useRefreshable } from "@/hooks/useRefreshable";
 import { disconnectBank } from "@/lib/bank-connect";
+import { FEEDBACK_EMAIL } from "@/lib/env";
+import { sendFeedback } from "@/lib/feedback";
 import { Screen } from "@/components/ui/Screen";
 import { Text } from "@/components/ui/Text";
 import { PasskeysPanel } from "@/components/profile/SecurityCards";
@@ -184,6 +186,12 @@ export default function ProfileScreen() {
     if (!result.success) {
       setFlipped((current) => ({ ...current, [kind]: !next }));
       toast(resolveMessage(t, result.error), "error");
+    }
+  }
+
+  async function handleFeedback() {
+    if (FEEDBACK_EMAIL && !(await sendFeedback(t, FEEDBACK_EMAIL))) {
+      toast(t("profile.feedbackNoMail", { email: FEEDBACK_EMAIL }), "error");
     }
   }
 
@@ -474,6 +482,17 @@ export default function ProfileScreen() {
             />
           ))}
         </ListSection>
+
+        {FEEDBACK_EMAIL ? (
+          <ListSection title={t("profile.helpSection")}>
+            <ListRow
+              icon="chatbubble-ellipses-outline"
+              label={t("profile.feedback")}
+              hint={t("profile.feedbackHint")}
+              onPress={() => void handleFeedback()}
+            />
+          </ListSection>
+        ) : null}
 
         <ListSection title={t("profile.dataSection")}>
           <ListRow

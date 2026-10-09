@@ -108,6 +108,7 @@ export default async function ProfilePage({ searchParams }: ProfilePageProps) {
       aiAccount={aiAccount}
       space={owner?.space ?? null}
       userId={user.id}
+      feedbackEmail={process.env.FEEDBACK_EMAIL?.trim() || null}
       // From an invitation to connect an AI account: that row, open.
       initialOpen={
         params.ai === "connect" && aiAccount && !aiAccount.model

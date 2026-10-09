@@ -151,6 +151,12 @@ export const en = {
     notificationsFooterMobile:
       "The first switch is for this phone only. The others apply on all your devices.",
     onThisPhone: "On this phone",
+    helpSection: "Help",
+    feedback: "Send feedback",
+    feedbackHint: "A bug, an idea: an email is enough.",
+    feedbackSubject: "Feedback on Pluclair",
+    feedbackBody: "What happened, or what you miss:\n\n\n\n— {about}",
+    feedbackNoMail: "No email app on this device: write to {email}.",
     dataSection: "Data",
     audience: "Audience measurement",
     audienceHint:
