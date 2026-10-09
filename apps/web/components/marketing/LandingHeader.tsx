@@ -635,6 +635,27 @@ function FeaturedCard({
           {page.body}
         </span>
       </span>
+      {compact ? null : (
+        // The sum behind the figure, as the landing puts it together.
+        <span className="flex flex-col gap-1.5 font-mono text-xs tabular-nums">
+          {[
+            [copy.figure.balance, euro(leftToSpend.balance)],
+            [
+              copy.figure.charges.replace("{date}", date),
+              `−${euro(leftToSpend.charges)}`,
+            ],
+            [copy.figure.marge, `−${euro(leftToSpend.marge)}`],
+          ].map(([label, value]) => (
+            <span
+              key={label}
+              className="flex items-baseline justify-between gap-3 border-b border-white/[0.07] pb-1.5"
+            >
+              <span className="font-sans text-marketing-muted">{label}</span>
+              <span className="text-marketing-ink">{value}</span>
+            </span>
+          ))}
+        </span>
+      )}
       <span className="block">
         <span className="block text-xs text-marketing-muted">
           {copy.figure.title}
