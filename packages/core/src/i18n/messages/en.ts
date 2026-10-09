@@ -15,6 +15,7 @@ import { actionsEn } from "./actions.en";
 import { propertyEn } from "./property.en";
 import { spaceEn } from "./space.en";
 import { askEn } from "./ask.en";
+import { taxEn } from "./tax.en";
 
 /**
  * What the app says, in English.
@@ -3625,6 +3626,7 @@ export const en = {
   property: propertyEn,
   space: spaceEn,
   ask: askEn,
+  tax: taxEn,
 } satisfies MessageTree;
 
 export type Messages = typeof en;
