@@ -66,26 +66,26 @@ cp apps/web/.env.local.example apps/web/.env.local
 | `SUPABASE_SERVICE_ROLE_KEY`     | optional | “Delete account” on web, and the daily cron jobs                        |
 | `APPLE_TEAM_ID`                 | optional | Passkeys on iOS — Apple Team ID for AASA                                |
 | `ANDROID_SHA256_FINGERPRINTS`   | optional | Passkeys on Android — colon-hex SHA-256 fingerprints                    |
-| `MISTRAL_API_KEY`               | optional | Every model call: the month read, and the look-through's read and       |
-|                                 |          | instrument readings                                                     |
+| `AI_SECRETS_KEY`                | optional | 32 random bytes, base64; seals each user's AI account key. Reads and    |
+|                                 |          | questions need a connected account, so none are written without it      |
 | `BANK_SECRETS_KEY`              | optional | 32 random bytes, base64; seals each user's credentials file. Bank setup |
 |                                 |          | is then offered where the `bank.connect` flag is on                     |
 
-One key and one model for all three. `MISTRAL_MODEL` overrides the model
-everywhere; there is no per-feature override, on the grounds that a
-deployment wanting two models has a problem this file cannot fix.
+Pluclair holds no model key of its own. Every read and every question is
+written on the user's own AI account, connected from Profile through
+OpenRouter and paid by them, with the model they chose
+(`docs/plans/AI_ACCOUNT_PLAN.md`). Without a connected account, nothing is
+written and the screens invite the person to connect one.
 
-Every one of these is server-side. None is `NEXT_PUBLIC_`, none is read in a
-browser, and each feature exposes only a boolean — `monthReadConfigured()` and
-`walletReadConfigured()` — to anything that renders, so a missing key shows up
-as a surface without a button rather than a button that fails.
+Every one of these is server-side. None is `NEXT_PUBLIC_` and none is read in
+a browser; a screen learns only whether an account is connected and the name
+of its model.
 
-The look-through needs the **web search connector**, which is a Mistral plan
-entitlement rather than a separate key. Without it, reading an instrument
-answers 4xx, the attempt is refunded, and the geography and sector sections
-say "not yet read" — which is the truth. Overlap by index, weighted charges,
-wrapper eligibility and the target allocation are computed without any model
-and are unaffected.
+The look-through reads an instrument with OpenRouter's web search, on the
+same account. Without an answer, the attempt is refunded, and the geography
+and sector sections say "not yet read" — which is the truth. Overlap by index,
+weighted charges, wrapper eligibility and the target allocation are computed
+without any model and are unaffected.
 
 Google OAuth is configured in the **Supabase dashboard**, not in env files.
 
@@ -187,9 +187,10 @@ the morning's charges already be there rather than arrive a second later.
 refresh, for the same reason: a search-backed reading takes tens of seconds,
 and bolting one onto a run that already reprices every user's templates and
 reads a bank statement would be the thing that runs the function out of time
-— taking the statement down with it. It needs `MISTRAL_API_KEY` on top of
+— taking the statement down with it. It needs `AI_SECRETS_KEY` on top of
 the two above, and answers `{ "skipped": ... }` rather than failing when
-either is absent. One instrument per user, a few users per run: a portfolio's
+either is absent; it reads only for users with an AI account connected, on
+that account. One instrument per user, a few users per run: a portfolio's
 readings arrive over a few days, and nothing about it is urgent because a
 reading one day staler is a reading still being used.
 
@@ -310,11 +311,9 @@ four observations, and up to three suggestions. It is written on request — a
 button on the card — never on page load, and stored, so opening the page costs
 nothing.
 
-Set `MISTRAL_API_KEY` to enable it (`MISTRAL_MODEL` is optional and defaults
-to `mistral-small-latest`). The same key and model power the Bearing's
-arranger below — one provider, one account, one place the key is read. Without the key the card is simply absent, the way
-the bank buttons are absent without bank credentials. The key is server-side
-only; the phone reaches the feature through the web app's
+It is written on the user's own AI account, with the model they chose.
+Without one, the card invites them to connect it. The key is opened
+server-side only; the phone reaches the feature through the web app's
 `POST /api/month-read` with its Supabase session as a bearer token, which is
 the same route the bank refresh takes.
 
@@ -351,9 +350,8 @@ instead of inferring it from an absence.
 
 What goes over the wire is aggregates only — totals, rates, category sums, the
 close figures. No merchant names, no individual transactions, no balances, no
-IBANs, no account holder. Switch on the training opt-out in Mistral's console
-before using the key in earnest; that is a console setting, not something this
-repo can do for you.
+IBANs, no account holder. The provider behind the model is the user's
+choice, on their own OpenRouter account.
 
 The read is rendered against the figures as they stand _now_, not the ones
 stored with it, so a number in the prose can never contradict the card above
@@ -412,9 +410,9 @@ overrule by dragging, and all three mechanisms that produced that order — an
 arrangement, a set of pins, a twelve-slot template — were answers to "which of
 these figures matters most?". A list of five does not ask the question. So the
 model went, and with it the arrange button, its eight-a-month allowance, the
-pins in `user_preferences` and the `@dnd-kit` grid. There is no
-`MISTRAL_API_KEY` on this screen any more and no degraded state without one:
-the Bearing is the same surface for everybody.
+pins in `user_preferences` and the `@dnd-kit` grid. There is no model on
+this screen any more and no degraded state without one: the Bearing is the
+same surface for everybody.
 
 Migration `029`'s `bearing_arrangements` table is still there and nothing
 reads it. Dropping it is a migration, so it is recorded as debt in

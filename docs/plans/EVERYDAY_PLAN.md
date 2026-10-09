@@ -303,14 +303,19 @@ or against a live model yet.
 - [x] Never advice: an advice question gets the facts and a line saying
       Pluclair does not advise; a check drops any recommending sentence
       (« vous devriez », « je vous conseille », « you should »…).
-- [x] About 20 questions a month on Pluclair's key; unlimited with the
-      user's own AI account.
+- [x] ~~About 20 questions a month on Pluclair's key~~ — superseded
+      2026-10-09: questions only on the user's own AI account, which pays
+      for them; no count shown, only the account ceiling.
 - [x] Conversations kept 30 days, each one deletable, swept nightly, gone
       with the account. Personal space only, to begin.
-- [x] « L'IA de votre choix » opens to everyone (migration 065): the
-      owner chose, 2026-10-09, that `ai.account` means « the person's own
-      account if connected, Pluclair's key otherwise » — nobody loses the AI,
-      anyone may bring their own. Out of « Bientôt » on the landing.
+- [x] « L'IA de votre choix » opens to everyone (migration 065). The
+      owner first chose, 2026-10-09, « the person's own account if
+      connected, Pluclair's key otherwise », then the same day removed
+      Pluclair's key (Mistral) altogether: AI only on one's own OpenRouter
+      account, paid by the person. The invitations became a card with three
+      steps (an OpenRouter account, a few euros of credit, a model) leading
+      to Profile with the connect row open. Out of « Bientôt » on the
+      landing.
 
 ## Phase 8 — Tax time and PDF statements (branch `everyday-tax`) — tax page built, PDF waiting
 
