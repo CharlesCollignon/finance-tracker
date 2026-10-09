@@ -1,29 +1,22 @@
-import { useMemo, useState, type ComponentProps, type ReactNode } from "react";
-import { Text as RNText, View } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
+import { useMemo, useState } from "react";
+import { View } from "react-native";
 import { useRouter, type Href } from "expo-router";
-
-import { formatPercentLabel } from "@finance/core/constants";
 import { describePullAge } from "@finance/core/bank-pull";
 import { countryFlag, countryName } from "@finance/core/country-names";
 import { formatCharge } from "@finance/core/fund-costs";
 import {
-  SECTOR_IDS,
   drainStep,
   haltIsInstrumentSpecific,
   type DrainHalt,
-  type SectorId,
 } from "@finance/core/instrument-reading";
 import { INVESTMENT_WALLET_LABELS } from "@finance/core/investments";
 import {
-  AXIS_COVERAGE_FLOOR,
   HOLDING_KIND_LABELS,
   holdingsWorthShowing,
   type HoldingKind,
 } from "@finance/core/look-through";
 import { buildArbitrage } from "@finance/core/look-through-target";
 import { factsDigest } from "@finance/core/month-facts";
-import type { ReadSegment } from "@finance/core/month-read";
 import { exactModelLabel } from "@finance/core/model-name";
 import { BylineMark, WriterMark } from "@/components/AiMark";
 import {
@@ -32,16 +25,13 @@ import {
   walletReadFooting,
 } from "@finance/core/wallet-read";
 import { walletReadsRemaining } from "@finance/core/wallet-read-budget";
-import { INTL_LOCALES, type Locale } from "@finance/core/i18n/locale";
-import type { Key, Translate } from "@finance/core/i18n/t";
-
+import type { Key } from "@finance/core/i18n/t";
 import { ConnectAiInvite } from "@/components/ConnectAiInvite";
 import { PrivateAmount } from "@/components/PrivateAmount";
 import { StaggerItem } from "@/components/motion/Stagger";
 import { StatHero } from "@/components/StatHero";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
-import { Card } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Text } from "@/components/ui/Text";
 import { cn } from "@/lib/cn";
@@ -54,13 +44,20 @@ import {
 import { useFormatCurrency } from "@/providers/CurrencyProvider";
 import { useLocale, useT } from "@/providers/LocaleProvider";
 import { useToast } from "@/providers/ToastProvider";
-import { sansWeightFace } from "@/lib/text-class";
-import { ICON, TABULAR } from "@/theme/tokens";
+import { ICON } from "@/theme/tokens";
 import { useThemeColors } from "@/theme/useThemeColors";
-
 import { WeightBars } from "./WeightBars";
-
-type IconName = ComponentProps<typeof Ionicons>["name"];
+import {
+  Bias,
+  Line,
+  PartialAxis,
+  Section,
+  Segments,
+  ToneDot,
+  Uncovered,
+  sectorLabel,
+  share,
+} from "@/components/look-through/parts";
 
 /** What to say when a walk down the queue stops early — the web's map. */
 const HALT_MESSAGES: Record<Exclude<DrainHalt, "done">, Key> = {
@@ -75,11 +72,6 @@ const HALT_MESSAGES: Record<Exclude<DrainHalt, "done">, Key> = {
   "wrong-instrument": "lookThrough.halt.wrongInstrument",
   "signed-out": "lookThrough.halt.signedOut",
 };
-
-/** "34 %" from 0.34, through Intl and the catalogue. */
-function share(weight: number, locale: Locale): string {
-  return formatPercentLabel(Math.round(weight * 100), locale);
-}
 
 /**
  * What the wallets are made of — the web's `LookThroughView`, on a phone.
@@ -749,207 +741,3 @@ export function LookThroughView({ data }: { data: LookThroughData }) {
     </View>
   );
 }
-
-/** A titled block, the shape every section on this screen takes. */
-function Section({
-  icon,
-  title,
-  tone,
-  children,
-}: {
-  icon: IconName;
-  title: string;
-  tone?: "warning";
-  children: ReactNode;
-}) {
-  const colors = useThemeColors();
-  return (
-    <Card bezel innerClassName="gap-4 p-5">
-      <View className="flex-row items-center gap-2">
-        <Ionicons
-          name={icon}
-          size={ICON.md}
-          color={tone === "warning" ? colors.warning : colors.mutedForeground}
-        />
-        <Text
-          accessibilityRole="header"
-          numberOfLines={1}
-          className="min-w-0 flex-1 text-sm font-semibold"
-        >
-          {title}
-        </Text>
-      </View>
-      {children}
-    </Card>
-  );
-}
-
-/** One group of holdings the shares do not cover; drawn only when it has any. */
-function Uncovered({
-  when,
-  heading,
-  body,
-  rows,
-  children,
-}: {
-  when: boolean;
-  heading: string;
-  body: string;
-  rows: { positionId: string; name: string; value: number }[];
-  children?: ReactNode;
-}) {
-  const formatEuro = useFormatCurrency();
-  if (!when) {
-    return null;
-  }
-  return (
-    <View className="gap-2 border-t border-border pt-3">
-      <Text className="text-sm font-semibold">{heading}</Text>
-      <Text variant="muted" className="text-sm">
-        {body}
-      </Text>
-      <View className="gap-1">
-        {rows.map((row) => (
-          <View
-            key={row.positionId}
-            className="flex-row items-baseline justify-between gap-3"
-          >
-            <Text numberOfLines={1} className="min-w-0 flex-1 text-sm">
-              {row.name}
-            </Text>
-            <PrivateAmount className="text-sm text-muted-foreground">
-              {formatEuro(row.value)}
-            </PrivateAmount>
-          </View>
-        ))}
-      </View>
-      {children}
-    </View>
-  );
-}
-
-/** A label and a figure on one line; only an amount of money is masked. */
-function Line({
-  label,
-  value,
-  strong = false,
-  money = false,
-}: {
-  label: string;
-  value: string;
-  strong?: boolean;
-  money?: boolean;
-}) {
-  const figure = cn("text-sm", strong && "font-semibold");
-  return (
-    <View className="flex-row items-baseline justify-between gap-3">
-      <Text variant="muted" className="min-w-0 flex-1 text-sm">
-        {label}
-      </Text>
-      {money ? (
-        <PrivateAmount className={figure}>{value}</PrivateAmount>
-      ) : (
-        <Text className={cn("font-sans tabular-nums", figure)}>{value}</Text>
-      )}
-    </View>
-  );
-}
-
-/** A region's share, and what it weighs against the market. */
-function Bias({
-  label,
-  share: weight,
-  factor,
-}: {
-  label: string;
-  share: number;
-  factor: number | null;
-}) {
-  const t = useT();
-  const locale = useLocale();
-  return (
-    <View className="min-w-0 flex-1">
-      <Text className="font-sans tabular-nums text-sm font-semibold">
-        {share(weight, locale)}
-      </Text>
-      <Text variant="micro">{label}</Text>
-      {factor !== null && factor > 0 ? (
-        <Text variant="micro">
-          {/* Within a sixth of the market's weight is "in line": the
-              reference is approximate itself. */}
-          {Math.abs(factor - 1) < 0.15
-            ? t("lookThrough.inLineWithMarket")
-            : t("lookThrough.timesMarket", {
-                factor: new Intl.NumberFormat(INTL_LOCALES[locale], {
-                  maximumFractionDigits: factor < 10 ? 1 : 0,
-                }).format(factor),
-              })}
-        </Text>
-      ) : null}
-    </View>
-  );
-}
-
-/** Said out loud when a factsheet did not publish a full breakdown. */
-function PartialAxis({ coverage, rows }: { coverage: number; rows: number }) {
-  const t = useT();
-  const locale = useLocale();
-  if (rows === 0 || coverage >= AXIS_COVERAGE_FLOOR) {
-    return null;
-  }
-  return (
-    <Text variant="micro" className="text-warning">
-      {t("lookThrough.caveats.partialAxis", {
-        coverage: share(coverage, locale),
-      })}
-    </Text>
-  );
-}
-
-function ToneDot({ tone }: { tone: "good" | "watch" | "neutral" }) {
-  const colors = useThemeColors();
-  return (
-    <View
-      className="mt-1.5 h-1.5 w-1.5 rounded-full"
-      style={{
-        backgroundColor:
-          tone === "good"
-            ? colors.success
-            : tone === "watch"
-              ? colors.warning
-              : colors.mutedForeground,
-      }}
-    />
-  );
-}
-
-/**
- * A claim, with the app's own figures spliced into it. Raw text nested in the
- * caller's line, so each piece inherits its size and colour; only the figures
- * change weight.
- */
-function Segments({ segments }: { segments: ReadSegment[] }) {
-  return (
-    <>
-      {segments.map((segment, index) =>
-        segment.kind === "text" ? (
-          <RNText key={index}>{segment.text}</RNText>
-        ) : (
-          <RNText key={index} style={FIGURE_STYLE}>
-            {segment.display}
-          </RNText>
-        ),
-      )}
-    </>
-  );
-}
-
-const FIGURE_STYLE = [TABULAR, sansWeightFace("font-sans font-semibold")];
-
-/** A sector's name in the reader's language, or the label it came with. */
-function sectorLabel(t: Translate, id: string, fallback: string): string {
-  return (SECTOR_IDS as readonly string[]).includes(id)
-    ? t(`lookThrough.sectorLabels.${id as SectorId}`)
-    : fallback;
-}
-
