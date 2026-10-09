@@ -284,18 +284,18 @@ export function SpentCardMock() {
   const t = useT();
   const locale = useLocale();
   const euro = useEuro();
-  const { spent, bearingMonth: month } = landingSampleFor(locale);
+  const { expenses, bearingMonth: month } = landingSampleFor(locale);
   return (
     <BearingCardFrame
       icon={<Receipt size={14} weight="bold" />}
       title={t("bearingMonth.spent")}
     >
       <p className="font-serif text-3xl font-semibold tracking-tight tabular-nums">
-        {euro(spent)}
+        {euro(expenses)}
       </p>
       <p className="text-sm text-success">
         {t("bearingMonth.spentLessSoFar", {
-          amount: euro(month.spentBefore - spent),
+          amount: euro(month.spentBefore - expenses),
           month: formatMonthLabel(2026, 2, locale),
         })}
       </p>

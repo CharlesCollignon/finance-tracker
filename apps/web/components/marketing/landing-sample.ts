@@ -27,7 +27,14 @@ export const landingSample = {
   month: 3,
   remaining: 1247,
   income: 3200,
+  /** Everything recorded leaving in March so far — what the Journal's « Sorties » adds up. */
   spent: 1953,
+  /**
+   * The part of `spent` that is spending: the expenses alone, without what
+   * went to savings and the PEA — what « Dépensé » and « Où c'est parti »
+   * count. `spendByCategory` sums to it.
+   */
+  expenses: 1453,
   /** The Plan page: a year ahead, the milestones on the way, the cushion. */
   plan: {
     yearAhead: 14850,
@@ -85,10 +92,10 @@ export const landingSample = {
     {
       name: "PEA DCA",
       meta: "Investments",
-      day: 15,
-      dayLabel: "15 Mar",
+      day: 13,
+      dayLabel: "13 Mar",
       icon: "chart-line",
-      amount: -200,
+      amount: -50,
       type: "investment" as CategoryType,
     },
     {
@@ -278,7 +285,7 @@ export const landingSample = {
    * `leaving`. `lowest` is the curve's lowest planned point.
    *
    * `spentTrend` is six months of spending, March so far last, which is
-   * `spent`; `spentBefore` is February's spending on the same day.
+   * `expenses`; `spentBefore` is February's spending on the same day.
    */
   bearingMonth: {
     curve: [
@@ -333,14 +340,14 @@ export const landingSample = {
     ],
     upcomingMore: 1,
     spentTrend: [
-      { month: 10, total: 2140 },
-      { month: 11, total: 1980 },
-      { month: 12, total: 2390 },
-      { month: 1, total: 2050 },
-      { month: 2, total: 2256 },
-      { month: 3, total: 1953 },
+      { month: 10, total: 1640 },
+      { month: 11, total: 1520 },
+      { month: 12, total: 1890 },
+      { month: 1, total: 1550 },
+      { month: 2, total: 1706 },
+      { month: 3, total: 1453 },
     ],
-    spentBefore: 2105,
+    spentBefore: 1580,
   },
   /**
    * The forward projection's two tracks, over a year.
@@ -427,7 +434,7 @@ export const landingSample = {
       },
       {
         tone: "flat" as const,
-        text: "Housing, at €850, is unchanged for the fourth month and is now 44% of what you spend.",
+        text: "Housing, at €850, is unchanged for the fourth month and is now 59% of what you spend.",
       },
     ],
     suggestions: [
@@ -599,31 +606,26 @@ export const landingSample = {
     },
   },
 
-  /** Where the month's spending went, largest first. Sums to `spent`. */
+  /** Where the month's spending went, largest first. Sums to `expenses`. */
   spendByCategory: [
     { label: "Housing", icon: "house", amount: 850, colorVar: "--chart-1" },
-    {
-      label: "Investments",
-      icon: "chart-line",
-      amount: 400,
-      colorVar: "--chart-4",
-    },
-    {
-      label: "Savings",
-      icon: "piggy-bank",
-      amount: 300,
-      colorVar: "--chart-3",
-    },
     {
       label: "Groceries",
       icon: "shopping-cart",
       amount: 218,
       colorVar: "--chart-2",
     },
+    { label: "Transport", icon: "car", amount: 86, colorVar: "--chart-3" },
+    {
+      label: "Utilities",
+      icon: "lightning",
+      amount: 65,
+      colorVar: "--chart-4",
+    },
     {
       label: "Everything else",
       icon: "dots-three",
-      amount: 185,
+      amount: 234,
       colorVar: "--chart-5",
     },
   ],

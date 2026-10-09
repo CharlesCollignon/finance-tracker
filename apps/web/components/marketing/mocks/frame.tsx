@@ -472,7 +472,7 @@ export function WebShell({
         {/* The real app's column at this width, `PageContainer`'s `lg` step,
           rather than the whole frame: with no rail beside it, content left
           to fill 1200px would be drawn wider than the app ever draws it. */}
-        <div className="mx-auto flex min-h-0 w-full max-w-5xl flex-1 flex-col gap-4 px-6 py-5">
+        <div className="mx-auto flex min-h-0 w-full max-w-5xl flex-1 flex-col gap-4 px-6 py-5 [&>*]:shrink-0">
           {children}
         </div>
       </div>
@@ -565,7 +565,7 @@ export function MobileShell({
             </h1>
           )}
         </div>
-        <div className="flex shrink-0 items-center gap-2 text-muted-foreground">
+        <div className="flex shrink-0 items-center gap-1 text-muted-foreground">
           {[Sparkle, ArrowClockwise, Eye].map((Icon, index) => {
             const here = index === 0 && active === "ask.title";
             return (
@@ -585,7 +585,9 @@ export function MobileShell({
           </span>
         </div>
       </header>
-      <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-hidden px-4 py-4">
+      {/* Each part keeps its height and the screen ends where it ends, as a
+          scrolling screen does — a flex column would squeeze them instead. */}
+      <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-hidden px-4 py-4 [&>*]:shrink-0">
         {children}
       </div>
       {back ? null : (

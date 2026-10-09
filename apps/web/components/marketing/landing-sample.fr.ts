@@ -61,7 +61,7 @@ export const landingSampleFr = {
     observations: [
       "Vous êtes à +1 247 € sur le mois à douze jours de la fin, devant là où février en était le même jour.",
       "Les dépenses non enregistrées de février se montent à 218 € — dans votre marge de 260 €, mais c'est la plus grosse ligne pour laquelle vous n'avez aucune écriture.",
-      "Le logement, à 850 €, est inchangé pour le quatrième mois et représente maintenant 44 % de ce que vous dépensez.",
+      "Le logement, à 850 €, est inchangé pour le quatrième mois et représente maintenant 59 % de ce que vous dépensez.",
     ],
     suggestions: [
       "Les courses en sont à 218 € à douze jours de la fin. Noter les petits achats cette semaine montrerait si la ligne non enregistrée, c'est aussi les courses.",
@@ -116,9 +116,9 @@ export const landingSampleFr = {
 
   spendByCategory: [
     "Logement",
-    "Investissements",
-    "Épargne",
     "Courses",
+    "Transports",
+    "Charges",
     "Tout le reste",
   ],
 };
