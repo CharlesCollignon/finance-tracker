@@ -8,6 +8,7 @@ import {
   formatCharge,
   parseChargeInput,
   savingAtCheapest,
+  walletFeeRates,
   type PositionCostInput,
   type WrapperFees,
 } from "./fund-costs";
@@ -321,5 +322,24 @@ describe("buildFundCosts with envelope fees", () => {
     expect(summary.envelopeCoveredValue).toBe(0);
     expect(summary.envelopeAnnualCost).toBe(0);
     expect(summary.weightedEnvelopeFee).toBeNull();
+  });
+});
+
+describe("walletFeeRates", () => {
+  it("weights the funds by value and adds the envelope's fee", () => {
+    const rates = walletFeeRates(
+      [
+        { walletId: "av", marketValue: 3000, ongoingCharge: 0.002 },
+        { walletId: "av", marketValue: 1000, ongoingCharge: 0.006 },
+        { walletId: "pea", marketValue: 5000, ongoingCharge: 0.0012 },
+        // Never entered: left out of the weighting, not counted free.
+        { walletId: "pea", marketValue: 5000, ongoingCharge: null },
+        { walletId: "crypto", marketValue: 800, ongoingCharge: null },
+      ],
+      { av: 0.006 },
+    );
+    expect(rates.av).toBeCloseTo(0.003 + 0.006, 6);
+    expect(rates.pea).toBeCloseTo(0.0012, 6);
+    expect(rates.crypto).toBeUndefined();
   });
 });

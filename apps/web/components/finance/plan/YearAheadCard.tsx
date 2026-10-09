@@ -11,11 +11,12 @@ import {
 } from "motion/react";
 import { ArrowRight, CalendarCheck } from "@phosphor-icons/react";
 import { formatMonthCompact } from "@finance/core/constants";
-import type { Envelope } from "@finance/core/future-plan";
+import type { Envelope, EnvelopeId } from "@finance/core/future-plan";
 import type { ForwardProjection } from "@finance/core/projection";
 import {
   buildYearAhead,
   YEAR_AHEAD_EVENT_DEFAULTS,
+  YEAR_AHEAD_INFLATION,
   YEAR_AHEAD_HORIZONS,
   type YearAheadAccountId,
   type YearAheadEvent,
@@ -33,6 +34,7 @@ import { useFormatCurrency } from "@/lib/use-currency";
 import { cn } from "@/lib/utils";
 import { PlanCard } from "./plan-controls";
 import { accountColors, accountNameKey, FOLLOW } from "./year-ahead-parts";
+import { YearAheadAccounts } from "./YearAheadAccounts";
 import { YearAheadChart } from "./YearAheadChart";
 import { YearAheadWhatIf } from "./YearAheadWhatIf";
 import { YearAheadWhy } from "./YearAheadWhy";
@@ -48,6 +50,8 @@ interface YearAheadCardProps {
   envelopes: readonly Envelope[];
   /** The wallets' market value is still on its way. */
   pending: boolean;
+  /** Each wallet's yearly fees, taken off its return. */
+  fees: Partial<Record<EnvelopeId, number>>;
   settings: YearAheadSettings;
   onSettingsChange: (next: YearAheadSettings) => void;
   /** Where « Et si… » goes, already checked against the accounts there are. */
@@ -117,6 +121,7 @@ function YearAhead({
   projection,
   envelopes,
   pending,
+  fees,
   settings,
   onSettingsChange,
   target,
@@ -147,10 +152,22 @@ function YearAhead({
         events: settings.events,
         hidden,
         complete: !pending,
+        inflation: YEAR_AHEAD_INFLATION,
+        realTerms: settings.realTerms,
+        fees,
       });
     const built = build(settings.hidden);
     return built.bands.every((band) => band.hidden) ? build([]) : built;
-  }, [points, opening.onHand, envelopes, settings, extra, target, pending]);
+  }, [
+    points,
+    opening.onHand,
+    envelopes,
+    settings,
+    extra,
+    target,
+    pending,
+    fees,
+  ]);
 
   // What the extra alone adds: the figure with it, against the figure
   // without it, events and all, on the same accounts.
@@ -167,9 +184,21 @@ function YearAhead({
               .filter((band) => band.hidden)
               .map((band) => band.id),
             complete: !pending,
+            inflation: YEAR_AHEAD_INFLATION,
+            realTerms: settings.realTerms,
+            fees,
           })
         : null,
-    [points, opening.onHand, envelopes, settings, extra, ahead.bands, pending],
+    [
+      points,
+      opening.onHand,
+      envelopes,
+      settings,
+      extra,
+      ahead.bands,
+      pending,
+      fees,
+    ],
   );
 
   const months = ahead.months;
@@ -297,13 +326,31 @@ function YearAhead({
               ? t("futurePlan.yearAllGrounded", { month: endLabel })
               : t("futurePlan.yearAllAdded", { month: endLabel })}
         </p>
+        {ahead.range ? (
+          <p className="privacy-sensitive mt-1 text-sm text-muted-foreground">
+            {t("futurePlan.rangeLine", {
+              low: money(ahead.range.low[months] ?? 0),
+              high: money(ahead.range.high[months] ?? 0),
+            })}
+          </p>
+        ) : null}
+        {end - ahead.afterTax.total >= 1 ? (
+          <p className="privacy-sensitive mt-1 text-sm text-muted-foreground">
+            {t("futurePlan.afterTaxLine", {
+              amount: money(ahead.afterTax.total),
+            })}
+          </p>
+        ) : null}
+        <TodaysEuros
+          on={settings.realTerms}
+          onChange={(realTerms) => update({ realTerms })}
+        />
       </div>
 
       <YearAheadChart
         ahead={ahead}
         color={color}
         name={name}
-        focus={focus}
         showBaseline={played}
         events={settings.events}
         onMoveEvent={(id, month) => changeEvent(id, { month })}
@@ -313,22 +360,27 @@ function YearAhead({
         format={money}
       />
 
-      <Legend
+      <YearAheadAccounts
         bands={ahead.bands}
         months={months}
         pending={pending}
         played={played}
+        focus={focus}
         color={color}
         name={name}
         onToggle={toggle}
-        onFocus={setFocus}
         format={money}
       />
-      {!grounded ? (
-        <p className={cn(MICRO, "-mt-2 text-muted-foreground")}>
-          {t("futurePlan.currentNoBank")}
+      <div className="-mt-1 flex flex-col gap-1">
+        {!grounded ? (
+          <p className={cn(MICRO, "text-muted-foreground")}>
+            {t("futurePlan.currentNoBank")}
+          </p>
+        ) : null}
+        <p className={cn(MICRO, "max-w-3xl text-muted-foreground")}>
+          {t("futurePlan.assumptions")}
         </p>
-      ) : null}
+      </div>
 
       <div className="flex flex-col gap-4 border-t border-border pt-5">
         <Segmented
@@ -473,121 +525,47 @@ function Segmented<T extends string | number>({
 }
 
 /**
- * One chip per account: its colour, its name, what it holds at the end. A
- * press takes it out of the figure and the chart, another brings it back;
- * pointing at one lights its band. The last one showing cannot be taken out.
+ * « En euros d'aujourd'hui »: a small switch under the figure. Off, the
+ * figures are the euros the accounts will show; on, each is what it would
+ * buy today, prices having risen by `YEAR_AHEAD_INFLATION` a year.
  */
-function Legend({
-  bands,
-  months,
-  pending,
-  played,
-  color,
-  name,
-  onToggle,
-  onFocus,
-  format,
+function TodaysEuros({
+  on,
+  onChange,
 }: {
-  bands: ReturnType<typeof buildYearAhead>["bands"];
-  months: number;
-  pending: boolean;
-  played: boolean;
-  color: (id: YearAheadAccountId) => string;
-  name: (id: YearAheadAccountId) => string;
-  onToggle: (id: YearAheadAccountId) => void;
-  onFocus: (id: YearAheadAccountId | null) => void;
-  format: (value: number) => string;
+  on: boolean;
+  onChange: (on: boolean) => void;
 }) {
   const t = useT();
   const reduce = useReducedMotion() ?? false;
-  const shown = bands.filter((band) => !band.hidden).length;
-
   return (
-    <ul className="flex flex-wrap gap-2">
-      <AnimatePresence initial={false}>
-        {bands.map((band) => {
-          const last = !band.hidden && shown === 1;
-          return (
-            <m.li
-              key={band.id}
-              layout
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.9 }}
-              transition={reduce ? { duration: 0 } : FOLLOW}
-            >
-              <m.button
-                type="button"
-                aria-pressed={!band.hidden}
-                aria-label={t("futurePlan.accountToggle", {
-                  name: name(band.id),
-                })}
-                disabled={last}
-                whileTap={reduce || last ? undefined : { scale: 0.95 }}
-                onClick={() => onToggle(band.id)}
-                onPointerEnter={() => !band.hidden && onFocus(band.id)}
-                onPointerLeave={() => onFocus(null)}
-                onFocus={() => !band.hidden && onFocus(band.id)}
-                onBlur={() => onFocus(null)}
-                className={cn(
-                  "flex min-h-11 items-center gap-2 rounded-full border px-3 text-left text-sm lg:min-h-10",
-                  "transition-colors duration-hover",
-                  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-card",
-                  band.hidden
-                    ? "border-dashed border-border text-muted-foreground hover:text-foreground"
-                    : "border-border bg-muted/40 hover:bg-muted",
-                  last && "cursor-default",
-                )}
-              >
-                <span
-                  aria-hidden
-                  className={cn(
-                    "size-2.5 shrink-0 rounded-full transition-transform duration-hover",
-                    band.hidden && "scale-75 opacity-40",
-                  )}
-                  style={{ background: color(band.id) }}
-                />
-                <span className={cn(band.hidden && "line-through")}>
-                  {name(band.id)}
-                </span>
-                {!band.hidden ? (
-                  <AnimatedAmount
-                    value={band.values[months] ?? 0}
-                    format={format}
-                    className="font-medium tabular-nums"
-                  />
-                ) : null}
-              </m.button>
-            </m.li>
-          );
-        })}
-        {pending ? (
-          <m.li
-            key="pending"
-            layout
-            exit={{ opacity: 0, scale: 0.9 }}
-            className="flex min-h-11 animate-pulse items-center rounded-full border border-dashed border-border px-3 text-sm text-muted-foreground lg:min-h-10"
-          >
-            {t("futurePlan.accountsPending")}
-          </m.li>
-        ) : null}
-        {played ? (
-          <m.li
-            key="baseline"
-            layout
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="flex min-h-11 items-center gap-2 px-1 text-xs text-muted-foreground lg:min-h-10"
-          >
-            <span
-              aria-hidden
-              className="h-0 w-4 border-t-2 border-dashed border-foreground/85"
-            />
-            {t("planWeb.asItStands")}
-          </m.li>
-        ) : null}
-      </AnimatePresence>
-    </ul>
+    <button
+      type="button"
+      role="switch"
+      aria-checked={on}
+      onClick={() => onChange(!on)}
+      className={cn(
+        "mt-3 flex min-h-9 items-center gap-2 rounded-full pr-2 text-xs font-medium",
+        "transition-colors duration-hover",
+        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+        on ? "text-foreground" : "text-muted-foreground hover:text-foreground",
+      )}
+    >
+      <span
+        aria-hidden
+        className={cn(
+          "relative flex h-4 w-7 items-center rounded-full px-0.5 transition-colors duration-hover",
+          on ? "bg-foreground" : "bg-foreground/20",
+        )}
+      >
+        <m.span
+          initial={false}
+          animate={{ x: on ? 12 : 0 }}
+          transition={reduce ? { duration: 0 } : FOLLOW}
+          className="size-3 rounded-full bg-background"
+        />
+      </span>
+      {t("futurePlan.realTerms")}
+    </button>
   );
 }
