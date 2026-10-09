@@ -6,7 +6,13 @@ import type { Metadata, Viewport } from "next";
 // "… Fallback" face next/font generates. That face is metric-matched to the
 // real one, and it is what stops the hero figure jumping when the webfont
 // swaps in. globals.css now composes these instead.
-import { Fraunces, IBM_Plex_Mono, Instrument_Sans } from "next/font/google";
+//
+// The files are in `app/fonts`, not fetched from Google at build time.
+// Google Fonts sometimes answers next/font/google with `/l/font?kit=…&…`
+// URLs, which Turbopack splits at the `&`, and the build fails — it took a
+// production deploy down on 2026-10-09 on code a preview had just built.
+// These are the same latin files Google served, OFL licences beside them.
+import localFont from "next/font/local";
 import "./globals.css";
 import { getLocale } from "@/lib/locale";
 import { LocaleProvider } from "@/lib/locale-context";
@@ -14,25 +20,40 @@ import { getCurrency } from "@/lib/currency";
 import { CurrencyProvider } from "@/lib/use-currency";
 import { LocaleSuggestion } from "@/components/layout/LocaleSuggestion";
 
-const instrumentSans = Instrument_Sans({
-  subsets: ["latin"],
+const instrumentSans = localFont({
+  src: "./fonts/instrument-sans-latin.woff2",
   variable: "--font-instrument-sans",
-  weight: ["400", "500", "600", "700"],
+  weight: "400 700",
   display: "swap",
 });
 
-const fraunces = Fraunces({
-  subsets: ["latin"],
+const fraunces = localFont({
+  src: [
+    {
+      path: "./fonts/fraunces-latin.woff2",
+      weight: "400 600",
+      style: "normal",
+    },
+    {
+      path: "./fonts/fraunces-italic-latin.woff2",
+      weight: "400 600",
+      style: "italic",
+    },
+  ],
   variable: "--font-fraunces",
-  weight: ["400", "500", "600"],
-  style: ["normal", "italic"],
   display: "swap",
+  // A serif: its metric-matched fallback is built on Times New Roman, as
+  // next/font/google built it.
+  adjustFontFallback: "Times New Roman",
 });
 
-const plexMono = IBM_Plex_Mono({
-  subsets: ["latin"],
+const plexMono = localFont({
+  src: [
+    { path: "./fonts/ibm-plex-mono-400-latin.woff2", weight: "400" },
+    { path: "./fonts/ibm-plex-mono-500-latin.woff2", weight: "500" },
+    { path: "./fonts/ibm-plex-mono-600-latin.woff2", weight: "600" },
+  ],
   variable: "--font-plex-mono",
-  weight: ["400", "500", "600"],
   display: "swap",
 });
 
