@@ -297,7 +297,7 @@ export const landingCopy = {
       steps: [
         {
           title: "See the year ahead",
-          body: "Your accounts month by month over the next twelve, from what you have already planned. Slide to set a little more aside and watch the year end higher.",
+          body: "Every account, month by month, from what you have already planned, and why the money ends up there. Slide to set a little more aside in the account you choose, and watch the year end higher.",
         },
         {
           title: "Your safety cushion",
@@ -484,11 +484,9 @@ export const landingCopy = {
       from: "From",
     },
     plan: {
-      heading: "Your cushion, sped up",
-      hint: "Slide what you set aside each month: the milestones move with it.",
-      monthly: "Set aside each month",
-      inMonths: "in {count} months",
-      reached: "Reached",
+      heading: "Your money, account by account",
+      hint: "Pick a window, set a little more aside, choose where: every account moves with it.",
+      note: "Nothing is moved: this is the Plan’s arithmetic on a sample month.",
     },
     wallets: {
       heading: "What one fund really holds",

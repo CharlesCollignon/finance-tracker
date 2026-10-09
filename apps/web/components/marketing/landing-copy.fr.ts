@@ -273,7 +273,7 @@ export const landingCopyFr: LandingCopySections & {
       steps: [
         {
           title: "Voyez l’année à venir",
-          body: "Vos comptes mois par mois sur les douze prochains, d’après ce que vous avez déjà prévu. Faites glisser pour mettre un peu plus de côté, et l’année finit plus haut.",
+          body: "Chaque compte mois par mois, d’après ce que vous avez déjà prévu, et pourquoi l’argent y arrive. Faites glisser pour mettre un peu plus de côté sur le compte de votre choix, et l’année finit plus haut.",
         },
         {
           title: "Votre matelas de sécurité",
@@ -449,11 +449,9 @@ export const landingCopyFr: LandingCopySections & {
       from: "D’où",
     },
     plan: {
-      heading: "Votre matelas, en accéléré",
-      hint: "Faites glisser ce que vous mettez de côté chaque mois : les caps bougent avec.",
-      monthly: "Mis de côté chaque mois",
-      inMonths: "dans {count} mois",
-      reached: "Atteint",
+      heading: "Votre argent, compte par compte",
+      hint: "Choisissez l’horizon, mettez un peu plus de côté, choisissez où : chaque compte bouge avec.",
+      note: "Rien n’est déplacé : c’est le calcul du Plan, sur un mois d’exemple.",
     },
     wallets: {
       heading: "Ce que contient vraiment un fonds",

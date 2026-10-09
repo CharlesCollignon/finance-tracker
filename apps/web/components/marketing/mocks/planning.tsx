@@ -3,11 +3,8 @@
 import type { ReactNode } from "react";
 import { CalendarCheck, ShieldCheck, Trophy } from "@phosphor-icons/react";
 import { formatMonthCompact, formatMonthLabel } from "@finance/core/constants";
-import { CUSHION_TARGETS, type Envelope } from "@finance/core/future-plan";
-import type { Locale } from "@finance/core/i18n/locale";
-import type { ProjectionPoint } from "@finance/core/projection";
+import { CUSHION_TARGETS } from "@finance/core/future-plan";
 import {
-  buildYearAhead,
   resampleSeries,
   stackBands,
   YEAR_AHEAD_HORIZONS,
@@ -20,6 +17,10 @@ import {
 import { Orb } from "@/components/brand/Orb";
 import { landingSampleFor } from "@/components/marketing/landing-sample";
 import { MOCK_GLASS } from "@/components/marketing/mocks/bearing";
+import {
+  SAMPLE_ENVELOPES,
+  sampleYearAhead,
+} from "@/components/marketing/year-ahead-sample";
 import { cn } from "@/lib/utils";
 import { useLocale, useT } from "@/lib/locale-context";
 import {
@@ -66,81 +67,6 @@ export function PlanCardFrame({
       {children}
     </section>
   );
-}
-
-/**
- * The sample person's accounts, as the Plan reads them: the Livret A their
- * « Emergency fund » feeds, the PEA their DCA buys into, and the CTO and
- * crypto from Placements, at the long view's returns.
- */
-const SAMPLE_ENVELOPES: Envelope[] = [
-  {
-    id: "livret_a",
-    initial: 2900,
-    monthly: 150,
-    annualReturn: 0.017,
-    taxOnGains: 0,
-  },
-  {
-    id: "pea",
-    initial: 6800,
-    monthly: 200,
-    annualReturn: 0.07,
-    taxOnGains: 0.186,
-  },
-  {
-    id: "cto",
-    initial: 4200,
-    monthly: 0,
-    annualReturn: 0.07,
-    taxOnGains: 0.314,
-  },
-  {
-    id: "crypto",
-    initial: 1480,
-    monthly: 0,
-    annualReturn: 0.05,
-    taxOnGains: 0.314,
-  },
-];
-
-/** What the current account holds on the 19th: Le point's balance. */
-const SAMPLE_ON_HAND = 2410;
-
-/**
- * The twelve months to March 2027 from the sample's own month: the salary
- * in, the charges and an everyday's spending out, the savings and the DCA
- * set aside — so what stays on the current account each month is the rest.
- */
-function sampleYearAhead(locale: Locale): YearAheadData {
-  const income = 3200;
-  const expense = 959;
-  const setAside = 350;
-  const unrecorded = 1500;
-  const points: ProjectionPoint[] = Array.from({ length: 12 }, (_, index) => {
-    const year = 2026 + Math.floor((3 + index) / 12);
-    const month = ((3 + index) % 12) + 1;
-    const left = (income - expense - setAside - unrecorded) * (index + 1);
-    return {
-      monthKey: `${year}-${String(month).padStart(2, "0")}`,
-      label: formatMonthLabel(year, month, locale),
-      year,
-      month,
-      income,
-      expense,
-      setAside,
-      deployed: 0,
-      unrecorded,
-      onHand: SAMPLE_ON_HAND + left,
-      kept: SAMPLE_ON_HAND + left + setAside * (index + 1),
-    };
-  });
-  return buildYearAhead({
-    points,
-    onHandToday: SAMPLE_ON_HAND,
-    envelopes: SAMPLE_ENVELOPES,
-    horizon: 12,
-  });
 }
 
 const color = accountColors(SAMPLE_ENVELOPES);
@@ -244,7 +170,7 @@ function YearAhead({ compact }: { compact: boolean }) {
   const locale = useLocale();
   const euro = useEuro();
   const { plan } = landingSampleFor(locale);
-  const ahead = sampleYearAhead(locale);
+  const { ahead } = sampleYearAhead(locale);
   const end = ahead.total[ahead.months]!;
   const name = (id: Parameters<typeof accountNameKey>[0]) =>
     t(accountNameKey(id));
