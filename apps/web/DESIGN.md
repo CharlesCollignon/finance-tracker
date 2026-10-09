@@ -950,6 +950,13 @@ horizon — the hero's sunrise, answered — its light following the pointer.
 Under reduced motion none of it pins or turns: each section stands at its
 final state, the scroll is not smoothed, and the orb draws one still frame.
 
+The marketing nav is one glass shape (`LandingHeader.tsx`): « Le produit »
+(the burger on a phone) grows the pill down into its own panel on a spring,
+the pages arriving in it as cards — Le point featured with its figure, the
+rest in three groups — and past the hero the pill tightens, narrower and a
+little higher, the wordmark folded behind its orb and « Se connecter » folded
+away until the menu is opened again.
+
 ## Do's and Don'ts
 
 ### Do:
