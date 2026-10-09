@@ -65,10 +65,7 @@ export async function MonthReadSlot({
         facts={facts}
         readFacts={readFacts}
         readLocale={view?.locale ?? locale}
-        writesLeft={writesRemaining(
-          stored?.tally ?? null,
-          writer.account ? ACCOUNT_ALLOWANCE : undefined,
-        )}
+        writesLeft={writesRemaining(stored?.tally ?? null, ACCOUNT_ALLOWANCE)}
         writer={writer}
         readModel={stored?.read ? stored.model : null}
       />

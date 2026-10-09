@@ -7,11 +7,10 @@ import type { Writer } from "./writer";
  * One adapter for every written read — the month, a category, the band's
  * order, the portfolio — whoever writes it.
  *
- * Mistral and OpenRouter speak the same chat-completions dialect, structured
- * output included, so what differs between Pluclair's key and a user's
- * account is the `Writer`: where to send, with which key, which model, and
- * what else the service wants. What differs between one read and another is
- * the `ReadSourceConfig`. Everything else — the request, the timeout, the
+ * Every call goes to OpenRouter's chat completions on the person's own
+ * account, structured output included; the `Writer` says with which key and
+ * which model, and what else the service wants. What differs between one
+ * read and another is the `ReadSourceConfig`. Everything else — the request, the timeout, the
  * failure count and its cooldown, the envelope — is the same call.
  *
  * `null` covers every way of not getting an answer — unreachable,

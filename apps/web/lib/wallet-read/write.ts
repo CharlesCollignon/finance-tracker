@@ -3,7 +3,6 @@ import { formatCurrency } from "@finance/core/constants";
 import {
   decideWalletReadWrite,
   explainWalletReadRefusal,
-  WALLET_READS_PER_MONTH,
   walletReadsRemaining,
 } from "@finance/core/wallet-read-budget";
 import {
@@ -16,7 +15,6 @@ import { factsDigest } from "@finance/core/month-facts";
 import type { Database } from "@finance/core/types/database";
 import { readSource } from "@/lib/ai/read-source";
 import { ACCOUNT_ALLOWANCE, writerFor } from "@/lib/ai/writer";
-import { createClient } from "@/lib/supabase/server";
 import { WALLET_READ_SOURCE } from "@/lib/wallet-read/client";
 import { gatherLookThrough } from "@/lib/wallet-read/facts";
 import {
@@ -60,18 +58,15 @@ export async function writeWalletRead(
   const locale = await getLocale();
   const t = await getT();
 
-  const { writer, account } = await writerFor(
-    userId,
-    client ?? (await createClient()),
-  );
+  const writer = await writerFor(userId);
   if (!writer) {
     return {
       read: false,
-      message: account ? t("aiAccount.connectFirst") : t("walletRead.noWriter"),
+      message: t("aiAccount.connectFirst"),
       readsLeft: 0,
     };
   }
-  const allowance = account ? ACCOUNT_ALLOWANCE : WALLET_READS_PER_MONTH;
+  const allowance = ACCOUNT_ALLOWANCE;
   const source = readSource(WALLET_READ_SOURCE, writer);
 
   const [{ stored, tracked }, bundle] = await Promise.all([

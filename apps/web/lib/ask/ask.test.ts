@@ -14,10 +14,7 @@ vi.mock("@/lib/ai/read-source", () => ({
 }));
 vi.mock("@/lib/ai/writer", () => ({
   ACCOUNT_ALLOWANCE: 10_000,
-  writerFor: async () => ({
-    writer: { model: "fake-model", label: "pluclair" },
-    account: false,
-  }),
+  writerFor: async () => ({ model: "fake-model", label: "account:u1" }),
 }));
 
 const store = {
@@ -93,7 +90,6 @@ describe("askQuestion", () => {
     expect(outcome).toEqual({
       conversationId: "conversation-1",
       message: null,
-      questionsLeft: 17,
     });
     expect(store.record).toHaveBeenCalledWith(
       expect.objectContaining({

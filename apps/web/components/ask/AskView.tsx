@@ -1,6 +1,12 @@
 "use client";
 
-import { useRef, useState, useTransition, type FormEvent } from "react";
+import {
+  useEffect,
+  useRef,
+  useState,
+  useTransition,
+  type FormEvent,
+} from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -14,9 +20,11 @@ import {
 import {
   ArrowUp,
   ChatCircleText,
+  ClockCounterClockwise,
   Info,
   Plus,
   Trash,
+  X,
 } from "@phosphor-icons/react";
 import {
   ASK_KEEP_DAYS,
@@ -30,6 +38,7 @@ import { EASE_STANDARD } from "@finance/core/motion";
 import type { ReadSegment } from "@finance/core/month-read";
 import type { AskConversation, AskMessage } from "@finance/data/ask";
 import { Orb } from "@/components/brand/Orb";
+import { ConnectAiInvite } from "@/components/finance/ConnectAiInvite";
 import { PrivateAmount } from "@/components/layout/PrivateAmount";
 import { useToast } from "@/components/layout/ToastProvider";
 import { askAction, deleteConversationAction } from "@/lib/actions/ask";
@@ -56,24 +65,23 @@ const SUGGESTIONS = [
 ] as const;
 
 /**
- * « Questions » (Ask Pluclair): the person's conversations of the last
- * thirty days beside the one open, a question at the bottom, and answers
- * whose every figure is the app's. The question in flight shows at once,
- * with Pluclair looking at the figures until the answer lands.
+ * « Questions » (Ask Pluclair): one centred column, as a conversation reads
+ * — the messages, and the question box pinned to the bottom of the screen
+ * above the bar. The last thirty days' conversations slide in from the side
+ * on demand. The question in flight shows at once, with Pluclair looking at
+ * the figures until the answer springs in. With no AI account connected,
+ * the page says how to connect one instead.
  */
 export function AskView({
   conversations,
   currentId,
   messages,
-  questionsLeft,
   writable,
 }: {
   conversations: AskConversation[];
   currentId: string | null;
   messages: AskMessage[];
-  /** Null on one's own AI account, where there is no count. */
-  questionsLeft: number | null;
-  /** Whether a model can be asked here at all. */
+  /** Whether a model can be asked here at all: an AI account connected. */
   writable: boolean;
 }) {
   const t = useT();
@@ -81,11 +89,16 @@ export function AskView({
   const { toast } = useToast();
   const [draft, setDraft] = useState("");
   const [asking, setAsking] = useState<string | null>(null);
+  const [history, setHistory] = useState(false);
   const [pending, startTransition] = useTransition();
-  const input = useRef<HTMLTextAreaElement>(null);
+  const end = useRef<HTMLDivElement>(null);
 
-  const spent = questionsLeft !== null && questionsLeft <= 0;
-  const canAsk = writable && !spent && !pending;
+  const canAsk = writable && !pending;
+
+  // The latest message in view as it lands.
+  useEffect(() => {
+    end.current?.scrollIntoView({ behavior: "smooth", block: "end" });
+  }, [messages.length, asking]);
 
   function ask(question: string) {
     const text = question.trim();
@@ -131,72 +144,39 @@ export function AskView({
   return (
     <LazyMotion features={domAnimation} strict>
       <MotionConfig reducedMotion="user">
-        <div className="grid min-h-[60vh] gap-6 md:grid-cols-[minmax(0,16rem)_minmax(0,1fr)]">
-          {/* The last thirty days, latest first. */}
-          <aside className="flex flex-col gap-2">
-            <Link
-              href="/ask"
-              className="flex items-center gap-2 rounded-control border border-border px-3 py-2 text-sm font-medium transition-colors duration-hover hover:bg-muted"
+        <div className="mx-auto flex w-full max-w-3xl flex-col">
+          {/* The two ways out of this conversation: the others, or a new one. */}
+          <div className="flex items-center justify-between gap-2 pb-2">
+            <button
+              type="button"
+              onClick={() => setHistory(true)}
+              className="flex items-center gap-2 rounded-full px-3 py-1.5 text-sm font-medium text-muted-foreground transition-colors duration-hover hover:bg-muted hover:text-foreground"
             >
-              <Plus size={ICON.md} />
-              {t("ask.new")}
-            </Link>
-            <p className={cn("mt-2 px-1 text-muted-foreground", MICRO)}>
+              <ClockCounterClockwise size={ICON.md} />
               {t("ask.history")}
-            </p>
-            {conversations.length === 0 ? (
-              <p className="px-1 text-sm text-muted-foreground">
-                {t("ask.historyEmpty")}
-              </p>
-            ) : (
-              <ul className="flex flex-col gap-1">
-                <AnimatePresence initial={false}>
-                  {conversations.map((conversation) => (
-                    <m.li
-                      key={conversation.id}
-                      layout
-                      initial={{ opacity: 0, x: -8 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      exit={{ opacity: 0, height: 0 }}
-                      transition={{ duration: 0.2, ease: EASE }}
-                      className={cn(
-                        "group flex items-center gap-1 rounded-control",
-                        conversation.id === currentId
-                          ? "bg-muted"
-                          : "hover:bg-muted/60",
-                      )}
-                    >
-                      <Link
-                        href={`/ask?c=${conversation.id}`}
-                        className="flex min-w-0 flex-1 items-center gap-2 px-3 py-2 text-sm"
-                      >
-                        <ChatCircleText
-                          size={ICON.sm}
-                          className="shrink-0 text-muted-foreground"
-                        />
-                        <span className="truncate">{conversation.title}</span>
-                      </Link>
-                      <button
-                        type="button"
-                        onClick={() => remove(conversation.id)}
-                        aria-label={t("ask.delete")}
-                        title={t("ask.delete")}
-                        className="mr-1 flex size-8 shrink-0 items-center justify-center rounded-full text-muted-foreground opacity-0 transition-opacity duration-hover hover:text-destructive focus-visible:opacity-100 group-hover:opacity-100"
-                      >
-                        <Trash size={ICON.sm} />
-                      </button>
-                    </m.li>
-                  ))}
-                </AnimatePresence>
-              </ul>
-            )}
-          </aside>
+            </button>
+            {currentId ? (
+              <Link
+                href="/ask"
+                className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium text-muted-foreground transition-colors duration-hover hover:bg-muted hover:text-foreground"
+              >
+                <Plus size={ICON.md} />
+                {t("ask.new")}
+              </Link>
+            ) : null}
+          </div>
 
-          <section className="flex min-w-0 flex-col gap-4">
-            {empty ? (
+          {/* Room under the last message for the box pinned below. */}
+          <section className="flex min-h-[55vh] flex-col gap-4 pb-48">
+            {!writable ? (
+              <div className="my-auto flex flex-col items-center gap-4 py-6">
+                <Orb size="56px" />
+                <ConnectAiInvite variant="card" className="w-full" />
+              </div>
+            ) : empty ? (
               <m.div
                 {...ARRIVE}
-                className="flex flex-col items-center gap-4 py-10 text-center"
+                className="my-auto flex flex-col items-center gap-4 py-10 text-center"
               >
                 <Orb size="56px" />
                 <p className="max-w-md text-sm text-muted-foreground">
@@ -247,14 +227,24 @@ export function AskView({
                 ) : null}
               </ol>
             )}
+            <div ref={end} />
+          </section>
+        </div>
 
-            <form
-              onSubmit={submit}
-              className="sticky bottom-[calc(var(--shell-bottom-nav-height,0px)+1rem)] mt-auto flex flex-col gap-2 md:bottom-4"
-            >
-              <div className="flex items-end gap-2 rounded-card border border-border bg-background/90 p-2 backdrop-blur">
+        {/* The question box, pinned to the bottom of the screen: above the
+            bar at phone width, a little off the edge from `md`. */}
+        {writable ? (
+          <form
+            onSubmit={submit}
+            className={cn(
+              "fixed inset-x-0 z-30 px-4",
+              "bottom-[calc(var(--shell-bottom-nav-height)+var(--shell-bottom-nav-inset)+env(safe-area-inset-bottom,0px)+0.75rem)]",
+              "md:bottom-6 md:pl-[var(--scrollbar-gutter)]",
+            )}
+          >
+            <div className="mx-auto flex w-full max-w-3xl flex-col gap-1.5">
+              <div className="flex items-end gap-2 rounded-card border border-border bg-background/90 p-2 shadow-lg backdrop-blur">
                 <textarea
-                  ref={input}
                   value={draft}
                   onChange={(event) => setDraft(event.target.value)}
                   onKeyDown={(event) => {
@@ -267,7 +257,6 @@ export function AskView({
                   maxLength={MAX_ASK_QUESTION}
                   placeholder={t("ask.placeholder")}
                   aria-label={t("ask.placeholder")}
-                  disabled={!writable || spent}
                   className="max-h-40 min-h-10 flex-1 resize-none bg-transparent px-2 py-2 text-base outline-none placeholder:text-muted-foreground"
                 />
                 <m.button
@@ -280,20 +269,110 @@ export function AskView({
                   <ArrowUp size={ICON.md} weight="bold" />
                 </m.button>
               </div>
-              <p className={cn("px-1 text-muted-foreground", MICRO)}>
-                {!writable
-                  ? t("ask.noWriter")
-                  : questionsLeft === null
-                    ? t("ask.onAccount")
-                    : spent
-                      ? t("ask.none")
-                      : t("ask.left", { count: questionsLeft })}
+              <p
+                className={cn("px-2 text-center text-muted-foreground", MICRO)}
+              >
+                {t("ask.onAccount")}
                 {" · "}
                 {t("ask.kept", { days: ASK_KEEP_DAYS })}
               </p>
-            </form>
-          </section>
-        </div>
+            </div>
+          </form>
+        ) : null}
+
+        {/* The last thirty days, sliding in from the side. */}
+        <AnimatePresence>
+          {history ? (
+            <>
+              <m.button
+                key="scrim"
+                type="button"
+                aria-label={t("common.close")}
+                onClick={() => setHistory(false)}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="fixed inset-0 z-40 bg-black/40"
+              />
+              <m.aside
+                key="panel"
+                initial={{ x: "-100%" }}
+                animate={{ x: 0 }}
+                exit={{ x: "-100%" }}
+                transition={{ type: "spring", stiffness: 380, damping: 36 }}
+                className="fixed inset-y-0 left-0 z-50 flex w-80 max-w-[85vw] flex-col gap-2 border-r border-border bg-background p-4 pt-safe"
+              >
+                <div className="flex items-center justify-between">
+                  <p className="text-sm font-medium">{t("ask.history")}</p>
+                  <button
+                    type="button"
+                    onClick={() => setHistory(false)}
+                    aria-label={t("common.close")}
+                    className="flex size-9 items-center justify-center rounded-full text-muted-foreground hover:bg-muted hover:text-foreground"
+                  >
+                    <X size={ICON.md} />
+                  </button>
+                </div>
+                <Link
+                  href="/ask"
+                  onClick={() => setHistory(false)}
+                  className="flex items-center gap-2 rounded-control border border-border px-3 py-2 text-sm font-medium transition-colors duration-hover hover:bg-muted"
+                >
+                  <Plus size={ICON.md} />
+                  {t("ask.new")}
+                </Link>
+                {conversations.length === 0 ? (
+                  <p className="px-1 text-sm text-muted-foreground">
+                    {t("ask.historyEmpty")}
+                  </p>
+                ) : (
+                  <ul className="flex flex-col gap-1 overflow-y-auto">
+                    <AnimatePresence initial={false}>
+                      {conversations.map((conversation) => (
+                        <m.li
+                          key={conversation.id}
+                          initial={{ opacity: 0, x: -8 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          exit={{ opacity: 0, height: 0 }}
+                          transition={{ duration: 0.2, ease: EASE }}
+                          className={cn(
+                            "group flex items-center gap-1 rounded-control",
+                            conversation.id === currentId
+                              ? "bg-muted"
+                              : "hover:bg-muted/60",
+                          )}
+                        >
+                          <Link
+                            href={`/ask?c=${conversation.id}`}
+                            onClick={() => setHistory(false)}
+                            className="flex min-w-0 flex-1 items-center gap-2 px-3 py-2 text-sm"
+                          >
+                            <ChatCircleText
+                              size={ICON.sm}
+                              className="shrink-0 text-muted-foreground"
+                            />
+                            <span className="truncate">
+                              {conversation.title}
+                            </span>
+                          </Link>
+                          <button
+                            type="button"
+                            onClick={() => remove(conversation.id)}
+                            aria-label={t("ask.delete")}
+                            title={t("ask.delete")}
+                            className="mr-1 flex size-8 shrink-0 items-center justify-center rounded-full text-muted-foreground hover:text-destructive"
+                          >
+                            <Trash size={ICON.sm} />
+                          </button>
+                        </m.li>
+                      ))}
+                    </AnimatePresence>
+                  </ul>
+                )}
+              </m.aside>
+            </>
+          ) : null}
+        </AnimatePresence>
       </MotionConfig>
     </LazyMotion>
   );

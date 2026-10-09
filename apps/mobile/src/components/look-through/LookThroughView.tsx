@@ -407,7 +407,7 @@ export function LookThroughView({ data }: { data: LookThroughData }) {
                 void onReview();
               }}
             />
-          ) : account ? (
+          ) : !account ? (
             <ConnectAiInvite />
           ) : null}
 

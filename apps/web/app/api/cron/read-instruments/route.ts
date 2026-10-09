@@ -1,7 +1,6 @@
 import type { NextRequest } from "next/server";
 
 import { aiSealer } from "@/lib/ai/secrets";
-import { pluclairWriter } from "@/lib/ai/writer";
 import { readInstrumentsForEveryUser } from "@/lib/instrument-reading/run";
 import { createAdminClient } from "@/lib/supabase/admin";
 
@@ -39,9 +38,9 @@ export async function GET(request: NextRequest) {
     return Response.json({ skipped: "no service role key" });
   }
 
-  // Neither Pluclair's key nor a way to open a user's own: nothing could be
-  // read for anyone. With either, each user's reading goes to their writer.
-  if (!pluclairWriter() && !aiSealer.configured()) {
+  // No way to open a user's own AI account, which is the only writer there
+  // is: nothing could be read for anyone.
+  if (!aiSealer.configured()) {
     return Response.json({ skipped: "no model key" });
   }
 

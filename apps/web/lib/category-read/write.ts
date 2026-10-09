@@ -3,7 +3,6 @@ import { formatCurrency } from "@finance/core/constants";
 import {
   CATEGORY_READ_COOLDOWN_SECONDS,
   CATEGORY_READ_RESERVATION_SECONDS,
-  CATEGORY_READ_WRITES_PER_MONTH,
   verifyCategoryRead,
 } from "@finance/core/category-read";
 import {
@@ -21,7 +20,6 @@ import { readSource } from "@/lib/ai/read-source";
 import { ACCOUNT_ALLOWANCE, writerFor } from "@/lib/ai/writer";
 import { CATEGORY_READ_SOURCE } from "@/lib/category-read/client";
 import { gatherCategoryFacts } from "@/lib/category-read/facts";
-import { createClient } from "@/lib/supabase/server";
 import { getLocale, getT } from "@/lib/locale";
 import {
   readCategoryReadState,
@@ -59,22 +57,15 @@ export async function writeCategoryRead(
   const locale = await getLocale();
   const t = await getT();
 
-  const { writer, account } = await writerFor(
-    userId,
-    client ?? (await createClient()),
-  );
+  const writer = await writerFor(userId);
   if (!writer) {
     return {
       written: false,
-      message: account
-        ? t("aiAccount.connectFirst")
-        : t("categoryRead.noWriter"),
+      message: t("aiAccount.connectFirst"),
       writesLeft: 0,
     };
   }
-  const allowance = account
-    ? ACCOUNT_ALLOWANCE
-    : CATEGORY_READ_WRITES_PER_MONTH;
+  const allowance = ACCOUNT_ALLOWANCE;
   const source = readSource(CATEGORY_READ_SOURCE, writer);
 
   const [state, facts] = await Promise.all([

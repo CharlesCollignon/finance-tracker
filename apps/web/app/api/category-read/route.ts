@@ -3,13 +3,14 @@ import { writeCategoryRead } from "@/lib/category-read/write";
 import { sessionFromBearer } from "@/lib/supabase/bearer";
 
 /**
- * Writing a category read, for a client that cannot hold the key.
+ * Writing a category read, for a client that cannot open the key.
  *
  * `api/month-read`'s twin, for the same reason: the phone reads stored reads
  * straight out of Supabase — `category_reads` is select-own under row level
- * security — and the only thing it cannot do is hold `MISTRAL_API_KEY`. The
- * Supabase access token it already has is verified here, and every query
- * below carries it, so row level security applies as for a cookie session.
+ * security — and the only thing it cannot do is open the person's AI account
+ * key, sealed with a server secret. The Supabase access token it already has
+ * is verified here, and every query below carries it, so row level security
+ * applies as for a cookie session.
  * No CORS headers on purpose: a native client is not subject to them.
  */
 

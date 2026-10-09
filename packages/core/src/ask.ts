@@ -55,9 +55,6 @@ export type AskTool = (typeof ASK_TOOLS)[number];
 /** How many families one question may draw on. */
 export const MAX_ASK_TOOLS = 3;
 
-/** Questions a month on Pluclair's key; one's own AI account has no count. */
-export const ASK_QUESTIONS_PER_MONTH = 20;
-
 /** Longest question taken, as typed. */
 export const MAX_ASK_QUESTION = 300;
 

@@ -1,6 +1,5 @@
 import "server-only";
 import {
-  ASK_QUESTIONS_PER_MONTH,
   askTitle,
   buildAskAnswerRequest,
   buildAskPlanRequest,
@@ -33,8 +32,6 @@ export interface AskOutcome {
   conversationId: string | null;
   /** What to say instead of an answer, when there is none. */
   message: string | null;
-  /** Questions left this month on Pluclair's key; null on one's own account. */
-  questionsLeft: number | null;
 }
 
 /**
@@ -64,29 +61,24 @@ export async function askQuestion(
     return {
       conversationId,
       message: t("ask.tooLong", { max: MAX_ASK_QUESTION }),
-      questionsLeft: null,
     };
   }
 
-  const { writer, account } = await writerFor(userId, db);
+  const writer = await writerFor(userId);
   if (!writer) {
     return {
       conversationId,
-      message: account ? t("aiAccount.connectFirst") : t("ask.noWriter"),
-      questionsLeft: null,
+      message: t("aiAccount.connectFirst"),
     };
   }
-  const allowance = account ? ACCOUNT_ALLOWANCE : ASK_QUESTIONS_PER_MONTH;
-  const left = (asked: number) =>
-    account ? null : Math.max(0, allowance - asked);
-
-  const taken = await reserveQuestion(db, today, allowance);
+  // One's own account pays for every question: the allowance is only a
+  // ceiling against a runaway client.
+  const taken = await reserveQuestion(db, today, ACCOUNT_ALLOWANCE);
   if (taken === null) {
     const asked = await questionsAsked(db, userId, today);
     return {
       conversationId,
-      message: asked >= allowance ? t("ask.none") : t("ask.noWriter"),
-      questionsLeft: left(asked),
+      message: asked >= ACCOUNT_ALLOWANCE ? t("ask.none") : t("ask.noAnswer"),
     };
   }
 
@@ -97,7 +89,7 @@ export async function askQuestion(
       case "busy":
         return t("ask.busy");
       case "refused":
-        return account ? t("ask.accountRefused") : t("ask.keyRefused");
+        return t("ask.accountRefused");
       case "no-credit":
         return t("ask.noCredit");
       default:
@@ -113,7 +105,6 @@ export async function askQuestion(
     return {
       conversationId,
       message: unanswered(planSource),
-      questionsLeft: left(taken - 1),
     };
   }
   const plan = verifyAskPlan(planned);
@@ -121,7 +112,6 @@ export async function askQuestion(
     return {
       conversationId,
       message: t("ask.unusable"),
-      questionsLeft: left(taken),
     };
   }
 
@@ -179,7 +169,6 @@ export async function askQuestion(
         return {
           conversationId,
           message: unanswered(answerSource),
-          questionsLeft: left(taken - 1),
         };
       }
       const verdict = verifyAskAnswer(raw, { facts });
@@ -187,7 +176,6 @@ export async function askQuestion(
         return {
           conversationId,
           message: t("ask.unusable"),
-          questionsLeft: left(taken),
         };
       }
       answer = {
@@ -207,5 +195,5 @@ export async function askQuestion(
     question: { text },
     answer,
   });
-  return { conversationId: id, message: null, questionsLeft: left(taken) };
+  return { conversationId: id, message: null };
 }

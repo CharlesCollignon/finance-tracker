@@ -463,7 +463,7 @@ export interface HomeRead {
   readLocale: Locale;
   writesLeft: number;
   /**
-   * Who would write: Pluclair's key or the user's own AI account, whether a
+   * Who would write — the user's own AI account, or nobody — whether a
    * read can be written now, and the name for the button. Which model wrote
    * a stored read is on the read itself.
    */

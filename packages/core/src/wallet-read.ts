@@ -147,7 +147,7 @@ const SCHEMA_WORDS: Record<
 /**
  * The same shape, as a provider's strict output format.
  *
- * Mistral's `response_format`, alongside the Zod schema above rather than
+ * The `response_format`, alongside the Zod schema above rather than
  * instead of it: strict mode does not reliably honour `maxItems` or
  * `maxLength`, and in any case a provider guarantee is an optimisation and
  * never the contract. This narrows what comes back; `verifyWalletRead` is

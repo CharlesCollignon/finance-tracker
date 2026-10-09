@@ -11,19 +11,18 @@ import type { Writer } from "@/lib/ai/writer";
 /**
  * Reading one instrument off the market.
  *
- * Two calls to two different endpoints, and the split is forced rather than
- * chosen. Web search is a built-in connector on Mistral's Conversations API
- * and is **not available on chat/completions**; a strict `response_format` is
- * what chat/completions is for. So the first call searches and writes notes,
- * and the second transcribes those notes into the shape the verifier expects.
+ * Two calls, both on the person's own AI account through OpenRouter. The
+ * first searches the web — OpenRouter's web plugin — and writes notes; the
+ * second transcribes those notes into the shape the verifier expects, with
+ * a strict `response_format`, the one thing a search call cannot also do.
  *
  * The second call is cheap — a few hundred tokens over text already in hand —
  * and buys a reading that either satisfies the schema or is `null`, with no
  * middle state to reason about. It also means the structured half runs on the
  * same proven path as the month read.
  *
- * Same key and model as every other model call in this app. Nothing new to
- * configure: if the month read works, this works.
+ * Same account and model as every other model call in this app. Nothing new
+ * to configure: if the month read works, this works.
  *
  * ## What can go wrong, and what happens
  *
@@ -41,8 +40,6 @@ import type { Writer } from "@/lib/ai/writer";
  * The look-through then reports those instruments as unread, which is its
  * ordinary state and is rendered honestly rather than as zeroes.
  */
-
-const CONVERSATIONS_ENDPOINT = "https://api.mistral.ai/v1/conversations";
 
 /** Facts, not prose: as close to deterministic as the parameter allows. */
 const TEMPERATURE = 0;
@@ -200,55 +197,6 @@ async function post(
 }
 
 /**
- * The prose of a Mistral conversation, and the pages its web search read.
- *
- * Joined into one block, sources listed after: the transcription step is
- * told to copy only what the notes state, and a page named beside the
- * figures is what lets a reader of the stored notes check one.
- */
-function notesFromConversation(raw: unknown): string {
-  const outputs =
-    (raw as { outputs?: { type?: string; content?: unknown }[] })?.outputs ??
-    [];
-
-  const text: string[] = [];
-  const sources: string[] = [];
-
-  for (const entry of outputs) {
-    if (entry?.type !== "message.output") {
-      continue;
-    }
-    const content = entry.content;
-
-    if (typeof content === "string") {
-      text.push(content);
-      continue;
-    }
-
-    if (!Array.isArray(content)) {
-      continue;
-    }
-
-    for (const chunk of content) {
-      const kind = (chunk as { type?: string })?.type;
-      if (kind === "text") {
-        const value = (chunk as { text?: unknown }).text;
-        if (typeof value === "string") {
-          text.push(value);
-        }
-      } else if (kind === "tool_reference") {
-        const url = (chunk as { url?: unknown }).url;
-        if (typeof url === "string" && !sources.includes(url)) {
-          sources.push(url);
-        }
-      }
-    }
-  }
-
-  return withSources(text.join(""), sources);
-}
-
-/**
  * The prose of an OpenRouter answer, and the pages its web plugin read —
  * given back as `url_citation` annotations on the message.
  */
@@ -309,36 +257,6 @@ function searchQuestion(request: InstrumentReadingRequest): string {
     "itself at 100%\n\n" +
     "Give the figures and say which page each came from."
   );
-}
-
-/** Mistral's own web search, through its conversations API — Pluclair's key. */
-async function mistralSearch(
-  request: InstrumentReadingRequest,
-  writer: Writer,
-): Promise<string> {
-  const raw = await post(
-    writer,
-    CONVERSATIONS_ENDPOINT,
-    {
-      model: writer.model,
-      // Inline rather than against a stored agent: an agent would be a second
-      // thing to create, version and keep in step with this prompt.
-      instructions: SEARCH_INSTRUCTIONS,
-      tools: [{ type: "web_search" }],
-      completion_args: {
-        temperature: TEMPERATURE,
-        max_tokens: SEARCH_MAX_TOKENS,
-      },
-      // Nothing to come back to: each reading is one question, and a stored
-      // conversation would leave this person's holdings sitting on a third
-      // party's servers for no purpose.
-      store: false,
-      inputs: [{ role: "user", content: searchQuestion(request) }],
-    },
-    SEARCH_TIMEOUT_MS,
-    "Mistral conversations",
-  );
-  return notesFromConversation(raw);
 }
 
 /**
@@ -411,14 +329,12 @@ async function transcribeNotes(
 /** Failures in a row, per writer: a user's failing account closes only its own door. */
 const breakers = new Map<string, { failures: number; closedUntil: number }>();
 
-/** A reading's source for one writer, Pluclair's key or the user's account. */
+/** A reading's source for one writer: the person's own account. */
 export function instrumentReadingSourceFor(
   writer: Writer,
   options: InstrumentReadingSourceOptions = {},
 ): InstrumentReadingSource {
-  const search =
-    options.search ??
-    (writer.kind === "pluclair" ? mistralSearch : openRouterSearch);
+  const search = options.search ?? openRouterSearch;
   const transcribe = options.transcribe ?? transcribeNotes;
   const now = options.now ?? Date.now;
   let lastFailure: ReadingFailure | null = null;

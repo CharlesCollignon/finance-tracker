@@ -115,7 +115,7 @@ export function CategoryRead({
   // deployment with no model key — and on one's own AI account, a line
   // saying how to get one.
   if (!configured && !rendered) {
-    return account ? <ConnectAiInvite /> : null;
+    return !account ? <ConnectAiInvite variant="card" bare /> : null;
   }
 
   function write() {
@@ -213,7 +213,7 @@ export function CategoryRead({
           ) : null}
         </p>
 
-        {!configured && account ? (
+        {!configured && !account ? (
           <ConnectAiInvite />
         ) : configured ? (
           <Button

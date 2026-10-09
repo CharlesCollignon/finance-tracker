@@ -2516,7 +2516,6 @@ export const en = {
     nothingToSay: "There is not enough in {month} to write about yet.",
     untracked: "Monthly reads are not available here yet.",
     /* What a press comes back with when there is no read to show. */
-    noWriter: "No writer is configured.",
     noAnswer: "The writer did not answer just now.",
     unusable: "The writer's answer could not be used.",
     writeFailed: "Could not write the read just now.",
@@ -2606,13 +2605,11 @@ export const en = {
       claimHadFigure: "It wrote a figure of its own",
     },
 
-    /** No writer configured on this deployment; the panel's write button is absent. */
-    noWriter: "No writer is configured.",
     /**
      * The category named no longer belongs to the caller — deleted, most
      * likely, in the moments between the panel opening and the button being
      * pressed. Rare enough that it earns one honest sentence rather than
-     * being folded into `noWriter`, which would say something untrue.
+     * being folded into a failure to write, which would say something untrue.
      */
     gone: "This category is no longer available.",
 
@@ -2880,19 +2877,32 @@ export const en = {
   aiAccount: {
     writeOne: "Write with {model}",
     writeAgain: "Write again with {model}",
-    connectFirst: "Connect an AI account for written reads.",
+    connectFirst: "Connect your AI account for reads and questions.",
+    ctaTitle: "Connect your AI",
+    ctaBody:
+      "Reads and questions are written by the model you choose, on your own OpenRouter account. Pluclair does not provide one.",
+    ctaButton: "Connect my AI account",
+    step1Title: "An OpenRouter account",
+    step1Body:
+      "Free to create, as you connect: OpenRouter opens its page, then brings you back here.",
+    step2Title: "A few euros of credit",
+    step2Body:
+      "Added on openrouter.ai. A read or a question costs a few cents, paid to OpenRouter.",
+    step3Title: "The model you choose",
+    step3Body:
+      "Mistral, ChatGPT or Claude — change it whenever you like, in Profile.",
     unavailable: "Connecting an AI account is not available right now.",
     notEnabled: "Connecting an AI account is not open yet.",
     /** The Profile's "AI account" section. */
     section: "AI account",
     footer:
-      "Written reads — your month, a category, your investments — are written on your own AI account, with the model you choose.",
+      "Written reads — your month, a category, your investments — and the answers to your questions are written on your own AI account, with the model you choose.",
     footerConnected:
       "Pluclair keeps the key encrypted and uses it for your reads only. Your account's balance is on openrouter.ai.",
     connect: "Connect an AI account",
     connectHint: "With OpenRouter, once",
     consentWhat:
-      "Written reads — your month, a category, your investments, a fund — will be written by the model you choose, on your OpenRouter account, and billed to your credits.",
+      "Written reads — your month, a category, your investments, a fund — and the answers to your questions will be written by the model you choose, on your OpenRouter account, and billed to your credits.",
     consentSent:
       "For each read, Pluclair sends the figures of the page it is about: totals, category names, the lines of your investments. Never your name, your email, your transactions one by one or your bank credentials.",
     consentWhere:
@@ -2973,7 +2983,6 @@ export const en = {
       "Not enough has been read yet to say anything about the whole portfolio.",
     unchanged: "Nothing has moved since the last read.",
     untracked: "Wallet reads are not available here yet.",
-    noWriter: "No writer is configured.",
     noAnswer: "The writer did not answer just now.",
     threwAway: "The writer's answer was thrown away. ({detail})",
 
@@ -3011,8 +3020,7 @@ export const en = {
         "{names} already read other accounts: pick other savings accounts for these.",
     },
     ignoredBilled: "open-banking.io bills it as long as it is connected there.",
-    jointHint:
-      "Its movements and its balance go to « {space} », for you both.",
+    jointHint: "Its movements and its balance go to « {space} », for you both.",
     otherBank: "Other bank",
     consentUntil: "Shared until {date}",
     consentSoon: "Renew before {date}",

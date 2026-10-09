@@ -18,11 +18,7 @@ export async function askAction(
 ): Promise<AskOutcome> {
   const user = await getAuthUser();
   if (!user) {
-    return {
-      conversationId,
-      message: "errors.notAuthenticated",
-      questionsLeft: null,
-    };
+    return { conversationId, message: "errors.notAuthenticated" };
   }
   const outcome = await askQuestion(await createClient(), user.id, {
     question: typeof question === "string" ? question : "",

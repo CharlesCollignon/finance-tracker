@@ -1,11 +1,5 @@
 import { redirect } from "next/navigation";
-import { ASK_QUESTIONS_PER_MONTH } from "@finance/core/ask";
-import { todayIsoLocal } from "@finance/core/constants";
-import {
-  getConversationMessages,
-  listConversations,
-  questionsAsked,
-} from "@finance/data/ask";
+import { getConversationMessages, listConversations } from "@finance/data/ask";
 import { AskView } from "@/components/ask/AskView";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { PageHeader } from "@/components/layout/PageHeader";
@@ -32,10 +26,9 @@ export default async function AskPage({
   }
 
   const db = await createClient();
-  const [conversations, writer, asked, params] = await Promise.all([
+  const [conversations, writer, params] = await Promise.all([
     listConversations(db, user.id),
     writerStateFor(user.id, db),
-    questionsAsked(db, user.id, todayIsoLocal()),
     searchParams,
   ]);
   const currentId = conversations.some(({ id }) => id === params.c)
@@ -53,9 +46,6 @@ export default async function AskPage({
           conversations={conversations}
           currentId={currentId}
           messages={messages}
-          questionsLeft={
-            writer.account ? null : Math.max(0, ASK_QUESTIONS_PER_MONTH - asked)
-          }
           writable={writer.writable}
         />
       </PageContainer>

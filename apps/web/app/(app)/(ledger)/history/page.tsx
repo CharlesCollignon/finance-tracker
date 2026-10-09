@@ -2,11 +2,7 @@ import { redirect } from "next/navigation";
 import { getAuthUser } from "@/lib/auth/get-user";
 import { getOwner } from "@/lib/owner";
 import { createClient } from "@/lib/supabase/server";
-import {
-  MIN_FINDINGS_TO_RANK,
-  CATEGORY_SELECTION_WRITES_PER_MONTH,
-} from "@finance/core/category-selection";
-import { CATEGORY_READ_WRITES_PER_MONTH } from "@finance/core/category-read";
+import { MIN_FINDINGS_TO_RANK } from "@finance/core/category-selection";
 import { writesRemaining } from "@finance/core/month-read-budget";
 import { readCategoryScreen } from "@finance/data/category-screen";
 import { CategoryHistoryView } from "@/components/finance/category/CategoryHistoryView";
@@ -63,16 +59,16 @@ export default async function HistoryPage() {
           lastWrittenAt: null,
           pendingSince: null,
         },
-        writer.account ? ACCOUNT_ALLOWANCE : CATEGORY_READ_WRITES_PER_MONTH,
+        ACCOUNT_ALLOWANCE,
       )
     : 0;
 
   /**
    * Whether the band may offer a re-rank at all.
    *
-   * Both halves matter, and for different failures. No model key on this
-   * deployment and the button would do nothing, so it is absent — the band
-   * is then byte-identical to what it showed before this feature existed.
+   * Both halves matter, and for different failures. No AI account connected
+   * and the button would do nothing, so it is absent — the band is then
+   * byte-identical to what it showed before this feature existed.
    * Migration 035 unapplied and the attempt could not be counted, and a call
    * that cannot be counted is a call that is not capped, so the button is
    * absent there too rather than present and refusing. Fewer findings than
@@ -85,12 +81,7 @@ export default async function HistoryPage() {
     selection.tracked &&
     screen.allFindings.length >= MIN_FINDINGS_TO_RANK;
   const rerankWritesLeft = selection.tracked
-    ? writesRemaining(
-        selection.tally,
-        writer.account
-          ? ACCOUNT_ALLOWANCE
-          : CATEGORY_SELECTION_WRITES_PER_MONTH,
-      )
+    ? writesRemaining(selection.tally, ACCOUNT_ALLOWANCE)
     : 0;
 
   // The header and the views are the Ledger layout's, so they stay put while

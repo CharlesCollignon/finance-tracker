@@ -151,7 +151,7 @@ export async function readInstrumentsForEveryUser(
         candidate.isin,
         candidate.name,
         candidate.symbol,
-        { client: supabase, service: true },
+        { client: supabase },
       );
       if (result.status === "read") {
         outcome.read += 1;

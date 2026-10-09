@@ -459,7 +459,7 @@ export function LookThroughView({
                   ? t("walletRead.reviewing")
                   : t("walletRead.review", { model: writerBrand })}
               </Button>
-            ) : reviewAccount ? (
+            ) : !reviewAccount ? (
               <ConnectAiInvite />
             ) : null
           }

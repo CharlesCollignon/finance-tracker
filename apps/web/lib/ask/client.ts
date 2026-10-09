@@ -3,7 +3,7 @@ import type { ReadSourceConfig } from "@/lib/ai/read-source";
 
 /**
  * Ask Pluclair's two requests: their schemas, ceilings and patience. Who
- * answers — Pluclair's key or the person's AI account — is the writer's
+ * answers — the person's own AI account — is the writer's
  * business (`lib/ai/writer.ts`), and how it is sent the one adapter's.
  *
  * The plan is a handful of words; the answer at most four sentences with
