@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import {
   AnimatePresence,
   m,
+  useMotionValue,
   useReducedMotion,
   useScroll,
   useSpring,
@@ -43,8 +44,8 @@ const LIFT = { type: "spring", stiffness: 300, damping: 22 } as const;
 /**
  * Placements' own extra: the envelopes a French saver keeps, as a hand of
  * cards. The hand is closed until it scrolls in, and fans open as it
- * arrives; a card lifts under the pointer and, chosen, comes out to the
- * front of the hand while the panel beside it opens on that envelope — a small moving
+ * arrives; a card lifts under the pointer and, chosen, rises out of the
+ * hand while the panel beside it opens on that envelope — a small moving
  * picture of what it is about, what Pluclair keeps for it, and what tax
  * takes from it in 2026. On a phone the hand is a row of cards to swipe.
  */
@@ -59,6 +60,20 @@ export function EnvelopeDeck() {
     target: ref,
     offset: ["start end", "center center"],
   });
+  // How far each card turns from the next, in degrees: as much as the
+  // column has room for, so the open hand never reaches past it.
+  const handRef = useRef<HTMLDivElement>(null);
+  const turn = useMotionValue(8);
+  useEffect(() => {
+    const hand = handRef.current;
+    if (!hand) return;
+    const observer = new ResizeObserver(([entry]) => {
+      const half = entry!.contentRect.width / 2;
+      turn.set(Math.min(8.5, Math.max(3, (half - 56) / 20.4)));
+    });
+    observer.observe(hand);
+    return () => observer.disconnect();
+  }, [turn]);
   const opened = useSpring(
     useTransform(scrollYProgress, [0.15, 0.85], [0, 1]),
     { stiffness: 90, damping: 20 },
@@ -93,12 +108,13 @@ export function EnvelopeDeck() {
 
       <div
         ref={ref}
-        className="mt-10 grid items-center gap-8 md:mt-14 md:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] md:gap-12"
+        className="mt-10 grid items-center gap-8 md:mt-14 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] lg:gap-12"
       >
         <div
           role="group"
           aria-label={copy.heading}
-          className="relative hidden h-[27rem] md:block"
+          ref={handRef}
+          className="relative hidden h-[25rem] md:block"
         >
           {cards.map((card, index) => (
             <FanCard
@@ -109,6 +125,7 @@ export function EnvelopeDeck() {
               chosen={card.id === chosen}
               onChoose={() => setChosen(card.id)}
               opened={opened}
+              turn={turn}
               still={still}
             />
           ))}
@@ -142,7 +159,7 @@ export function EnvelopeDeck() {
           ))}
         </div>
 
-        <Stage className="md:min-h-[33rem]">
+        <Stage className="lg:min-h-[33rem]">
           <AnimatePresence mode="wait" initial={false}>
             <m.div
               key={chosen}
@@ -201,12 +218,11 @@ function CardHead({ card }: { card: Card }) {
 }
 
 /**
- * One card of the hand. Left in the hand, its place in the fan — the turn
- * about a point well below it, and the step sideways — grows with
- * `opened`, and only its name shows, as a held card shows its corner.
- * Chosen, it leaves its place for the front of the hand, upright and
- * raised, and turns its figure up; the gap it leaves says where it came
- * from. `pick` carries it between the two on a spring.
+ * One card of the hand. Its place in the fan — the turn about a point well
+ * below it, and the step sideways — grows with `opened`, and in the hand
+ * only its name shows, as a held card shows its corner. Chosen, it rises
+ * out of its place upright and turns its figure up; `pick` carries it
+ * between the two on a spring.
  */
 function FanCard({
   card,
@@ -215,6 +231,7 @@ function FanCard({
   chosen,
   onChoose,
   opened,
+  turn,
   still,
 }: {
   card: Card;
@@ -223,6 +240,7 @@ function FanCard({
   chosen: boolean;
   onChoose: () => void;
   opened: MotionValue<number>;
+  turn: MotionValue<number>;
   still: boolean;
 }) {
   const pick = useSpring(chosen ? 1 : 0, { stiffness: 170, damping: 22 });
@@ -233,14 +251,15 @@ function FanCard({
       pick.set(chosen ? 1 : 0);
     }
   }, [pick, chosen, still]);
-  const spread = () => (1 - pick.get()) * (still ? 1 : opened.get());
-  const rotate = useTransform(() => slot * 6.5 * spread());
-  const x = useTransform(() => slot * 16 * spread());
-  const y = useTransform(() => pick.get() * -40);
-  const scale = useTransform(() => 1 + pick.get() * 0.06);
+  // Its place in the open hand, and how far the hand is open.
+  const place = () => slot * turn.get() * (still ? 1 : opened.get());
+  const rotate = useTransform(() => place() * (1 - pick.get()));
+  const x = useTransform(() => place() * 2.4);
+  const y = useTransform(() => pick.get() * -52);
+  const scale = useTransform(() => 1 + pick.get() * 0.05);
   return (
     <m.div
-      className="absolute bottom-6 left-1/2 -ml-[5.5rem] h-60 w-44"
+      className="absolute bottom-4 left-1/2 -ml-20 h-56 w-40"
       style={{
         rotate,
         x,
