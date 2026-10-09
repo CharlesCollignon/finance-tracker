@@ -1,0 +1,6 @@
+{
+  "ios": {
+    "CFBundleDisplayName": "Pluclair",
+    "NSFaceIDUsageDescription": "Pluclair utilise Face ID pour déverrouiller l'application."
+  }
+}

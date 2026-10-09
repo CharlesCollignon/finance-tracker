@@ -13,9 +13,17 @@
       "associatedDomains": [
         "webcredentials:pluclair.com"
       ],
+      "config": {
+        "usesNonExemptEncryption": false
+      },
       "infoPlist": {
-        "NSFaceIDUsageDescription": "Allow Pluclair to use Face ID to unlock the app."
+        "CFBundleAllowMixedLocalizations": true,
+        "NSFaceIDUsageDescription": "Pluclair utilise Face ID pour déverrouiller l'application."
       }
+    },
+    "locales": {
+      "fr": "./locales/fr.json",
+      "en": "./locales/en.json"
     },
     "android": {
       "package": "com.salut_charles.pluclair",
@@ -49,7 +57,7 @@
       [
         "expo-local-authentication",
         {
-          "faceIDPermission": "Allow Pluclair to use Face ID to unlock the app."
+          "faceIDPermission": "Pluclair utilise Face ID pour déverrouiller l'application."
         }
       ],
       [
