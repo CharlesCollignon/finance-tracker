@@ -10,7 +10,6 @@ import {
   useReducedMotion,
   useScroll,
   useTransform,
-  type MotionValue,
 } from "motion/react";
 import { Plus } from "@phosphor-icons/react";
 import { DURATION, EASE_STANDARD } from "@finance/core/motion";
@@ -188,71 +187,6 @@ export function FadeUp({
     >
       {children}
     </m.div>
-  );
-}
-
-/**
- * A sentence that lights word by word as it is read: each word goes from
- * faint to full as the sentence crosses the screen, all of it lit by the
- * time the sentence reaches the middle.
- */
-export function ScrollWords({
-  text,
-  className,
-}: {
-  text: string;
-  className?: string;
-}) {
-  const ref = useRef<HTMLParagraphElement>(null);
-  const still = useReducedMotion() ?? false;
-  const { scrollYProgress } = useScroll({
-    target: ref,
-    offset: ["start 0.85", "end 0.5"],
-  });
-  const words = text.split(" ");
-  return (
-    <p ref={ref} className={className}>
-      {words.map((word, index) => (
-        <LitWord
-          key={`${word}-${index}`}
-          progress={scrollYProgress}
-          from={index / words.length}
-          to={(index + 1) / words.length}
-          still={still}
-          last={index === words.length - 1}
-        >
-          {word}
-        </LitWord>
-      ))}
-    </p>
-  );
-}
-
-function LitWord({
-  progress,
-  from,
-  to,
-  still,
-  last,
-  children,
-}: {
-  progress: MotionValue<number>;
-  from: number;
-  to: number;
-  still: boolean;
-  last: boolean;
-  children: string;
-}) {
-  const opacity = useTransform(
-    progress,
-    [from, to],
-    still ? [1, 1] : [0.18, 1],
-  );
-  return (
-    <>
-      <m.span style={{ opacity }}>{children}</m.span>
-      {last ? null : " "}
-    </>
   );
 }
 
