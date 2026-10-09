@@ -1,7 +1,7 @@
 import { useCallback } from "react";
 
 import { formatMonthLabel, formatPercent } from "@finance/core/constants";
-import type { Locale } from "@finance/core/i18n/locale";
+import { INTL_LOCALES, type Locale } from "@finance/core/i18n/locale";
 
 import { useFormatCurrency } from "@/providers/CurrencyProvider";
 import { usePrivacy } from "@/providers/PrivacyProvider";
@@ -51,7 +51,20 @@ export function monthAheadLabel(
   return formatMonthLabel(at.year, at.month, locale);
 }
 
-/** A fraction as the digits of a percentage, for a field: 0.186 → "18,6". */
-export function percentDigits(fraction: number, locale: Locale): string {
-  return formatPercent(Math.round(fraction * 1000) / 10, locale);
+/**
+ * A fraction as the digits of a percentage, for a field: 0.186 → "18,6".
+ * Two decimals for a fee, where 0,25 % is not 0,3 %.
+ */
+export function percentDigits(
+  fraction: number,
+  locale: Locale,
+  decimals = 1,
+): string {
+  if (decimals === 1) {
+    return formatPercent(Math.round(fraction * 1000) / 10, locale);
+  }
+  const factor = 10 ** decimals;
+  return new Intl.NumberFormat(INTL_LOCALES[locale], {
+    maximumFractionDigits: decimals,
+  }).format(Math.round(fraction * 100 * factor) / factor);
 }

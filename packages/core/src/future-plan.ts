@@ -189,6 +189,12 @@ export interface Envelope {
   annualReturn: number;
   /** On gains, as a fraction. */
   taxOnGains: number;
+  /**
+   * What holding it costs a year, as a fraction — its funds' ongoing
+   * charges and the envelope's own fee — taken off the return. Absent is
+   * none known.
+   */
+  fees?: number;
 }
 
 export interface EnvelopeProjectionInput {
@@ -264,7 +270,10 @@ export function projectEnvelopes(
   const months = Math.max(0, Math.round(input.years * 12));
   const accounts = input.envelopes.map((envelope) => ({
     ...envelope,
-    rate: Math.pow(1 + envelope.annualReturn, 1 / 12) - 1,
+    // The fees come off the return before it compounds, as they do in an
+    // account: a 7 % fund at 0.5 % a year grows at 6.5 %.
+    rate:
+      Math.pow(1 + envelope.annualReturn - (envelope.fees ?? 0), 1 / 12) - 1,
     ceiling: ENVELOPE_PRESETS[envelope.id]?.ceiling ?? null,
     value: envelope.initial,
     paidIn: 0,
@@ -486,6 +495,8 @@ export interface EnvelopeSource {
   savingsReserve: number;
   /** What the recurring templates put in each month, by account. */
   monthly: Partial<Record<EnvelopeId, number>>;
+  /** What each wallet costs a year, as Placements knows it (`walletFeeRates`). */
+  fees?: Partial<Record<InvestmentWalletId, number>>;
 }
 
 /**
@@ -538,11 +549,31 @@ export function envelopesFromData(source: EnvelopeSource): Envelope[] {
         monthly: roundMoney(monthly),
         annualReturn: ENVELOPE_PRESETS[wallet].annualReturn,
         taxOnGains: ENVELOPE_PRESETS[wallet].taxOnGains,
+        ...(source.fees?.[wallet] ? { fees: source.fees[wallet] } : {}),
       },
     ];
   });
 
   return [...savings, ...wallets];
+}
+
+/**
+ * A long view saved before accounts had fees: each account without a
+ * `fees` of its own takes the one the user's figures know, so an old edit
+ * does not quietly project fee-free. An account the reader set to 0 keeps
+ * its 0.
+ */
+export function withKnownFees(
+  envelopes: readonly Envelope[],
+  fromData: readonly Envelope[],
+): Envelope[] {
+  return envelopes.map((envelope) => {
+    if (envelope.fees !== undefined) {
+      return envelope;
+    }
+    const known = fromData.find((each) => each.id === envelope.id)?.fees;
+    return known ? { ...envelope, fees: known } : envelope;
+  });
 }
 
 /* ---------------------------------------------- which account, discreetly */

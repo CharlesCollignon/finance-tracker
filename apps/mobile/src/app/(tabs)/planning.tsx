@@ -10,6 +10,7 @@ import {
   monthsUntil,
   projectEnvelopes,
   wealthToday,
+  withKnownFees,
   type Envelope,
 } from "@finance/core/future-plan";
 import { todayIsoLocal } from "@finance/core/constants";
@@ -65,9 +66,6 @@ import { getJointPropertiesFor, getProperties } from "@/lib/properties";
 import { useAuth } from "@/providers/AuthProvider";
 import { useLocale, useT } from "@/providers/LocaleProvider";
 import { useTabBarClearance } from "@/theme/chrome";
-
-/** Fees not known yet, or none: one object, so the card's memo holds. */
-const NO_FEES = {};
 
 /**
  * One close, and every figure the sheet reads while it is open. Assembled
@@ -186,7 +184,10 @@ export default function PlanningScreen() {
     () => (data ? planEnvelopes(data, wealth.data) : []),
     [data, wealth.data],
   );
-  const envelopes = settings.envelopes ?? dataEnvelopes;
+  // An edit saved before accounts had fees takes the known ones.
+  const envelopes = settings.envelopes
+    ? withKnownFees(settings.envelopes, dataEnvelopes)
+    : dataEnvelopes;
   // The year ahead is drawn at once on the savings; the wallets join it when
   // their market value arrives, rising into the chart. The web does the same.
   const yearEnvelopes = useMemo(
@@ -342,7 +343,6 @@ export default function PlanningScreen() {
               month={data.month}
               envelopes={yearEnvelopes}
               pending={!wealthSettled}
-              fees={wealth.data?.fees ?? NO_FEES}
               settings={yearAhead}
               onSettingsChange={changeYearAhead}
               target={target}

@@ -10,7 +10,7 @@ import Animated, {
 } from "react-native-reanimated";
 
 import { formatMonthCompact } from "@finance/core/constants";
-import type { Envelope, EnvelopeId } from "@finance/core/future-plan";
+import type { Envelope } from "@finance/core/future-plan";
 import type { ForwardProjection } from "@finance/core/projection";
 import {
   buildYearAhead,
@@ -60,8 +60,6 @@ interface YearAheadCardProps {
   envelopes: readonly Envelope[];
   /** The wallets' market value is still on its way. */
   pending: boolean;
-  /** Each wallet's yearly fees, taken off its return. */
-  fees: Partial<Record<EnvelopeId, number>>;
   settings: YearAheadSettings;
   onSettingsChange: (next: YearAheadSettings) => void;
   /** Where « Et si… » goes, already checked against the accounts there are. */
@@ -117,7 +115,6 @@ function YearAhead({
   month,
   envelopes,
   pending,
-  fees,
   settings,
   onSettingsChange,
   target,
@@ -152,11 +149,10 @@ function YearAhead({
         complete: !pending,
         inflation: YEAR_AHEAD_INFLATION,
         realTerms: settings.realTerms,
-        fees,
       });
     const built = build(settings.hidden);
     return built.bands.every((band) => band.hidden) ? build([]) : built;
-  }, [points, opening.onHand, envelopes, settings, extra, target, pending, fees]);
+  }, [points, opening.onHand, envelopes, settings, extra, target, pending]);
 
   // What the extra alone adds, on the same accounts: the web's sum.
   const withoutExtra = useMemo(
@@ -174,10 +170,9 @@ function YearAhead({
             complete: !pending,
             inflation: YEAR_AHEAD_INFLATION,
             realTerms: settings.realTerms,
-            fees,
           })
         : null,
-    [points, opening.onHand, envelopes, settings, extra, ahead.bands, pending, fees],
+    [points, opening.onHand, envelopes, settings, extra, ahead.bands, pending],
   );
 
   // A tick each time sliding brings the next milestone closer, so the finger

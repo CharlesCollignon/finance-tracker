@@ -334,8 +334,6 @@ export interface YearAheadInput {
   inflation?: number;
   /** Every figure in today's euros, deflated at `inflation`. */
   realTerms?: boolean;
-  /** Each wallet's yearly fees as a fraction — fund and envelope — taken off its return. */
-  fees?: Partial<Record<EnvelopeId, number>>;
 }
 
 export interface YearAheadBand {
@@ -479,15 +477,12 @@ export function buildYearAhead(input: YearAheadInput): YearAhead {
     into.push({ id: "elsewhere", monthly: elsewhere });
   }
 
-  /* The envelopes, at their return after fees, and twice when the extra
-     goes into one of them: compounding makes it worth more than the sum of
-     the payments. */
+  /* The envelopes, at their return after their own fees (`Envelope.fees`,
+     which projectEnvelopes takes off), and twice when the extra goes into
+     one of them: compounding makes it worth more than the sum of the
+     payments. */
   const inflation = input.inflation ?? 0;
-  const fees = input.fees ?? {};
-  const net = input.envelopes.map((envelope) => ({
-    ...envelope,
-    annualReturn: envelope.annualReturn - (fees[envelope.id] ?? 0),
-  }));
+  const net = input.envelopes;
   const extraEnvelope =
     extra && input.envelopes.some((envelope) => envelope.id === extra.to)
       ? extra
@@ -506,9 +501,12 @@ export function buildYearAhead(input: YearAheadInput): YearAhead {
     : asTheyStand;
   // What the same accounts would have earned with no fees at all.
   const grossGrowth = input.envelopes.some(
-    (envelope) => (fees[envelope.id] ?? 0) > 0,
+    (envelope) => (envelope.fees ?? 0) > 0,
   )
-    ? envelopeSeries(boosted(input.envelopes), months).growth
+    ? envelopeSeries(
+        boosted(input.envelopes.map((envelope) => ({ ...envelope, fees: 0 }))),
+        months,
+      ).growth
     : withExtra.growth;
 
   /* Prices rise: the salary, the charges and the everyday spending follow
@@ -633,7 +631,7 @@ export function buildYearAhead(input: YearAheadInput): YearAhead {
       // A drift whose average month grows at the account's return, as the
       // central line does — the median future sits a little lower.
       const drift =
-        Math.log(1 + envelope.annualReturn) / 12 -
+        Math.log(1 + envelope.annualReturn - (envelope.fees ?? 0)) / 12 -
         (monthlyVolatility * monthlyVolatility) / 2;
       const payment =
         envelope.monthly +

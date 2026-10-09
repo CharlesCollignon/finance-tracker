@@ -369,6 +369,9 @@ function AccountRow({
   const name = envelopeName(envelope.id, t);
   const fullName = t(ENVELOPE_NAME_KEYS[envelope.id]);
 
+  // Livrets and PELs charge no fees; a wallet's funds and envelope do.
+  const charges = envelope.id !== "savings" && !isSavingsKind(envelope.id);
+
   return (
     <View className="gap-3 rounded-card border border-border p-3">
       <View className="flex-row items-start justify-between gap-2">
@@ -420,14 +423,38 @@ function AccountRow({
           max={0.5}
           onChange={(annualReturn) => onChange({ annualReturn })}
         />
-        <NumberField
-          label={t("futurePlan.fieldTax")}
-          kind="percent"
-          value={envelope.taxOnGains}
-          max={1}
-          onChange={(taxOnGains) => onChange({ taxOnGains })}
-        />
+        {/* Livrets charge nothing; a fund and its envelope do. */}
+        {charges ? (
+          <NumberField
+            label={t("futurePlan.fieldFees")}
+            kind="percent"
+            decimals={2}
+            value={envelope.fees ?? 0}
+            max={0.05}
+            onChange={(fees) => onChange({ fees })}
+          />
+        ) : (
+          <NumberField
+            label={t("futurePlan.fieldTax")}
+            kind="percent"
+            value={envelope.taxOnGains}
+            max={1}
+            onChange={(taxOnGains) => onChange({ taxOnGains })}
+          />
+        )}
       </View>
+      {charges ? (
+        <View className="flex-row gap-2">
+          <NumberField
+            label={t("futurePlan.fieldTax")}
+            kind="percent"
+            value={envelope.taxOnGains}
+            max={1}
+            onChange={(taxOnGains) => onChange({ taxOnGains })}
+          />
+          <View className="flex-1" />
+        </View>
+      ) : null}
 
       <Text variant="muted" className="text-xs">
         {t(ENVELOPE_TAX_KEYS[envelope.id])}

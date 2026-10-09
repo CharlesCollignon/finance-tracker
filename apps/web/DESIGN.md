@@ -927,6 +927,10 @@ specific:
   figures and the 2026 French rates, every input is theirs to change, the
   edits stay in this browser, and "Revenir à mes chiffres" goes back. The
   milestones never read those edits: they are about money that exists.
+  Each wallet has « Frais par an », pre-filled with what Placements knows
+  (fund charges weighted by value, plus the envelope's fee); livrets have
+  none. The fees come off the return in the long view, the milestones and
+  the year ahead alike (`Envelope.fees`, October 2026).
 - **What the future is made of, quietly.** Under the long view's net value, a
   1.5px bar of each account's share (2px seams, chart tokens in the accounts'
   order, never gold) and one muted line naming them, four at most and the rest

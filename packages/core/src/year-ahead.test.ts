@@ -242,7 +242,12 @@ describe("buildYearAhead, as finances really go", () => {
 
   it("takes the fees off the return, and says what they cost", () => {
     const without = buildYearAhead(base);
-    const withFees = buildYearAhead({ ...base, fees: { pea: 0.005 } });
+    const withFees = buildYearAhead({
+      ...base,
+      envelopes: base.envelopes.map((each) =>
+        each.id === "pea" ? { ...each, fees: 0.005 } : each,
+      ),
+    });
     const pea = (ahead: typeof without) =>
       ahead.bands.find((band) => band.id === "pea")!.values[24]!;
 

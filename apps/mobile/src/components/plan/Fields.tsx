@@ -42,8 +42,11 @@ export function NumberField({
   onDone,
   min = 0,
   max = Number.POSITIVE_INFINITY,
+  decimals = 1,
 }: {
   label: string;
+  /** Decimals a percentage shows: two for a fee. */
+  decimals?: number;
   /** Euros, or a fraction for a percentage. */
   value: number;
   kind: "money" | "percent";
@@ -61,7 +64,7 @@ export function NumberField({
 
   const formatted =
     kind === "percent"
-      ? percentDigits(value, locale)
+      ? percentDigits(value, locale, decimals)
       : new Intl.NumberFormat(INTL_LOCALES[locale], {
           maximumFractionDigits: 0,
         }).format(value);
