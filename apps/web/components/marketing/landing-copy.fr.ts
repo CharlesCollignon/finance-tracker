@@ -99,7 +99,7 @@ export const landingCopyFr: LandingCopySections & {
       {
         question: "C’est payant ?",
         answer:
-          "Non. Créer un compte et tout ce qui est décrit plus haut est gratuit, sans carte bancaire. Les lectures et les questions sont offertes dans une limite par mois ; avec l’IA de votre choix — Mistral, ChatGPT ou Claude sur votre propre compte OpenRouter — vous les payez à ce service, quelques centimes chacune, sans limite. La connexion bancaire, quand elle arrivera, se paiera chez son service.",
+          "Pluclair est gratuit, sans carte bancaire. Les lectures et les questions, écrites par une IA, demandent votre propre compte OpenRouter : vous y choisissez le modèle — Mistral, ChatGPT ou Claude — et vous payez ce service directement, quelques centimes chacune. La connexion bancaire, quand elle arrivera, se paiera chez son service.",
       },
       {
         question: "Pluclair peut-il toucher à mon argent ?",
@@ -279,7 +279,7 @@ export const landingCopyFr: LandingCopySections & {
       title: "Lectures écrites",
       body: "Quelques phrases sur votre mois ou vos placements. Les mots sont ceux de l’IA ; chaque chiffre est celui de Pluclair.",
       utility:
-        "Les autres écrans vous donnent des chiffres et des listes. Une lecture les rassemble et dit ce qui ressort — sans avoir le droit d’inventer un nombre. Utile les mois où les totaux ont l’air normaux et où quelque chose en dessous ne l’est pas. Les lectures sont écrites sur la clé de Pluclair dans une limite par mois, ou sur votre propre compte OpenRouter avec le modèle de votre choix — Mistral, ChatGPT ou Claude — à vos frais.",
+        "Les autres écrans vous donnent des chiffres et des listes. Une lecture les rassemble et dit ce qui ressort — sans avoir le droit d’inventer un nombre. Utile les mois où les totaux ont l’air normaux et où quelque chose en dessous ne l’est pas. Les lectures sont écrites sur votre propre compte OpenRouter, avec le modèle de votre choix — Mistral, ChatGPT ou Claude — et à vos frais : quelques centimes chacune.",
       steps: [
         {
           title: "Demandez-en une",
