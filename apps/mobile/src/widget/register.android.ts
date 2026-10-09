@@ -1,8 +1,12 @@
-import { registerWidgetTaskHandler } from "react-native-android-widget";
+import { hasWidget } from "./native";
 
-import { widgetTaskHandler } from "./task-handler";
-
-// The home-screen widget's calls, handled with no screen open (see
-// `task-handler.tsx`). Android only: the file's suffix keeps it out of the
-// iOS and web bundles, and `register.ts` stands in for them.
-registerWidgetTaskHandler(widgetTaskHandler);
+// The home-screen widget's handler, in a build that has the widget. Android
+// only: the suffix keeps it out of the iOS and web bundles, and `register.ts`
+// stands in for them. Required rather than imported, so Expo Go never loads
+// the library (`native.ts`).
+if (hasWidget) {
+  // A require, not an import: an import is hoisted and always runs; and not
+  // `import()`, which would register after Android may already have called.
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  require("./register-native");
+}

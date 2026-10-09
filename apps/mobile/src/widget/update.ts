@@ -1,5 +1,5 @@
 /**
- * The home-screen widget is Android's (`update.android.tsx`); on iOS and the
+ * The home-screen widget is Android's (`update.android.ts`); on iOS and the
  * web there is nothing to draw.
  */
 export async function updateWidget(_options: {
