@@ -860,10 +860,11 @@ next sync learns from. Counted, not guessed: the groups filed in that sitting.
 
 ### Plan: Where Moments Gather
 
-Plan (`components/finance/plan/`) is where the money is heading: a year from
-now with an "Et si…" slider, the milestones and the cushion, the long view
-after French tax, and the run of month-ends with what each one saved. Most of
-the app's moments live here, and the allowance is specific:
+Plan (`components/finance/plan/`) is where the money is heading: the months
+ahead account by account with « Pourquoi » and « Et si… », the milestones and
+the cushion, the long view after French tax, and the run of month-ends with
+what each one saved. Most of the app's moments live here, and the allowance is
+specific:
 
 - **Gold means done.** Reached milestones (the orb, `tone="mark"`, in a glow of
   `--primary` drawn as a radial light, never a shadow), lit cushion rungs, the
@@ -877,6 +878,31 @@ the app's moments live here, and the allowance is specific:
 - **Play answers at once.** The slider, the horizon and every field of the
   long view redraw immediately; a calculator that animates between answers is
   one you wait for. The headline figures count to their new value.
+- **The months ahead show where, and why** (October 2026, the owner's call).
+  The figure is every account at the end of the window
+  (`packages/core/src/year-ahead.ts`). That is the current account walked
+  forward by the recurring entries, plus each savings account and wallet as
+  the milestones see it, plus « Autre épargne » for money set aside that no
+  account receives. The chart stacks one band per account under the gold line
+  of their sum, in the long view's chart tokens and order. The current account
+  is the ink; « Autre épargne » and anything past four accounts are the muted
+  "Autres". A legend chip takes an account out of the figure, and pointing at
+  a chip or at a « Pourquoi » row lights that account's band and dims the
+  rest.
+  « Pourquoi » is one month's income cut into charges, everyday spending, each
+  account and what stays on the current account. « Et si… » aims its extra at
+  one account. Events (a raise, a bonus, a big expense) land on the current
+  account, each as a marker that rides the line and is dragged from month to
+  month. The window (6 mois to 5 ans), the target, the hidden accounts and the
+  events stay in this browser; the extra does not.
+- **The months ahead morph instead of redrawing.** This is the one exception
+  to "arrives, then rests", kept to this card. Every path there is drawn from
+  the same 61 points, so a band that is hidden folds into its floor, a new
+  one rises from it, and a longer window stretches the bands. The morph is
+  550ms on the one curve. The pills that slide (the window, the target) and
+  the crosshair's readout follow on one quick spring (`FOLLOW` in
+  `year-ahead-parts.tsx`). Under reduced motion every one of them lands at
+  once.
 - **The long view is a calculator, and says so.** It opens on the user's own
   figures and the 2026 French rates, every input is theirs to change, the
   edits stay in this browser, and "Revenir à mes chiffres" goes back. The

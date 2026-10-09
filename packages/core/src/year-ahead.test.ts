@@ -7,6 +7,7 @@ import {
   defaultExtraTarget,
   parseYearAheadSettings,
   resampleSeries,
+  resolveExtraTarget,
   stackBands,
   YEAR_AHEAD_DEFAULT_SETTINGS,
 } from "./year-ahead";
@@ -203,6 +204,16 @@ describe("defaultExtraTarget", () => {
     ).toBe("ldds");
     expect(defaultExtraTarget([envelope("pea", 0, 0)])).toBe("pea");
     expect(defaultExtraTarget([])).toBe("current");
+  });
+});
+
+describe("resolveExtraTarget", () => {
+  it("keeps the account picked while it exists", () => {
+    const envelopes = [envelope("livret_a", 0, 0), envelope("pea", 0, 0)];
+    expect(resolveExtraTarget("pea", envelopes)).toBe("pea");
+    expect(resolveExtraTarget("current", envelopes)).toBe("current");
+    expect(resolveExtraTarget("cto", envelopes)).toBe("livret_a");
+    expect(resolveExtraTarget(null, envelopes)).toBe("livret_a");
   });
 });
 

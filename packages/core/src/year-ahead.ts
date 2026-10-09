@@ -178,6 +178,23 @@ export function defaultExtraTarget(
   return liquid?.id ?? envelopes[0]?.id ?? "current";
 }
 
+/**
+ * The account « Et si… » goes to: the one picked while it still exists —
+ * a wallet sold, a livret closed — else the default.
+ */
+export function resolveExtraTarget(
+  picked: YearAheadAccountId | null,
+  envelopes: readonly Envelope[],
+): YearAheadAccountId {
+  if (
+    picked === "current" ||
+    envelopes.some((envelope) => envelope.id === picked)
+  ) {
+    return picked!;
+  }
+  return defaultExtraTarget(envelopes);
+}
+
 /* ------------------------------------------------------------------ events */
 
 /**

@@ -1,19 +1,28 @@
 "use client";
 
-import {
-  useId,
-  useMemo,
-  useRef,
-  useState,
-  type KeyboardEvent,
-  type PointerEvent,
-  type ReactNode,
-} from "react";
+import { useId, useMemo, useState, type ReactNode } from "react";
 import Link from "next/link";
-import { ArrowRight, CalendarCheck, Sparkle } from "@phosphor-icons/react";
+import {
+  AnimatePresence,
+  LazyMotion,
+  m,
+  MotionConfig,
+  useReducedMotion,
+} from "motion/react";
+import { ArrowRight, CalendarCheck } from "@phosphor-icons/react";
 import { formatMonthCompact } from "@finance/core/constants";
-import { withExtraSaving, type WhatIfPoint } from "@finance/core/future-plan";
+import type { Envelope } from "@finance/core/future-plan";
 import type { ForwardProjection } from "@finance/core/projection";
+import {
+  buildYearAhead,
+  YEAR_AHEAD_EVENT_DEFAULTS,
+  YEAR_AHEAD_HORIZONS,
+  type YearAheadAccountId,
+  type YearAheadEvent,
+  type YearAheadEventKind,
+  type YearAheadHorizon,
+  type YearAheadSettings,
+} from "@finance/core/year-ahead";
 import { AnimatedAmount } from "@/components/finance/AnimatedAmount";
 import { Button, ButtonNub } from "@/components/ui/Button";
 import { GLASS_HERO } from "@/lib/glass";
@@ -22,16 +31,27 @@ import { useLocale, useT } from "@/lib/locale-context";
 import { FIGURE_HERO, MICRO } from "@/lib/type-scale";
 import { useFormatCurrency } from "@/lib/use-currency";
 import { cn } from "@/lib/utils";
-import { PlanCard, Slider } from "./plan-controls";
+import { PlanCard } from "./plan-controls";
+import { accountColors, accountNameKey, FOLLOW } from "./year-ahead-parts";
+import { YearAheadChart } from "./YearAheadChart";
+import { YearAheadWhatIf } from "./YearAheadWhatIf";
+import { YearAheadWhy } from "./YearAheadWhy";
 
-/** What the "Et si…" slider runs to, in euros a month. */
-const EXTRA_MAX = 500;
-const EXTRA_STEP = 25;
-const QUICK_EXTRAS = [50, 100, 200] as const;
+/** Motion's layout engine, fetched after the page — see `lib/motion-features`. */
+const loadMotionFeatures = () =>
+  import("@/lib/motion-features").then((mod) => mod.default);
 
 interface YearAheadCardProps {
   projection: ForwardProjection;
   hasTemplates: boolean;
+  /** The savings accounts and wallets, from the user's own figures. */
+  envelopes: readonly Envelope[];
+  /** The wallets' market value is still on its way. */
+  pending: boolean;
+  settings: YearAheadSettings;
+  onSettingsChange: (next: YearAheadSettings) => void;
+  /** Where « Et si… » goes, already checked against the accounts there are. */
+  target: YearAheadAccountId;
   extra: number;
   onExtraChange: (extra: number) => void;
   /**
@@ -43,31 +63,24 @@ interface YearAheadCardProps {
 }
 
 /**
- * A year from now: the page's headline figure and the one control on it
- * that is pure play.
+ * The months ahead: the page's headline figure, where that money will be,
+ * and why — with the controls that are pure play.
  *
- * The figure is the forward projection's kept track — what is on the
- * accounts and put aside twelve months out, or what the months add when there
- * is no balance to start from — and the slider under it moves it. Money kept
- * rather than spent adds up month after month, so the curve redraws a second,
- * dashed line as the thumb moves and the figure counts to its new end: the
- * cheapest way to show what fifty euros a month is worth is to let someone
- * drag it.
+ * The figure is every account added up at the end of the window: the
+ * current account walked forward by the recurring entries, each savings
+ * account and wallet growing by what goes in and what it earns. The chart
+ * stacks them as bands under the gold line of their sum, the legend under it
+ * takes any of them out, and « Pourquoi » cuts a month's income into where
+ * it goes. « Et si… » aims an extra at one account and adds the events the
+ * recurring entries cannot know, each a marker that rides the line.
  */
-export function YearAheadCard({
-  projection,
-  hasTemplates,
-  extra,
-  onExtraChange,
-  milestoneLine,
-}: YearAheadCardProps) {
+export function YearAheadCard(props: YearAheadCardProps) {
   const t = useT();
-  const format = useFormatCurrency();
-  const { summary, points, makeup } = projection;
-
-  const series = useMemo(() => withExtraSaving(points, extra), [points, extra]);
-
-  if (!hasTemplates || !summary || points.length < 2) {
+  if (
+    !props.hasTemplates ||
+    !props.projection.summary ||
+    props.projection.points.length < 2
+  ) {
     return (
       <PlanCard
         icon={<CalendarCheck size={ICON.sm} weight="fill" />}
@@ -90,14 +103,158 @@ export function YearAheadCard({
       </PlanCard>
     );
   }
+  return (
+    <LazyMotion features={loadMotionFeatures} strict>
+      <MotionConfig reducedMotion="user">
+        <YearAhead {...props} />
+      </MotionConfig>
+    </LazyMotion>
+  );
+}
 
-  const base = summary.grounded ? summary.endingKept : summary.addedAltogether;
-  const total = base + extra * points.length;
+function YearAhead({
+  projection,
+  envelopes,
+  pending,
+  settings,
+  onSettingsChange,
+  target,
+  extra,
+  onExtraChange,
+  milestoneLine,
+}: YearAheadCardProps) {
+  const t = useT();
+  const locale = useLocale();
+  const format = useFormatCurrency();
+  const money = (value: number) => format(Math.round(value));
+  const [focus, setFocus] = useState<YearAheadAccountId | null>(null);
+
+  const { points, opening, makeup, summary } = projection;
+  const grounded = opening.onHand !== null;
+
+  // Never every account hidden: a card with nothing on it explains nothing.
+  const ahead = useMemo(() => {
+    const build = (hidden: readonly YearAheadAccountId[]) =>
+      buildYearAhead({
+        points,
+        onHandToday: opening.onHand,
+        envelopes,
+        horizon: settings.horizon,
+        extra: { monthly: extra, to: target },
+        events: settings.events,
+        hidden,
+      });
+    const built = build(settings.hidden);
+    return built.bands.every((band) => band.hidden) ? build([]) : built;
+  }, [points, opening.onHand, envelopes, settings, extra, target]);
+
+  // What the extra alone adds: the figure with it, against the figure
+  // without it, events and all, on the same accounts.
+  const withoutExtra = useMemo(
+    () =>
+      extra > 0
+        ? buildYearAhead({
+            points,
+            onHandToday: opening.onHand,
+            envelopes,
+            horizon: settings.horizon,
+            events: settings.events,
+            hidden: ahead.bands
+              .filter((band) => band.hidden)
+              .map((band) => band.id),
+          })
+        : null,
+    [points, opening.onHand, envelopes, settings, extra, ahead.bands],
+  );
+
+  const months = ahead.months;
+  const color = useMemo(() => accountColors(envelopes), [envelopes]);
+  const name = (id: YearAheadAccountId) => t(accountNameKey(id));
+  const stepLabel = (step: number) =>
+    step === 0 ? t("futurePlan.today") : (points[step - 1]?.label ?? "");
+  const axisLabel = (step: number) => {
+    if (step === 0) {
+      return t("futurePlan.today");
+    }
+    const point = points[step - 1];
+    return point ? formatMonthCompact(point.year, point.month, locale) : "";
+  };
+  // A tick where each year turns, once the window is long enough to need it.
+  const yearTicks =
+    months >= 24
+      ? points
+          .slice(0, months - 1)
+          .flatMap((point, index) =>
+            point.month === 1
+              ? [{ step: index + 1, label: String(point.year) }]
+              : [],
+          )
+      : [];
+
+  const end = ahead.total[months] ?? 0;
+  const today = ahead.total[0] ?? 0;
+  const baselineEnd = ahead.baseline[months] ?? 0;
+  const played = ahead.total.some(
+    (value, step) => Math.abs(value - (ahead.baseline[step] ?? 0)) >= 1,
+  );
+  const someHidden = ahead.bands.some((band) => band.hidden);
+  const endLabel = points[months - 1]?.label ?? summary?.endLabel ?? "";
+
+  const title =
+    settings.horizon < 12
+      ? t("futurePlan.inMonthsTitle", { count: settings.horizon })
+      : t("futurePlan.inYearsTitle", { count: settings.horizon / 12 });
+
+  const extraGain = withoutExtra ? end - (withoutExtra.total[months] ?? 0) : 0;
+
+  /* ------------------------------------------------ the settings' moves */
+
+  const update = (patch: Partial<YearAheadSettings>) =>
+    onSettingsChange({ ...settings, ...patch });
+
+  const toggle = (id: YearAheadAccountId) => {
+    const hidden = settings.hidden.includes(id)
+      ? settings.hidden.filter((other) => other !== id)
+      : [...settings.hidden, id];
+    update({ hidden });
+  };
+
+  const addEvent = (kind: YearAheadEventKind) => {
+    const event: YearAheadEvent = {
+      id: `${kind}-${Date.now().toString(36)}`,
+      kind,
+      amount: YEAR_AHEAD_EVENT_DEFAULTS[kind],
+      month: Math.max(1, Math.ceil(months / 2)),
+    };
+    // An event lands on the current account, so it has to be on the chart.
+    update({
+      events: [...settings.events, event],
+      hidden: settings.hidden.filter((id) => id !== "current"),
+    });
+  };
+
+  const changeEvent = (id: string, patch: Partial<YearAheadEvent>) =>
+    update({
+      events: settings.events.map((event) =>
+        event.id === id ? { ...event, ...patch } : event,
+      ),
+    });
+
+  const targets: YearAheadAccountId[] = [
+    ...envelopes.map((envelope) => envelope.id),
+    "current",
+  ];
 
   return (
     <PlanCard
       icon={<CalendarCheck size={ICON.sm} weight="fill" />}
-      title={t("futurePlan.yearTitle")}
+      title={title}
+      aside={
+        <HorizonPicker
+          value={settings.horizon}
+          onChange={(horizon) => update({ horizon })}
+        />
+      }
       className={cn(GLASS_HERO, "md:p-8")}
     >
       {/* Above the figure, because it invalidates it. */}
@@ -115,430 +272,327 @@ export function YearAheadCard({
 
       <div>
         <AnimatedAmount
-          value={total}
-          format={(value) => format(Math.round(value))}
+          value={end}
+          format={money}
           className={cn(FIGURE_HERO, "block text-primary-ink")}
         />
         <p className="mt-2 text-sm text-muted-foreground">
-          {summary.grounded
-            ? t("futurePlan.yearGrounded", { month: summary.endLabel })
-            : t("futurePlan.yearAdded", { month: summary.endLabel })}
+          {someHidden
+            ? t("futurePlan.yearShownOnly", { month: endLabel })
+            : grounded
+              ? t("futurePlan.yearAllGrounded", { month: endLabel })
+              : t("futurePlan.yearAllAdded", { month: endLabel })}
         </p>
+        <div className="mt-3 flex flex-wrap gap-2">
+          <Pill>
+            {end >= today
+              ? t("futurePlan.yearFromToday", { amount: money(end - today) })
+              : t("futurePlan.yearBelowToday", { amount: money(today - end) })}
+          </Pill>
+          <AnimatePresence>
+            {played ? (
+              <m.span
+                key="played"
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.9 }}
+                transition={FOLLOW}
+              >
+                <Pill tone="gold">
+                  {end >= baselineEnd
+                    ? t("futurePlan.yearScenarioUp", {
+                        amount: money(end - baselineEnd),
+                      })
+                    : t("futurePlan.yearScenarioDown", {
+                        amount: money(baselineEnd - end),
+                      })}
+                </Pill>
+              </m.span>
+            ) : null}
+          </AnimatePresence>
+        </div>
       </div>
 
-      <YearCurve
-        points={series}
-        showExtra={extra > 0}
-        extraLabel={t("futurePlan.whatIfPerMonth", { amount: format(extra) })}
-        format={(value) => format(Math.round(value))}
+      <YearAheadChart
+        ahead={ahead}
+        color={color}
+        name={name}
+        focus={focus}
+        showBaseline={played}
+        events={settings.events}
+        onMoveEvent={(id, month) => changeEvent(id, { month })}
+        stepLabel={stepLabel}
+        axisLabel={axisLabel}
+        yearTicks={yearTicks}
+        format={money}
       />
 
-      <div className="flex flex-col gap-3 border-t border-border pt-4">
-        <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
-          <h3 className="flex items-center gap-2 font-head text-base">
-            <Sparkle
-              size={ICON.md}
-              weight="fill"
-              aria-hidden
-              className="text-primary"
-            />
-            {t("futurePlan.whatIfTitle")}
-          </h3>
-          <p className="text-sm text-muted-foreground">
-            {t("futurePlan.whatIfLabel")}
-          </p>
-        </div>
+      <Legend
+        bands={ahead.bands}
+        months={months}
+        pending={pending}
+        played={played}
+        color={color}
+        name={name}
+        onToggle={toggle}
+        onFocus={setFocus}
+        format={money}
+      />
+      {!grounded ? (
+        <p className={cn(MICRO, "-mt-2 text-muted-foreground")}>
+          {t("futurePlan.currentNoBank")}
+        </p>
+      ) : null}
 
-        <div className="flex items-center gap-3">
-          <Slider
-            value={extra}
-            min={0}
-            max={EXTRA_MAX}
-            step={EXTRA_STEP}
-            onChange={onExtraChange}
-            label={t("futurePlan.whatIfLabel")}
-            valueText={t("futurePlan.whatIfPerMonth", {
-              amount: format(extra),
-            })}
-            className="min-w-0 flex-1"
-          />
-          <span
-            className={cn(
-              "privacy-sensitive w-28 shrink-0 text-right text-sm font-medium tabular-nums",
-              extra === 0 && "text-muted-foreground",
-            )}
-          >
-            {t("futurePlan.whatIfPerMonth", { amount: format(extra) })}
-          </span>
-        </div>
-
-        <div className="flex flex-wrap gap-2">
-          {QUICK_EXTRAS.map((amount) => {
-            const on = extra === amount;
-            return (
-              <button
-                key={amount}
-                type="button"
-                aria-pressed={on}
-                onClick={() => onExtraChange(on ? 0 : amount)}
-                className={cn(
-                  "min-h-11 rounded-full border px-4 text-sm tabular-nums transition-colors duration-hover lg:min-h-9",
-                  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-card",
-                  on
-                    ? "border-foreground/30 bg-muted text-foreground"
-                    : "border-border text-muted-foreground hover:bg-muted hover:text-foreground",
-                )}
-              >
-                +{format(amount)}
-              </button>
-            );
-          })}
-        </div>
-
-        <div aria-live="polite" className="min-h-12">
-          {extra === 0 ? (
-            <p className="text-sm text-muted-foreground">
-              {t("futurePlan.whatIfNone")}
-            </p>
-          ) : (
-            <>
-              <p className="privacy-sensitive text-base font-medium">
-                {t("futurePlan.whatIfResult", {
-                  amount: format(extra * points.length),
-                })}
-              </p>
-              {milestoneLine}
-            </>
-          )}
-        </div>
+      <div className="grid gap-6 border-t border-border pt-5 lg:grid-cols-2 lg:gap-10">
+        <YearAheadWhy
+          flow={ahead.flow}
+          everydayCounted={summary?.unrecordedCounted ?? false}
+          color={color}
+          name={name}
+          onFocus={setFocus}
+          format={format}
+        />
+        <YearAheadWhatIf
+          extra={extra}
+          onExtraChange={onExtraChange}
+          targets={targets}
+          target={target}
+          onTarget={(id) =>
+            update({
+              to: id,
+              hidden: settings.hidden.filter((other) => other !== id),
+            })
+          }
+          result={
+            extra > 0
+              ? t("futurePlan.whatIfResultBy", {
+                  amount: money(extraGain),
+                  month: endLabel,
+                })
+              : null
+          }
+          milestoneLine={milestoneLine}
+          events={settings.events}
+          onAddEvent={addEvent}
+          onChangeEvent={changeEvent}
+          onRemoveEvent={(id) =>
+            update({
+              events: settings.events.filter((event) => event.id !== id),
+            })
+          }
+          onClear={() => {
+            onExtraChange(0);
+            update({ events: [] });
+          }}
+          monthOptions={points.map((point, index) => ({
+            month: index + 1,
+            label: point.label,
+          }))}
+          months={months}
+          color={color}
+          name={name}
+          format={format}
+        />
       </div>
     </PlanCard>
   );
 }
 
-/* ------------------------------------------------------------ the curve */
+/* ------------------------------------------------------------ the pieces */
 
-/** The plot's height in pixels; its width is whatever the card gives it. */
-const HEIGHT = 176;
-/** Room above and below the lines, so an end dot is not cut. */
-const PAD_Y = 16;
-/** The x axis in the SVG's own units, stretched to the card's width. */
-const SPAN = 1000;
+function Pill({
+  tone = "neutral",
+  children,
+}: {
+  tone?: "neutral" | "gold";
+  children: ReactNode;
+}) {
+  return (
+    <span
+      className={cn(
+        "privacy-sensitive inline-flex min-h-7 items-center rounded-full border px-3 text-xs font-medium tabular-nums",
+        tone === "gold"
+          ? "border-primary/40 bg-primary/10 text-primary-ink"
+          : "border-border text-muted-foreground",
+      )}
+    >
+      {children}
+    </span>
+  );
+}
 
 /**
- * The twelve months ahead, and the same twelve with the extra.
- *
- * Built the way the Bearing's balance curve is — relative units stretched to
- * the card, strokes held at their width, dots in HTML so they stay round — so
- * the line is in the server's HTML and draws itself in as the card arrives.
- * The solid line is the accent, being the figure the page opens on; the extra
- * is a dashed line in the ink, told apart by its dash as well as its colour.
- * The crosshair follows the pointer, a finger or the arrow keys to the
- * nearest month and reads it out, to a screen reader as well.
+ * Six months to five years, as one row of choices with a pill that slides to
+ * the one picked.
  */
-function YearCurve({
-  points,
-  showExtra,
-  extraLabel,
-  format,
+function HorizonPicker({
+  value,
+  onChange,
 }: {
-  points: WhatIfPoint[];
-  showExtra: boolean;
-  extraLabel: string;
-  format: (value: number) => string;
+  value: YearAheadHorizon;
+  onChange: (value: YearAheadHorizon) => void;
 }) {
   const t = useT();
-  const locale = useLocale();
-  const titleId = useId();
-  const frameRef = useRef<HTMLDivElement>(null);
-  const [active, setActive] = useState<number | null>(null);
-
-  const geometry = useMemo(() => {
-    const values = points.flatMap((point) =>
-      showExtra ? [point.value, point.withExtra] : [point.value],
-    );
-    let min = Math.min(...values, 0);
-    let max = Math.max(...values, 0);
-    if (max - min < 1) {
-      max += 1;
-      min -= 1;
-    }
-    const last = Math.max(1, points.length - 1);
-    const x = (index: number) => index / last;
-    const y = (value: number) =>
-      PAD_Y + ((max - value) / (max - min)) * (HEIGHT - PAD_Y * 2);
-    const path = (pick: (point: WhatIfPoint) => number) =>
-      points
-        .map(
-          (point, index) =>
-            `${index === 0 ? "M" : "L"}${(x(index) * SPAN).toFixed(1)},${y(pick(point)).toFixed(1)}`,
-        )
-        .join(" ");
-    const base = path((point) => point.value);
-    return {
-      x,
-      y,
-      base,
-      extra: showExtra ? path((point) => point.withExtra) : "",
-      area: `${base} L${SPAN},${y(min).toFixed(1)} L0,${y(min).toFixed(1)} Z`,
-      zeroY: min < 0 && max > 0 ? y(0) : null,
-    };
-  }, [points, showExtra]);
-
-  function nearest(clientX: number): number {
-    const frame = frameRef.current;
-    if (!frame) {
-      return 0;
-    }
-    const rect = frame.getBoundingClientRect();
-    const ratio = (clientX - rect.left) / rect.width;
-    return Math.min(
-      points.length - 1,
-      Math.max(0, Math.round(ratio * (points.length - 1))),
-    );
-  }
-
-  function handleKey(event: KeyboardEvent<HTMLDivElement>) {
-    const steps: Record<string, number> = {
-      ArrowLeft: -1,
-      ArrowRight: 1,
-      Home: -points.length,
-      End: points.length,
-    };
-    const step = steps[event.key];
-    if (step === undefined) {
-      return;
-    }
-    event.preventDefault();
-    const start = active ?? (step > 0 ? -1 : points.length);
-    setActive(Math.min(points.length - 1, Math.max(0, start + step)));
-  }
-
-  const lastIndex = points.length - 1;
-  const end = points[lastIndex]!;
-  const shown = active !== null ? points[active] : null;
-  const percent = (fraction: number) => `${(fraction * 100).toFixed(3)}%`;
-  const shortLabel = (monthKey: string) => {
-    const [year, month] = monthKey.split("-").map(Number);
-    return formatMonthCompact(year!, month!, locale);
-  };
-  const readout = shown
-    ? t("futurePlan.scrubPoint", {
-        month: shown.label,
-        amount: format(shown.value),
-      })
-    : "";
-
+  const pillId = useId();
+  const reduce = useReducedMotion() ?? false;
   return (
-    <div>
-      <div
-        ref={frameRef}
-        role="img"
-        aria-labelledby={titleId}
-        tabIndex={0}
-        onPointerMove={(event: PointerEvent<HTMLDivElement>) =>
-          setActive(nearest(event.clientX))
-        }
-        onPointerDown={(event: PointerEvent<HTMLDivElement>) =>
-          setActive(nearest(event.clientX))
-        }
-        onPointerLeave={() => setActive(null)}
-        onBlur={() => setActive(null)}
-        onKeyDown={handleKey}
-        className={cn(
-          "relative w-full touch-pan-y select-none rounded-control outline-none",
-          "focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-card",
-        )}
-        style={{ height: HEIGHT }}
-      >
-        <span id={titleId} className="sr-only">
-          {t("planWeb.yearChartLabel")}
-        </span>
-
-        <svg
-          viewBox={`0 0 ${SPAN} ${HEIGHT}`}
-          preserveAspectRatio="none"
-          className="absolute inset-0 h-full w-full overflow-visible"
-          aria-hidden
-        >
-          <defs>
-            <linearGradient id={`${titleId}-wash`} x1="0" x2="0" y1="0" y2="1">
-              <stop offset="0%" stopColor="var(--primary)" stopOpacity="0.18" />
-              <stop offset="100%" stopColor="var(--primary)" stopOpacity="0" />
-            </linearGradient>
-          </defs>
-
-          {geometry.zeroY !== null ? (
-            <line
-              x1={0}
-              x2={SPAN}
-              y1={geometry.zeroY}
-              y2={geometry.zeroY}
-              stroke="var(--hairline-strong)"
-              strokeWidth={1}
-              vectorEffect="non-scaling-stroke"
-            />
-          ) : null}
-
-          <path
-            d={geometry.area}
-            fill={`url(#${titleId}-wash)`}
-            className="balance-curve-wash"
-          />
-          <path
-            d={geometry.base}
-            fill="none"
-            stroke="var(--primary)"
-            strokeWidth={2}
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            vectorEffect="non-scaling-stroke"
-            className="balance-curve-draw"
-          />
-          {geometry.extra ? (
-            <path
-              d={geometry.extra}
-              fill="none"
-              stroke="var(--foreground)"
-              strokeOpacity={0.85}
-              strokeWidth={2}
-              strokeDasharray="5 5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              vectorEffect="non-scaling-stroke"
-            />
-          ) : null}
-        </svg>
-
-        <Dot
-          left={percent(geometry.x(lastIndex))}
-          top={geometry.y(end.value)}
-          className="balance-curve-fade size-2.5 bg-primary"
-        />
-        {showExtra ? (
-          <Dot
-            left={percent(geometry.x(lastIndex))}
-            top={geometry.y(end.withExtra)}
-            className="size-2.5 border-2 border-foreground bg-card"
-          />
-        ) : null}
-
-        {active !== null && shown ? (
-          <>
-            <span
-              aria-hidden
-              className="pointer-events-none absolute inset-y-1 w-px bg-hairline-strong"
-              style={{ left: percent(geometry.x(active)) }}
-            />
-            <Dot
-              left={percent(geometry.x(active))}
-              top={geometry.y(shown.value)}
-              className="size-3 bg-primary"
-            />
-            {showExtra ? (
-              <Dot
-                left={percent(geometry.x(active))}
-                top={geometry.y(shown.withExtra)}
-                className="size-3 bg-foreground"
+    <div
+      role="radiogroup"
+      aria-label={t("futurePlan.horizon")}
+      className="flex rounded-full border border-border p-0.5"
+    >
+      {YEAR_AHEAD_HORIZONS.map((horizon) => {
+        const on = horizon === value;
+        return (
+          <button
+            key={horizon}
+            type="button"
+            role="radio"
+            aria-checked={on}
+            onClick={() => onChange(horizon)}
+            className={cn(
+              "relative isolate min-h-9 rounded-full px-3 text-xs font-medium tabular-nums",
+              "transition-colors duration-hover",
+              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+              on
+                ? "text-foreground"
+                : "text-muted-foreground hover:text-foreground",
+            )}
+          >
+            {on ? (
+              <m.span
+                layoutId={pillId}
+                transition={reduce ? { duration: 0 } : FOLLOW}
+                className="absolute inset-0 -z-10 rounded-full bg-muted"
               />
             ) : null}
-            <div
-              aria-hidden
-              className={cn(
-                "pointer-events-none absolute top-0 z-10 whitespace-nowrap",
-                "rounded-control border border-foreground/10 bg-popover px-2.5 py-1.5 text-left",
-                geometry.x(active) < 0.15
-                  ? "translate-x-0"
-                  : geometry.x(active) > 0.85
-                    ? "-translate-x-full"
-                    : "-translate-x-1/2",
-              )}
-              style={{ left: percent(geometry.x(active)) }}
-            >
-              <p className="privacy-sensitive text-sm font-semibold tabular-nums">
-                {readout}
-              </p>
-              {showExtra ? (
-                <p className="privacy-sensitive text-xs tabular-nums text-muted-foreground">
-                  {t("futurePlan.scrubWithExtra", {
-                    amount: format(shown.withExtra),
-                  })}
-                </p>
-              ) : null}
-            </div>
-          </>
-        ) : null}
-      </div>
-
-      <p className="sr-only" aria-live="polite">
-        {readout}
-        {shown && showExtra
-          ? ` · ${t("futurePlan.scrubWithExtra", { amount: format(shown.withExtra) })}`
-          : ""}
-      </p>
-
-      <div className="mt-2 flex items-center justify-between gap-3 text-xs text-muted-foreground">
-        <span>{shortLabel(points[0]!.monthKey)}</span>
-        <span className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1">
-          <span className="flex items-center gap-1.5">
-            <span aria-hidden className="h-0.5 w-4 rounded-full bg-primary" />
-            {t("planWeb.asItStands")}
-          </span>
-          {showExtra ? (
-            <span className="privacy-sensitive flex items-center gap-1.5">
-              <span
-                aria-hidden
-                className="h-0 w-4 border-t-2 border-dashed border-foreground/85"
-              />
-              {extraLabel}
-            </span>
-          ) : null}
-        </span>
-        <span>{shortLabel(end.monthKey)}</span>
-      </div>
-      <p className={cn(MICRO, "mt-1 text-center text-muted-foreground")}>
-        {t("futurePlan.scrubHint")}
-      </p>
-
-      <table className="sr-only">
-        <thead>
-          <tr>
-            <th scope="col">{t("planWeb.tableMonth")}</th>
-            <th scope="col">{t("planWeb.asItStands")}</th>
-            {showExtra ? <th scope="col">{extraLabel}</th> : null}
-          </tr>
-        </thead>
-        <tbody>
-          {points.map((point) => (
-            <tr key={point.monthKey}>
-              <th scope="row">{point.label}</th>
-              <td>{format(point.value)}</td>
-              {showExtra ? <td>{format(point.withExtra)}</td> : null}
-            </tr>
-          ))}
-        </tbody>
-      </table>
+            {horizon < 12
+              ? t("futurePlan.horizonMonths", { count: horizon })
+              : t("futurePlan.years", { count: horizon / 12 })}
+          </button>
+        );
+      })}
     </div>
   );
 }
 
-function Dot({
-  left,
-  top,
-  className,
+/**
+ * One chip per account: its colour, its name, what it holds at the end. A
+ * press takes it out of the figure and the chart, another brings it back;
+ * pointing at one lights its band. The last one showing cannot be taken out.
+ */
+function Legend({
+  bands,
+  months,
+  pending,
+  played,
+  color,
+  name,
+  onToggle,
+  onFocus,
+  format,
 }: {
-  left: string;
-  top: number;
-  className?: string;
+  bands: ReturnType<typeof buildYearAhead>["bands"];
+  months: number;
+  pending: boolean;
+  played: boolean;
+  color: (id: YearAheadAccountId) => string;
+  name: (id: YearAheadAccountId) => string;
+  onToggle: (id: YearAheadAccountId) => void;
+  onFocus: (id: YearAheadAccountId | null) => void;
+  format: (value: number) => string;
 }) {
+  const t = useT();
+  const reduce = useReducedMotion() ?? false;
+  const shown = bands.filter((band) => !band.hidden).length;
+
   return (
-    <span
-      aria-hidden
-      className={cn(
-        "pointer-events-none absolute -translate-x-1/2 -translate-y-1/2 rounded-full ring-2 ring-card",
-        className,
-      )}
-      style={{ left, top }}
-    />
+    <ul className="flex flex-wrap gap-2">
+      <AnimatePresence initial={false}>
+        {bands.map((band) => {
+          const last = !band.hidden && shown === 1;
+          return (
+            <m.li
+              key={band.id}
+              layout
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.9 }}
+              transition={reduce ? { duration: 0 } : FOLLOW}
+            >
+              <m.button
+                type="button"
+                aria-pressed={!band.hidden}
+                aria-label={t("futurePlan.accountToggle", {
+                  name: name(band.id),
+                })}
+                disabled={last}
+                whileTap={reduce || last ? undefined : { scale: 0.95 }}
+                onClick={() => onToggle(band.id)}
+                onPointerEnter={() => !band.hidden && onFocus(band.id)}
+                onPointerLeave={() => onFocus(null)}
+                onFocus={() => !band.hidden && onFocus(band.id)}
+                onBlur={() => onFocus(null)}
+                className={cn(
+                  "flex min-h-11 items-center gap-2 rounded-full border px-3 text-left text-sm lg:min-h-10",
+                  "transition-colors duration-hover",
+                  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-card",
+                  band.hidden
+                    ? "border-dashed border-border text-muted-foreground hover:text-foreground"
+                    : "border-border bg-muted/40 hover:bg-muted",
+                  last && "cursor-default",
+                )}
+              >
+                <span
+                  aria-hidden
+                  className={cn(
+                    "size-2.5 shrink-0 rounded-full transition-transform duration-hover",
+                    band.hidden && "scale-75 opacity-40",
+                  )}
+                  style={{ background: color(band.id) }}
+                />
+                <span className={cn(band.hidden && "line-through")}>
+                  {name(band.id)}
+                </span>
+                {!band.hidden ? (
+                  <AnimatedAmount
+                    value={band.values[months] ?? 0}
+                    format={format}
+                    className="font-medium tabular-nums"
+                  />
+                ) : null}
+              </m.button>
+            </m.li>
+          );
+        })}
+        {pending ? (
+          <m.li
+            key="pending"
+            layout
+            exit={{ opacity: 0, scale: 0.9 }}
+            className="flex min-h-11 animate-pulse items-center rounded-full border border-dashed border-border px-3 text-sm text-muted-foreground lg:min-h-10"
+          >
+            {t("futurePlan.accountsPending")}
+          </m.li>
+        ) : null}
+        {played ? (
+          <m.li
+            key="baseline"
+            layout
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="flex min-h-11 items-center gap-2 px-1 text-xs text-muted-foreground lg:min-h-10"
+          >
+            <span
+              aria-hidden
+              className="h-0 w-4 border-t-2 border-dashed border-foreground/85"
+            />
+            {t("planWeb.asItStands")}
+          </m.li>
+        ) : null}
+      </AnimatePresence>
+    </ul>
   );
 }

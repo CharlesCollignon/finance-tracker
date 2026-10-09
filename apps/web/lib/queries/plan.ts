@@ -6,6 +6,7 @@ import {
   type ForwardProjection,
 } from "@finance/core/projection";
 import type { RecurringTemplateWithCategory } from "@finance/core/types/database";
+import { YEAR_AHEAD_MAX_MONTHS } from "@finance/core/year-ahead";
 import { getLocale } from "@/lib/locale";
 import { readCashBalance, readCloseWait } from "@/lib/queries/bank-balance";
 import type { CloseWaitAccount } from "@finance/data/bank-balance";
@@ -71,7 +72,10 @@ export interface PlanBase {
    * and cannot read one of them. Empty otherwise.
    */
   closeWait: CloseWaitAccount[];
-  /** The next twelve months, from the recurring templates. */
+  /**
+   * The months ahead from the recurring templates, as far as the year
+   * ahead's longest window: the card draws as many of them as the reader asks.
+   */
   projection: ForwardProjection;
   /**
    * The user's properties, for net worth and the long view — null for an
@@ -144,7 +148,7 @@ export async function gatherPlanBase(userId: string): Promise<PlanBase> {
       year,
       month,
       today,
-      months: 12,
+      months: YEAR_AHEAD_MAX_MONTHS,
       // Never a partial sum: a reading missing an account is short by
       // whatever that account holds, so it is not a balance and cannot open
       // one.

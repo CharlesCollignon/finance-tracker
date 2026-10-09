@@ -6,7 +6,8 @@ export const planWebEn = {
   yearEmpty:
     "Add what comes in and goes out each month in Recurring, and your year ahead will appear here.",
   yearEmptyCta: "Open Recurring",
-  yearChartLabel: "What you keep, month by month, over the next twelve months",
+  yearChartLabel: "Your money, account by account, month by month",
+  scrubTotal: "Altogether",
   asItStands: "As things are",
 
   horizonLess: "One year less",
