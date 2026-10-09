@@ -539,6 +539,83 @@ export const landingCopy = {
         "Consumer",
         "Everything else",
       ],
+      envelopes: {
+        heading: "Every envelope, its own rules",
+        hint: "Pick a card: what Pluclair keeps for it, and what tax takes in 2026.",
+        inApp: "In Pluclair",
+        tax: "Tax, in 2026",
+        items: {
+          pea: {
+            name: "PEA",
+            full: "Share savings plan",
+            badge: "{ceiling}",
+            badgeLabel: "ceiling on payments",
+            inApp:
+              "The ceiling is read on what you paid in, not on what it is worth, and the day you opened it starts the five-year clock.",
+            tax: "After five years, no income tax on the gains: only social contributions, {rate}.",
+            paidIn: "Paid in",
+            of: "of {ceiling}",
+            left: "{amount} of room left",
+            clock: "Five years",
+            opened: "Opened on {date}",
+          },
+          av: {
+            name: "Life insurance",
+            full: "Euro funds and unit-linked funds",
+            badge: "8 years",
+            badgeLabel: "to its tax break",
+            inApp:
+              "Funds with a price follow it on their own; a euro fund, you note its value. The long view estimates what is left after tax.",
+            tax: "After eight years, {allowance} of gains a year free of income tax ({couple} for a couple), then {rate}. Social contributions stay at {social}.",
+            progress: "Year {count} of eight",
+            allowance: "of gains a year free of income tax, once it is eight",
+            couple: "{amount} for a couple",
+          },
+          cto: {
+            name: "CTO",
+            full: "Ordinary brokerage account",
+            badge: "Any currency",
+            badgeLabel: "priced in euros",
+            inApp:
+              "Shares and funds from anywhere: their prices arrive in euros, whatever the currency, and update on their own.",
+            tax: "No ceiling and no clock: a flat {rate} on gains and dividends.",
+            quotes: ["A US share", "A UK share", "A Swiss share"],
+          },
+          per: {
+            name: "PER",
+            full: "Retirement savings plan",
+            badge: "Box 6NS",
+            badgeLabel: "on your tax return",
+            inApp:
+              "What you pay into it over the year fills box 6NS of your tax return on its own.",
+            tax: "Payments come off your taxable income, within the ceiling printed on your tax notice. The money stays in until retirement, bar a few exceptions such as buying your home.",
+            paid: "Paid in, {year}",
+            box: "Box 6NS",
+          },
+          crypto: {
+            name: "Crypto",
+            full: "Bitcoin",
+            badge: "₿",
+            badgeLabel: "noted in bitcoin",
+            inApp:
+              "Note what you hold in bitcoin: its value in euros follows the price.",
+            tax: "{rate} on gains, and nothing in a year when your sales come to {exemption} or less.",
+            flip: "Flip the coin",
+            price: "1 BTC = {price}",
+          },
+          livret: {
+            name: "Livret A",
+            full: "And the other livrets",
+            badge: "{rate}",
+            badgeLabel: "a year, tax-free",
+            inApp:
+              "Each livret’s balance, rate and ceiling, and the interest it should pay this year.",
+            tax: "No tax at all on a Livret A, an LDDS or an LEP. Payments stop at the ceiling: {ceiling} for a Livret A.",
+            balance: "Balance",
+            interest: "{amount} of interest a year",
+          },
+        },
+      },
     },
     property: {
       heading: "How much of it is yours",

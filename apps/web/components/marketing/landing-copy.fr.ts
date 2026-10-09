@@ -503,6 +503,88 @@ export const landingCopyFr: LandingCopySections & {
         "Consommation",
         "Tout le reste",
       ],
+      envelopes: {
+        heading: "Chaque enveloppe, ses règles",
+        hint: "Choisissez une carte : ce que Pluclair suit pour elle, et ce que l’impôt en prend en 2026.",
+        inApp: "Dans Pluclair",
+        tax: "L’impôt, en 2026",
+        items: {
+          pea: {
+            name: "PEA",
+            full: "Plan d’épargne en actions",
+            badge: "{ceiling}",
+            badgeLabel: "de plafond de versements",
+            inApp:
+              "Le plafond se lit sur ce que vous avez versé, pas sur ce que ça vaut, et la date d’ouverture lance le compte à rebours des cinq ans.",
+            tax: "Après cinq ans, pas d’impôt sur le revenu sur les gains : seulement les prélèvements sociaux, {rate}.",
+            paidIn: "Versé",
+            of: "sur {ceiling}",
+            left: "{amount} de marge restante",
+            clock: "Cinq ans",
+            opened: "Ouvert le {date}",
+          },
+          av: {
+            name: "Assurance vie",
+            full: "Fonds euros et unités de compte",
+            badge: "8 ans",
+            badgeLabel: "avant l’avantage fiscal",
+            inApp:
+              "Les supports cotés suivent leur cours tout seuls ; un fonds euros, vous notez sa valeur. La vue longue estime ce qu’il restera après l’impôt.",
+            tax: "Après huit ans, {allowance} de gains par an sans impôt sur le revenu ({couple} à deux), puis {rate}. Les prélèvements sociaux restent à {social}.",
+            progress: "{count}e année sur huit",
+            allowance:
+              "de gains par an sans impôt sur le revenu, passé huit ans",
+            couple: "{amount} à deux",
+          },
+          cto: {
+            name: "CTO",
+            full: "Compte-titres ordinaire",
+            badge: "Toutes devises",
+            badgeLabel: "cours en euros",
+            inApp:
+              "Actions et fonds du monde entier : les cours arrivent en euros, quelle que soit leur devise, et se mettent à jour seuls.",
+            tax: "Ni plafond ni horloge : {rate} de prélèvement forfaitaire sur les gains et les dividendes.",
+            quotes: [
+              "Une action américaine",
+              "Une action britannique",
+              "Une action suisse",
+            ],
+          },
+          per: {
+            name: "PER",
+            full: "Plan d’épargne retraite",
+            badge: "Case 6NS",
+            badgeLabel: "de votre déclaration",
+            inApp:
+              "Ce que vous y versez dans l’année remplit tout seul la case 6NS de votre déclaration de revenus.",
+            tax: "Les versements se déduisent du revenu imposable, dans le plafond indiqué sur votre avis d’impôt. L’argent reste bloqué jusqu’à la retraite, sauf exceptions comme l’achat de la résidence principale.",
+            paid: "Versé en {year}",
+            box: "Case 6NS",
+          },
+          crypto: {
+            name: "Crypto",
+            full: "Bitcoin",
+            badge: "₿",
+            badgeLabel: "noté en bitcoins",
+            inApp:
+              "Notez ce que vous détenez en bitcoins : la valeur en euros suit le cours.",
+            tax: "{rate} sur les plus-values, et rien l’année où vos ventes ne dépassent pas {exemption} au total.",
+            flip: "Retournez la pièce",
+            price: "1 BTC = {price}",
+          },
+          livret: {
+            name: "Livret A",
+            full: "Et les autres livrets",
+            badge: "{rate}",
+            badgeLabel: "par an, sans impôt",
+            inApp:
+              "Le solde, le taux et le plafond de chaque livret, et les intérêts qu’il devrait rapporter dans l’année.",
+            tax: "Aucun impôt sur un Livret A, un LDDS ou un LEP. Les versements s’arrêtent au plafond : {ceiling} pour un Livret A.",
+            balance: "Solde",
+            interest: "{amount} d’intérêts par an",
+          },
+        },
+      },
     },
     property: {
       heading: "La part qui est à vous",

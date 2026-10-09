@@ -8,6 +8,7 @@ import {
   landingCopyFor,
   type LandingPageId,
 } from "@/components/marketing/landing-copy";
+import { EnvelopeDeck } from "@/components/marketing/feature/EnvelopeDeck";
 import { FeatureDemo } from "@/components/marketing/feature/FeatureDemo";
 import {
   FeatureHero,
@@ -73,6 +74,9 @@ export async function FeaturePage({ pageId, isLoggedIn }: FeaturePageProps) {
         utility={page.utility}
         isLoggedIn={isLoggedIn}
       />
+      {/* Placements is five envelopes with five sets of rules, and the
+          page shows them before it opens one fund. */}
+      {pageId === "wallets" ? <EnvelopeDeck /> : null}
       <FeatureDemo pageId={pageId} />
       <div className="mt-8 md:mt-16">
         <StepStack steps={page.steps} />

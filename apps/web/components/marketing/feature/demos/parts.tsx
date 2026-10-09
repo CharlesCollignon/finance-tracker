@@ -11,15 +11,22 @@ import { cn } from "@/lib/utils";
  */
 export function Count({
   value,
+  from,
   format,
   className,
 }: {
   value: number;
+  /** Where it counts up from on first showing; by default it starts there. */
+  from?: number;
   format: (value: number) => string;
   className?: string;
 }) {
   const still = useReducedMotion() ?? false;
-  const spring = useSpring(value, { stiffness: 140, damping: 22, mass: 0.6 });
+  const spring = useSpring(from ?? value, {
+    stiffness: 140,
+    damping: 22,
+    mass: 0.6,
+  });
   useEffect(() => {
     if (still) {
       spring.jump(value);
