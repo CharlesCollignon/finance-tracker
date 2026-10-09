@@ -71,6 +71,11 @@ interface LandingCtasProps {
   layout?: "pair" | "pair-compact" | "solo";
   /** A glint of light across the gold button, once: the hero's sunrise. */
   shine?: boolean;
+  /**
+   * The secondary link folded away, for the nav pill once it has tightened
+   * on scroll: it narrows and fades rather than leaving the row at once.
+   */
+  foldSecondary?: boolean;
   className?: string;
 }
 
@@ -79,6 +84,7 @@ export function LandingCtas({
   size = "md",
   layout = "pair",
   shine = false,
+  foldSecondary = false,
   className,
 }: LandingCtasProps) {
   const gold = cn(solid, shine && "marketing-cta-shine");
@@ -106,6 +112,10 @@ export function LandingCtas({
             sizes[size],
             quiet,
             layout === "pair-compact" && "max-sm:hidden",
+            "overflow-hidden whitespace-nowrap transition-[max-width,opacity,padding,margin,transform,background-color,border-color,color] duration-500",
+            foldSecondary
+              ? "pointer-events-none -ml-3 max-w-0 border-transparent px-0 opacity-0"
+              : "max-w-48",
           )}
         >
           {copy.cta.signIn}

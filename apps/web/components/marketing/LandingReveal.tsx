@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, type ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import {
   AnimatePresence,
   domAnimation,
@@ -10,7 +10,6 @@ import {
   useReducedMotion,
   useScroll,
   useTransform,
-  type MotionValue,
 } from "motion/react";
 import { Plus } from "@phosphor-icons/react";
 import { DURATION, EASE_STANDARD } from "@finance/core/motion";
@@ -188,117 +187,6 @@ export function FadeUp({
     >
       {children}
     </m.div>
-  );
-}
-
-/**
- * A sentence that lights word by word as it is read: each word goes from
- * faint to full as the sentence crosses the screen, all of it lit by the
- * time the sentence reaches the middle.
- */
-export function ScrollWords({
-  text,
-  className,
-}: {
-  text: string;
-  className?: string;
-}) {
-  const ref = useRef<HTMLParagraphElement>(null);
-  const still = useReducedMotion() ?? false;
-  const { scrollYProgress } = useScroll({
-    target: ref,
-    offset: ["start 0.85", "end 0.5"],
-  });
-  const words = text.split(" ");
-  return (
-    <p ref={ref} className={className}>
-      {words.map((word, index) => (
-        <LitWord
-          key={`${word}-${index}`}
-          progress={scrollYProgress}
-          from={index / words.length}
-          to={(index + 1) / words.length}
-          still={still}
-          last={index === words.length - 1}
-        >
-          {word}
-        </LitWord>
-      ))}
-    </p>
-  );
-}
-
-function LitWord({
-  progress,
-  from,
-  to,
-  still,
-  last,
-  children,
-}: {
-  progress: MotionValue<number>;
-  from: number;
-  to: number;
-  still: boolean;
-  last: boolean;
-  children: string;
-}) {
-  const opacity = useTransform(
-    progress,
-    [from, to],
-    still ? [1, 1] : [0.18, 1],
-  );
-  return (
-    <>
-      <m.span style={{ opacity }}>{children}</m.span>
-      {last ? null : " "}
-    </>
-  );
-}
-
-/**
- * A screen of the app landing as the page scrolls to it: tilted back on its
- * bottom edge, low and a little small, it comes up and flattens into place
- * by the time its top is two fifths of the way down the window — tied to the
- * scroll, so it moves as fast as the reader does.
- */
-export function Land({
-  children,
-  className,
-}: {
-  children: ReactNode;
-  className?: string;
-}) {
-  const ref = useRef<HTMLDivElement>(null);
-  const still = useReducedMotion() ?? false;
-  const { scrollYProgress } = useScroll({
-    target: ref,
-    offset: ["start end", "start 0.4"],
-  });
-  const rotateX = useTransform(
-    scrollYProgress,
-    [0, 1],
-    still ? [0, 0] : [16, 0],
-  );
-  const y = useTransform(scrollYProgress, [0, 1], still ? [0, 0] : [80, 0]);
-  const scale = useTransform(
-    scrollYProgress,
-    [0, 1],
-    still ? [1, 1] : [0.92, 1],
-  );
-  const opacity = useTransform(
-    scrollYProgress,
-    [0, 0.55],
-    still ? [1, 1] : [0, 1],
-  );
-  return (
-    <div ref={ref} className={cn("[perspective:1400px]", className)}>
-      <m.div
-        style={{ rotateX, y, scale, opacity, transformOrigin: "50% 100%" }}
-      >
-        {children}
-      </m.div>
-    </div>
   );
 }
 

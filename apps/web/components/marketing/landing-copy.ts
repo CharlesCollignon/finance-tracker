@@ -35,48 +35,123 @@ export const landingCopy = {
   },
 
   /**
-   * One question a person actually asks, per screen that answers it — the
-   * rows of the "How it works" section, each beside a picture of that screen.
+   * « Il vous reste »: the figure the app opens on, put together on the page
+   * the way the app works it out — the accounts, less the charges due before
+   * the next pay, less a margin for what is never written down. The figures
+   * are the sample month's (`landing-sample.ts`, `leftToSpend`).
    */
-  how: {
+  figure: {
+    heading: "One figure, every morning",
+    body: "What your accounts hold, less the charges due before your next pay, less a margin for what you never write down. Worked out again with every spend you note.",
+    title: "You have",
+    until: "until {date}",
+    perDay: "so {amount} a day",
+    balance: "In your accounts",
+    charges: "Charges until {date}",
+    marge: "Margin for the unrecorded",
+    note: "Arithmetic on what you planned. Never advice.",
+  },
+
+  /**
+   * The month on a phone, a chapter a screen: the pinned section where the
+   * phone turns as the page scrolls. Each chapter names the screen it shows.
+   * The phone is the web app in a phone's browser — the app itself is under
+   * "Coming soon".
+   */
+  story: {
     heading: "How it works",
-    rows: {
-      bearing: {
-        question: "Where do I stand this month?",
-        body: "The Overview shows what is in your account today, and what will be left at the end of the month once everything already planned has gone out. Tap a card to see what is behind a figure.",
-        link: "See the Overview",
+    body: "On your phone, Pluclair opens in the browser and sits on your home screen like an app.",
+    chapters: [
+      {
+        id: "bearing",
+        title: "Where you stand, at a glance",
+        body: "The Overview opens on what is left until your next pay, and where the month will end once everything planned has gone out.",
       },
-      charges: {
-        question: "Note what repeats, once",
-        body: "Rent, salary, subscriptions, a monthly top-up to your savings: you note each one once, and every month it adds itself. You only note the rest — the groceries, the dinner out, the birthday present. Or import your bank’s CSV statement: Pluclair suggests a category for each line, and you confirm.",
-        link: "See Recurring",
+      {
+        id: "ledger",
+        title: "A spend, in a few taps",
+        body: "The amount and the shop: Pluclair finds the category it went in last time. Or import your bank’s CSV or OFX file.",
       },
-      "month-close": {
-        question: "Where did the rest go?",
-        body: "Once a month, copy the balance your bank shows. Pluclair compares it with what you noted, and the gap is money that left without a trace: a cash withdrawal, a payment you forgot. Now you can see it, in euros.",
-        link: "See the month close",
+      {
+        id: "charges",
+        title: "What repeats, written for you",
+        body: "Rent, salary, subscriptions: noted once, they fill in every month — and a subscription whose price goes up is flagged.",
       },
-      plan: {
-        question: "How long could I hold out?",
-        body: "The Plan counts your safety cushion in months of fixed spending, shows the milestones your savings will pass and when, and what each account could be worth in ten or twenty years, after French tax.",
-        link: "See the Plan",
+      {
+        id: "month-close",
+        title: "The month, checked against your bank",
+        body: "Once a month, copy the balance your bank shows. What left without a trace — cash, a forgotten card — appears, in euros.",
       },
-      wallets: {
-        question: "What are my investments really worth?",
-        body: "PEA, life insurance, brokerage account, PER, crypto: what you put in, what it is worth today, and what your funds are made of — shares, bonds, gold, crypto, countries, fees. Prices update on their own, and no order ever leaves the app.",
-        link: "See Investments",
+      {
+        id: "questions",
+        title: "Ask, in your own words",
+        body: "“How much on groceries this month?” The answer comes with Pluclair’s own figures, written by the AI of your choice — never advice.",
       },
-      property: {
-        question: "And your home?",
-        body: "The property you own or let: its estimated value from the sales recorded around it, what is left on the loan, and how much of it is really yours. The loan's monthly payment joins your recurring entries on its own.",
-        link: "See Property",
+    ],
+  },
+
+  /** The desktop screens, a gallery that runs sideways as the page scrolls. */
+  gallery: {
+    heading: "On a bigger screen",
+    body: "The same account on your computer, with room for the long view.",
+    items: [
+      { id: "wallets", caption: "What your funds are really made of" },
+      { id: "plan", caption: "Your cushion, and the milestones ahead" },
+      { id: "property", caption: "Your home, and how much of it is yours" },
+      { id: "month-read", caption: "Your month, put into words" },
+    ],
+  },
+
+  /**
+   * What sits around the month: a grid of the rest, each a sentence, the
+   * ones with a page of their own leading to it.
+   */
+  more: {
+    heading: "And everything around it",
+    items: [
+      {
+        id: "together",
+        title: "For two",
+        body: "A shared space for the joint account. Each of you sees what you share — never the other’s own money.",
+        link: "See the shared space",
       },
-      "month-read": {
-        question: "Want your month explained?",
-        body: "Ask for a read and an AI writes a few sentences about your month: what changed, what deserves a look. Or ask your own question in Questions. The figures always come from Pluclair — the AI is not allowed to make up a single one, nor to tell you what to do.",
-        link: "See written reads",
+      {
+        id: "questions",
+        title: "Questions",
+        body: "Ask about your money in words. The AI of your choice answers with Pluclair’s figures, on your own account.",
+        link: "See Questions",
       },
-    },
+      {
+        id: "tax",
+        title: "Your tax return, prepared",
+        body: "Donations, home help, childcare, PER, rents: the amounts for your boxes, from your own rows.",
+        link: "See the tax page",
+      },
+      {
+        id: "year",
+        title: "Your year",
+        body: "Every January, your year in figures — to keep, or to share as an image.",
+        link: "",
+      },
+      {
+        id: "search",
+        title: "Every month at once",
+        body: "Find a shop, an amount or a category across all your months. Subscriptions are found on their own.",
+        link: "",
+      },
+      {
+        id: "alerts",
+        title: "The Monday recap",
+        body: "Your week in one notification, and a warning before an overdraft.",
+        link: "",
+      },
+      {
+        id: "privacy",
+        title: "Blurred in one tap",
+        body: "Every amount hidden at once — on the train, at the office.",
+        link: "",
+      },
+    ],
   },
 
   /** What is built and not open to everyone yet. Future tense, here only. */
@@ -112,6 +187,11 @@ export const landingCopy = {
   faq: {
     heading: "Your questions",
     items: [
+      {
+        question: "Can we use it as a couple?",
+        answer:
+          "Yes. Invite your partner into a shared space for the joint account: you both see what you share, each keeps a personal space the other never sees, and you choose how the joint spending splits.",
+      },
       {
         question: "Does it cost anything?",
         answer:
@@ -156,19 +236,19 @@ export const landingCopy = {
       title: "Overview",
       body: "Where you stand today, and where the month will end.",
       utility:
-        "Two figures at the top: what is in your account now, and what will be left at the end of the month. Below, a few cards that open to show the detail — every figure comes from another screen, so you can always check it.",
+        "Two figures at the top: what is in your account now, and where it will stand at the end of the month. Under them, the month as a curve, then a few cards — what you have spent, what is still to go out, where it went — each leading to the screen that holds its figures.",
       steps: [
         {
           title: "Read the two figures",
           body: "Today’s balance, and the end of the month once everything already planned has gone out. The second is simple arithmetic on what you planned, not a guess at what you might spend.",
         },
         {
-          title: "Open a card for the detail",
-          body: "This month, your accounts, your savings, your investments. Each card opens in place and shows what makes up its figure.",
+          title: "See the month as a line",
+          body: "Your balance day by day, solid up to today and dotted after it, with its lowest point still to come. Above it, what is left until pay day, and how much that is a day.",
         },
         {
-          title: "Follow it to where it comes from",
-          body: "Each card ends with a link to the screen that holds its figures, so nothing is counted twice.",
+          title: "Follow a card to where it comes from",
+          body: "Spent, still to come, where it went: each card leads with an arrow to the screen that holds its figures, so nothing is counted twice.",
         },
       ],
     },
@@ -319,7 +399,248 @@ export const landingCopy = {
         },
       ],
     },
+    {
+      id: "questions",
+      title: "Questions",
+      body: "Ask about your money in your own words.",
+      utility:
+        "Type a question the way it comes to you. Pluclair picks the figures it needs, the AI of your choice writes a few sentences, and every number in them is Pluclair’s own. On your own AI account, and never advice.",
+      steps: [
+        {
+          title: "Ask it your way",
+          body: "“How much on groceries this month?”, “What is my biggest subscription?” — the question as it comes. A shop is answered with its rows and their total.",
+        },
+        {
+          title: "Pluclair’s figures, the AI’s words",
+          body: "The AI never writes a number: it names a figure and Pluclair puts in its own. A sentence that would invent one, or tell you what to do, is removed.",
+        },
+        {
+          title: "On your own account",
+          body: "Connect an OpenRouter account once and choose Mistral, ChatGPT or Claude: each question costs a few cents, paid to OpenRouter. Conversations are kept 30 days.",
+        },
+      ],
+    },
+    {
+      id: "together",
+      title: "Shared space",
+      body: "A joint account, shared — and your own money kept your own.",
+      utility:
+        "Invite your partner into a shared space: the joint account, its charges, its months and a home you own together. Each of you keeps a personal space the other never sees.",
+      steps: [
+        {
+          title: "Invite with a link",
+          body: "Send a link; your partner joins the space, and the joint account’s rows land there rather than in either of your own months.",
+        },
+        {
+          title: "Me, or shared",
+          body: "Switch between your money and the shared space in one tap. Each row says who added it, and either of you can close the joint month.",
+        },
+        {
+          title: "Your share",
+          body: "Set how the joint spending splits — half each, or otherwise — and see your spending with your part of the joint one.",
+        },
+      ],
+    },
+    {
+      id: "tax",
+      title: "Tax return",
+      body: "The amounts for your income tax boxes, from your own rows.",
+      utility:
+        "Each spring, the boxes your year fills: donations (7UF, 7UD), home help (7DB), childcare (7GA–7GC), PER payments (6NS), rents (4BE, 5NI). Pluclair adds them up; you check them and file on impots.gouv.fr.",
+      steps: [
+        {
+          title: "File a category in its box",
+          body: "Donations, a cleaner, a nursery: put the category in its box once, and every row of it counts there.",
+        },
+        {
+          title: "Open a box to see its rows",
+          body: "Each amount opens to the rows it adds up, so you can check it line by line before copying it.",
+        },
+        {
+          title: "Check, then declare",
+          body: "Pluclair estimates no tax and files nothing: you copy the amounts into impots.gouv.fr yourself.",
+        },
+      ],
+    },
   ],
+
+  /**
+   * Each feature page's own hands-on part: a heading, a line saying what to
+   * do, and the words its demo needs. The figures are the demos' own, in
+   * `feature/demos/`.
+   */
+  demos: {
+    bearing: {
+      heading: "Can I afford it?",
+      hint: "Slide an amount: the figure answers at once. Nothing is saved.",
+    },
+    ledger: {
+      heading: "It files itself",
+      hint: "Tap a shop: Pluclair finds its category, the way it did last time.",
+      shops: [
+        { shop: "Carrefour", category: "Groceries" },
+        { shop: "SNCF", category: "Transport" },
+        { shop: "Le Bistrot", category: "Eating out" },
+        { shop: "Netflix", category: "Subscriptions" },
+      ],
+      added: "Added today",
+    },
+    charges: {
+      heading: "The month fills itself",
+      hint: "Scroll: each recurring entry lands on its day.",
+      left: "Left each month",
+    },
+    "month-close": {
+      heading: "What slipped through",
+      hint: "Drag the balance your bank shows: the gap is what left without a trace.",
+      expected: "What your rows say",
+      bank: "What your bank shows",
+      gap: "Left without a trace",
+      none: "Nothing slipped through",
+    },
+    "month-read": {
+      heading: "Every figure is Pluclair’s",
+      hint: "Point at a figure: it comes from your own rows, never from the AI.",
+      sentence:
+        "Groceries are at {groceries} with twelve days to go, inside your margin of {marge}, and housing is still {housing}.",
+      sources: {
+        groceries: "Groceries, March",
+        marge: "Your margin for the unrecorded",
+        housing: "Rent, every month",
+      },
+      from: "From",
+    },
+    plan: {
+      heading: "Your cushion, sped up",
+      hint: "Slide what you set aside each month: the milestones move with it.",
+      monthly: "Set aside each month",
+      inMonths: "in {count} months",
+      reached: "Reached",
+    },
+    wallets: {
+      heading: "What one fund really holds",
+      hint: "An MSCI World ETF, opened up.",
+      fund: "MSCI World ETF",
+      countriesTab: "Countries",
+      sectorsTab: "Sectors",
+      countries: [
+        "United States",
+        "Japan",
+        "United Kingdom",
+        "Canada",
+        "France",
+        "Elsewhere",
+      ],
+      sectors: [
+        "Technology",
+        "Financials",
+        "Health",
+        "Industrials",
+        "Consumer",
+        "Everything else",
+      ],
+      envelopes: {
+        heading: "Every envelope, its own rules",
+        hint: "Pick a card: what Pluclair keeps for it, and what tax takes in 2026.",
+        inApp: "In Pluclair",
+        tax: "Tax, in 2026",
+        items: {
+          pea: {
+            name: "PEA",
+            full: "Share savings plan",
+            badge: "{ceiling}",
+            badgeLabel: "ceiling on payments",
+            inApp:
+              "The ceiling is read on what you paid in, not on what it is worth, and the day you opened it starts the five-year clock.",
+            tax: "After five years, no income tax on the gains: only social contributions, {rate}.",
+            paidIn: "Paid in",
+            of: "of {ceiling}",
+            left: "{amount} of room left",
+            clock: "Five years",
+            opened: "Opened on {date}",
+          },
+          av: {
+            name: "Life insurance",
+            full: "Euro funds and unit-linked funds",
+            badge: "8 years",
+            badgeLabel: "to its tax break",
+            inApp:
+              "Funds with a price follow it on their own; a euro fund, you note its value. The long view estimates what is left after tax.",
+            tax: "After eight years, {allowance} of gains a year free of income tax ({couple} for a couple), then {rate}. Social contributions stay at {social}.",
+            progress: "Year {count} of eight",
+            allowance: "of gains a year free of income tax, once it is eight",
+            couple: "{amount} for a couple",
+          },
+          cto: {
+            name: "CTO",
+            full: "Ordinary brokerage account",
+            badge: "Any currency",
+            badgeLabel: "priced in euros",
+            inApp:
+              "Shares and funds from anywhere: their prices arrive in euros, whatever the currency, and update on their own.",
+            tax: "No ceiling and no clock: a flat {rate} on gains and dividends.",
+            quotes: ["A US share", "A UK share", "A Swiss share"],
+          },
+          per: {
+            name: "PER",
+            full: "Retirement savings plan",
+            badge: "Box 6NS",
+            badgeLabel: "on your tax return",
+            inApp:
+              "What you pay into it over the year fills box 6NS of your tax return on its own.",
+            tax: "Payments come off your taxable income, within the ceiling printed on your tax notice. The money stays in until retirement, bar a few exceptions such as buying your home.",
+            paid: "Paid in, {year}",
+            box: "Box 6NS",
+          },
+          crypto: {
+            name: "Crypto",
+            full: "Bitcoin",
+            badge: "BTC",
+            badgeLabel: "noted in bitcoin",
+            inApp:
+              "Note what you hold in bitcoin: its value in euros follows the price.",
+            tax: "{rate} on gains, and nothing in a year when your sales come to {exemption} or less.",
+            flip: "Flip the coin",
+            price: "1 BTC = {price}",
+          },
+          livret: {
+            name: "Livret A",
+            full: "And the other livrets",
+            badge: "{rate}",
+            badgeLabel: "a year, tax-free",
+            inApp:
+              "Each livret’s balance, rate and ceiling, and the interest it should pay this year.",
+            tax: "No tax at all on a Livret A, an LDDS or an LEP. Payments stop at the ceiling: {ceiling} for a Livret A.",
+            balance: "Balance",
+            interest: "{amount} of interest a year",
+          },
+        },
+      },
+    },
+    property: {
+      heading: "How much of it is yours",
+      hint: "Slide through the years of the loan.",
+      yours: "Yours",
+      owed: "Still owed",
+      year: "In {year}",
+    },
+    questions: {
+      heading: "Ask it your way",
+      hint: "Pick a question.",
+      third: "How much do I have left?",
+      thirdAnswer: "You have {left} until {date}, so {perDay} a day.",
+    },
+    together: {
+      heading: "Your share",
+      hint: "Drag the split: each part of the joint spending follows.",
+      spent: "Joint spending this month",
+    },
+    tax: {
+      heading: "File it once, it counts",
+      hint: "Tap a category to put it in its box.",
+      chips: ["Restos du Cœur", "Red Cross", "Cleaner", "Studio rents"],
+    },
+  },
 
   /** The header's two in-page links, and the feature pages' walk. */
   nav: {
@@ -327,6 +648,10 @@ export const landingCopy = {
     privacy: "Your questions",
     previous: "Previous",
     next: "Next",
+    /** The product menu's three groups of pages. */
+    groupMonth: "Your month",
+    groupWealth: "Your wealth",
+    groupMore: "And also",
   },
 
   footer: {

@@ -715,7 +715,6 @@ export const fr: Messages = {
     refreshQuotes: "Actualiser les cours",
     refreshingQuotes: "Actualisation…",
     quotesRefreshed: "Cours actualisés",
-    marketValue: "Valeur aujourd'hui",
     value: "Valeur",
     invested: "Versé",
     market: "Aujourd'hui",
@@ -1033,44 +1032,6 @@ export const fr: Messages = {
       "Ouvrez le lien sur n'importe quel appareil pour choisir un nouveau mot de passe, puis connectez-vous ici avec celui-ci.",
   },
 
-  marketingMock: {
-    openingBalance: "Solde d'ouverture",
-    recordedIn: "Entrées enregistrées",
-    recordedOut: "Sorties enregistrées",
-    closingBalance: "Solde en fin de mois",
-    howItAddsUp: "Comment on y arrive",
-    monthRead: "Lecture du mois",
-    whereItWent: "Où c'est parti",
-    whatsLeft: "Ce qu'il reste",
-    expectedImpact: "Impact prévu",
-    expectedImpactPerMonth: "Impact prévu par mois",
-    portfolioValue: "Valeur des placements",
-    oneShare: "1 part",
-    oneShareAtQuote: "1 part au cours actuel",
-    sharePriced: "Au cours",
-    templatesAllApplied: {
-      one: "{count} récurrent, appliqué",
-      other: "{count} récurrents, tous appliqués",
-    },
-  },
-
-  marketingStat: {
-    unrecordedIn: "Non noté en {month}",
-    underAllowance: "sous votre marge de {amount}",
-    ofWhatCameIn: "{percent} de ce qui est entré",
-    monthsInARow: {
-      one: "{count} mois d'affilée",
-      other: "{count} mois d'affilée",
-    },
-    inARow: "{count} d'affilée",
-    readyToClose: "{month} est prêt pour son bilan",
-    keepTheRun:
-      "Restez sous {amount} de dépenses non notées pour continuer la série.",
-    keptIn: "Économisé en {month}",
-    leftIn: "Reste en {month}",
-    ofEarned: "sur {amount} gagnés",
-  },
-
   position: {
     fromRecurring: "Depuis une opération récurrente",
     customHolding: "Ligne personnalisée",
@@ -1289,7 +1250,6 @@ export const fr: Messages = {
     setUp: "Configuration",
     usePassword: "Utiliser le mot de passe",
     browserNotifications: "Notifications du navigateur",
-    kept: "Économisé",
     showAmounts: "Afficher les montants",
     hideAmounts: "Masquer les montants",
   },
@@ -1438,16 +1398,6 @@ export const fr: Messages = {
     investedValue: "Valeur investie",
     inboxPending: "Opérations encore sans catégorie",
     chargesUnconfirmed: "Opérations récurrentes pas encore confirmées",
-  },
-
-  bearingFacts: {
-    netPosition: "Tout ce que vous avez, additionné",
-    committed: "Reste à partir ce mois-ci",
-    arriving: "Reste à arriver ce mois-ci",
-    savingsRate: "Taux d'épargne ce mois-ci",
-    unrecordedBaseline: "Dépenses non notées habituelles",
-    projectedBalanceBare: "Solde prévu",
-    walletCost: "Versé sur vos placements",
   },
 
   categoryFacts: {
@@ -2575,17 +2525,6 @@ export const fr: Messages = {
   },
 
   bearing: {
-    headline: {
-      onHand: "actuellement sur votre compte courant",
-      free: "vous finirez le mois à",
-    },
-    cards: {
-      month: "Ce mois-ci",
-      now: "Les comptes",
-      run: "Votre série",
-      ahead: "L'année à venir",
-      wallet: "Placements",
-    },
     panel: {
       cashAccountsLapsed: "Le consentement a expiré — rien ne peut en être lu",
     },

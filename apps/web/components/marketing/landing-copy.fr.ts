@@ -38,45 +38,107 @@ export const landingCopyFr: LandingCopySections & {
     text: "Trois choses que Pluclair ne fera jamais : toucher à votre argent, décider à votre place, vous vendre quoi que ce soit.",
   },
 
-  how: {
+  figure: {
+    heading: "Un chiffre, chaque matin",
+    body: "Ce que vos comptes contiennent, moins les charges qui tombent avant votre prochain revenu, moins une marge pour ce que vous ne notez jamais. Recalculé à chaque dépense notée.",
+    title: "Il vous reste",
+    until: "jusqu’au {date}",
+    perDay: "soit {amount} par jour",
+    balance: "Sur vos comptes",
+    charges: "Charges d’ici le {date}",
+    marge: "Marge pour le non-noté",
+    note: "De l’arithmétique sur ce que vous avez prévu. Jamais un conseil.",
+  },
+
+  story: {
     heading: "Comment ça marche",
-    rows: {
-      bearing: {
-        question: "Où j’en suis ce mois-ci ?",
-        body: "Le point affiche ce qu’il y a sur votre compte aujourd’hui, et ce qu’il restera à la fin du mois une fois passé tout ce qui est prévu. Touchez une carte pour voir ce qu’il y a derrière un chiffre.",
-        link: "Voir Le point",
+    body: "Sur votre téléphone, Pluclair s’ouvre dans le navigateur et se range sur l’écran d’accueil comme une application.",
+    chapters: [
+      {
+        id: "bearing",
+        title: "Où vous en êtes, d’un coup d’œil",
+        body: "Le point s’ouvre sur ce qu’il vous reste jusqu’à votre prochain revenu, et sur la fin du mois une fois passé tout ce qui est prévu.",
       },
-      charges: {
-        question: "Ce qui revient, noté une seule fois",
-        body: "Loyer, salaire, abonnements, épargne du mois : vous notez chacun une seule fois, et il s’ajoute tout seul chaque mois. Il ne vous reste qu’à noter le reste — les courses, le resto, le cadeau d’anniversaire. Ou importez le relevé CSV de votre banque : Pluclair propose une catégorie pour chaque ligne, et vous validez.",
-        link: "Voir les Récurrents",
+      {
+        id: "ledger",
+        title: "Une dépense, en quelques touches",
+        body: "Le montant et le commerce : Pluclair retrouve la catégorie de la dernière fois. Ou importez le fichier CSV ou OFX de votre banque.",
       },
-      "month-close": {
-        question: "Où est passé le reste ?",
-        body: "Une fois par mois, recopiez le solde affiché par votre banque. Pluclair le compare à ce que vous avez noté, et l’écart, c’est l’argent parti sans laisser de trace : un retrait au distributeur, un paiement oublié. Vous le voyez enfin, en euros.",
-        link: "Voir la clôture du mois",
+      {
+        id: "charges",
+        title: "Ce qui revient, écrit pour vous",
+        body: "Loyer, salaire, abonnements : notés une fois, ils remplissent chaque mois — et un abonnement qui augmente vous est signalé.",
       },
-      plan: {
-        question: "Combien de temps je tiens si ça coince ?",
-        body: "Le Plan compte votre matelas de sécurité en mois de dépenses fixes, montre les paliers que votre épargne va franchir et quand, et ce que chaque compte pourrait valoir dans dix ou vingt ans, après impôts.",
-        link: "Voir le Plan",
+      {
+        id: "month-close",
+        title: "Le mois, vérifié face à votre banque",
+        body: "Une fois par mois, recopiez le solde affiché par votre banque. Ce qui est parti sans laisser de trace — du liquide, une carte oubliée — apparaît, en euros.",
       },
-      wallets: {
-        question: "Que valent vraiment mes placements ?",
-        body: "PEA, assurance vie, compte-titres, PER, crypto : ce que vous avez versé, ce que ça vaut aujourd’hui, et de quoi vos fonds sont faits — actions, obligations, or, crypto, pays, frais. Les cours se mettent à jour tout seuls, et aucun ordre ne part jamais de l’application.",
-        link: "Voir les Placements",
+      {
+        id: "questions",
+        title: "Demandez, avec vos mots",
+        body: "« Combien en courses ce mois-ci ? » La réponse vient avec les chiffres de Pluclair, écrite par l’IA de votre choix — jamais un conseil.",
       },
-      property: {
-        question: "Et votre logement ?",
-        body: "Le bien que vous possédez ou louez : sa valeur estimée d’après les ventes enregistrées autour, ce qu’il reste sur le crédit, et la part qui est vraiment à vous. La mensualité du crédit rejoint vos Récurrents toute seule.",
-        link: "Voir l’immobilier",
+    ],
+  },
+
+  gallery: {
+    heading: "Sur grand écran",
+    body: "Le même compte sur votre ordinateur, avec de la place pour voir loin.",
+    items: [
+      { id: "wallets", caption: "Ce que contiennent vraiment vos fonds" },
+      { id: "plan", caption: "Votre matelas, et les caps à venir" },
+      { id: "property", caption: "Votre logement, et la part qui est à vous" },
+      { id: "month-read", caption: "Votre mois, mis en mots" },
+    ],
+  },
+
+  more: {
+    heading: "Et tout ce qu’il y a autour",
+    items: [
+      {
+        id: "together",
+        title: "À deux",
+        body: "Un espace commun pour le compte joint. Chacun voit ce que vous partagez — jamais l’argent de l’autre.",
+        link: "Voir l’espace commun",
       },
-      "month-read": {
-        question: "Et si on vous expliquait votre mois ?",
-        body: "Demandez une lecture : une IA écrit quelques phrases sur votre mois — ce qui a changé, ce qui mérite un œil. Ou posez votre propre question dans Questions. Les chiffres, eux, viennent toujours de Pluclair : l’IA n’a pas le droit d’en inventer un seul, ni de vous dire quoi faire.",
-        link: "Voir les lectures écrites",
+      {
+        id: "questions",
+        title: "Questions",
+        body: "Interrogez votre argent avec des mots. L’IA de votre choix répond avec les chiffres de Pluclair, sur votre propre compte.",
+        link: "Voir Questions",
       },
-    },
+      {
+        id: "tax",
+        title: "Votre déclaration, préparée",
+        body: "Dons, emploi à domicile, garde d’enfant, PER, loyers : les montants de vos cases, tirés de vos propres opérations.",
+        link: "Voir la page impôts",
+      },
+      {
+        id: "year",
+        title: "Votre année",
+        body: "Chaque janvier, votre année en chiffres — à garder, ou à partager en image.",
+        link: "",
+      },
+      {
+        id: "search",
+        title: "Tous vos mois d’un coup",
+        body: "Retrouvez un commerce, un montant ou une catégorie dans tous vos mois. Les abonnements se repèrent tout seuls.",
+        link: "",
+      },
+      {
+        id: "alerts",
+        title: "Le récap du lundi",
+        body: "Votre semaine en une notification, et une alerte avant un découvert.",
+        link: "",
+      },
+      {
+        id: "privacy",
+        title: "Flouté d’un geste",
+        body: "Tous les montants masqués d’un coup — dans le train, au bureau.",
+        link: "",
+      },
+    ],
   },
 
   soon: {
@@ -105,6 +167,11 @@ export const landingCopyFr: LandingCopySections & {
   faq: {
     heading: "Vos questions",
     items: [
+      {
+        question: "Peut-on l’utiliser à deux ?",
+        answer:
+          "Oui. Invitez votre conjoint dans un espace commun pour le compte joint : vous voyez tous les deux ce que vous partagez, chacun garde un espace personnel que l’autre ne voit jamais, et vous choisissez comment se répartissent les dépenses communes.",
+      },
       {
         question: "C’est payant ?",
         answer:
@@ -148,19 +215,19 @@ export const landingCopyFr: LandingCopySections & {
       title: "Le point",
       body: "Où vous en êtes aujourd’hui, et comment le mois va finir.",
       utility:
-        "Deux chiffres en haut : ce qu’il y a sur votre compte maintenant, et ce qu’il restera à la fin du mois. En dessous, quelques cartes qui s’ouvrent pour montrer le détail — chaque chiffre vient d’un autre écran, vous pouvez toujours le vérifier.",
+        "Deux chiffres en haut : ce qu’il y a sur votre compte maintenant, et où il en sera à la fin du mois. Dessous, le mois en courbe, puis quelques cartes — ce que vous avez dépensé, ce qui doit encore partir, où c’est parti —, chacune menant à l’écran qui porte ses chiffres.",
       steps: [
         {
           title: "Lisez les deux chiffres",
           body: "Le solde d’aujourd’hui, et la fin du mois une fois passé tout ce qui est prévu. Le second est un simple calcul sur ce que vous avez prévu, pas une supposition sur ce que vous pourriez dépenser.",
         },
         {
-          title: "Ouvrez une carte pour le détail",
-          body: "Ce mois-ci, vos comptes, votre épargne, vos placements. Chaque carte s’ouvre sur place et montre ce qui compose son chiffre.",
+          title: "Voyez le mois en une ligne",
+          body: "Votre solde jour après jour, plein jusqu’à aujourd’hui et pointillé ensuite, avec son point le plus bas à venir. Au-dessus, ce qu’il vous reste jusqu’à la paie, et combien cela fait par jour.",
         },
         {
-          title: "Remontez jusqu’à la source",
-          body: "Chaque carte se termine par un lien vers l’écran qui porte ses chiffres : rien n’est compté deux fois.",
+          title: "Suivez une carte jusqu’à sa source",
+          body: "Dépensé, encore à venir, où c’est parti : chaque carte mène d’une flèche à l’écran qui porte ses chiffres, rien n’est compté deux fois.",
         },
       ],
     },
@@ -304,6 +371,245 @@ export const landingCopyFr: LandingCopySections & {
         },
       ],
     },
+    questions: {
+      title: "Questions",
+      body: "Interrogez votre argent avec vos propres mots.",
+      utility:
+        "Tapez une question comme elle vous vient. Pluclair choisit les chiffres utiles, l’IA de votre choix écrit quelques phrases, et chaque nombre y est celui de Pluclair. Sur votre propre compte IA, et jamais un conseil.",
+      steps: [
+        {
+          title: "Posez-la à votre façon",
+          body: "« Combien en courses ce mois-ci ? », « Quel est mon plus gros abonnement ? » — la question telle qu’elle vient. Un commerce reçoit ses opérations et leur total.",
+        },
+        {
+          title: "Les chiffres de Pluclair, les mots de l’IA",
+          body: "L’IA n’écrit jamais un nombre : elle nomme un chiffre et Pluclair y met le sien. Une phrase qui en inventerait un, ou qui dirait quoi faire, est retirée.",
+        },
+        {
+          title: "Sur votre propre compte",
+          body: "Connectez une fois un compte OpenRouter et choisissez Mistral, ChatGPT ou Claude : chaque question coûte quelques centimes, payés à OpenRouter. Les conversations sont gardées 30 jours.",
+        },
+      ],
+    },
+    together: {
+      title: "Espace commun",
+      body: "Un compte joint, partagé — et votre argent à vous, gardé pour vous.",
+      utility:
+        "Invitez votre conjoint dans un espace commun : le compte joint, ses charges, ses mois et un logement que vous possédez ensemble. Chacun garde un espace personnel que l’autre ne voit jamais.",
+      steps: [
+        {
+          title: "Invitez par un lien",
+          body: "Envoyez un lien ; votre conjoint rejoint l’espace, et les opérations du compte joint y arrivent plutôt que dans vos mois à chacun.",
+        },
+        {
+          title: "Moi, ou Commun",
+          body: "Passez de votre argent à l’espace commun d’une touche. Chaque opération dit qui l’a ajoutée, et chacun de vous peut clôturer le mois commun.",
+        },
+        {
+          title: "Votre part",
+          body: "Fixez la répartition des dépenses communes — moitié chacun, ou autrement — et voyez vos dépenses avec votre part du commun.",
+        },
+      ],
+    },
+    tax: {
+      title: "Déclaration de revenus",
+      body: "Les montants de vos cases d’impôt, tirés de vos propres opérations.",
+      utility:
+        "Chaque printemps, les cases que votre année remplit : dons (7UF, 7UD), emploi à domicile (7DB), garde d’enfant (7GA–7GC), versements PER (6NS), loyers (4BE, 5NI). Pluclair additionne ; vous vérifiez et déclarez sur impots.gouv.fr.",
+      steps: [
+        {
+          title: "Rangez une catégorie dans sa case",
+          body: "Dons, ménage, crèche : rangez la catégorie dans sa case une fois, et chacune de ses opérations y compte.",
+        },
+        {
+          title: "Ouvrez une case pour voir ses lignes",
+          body: "Chaque montant s’ouvre sur les opérations qu’il additionne, pour le vérifier ligne à ligne avant de le recopier.",
+        },
+        {
+          title: "Vérifiez, puis déclarez",
+          body: "Pluclair n’estime aucun impôt et ne déclare rien : vous recopiez vous-même les montants sur impots.gouv.fr.",
+        },
+      ],
+    },
+  },
+
+  demos: {
+    bearing: {
+      heading: "Puis-je me permettre ?",
+      hint: "Faites glisser un montant : le chiffre répond aussitôt. Rien n’est enregistré.",
+    },
+    ledger: {
+      heading: "Ça se range tout seul",
+      hint: "Touchez un commerce : Pluclair retrouve sa catégorie, comme la dernière fois.",
+      shops: [
+        { shop: "Carrefour", category: "Courses" },
+        { shop: "SNCF", category: "Transports" },
+        { shop: "Le Bistrot", category: "Restaurants" },
+        { shop: "Netflix", category: "Abonnements" },
+      ],
+      added: "Ajouté aujourd’hui",
+    },
+    charges: {
+      heading: "Le mois se remplit tout seul",
+      hint: "Faites défiler : chaque opération récurrente se pose sur son jour.",
+      left: "Reste chaque mois",
+    },
+    "month-close": {
+      heading: "Ce qui a filé",
+      hint: "Faites glisser le solde affiché par votre banque : l’écart, c’est ce qui est parti sans laisser de trace.",
+      expected: "Ce que disent vos opérations",
+      bank: "Ce qu’affiche votre banque",
+      gap: "Parti sans laisser de trace",
+      none: "Rien n’a filé",
+    },
+    "month-read": {
+      heading: "Chaque chiffre est celui de Pluclair",
+      hint: "Pointez un chiffre : il vient de vos propres opérations, jamais de l’IA.",
+      sentence:
+        "Les courses en sont à {groceries} à douze jours de la fin, dans votre marge de {marge}, et le logement reste à {housing}.",
+      sources: {
+        groceries: "Courses, mars",
+        marge: "Votre marge pour le non-noté",
+        housing: "Loyer, chaque mois",
+      },
+      from: "D’où",
+    },
+    plan: {
+      heading: "Votre matelas, en accéléré",
+      hint: "Faites glisser ce que vous mettez de côté chaque mois : les caps bougent avec.",
+      monthly: "Mis de côté chaque mois",
+      inMonths: "dans {count} mois",
+      reached: "Atteint",
+    },
+    wallets: {
+      heading: "Ce que contient vraiment un fonds",
+      hint: "Un ETF MSCI World, ouvert.",
+      fund: "ETF MSCI World",
+      countriesTab: "Pays",
+      sectorsTab: "Secteurs",
+      countries: [
+        "États-Unis",
+        "Japon",
+        "Royaume-Uni",
+        "Canada",
+        "France",
+        "Ailleurs",
+      ],
+      sectors: [
+        "Technologie",
+        "Finance",
+        "Santé",
+        "Industrie",
+        "Consommation",
+        "Tout le reste",
+      ],
+      envelopes: {
+        heading: "Chaque enveloppe, ses règles",
+        hint: "Choisissez une carte : ce que Pluclair suit pour elle, et ce que l’impôt en prend en 2026.",
+        inApp: "Dans Pluclair",
+        tax: "L’impôt, en 2026",
+        items: {
+          pea: {
+            name: "PEA",
+            full: "Plan d’épargne en actions",
+            badge: "{ceiling}",
+            badgeLabel: "de plafond de versements",
+            inApp:
+              "Le plafond se lit sur ce que vous avez versé, pas sur ce que ça vaut, et la date d’ouverture lance le compte à rebours des cinq ans.",
+            tax: "Après cinq ans, pas d’impôt sur le revenu sur les gains : seulement les prélèvements sociaux, {rate}.",
+            paidIn: "Versé",
+            of: "sur {ceiling}",
+            left: "{amount} de marge restante",
+            clock: "Cinq ans",
+            opened: "Ouvert le {date}",
+          },
+          av: {
+            name: "Assurance vie",
+            full: "Fonds euros et unités de compte",
+            badge: "8 ans",
+            badgeLabel: "avant l’avantage fiscal",
+            inApp:
+              "Les supports cotés suivent leur cours tout seuls ; un fonds euros, vous notez sa valeur. La vue longue estime ce qu’il restera après l’impôt.",
+            tax: "Après huit ans, {allowance} de gains par an sans impôt sur le revenu ({couple} à deux), puis {rate}. Les prélèvements sociaux restent à {social}.",
+            progress: "{count}e année sur huit",
+            allowance:
+              "de gains par an sans impôt sur le revenu, passé huit ans",
+            couple: "{amount} à deux",
+          },
+          cto: {
+            name: "CTO",
+            full: "Compte-titres ordinaire",
+            badge: "Toutes devises",
+            badgeLabel: "cours en euros",
+            inApp:
+              "Actions et fonds du monde entier : les cours arrivent en euros, quelle que soit leur devise, et se mettent à jour seuls.",
+            tax: "Ni plafond ni horloge : {rate} de prélèvement forfaitaire sur les gains et les dividendes.",
+            quotes: [
+              "Une action américaine",
+              "Une action britannique",
+              "Une action suisse",
+            ],
+          },
+          per: {
+            name: "PER",
+            full: "Plan d’épargne retraite",
+            badge: "Case 6NS",
+            badgeLabel: "de votre déclaration",
+            inApp:
+              "Ce que vous y versez dans l’année remplit tout seul la case 6NS de votre déclaration de revenus.",
+            tax: "Les versements se déduisent du revenu imposable, dans le plafond indiqué sur votre avis d’impôt. L’argent reste bloqué jusqu’à la retraite, sauf exceptions comme l’achat de la résidence principale.",
+            paid: "Versé en {year}",
+            box: "Case 6NS",
+          },
+          crypto: {
+            name: "Crypto",
+            full: "Bitcoin",
+            badge: "BTC",
+            badgeLabel: "noté en bitcoins",
+            inApp:
+              "Notez ce que vous détenez en bitcoins : la valeur en euros suit le cours.",
+            tax: "{rate} sur les plus-values, et rien l’année où vos ventes ne dépassent pas {exemption} au total.",
+            flip: "Retournez la pièce",
+            price: "1 BTC = {price}",
+          },
+          livret: {
+            name: "Livret A",
+            full: "Et les autres livrets",
+            badge: "{rate}",
+            badgeLabel: "par an, sans impôt",
+            inApp:
+              "Le solde, le taux et le plafond de chaque livret, et les intérêts qu’il devrait rapporter dans l’année.",
+            tax: "Aucun impôt sur un Livret A, un LDDS ou un LEP. Les versements s’arrêtent au plafond : {ceiling} pour un Livret A.",
+            balance: "Solde",
+            interest: "{amount} d’intérêts par an",
+          },
+        },
+      },
+    },
+    property: {
+      heading: "La part qui est à vous",
+      hint: "Faites défiler les années du prêt.",
+      yours: "À vous",
+      owed: "Reste dû",
+      year: "En {year}",
+    },
+    questions: {
+      heading: "Demandez à votre façon",
+      hint: "Choisissez une question.",
+      third: "Combien me reste-t-il ?",
+      thirdAnswer:
+        "Il vous reste {left} jusqu’au {date}, soit {perDay} par jour.",
+    },
+    together: {
+      heading: "Votre part",
+      hint: "Faites glisser la répartition : chaque part des dépenses communes suit.",
+      spent: "Dépenses communes ce mois-ci",
+    },
+    tax: {
+      heading: "Rangez une fois, c’est compté",
+      hint: "Touchez une catégorie pour la ranger dans sa case.",
+      chips: ["Restos du Cœur", "Croix-Rouge", "Ménage", "Loyers du studio"],
+    },
   },
 
   nav: {
@@ -311,6 +617,9 @@ export const landingCopyFr: LandingCopySections & {
     privacy: "Vos questions",
     previous: "Précédent",
     next: "Suivant",
+    groupMonth: "Votre mois",
+    groupWealth: "Votre patrimoine",
+    groupMore: "Et aussi",
   },
 
   footer: {

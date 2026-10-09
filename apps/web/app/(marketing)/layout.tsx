@@ -2,6 +2,7 @@ import { getAuthUser } from "@/lib/auth/get-user";
 import { LandingFooter } from "@/components/marketing/LandingFooter";
 import { LandingHeader } from "@/components/marketing/LandingHeader";
 import { MarketingMotion } from "@/components/marketing/LandingReveal";
+import { SmoothScroll } from "@/components/marketing/landing/SmoothScroll";
 
 /**
  * The marketing shell.
@@ -45,6 +46,7 @@ export default async function MarketingLayout({
 
       {/* One motion setup for the whole site: see `LandingReveal`. */}
       <MarketingMotion>
+        <SmoothScroll />
         <LandingHeader isLoggedIn={isLoggedIn} />
         <main className="flex flex-1 flex-col">{children}</main>
         <LandingFooter isLoggedIn={isLoggedIn} />

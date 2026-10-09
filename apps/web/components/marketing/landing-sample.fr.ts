@@ -44,6 +44,9 @@ export const landingSampleFr = {
     { name: "Loyer", schedule: "Mensuel · le 5" },
     { name: "DCA PEA", schedule: "Hebdomadaire · vendredi" },
     { name: "Netflix", schedule: "Mensuel · le 15" },
+    { name: "Fonds d'urgence", schedule: "Mensuel · le 12" },
+    { name: "Internet", schedule: "Mensuel · le 10" },
+    { name: "Mutuelle", schedule: "Mensuel · le 25" },
   ],
 
   close: {
@@ -56,9 +59,9 @@ export const landingSampleFr = {
     headline:
       "Mars tient, et la part qui ne tient pas est celle que vous n'avez pas enregistrée.",
     observations: [
-      "Il vous reste 1 247 € à douze jours de la fin, soit devant là où février en était le même jour.",
+      "Vous êtes à +1 247 € sur le mois à douze jours de la fin, devant là où février en était le même jour.",
       "Les dépenses non enregistrées de février se montent à 218 € — dans votre marge de 260 €, mais c'est la plus grosse ligne pour laquelle vous n'avez aucune écriture.",
-      "Le logement, à 850 €, est inchangé pour le quatrième mois et représente maintenant 44 % de ce que vous dépensez.",
+      "Le logement, à 850 €, est inchangé pour le quatrième mois et représente maintenant 59 % de ce que vous dépensez.",
     ],
     suggestions: [
       "Les courses en sont à 218 € à douze jours de la fin. Noter les petits achats cette semaine montrerait si la ligne non enregistrée, c'est aussi les courses.",
@@ -71,11 +74,51 @@ export const landingSampleFr = {
     kindLine: "Appartement · Location meublée · 24 m²",
   },
 
+  questions: {
+    exchanges: [
+      {
+        question: "Combien ai-je dépensé en courses ce mois-ci ?",
+        answer: [
+          "Les courses en sont à {spent} en mars.",
+          "Au même jour de février, c'était {before}.",
+        ],
+      },
+      {
+        question: "Quel est mon plus gros abonnement ?",
+        answer: ["Netflix, à {netflix} par mois — le seul que vous ayez."],
+      },
+    ],
+  },
+
+  /** In the order `landingSample.together.rows` holds them. */
+  together: {
+    name: "Commun",
+    me: "Moi",
+    rows: [
+      { meta: "Courses" },
+      { meta: "Internet" },
+      { meta: "Restaurants" },
+      { name: "Versement de B.", meta: "Virement" },
+      { name: "Versement de A.", meta: "Virement" },
+    ],
+  },
+
+  /** What is still to leave, in the order `landingSample.bearingMonth.upcoming` holds it. */
+  upcoming: ["DCA PEA", "Livret A", "Mutuelle", "DCA PEA"],
+
+  /** The PEA's lines, in the order `landingSample.pea.positions` holds them. */
+  peaPositions: ["ETF MSCI World", "ETF S&P 500", "ETF Pays émergents"],
+
+  /** The tax boxes' labels, in the order `landingSample.tax.boxes` holds them. */
+  tax: ["Dons", "Emploi à domicile", "Location meublée, recettes"],
+  /** The categories filed in each box, in the same order; 5NI has none. */
+  taxCategories: ["Dons", "Ménage", null],
+
   spendByCategory: [
     "Logement",
-    "Investissements",
-    "Épargne",
     "Courses",
+    "Transports",
+    "Charges",
     "Tout le reste",
   ],
 };

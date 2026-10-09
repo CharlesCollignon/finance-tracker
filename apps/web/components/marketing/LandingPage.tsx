@@ -1,59 +1,34 @@
 /* Hallmark · genre: atmospheric · macrostructure: Split Studio · theme: design.md (Pluclair) · enrichment: kept (WebGL Earth hero) · nav: kept · footer: kept */
 
-import Link from "next/link";
-import {
-  AppleLogo,
-  ArrowRight,
-  GooglePlayLogo,
-} from "@phosphor-icons/react/dist/ssr";
+import { AppleLogo, GooglePlayLogo } from "@phosphor-icons/react/dist/ssr";
 import { getLocale } from "@/lib/locale";
-import { AppScreen } from "@/components/marketing/AppScreen";
-import { LandingBloom } from "@/components/marketing/LandingOrb";
 import { LandingCtas } from "@/components/marketing/LandingCtas";
 import { LandingEarth } from "@/components/marketing/LandingEarth";
 import {
   FadeUp,
   HeroDepth,
   HeroDrift,
-  Land,
   Questions,
   RiseLines,
   RiseWords,
-  ScrollWords,
 } from "@/components/marketing/LandingReveal";
-import {
-  featureHref,
-  landingCopyFor,
-  type LandingPageId,
-} from "@/components/marketing/landing-copy";
+import { landingCopyFor } from "@/components/marketing/landing-copy";
 import { marketingFocus } from "@/components/marketing/marketing-focus";
 import { storeLinks } from "@/lib/store-links";
+import { FeatureBento } from "@/components/marketing/landing/FeatureBento";
+import { FigureSection } from "@/components/marketing/landing/FigureSection";
+import { OrbFinale } from "@/components/marketing/landing/OrbFinale";
+import { PhoneStory } from "@/components/marketing/landing/PhoneStory";
+import { PromiseSection } from "@/components/marketing/landing/PromiseSection";
+import { ScreenGallery } from "@/components/marketing/landing/ScreenGallery";
 import { cn } from "@/lib/utils";
 
 interface LandingPageProps {
   isLoggedIn: boolean;
 }
 
-/**
- * The screens "How it works" walks through, in the order a month uses them:
- * where you stand, what repeats, what slipped through, how long you could
- * hold out, what the investments are made of, and the read that puts it into
- * words. The ledger and the feature pages' walk keep all seven; these are the
- * six a first visit needs.
- */
-const HOW_ORDER = [
-  "bearing",
-  "charges",
-  "month-close",
-  "plan",
-  "wallets",
-  "property",
-  "month-read",
-] as const satisfies readonly LandingPageId[];
-
 /** Text a little narrower than its screen, on whichever side it falls. */
 const SPLIT = "md:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]";
-const SPLIT_FLIPPED = "md:grid-cols-[minmax(0,7fr)_minmax(0,5fr)]";
 
 /**
  * The landing page, as a run of questions a person actually asks, each beside
@@ -66,16 +41,27 @@ const SPLIT_FLIPPED = "md:grid-cols-[minmax(0,7fr)_minmax(0,5fr)]";
  * here, each said in two or three plain sentences next to a picture of the
  * screen, with the feature page one press away for anyone who wants the rest.
  *
- * It moves on one motif, things rising out of a horizon (`LandingReveal`):
- * the hero on a single timeline with the Earth's, headings rising word by
- * word, the promise lit as it is read, the screens landing as they are
- * scrolled to. What is not open to everyone yet is said once, under "Coming
- * soon", in the future tense.
+ * Below the hero it is told as the page is scrolled: the promise lit
+ * word by word, « Il vous reste » put together, the month on a phone that
+ * turns chapter by chapter, the desktop screens as a reel, the rest as an
+ * uneven grid, and the orb rising at the end (`landing/`, and the Motion
+ * section of DESIGN.md). What is not open to everyone yet is said once,
+ * under "Coming soon", in the future tense.
  */
 export async function LandingPage({ isLoggedIn }: LandingPageProps) {
   const locale = await getLocale();
-  const { hero, promise, how, soon, phone, faq, finalCta } =
-    landingCopyFor(locale);
+  const {
+    hero,
+    promise,
+    figure,
+    story,
+    gallery,
+    more,
+    soon,
+    phone,
+    faq,
+    finalCta,
+  } = landingCopyFor(locale);
   // The phone app leaves « Bientôt » once a store has it.
   const stores = storeLinks();
   const inStores = [
@@ -143,75 +129,19 @@ export async function LandingPage({ isLoggedIn }: LandingPageProps) {
       </section>
 
       {/* --------------------------------------------------------- promise */}
-      {/* The three commitments as one sentence, set large and left: a thing
-          the reader is told, not a row of cards to scan. */}
-      <section className="relative px-6 py-20 md:py-28">
-        <ScrollWords
-          text={promise.text}
-          className="marketing-display mx-auto max-w-5xl text-balance text-display-sub text-marketing-ink"
-        />
-      </section>
+      <PromiseSection text={promise.text} />
 
-      {/* ------------------------------------------------------------- how */}
-      <section
-        id="how"
-        className="relative overflow-x-clip px-6 pb-28 md:pb-40"
-      >
-        <div className="mx-auto max-w-6xl">
-          <RiseWords
-            text={how.heading}
-            className="marketing-display text-display-section"
-          />
-          <div className="mt-14 flex flex-col gap-24 md:mt-20 md:gap-36">
-            {HOW_ORDER.map((id, index) => {
-              const row = how.rows[id];
-              // Alternating sides, so the eye walks down the page rather
-              // than down one column.
-              const flipped = index % 2 === 1;
-              return (
-                <article
-                  key={id}
-                  className={cn(
-                    "grid items-center gap-10 md:gap-14",
-                    flipped ? SPLIT_FLIPPED : SPLIT,
-                  )}
-                >
-                  <div className={flipped ? "md:order-2" : undefined}>
-                    <RiseWords
-                      as="h3"
-                      text={row.question}
-                      className="marketing-display text-display-sub"
-                    />
-                    <FadeUp delay={0.2}>
-                      <p className="mt-4 max-w-md text-base leading-relaxed text-marketing-muted">
-                        {row.body}
-                      </p>
-                      <Link
-                        href={featureHref(id)}
-                        className={cn(
-                          "group mt-7 inline-flex items-center gap-2 whitespace-nowrap rounded-full border border-white/15 px-4 py-2 text-sm font-medium text-marketing-ink transition-colors duration-200 hover:border-white/30 hover:bg-white/[0.06] motion-reduce:transition-none",
-                          marketingFocus,
-                        )}
-                      >
-                        {row.link}
-                        {/* It leans toward where it leads. */}
-                        <ArrowRight
-                          size={14}
-                          aria-hidden
-                          className="transition-transform duration-200 group-hover:translate-x-1 motion-reduce:transition-none"
-                        />
-                      </Link>
-                    </FadeUp>
-                  </div>
-                  <Land className={flipped ? "md:order-1" : undefined}>
-                    <AppScreen pageId={id} />
-                  </Land>
-                </article>
-              );
-            })}
-          </div>
-        </div>
-      </section>
+      {/* ---------------------------------------------------------- figure */}
+      <FigureSection copy={figure} />
+
+      {/* ----------------------------------------------------------- story */}
+      <PhoneStory copy={story} />
+
+      {/* --------------------------------------------------------- gallery */}
+      <ScreenGallery copy={gallery} />
+
+      {/* ------------------------------------------------------------ more */}
+      <FeatureBento copy={more} />
 
       {/* ----------------------------------------------------------- phone */}
       {inStores.length > 0 ? (
@@ -289,30 +219,7 @@ export async function LandingPage({ isLoggedIn }: LandingPageProps) {
       </section>
 
       {/* ------------------------------------------------------- final cta */}
-      <section className="relative isolate overflow-hidden px-6 pb-28 pt-8 md:pb-40">
-        <LandingBloom className="left-1/2 top-[38%] h-[34rem] w-[34rem] -translate-x-1/2 -translate-y-1/2 opacity-60" />
-        <div
-          className="marketing-sparks pointer-events-none absolute inset-0 opacity-60"
-          aria-hidden
-        />
-
-        <div className="relative mx-auto flex max-w-2xl flex-col items-center text-center">
-          <RiseWords
-            text={finalCta.heading}
-            className="marketing-display text-display-section"
-          />
-          <FadeUp delay={0.3} className="flex flex-col items-center">
-            <p className="mt-5 max-w-md text-base leading-relaxed text-marketing-muted">
-              {finalCta.body}
-            </p>
-            <LandingCtas
-              isLoggedIn={isLoggedIn}
-              size="lg"
-              className="mt-9 justify-center"
-            />
-          </FadeUp>
-        </div>
-      </section>
+      <OrbFinale copy={finalCta} isLoggedIn={isLoggedIn} />
     </>
   );
 }
