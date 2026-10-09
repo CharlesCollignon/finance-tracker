@@ -1,5 +1,38 @@
 # Pluclair in the stores
 
+## For now: an APK for a few friends on Android
+
+The stores are set aside (the owner, 2026-10-09: no Apple account, no
+iPhone to test on). The app goes to a few friends with Android phones as
+an APK, installed from a link — no store, no review.
+
+1. On expo.dev, project `salutcharless-team/pluclair`, set the **preview**
+   environment's variables, which the `preview` profile reads:
+   `EXPO_PUBLIC_SUPABASE_URL`, `EXPO_PUBLIC_SUPABASE_ANON_KEY`,
+   `EXPO_PUBLIC_WEB_APP_URL` — the hosted project's public values only.
+2. Build: `cd apps/mobile && eas build --platform android --profile preview`.
+   The first build asks to create the signing key; let EAS keep it, so
+   every later APK installs over the one before.
+3. Send the build's page (expo.dev shows a link and a QR code). On the
+   friend's phone: open it, download the APK, allow the browser to install
+   apps when Android asks, and press « Installer quand même » if Play
+   Protect warns about an unknown developer.
+4. Once, for what a standalone app does differently from Expo Go:
+   - **Google sign-in** comes back to `pluclair://auth/callback`: Supabase
+     → Authentication → URL Configuration → Redirect URLs must allow
+     `pluclair://**`.
+   - **Passkeys** need the APK's signing certificate in
+     `ANDROID_SHA256_FINGERPRINTS` on Vercel (`eas credentials -p android`
+     prints its SHA-256), then a redeploy — `/.well-known/assetlinks.json`
+     is built from it.
+5. The widget: a long press on the home screen → Widgets → Pluclair,
+   « Il vous reste ». Expo Go cannot show it; the APK can.
+
+A change to the app reaches the friends with a new build: they install the
+new APK over the old one, and their data stays (it lives in Supabase).
+
+## Later: the stores
+
 Phase 3 of `docs/plans/EVERYDAY_PLAN.md`: the phone app on the App Store
 and Google Play. What the repository could prepare is here and in
 `apps/mobile/app.json`; the rest needs the owner's accounts, a build and a
@@ -11,7 +44,7 @@ person at the consoles. In the order it happens:
 - `privacy-labels.md` — Apple's App Privacy and Google's Data safety, read
   from the privacy policy, with what is left to decide marked [[…]].
 
-## 1. Accounts
+### 1. Accounts
 
 - **Apple Developer Program** (99 $ a year). Apple asks apps in « banking
   and financial services » to come from a legal entity rather than an
@@ -22,7 +55,7 @@ person at the consoles. In the order it happens:
   November 2023 must run a closed test with at least 12 testers for 14 days
   before it may publish to everyone; an organisation account does not.
 
-## 2. Before the first build
+### 2. Before the first build
 
 1. The EAS project is `salutcharless-team/pluclair` (`app.json`,
    `extra.eas.projectId`). On expo.dev, set the **production** environment's
@@ -38,7 +71,7 @@ person at the consoles. In the order it happens:
 3. Sign-in on the phone: see « Before review » below — Sign in with Apple
    may have to come first.
 
-## 3. Build and send
+### 3. Build and send
 
 ```sh
 cd apps/mobile
@@ -54,7 +87,7 @@ build numbers look after themselves; the version shown (`1.0.0`) is
 The first Android upload must be made by hand in the Play Console (an
 internal test release), after which `eas submit` can follow.
 
-## 4. Screenshots
+### 4. Screenshots
 
 Taken on a build against a **demo account** with made-up figures — never
 real data. Le point first, since it is what the listing promises.
@@ -73,7 +106,7 @@ no iPad, the app is iPhone-only (`supportsTablet` unset). Google Play — at
 least two phone screenshots (9:16), the 512 × 512 icon and a 1024 × 500
 feature graphic.
 
-## 5. Before review
+### 5. Before review
 
 - **A demo account for the reviewers.** Both stores need one to get past
   the sign-in: an email and password, with figures in it, on the hosted
@@ -98,7 +131,7 @@ feature graphic.
 - **Account deletion** is in the app (Profil → Supprimer le compte), as
   both stores require.
 
-## 6. Once published
+### 6. Once published
 
 Set `APP_STORE_URL` and `PLAY_STORE_URL` in the web app's environment
 (Vercel), then redeploy: Vercel reads new variables only on a new

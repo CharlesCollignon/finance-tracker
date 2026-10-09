@@ -174,10 +174,12 @@ Built on 2026-10-08, with what the plan did not say:
 Waiting: the presets (each on a real export, anonymised) and the launch (on
 the owner's sign-off of the privacy policy and terms).
 
-## Phase 3 — The phone in the stores (branch `everyday-stores`) — built, waiting on the stores
+## Phase 3 — The phone in the stores (branch `everyday-stores`) — widget built, stores set aside
 
-Built 2026-10-09; what is left needs the owner's store accounts, a build
-and a person at the consoles (`docs/store/README.md`).
+Built 2026-10-09. The same day the owner set the stores aside — no Apple
+account, no iPhone to test on — and chose to send the app to a few friends
+on Android as an APK (`preview` profile, `docs/store/README.md`). What the
+stores need stays prepared for later.
 
 - [x] Android home-screen widget with `react-native-android-widget`: the
       figure and a « + » that opens the add sheet (`pluclair://`). With the
