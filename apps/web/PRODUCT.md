@@ -105,7 +105,7 @@ transactions, the Plan (`/plan`), recurring, categories, investments and
 look-through, properties (`/property` and each one's page; the
 `property.track` flag, on for everyone since migration 063, stays as a
 switch),
-history, import, Questions (`/ask`), the tax return (`/tax`), welcome, profile and its Bank page (`/bank`: connect, the
+history, import, Questions (`/ask`), welcome, profile and its Bank page (`/bank`: connect, the
 first import, status and renewal, disconnect), plus a public marketing site at
 pluclair.com with its own feature pages and, once signed off, the privacy
 policy and terms (`/privacy`, `/terms`; drafts are served only off production,

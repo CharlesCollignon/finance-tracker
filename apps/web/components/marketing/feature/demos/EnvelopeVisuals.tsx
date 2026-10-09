@@ -267,7 +267,7 @@ export function CtoVisual({ copy }: { copy: Items["cto"] }) {
 
 /* --------------------------------------------------------- retirement plan */
 
-/** Twelve months of 200 € dropping into the box the tax page fills. */
+/** Twelve months of 200 € adding up to the year paid in. */
 const PER_MONTHLY = 200;
 
 export function PerVisual({ copy }: { copy: Items["per"] }) {
@@ -306,7 +306,7 @@ export function PerVisual({ copy }: { copy: Items["per"] }) {
         transition={{ delay: 0.8, type: "spring", stiffness: 260, damping: 18 }}
       >
         <p className="font-mono text-xs tracking-widest text-primary">
-          {copy.box}
+          {copy.total}
         </p>
         <Count
           from={0}

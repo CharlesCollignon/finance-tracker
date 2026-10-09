@@ -15,7 +15,6 @@ import { actionsFr } from "./actions.fr";
 import { propertyFr } from "./property.fr";
 import { spaceFr } from "./space.fr";
 import { askFr } from "./ask.fr";
-import { taxFr } from "./tax.fr";
 
 /**
  * What the app says, in French.
@@ -2684,5 +2683,4 @@ export const fr: Messages = {
   property: propertyFr,
   space: spaceFr,
   ask: askFr,
-  tax: taxFr,
 };

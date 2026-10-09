@@ -16,7 +16,6 @@ import { MonthReadMock } from "@/components/marketing/mocks/month-read";
 import { PlanningMock } from "@/components/marketing/mocks/planning";
 import { PropertyMock } from "@/components/marketing/mocks/property";
 import { QuestionsMock } from "@/components/marketing/mocks/questions";
-import { TaxMock } from "@/components/marketing/mocks/tax";
 import { TogetherMock } from "@/components/marketing/mocks/together";
 import { RecurringMock } from "@/components/marketing/mocks/recurring";
 import { TransactionsMock } from "@/components/marketing/mocks/transactions";
@@ -33,7 +32,6 @@ const PAGE_MOCKS: Record<LandingPageId, (variant: Variant) => ReactNode> = {
   property: (variant) => <PropertyMock variant={variant} />,
   questions: (variant) => <QuestionsMock variant={variant} />,
   together: (variant) => <TogetherMock variant={variant} />,
-  tax: (variant) => <TaxMock variant={variant} />,
 };
 
 /** The right mock for a feature, at its design size, ready to be scaled by

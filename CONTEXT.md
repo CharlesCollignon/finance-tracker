@@ -649,14 +649,6 @@ several writers. A writer chooses words and which figures to point at, and
 writes no figure of its own.
 _Avoid_: AI, assistant, bot, author, agent
 
-**Tax box**:
-_En français_ : case (de la déclaration de revenus)
-A box of the French income tax return — 7UF, 6NS — and the year's amount
-the person's own rows put in it: categories they filed in it once, their
-PER's payments, their let properties' rents. Pluclair adds up and shows
-the rows; it does not file the return, estimate a tax or advise.
-_Avoid_: tax line, deduction (some boxes are credits), tax calculation
-
 **Question**:
 _En français_ : question (l'écran : Questions)
 Something a person asks about their own money in their own words, answered

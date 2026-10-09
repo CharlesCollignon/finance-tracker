@@ -120,7 +120,6 @@ export async function updateSession(request: NextRequest) {
     pathname.startsWith("/budgets") ||
     pathname.startsWith("/profile") ||
     pathname.startsWith("/ask") ||
-    pathname.startsWith("/tax") ||
     pathname.startsWith("/bank");
 
   if (!user && isProtected) {

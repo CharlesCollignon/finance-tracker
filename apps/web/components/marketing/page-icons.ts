@@ -3,7 +3,6 @@ import {
   ChartLineUp,
   ChatCircleDots,
   Compass,
-  FileText,
   House,
   Mountains,
   Receipt,
@@ -26,5 +25,4 @@ export const PAGE_ICON: Record<LandingPageId, Icon> = {
   property: House,
   questions: ChatCircleDots,
   together: UsersThree,
-  tax: FileText,
 };

@@ -8,7 +8,6 @@ import {
   EnvelopeSimple,
   Globe,
   Key,
-  Receipt,
   SignIn,
   Tag,
   Trash,
@@ -273,7 +272,6 @@ export function ProfileView({
             label={t("profile.categories")}
             href="/categories"
           />
-          <ListRow icon={Receipt} label={t("tax.profileLink")} href="/tax" />
           {showBank ? (
             <ListRow
               icon={Bank}

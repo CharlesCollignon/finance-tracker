@@ -122,12 +122,6 @@ export const landingCopy = {
         link: "See Questions",
       },
       {
-        id: "tax",
-        title: "Your tax return, prepared",
-        body: "Donations, home help, childcare, PER, rents: the amounts for your boxes, from your own rows.",
-        link: "See the tax page",
-      },
-      {
         id: "year",
         title: "Your year",
         body: "Every January, your year in figures — to keep, or to share as an image.",
@@ -441,27 +435,6 @@ export const landingCopy = {
         },
       ],
     },
-    {
-      id: "tax",
-      title: "Tax return",
-      body: "The amounts for your income tax boxes, from your own rows.",
-      utility:
-        "Each spring, the boxes your year fills: donations (7UF, 7UD), home help (7DB), childcare (7GA–7GC), PER payments (6NS), rents (4BE, 5NI). Pluclair adds them up; you check them and file on impots.gouv.fr.",
-      steps: [
-        {
-          title: "File a category in its box",
-          body: "Donations, a cleaner, a nursery: put the category in its box once, and every row of it counts there.",
-        },
-        {
-          title: "Open a box to see its rows",
-          body: "Each amount opens to the rows it adds up, so you can check it line by line before copying it.",
-        },
-        {
-          title: "Check, then declare",
-          body: "Pluclair estimates no tax and files nothing: you copy the amounts into impots.gouv.fr yourself.",
-        },
-      ],
-    },
   ],
 
   /**
@@ -584,13 +557,13 @@ export const landingCopy = {
           per: {
             name: "PER",
             full: "Retirement savings plan",
-            badge: "Box 6NS",
-            badgeLabel: "on your tax return",
+            badge: "Deductible",
+            badgeLabel: "from your taxable income",
             inApp:
-              "What you pay into it over the year fills box 6NS of your tax return on its own.",
+              "What you paid in and what it is worth today. The long view estimates what is left after tax.",
             tax: "Payments come off your taxable income, within the ceiling printed on your tax notice. The money stays in until retirement, bar a few exceptions such as buying your home.",
             paid: "Paid in, {year}",
-            box: "Box 6NS",
+            total: "Over the year",
           },
           crypto: {
             name: "Crypto",
@@ -634,11 +607,6 @@ export const landingCopy = {
       heading: "Your share",
       hint: "Drag the split: each part of the joint spending follows.",
       spent: "Joint spending this month",
-    },
-    tax: {
-      heading: "File it once, it counts",
-      hint: "Tap a category to put it in its box.",
-      chips: ["Restos du Cœur", "Red Cross", "Cleaner", "Studio rents"],
     },
   },
 

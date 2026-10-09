@@ -92,8 +92,6 @@ const TABLE_AREAS: Record<string, readonly DataArea[]> = {
   // Ask Pluclair's conversations: the Questions screen reloads its own.
   ask_conversations: [],
   ask_messages: [],
-  // Which box a category goes in: the tax screen reloads its own.
-  tax_box_categories: [],
 };
 
 /**

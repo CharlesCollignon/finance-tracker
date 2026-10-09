@@ -109,12 +109,6 @@ export const landingCopyFr: LandingCopySections & {
         link: "Voir Questions",
       },
       {
-        id: "tax",
-        title: "Votre déclaration, préparée",
-        body: "Dons, emploi à domicile, garde d’enfant, PER, loyers : les montants de vos cases, tirés de vos propres opérations.",
-        link: "Voir la page impôts",
-      },
-      {
         id: "year",
         title: "Votre année",
         body: "Chaque janvier, votre année en chiffres — à garder, ou à partager en image.",
@@ -411,26 +405,6 @@ export const landingCopyFr: LandingCopySections & {
         },
       ],
     },
-    tax: {
-      title: "Déclaration de revenus",
-      body: "Les montants de vos cases d’impôt, tirés de vos propres opérations.",
-      utility:
-        "Chaque printemps, les cases que votre année remplit : dons (7UF, 7UD), emploi à domicile (7DB), garde d’enfant (7GA–7GC), versements PER (6NS), loyers (4BE, 5NI). Pluclair additionne ; vous vérifiez et déclarez sur impots.gouv.fr.",
-      steps: [
-        {
-          title: "Rangez une catégorie dans sa case",
-          body: "Dons, ménage, crèche : rangez la catégorie dans sa case une fois, et chacune de ses opérations y compte.",
-        },
-        {
-          title: "Ouvrez une case pour voir ses lignes",
-          body: "Chaque montant s’ouvre sur les opérations qu’il additionne, pour le vérifier ligne à ligne avant de le recopier.",
-        },
-        {
-          title: "Vérifiez, puis déclarez",
-          body: "Pluclair n’estime aucun impôt et ne déclare rien : vous recopiez vous-même les montants sur impots.gouv.fr.",
-        },
-      ],
-    },
   },
 
   demos: {
@@ -553,13 +527,13 @@ export const landingCopyFr: LandingCopySections & {
           per: {
             name: "PER",
             full: "Plan d’épargne retraite",
-            badge: "Case 6NS",
-            badgeLabel: "de votre déclaration",
+            badge: "Déductible",
+            badgeLabel: "du revenu imposable",
             inApp:
-              "Ce que vous y versez dans l’année remplit tout seul la case 6NS de votre déclaration de revenus.",
+              "Ce que vous y avez versé et ce que ça vaut aujourd’hui. La vue longue estime ce qu’il restera après l’impôt.",
             tax: "Les versements se déduisent du revenu imposable, dans le plafond indiqué sur votre avis d’impôt. L’argent reste bloqué jusqu’à la retraite, sauf exceptions comme l’achat de la résidence principale.",
             paid: "Versé en {year}",
-            box: "Case 6NS",
+            total: "Sur l’année",
           },
           crypto: {
             name: "Crypto",
@@ -604,11 +578,6 @@ export const landingCopyFr: LandingCopySections & {
       heading: "Votre part",
       hint: "Faites glisser la répartition : chaque part des dépenses communes suit.",
       spent: "Dépenses communes ce mois-ci",
-    },
-    tax: {
-      heading: "Rangez une fois, c’est compté",
-      hint: "Touchez une catégorie pour la ranger dans sa case.",
-      chips: ["Restos du Cœur", "Croix-Rouge", "Ménage", "Loyers du studio"],
     },
   },
 

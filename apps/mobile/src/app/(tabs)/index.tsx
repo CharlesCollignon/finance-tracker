@@ -12,7 +12,6 @@ import { NewAccountsLine } from "@/components/bank/NewAccountsLine";
 import { AttentionRow } from "@/components/bearing/AttentionRow";
 import { SetupCard } from "@/components/bearing/SetupCard";
 import { YearReadyCard } from "@/components/bearing/YearReadyCard";
-import { TaxSeasonCard } from "@/components/bearing/TaxSeasonCard";
 import { BalanceCard } from "@/components/bearing/BalanceCard";
 import { MomentumCard } from "@/components/bearing/MomentumCard";
 import { SpentCard } from "@/components/bearing/SpentCard";
@@ -28,7 +27,6 @@ import { useRefreshable } from "@/hooks/useRefreshable";
 import { getBankAccounts } from "@/lib/queries";
 import { shouldInvite } from "@/lib/bank-connect";
 import { nextSetupStep } from "@finance/core/setup-steps";
-import { inTaxSeason, incomeYearFor } from "@finance/core/tax-return";
 import {
   gatherHomeMonth,
   gatherHomeRead,
@@ -181,11 +179,6 @@ export default function HomeScreen() {
                   proposals={data.arrived.proposals}
                 />
               </View>
-            ) : null}
-
-            {/* April to June, the person's own: the return's amounts. */}
-            {current && !joint && inTaxSeason(todayIsoLocal()) ? (
-              <TaxSeasonCard year={incomeYearFor(todayIsoLocal())} />
             ) : null}
 
             {/* January: the year before, told in a few cards. */}

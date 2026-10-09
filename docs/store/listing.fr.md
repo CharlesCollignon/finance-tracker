@@ -62,8 +62,6 @@ l'argent de l'autre.
 ET AUSSI
 
 - « Votre année » : votre année en chiffres, à garder ou partager.
-- Déclaration de revenus : les montants de vos cases (dons, emploi à
-  domicile, garde d'enfant, PER, loyers), à vérifier sur impots.gouv.fr.
 - Import de relevés CSV et OFX.
 - Recherche dans tous vos mois.
 - Le récap du lundi et une alerte avant un découvert.
@@ -80,7 +78,7 @@ Pluclair est gratuit, et le même sur pluclair.com.
 
 ## Mots-clés App Store (100 au plus, séparés par des virgules, sans espaces)
 
-budget,dépenses,épargne,compte,banque,patrimoine,pea,assurance vie,clôture,abonnements,impôts
+budget,dépenses,épargne,compte,banque,patrimoine,pea,assurance vie,clôture,abonnements
 
 ## Nouveautés de la version 1.0
 

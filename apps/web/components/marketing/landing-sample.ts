@@ -547,37 +547,6 @@ export const landingSample = {
   },
 
   /**
-   * The tax page for 2025, filed in 2026: the boxes the sample year fills.
-   * 5NI is the studio's year of rent, twelve months of `property.monthly`.
-   */
-  tax: {
-    year: 2025,
-    boxes: [
-      {
-        id: "7UF",
-        label: "Donations",
-        amount: 240,
-        category: "Donations",
-        rows: 4,
-      },
-      {
-        id: "7DB",
-        label: "Home help",
-        amount: 1860,
-        category: "Cleaning",
-        rows: 12,
-      },
-      {
-        id: "5NI",
-        label: "Furnished let, receipts",
-        amount: 8280,
-        category: null,
-        rows: 12,
-      },
-    ],
-  },
-
-  /**
    * Immobilier: a studio the sample person lets — they rent their own home,
    * as the ledger's « Loyer » says. Net value is `value` less `owed`.
    */
@@ -695,17 +664,6 @@ export function landingSampleFor(locale: Locale) {
       rows: landingSample.together.rows.map((row, index) => ({
         ...row,
         ...fr.together.rows[index],
-      })),
-    },
-    tax: {
-      ...landingSample.tax,
-      boxes: landingSample.tax.boxes.map((box, index) => ({
-        ...box,
-        label: fr.tax[index] ?? box.label,
-        category:
-          box.category === null
-            ? null
-            : (fr.taxCategories[index] ?? box.category),
       })),
     },
     spendByCategory: landingSample.spendByCategory.map((row, index) => ({

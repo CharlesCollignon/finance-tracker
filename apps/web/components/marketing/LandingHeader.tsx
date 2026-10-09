@@ -65,7 +65,7 @@ const GROUPS: {
     pages: ["ledger", "charges", "month-close", "month-read"],
   },
   { key: "groupWealth", pages: ["plan", "wallets", "property"] },
-  { key: "groupMore", pages: ["questions", "together", "tax"] },
+  { key: "groupMore", pages: ["questions", "together"] },
 ];
 
 type Panel = "product" | "sheet";

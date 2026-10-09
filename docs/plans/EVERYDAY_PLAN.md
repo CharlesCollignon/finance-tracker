@@ -329,25 +329,16 @@ or against a live model yet.
       to Profile with the connect row open. Out of « Bientôt » on the
       landing.
 
-## Phase 8 — Tax time and PDF statements (branch `everyday-tax`) — tax page built, PDF waiting
+## Phase 8 — Tax time and PDF statements (branch `everyday-tax`) — tax page removed, PDF waiting
 
-Built 2026-10-09: the tax page, migration 066 to apply. The PDF statements
-wait for the anonymised exports, as the plan asks.
+Built 2026-10-09: the tax page, migration 066. Removed the same day at the
+owner's call (branch `remove-tax`): no « Déclaration de revenus » in either
+app or on the landing, and migration 068 drops `tax_box_categories`. The
+PDF statements wait for the anonymised exports, as the plan asks.
 
-- [x] By April 2027, both apps: a « Déclaration de revenus » page, offered
-      on Le point from April to June and reachable from Profile all year.
-      Each box with its amount, each amount opening its rows: donations
-      (7UF, 7UD), home help (7DB), childcare (7GA–7GC; shared custody's
-      7GE–7GG not yet), PER payments (6NS) from the wallets, rents (4BE, or
-      5NI under micro-BIC for furnished lets) from the property's rental.
-      The user files their categories in the boxes once. Sums only — no
-      tax, credit or advice is worked out.
-- [x] The boxes, rates and ceilings in a yearly table
-      (`FRENCH_TAX_BOXES`, `@finance/core/tax-return`), read on 2026-10-09
-      from the 2026 forms for 2025 income; 2026 income borrows them,
-      provisionally, until the 2027 forms come out. To check each April —
-      5NI (the code that replaced 5ND for furnished lets) and the 7UD
-      ceiling (2,000 € under the 2026 finance law) first.
+- [ ] ~~A « Déclaration de revenus » page on both apps~~ — built, then
+      removed 2026-10-09: the boxes (7UF, 7UD, 7DB, 7GA–7GC, 6NS, 4BE, 5NI),
+      their yearly table and the categories filed in them all went.
 - [ ] PDF statements read on the server without AI — waiting on the
       anonymised exports of the five groups (Crédit Agricole, Crédit
       Mutuel–CIC, BPCE, BNP Paribas, Société Générale): each layout is added

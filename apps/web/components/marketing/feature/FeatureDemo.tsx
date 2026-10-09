@@ -15,7 +15,6 @@ import { MonthReadDemo } from "./demos/MonthReadDemo";
 import { PlanDemo } from "./demos/PlanDemo";
 import { PropertyDemo } from "./demos/PropertyDemo";
 import { QuestionsDemo } from "./demos/QuestionsDemo";
-import { TaxDemo } from "./demos/TaxDemo";
 import { TogetherDemo } from "./demos/TogetherDemo";
 import { WalletsDemo } from "./demos/WalletsDemo";
 import { Stage } from "./demos/parts";
@@ -83,7 +82,5 @@ function Demo({ pageId }: { pageId: LandingPageId }) {
       return <QuestionsDemo copy={demos.questions} />;
     case "together":
       return <TogetherDemo copy={demos.together} />;
-    case "tax":
-      return <TaxDemo copy={demos.tax} />;
   }
 }
