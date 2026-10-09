@@ -298,6 +298,19 @@ from the app delegate to the router. `/add` opens the add sheet over Le point
 (`?add=1`, read by `QuickAddProvider`). Checked through prebuild and
 autolinking only, not on a device yet.
 
+On Android, a home-screen widget shows the figure (`react-native-android-widget`,
+declared in `app.json`, its handler registered beside Expo Router's entry in
+`apps/mobile/index.ts`). The whole widget opens Le point, its « + » the add
+sheet, both by their `pluclair://` address. It is drawn with no screen open,
+from what the phone keeps (`src/widget/figure.ts`): the figure as last read —
+the person's own, never the space's — the privacy blur, the language and the
+currency. The figure is read again as the app goes to the background after a
+write under it (`useWidgetSync`), and by Android every half hour
+(`updatePeriodMillis`). `@finance/core/widget-figure` decides what shows: the
+figure only on the day it was read, never with the blur on; otherwise
+« + » and « Le point » alone. Checked through prebuild only, not on a
+device.
+
 ## Votre année
 
 The year gone by, in January, on both apps (`/year`, the phone's `year`;
@@ -573,3 +586,6 @@ assertion script:
   local stack; CI does not run them.
 - The phone's quick actions and their iOS module have not run on a device:
   the Swift in `modules/quick-actions` is compiled only by a native build.
+  Nor has the Android widget.
+- Signing in with Google on iOS without Sign in with Apple is likely to be
+  refused by App Review (Guideline 4.8): `docs/store/README.md`.

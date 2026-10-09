@@ -83,14 +83,23 @@ export const landingCopyFr: LandingCopySections & {
     heading: "Bientôt dans Pluclair",
     items: [
       {
+        id: "bank",
         title: "Votre banque, connectée",
         body: "En lecture seule : vos opérations arriveront toutes seules, et Pluclair ne pourra jamais faire de paiement.",
       },
       {
+        id: "app",
         title: "L’application mobile",
         body: "Pluclair dans votre poche, avec les mêmes chiffres que sur l’ordinateur.",
       },
     ],
+  },
+
+  phone: {
+    heading: "Sur votre téléphone",
+    body: "Le même compte et les mêmes chiffres, où que vous soyez. Sur Android, « Il vous reste » s’affiche sur l’écran d’accueil, avec un + pour noter une dépense.",
+    appStore: "App Store",
+    googlePlay: "Google Play",
   },
 
   faq: {

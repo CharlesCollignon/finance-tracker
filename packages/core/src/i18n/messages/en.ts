@@ -3306,6 +3306,10 @@ export const en = {
     eachMonthAfter: "Each month would leave {amount}",
     nothingSaved: "Nothing is saved: it is only the arithmetic.",
   },
+  /** The Android home-screen widget: « Il vous reste » and two ways in. */
+  widget: {
+    add: "Add a spend",
+  },
   leftToSpend: {
     title: "You have",
     missing: "You are short",

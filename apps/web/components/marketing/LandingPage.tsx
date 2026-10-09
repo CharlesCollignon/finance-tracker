@@ -1,7 +1,11 @@
 /* Hallmark · genre: atmospheric · macrostructure: Split Studio · theme: design.md (Pluclair) · enrichment: kept (WebGL Earth hero) · nav: kept · footer: kept */
 
 import Link from "next/link";
-import { ArrowRight } from "@phosphor-icons/react/dist/ssr";
+import {
+  AppleLogo,
+  ArrowRight,
+  GooglePlayLogo,
+} from "@phosphor-icons/react/dist/ssr";
 import { getLocale } from "@/lib/locale";
 import { AppScreen } from "@/components/marketing/AppScreen";
 import { LandingBloom } from "@/components/marketing/LandingOrb";
@@ -23,6 +27,7 @@ import {
   type LandingPageId,
 } from "@/components/marketing/landing-copy";
 import { marketingFocus } from "@/components/marketing/marketing-focus";
+import { storeLinks } from "@/lib/store-links";
 import { cn } from "@/lib/utils";
 
 interface LandingPageProps {
@@ -69,7 +74,20 @@ const SPLIT_FLIPPED = "md:grid-cols-[minmax(0,7fr)_minmax(0,5fr)]";
  */
 export async function LandingPage({ isLoggedIn }: LandingPageProps) {
   const locale = await getLocale();
-  const { hero, promise, how, soon, faq, finalCta } = landingCopyFor(locale);
+  const { hero, promise, how, soon, phone, faq, finalCta } =
+    landingCopyFor(locale);
+  // The phone app leaves « Bientôt » once a store has it.
+  const stores = storeLinks();
+  const inStores = [
+    { href: stores.appStore, label: phone.appStore, Icon: AppleLogo },
+    { href: stores.googlePlay, label: phone.googlePlay, Icon: GooglePlayLogo },
+  ].filter((store): store is typeof store & { href: string } =>
+    Boolean(store.href),
+  );
+  const comingSoon =
+    inStores.length > 0
+      ? soon.items.filter((item) => item.id !== "app")
+      : soon.items;
 
   return (
     <>
@@ -195,29 +213,65 @@ export async function LandingPage({ isLoggedIn }: LandingPageProps) {
         </div>
       </section>
 
+      {/* ----------------------------------------------------------- phone */}
+      {inStores.length > 0 ? (
+        <section className="relative px-6 pb-28 md:pb-36">
+          <div className={cn("mx-auto grid max-w-6xl gap-10 md:gap-14", SPLIT)}>
+            <RiseWords
+              text={phone.heading}
+              className="marketing-display text-display-sub"
+            />
+            <FadeUp delay={0.1}>
+              <p className="max-w-prose text-base leading-relaxed text-marketing-muted">
+                {phone.body}
+              </p>
+              <div className="mt-6 flex flex-wrap gap-3">
+                {inStores.map(({ href, label, Icon }) => (
+                  <a
+                    key={label}
+                    href={href}
+                    rel="noopener"
+                    className={cn(
+                      "inline-flex min-h-11 items-center gap-2 rounded-full border border-white/12 bg-white/[0.06] px-5 text-sm font-medium text-marketing-ink backdrop-blur-xl",
+                      "transition-[transform,background-color,border-color,color] duration-hover hover:border-white/25 hover:bg-white/[0.11] hover:text-white active:scale-[0.98]",
+                      marketingFocus,
+                    )}
+                  >
+                    <Icon size={18} weight="fill" aria-hidden />
+                    {label}
+                  </a>
+                ))}
+              </div>
+            </FadeUp>
+          </div>
+        </section>
+      ) : null}
+
       {/* ------------------------------------------------------------ soon */}
-      <section className="relative px-6 pb-28 md:pb-36">
-        <div className={cn("mx-auto grid max-w-6xl gap-10 md:gap-14", SPLIT)}>
-          <RiseWords
-            text={soon.heading}
-            className="marketing-display text-display-sub"
-          />
-          <ul className="grid gap-x-12 gap-y-10 sm:grid-cols-2">
-            {soon.items.map((item, index) => (
-              <li key={item.title}>
-                <FadeUp delay={0.1 + index * 0.08}>
-                  <h3 className="font-head text-lg text-marketing-ink">
-                    {item.title}
-                  </h3>
-                  <p className="mt-2 text-sm leading-relaxed text-marketing-muted">
-                    {item.body}
-                  </p>
-                </FadeUp>
-              </li>
-            ))}
-          </ul>
-        </div>
-      </section>
+      {comingSoon.length > 0 ? (
+        <section className="relative px-6 pb-28 md:pb-36">
+          <div className={cn("mx-auto grid max-w-6xl gap-10 md:gap-14", SPLIT)}>
+            <RiseWords
+              text={soon.heading}
+              className="marketing-display text-display-sub"
+            />
+            <ul className="grid gap-x-12 gap-y-10 sm:grid-cols-2">
+              {comingSoon.map((item, index) => (
+                <li key={item.title}>
+                  <FadeUp delay={0.1 + index * 0.08}>
+                    <h3 className="font-head text-lg text-marketing-ink">
+                      {item.title}
+                    </h3>
+                    <p className="mt-2 text-sm leading-relaxed text-marketing-muted">
+                      {item.body}
+                    </p>
+                  </FadeUp>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </section>
+      ) : null}
 
       {/* ------------------------------------------------------- questions */}
       {/* `#privacy`, which the header has always linked to: the questions

@@ -174,18 +174,30 @@ Built on 2026-10-08, with what the plan did not say:
 Waiting: the presets (each on a real export, anonymised) and the launch (on
 the owner's sign-off of the privacy policy and terms).
 
-## Phase 3 — The phone in the stores (branch `everyday-stores`)
+## Phase 3 — The phone in the stores (branch `everyday-stores`) — widget built, stores set aside
 
-- [ ] Android home-screen widget with `react-native-android-widget`: the
+Built 2026-10-09. The same day the owner set the stores aside — no Apple
+account, no iPhone to test on — and chose to send the app to a few friends
+on Android as an APK (`preview` profile, `docs/store/README.md`). What the
+stores need stays prepared for later.
+
+- [x] Android home-screen widget with `react-native-android-widget`: the
       figure and a « + » that opens the add sheet (`pluclair://`). With the
       privacy blur on, the widget shows only « + » and « Le point ». Updated
       after each write and at least every 30 minutes. The phone's entry
       changes from `expo-router/entry` to an `index.ts` that registers it.
+      « After each write » is read as « on leaving the app after one »: the
+      widget cannot be seen while the app is in front. A figure is shown
+      only on the day it was read. Not run on a device.
 - [ ] Store releases, App Store and Google Play: the listings in French,
       screenshots, Apple's privacy labels and Google's data-safety form,
-      review.
-- [ ] The landing moves the phone app out of « Bientôt », with the store
-      links.
+      review. Prepared: the listings in French and English, both privacy
+      forms as drafts, the checklist, the Face ID prompt in French and the
+      export-compliance answer in `app.json`. Waiting on: the accounts, the
+      EAS production variables, a demo account on hosted, the screenshots,
+      and the owner's call on Sign in with Apple (Guideline 4.8).
+- [x] The landing moves the phone app out of « Bientôt », with the store
+      links — as soon as `APP_STORE_URL` or `PLAY_STORE_URL` is set.
 
 ## Phase 4 — Find and watch (branch `everyday-search`) — done
 
