@@ -215,19 +215,19 @@ export const landingCopyFr: LandingCopySections & {
       title: "Le point",
       body: "Où vous en êtes aujourd’hui, et comment le mois va finir.",
       utility:
-        "Deux chiffres en haut : ce qu’il y a sur votre compte maintenant, et ce qu’il restera à la fin du mois. En dessous, quelques cartes qui s’ouvrent pour montrer le détail — chaque chiffre vient d’un autre écran, vous pouvez toujours le vérifier.",
+        "Deux chiffres en haut : ce qu’il y a sur votre compte maintenant, et où il en sera à la fin du mois. Dessous, le mois en courbe, puis quelques cartes — ce que vous avez dépensé, ce qui doit encore partir, où c’est parti —, chacune menant à l’écran qui porte ses chiffres.",
       steps: [
         {
           title: "Lisez les deux chiffres",
           body: "Le solde d’aujourd’hui, et la fin du mois une fois passé tout ce qui est prévu. Le second est un simple calcul sur ce que vous avez prévu, pas une supposition sur ce que vous pourriez dépenser.",
         },
         {
-          title: "Ouvrez une carte pour le détail",
-          body: "Ce mois-ci, vos comptes, votre épargne, vos placements. Chaque carte s’ouvre sur place et montre ce qui compose son chiffre.",
+          title: "Voyez le mois en une ligne",
+          body: "Votre solde jour après jour, plein jusqu’à aujourd’hui et pointillé ensuite, avec son point le plus bas à venir. Au-dessus, ce qu’il vous reste jusqu’à la paie, et combien cela fait par jour.",
         },
         {
-          title: "Remontez jusqu’à la source",
-          body: "Chaque carte se termine par un lien vers l’écran qui porte ses chiffres : rien n’est compté deux fois.",
+          title: "Suivez une carte jusqu’à sa source",
+          body: "Dépensé, encore à venir, où c’est parti : chaque carte mène d’une flèche à l’écran qui porte ses chiffres, rien n’est compté deux fois.",
         },
       ],
     },

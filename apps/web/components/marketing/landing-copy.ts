@@ -236,19 +236,19 @@ export const landingCopy = {
       title: "Overview",
       body: "Where you stand today, and where the month will end.",
       utility:
-        "Two figures at the top: what is in your account now, and what will be left at the end of the month. Below, a few cards that open to show the detail — every figure comes from another screen, so you can always check it.",
+        "Two figures at the top: what is in your account now, and where it will stand at the end of the month. Under them, the month as a curve, then a few cards — what you have spent, what is still to go out, where it went — each leading to the screen that holds its figures.",
       steps: [
         {
           title: "Read the two figures",
           body: "Today’s balance, and the end of the month once everything already planned has gone out. The second is simple arithmetic on what you planned, not a guess at what you might spend.",
         },
         {
-          title: "Open a card for the detail",
-          body: "This month, your accounts, your savings, your investments. Each card opens in place and shows what makes up its figure.",
+          title: "See the month as a line",
+          body: "Your balance day by day, solid up to today and dotted after it, with its lowest point still to come. Above it, what is left until pay day, and how much that is a day.",
         },
         {
-          title: "Follow it to where it comes from",
-          body: "Each card ends with a link to the screen that holds its figures, so nothing is counted twice.",
+          title: "Follow a card to where it comes from",
+          body: "Spent, still to come, where it went: each card leads with an arrow to the screen that holds its figures, so nothing is counted twice.",
         },
       ],
     },
