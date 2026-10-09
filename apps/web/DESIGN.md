@@ -937,6 +937,19 @@ twinkles, the stars stop drifting, and the aurora's curtains, the black hole's
 disk and the distant sun's glow hold still. Its light never follows the pointer
 on the landing; it rests in the distant sun.
 
+The landing below its hero is the system's one scroll-driven surface (the
+owner's call, October 2026). Lenis smooths the marketing site's scroll
+(`landing/SmoothScroll.tsx`). Four sections are pinned while the page scrolls
+through them: the promise lighting word by word, « Il vous reste » counting
+down as its subtraction assembles, a CSS 3D phone turning through five
+chapters of the month while its screens wipe up over each other, and the
+desktop screens running sideways as a reel. The rest of the app sits in an
+uneven grid whose cards rise in and carry a light under the pointer, and the
+page closes on a WebGL gold orb (`landing/GoldOrb.tsx`) rising out of a
+horizon — the hero's sunrise, answered — its light following the pointer.
+Under reduced motion none of it pins or turns: each section stands at its
+final state, the scroll is not smoothed, and the orb draws one still frame.
+
 ## Do's and Don'ts
 
 ### Do:

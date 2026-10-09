@@ -65,7 +65,7 @@ void main() {
 
   // The orb climbs from behind the horizon to sit above it.
   float radius = 0.2;
-  vec2 centre = vec2(0.0, mix(-0.58, 0.17, uRise));
+  vec2 centre = vec2(0.0, mix(-0.58, 0.13, uRise));
   vec2 q = (p - centre) / radius;
   float r = length(q);
 

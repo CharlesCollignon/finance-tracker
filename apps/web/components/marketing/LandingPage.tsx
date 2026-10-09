@@ -41,11 +41,12 @@ const SPLIT = "md:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]";
  * here, each said in two or three plain sentences next to a picture of the
  * screen, with the feature page one press away for anyone who wants the rest.
  *
- * It moves on one motif, things rising out of a horizon (`LandingReveal`):
- * the hero on a single timeline with the Earth's, headings rising word by
- * word, the promise lit as it is read, the screens landing as they are
- * scrolled to. What is not open to everyone yet is said once, under "Coming
- * soon", in the future tense.
+ * Below the hero it is told as the page is scrolled: the promise lit
+ * word by word, « Il vous reste » put together, the month on a phone that
+ * turns chapter by chapter, the desktop screens as a reel, the rest as an
+ * uneven grid, and the orb rising at the end (`landing/`, and the Motion
+ * section of DESIGN.md). What is not open to everyone yet is said once,
+ * under "Coming soon", in the future tense.
  */
 export async function LandingPage({ isLoggedIn }: LandingPageProps) {
   const locale = await getLocale();
