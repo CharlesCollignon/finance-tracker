@@ -433,6 +433,103 @@ export const landingCopyFr: LandingCopySections & {
     },
   },
 
+  demos: {
+    bearing: {
+      heading: "Puis-je me permettre ?",
+      hint: "Faites glisser un montant : le chiffre répond aussitôt. Rien n’est enregistré.",
+    },
+    ledger: {
+      heading: "Ça se range tout seul",
+      hint: "Touchez un commerce : Pluclair retrouve sa catégorie, comme la dernière fois.",
+      shops: [
+        { shop: "Carrefour", category: "Courses" },
+        { shop: "SNCF", category: "Transports" },
+        { shop: "Boulangerie", category: "Restaurants" },
+        { shop: "Netflix", category: "Abonnements" },
+      ],
+      added: "Ajouté aujourd’hui",
+    },
+    charges: {
+      heading: "Le mois se remplit tout seul",
+      hint: "Faites défiler : chaque opération récurrente se pose sur son jour.",
+      left: "Reste chaque mois",
+    },
+    "month-close": {
+      heading: "Ce qui a filé",
+      hint: "Faites glisser le solde affiché par votre banque : l’écart, c’est ce qui est parti sans laisser de trace.",
+      expected: "Ce que disent vos opérations",
+      bank: "Ce qu’affiche votre banque",
+      gap: "Parti sans laisser de trace",
+      none: "Rien n’a filé",
+    },
+    "month-read": {
+      heading: "Chaque chiffre est celui de Pluclair",
+      hint: "Pointez un chiffre : il vient de vos propres opérations, jamais de l’IA.",
+      sentence:
+        "Les courses en sont à {groceries} à douze jours de la fin, dans votre marge de {marge}, et le logement reste à {housing}.",
+      sources: {
+        groceries: "Courses, mars",
+        marge: "Votre marge pour le non-noté",
+        housing: "Loyer, chaque mois",
+      },
+      from: "D’où",
+    },
+    plan: {
+      heading: "Votre matelas, en accéléré",
+      hint: "Faites glisser ce que vous mettez de côté chaque mois : les caps bougent avec.",
+      monthly: "Mis de côté chaque mois",
+      inMonths: "dans {count} mois",
+      reached: "Atteint",
+    },
+    wallets: {
+      heading: "Ce que contient vraiment un fonds",
+      hint: "Un ETF MSCI World, ouvert.",
+      fund: "ETF MSCI World",
+      countriesTab: "Pays",
+      sectorsTab: "Secteurs",
+      countries: [
+        "États-Unis",
+        "Japon",
+        "Royaume-Uni",
+        "Canada",
+        "France",
+        "Ailleurs",
+      ],
+      sectors: [
+        "Technologie",
+        "Finance",
+        "Santé",
+        "Industrie",
+        "Consommation",
+        "Tout le reste",
+      ],
+    },
+    property: {
+      heading: "La part qui est à vous",
+      hint: "Faites défiler les années du prêt.",
+      yours: "À vous",
+      owed: "Reste dû",
+      year: "En {year}",
+    },
+    questions: {
+      heading: "Demandez à votre façon",
+      hint: "Choisissez une question.",
+      third: "Combien me reste-t-il ?",
+      thirdAnswer:
+        "Il vous reste {left} jusqu’au {date}, soit {perDay} par jour.",
+    },
+    together: {
+      heading: "Votre part",
+      hint: "Faites glisser la répartition : chaque part des dépenses communes suit.",
+      spent: "Dépenses communes ce mois-ci",
+    },
+    tax: {
+      heading: "Rangez une fois, c’est compté",
+      hint: "Touchez une catégorie pour la ranger dans sa case.",
+      chips: ["Restos du Cœur", "Croix-Rouge", "Ménage", "Loyers du studio"],
+    },
+  },
+
   nav: {
     howItWorks: "Comment ça marche",
     privacy: "Vos questions",

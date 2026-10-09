@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, type ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import {
   AnimatePresence,
   domAnimation,
@@ -187,52 +187,6 @@ export function FadeUp({
     >
       {children}
     </m.div>
-  );
-}
-
-/**
- * A screen of the app landing as the page scrolls to it: tilted back on its
- * bottom edge, low and a little small, it comes up and flattens into place
- * by the time its top is two fifths of the way down the window — tied to the
- * scroll, so it moves as fast as the reader does.
- */
-export function Land({
-  children,
-  className,
-}: {
-  children: ReactNode;
-  className?: string;
-}) {
-  const ref = useRef<HTMLDivElement>(null);
-  const still = useReducedMotion() ?? false;
-  const { scrollYProgress } = useScroll({
-    target: ref,
-    offset: ["start end", "start 0.4"],
-  });
-  const rotateX = useTransform(
-    scrollYProgress,
-    [0, 1],
-    still ? [0, 0] : [16, 0],
-  );
-  const y = useTransform(scrollYProgress, [0, 1], still ? [0, 0] : [80, 0]);
-  const scale = useTransform(
-    scrollYProgress,
-    [0, 1],
-    still ? [1, 1] : [0.92, 1],
-  );
-  const opacity = useTransform(
-    scrollYProgress,
-    [0, 0.55],
-    still ? [1, 1] : [0, 1],
-  );
-  return (
-    <div ref={ref} className={cn("[perspective:1400px]", className)}>
-      <m.div
-        style={{ rotateX, y, scale, opacity, transformOrigin: "50% 100%" }}
-      >
-        {children}
-      </m.div>
-    </div>
   );
 }
 

@@ -464,6 +464,107 @@ export const landingCopy = {
     },
   ],
 
+  /**
+   * Each feature page's own hands-on part: a heading, a line saying what to
+   * do, and the words its demo needs. The figures are the demos' own, in
+   * `feature/demos/`.
+   */
+  demos: {
+    bearing: {
+      heading: "Can I afford it?",
+      hint: "Slide an amount: the figure answers at once. Nothing is saved.",
+    },
+    ledger: {
+      heading: "It files itself",
+      hint: "Tap a shop: Pluclair finds its category, the way it did last time.",
+      shops: [
+        { shop: "Carrefour", category: "Groceries" },
+        { shop: "SNCF", category: "Transport" },
+        { shop: "Bakery", category: "Eating out" },
+        { shop: "Netflix", category: "Subscriptions" },
+      ],
+      added: "Added today",
+    },
+    charges: {
+      heading: "The month fills itself",
+      hint: "Scroll: each recurring entry lands on its day.",
+      left: "Left each month",
+    },
+    "month-close": {
+      heading: "What slipped through",
+      hint: "Drag the balance your bank shows: the gap is what left without a trace.",
+      expected: "What your rows say",
+      bank: "What your bank shows",
+      gap: "Left without a trace",
+      none: "Nothing slipped through",
+    },
+    "month-read": {
+      heading: "Every figure is Pluclair’s",
+      hint: "Point at a figure: it comes from your own rows, never from the AI.",
+      sentence:
+        "Groceries are at {groceries} with twelve days to go, inside your margin of {marge}, and housing is still {housing}.",
+      sources: {
+        groceries: "Groceries, March",
+        marge: "Your margin for the unrecorded",
+        housing: "Rent, every month",
+      },
+      from: "From",
+    },
+    plan: {
+      heading: "Your cushion, sped up",
+      hint: "Slide what you set aside each month: the milestones move with it.",
+      monthly: "Set aside each month",
+      inMonths: "in {count} months",
+      reached: "Reached",
+    },
+    wallets: {
+      heading: "What one fund really holds",
+      hint: "An MSCI World ETF, opened up.",
+      fund: "MSCI World ETF",
+      countriesTab: "Countries",
+      sectorsTab: "Sectors",
+      countries: [
+        "United States",
+        "Japan",
+        "United Kingdom",
+        "Canada",
+        "France",
+        "Elsewhere",
+      ],
+      sectors: [
+        "Technology",
+        "Financials",
+        "Health",
+        "Industrials",
+        "Consumer",
+        "Everything else",
+      ],
+    },
+    property: {
+      heading: "How much of it is yours",
+      hint: "Slide through the years of the loan.",
+      yours: "Yours",
+      owed: "Still owed",
+      year: "In {year}",
+    },
+    questions: {
+      heading: "Ask it your way",
+      hint: "Pick a question.",
+      third: "How much do I have left?",
+      thirdAnswer: "You have {left} until {date}, so {perDay} a day.",
+    },
+    together: {
+      heading: "Your share",
+      hint: "Drag the split: each part of the joint spending follows.",
+      spent: "Joint spending this month",
+    },
+    tax: {
+      heading: "File it once, it counts",
+      hint: "Tap a category to put it in its box.",
+      chips: ["Restos du Cœur", "Red Cross", "Cleaner", "Studio rents"],
+    },
+  },
+
   /** The header's two in-page links, and the feature pages' walk. */
   nav: {
     howItWorks: "How it works",

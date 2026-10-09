@@ -17,24 +17,7 @@ import {
 import { EASE_STANDARD } from "@finance/core/motion";
 import { formatDayMonth } from "@finance/core/constants";
 import { usePathname } from "next/navigation";
-import {
-  ArrowRight,
-  ArrowsClockwise,
-  CaretDown,
-  ChartLineUp,
-  ChatCircleDots,
-  Compass,
-  FileText,
-  House,
-  List,
-  Mountains,
-  Receipt,
-  SealCheck,
-  Sparkle,
-  UsersThree,
-  X,
-  type Icon,
-} from "@phosphor-icons/react";
+import { ArrowRight, CaretDown, Compass, List, X } from "@phosphor-icons/react";
 import { Orb } from "@/components/brand/Orb";
 import { LandingCtas } from "@/components/marketing/LandingCtas";
 import { LocaleChoices, LocaleMenu } from "@/components/marketing/LocaleSwitch";
@@ -46,6 +29,7 @@ import {
   type LocalisedLandingCopy,
 } from "@/components/marketing/landing-copy";
 import { landingSampleFor } from "@/components/marketing/landing-sample";
+import { PAGE_ICON } from "@/components/marketing/page-icons";
 import { useLocale, useT } from "@/lib/locale-context";
 import { useFormatCurrency } from "@/lib/use-currency";
 import { cn } from "@/lib/utils";
@@ -70,21 +54,6 @@ const SECTION_LINKS = [
   { href: "/#how", key: "howItWorks" },
   { href: "/#privacy", key: "privacy" },
 ] as const;
-
-/** Each feature page's mark on its card. */
-const PAGE_ICON: Record<LandingPageId, Icon> = {
-  bearing: Compass,
-  ledger: Receipt,
-  charges: ArrowsClockwise,
-  "month-close": SealCheck,
-  "month-read": Sparkle,
-  plan: Mountains,
-  wallets: ChartLineUp,
-  property: House,
-  questions: ChatCircleDots,
-  together: UsersThree,
-  tax: FileText,
-};
 
 /** The pages in three groups, Le point apart as the featured card. */
 const GROUPS: {
