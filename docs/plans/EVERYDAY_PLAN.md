@@ -312,21 +312,29 @@ or against a live model yet.
       account if connected, Pluclair's key otherwise » — nobody loses the AI,
       anyone may bring their own. Out of « Bientôt » on the landing.
 
-## Phase 8 — Tax time and PDF statements (branch `everyday-tax-pdf`)
+## Phase 8 — Tax time and PDF statements (branch `everyday-tax`) — tax page built, PDF waiting
 
-- [ ] By April 2027, both apps: a « Déclaration de revenus » page from April.
-      Each relevant box with its amount, each amount opening its rows:
-      donations (7UF, 7UD), home help (7DB), childcare (7GA–7GG), PER
-      payments (6NS–6NU) from the wallets, rents (4BE, or micro-BIC for
-      furnished lets) from the property's rental. The user maps their
-      categories to the boxes once.
-- [ ] The boxes, rates and ceilings in a yearly table like `FRENCH_TAX_2026`,
-      checked each April when the forms come out (the 2027 forms are not out
-      as of 2026-10-08).
-- [ ] PDF statements read on the server without AI — text extracted, each
-      bank's layout — for the five biggest groups: Crédit Agricole, Crédit
-      Mutuel–CIC, BPCE, BNP Paribas, Société Générale. The file is never
-      kept. Each layout added only once its anonymised export exists.
+Built 2026-10-09: the tax page, migration 066 to apply. The PDF statements
+wait for the anonymised exports, as the plan asks.
+
+- [x] By April 2027, both apps: a « Déclaration de revenus » page, offered
+      on Le point from April to June and reachable from Profile all year.
+      Each box with its amount, each amount opening its rows: donations
+      (7UF, 7UD), home help (7DB), childcare (7GA–7GC; shared custody's
+      7GE–7GG not yet), PER payments (6NS) from the wallets, rents (4BE, or
+      5NI under micro-BIC for furnished lets) from the property's rental.
+      The user files their categories in the boxes once. Sums only — no
+      tax, credit or advice is worked out.
+- [x] The boxes, rates and ceilings in a yearly table
+      (`FRENCH_TAX_BOXES`, `@finance/core/tax-return`), read on 2026-10-09
+      from the 2026 forms for 2025 income; 2026 income borrows them,
+      provisionally, until the 2027 forms come out. To check each April —
+      5NI (the code that replaced 5ND for furnished lets) and the 7UD
+      ceiling (2,000 € under the 2026 finance law) first.
+- [ ] PDF statements read on the server without AI — waiting on the
+      anonymised exports of the five groups (Crédit Agricole, Crédit
+      Mutuel–CIC, BPCE, BNP Paribas, Société Générale): each layout is added
+      only once its export exists.
 
 ## The owner's part
 

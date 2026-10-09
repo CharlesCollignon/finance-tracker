@@ -10,7 +10,13 @@ import {
   readBankAttention,
 } from "@/lib/bank/attention";
 import { shouldInviteToConnect } from "@/lib/bank/invite";
-import { getCurrentMonth, parseMonthParams } from "@finance/core/constants";
+import {
+  getCurrentMonth,
+  parseMonthParams,
+  todayIsoLocal,
+} from "@finance/core/constants";
+import { inTaxSeason, incomeYearFor } from "@finance/core/tax-return";
+import { TaxSeasonCard } from "@/components/tax/TaxSeasonCard";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { BearingMonthView } from "@/components/finance/bearing/BearingMonthView";
@@ -76,6 +82,14 @@ export default async function BearingPage({ searchParams }: BearingPageProps) {
           bankInvite={bankInvite}
           bankAttention={bankAttention}
           awaitingAccounts={awaitingAccounts}
+          // April to June, the person's own: the return's amounts are ready.
+          taxSlot={
+            !joint &&
+            data.balance.period === "current" &&
+            inTaxSeason(todayIsoLocal()) ? (
+              <TaxSeasonCard year={incomeYearFor(todayIsoLocal())} />
+            ) : null
+          }
           // The week is this month's to recap, not a month browsed to.
           recapSlot={
             data.balance.period === "current" ? (
