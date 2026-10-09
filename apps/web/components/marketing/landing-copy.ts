@@ -16,7 +16,7 @@ import { landingCopyFr } from "@/components/marketing/landing-copy.fr";
  *   to before can tell the difference in about a second.
  *
  *   Never promise what the app does not do. What is not open to everyone yet
- *   — the bank connection, the mobile app —
+ *   — the bank connection, the mobile app until a store has it —
  *   is said once, under "Coming soon", in the future tense, and nowhere in
  *   the present (the owner's call, October 2026).
  */
@@ -84,14 +84,28 @@ export const landingCopy = {
     heading: "Coming soon",
     items: [
       {
+        id: "bank",
         title: "Your bank, connected",
         body: "Read-only: your transactions will arrive on their own, and Pluclair will never be able to make a payment.",
       },
       {
+        /** Leaves this list for `phone` below once a store has the app. */
+        id: "app",
         title: "The mobile app",
         body: "Pluclair in your pocket, with the same figures as on your computer.",
       },
     ],
+  },
+
+  /**
+   * The phone app, once the App Store or Google Play has it
+   * (`lib/store-links.ts`); until then it is under "Coming soon".
+   */
+  phone: {
+    heading: "On your phone",
+    body: 'The same account and the same figures, wherever you are. On Android, "You have" sits on your home screen, with a + to note a spend.',
+    appStore: "App Store",
+    googlePlay: "Google Play",
   },
 
   /** The worries a first visit has, answered plainly. Anchored as #privacy. */
