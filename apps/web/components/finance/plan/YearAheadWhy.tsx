@@ -194,10 +194,16 @@ export function YearAheadWhy({
 
       {Math.round(flow.growth) > 0 ? (
         <p className="privacy-sensitive text-sm text-muted-foreground">
-          {t("futurePlan.flowGrowthLine", {
-            amount: money(flow.growth),
-            month: endLabel,
-          })}
+          {flow.fees >= 1
+            ? t("futurePlan.flowGrowthFeesLine", {
+                amount: money(flow.growth),
+                month: endLabel,
+                fees: money(flow.fees),
+              })
+            : t("futurePlan.flowGrowthLine", {
+                amount: money(flow.growth),
+                month: endLabel,
+              })}
         </p>
       ) : null}
     </div>

@@ -53,6 +53,9 @@ import {
 import { MonthsCard, RunCard } from "./RunCard";
 import { YearAheadCard } from "./YearAheadCard";
 
+/** Fees not known yet, or none: one object, so the card's memo holds. */
+const NO_FEES = {};
+
 /** Where the long view opens, before the reader changes anything. */
 const DEFAULT_YEARS = 20;
 const DEFAULT_INFLATION = 0.02;
@@ -135,6 +138,7 @@ export function PlanView({ base, wealth, bankInvite }: PlanViewProps) {
                 hasTemplates={base.hasTemplates}
                 envelopes={yearEnvelopes}
                 pending={!wealthDone}
+                fees={wealthValue?.fees ?? NO_FEES}
                 settings={yearAhead}
                 onSettingsChange={(next) =>
                   saveYearAheadSettings(base.userId, next)

@@ -3,24 +3,21 @@ import { Pressable, View } from "react-native";
 import { useRouter } from "expo-router";
 import Animated, {
   FadeIn,
-  FadeOut,
-  LinearTransition,
   useAnimatedStyle,
   useReducedMotion,
   useSharedValue,
   withSpring,
-  ZoomIn,
 } from "react-native-reanimated";
 
 import { formatMonthCompact } from "@finance/core/constants";
-import type { Envelope } from "@finance/core/future-plan";
+import type { Envelope, EnvelopeId } from "@finance/core/future-plan";
 import type { ForwardProjection } from "@finance/core/projection";
 import {
   buildYearAhead,
   YEAR_AHEAD_EVENT_DEFAULTS,
+  YEAR_AHEAD_INFLATION,
   YEAR_AHEAD_HORIZONS,
   type YearAheadAccountId,
-  type YearAheadBand,
   type YearAheadEvent,
   type YearAheadEventKind,
   type YearAheadHorizon,
@@ -39,6 +36,7 @@ import { useThemeColors } from "@/theme/useThemeColors";
 import { monthAheadLabel, usePlanMoney } from "./format";
 import { PlanCard } from "./PlanCard";
 import { accountColors, accountNameKey, FOLLOW } from "./year-ahead-parts";
+import { YearAheadAccounts } from "./YearAheadAccounts";
 import { YearAheadChart } from "./YearAheadChart";
 import { YearAheadWhatIf } from "./YearAheadWhatIf";
 import { YearAheadWhy } from "./YearAheadWhy";
@@ -62,6 +60,8 @@ interface YearAheadCardProps {
   envelopes: readonly Envelope[];
   /** The wallets' market value is still on its way. */
   pending: boolean;
+  /** Each wallet's yearly fees, taken off its return. */
+  fees: Partial<Record<EnvelopeId, number>>;
   settings: YearAheadSettings;
   onSettingsChange: (next: YearAheadSettings) => void;
   /** Where « Et si… » goes, already checked against the accounts there are. */
@@ -117,6 +117,7 @@ function YearAhead({
   month,
   envelopes,
   pending,
+  fees,
   settings,
   onSettingsChange,
   target,
@@ -149,10 +150,13 @@ function YearAhead({
         events: settings.events,
         hidden,
         complete: !pending,
+        inflation: YEAR_AHEAD_INFLATION,
+        realTerms: settings.realTerms,
+        fees,
       });
     const built = build(settings.hidden);
     return built.bands.every((band) => band.hidden) ? build([]) : built;
-  }, [points, opening.onHand, envelopes, settings, extra, target, pending]);
+  }, [points, opening.onHand, envelopes, settings, extra, target, pending, fees]);
 
   // What the extra alone adds, on the same accounts: the web's sum.
   const withoutExtra = useMemo(
@@ -168,9 +172,12 @@ function YearAhead({
               .filter((band) => band.hidden)
               .map((band) => band.id),
             complete: !pending,
+            inflation: YEAR_AHEAD_INFLATION,
+            realTerms: settings.realTerms,
+            fees,
           })
         : null,
-    [points, opening.onHand, envelopes, settings, extra, ahead.bands, pending],
+    [points, opening.onHand, envelopes, settings, extra, ahead.bands, pending, fees],
   );
 
   // A tick each time sliding brings the next milestone closer, so the finger
@@ -302,6 +309,25 @@ function YearAhead({
               ? t("futurePlan.yearAllGrounded", { month: endLabel })
               : t("futurePlan.yearAllAdded", { month: endLabel })}
         </Text>
+        {ahead.range ? (
+          <Text variant="muted" className="text-sm">
+            {t("futurePlan.rangeLine", {
+              low: shown(ahead.range.low[months] ?? 0),
+              high: shown(ahead.range.high[months] ?? 0),
+            })}
+          </Text>
+        ) : null}
+        {end - ahead.afterTax.total >= 1 ? (
+          <Text variant="muted" className="text-sm">
+            {t("futurePlan.afterTaxLine", {
+              amount: shown(ahead.afterTax.total),
+            })}
+          </Text>
+        ) : null}
+        <TodaysEuros
+          on={settings.realTerms}
+          onChange={(realTerms) => update({ realTerms })}
+        />
       </View>
 
       {makeup.noIncomeScheduled ? (
@@ -330,8 +356,6 @@ function YearAhead({
 
       <YearAheadChart
         ahead={ahead}
-        color={color}
-        focus={focus}
         showBaseline={played}
         events={settings.events}
         onMoveEvent={(id, next) => changeEvent(id, { month: next })}
@@ -343,21 +367,25 @@ function YearAhead({
         label={title}
       />
 
-      <Legend
+      <YearAheadAccounts
         bands={ahead.bands}
         step={active ?? months}
         pending={pending}
         played={played}
+        focus={focus}
         color={color}
         name={name}
         onToggle={toggle}
         whole={whole}
       />
-      {!grounded ? (
-        <Text variant="muted" className="text-xs">
-          {t("futurePlan.currentNoBank")}
-        </Text>
-      ) : null}
+      <View className="gap-1">
+        {!grounded ? (
+          <Text variant="muted" className="text-xs">
+            {t("futurePlan.currentNoBank")}
+          </Text>
+        ) : null}
+        <Text variant="micro">{t("futurePlan.assumptions")}</Text>
+      </View>
 
       <View className="gap-4 border-t border-border pt-4">
         <Segmented
@@ -525,114 +553,65 @@ function Segmented<T extends string | number>({
 }
 
 /**
- * One chip per account: its colour, its name, what it holds — at the end of
- * the window, or at the month under the finger. A tap takes it out of the
- * figure and the chart, another brings it back; the last one showing stays.
+ * « En euros d'aujourd'hui »: off, the euros the accounts will show; on,
+ * what each would buy today, prices having risen 2 % a year. The web's
+ * switch, with a knob that springs.
  */
-function Legend({
-  bands,
-  step,
-  pending,
-  played,
-  color,
-  name,
-  onToggle,
-  whole,
+function TodaysEuros({
+  on,
+  onChange,
 }: {
-  bands: YearAheadBand[];
-  step: number;
-  pending: boolean;
-  played: boolean;
-  color: (id: YearAheadAccountId) => string;
-  name: (id: YearAheadAccountId) => string;
-  onToggle: (id: YearAheadAccountId) => void;
-  whole: (value: number) => string;
+  on: boolean;
+  onChange: (on: boolean) => void;
 }) {
   const t = useT();
   const colors = useThemeColors();
   const reduce = useReducedMotion();
-  const shownCount = bands.filter((band) => !band.hidden).length;
-
+  const x = useSharedValue(on ? 12 : 0);
+  useEffect(() => {
+    x.set(reduce ? (on ? 12 : 0) : withSpring(on ? 12 : 0, FOLLOW));
+  }, [on, reduce, x]);
+  const knob = useAnimatedStyle(() => ({ transform: [{ translateX: x.get() }] }));
   return (
-    <View className="flex-row flex-wrap gap-2">
-      {bands.map((band) => {
-        const last = !band.hidden && shownCount === 1;
-        return (
-          <Animated.View
-            key={band.id}
-            entering={reduce ? undefined : ZoomIn.springify().damping(16)}
-            layout={reduce ? undefined : LinearTransition.springify().damping(20)}
-          >
-            <Pressable
-              accessibilityRole="switch"
-              accessibilityState={{ checked: !band.hidden, disabled: last }}
-              accessibilityLabel={t("futurePlan.accountToggle", {
-                name: name(band.id),
-              })}
-              disabled={last}
-              onPress={() => onToggle(band.id)}
-              className={cn(
-                "min-h-11 flex-row items-center gap-2 rounded-full border px-3",
-                band.hidden
-                  ? "border-dashed border-border"
-                  : "border-border bg-muted/40",
-              )}
-            >
-              <View
-                style={{
-                  width: 10,
-                  height: 10,
-                  borderRadius: 5,
-                  backgroundColor: color(band.id),
-                  opacity: band.hidden ? 0.35 : 1,
-                }}
-              />
-              <Text
-                className={cn(
-                  "text-sm",
-                  band.hidden ? "text-muted-foreground line-through" : "text-foreground",
-                )}
-              >
-                {name(band.id)}
-              </Text>
-              {!band.hidden ? (
-                <AnimatedAmount
-                  value={band.values[Math.min(step, band.values.length - 1)] ?? 0}
-                  format={whole}
-                  className="text-sm font-semibold tabular-nums"
-                />
-              ) : null}
-            </Pressable>
-          </Animated.View>
-        );
-      })}
-      {pending ? (
-        <Animated.View exiting={reduce ? undefined : FadeOut}>
-          <View className="min-h-11 justify-center rounded-full border border-dashed border-border px-3">
-            <Text variant="muted" className="text-sm">
-              {t("futurePlan.accountsPending")}
-            </Text>
-          </View>
-        </Animated.View>
-      ) : null}
-      {played ? (
-        <Animated.View entering={reduce ? undefined : FadeIn}>
-          <View className="min-h-11 flex-row items-center gap-2 px-1">
-            <View
-              style={{
-                width: 16,
-                height: 0,
-                borderTopWidth: 2,
-                borderStyle: "dashed",
-                borderColor: colors.foreground,
-              }}
-            />
-            <Text variant="muted" className="text-xs">
-              {t("planWeb.asItStands")}
-            </Text>
-          </View>
-        </Animated.View>
-      ) : null}
-    </View>
+    <Pressable
+      accessibilityRole="switch"
+      accessibilityState={{ checked: on }}
+      onPress={() => {
+        void hapticSelection();
+        onChange(!on);
+      }}
+      className="mt-2 min-h-11 flex-row items-center gap-2 self-start"
+    >
+      <View
+        style={{
+          width: 30,
+          height: 18,
+          borderRadius: 9,
+          paddingHorizontal: 2,
+          justifyContent: "center",
+          backgroundColor: on ? colors.foreground : `${colors.foreground}33`,
+        }}
+      >
+        <Animated.View
+          style={[
+            {
+              width: 14,
+              height: 14,
+              borderRadius: 7,
+              backgroundColor: colors.background,
+            },
+            knob,
+          ]}
+        />
+      </View>
+      <Text
+        className={cn(
+          "text-xs font-medium",
+          on ? "text-foreground" : "text-muted-foreground",
+        )}
+      >
+        {t("futurePlan.realTerms")}
+      </Text>
+    </Pressable>
   );
 }

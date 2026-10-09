@@ -15,10 +15,9 @@ import Svg, { Circle, G, Line, Path } from "react-native-svg";
 
 import { EASE_STANDARD } from "@finance/core/motion";
 import {
+  niceTicks,
   resampleSeries,
-  stackBands,
   type YearAhead,
-  type YearAheadAccountId,
   type YearAheadEvent,
 } from "@finance/core/year-ahead";
 
@@ -61,43 +60,35 @@ const STEM = 8;
 
 /** One state of the chart, in pixels: what the morph goes from and to. */
 interface Shape {
-  bands: Record<string, { upper: number[]; lower: number[] }>;
   total: number[];
   baseline: number[];
-  /** Where zero is: what a line rises from the first time. */
+  /** The range 8 futures in 10 stay within; the total when there is none. */
+  low: number[];
+  high: number[];
+  /** The chart's bottom: what a line rises from the first time. */
   floor: number;
 }
 
-const EMPTY: Shape = { bands: {}, total: [], baseline: [], floor: HEIGHT };
+const EMPTY: Shape = { total: [], baseline: [], low: [], high: [], floor: HEIGHT };
 
-/** Two shapes `progress` of the way, the missing pieces risen from their floor. */
+/** Two shapes `progress` of the way, a missing piece risen from the floor. */
 function mixShape(from: Shape, to: Shape, progress: number): Shape {
-  const mix = (a: number[] | undefined, b: number[], fallback: number[]) => {
-    const start = a && a.length === b.length ? a : fallback;
+  const flat = to.total.map(() => to.floor);
+  const mix = (a: number[], b: number[]) => {
+    const start = a.length === b.length ? a : flat;
     return b.map((value, index) => start[index]! + (value - start[index]!) * progress);
   };
-  const flat = to.total.map(() => to.floor);
-  const bands: Shape["bands"] = {};
-  for (const [id, band] of Object.entries(to.bands)) {
-    const was = from.bands[id];
-    bands[id] = {
-      upper: mix(was?.upper, band.upper, band.lower),
-      lower: mix(was?.lower, band.lower, band.lower),
-    };
-  }
   return {
-    bands,
-    total: mix(from.total, to.total, flat),
-    baseline: mix(from.baseline, to.baseline, flat),
+    total: mix(from.total, to.total),
+    baseline: mix(from.baseline, to.baseline),
+    low: mix(from.low, to.low),
+    high: mix(from.high, to.high),
     floor: to.floor,
   };
 }
 
 interface YearAheadChartProps {
   ahead: YearAhead;
-  color: (id: YearAheadAccountId) => string;
-  /** An account a « Pourquoi » row was tapped for: the others dim. */
-  focus: YearAheadAccountId | null;
   showBaseline: boolean;
   events: readonly YearAheadEvent[];
   onMoveEvent: (id: string, month: number) => void;
@@ -114,20 +105,20 @@ interface YearAheadChartProps {
 }
 
 /**
- * The months ahead as one band per account, stacked under the gold line of
- * their sum — the web's chart, drawn with Reanimated.
+ * The months ahead as one gold line — every visible account added up — in
+ * the shaded range 8 futures in 10 stay within, zoomed on where the money
+ * is with a few round amounts as labelled lines: the web's chart, drawn
+ * with Reanimated. The accounts are read in their rows under it.
  *
  * Each state is a shape in pixels; a new one morphs from wherever the last
- * one had got to, on the UI thread, so an account taken out folds into its
- * floor, a new one rises from it, and a longer window stretches the bands.
- * A touch or a drag reads the month out above the chart, with a tick for
- * each month crossed, and hands it to the legend; an event's marker rides
- * the line and is dragged from month to month, ticking as it goes.
+ * one had got to, on the UI thread, so a longer window stretches the line
+ * and its range. A touch or a drag reads the month and its range out above
+ * the chart, with a tick for each month crossed, and hands the month to the
+ * rows; an event's marker rides the line and is dragged from month to
+ * month, ticking as it goes.
  */
 export function YearAheadChart({
   ahead,
-  color,
-  focus,
   showBaseline,
   events,
   onMoveEvent,
@@ -155,28 +146,18 @@ export function YearAheadChart({
     if (width === 0) {
       return null;
     }
-    // Hidden accounts stay in the stack at nothing, so they fold away
-    // rather than vanish.
-    const stacked = stackBands(
-      ahead.bands.map((band) =>
-        band.hidden
-          ? Array.from({ length: SAMPLES }, () => 0)
-          : resampleSeries(band.values, SAMPLES),
-      ),
-    );
     const total = resampleSeries(ahead.total, SAMPLES);
     const baseline = resampleSeries(ahead.baseline, SAMPLES);
-    const values = [
-      ...stacked.flatMap((band) => [...band.lower, ...band.upper]),
-      ...total,
-      ...(showBaseline ? baseline : []),
-    ];
-    let min = Math.min(0, ...values);
-    let max = Math.max(0, ...values);
-    if (max - min < 1) {
-      max += 1;
-      min -= 1;
-    }
+    const low = ahead.range ? resampleSeries(ahead.range.low, SAMPLES) : total;
+    const high = ahead.range ? resampleSeries(ahead.range.high, SAMPLES) : total;
+    const values = [...total, ...low, ...high, ...(showBaseline ? baseline : [])];
+    // Zoomed on where the money is, the labelled lines keeping the scale
+    // honest — as on the web.
+    let min = Math.min(...values);
+    let max = Math.max(...values);
+    const pad = Math.max((max - min) * 0.08, Math.abs(max) * 0.01, 1);
+    min -= pad;
+    max += pad;
     const y = (value: number) =>
       padTop + ((max - value) / (max - min)) * (HEIGHT - padTop - PAD_BOTTOM);
     const xOfSample = (index: number) =>
@@ -184,24 +165,18 @@ export function YearAheadChart({
     const xOfStep = (step: number) =>
       PAD_X + (months > 0 ? step / months : 0) * (width - PAD_X * 2);
     const shape: Shape = {
-      bands: Object.fromEntries(
-        ahead.bands.map((band, index) => [
-          band.id,
-          {
-            upper: stacked[index]!.upper.map(y),
-            lower: stacked[index]!.lower.map(y),
-          },
-        ]),
-      ),
       total: total.map(y),
       baseline: baseline.map(y),
-      floor: y(0),
+      low: low.map(y),
+      high: high.map(y),
+      floor: HEIGHT - PAD_BOTTOM,
     };
     return {
       shape,
       xs: Array.from({ length: SAMPLES }, (_, index) => xOfSample(index)),
       y,
       xOfStep,
+      ticks: niceTicks(min, max),
     };
   }, [ahead, showBaseline, width, months, padTop]);
 
@@ -272,10 +247,17 @@ export function YearAheadChart({
         }
       >
         {shown !== null
-          ? t("futurePlan.scrubPoint", {
+          ? `${t("futurePlan.scrubPoint", {
               month: stepLabel(shown),
               amount: money(ahead.total[shown] ?? 0),
-            })
+            })}${
+              ahead.range && shown > 0
+                ? ` · ${t("futurePlan.scrubRange", {
+                    low: money(ahead.range.low[shown] ?? 0),
+                    high: money(ahead.range.high[shown] ?? 0),
+                  })}`
+                : ""
+            }`
           : t("futurePlan.scrubHint")}
       </Text>
 
@@ -304,29 +286,19 @@ export function YearAheadChart({
       >
         {target ? (
           <Svg width={width} height={HEIGHT} pointerEvents="none">
-            {target.shape.floor > padTop &&
-            target.shape.floor < HEIGHT - PAD_BOTTOM - 1 ? (
+            {target.ticks.map((tick) => (
               <Line
+                key={tick}
                 x1={0}
                 x2={width}
-                y1={target.shape.floor}
-                y2={target.shape.floor}
-                stroke={colors.hairlineStrong}
+                y1={target.y(tick)}
+                y2={target.y(tick)}
+                stroke={colors.border}
                 strokeWidth={1}
               />
-            ) : null}
-
-            {ahead.bands.map((band) => (
-              <Band
-                key={band.id}
-                id={band.id}
-                geom={geom}
-                progress={progress}
-                color={color(band.id)}
-                hidden={band.hidden}
-                dim={focus !== null && focus !== band.id}
-              />
             ))}
+
+            <Range geom={geom} progress={progress} color={colors.primary} />
 
             <Edge
               pick="baseline"
@@ -368,6 +340,20 @@ export function YearAheadChart({
             ) : null}
           </Svg>
         ) : null}
+
+        {target
+          ? target.ticks.map((tick) => (
+              <Text
+                key={tick}
+                variant="micro"
+                pointerEvents="none"
+                className="tabular-nums"
+                style={{ position: "absolute", left: 0, top: target.y(tick) - 15 }}
+              >
+                {money(tick)}
+              </Text>
+            ))
+          : null}
 
         {target
           ? events
@@ -438,71 +424,38 @@ export function YearAheadChart({
   );
 }
 
-/** One account's band and its top edge, morphing on the UI thread. */
-function Band({
-  id,
+/** The range 8 futures in 10 stay within, morphing on the UI thread. */
+function Range({
   geom,
   progress,
   color,
-  hidden,
-  dim,
 }: {
-  id: string;
   geom: SharedValue<{ from: Shape; to: Shape; xs: number[] }>;
   progress: SharedValue<number>;
   color: string;
-  hidden: boolean;
-  dim: boolean;
 }) {
   const area = useAnimatedProps(() => {
     const { from, to, xs } = geom.get();
     const p = progress.get();
-    const goal = to.bands[id];
-    if (!goal || xs.length === 0) {
+    if (to.high.length === 0 || xs.length === 0) {
       return { d: "" };
     }
-    const was = from.bands[id];
-    const upperFrom = was && was.upper.length === goal.upper.length ? was.upper : goal.lower;
-    const lowerFrom = was && was.lower.length === goal.lower.length ? was.lower : goal.lower;
+    const mixed = (was: number[], goal: number[], index: number) => {
+      const start = was.length === goal.length ? was[index]! : to.floor;
+      return start + (goal[index]! - start) * p;
+    };
     let d = "";
     for (let index = 0; index < xs.length; index += 1) {
-      const value = upperFrom[index]! + (goal.upper[index]! - upperFrom[index]!) * p;
+      const value = mixed(from.high, to.high, index);
       d += `${index === 0 ? "M" : "L"}${xs[index]!.toFixed(1)},${value.toFixed(1)} `;
     }
     for (let index = xs.length - 1; index >= 0; index -= 1) {
-      const value = lowerFrom[index]! + (goal.lower[index]! - lowerFrom[index]!) * p;
+      const value = mixed(from.low, to.low, index);
       d += `L${xs[index]!.toFixed(1)},${value.toFixed(1)} `;
     }
     return { d: `${d}Z` };
   });
-  const edge = useAnimatedProps(() => {
-    const { from, to, xs } = geom.get();
-    const p = progress.get();
-    const goal = to.bands[id];
-    if (!goal || xs.length === 0) {
-      return { d: "" };
-    }
-    const was = from.bands[id];
-    const start = was && was.upper.length === goal.upper.length ? was.upper : goal.lower;
-    let d = "";
-    for (let index = 0; index < xs.length; index += 1) {
-      const value = start[index]! + (goal.upper[index]! - start[index]!) * p;
-      d += `${index === 0 ? "M" : "L"}${xs[index]!.toFixed(1)},${value.toFixed(1)} `;
-    }
-    return { d };
-  });
-  return (
-    <G opacity={dim ? 0.25 : 1}>
-      <AnimatedPath animatedProps={area} fill={color} fillOpacity={0.38} />
-      <AnimatedPath
-        animatedProps={edge}
-        fill="none"
-        stroke={color}
-        strokeOpacity={hidden ? 0 : 0.9}
-        strokeWidth={1.25}
-      />
-    </G>
-  );
+  return <AnimatedPath animatedProps={area} fill={color} fillOpacity={0.16} />;
 }
 
 /** The gold total, or the dashed line of things as they stand. */

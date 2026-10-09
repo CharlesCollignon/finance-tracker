@@ -10,8 +10,8 @@ import {
 } from "react";
 import { AnimatePresence, m, useReducedMotion } from "motion/react";
 import {
+  niceTicks,
   resampleSeries,
-  stackBands,
   type YearAhead,
   type YearAheadAccountId,
   type YearAheadEvent,
@@ -44,8 +44,6 @@ interface YearAheadChartProps {
   ahead: YearAhead;
   color: (id: YearAheadAccountId) => string;
   name: (id: YearAheadAccountId) => string;
-  /** An account being pointed at elsewhere on the card: the others dim. */
-  focus: YearAheadAccountId | null;
   /** Whether the reader's what-ifs move the figure, so the dashed line says from where. */
   showBaseline: boolean;
   events: readonly YearAheadEvent[];
@@ -60,23 +58,24 @@ interface YearAheadChartProps {
 }
 
 /**
- * The months ahead as one band per account, stacked, under the gold line of
- * their sum.
+ * The months ahead as one gold line — every visible account added up — in
+ * the shaded range 8 futures in 10 stay within, the markets being what they
+ * are. The accounts themselves are read in the rows under the chart, each
+ * on its own, rather than stacked here into bands too thin to read.
  *
  * Built the way the Bearing's balance curve is — relative units stretched to
  * the card, strokes held at their width, dots in HTML so they stay round —
  * and wiped in from the left as the card arrives. After that every change
- * morphs: an account taken out folds into the one below it, a new one rises
- * from its floor, a longer window stretches the bands instead of redrawing
- * them. The crosshair follows the pointer, a finger or the arrow keys to the
- * nearest month and reads every account out, to a screen reader as well; an
- * event's marker rides the line and is dragged from month to month.
+ * morphs: a longer window stretches the line and its range instead of
+ * redrawing them. The crosshair follows the pointer, a finger or the arrow
+ * keys to the nearest month and reads the total, its range and every
+ * account out, to a screen reader as well; an event's marker rides the line
+ * and is dragged from month to month.
  */
 export function YearAheadChart({
   ahead,
   color,
   name,
-  focus,
   showBaseline,
   events,
   onMoveEvent,
@@ -101,22 +100,27 @@ export function YearAheadChart({
   );
 
   const geometry = useMemo(() => {
-    const stacked = stackBands(
-      visible.map((band) => resampleSeries(band.values, SAMPLES)),
-    );
     const total = resampleSeries(ahead.total, SAMPLES);
     const baseline = resampleSeries(ahead.baseline, SAMPLES);
+    const low = ahead.range ? resampleSeries(ahead.range.low, SAMPLES) : total;
+    const high = ahead.range
+      ? resampleSeries(ahead.range.high, SAMPLES)
+      : total;
     const values = [
-      ...stacked.flatMap((band) => [...band.lower, ...band.upper]),
       ...total,
+      ...low,
+      ...high,
       ...(showBaseline ? baseline : []),
     ];
-    let min = Math.min(0, ...values);
-    let max = Math.max(0, ...values);
-    if (max - min < 1) {
-      max += 1;
-      min -= 1;
-    }
+    // Zoomed on where the money is, with the value axis drawn, rather than
+    // from zero with half the chart empty: the range and the rise read at a
+    // size worth reading, and the gridlines keep the scale honest.
+    let min = Math.min(...values);
+    let max = Math.max(...values);
+    const pad = Math.max((max - min) * 0.08, Math.abs(max) * 0.01, 1);
+    min -= pad;
+    max += pad;
+    const ticks = niceTicks(min, max);
     const y = (value: number) =>
       PAD_Y + ((max - value) / (max - min)) * (HEIGHT - PAD_Y * 2);
     const x = (index: number) => (index / (SAMPLES - 1)) * SPAN;
@@ -127,28 +131,19 @@ export function YearAheadChart({
             `${index === 0 ? "M" : "L"}${x(index).toFixed(1)},${y(value).toFixed(1)}`,
         )
         .join(" ");
-    const area = (upper: readonly number[], lower: readonly number[]) => {
-      const back = lower
-        .map((value, index) => `L${x(index).toFixed(1)},${y(value).toFixed(1)}`)
-        .reverse()
-        .join(" ");
-      return `${line(upper)} ${back} Z`;
-    };
+    const back = low
+      .map((value, index) => `L${x(index).toFixed(1)},${y(value).toFixed(1)}`)
+      .reverse()
+      .join(" ");
     return {
       y,
-      bands: visible.map((band, index) => ({
-        id: band.id,
-        area: area(stacked[index]!.upper, stacked[index]!.lower),
-        edge: line(stacked[index]!.upper),
-        // Where a band rises from and folds back to: its own floor.
-        flat: area(stacked[index]!.lower, stacked[index]!.lower),
-        flatEdge: line(stacked[index]!.lower),
-      })),
+      ticks,
       total: line(total),
       baseline: line(baseline),
+      range: `${line(high)} ${back} Z`,
       zeroY: min < 0 && max > 0 ? y(0) : null,
     };
-  }, [visible, ahead.total, ahead.baseline, showBaseline]);
+  }, [ahead.total, ahead.baseline, ahead.range, showBaseline]);
 
   const percent = (step: number) =>
     `${((months > 0 ? step / months : 0) * 100).toFixed(3)}%`;
@@ -184,8 +179,11 @@ export function YearAheadChart({
     shown !== null
       ? `${stepLabel(shown)} · ${t("planWeb.scrubTotal")} ${format(ahead.total[shown] ?? 0)}`
       : "";
-  // The tooltip lists the accounts top to bottom, as they are stacked.
-  const stackedTopDown = [...visible].reverse();
+  // The tooltip lists the accounts by what they hold that month.
+  const byValue = [...visible].sort(
+    (left, right) =>
+      (right.values[shown ?? 0] ?? 0) - (left.values[shown ?? 0] ?? 0),
+  );
   const placed = events.filter((event) => event.month <= months);
 
   return (
@@ -220,6 +218,26 @@ export function YearAheadChart({
           {t("planWeb.yearChartLabel")}
         </span>
 
+        {/* The value axis: a few round amounts as faint lines, labelled at
+            the left. */}
+        {geometry.ticks.map((tick) => (
+          <div
+            key={tick}
+            aria-hidden
+            className="pointer-events-none absolute inset-x-0 border-t border-hairline"
+            style={{ top: geometry.y(tick) }}
+          >
+            <span
+              className={cn(
+                MICRO,
+                "privacy-sensitive absolute -top-4 left-0 tabular-nums text-muted-foreground",
+              )}
+            >
+              {format(tick)}
+            </span>
+          </div>
+        ))}
+
         <svg
           viewBox={`0 0 ${SPAN} ${HEIGHT}`}
           preserveAspectRatio="none"
@@ -238,39 +256,22 @@ export function YearAheadChart({
             />
           ) : null}
 
-          <AnimatePresence initial={false}>
-            {geometry.bands.map((band) => {
-              const dim = focus !== null && focus !== band.id;
-              return (
-                <m.g
-                  key={band.id}
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: dim ? 0.22 : 1 }}
-                  exit={{ opacity: 0 }}
-                  transition={morph}
-                >
-                  <m.path
-                    initial={{ d: band.flat }}
-                    animate={{ d: band.area }}
-                    exit={{ d: band.flat }}
-                    transition={morph}
-                    fill={color(band.id)}
-                    fillOpacity={0.38}
-                  />
-                  <m.path
-                    initial={{ d: band.flatEdge }}
-                    animate={{ d: band.edge }}
-                    exit={{ d: band.flatEdge }}
-                    transition={morph}
-                    fill="none"
-                    stroke={color(band.id)}
-                    strokeWidth={1.25}
-                    vectorEffect="non-scaling-stroke"
-                  />
-                </m.g>
-              );
-            })}
-          </AnimatePresence>
+          <defs>
+            <linearGradient id={`${titleId}-range`} x1="0" x2="0" y1="0" y2="1">
+              <stop offset="0%" stopColor="var(--primary)" stopOpacity="0.22" />
+              <stop
+                offset="100%"
+                stopColor="var(--primary)"
+                stopOpacity="0.08"
+              />
+            </linearGradient>
+          </defs>
+          <m.path
+            initial={false}
+            animate={{ d: geometry.range, opacity: ahead.range ? 1 : 0 }}
+            transition={morph}
+            fill={`url(#${titleId}-range)`}
+          />
 
           <AnimatePresence>
             {showBaseline ? (
@@ -365,8 +366,16 @@ export function YearAheadChart({
                 <p className="privacy-sensitive text-sm font-semibold tabular-nums text-primary-ink">
                   {format(ahead.total[shown] ?? 0)}
                 </p>
+                {ahead.range && shown > 0 ? (
+                  <p className="privacy-sensitive text-xs tabular-nums text-muted-foreground">
+                    {t("futurePlan.scrubRange", {
+                      low: format(ahead.range.low[shown] ?? 0),
+                      high: format(ahead.range.high[shown] ?? 0),
+                    })}
+                  </p>
+                ) : null}
                 <ul className="mt-1 flex flex-col gap-0.5">
-                  {stackedTopDown.map((band) => (
+                  {byValue.map((band) => (
                     <li
                       key={band.id}
                       className="flex items-center justify-between gap-3 text-xs"

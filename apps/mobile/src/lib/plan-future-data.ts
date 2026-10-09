@@ -11,6 +11,7 @@ import {
 import type { Locale } from "@finance/core/i18n/locale";
 import type { InvestmentWalletId } from "@finance/core/investments";
 import { planWealthFromPortfolio } from "@finance/core/investment-positions";
+import { walletFeeRates, wrapperFeesFromPlans } from "@finance/core/fund-costs";
 import { defaultSavingsKind } from "@finance/core/savings-accounts";
 import {
   buildForwardProjection,
@@ -29,6 +30,7 @@ import {
   getMonthCloseOverview,
   getRecurringTemplates,
   getSavingsReserve,
+  getWalletPlans,
   getWalletPortfolio,
   readCashBalance,
   readCloseWait,
@@ -124,13 +126,30 @@ export interface PlanWealth {
   wallets: Partial<Record<InvestmentWalletId, number>>;
   /** The account each position-linked recurring purchase goes into. */
   templateWallets: Record<string, InvestmentWalletId>;
+  /**
+   * What each account costs a year, funds and envelope together, as a
+   * fraction — taken off its return in the year ahead. The web reads the
+   * same.
+   */
+  fees: Partial<Record<InvestmentWalletId, number>>;
 }
 
 export async function gatherPlanWealth(
   userId: string,
   locale: Locale,
 ): Promise<PlanWealth> {
-  return planWealthFromPortfolio(await getWalletPortfolio(userId, locale));
+  const [portfolio, plans] = await Promise.all([
+    getWalletPortfolio(userId, locale),
+    // Fees left unknown are better than a Plan without its long view.
+    getWalletPlans(userId).catch(() => []),
+  ]);
+  return {
+    ...planWealthFromPortfolio(portfolio),
+    fees: walletFeeRates(
+      portfolio.columns.flatMap((column) => column.items),
+      wrapperFeesFromPlans(plans),
+    ),
+  };
 }
 
 /** The accounts as the user's own figures describe them. */

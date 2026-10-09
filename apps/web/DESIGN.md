@@ -883,12 +883,22 @@ specific:
   (`packages/core/src/year-ahead.ts`). That is the current account walked
   forward by the recurring entries, plus each savings account and wallet as
   the milestones see it, plus « Autre épargne » for money set aside that no
-  account receives. The chart stacks one band per account under the gold line
-  of their sum, in the long view's chart tokens and order. The current account
-  is the ink; « Autre épargne » and anything past four accounts are the muted
-  "Autres". A legend chip takes an account out of the figure, and pointing at
-  a chip or at a « Pourquoi » row lights that account's band and dims the
-  rest.
+  account receives. The chart is one gold line, the visible accounts added
+  up, inside a gold-washed range where 8 futures in 10 end. The range comes
+  from each account's long-run volatility. The chart is zoomed on where the
+  money is, with two to four round amounts as labelled gridlines, so the
+  scale stays honest. Under the figure: that range in words, the value after
+  tax if everything were sold, and an « En euros d'aujourd'hui » switch. The
+  assumptions are written under the accounts: prices +2 %/yr with salary
+  and charges, shares ±15 %/yr, crypto ±65 %, known fees deducted (October
+  2026, the owner asked for "a more realisable future").
+  The accounts are rows, not stacked bands (stacked, they were too thin to
+  read): colour dot, name, a sparkline, today → end and the change. The
+  sparklines share one scale in euros, so a steep one is a big change. The
+  colours are the long view's chart tokens in its order; the current account
+  is the ink, and « Autre épargne » and anything past four accounts are the
+  muted "Autres". A row takes its account out of the figure; pointing at a
+  « Pourquoi » row lights its account's row.
   Under the legend, one panel at a time behind a switch, so the card reads
   calmly (the owner asked for it simpler, October 2026). On a wide card
   each panel uses the whole width in two columns: « Pourquoi »'s rows, and
@@ -902,8 +912,8 @@ specific:
   events stay in this browser; the extra does not.
 - **The months ahead morph instead of redrawing.** This is the one exception
   to "arrives, then rests", kept to this card. Every path there is drawn from
-  the same 61 points, so a band that is hidden folds into its floor, a new
-  one rises from it, and a longer window stretches the bands. The morph is
+  the same 61 points (the sparklines from 25), so a longer window stretches
+  the line, its range and every sparkline instead of redrawing them. The morph is
   550ms on the one curve. The pills that slide (the window, the target) and
   the crosshair's readout follow on one quick spring (`FOLLOW` in
   `year-ahead-parts.tsx`). Under reduced motion every one of them lands at

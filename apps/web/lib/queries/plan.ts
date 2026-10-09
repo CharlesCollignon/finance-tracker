@@ -19,6 +19,8 @@ import {
   type MonthCloseOverview,
 } from "@/lib/queries/month-close";
 import { getWalletPortfolio } from "@/lib/queries/wallet-portfolio";
+import { getWalletPlans } from "@/lib/queries/investments";
+import { walletFeeRates, wrapperFeesFromPlans } from "@finance/core/fund-costs";
 import { getSavingsAccounts } from "@/lib/queries/savings-accounts";
 import type { SavingsAccountKind } from "@finance/core/types/database";
 import { getNotificationSettings } from "@finance/data/preferences";
@@ -164,6 +166,11 @@ export interface PlanWealth {
   wallets: Partial<Record<InvestmentWalletId, number>>;
   /** The account each position-linked recurring purchase goes into. */
   templateWallets: Record<string, InvestmentWalletId>;
+  /**
+   * What each account costs a year, funds and envelope together, as a
+   * fraction — taken off its return in the year ahead.
+   */
+  fees: Partial<Record<InvestmentWalletId, number>>;
 }
 
 /**
@@ -178,9 +185,18 @@ export async function gatherPlanWealth(
   userId: string,
 ): Promise<PlanWealth | null> {
   try {
-    return planWealthFromPortfolio(
-      await getWalletPortfolio(userId, { includeHistory: false }),
-    );
+    const [portfolio, plans] = await Promise.all([
+      getWalletPortfolio(userId, { includeHistory: false }),
+      // Fees left unknown are better than a Plan without its long view.
+      getWalletPlans(userId).catch(() => []),
+    ]);
+    return {
+      ...planWealthFromPortfolio(portfolio),
+      fees: walletFeeRates(
+        portfolio.columns.flatMap((column) => column.items),
+        wrapperFeesFromPlans(plans),
+      ),
+    };
   } catch {
     return null;
   }

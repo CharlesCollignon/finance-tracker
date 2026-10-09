@@ -5,6 +5,7 @@ import type { ProjectionPoint } from "./projection";
 import {
   buildYearAhead,
   defaultExtraTarget,
+  niceTicks,
   parseYearAheadSettings,
   resampleSeries,
   resolveExtraTarget,
@@ -229,6 +230,85 @@ describe("buildYearAhead", () => {
   });
 });
 
+describe("buildYearAhead, as finances really go", () => {
+  const base = {
+    points: steadyPoints(24),
+    onHandToday: 2_000,
+    envelopes: [
+      envelope("livret_a", 10_000, 300, 0.017),
+      { ...envelope("pea", 8_000, 200, 0.07), taxOnGains: 0.186 },
+    ],
+    horizon: 24,
+  };
+
+  it("takes the fees off the return, and says what they cost", () => {
+    const without = buildYearAhead(base);
+    const withFees = buildYearAhead({ ...base, fees: { pea: 0.005 } });
+    const pea = (ahead: typeof without) =>
+      ahead.bands.find((band) => band.id === "pea")!.values[24]!;
+
+    expect(pea(withFees)).toBeLessThan(pea(without));
+    expect(withFees.flow.fees).toBeCloseTo(pea(without) - pea(withFees), 0);
+    expect(without.flow.fees).toBe(0);
+  });
+
+  it("lets the salary and the charges rise with prices", () => {
+    const flat = buildYearAhead(base);
+    const rising = buildYearAhead({ ...base, inflation: 0.02 });
+    const current = (ahead: typeof flat) => ahead.bands[0]!.values[24]!;
+
+    // 1 200 a month kept from salary over charges, growing with prices.
+    expect(current(rising)).toBeGreaterThan(current(flat));
+    expect(current(rising) - current(flat)).toBeLessThan(1_200 * 24 * 0.05);
+  });
+
+  it("can say it all in today's euros", () => {
+    const nominal = buildYearAhead({ ...base, inflation: 0.02 });
+    const real = buildYearAhead({ ...base, inflation: 0.02, realTerms: true });
+
+    expect(real.total[0]).toBe(nominal.total[0]);
+    expect(real.total[24]).toBeCloseTo(nominal.total[24]! / 1.02 ** 2, 0);
+    expect(real.afterTax.total).toBeCloseTo(
+      nominal.afterTax.total / 1.02 ** 2,
+      0,
+    );
+  });
+
+  it("draws a range around what moves with the markets, the same every time", () => {
+    const ahead = buildYearAhead(base);
+    const again = buildYearAhead(base);
+
+    expect(ahead.range).not.toBeNull();
+    expect(ahead.range).toEqual(again.range);
+    expect(ahead.range!.low[0]).toBe(ahead.total[0]);
+    expect(ahead.range!.high[0]).toBe(ahead.total[0]);
+    expect(ahead.range!.low[24]).toBeLessThan(ahead.total[24]!);
+    expect(ahead.range!.high[24]).toBeGreaterThan(ahead.total[24]!);
+    // A PEA of 8 000 to 13 000 or so swings by hundreds to a few thousand
+    // over two years, not by the whole account.
+    const spread = ahead.range!.high[24]! - ahead.range!.low[24]!;
+    expect(spread).toBeGreaterThan(1_000);
+    expect(spread).toBeLessThan(10_000);
+  });
+
+  it("draws no range when nothing visible moves with the markets", () => {
+    expect(buildYearAhead({ ...base, hidden: ["pea"] }).range).toBeNull();
+  });
+
+  it("says what everything would be worth after tax, were it sold", () => {
+    const ahead = buildYearAhead(base);
+    const pea = ahead.bands.find((band) => band.id === "pea")!.values[24]!;
+    const gains = pea - 8_000 - 200 * 24;
+
+    expect(ahead.afterTax.byAccount.pea).toBeCloseTo(pea - gains * 0.186, 0);
+    // The Livret A is tax-free, the current account has no gains.
+    expect(ahead.afterTax.byAccount.livret_a).toBe(
+      ahead.bands.find((band) => band.id === "livret_a")!.values[24],
+    );
+    expect(ahead.afterTax.total).toBeLessThan(ahead.total[24]!);
+  });
+});
+
 describe("defaultExtraTarget", () => {
   it("prefers a savings account at hand, then any account", () => {
     expect(
@@ -264,6 +344,7 @@ describe("parseYearAheadSettings", () => {
       }),
     ).toEqual({
       horizon: 24,
+      realTerms: false,
       to: "pea",
       hidden: ["current"],
       events: [
@@ -298,5 +379,13 @@ describe("stackBands", () => {
     ]);
     expect(current).toEqual({ lower: [-100, 0], upper: [0, 50] });
     expect(livret).toEqual({ lower: [0, 50], upper: [200, 250] });
+  });
+});
+
+describe("niceTicks", () => {
+  it("picks round amounts across the range", () => {
+    expect(niceTicks(36_000, 86_000)).toEqual([40_000, 60_000, 80_000]);
+    expect(niceTicks(1_000, 1_900)).toEqual([1_000, 1_500]);
+    expect(niceTicks(5, 5)).toEqual([]);
   });
 });

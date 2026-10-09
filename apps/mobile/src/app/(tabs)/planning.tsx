@@ -66,6 +66,9 @@ import { useAuth } from "@/providers/AuthProvider";
 import { useLocale, useT } from "@/providers/LocaleProvider";
 import { useTabBarClearance } from "@/theme/chrome";
 
+/** Fees not known yet, or none: one object, so the card's memo holds. */
+const NO_FEES = {};
+
 /**
  * One close, and every figure the sheet reads while it is open. Assembled
  * from live data to render the trigger, and frozen the moment it is pressed:
@@ -339,6 +342,7 @@ export default function PlanningScreen() {
               month={data.month}
               envelopes={yearEnvelopes}
               pending={!wealthSettled}
+              fees={wealth.data?.fees ?? NO_FEES}
               settings={yearAhead}
               onSettingsChange={changeYearAhead}
               target={target}

@@ -34,6 +34,14 @@ export const futurePlanEn = {
   flowGrowthLine: "Plus {amount} of interest and estimated returns by {month}.",
   eventAdd: "An event",
   detailsLabel: "The details",
+  rangeLine: "8 chances in 10: between {low} and {high}",
+  afterTaxLine: "or {amount} after tax if you sold everything",
+  realTerms: "In today's euros",
+  scrubRange: "between {low} and {high}",
+  flowGrowthFeesLine:
+    "Plus {amount} of interest and estimated returns by {month}, after {fees} of fees.",
+  assumptions:
+    "Assumes prices rise 2 % a year, salary and charges with them; shares swing about 15 % a year and crypto about 65 %, livrets earn their rate; known fees are taken off.",
   whyTitle: "Why",
   flowCommitted: "Fixed costs",
   flowEveryday: "Everyday spending",

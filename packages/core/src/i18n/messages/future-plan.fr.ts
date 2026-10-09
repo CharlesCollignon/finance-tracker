@@ -30,6 +30,14 @@ export const futurePlanFr: typeof futurePlanEn = {
     "S'y ajoutent {amount} d'intérêts et de rendement estimés d'ici {month}.",
   eventAdd: "Un événement",
   detailsLabel: "Le détail",
+  rangeLine: "8 chances sur 10\u00a0: entre {low} et {high}",
+  afterTaxLine: "soit {amount} après impôts si vous vendiez tout",
+  realTerms: "En euros d'aujourd'hui",
+  scrubRange: "entre {low} et {high}",
+  flowGrowthFeesLine:
+    "S'y ajoutent {amount} d'intérêts et de rendement estimés d'ici {month}, après {fees} de frais.",
+  assumptions:
+    "Hypothèses\u00a0: les prix montent de 2\u00a0% par an, salaire et charges avec eux\u00a0; les actions varient d'environ 15\u00a0% par an et la crypto de 65\u00a0%, les livrets rapportent leur taux\u00a0; les frais connus sont déduits.",
   whyTitle: "Pourquoi",
   flowCommitted: "Charges fixes",
   flowEveryday: "Dépenses courantes",

@@ -298,3 +298,48 @@ export function wrapperFeesFromPlans(
   }
   return fees;
 }
+
+/**
+ * What each wallet costs a year, as one fraction of what it holds: its
+ * funds' ongoing charges weighted by what each position is worth, plus the
+ * envelope's own fee. A position whose charge was never entered is left out
+ * of the weighting rather than counted as free; a wallet with no charge
+ * known at all pays its envelope's fee alone, and one with neither is left
+ * out. The Plan takes these off each wallet's expected return.
+ */
+export function walletFeeRates(
+  positions: readonly Pick<
+    PositionCostInput,
+    "walletId" | "marketValue" | "ongoingCharge"
+  >[],
+  wrapperFees: WrapperFees,
+): Partial<Record<InvestmentWalletId, number>> {
+  const charged = new Map<
+    InvestmentWalletId,
+    { cost: number; value: number }
+  >();
+  const wallets = new Set<InvestmentWalletId>();
+  for (const position of positions) {
+    wallets.add(position.walletId);
+    if (position.ongoingCharge === null || position.marketValue <= 0) {
+      continue;
+    }
+    const sum = charged.get(position.walletId) ?? { cost: 0, value: 0 };
+    sum.cost += position.marketValue * position.ongoingCharge;
+    sum.value += position.marketValue;
+    charged.set(position.walletId, sum);
+  }
+  for (const wallet of Object.keys(wrapperFees) as InvestmentWalletId[]) {
+    wallets.add(wallet);
+  }
+  const rates: Partial<Record<InvestmentWalletId, number>> = {};
+  for (const wallet of wallets) {
+    const funds = charged.get(wallet);
+    const fundRate = funds && funds.value > 0 ? funds.cost / funds.value : 0;
+    const rate = fundRate + (wrapperFees[wallet] ?? 0);
+    if (rate > 0) {
+      rates[wallet] = rate;
+    }
+  }
+  return rates;
+}

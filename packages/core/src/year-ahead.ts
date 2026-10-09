@@ -91,6 +91,8 @@ export const YEAR_AHEAD_MAX_EVENTS = 6;
 /** The card's settings, as a browser or the phone remembers them. */
 export interface YearAheadSettings {
   horizon: YearAheadHorizon;
+  /** Every figure in today's euros, at `YEAR_AHEAD_INFLATION`. */
+  realTerms: boolean;
   /** Where « Et si… » puts the extra; null for the default account. */
   to: YearAheadAccountId | null;
   /** The accounts taken out of the figure and the chart. */
@@ -100,6 +102,7 @@ export interface YearAheadSettings {
 
 export const YEAR_AHEAD_DEFAULT_SETTINGS: YearAheadSettings = {
   horizon: YEAR_AHEAD_DEFAULT_HORIZON,
+  realTerms: false,
   to: null,
   hidden: [],
   events: [],
@@ -156,6 +159,7 @@ export function parseYearAheadSettings(value: unknown): YearAheadSettings {
     : [];
   return {
     horizon,
+    realTerms: stored.realTerms === true,
     to: isAccountId(stored.to) ? stored.to : null,
     hidden,
     events,
@@ -193,6 +197,90 @@ export function resolveExtraTarget(
     return picked!;
   }
   return defaultExtraTarget(envelopes);
+}
+
+/* ---------------------------------------------------------------- realism */
+
+/**
+ * How fast prices rise each year: the ECB's target, which French inflation
+ * has hovered around since 2024. Income, charges and everyday spending rise
+ * with it month by month; the regular transfers to savings stay what the
+ * reader set, as they do in life until someone changes them.
+ */
+export const YEAR_AHEAD_INFLATION = 0.02;
+
+/**
+ * How much a year can swing around an account's expected return — its
+ * long-run annual volatility. World equities (an MSCI World tracker, what a
+ * PEA, a CTO or a PER usually holds) have moved about 15 % a year; a life
+ * insurance mixing a euro fund and units about 40 % of that; crypto four
+ * times as much as equities. Savings accounts pay a known rate: they do
+ * not swing.
+ */
+export const ACCOUNT_VOLATILITY: Partial<Record<EnvelopeId, number>> = {
+  pea: 0.15,
+  cto: 0.15,
+  per: 0.15,
+  av: 0.06,
+  crypto: 0.65,
+};
+
+/** Equity-like accounts move together, on one market; crypto on its own. */
+const SHOCK_STREAM: Partial<Record<EnvelopeId, "markets" | "crypto">> = {
+  pea: "markets",
+  cto: "markets",
+  per: "markets",
+  av: "markets",
+  crypto: "crypto",
+};
+
+/** How many futures the range is drawn from, and the share it holds. */
+const PATHS = 400;
+const RANGE_LOW = 0.1;
+const RANGE_HIGH = 0.9;
+
+/** A small seeded generator, so the same figures always draw the same range. */
+function mulberry32(seed: number): () => number {
+  let state = seed >>> 0;
+  return () => {
+    state = (state + 0x6d2b79f5) >>> 0;
+    let t = state;
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+const shockCache = new Map<string, Float64Array>();
+
+/**
+ * Standard normal shocks for every path and month of one stream, drawn once
+ * and kept: a slider moved does not reshuffle the future under it.
+ */
+function shocks(stream: "markets" | "crypto", months: number): Float64Array {
+  const key = `${stream}:${months}`;
+  const cached = shockCache.get(key);
+  if (cached) {
+    return cached;
+  }
+  const random = mulberry32(stream === "markets" ? 20261009 : 19800301);
+  const values = new Float64Array(PATHS * months);
+  for (let index = 0; index < values.length; index += 2) {
+    // Box–Muller: two normals from two uniforms.
+    const u = Math.max(random(), Number.EPSILON);
+    const v = random();
+    const radius = Math.sqrt(-2 * Math.log(u));
+    values[index] = radius * Math.cos(2 * Math.PI * v);
+    if (index + 1 < values.length) {
+      values[index + 1] = radius * Math.sin(2 * Math.PI * v);
+    }
+  }
+  shockCache.set(key, values);
+  return values;
+}
+
+function percentile(sorted: readonly number[], share: number): number {
+  return sorted[Math.round(share * (sorted.length - 1))] ?? 0;
 }
 
 /* ------------------------------------------------------------------ events */
@@ -239,6 +327,15 @@ export interface YearAheadInput {
    * aside with no account, so « Autre épargne » waits for them.
    */
   complete?: boolean;
+  /**
+   * How fast prices rise each year. Income, charges and everyday spending
+   * follow it; 0 (the default) leaves them as the recurring entries say.
+   */
+  inflation?: number;
+  /** Every figure in today's euros, deflated at `inflation`. */
+  realTerms?: boolean;
+  /** Each wallet's yearly fees as a fraction — fund and envelope — taken off its return. */
+  fees?: Partial<Record<EnvelopeId, number>>;
 }
 
 export interface YearAheadBand {
@@ -268,6 +365,8 @@ export interface YearAheadFlow {
   events: number;
   /** Over the window: the extra, every month of it. */
   extra: number;
+  /** Over the window: what the accounts' fees cost, in returns not earned. */
+  fees: number;
 }
 
 export interface YearAhead {
@@ -279,6 +378,20 @@ export interface YearAhead {
   total: number[];
   /** The visible accounts as things stand. */
   baseline: number[];
+  /**
+   * Where 8 futures in 10 put the visible accounts, month by month, from
+   * the accounts' long-run volatility. Null when nothing visible moves with
+   * the markets.
+   */
+  range: { low: number[]; high: number[] } | null;
+  /**
+   * What the visible accounts would be worth at the end after the tax on
+   * their gains, were everything sold — and each account's own.
+   */
+  afterTax: {
+    total: number;
+    byAccount: Partial<Record<YearAheadAccountId, number>>;
+  };
   flow: YearAheadFlow;
 }
 
@@ -301,6 +414,8 @@ function envelopeSeries(
   months: number,
 ): {
   values: Map<EnvelopeId, number[]>;
+  /** What has gone into each account so far, month by month, today first. */
+  paid: Map<EnvelopeId, number[]>;
   turnedAway: number[];
   growth: number;
 } {
@@ -311,6 +426,7 @@ function envelopeSeries(
     withdrawalRate: 0,
   });
   const values = new Map<EnvelopeId, number[]>();
+  const paid = new Map<EnvelopeId, number[]>();
   const turnedAway = Array.from({ length: months + 1 }, () => 0);
   for (const envelope of envelopes) {
     const account = run.monthlyByAccount.find((row) => row.id === envelope.id);
@@ -318,6 +434,7 @@ function envelopeSeries(
       roundMoney(envelope.initial),
       ...(account?.values ?? []),
     ]);
+    paid.set(envelope.id, [0, ...(account?.paid ?? [])]);
     account?.paid.forEach((paid, index) => {
       turnedAway[index + 1]! += Math.max(
         0,
@@ -327,6 +444,7 @@ function envelopeSeries(
   }
   return {
     values,
+    paid,
     turnedAway: turnedAway.map(roundMoney),
     growth: run.gains,
   };
@@ -361,23 +479,48 @@ export function buildYearAhead(input: YearAheadInput): YearAhead {
     into.push({ id: "elsewhere", monthly: elsewhere });
   }
 
-  /* The envelopes, twice when the extra goes into one of them: compounding
-     makes it worth more than the sum of the payments. */
-  const asTheyStand = envelopeSeries(input.envelopes, months);
+  /* The envelopes, at their return after fees, and twice when the extra
+     goes into one of them: compounding makes it worth more than the sum of
+     the payments. */
+  const inflation = input.inflation ?? 0;
+  const fees = input.fees ?? {};
+  const net = input.envelopes.map((envelope) => ({
+    ...envelope,
+    annualReturn: envelope.annualReturn - (fees[envelope.id] ?? 0),
+  }));
   const extraEnvelope =
     extra && input.envelopes.some((envelope) => envelope.id === extra.to)
       ? extra
       : null;
-  const withExtra = extraEnvelope
-    ? envelopeSeries(
-        input.envelopes.map((envelope) =>
+  const boosted = (envelopes: readonly Envelope[]) =>
+    extraEnvelope
+      ? envelopes.map((envelope) =>
           envelope.id === extraEnvelope.to
             ? { ...envelope, monthly: envelope.monthly + extraEnvelope.monthly }
             : envelope,
-        ),
-        months,
-      )
+        )
+      : envelopes;
+  const asTheyStand = envelopeSeries(net, months);
+  const withExtra = extraEnvelope
+    ? envelopeSeries(boosted(net), months)
     : asTheyStand;
+  // What the same accounts would have earned with no fees at all.
+  const grossGrowth = input.envelopes.some(
+    (envelope) => (fees[envelope.id] ?? 0) > 0,
+  )
+    ? envelopeSeries(boosted(input.envelopes), months).growth
+    : withExtra.growth;
+
+  /* Prices rise: the salary, the charges and the everyday spending follow
+     them month by month, so what the current account keeps grows (or
+     shrinks) with the gap between them. */
+  const lifted = [0];
+  let lift = 0;
+  window.forEach((point, index) => {
+    const rise = Math.pow(1 + inflation, index / 12) - 1;
+    lift += (point.income - point.expense - point.unrecorded) * rise;
+    lifted.push(lift);
+  });
 
   /* The current account: the projection's on-hand track, with the events,
      what a full account turned away and, when it is the one picked, the
@@ -386,7 +529,11 @@ export function buildYearAhead(input: YearAheadInput): YearAhead {
   const currentBaseline = [
     roundMoney(opening),
     ...window.map((point, index) =>
-      roundMoney(point.onHand + (asTheyStand.turnedAway[index + 1] ?? 0)),
+      roundMoney(
+        point.onHand +
+          (asTheyStand.turnedAway[index + 1] ?? 0) +
+          (lifted[index + 1] ?? 0),
+      ),
     ),
   ];
   const currentValues = currentBaseline.map((_, step) => {
@@ -401,6 +548,7 @@ export function buildYearAhead(input: YearAheadInput): YearAhead {
     return roundMoney(
       window[step - 1]!.onHand +
         (withExtra.turnedAway[step] ?? 0) +
+        (lifted[step] ?? 0) +
         fromEvents +
         fromExtra,
     );
@@ -453,12 +601,124 @@ export function buildYearAhead(input: YearAheadInput): YearAhead {
   const income = mean(window.map((point) => point.income));
   const committed = mean(window.map((point) => point.expense));
   const everyday = mean(window.map((point) => point.unrecorded));
+  const total = sum((band) => band.values);
+  const visible = (id: YearAheadAccountId) => !hidden.has(id);
+
+  /* The range: each visible account that moves with the markets, played
+     over many futures on its own volatility around its expected return —
+     the equity ones on one shared market, crypto on its own — with the
+     rest of the money added as the plan has it. */
+  const risky = net.filter(
+    (envelope) =>
+      (ACCOUNT_VOLATILITY[envelope.id] ?? 0) > 0 && visible(envelope.id),
+  );
+  let range: YearAhead["range"] = null;
+  if (risky.length > 0 && months > 0) {
+    const sums = Array.from(
+      { length: months + 1 },
+      () => new Float64Array(PATHS),
+    );
+    const fixed = total.map(
+      (value, step) =>
+        value -
+        risky.reduce(
+          (sum, envelope) =>
+            sum + (withExtra.values.get(envelope.id)?.[step] ?? 0),
+          0,
+        ),
+    );
+    for (const envelope of risky) {
+      const yearly = ACCOUNT_VOLATILITY[envelope.id]!;
+      const monthlyVolatility = yearly / Math.sqrt(12);
+      // A drift whose average month grows at the account's return, as the
+      // central line does — the median future sits a little lower.
+      const drift =
+        Math.log(1 + envelope.annualReturn) / 12 -
+        (monthlyVolatility * monthlyVolatility) / 2;
+      const payment =
+        envelope.monthly +
+        (extraEnvelope?.to === envelope.id ? extraEnvelope.monthly : 0);
+      const draws = shocks(SHOCK_STREAM[envelope.id] ?? "markets", months);
+      for (let path = 0; path < PATHS; path += 1) {
+        let value = envelope.initial;
+        sums[0]![path]! += value;
+        for (let month = 1; month <= months; month += 1) {
+          const shock = draws[path * months + (month - 1)]!;
+          value = value * Math.exp(drift + monthlyVolatility * shock) + payment;
+          sums[month]![path]! += value;
+        }
+      }
+    }
+    const low: number[] = [];
+    const high: number[] = [];
+    sums.forEach((paths, step) => {
+      const sorted = Array.from(paths, (value) => value + fixed[step]!).sort(
+        (left, right) => left - right,
+      );
+      low.push(roundMoney(percentile(sorted, RANGE_LOW)));
+      high.push(roundMoney(percentile(sorted, RANGE_HIGH)));
+    });
+    range = { low, high };
+  }
+
+  /* After tax, were everything sold at the end: each account's gains —
+     what it holds beyond what it started with and what went in — taxed at
+     its rate. The current account has no gains to tax. */
+  const byAccount: Partial<Record<YearAheadAccountId, number>> = {};
+  for (const band of bands) {
+    if (band.hidden) {
+      continue;
+    }
+    const end = band.values[months] ?? 0;
+    const envelope = input.envelopes.find((each) => each.id === band.id);
+    if (!envelope) {
+      byAccount[band.id] = end;
+      continue;
+    }
+    const paidIn = withExtra.paid.get(envelope.id)?.[months] ?? 0;
+    const gains = end - envelope.initial - paidIn;
+    byAccount[band.id] = roundMoney(
+      end - (gains > 0 ? gains * envelope.taxOnGains : 0),
+    );
+  }
+
+  /* In today's euros: every figure divided by how much prices will have
+     risen by its month. */
+  const deflate = (values: number[]) =>
+    input.realTerms && inflation !== 0
+      ? values.map((value, step) =>
+          roundMoney(value / Math.pow(1 + inflation, step / 12)),
+        )
+      : values;
+  const endDeflator =
+    input.realTerms && inflation !== 0
+      ? Math.pow(1 + inflation, months / 12)
+      : 1;
 
   return {
     months,
-    bands,
-    total: sum((band) => band.values),
-    baseline: sum((band) => band.baseline),
+    bands: bands.map((band) => ({
+      ...band,
+      values: deflate(band.values),
+      baseline: deflate(band.baseline),
+    })),
+    total: deflate(total),
+    baseline: deflate(sum((band) => band.baseline)),
+    range: range
+      ? { low: deflate(range.low), high: deflate(range.high) }
+      : null,
+    afterTax: {
+      total: roundMoney(
+        Object.values(byAccount).reduce((sum, value) => sum + value, 0) /
+          endDeflator,
+      ),
+      byAccount: Object.fromEntries(
+        Object.entries(byAccount).map(([id, value]) => [
+          id,
+          roundMoney(value / endDeflator),
+        ]),
+      ),
+    },
     flow: {
       income,
       committed,
@@ -470,6 +730,7 @@ export function buildYearAhead(input: YearAheadInput): YearAhead {
         events.reduce((sum, event) => sum + eventEffect(event, months), 0),
       ),
       extra: extra ? roundMoney(extra.monthly * months) : 0,
+      fees: roundMoney(Math.max(0, grossGrowth - withExtra.growth)),
     },
   };
 }
@@ -540,4 +801,25 @@ export function stackBands(
     }
     return { lower, upper };
   });
+}
+
+/**
+ * Two to four round amounts across `[min, max]` for a value axis: steps of
+ * 1, 2, 2.5 or 5 times a power of ten, the smallest that keeps it to four.
+ */
+export function niceTicks(min: number, max: number): number[] {
+  const raw = (max - min) / 3;
+  if (!(raw > 0)) {
+    return [];
+  }
+  const power = Math.pow(10, Math.floor(Math.log10(raw)));
+  const step =
+    [1, 2, 2.5, 5, 10]
+      .map((each) => each * power)
+      .find((each) => each >= raw) ?? 10 * power;
+  const ticks: number[] = [];
+  for (let tick = Math.ceil(min / step) * step; tick < max; tick += step) {
+    ticks.push(Math.round(tick));
+  }
+  return ticks;
 }
