@@ -903,6 +903,11 @@ specific:
   the crosshair's readout follow on one quick spring (`FOLLOW` in
   `year-ahead-parts.tsx`). Under reduced motion every one of them lands at
   once.
+- **The page meets the reader where they scroll.** Each card rises into place
+  the first time it comes into view (`Reveal` in `PlanView.tsx`), rather than
+  in one stagger on load that has finished before the run is reached. Every
+  `PlanCard` carries the landing's light under the pointer, in the ink at 6 %
+  and never the accent.
 - **The long view is a calculator, and says so.** It opens on the user's own
   figures and the 2026 French rates, every input is theirs to change, the
   edits stay in this browser, and "Revenir à mes chiffres" goes back. The

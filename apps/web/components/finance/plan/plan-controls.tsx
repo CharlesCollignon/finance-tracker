@@ -1,6 +1,12 @@
 "use client";
 
-import { useId, useState, type CSSProperties, type ReactNode } from "react";
+import {
+  useId,
+  useState,
+  type CSSProperties,
+  type PointerEvent,
+  type ReactNode,
+} from "react";
 import { parseTypedAmount } from "@finance/core/amount-input";
 import { formatMonthLabel } from "@finance/core/constants";
 import { INTL_LOCALES, type Locale } from "@finance/core/i18n/locale";
@@ -10,8 +16,27 @@ import { cn } from "@/lib/utils";
 import styles from "./plan.module.css";
 
 /**
+ * A soft light under the pointer, as the landing's cards carry: in the ink
+ * rather than the accent, which on this page means a milestone. `after`,
+ * because the hero's glass already draws its top edge with `before`.
+ */
+const POINTER_LIGHT = cn(
+  "relative isolate",
+  "after:pointer-events-none after:absolute after:inset-0 after:-z-10 after:rounded-[inherit]",
+  "after:opacity-0 after:transition-opacity after:duration-enter hover:after:opacity-100",
+  "after:[background:radial-gradient(24rem_circle_at_var(--x,50%)_var(--y,50%),color-mix(in_oklab,var(--foreground)_6%,transparent),transparent_60%)]",
+);
+
+/** The light follows the pointer: two custom properties, no render. */
+function followPointer(event: PointerEvent<HTMLElement>) {
+  const box = event.currentTarget.getBoundingClientRect();
+  event.currentTarget.style.setProperty("--x", `${event.clientX - box.left}px`);
+  event.currentTarget.style.setProperty("--y", `${event.clientY - box.top}px`);
+}
+
+/**
  * A card on the Plan page: glass over the lit ground, a small icon and its
- * title, as the Bearing draws its own.
+ * title, as the Bearing draws its own, and a light that follows the pointer.
  */
 export function PlanCard({
   icon,
@@ -29,8 +54,10 @@ export function PlanCard({
 }) {
   return (
     <section
+      onPointerMove={followPointer}
       className={cn(
         GLASS_CARD,
+        POINTER_LIGHT,
         "flex h-full min-w-0 flex-col gap-4 rounded-card p-card",
         className,
       )}

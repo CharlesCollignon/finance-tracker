@@ -1,6 +1,14 @@
 "use client";
 
-import { Suspense, use, useEffect, useMemo, useState } from "react";
+import {
+  Suspense,
+  use,
+  useEffect,
+  useMemo,
+  useState,
+  type ReactNode,
+} from "react";
+import { domAnimation, LazyMotion, m, MotionConfig } from "motion/react";
 import { CaretDown, GearSix, Sparkle } from "@phosphor-icons/react";
 import {
   buildCushion,
@@ -13,6 +21,7 @@ import {
   type EnvelopeId,
   wealthToday,
 } from "@finance/core/future-plan";
+import { EASE_STANDARD } from "@finance/core/motion";
 import { buildRunway } from "@finance/core/projection";
 import { isSavingsKind } from "@finance/core/savings-accounts";
 import {
@@ -21,7 +30,6 @@ import {
 } from "@finance/core/year-ahead";
 import { MonthCloseHistory } from "@/components/finance/MonthCloseHistory";
 import { ConnectBankInvite } from "@/components/finance/bank/ConnectBankInvite";
-import { Stagger, StaggerItem } from "@/components/motion/Stagger";
 import { markMilestoneSeen } from "@/lib/actions/plan";
 import { GLASS_CARD } from "@/lib/glass";
 import { ICON } from "@/lib/icon-scale";
@@ -69,6 +77,8 @@ interface PlanViewProps {
  * savings and investments, never counted in them. Budgets, goals and tags used to live here and are
  * gone; the month-close settings stay, folded away under the months.
  *
+ * Each card rises into place as it first scrolls into view.
+ *
  * Drawn in two loads, as the phone draws it. The year ahead, the cushion and
  * the run need only the ledger and are here at once; the milestones and the
  * long view need the market value of the investment accounts, so they stream
@@ -113,99 +123,132 @@ export function PlanView({ base, wealth, bankInvite }: PlanViewProps) {
   );
 
   return (
-    <div className="flex flex-col gap-4 md:gap-5">
-      <Intro />
+    <LazyMotion features={domAnimation} strict>
+      <MotionConfig reducedMotion="user">
+        <div className="flex flex-col gap-4 md:gap-5">
+          <Intro />
 
-      <Stagger
-        className="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-5"
-        stagger={0.06}
-      >
-        <StaggerItem className="md:col-span-2">
-          <YearAheadCard
-            projection={base.projection}
-            hasTemplates={base.hasTemplates}
-            envelopes={yearEnvelopes}
-            pending={!wealthDone}
-            settings={yearAhead}
-            onSettingsChange={(next) =>
-              saveYearAheadSettings(base.userId, next)
-            }
-            target={target}
-            extra={extra}
-            onExtraChange={setExtra}
-            milestoneLine={
-              extra > 0 ? (
-                <Suspense fallback={null}>
-                  <WhatIfMilestone
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-5">
+            <Reveal className="md:col-span-2">
+              <YearAheadCard
+                projection={base.projection}
+                hasTemplates={base.hasTemplates}
+                envelopes={yearEnvelopes}
+                pending={!wealthDone}
+                settings={yearAhead}
+                onSettingsChange={(next) =>
+                  saveYearAheadSettings(base.userId, next)
+                }
+                target={target}
+                extra={extra}
+                onExtraChange={setExtra}
+                milestoneLine={
+                  extra > 0 ? (
+                    <Suspense fallback={null}>
+                      <WhatIfMilestone
+                        base={base}
+                        wealth={wealth}
+                        extra={extra}
+                        target={target}
+                      />
+                    </Suspense>
+                  ) : null
+                }
+              />
+            </Reveal>
+
+            <Reveal>
+              <Suspense fallback={<CardPlaceholder rows={3} />}>
+                <Milestones base={base} wealth={wealth} />
+              </Suspense>
+            </Reveal>
+
+            <Reveal>
+              <CushionCard cushion={buildCushion(runway.months)} />
+            </Reveal>
+
+            {base.properties && base.properties.length > 0 ? (
+              <Reveal className="md:col-span-2">
+                <Suspense fallback={<CardPlaceholder rows={3} />}>
+                  <NetWorth
                     base={base}
                     wealth={wealth}
-                    extra={extra}
-                    target={target}
+                    properties={base.properties}
                   />
                 </Suspense>
-              ) : null
-            }
-          />
-        </StaggerItem>
+              </Reveal>
+            ) : null}
 
-        <StaggerItem>
-          <Suspense fallback={<CardPlaceholder rows={3} />}>
-            <Milestones base={base} wealth={wealth} />
-          </Suspense>
-        </StaggerItem>
+            <Reveal className="md:col-span-2">
+              <Suspense fallback={<CardPlaceholder rows={5} />}>
+                <LongView
+                  base={base}
+                  wealth={wealth}
+                  draft={draft}
+                  offerable={offerable}
+                />
+              </Suspense>
+            </Reveal>
 
-        <StaggerItem>
-          <CushionCard cushion={buildCushion(runway.months)} />
-        </StaggerItem>
-
-        {base.properties && base.properties.length > 0 ? (
-          <StaggerItem className="md:col-span-2">
-            <Suspense fallback={<CardPlaceholder rows={3} />}>
-              <NetWorth
-                base={base}
-                wealth={wealth}
-                properties={base.properties}
+            <Reveal>
+              <RunCard
+                closes={base.closes}
+                closeWait={base.closeWait}
+                monthlyCommitted={runway.monthlyCommitted}
               />
-            </Suspense>
-          </StaggerItem>
-        ) : null}
+            </Reveal>
 
-        <StaggerItem className="md:col-span-2">
-          <Suspense fallback={<CardPlaceholder rows={5} />}>
-            <LongView
-              base={base}
-              wealth={wealth}
-              draft={draft}
-              offerable={offerable}
-            />
-          </Suspense>
-        </StaggerItem>
+            <Reveal>
+              <MonthsCard history={base.closes.history} />
+            </Reveal>
 
-        <StaggerItem>
-          <RunCard
-            closes={base.closes}
-            closeWait={base.closeWait}
-            monthlyCommitted={runway.monthlyCommitted}
-          />
-        </StaggerItem>
+            <Reveal className="md:col-span-2">
+              <CloseDetails base={base} />
+            </Reveal>
 
-        <StaggerItem>
-          <MonthsCard history={base.closes.history} />
-        </StaggerItem>
-
-        <StaggerItem className="md:col-span-2">
-          <CloseDetails base={base} />
-        </StaggerItem>
-
-        {/* Under the run, because a connected bank is what makes the month's
+            {/* Under the run, because a connected bank is what makes the month's
             bilan do itself. */}
-        {bankInvite ? (
-          <StaggerItem className="md:col-span-2">
-            <ConnectBankInvite surface="plan" />
-          </StaggerItem>
-        ) : null}
-      </Stagger>
-    </div>
+            {bankInvite ? (
+              <Reveal className="md:col-span-2">
+                <ConnectBankInvite surface="plan" />
+              </Reveal>
+            ) : null}
+          </div>
+        </div>
+      </MotionConfig>
+    </LazyMotion>
+  );
+}
+
+/** How a card rises into place: the page entrance's duration, on the one curve. */
+const REVEAL = {
+  duration: 0.55,
+  ease: [...EASE_STANDARD] as [number, number, number, number],
+};
+
+/**
+ * A card rising into place the first time it scrolls into view. The page is
+ * long, and an entrance played on load has finished before the reader ever
+ * reaches the run; this one waits for them. Under reduced motion it only
+ * fades.
+ */
+function Reveal({
+  className,
+  children,
+}: {
+  className?: string;
+  children: ReactNode;
+}) {
+  return (
+    <m.div
+      className={className}
+      initial={{ opacity: 0, y: 28, scale: 0.98 }}
+      whileInView={{ opacity: 1, y: 0, scale: 1 }}
+      viewport={{ once: true, amount: 0.12 }}
+      transition={REVEAL}
+    >
+      {children}
+    </m.div>
   );
 }
 
