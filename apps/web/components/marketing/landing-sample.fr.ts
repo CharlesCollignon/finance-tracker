@@ -99,6 +99,7 @@ export const landingSampleFr = {
       { meta: "Internet" },
       { meta: "Restaurants" },
       { name: "Versement de B.", meta: "Virement" },
+      { name: "Versement de A.", meta: "Virement" },
     ],
   },
 
@@ -110,6 +111,8 @@ export const landingSampleFr = {
 
   /** The tax boxes' labels, in the order `landingSample.tax.boxes` holds them. */
   tax: ["Dons", "Emploi à domicile", "Location meublée, recettes"],
+  /** The categories filed in each box, in the same order; 5NI has none. */
+  taxCategories: ["Dons", "Ménage", null],
 
   spendByCategory: [
     "Logement",

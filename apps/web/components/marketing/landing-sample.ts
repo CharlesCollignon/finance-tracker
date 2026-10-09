@@ -488,11 +488,55 @@ export const landingSample = {
     spent: 1120,
     myPart: 560,
     rows: [
-      { name: "Monoprix", meta: "Groceries", amount: -86.4, by: "A" },
-      { name: "Free", meta: "Internet", amount: -29.99, by: "B" },
-      { name: "Le Bistrot", meta: "Restaurants", amount: -54, by: "A" },
-      { name: "From B.", meta: "Transfer", amount: 600, by: "B" },
+      {
+        day: 18,
+        name: "Monoprix",
+        meta: "Groceries",
+        icon: "shopping-cart",
+        type: "expense" as CategoryType,
+        amount: -86.4,
+        by: "A",
+      },
+      {
+        day: 17,
+        name: "Free",
+        meta: "Internet",
+        icon: "wifi",
+        type: "expense" as CategoryType,
+        amount: -29.99,
+        by: "B",
+      },
+      {
+        day: 14,
+        name: "Le Bistrot",
+        meta: "Restaurants",
+        icon: "credit-card",
+        type: "expense" as CategoryType,
+        amount: -54,
+        by: "A",
+      },
+      {
+        day: 1,
+        name: "From B.",
+        meta: "Transfer",
+        icon: "bank",
+        type: "income" as CategoryType,
+        amount: 600,
+        by: "B",
+      },
+      {
+        day: 1,
+        name: "From A.",
+        meta: "Transfer",
+        icon: "bank",
+        type: "income" as CategoryType,
+        amount: 600,
+        by: "A",
+      },
     ],
+    /** What came into the joint account this month — the two transfers — and how many rows it holds. */
+    income: 1200,
+    entries: 14,
   },
 
   /**
@@ -502,9 +546,27 @@ export const landingSample = {
   tax: {
     year: 2025,
     boxes: [
-      { id: "7UF", label: "Donations", amount: 240 },
-      { id: "7DB", label: "Home help", amount: 1860 },
-      { id: "5NI", label: "Furnished let, receipts", amount: 8280 },
+      {
+        id: "7UF",
+        label: "Donations",
+        amount: 240,
+        category: "Donations",
+        rows: 4,
+      },
+      {
+        id: "7DB",
+        label: "Home help",
+        amount: 1860,
+        category: "Cleaning",
+        rows: 12,
+      },
+      {
+        id: "5NI",
+        label: "Furnished let, receipts",
+        amount: 8280,
+        category: null,
+        rows: 12,
+      },
     ],
   },
 
@@ -638,6 +700,10 @@ export function landingSampleFor(locale: Locale) {
       boxes: landingSample.tax.boxes.map((box, index) => ({
         ...box,
         label: fr.tax[index] ?? box.label,
+        category:
+          box.category === null
+            ? null
+            : (fr.taxCategories[index] ?? box.category),
       })),
     },
     spendByCategory: landingSample.spendByCategory.map((row, index) => ({
@@ -646,6 +712,3 @@ export function landingSampleFor(locale: Locale) {
     })),
   };
 }
-
-/** The shape both languages present. */
-export type LocalisedLandingSample = typeof landingSample;

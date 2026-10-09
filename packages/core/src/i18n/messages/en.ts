@@ -1393,77 +1393,6 @@ export const en = {
       "Open the link on any device to choose a new password, then sign in here with it.",
   },
 
-  /**
-   * The marketing site's mock screens.
-   *
-   * Sample figures and sample category names, so a visitor sees the app as it
-   * would read for them. The names are copy rather than data: nobody's
-   * "Housing" category is being displayed, so translating it is right.
-   */
-  marketingMock: {
-    whereItWent: "Where it went",
-    /**
-     * The close mock's four rows, and the heading over them.
-     *
-     * "How it adds up" rather than "How it reconciled": the close's own
-     * vocabulary rules out calling it a reconciliation, and a marketing mock
-     * is the last place that should be the one surface using the word.
-     */
-    openingBalance: "Opening balance",
-    recordedIn: "Recorded in",
-    recordedOut: "Recorded out",
-    closingBalance: "Closing balance",
-    howItAddsUp: "How it adds up",
-    /** The read's own card heading, which the app draws from its surface. */
-    monthRead: "Month read",
-    whatsLeft: "What's left",
-    expectedImpact: "Expected impact",
-    expectedImpactPerMonth: "Expected impact per month",
-    /** The Charges mock's share-priced template, which the other three are
-     * not: its amount is a quote times a quantity rather than a figure
-     * anybody typed. */
-    oneShare: "1 share",
-    oneShareAtQuote: "1 share at the current quote",
-    sharePriced: "Share-priced",
-    templatesAllApplied: {
-      one: "{count} template, applied",
-      other: "{count} templates, all applied",
-    },
-  },
-
-  /**
-   * Sentences the sample month is written into.
-   *
-   * Their own group rather than more of `marketingMock` because they are not
-   * only a mock's: the landing page prints the same three figures in glass
-   * panels beside the device frames, in the same words. One home means the
-   * page and the screenshot of the app cannot drift apart, which is the whole
-   * claim the section is making.
-   *
-   * Every one of them carries a figure, which is why they are here and not in
-   * `landing-copy`: a translated sentence with a `{placeholder}` is the thing
-   * the catalogue exists to hold, and the marketing copy files are prose that
-   * takes no arguments.
-   */
-  marketingStat: {
-    unrecordedIn: "Unrecorded in {month}",
-    underAllowance: "under your {amount} allowance",
-    /** `{percent}` arrives already carrying its sign, from `units.percent`:
-     * English closes it up, French wants a space before it. */
-    ofWhatCameIn: "{percent} of what came in",
-    monthsInARow: {
-      one: "{count} month in a row",
-      other: "{count} months in a row",
-    },
-    inARow: "{count} in a row",
-    readyToClose: "{month} is ready to close",
-    keepTheRun:
-      "Stay under {amount} of unrecorded spending to keep the run going.",
-    keptIn: "Kept in {month}",
-    leftIn: "Left in {month}",
-    ofEarned: "of {amount} earned",
-  },
-
   /** Wallet detail: the position sheet, the targets and the performance card. */
   position: {
     /* The sheet's own fields. */
@@ -1734,7 +1663,6 @@ export const en = {
     setUp: "Set up",
     usePassword: "Use password",
     browserNotifications: "Browser notifications",
-    kept: "Kept",
     /**
      * The privacy blur's toggle, which is an icon and nothing else — so
      * these two are the whole of its wording, seen only by a screen reader
@@ -1952,28 +1880,6 @@ export const en = {
     investedValue: "Invested value",
     inboxPending: "Transactions still waiting for a category",
     chargesUnconfirmed: "Recurring charges not yet confirmed",
-  },
-
-  /**
-   * The figures the Bearing may show, and a model may name.
-   *
-   * A separate family from `facts` above even where a label is nearly the
-   * same, because the two packs are read in different company. In a month
-   * read "Still to leave" sits under that month's heading and needs no
-   * qualifier; on the Bearing it sits beside a twelve-month projection and a
-   * portfolio, so it has to say which month it means. Merging them would
-   * force one wording to serve two contexts, and the loser is always the
-   * one with less surrounding text — which here is the one made of
-   * nothing but figures.
-   */
-  bearingFacts: {
-    netPosition: "Everything you have, added up",
-    committed: "Still to leave this month",
-    arriving: "Still to arrive this month",
-    savingsRate: "Savings rate this month",
-    unrecordedBaseline: "Usual unrecorded spending",
-    projectedBalanceBare: "Expected balance",
-    walletCost: "Put into the wallets",
   },
 
   /**
@@ -3411,34 +3317,6 @@ export const en = {
    * ranking or apologise for failing to produce one.
    */
   bearing: {
-    /**
-     * The two figures at the top of the screen, and the fallback for the
-     * second of them.
-     *
-     * Deliberately lower-case fragments that lead into the number rather than
-     * naming it: the figure completes the phrase. That is also what retired
-     * the old negative-case swap. The headline used to switch to
-     * `pulse.headlineShort` ("Short by") when `free` went under, because
-     * "Yours to spend this month −412,00 €" read as an offer at the largest
-     * type in the app. "You'll finish the month at −412,00 €" does not, so
-     * one wording now serves both signs and the red carries the rest.
-     *
-     * Not `bearingFacts.onHand` / `bearingFacts.free`: those are the pack's
-     * labels and still name the same two figures on the cards below, where a
-     * noun phrase in a list is right and a sentence fragment would not be.
-     */
-    headline: {
-      onHand: "currently in your current account",
-      free: "you'll finish the month at",
-    },
-    /** The five cards' names, in `CARD_ORDER`. */
-    cards: {
-      month: "This month",
-      now: "The accounts",
-      run: "Your run",
-      ahead: "The year ahead",
-      wallet: "Investments",
-    },
     panel: {
       /**
        * The phone's `cash-accounts` block. Shared with the web's

@@ -14,6 +14,7 @@ import {
   TYPE_AMOUNT_CLASS,
 } from "@finance/core/category-styles";
 import { formatShortDate } from "@finance/core/constants";
+import type { CategoryType } from "@finance/core/types/database";
 import { CategoryIcon } from "@/components/finance/CategoryIcon";
 import { landingSampleFor } from "@/components/marketing/landing-sample";
 import { cn } from "@/lib/utils";
@@ -35,14 +36,25 @@ import {
  * them.
  */
 
-/** The sample's rows, gathered by day, newest day first. */
-function useDays() {
-  const sample = landingSampleFor(useLocale());
-  const byDay = new Map<number, typeof sample.transactions>();
-  for (const row of sample.transactions) {
-    byDay.set(row.day, [...(byDay.get(row.day) ?? []), row]);
+/** One row of the list: its category, what it was, and who added it. */
+export interface LedgerRow {
+  day: number;
+  category: string;
+  note: string;
+  icon: string;
+  amount: number;
+  type: CategoryType;
+  /** The initial of who added it, in a shared space. */
+  by?: string;
+}
+
+/** Rows gathered by day, newest day first, each day with its net. */
+function byDay(rows: LedgerRow[]) {
+  const days = new Map<number, LedgerRow[]>();
+  for (const row of rows) {
+    days.set(row.day, [...(days.get(row.day) ?? []), row]);
   }
-  return [...byDay.entries()]
+  return [...days.entries()]
     .sort(([a], [b]) => b - a)
     .map(([day, rows]) => ({
       date: `2026-03-${String(day).padStart(2, "0")}`,
@@ -51,18 +63,17 @@ function useDays() {
     }));
 }
 
-function DayList({ compact }: { compact: boolean }) {
+function DayList({ rows, compact }: { rows: LedgerRow[]; compact: boolean }) {
   const locale = useLocale();
   const t = useT();
   const euro = useEuro();
-  const days = useDays();
   // The sample is seen from the 19th of March, whatever today is, so its
   // « Aujourd'hui » is said here rather than by `relativeDayLabel`.
   const label = (date: string) =>
     date === "2026-03-19" ? t("calendar.today") : formatShortDate(date, locale);
   return (
     <div className={cn("flex flex-col", compact ? "gap-3" : "gap-4")}>
-      {days.map((day) => (
+      {byDay(rows).map((day) => (
         <div key={day.date} className="flex flex-col gap-1">
           <div className="flex items-baseline justify-between gap-3">
             <h3 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
@@ -76,20 +87,27 @@ function DayList({ compact }: { compact: boolean }) {
           <div className="divide-y divide-border">
             {day.rows.map((row) => (
               <div
-                key={row.name}
+                key={row.note}
                 className="flex items-center justify-between gap-3 py-2.5"
               >
                 <span className="flex min-w-0 items-center gap-3">
-                  <CategoryIcon
-                    icon={row.icon}
-                    className="size-9 shrink-0 rounded-control border-0 bg-muted"
-                  />
+                  <span className="relative shrink-0">
+                    <CategoryIcon
+                      icon={row.icon}
+                      className="size-9 shrink-0 rounded-control border-0 bg-muted"
+                    />
+                    {row.by ? (
+                      <span className="absolute -bottom-1 -right-1 flex size-4 items-center justify-center rounded-full border border-background bg-foreground text-[8px] font-semibold leading-none text-background">
+                        {row.by}
+                      </span>
+                    ) : null}
+                  </span>
                   <span className="min-w-0">
                     <span className="block truncate text-sm font-medium">
-                      {row.meta}
+                      {row.category}
                     </span>
                     <span className="block truncate text-xs text-muted-foreground">
-                      {row.name}
+                      {row.note}
                     </span>
                   </span>
                 </span>
@@ -173,15 +191,22 @@ function Search({ withFilters }: { withFilters: boolean }) {
 }
 
 /** The month's two totals, as the list states them over its rows. */
-function Totals({ count }: { count: boolean }) {
+function Totals({
+  count,
+  income,
+  spent,
+}: {
+  count: number | null;
+  income: number;
+  spent: number;
+}) {
   const t = useT();
   const euro = useEuro();
-  const { income, spent, entries } = landingSampleFor(useLocale());
   return (
     <div className="flex items-baseline justify-between gap-6 border-t border-border pt-3 text-sm">
-      {count ? (
+      {count !== null ? (
         <p className="text-muted-foreground">
-          {t("ledger.entryCount", { count: entries })}
+          {t("ledger.entryCount", { count })}
         </p>
       ) : null}
       <p className="flex gap-5">
@@ -204,13 +229,31 @@ const LEDGER_VIEWS = [
   "nav.ledgerByCategory",
 ] as const;
 
-export function TransactionsMock({ variant = "web" }: { variant?: Variant }) {
+/**
+ * The list view of the Journal for any month's rows: the Journal's own, or
+ * the shared space's under « Commun », where each row says who added it.
+ */
+export function LedgerMock({
+  variant,
+  rows,
+  income,
+  spent,
+  count,
+  space = false,
+}: {
+  variant: Variant;
+  rows: LedgerRow[];
+  income: number;
+  spent: number;
+  count: number;
+  space?: boolean;
+}) {
   const t = useT();
   const { monthLabel } = landingSampleFor(useLocale());
 
   if (variant === "mobile") {
     return (
-      <MobileShell active="nav.ledger">
+      <MobileShell active="nav.ledger" space={space}>
         <MockTabs labels={[...LEDGER_VIEWS]} compact />
         <div className="flex flex-col items-center gap-1">
           <MockMonthPicker label={monthLabel} compact />
@@ -220,14 +263,14 @@ export function TransactionsMock({ variant = "web" }: { variant?: Variant }) {
         </div>
         <Search withFilters={false} />
         <TypeChips />
-        <Totals count={false} />
-        <DayList compact />
+        <Totals count={null} income={income} spent={spent} />
+        <DayList rows={rows} compact />
       </MobileShell>
     );
   }
 
   return (
-    <WebShell active="nav.ledger">
+    <WebShell active="nav.ledger" space={space}>
       <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3">
         <MockTabs labels={[...LEDGER_VIEWS]} />
         <MockMonthPicker label={monthLabel} />
@@ -250,9 +293,30 @@ export function TransactionsMock({ variant = "web" }: { variant?: Variant }) {
             </span>
           </div>
         </div>
-        <Totals count />
-        <DayList compact={false} />
+        <Totals count={count} income={income} spent={spent} />
+        <DayList rows={rows} compact={false} />
       </section>
     </WebShell>
+  );
+}
+
+export function TransactionsMock({ variant = "web" }: { variant?: Variant }) {
+  const { transactions, income, spent, entries } =
+    landingSampleFor(useLocale());
+  return (
+    <LedgerMock
+      variant={variant}
+      rows={transactions.map((row) => ({
+        day: row.day,
+        category: row.meta,
+        note: row.name,
+        icon: row.icon,
+        amount: row.amount,
+        type: row.type,
+      }))}
+      income={income}
+      spent={spent}
+      count={entries}
+    />
   );
 }

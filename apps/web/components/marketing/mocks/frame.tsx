@@ -18,7 +18,7 @@ import {
   Sparkle,
   type Icon,
 } from "@phosphor-icons/react";
-import { formatEuro, formatPercent } from "@finance/core/constants";
+import { formatEuro } from "@finance/core/constants";
 import { Orb } from "@/components/brand/Orb";
 import { Card } from "@/components/ui/Card";
 import { navItems, PROPERTY_NAV_ITEM } from "@/lib/navigation";
@@ -57,19 +57,6 @@ import type { Key } from "@finance/core/i18n/t";
 export function useEuro(): (amount: number) => string {
   const locale = useLocale();
   return (amount: number) => formatEuro(amount, locale);
-}
-
-/**
- * The same for a rate: "33.6%" in English, "33,6 %" in French.
- *
- * Both halves are the language's — the decimal separator and the space before
- * the sign — so neither is written into the sentences that quote a rate.
- */
-export function usePercent(): (value: number) => string {
-  const locale = useLocale();
-  const t = useT();
-  return (value: number) =>
-    t("units.percent", { value: formatPercent(value, locale) });
 }
 
 export type Variant = "web" | "mobile";
@@ -258,8 +245,9 @@ export const ACTIVE_NAV: Record<LandingPageId, Key> = {
   "month-read": "nav.bearing",
   property: "nav.property",
   questions: "ask.title",
-  // The shared space is every screen under « Commun »; its mock is Le point.
-  together: "nav.bearing",
+  // The shared space is every screen under « Commun »; its mock is the
+  // Journal, where each row says who added it.
+  together: "nav.ledger",
   tax: "tax.title",
 };
 
@@ -374,14 +362,21 @@ function WebTopNav({ active, space }: { active: Key; space: boolean }) {
       </nav>
 
       <div className={TOPBAR_END_CLASS}>
-        {[Sparkle, ArrowsClockwise, Eye].map((Icon, index) => (
-          <span
-            key={index}
-            className="flex size-11 items-center justify-center rounded-full text-muted-foreground"
-          >
-            <Icon size={18} />
-          </span>
-        ))}
+        {[Sparkle, ArrowsClockwise, Eye].map((Icon, index) => {
+          // « Questions » is lit on its own screen, as `AskButton` is.
+          const here = index === 0 && active === "ask.title";
+          return (
+            <span
+              key={index}
+              className={cn(
+                "flex size-11 items-center justify-center rounded-full",
+                here ? "text-foreground" : "text-muted-foreground",
+              )}
+            >
+              <Icon size={18} weight={here ? "fill" : "regular"} />
+            </span>
+          );
+        })}
         <span className="flex size-11 items-center justify-center">
           <Initial size="md" />
         </span>
@@ -571,14 +566,20 @@ export function MobileShell({
           )}
         </div>
         <div className="flex shrink-0 items-center gap-2 text-muted-foreground">
-          {[Sparkle, ArrowClockwise, Eye].map((Icon, index) => (
-            <span
-              key={index}
-              className="flex size-8 items-center justify-center"
-            >
-              <Icon size={19} />
-            </span>
-          ))}
+          {[Sparkle, ArrowClockwise, Eye].map((Icon, index) => {
+            const here = index === 0 && active === "ask.title";
+            return (
+              <span
+                key={index}
+                className={cn(
+                  "flex size-8 items-center justify-center",
+                  here && "text-foreground",
+                )}
+              >
+                <Icon size={19} weight={here ? "fill" : "regular"} />
+              </span>
+            );
+          })}
           <span className="flex size-8 items-center justify-center">
             <Initial size="sm" />
           </span>
@@ -596,60 +597,6 @@ export function MobileShell({
         </>
       )}
       {overlay ? <div className="absolute inset-0 z-20">{overlay}</div> : null}
-    </div>
-  );
-}
-
-/* ------------------------------------------------------------------- home */
-
-/** Where the month's spending went — the stacked bar plus its legend, shared
- * by both variants at different densities. */
-export function SpendSplit({ compact = false }: { compact?: boolean }) {
-  const sample = landingSampleFor(useLocale());
-  const euro = useEuro();
-  const rows = sample.spendByCategory;
-  const total = rows.reduce((sum, row) => sum + row.amount, 0);
-
-  return (
-    <div className="flex w-full flex-col gap-3">
-      <div
-        className={cn(
-          "flex w-full overflow-hidden rounded-full",
-          compact ? "h-2" : "h-2.5",
-        )}
-        aria-hidden
-      >
-        {rows.map((row) => (
-          <div
-            key={row.label}
-            style={{
-              width: `${(row.amount / total) * 100}%`,
-              backgroundColor: `var(${row.colorVar})`,
-            }}
-          />
-        ))}
-      </div>
-      <ul className="flex flex-col gap-1.5">
-        {rows.slice(0, compact ? 3 : 5).map((row) => (
-          <li
-            key={row.label}
-            className={cn(
-              "flex items-center justify-between gap-2",
-              compact ? "text-[11px]" : "text-xs",
-            )}
-          >
-            <span className="flex items-center gap-2 text-muted-foreground">
-              <span
-                className="h-2 w-2 shrink-0 rounded-sm"
-                style={{ backgroundColor: `var(${row.colorVar})` }}
-                aria-hidden
-              />
-              {row.label}
-            </span>
-            <span className="font-mono tabular-nums">{euro(row.amount)}</span>
-          </li>
-        ))}
-      </ul>
     </div>
   );
 }
