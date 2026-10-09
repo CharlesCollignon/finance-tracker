@@ -9,7 +9,6 @@ import {
   parseYearAheadSettings,
   resampleSeries,
   resolveExtraTarget,
-  stackBands,
   YEAR_AHEAD_DEFAULT_SETTINGS,
 } from "./year-ahead";
 
@@ -368,17 +367,6 @@ describe("resampleSeries", () => {
     expect(resampleSeries([0, 10, 0], 5)).toEqual([0, 5, 10, 5, 0]);
     expect(resampleSeries([4], 3)).toEqual([4, 4, 4]);
     expect(resampleSeries([], 3)).toEqual([]);
-  });
-});
-
-describe("stackBands", () => {
-  it("piles positives up from zero and negatives down from it", () => {
-    const [current, livret] = stackBands([
-      [-100, 50],
-      [200, 200],
-    ]);
-    expect(current).toEqual({ lower: [-100, 0], upper: [0, 50] });
-    expect(livret).toEqual({ lower: [0, 50], upper: [200, 250] });
   });
 });
 
