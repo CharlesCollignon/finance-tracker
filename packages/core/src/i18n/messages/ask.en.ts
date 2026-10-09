@@ -34,6 +34,11 @@ export const askEn = {
   noAnswer: "No answer right now. Try again in a moment.",
   unusable:
     "The answer could not be shown: nothing in it held up. Try asking another way.",
+  busy: "Too many requests to the AI right now: try again in a minute.",
+  keyRefused:
+    "The AI service refused the request: its key or its model is not available. The app's owner has to look.",
+  accountRefused: "Your AI account refused the request: check it in Profile.",
+  noCredit: "Your AI account has no credit left: top it up on OpenRouter.",
   noWriter: "Questions are not available here.",
   tooLong: "Shorter, please: {max} characters at most.",
   suggest1: "How much did I spend on groceries this month?",

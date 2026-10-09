@@ -20,7 +20,7 @@ import {
 } from "@finance/data/ask";
 import type { Db } from "@finance/data/client";
 import { searchAllMonths } from "@finance/data/ledger-search";
-import { readSource } from "@/lib/ai/read-source";
+import { readSource, type ReadSource } from "@/lib/ai/read-source";
 import { ACCOUNT_ALLOWANCE, writerFor } from "@/lib/ai/writer";
 import { gatherAskFacts } from "@/lib/ask/facts";
 import { ASK_ANSWER_SOURCE, ASK_PLAN_SOURCE } from "@/lib/ask/client";
@@ -90,17 +90,38 @@ export async function askQuestion(
     };
   }
 
-  const plan = verifyAskPlan(
-    await readSource(ASK_PLAN_SOURCE, writer).write(
-      buildAskPlanRequest(text, locale),
-    ),
-  );
-  if (!plan) {
+  // Why no answer came, in the person's words: a busy service, a key or a
+  // model refused, an account out of credit — or just none right now.
+  const unanswered = (source: ReadSource): string => {
+    switch (source.failure()) {
+      case "busy":
+        return t("ask.busy");
+      case "refused":
+        return account ? t("ask.accountRefused") : t("ask.keyRefused");
+      case "no-credit":
+        return t("ask.noCredit");
+      default:
+        return t("ask.noAnswer");
+    }
+  };
+
+  const planSource = readSource(ASK_PLAN_SOURCE, writer);
+  const planned = await planSource.write(buildAskPlanRequest(text, locale));
+  if (planned === null) {
+    // Never answered: nothing was spent, so the question is handed back.
     await refundQuestion(db, today);
     return {
       conversationId,
-      message: t("ask.noAnswer"),
+      message: unanswered(planSource),
       questionsLeft: left(taken - 1),
+    };
+  }
+  const plan = verifyAskPlan(planned);
+  if (!plan) {
+    return {
+      conversationId,
+      message: t("ask.unusable"),
+      questionsLeft: left(taken),
     };
   }
 
@@ -139,7 +160,8 @@ export async function askQuestion(
     if (facts.length === 0) {
       answer = { kind: "empty", advice: plan.advice, locale };
     } else {
-      const raw = await readSource(ASK_ANSWER_SOURCE, writer).write(
+      const answerSource = readSource(ASK_ANSWER_SOURCE, writer);
+      const raw = await answerSource.write(
         buildAskAnswerRequest(
           text,
           { facts },
@@ -156,7 +178,7 @@ export async function askQuestion(
         await refundQuestion(db, today);
         return {
           conversationId,
-          message: t("ask.noAnswer"),
+          message: unanswered(answerSource),
           questionsLeft: left(taken - 1),
         };
       }

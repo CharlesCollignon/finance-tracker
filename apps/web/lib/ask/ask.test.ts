@@ -8,8 +8,9 @@ vi.mock("@/lib/ask/client", () => ({
 
 const answers: unknown[] = [];
 const write = vi.fn(async () => answers.shift() ?? null);
+let failure: string | null = null;
 vi.mock("@/lib/ai/read-source", () => ({
-  readSource: () => ({ write, model: "fake-model" }),
+  readSource: () => ({ write, model: "fake-model", failure: () => failure }),
 }));
 vi.mock("@/lib/ai/writer", () => ({
   ACCOUNT_ALLOWANCE: 10_000,
@@ -72,6 +73,7 @@ const ask = (question: string) =>
   askQuestion(db, "u1", { question, conversationId: null, locale: "fr" });
 
 beforeEach(() => {
+  failure = null;
   answers.length = 0;
   write.mockClear();
   Object.values(store).forEach((fn) => fn.mockClear());
@@ -111,6 +113,20 @@ describe("askQuestion", () => {
     expect(outcome.message).toBe(
       "Pas de réponse pour l'instant. Réessayez dans un moment.",
     );
+  });
+
+  it("says the service is busy when it is, and hands the question back", async () => {
+    failure = "busy";
+    const outcome = await ask("Combien en courses ?");
+    expect(store.refund).toHaveBeenCalledOnce();
+    expect(outcome.message).toMatch(/Trop de demandes/);
+  });
+
+  it("keeps a routing answer that did not hold up counted", async () => {
+    answers.push({ kind: "facts", tools: ["shops"] });
+    const outcome = await ask("Combien en courses ?");
+    expect(store.refund).not.toHaveBeenCalled();
+    expect(outcome.message).toMatch(/rien n'y tenait/);
   });
 
   it("answers a shop with the rows and its own sum, the model writing nothing", async () => {

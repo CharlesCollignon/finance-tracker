@@ -34,6 +34,13 @@ export const askFr: typeof askEn = {
   noAnswer: "Pas de réponse pour l'instant. Réessayez dans un moment.",
   unusable:
     "La réponse n'a pas pu être montrée : rien n'y tenait. Essayez de la poser autrement.",
+  busy: "Trop de demandes au service d'IA pour l'instant\u00A0: réessayez dans une minute.",
+  keyRefused:
+    "Le service d'IA a refusé la demande\u00A0: sa clé ou son modèle n'est pas disponible. C'est à l'éditeur de Pluclair de regarder.",
+  accountRefused:
+    "Votre compte IA a refusé la demande\u00A0: vérifiez-le dans Profil.",
+  noCredit:
+    "Votre compte IA n'a plus de crédit\u00A0: rechargez-le sur OpenRouter.",
   noWriter: "Les questions ne sont pas disponibles ici.",
   tooLong: "Plus court, s'il vous plaît : {max} caractères au plus.",
   suggest1: "Combien ai-je dépensé en courses ce mois-ci ?",
