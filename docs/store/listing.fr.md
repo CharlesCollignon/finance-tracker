@@ -60,6 +60,7 @@ Un espace commun pour le compte joint : chacun voit le commun, et jamais
 l'argent de l'autre.
 
 ET AUSSI
+
 - « Votre année » : votre année en chiffres, à garder ou partager.
 - Déclaration de revenus : les montants de vos cases (dons, emploi à
   domicile, garde d'enfant, PER, loyers), à vérifier sur impots.gouv.fr.

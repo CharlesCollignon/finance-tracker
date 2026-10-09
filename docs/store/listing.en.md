@@ -55,6 +55,7 @@ A shared space for the joint account: each of you sees what is shared, and
 never the other's own money.
 
 AND ALSO
+
 - "Your year": your year in figures, to keep or share.
 - Income tax return: the amounts for your boxes (donations, home help,
   childcare, PER, rents), to check on impots.gouv.fr.

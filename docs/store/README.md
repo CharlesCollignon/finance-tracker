@@ -79,10 +79,10 @@ feature graphic.
   the sign-in: an email and password, with figures in it, on the hosted
   project. The owner creates it — nothing here writes to hosted data.
 - **Sign in with Apple.** The phone offers « Continuer avec Google ». Apple
-  asks an app that signs in with a third party to offer an equivalent that
-  keeps the email private (Guideline 4.8) — in practice Sign in with Apple
-  on iOS. Without it, expect a rejection. [[Owner's call: add Sign in with
-  Apple on iOS, or hide Google on iOS.]]
+      asks an app that signs in with a third party to offer an equivalent that
+      keeps the email private (Guideline 4.8) — in practice Sign in with Apple
+      on iOS. Without it, expect a rejection. [[Owner's call: add Sign in with
+      Apple on iOS, or hide Google on iOS.]]
 - **Paid services the app sends people to.** The bank connection (the
   person's own open-banking.io account) and the AI (their own OpenRouter
   account) are paid to those services, never to Pluclair, and nothing is
@@ -101,5 +101,6 @@ feature graphic.
 ## 6. Once published
 
 Set `APP_STORE_URL` and `PLAY_STORE_URL` in the web app's environment
-(Vercel). The landing then takes « L'application mobile » out of
+(Vercel), then redeploy: Vercel reads new variables only on a new
+deployment. The landing then takes « L'application mobile » out of
 « Bientôt » and shows the store links — one alone is enough for it to move.
