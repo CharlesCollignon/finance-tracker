@@ -39,6 +39,11 @@ export const landingSample = {
     ],
     /** Months of fixed costs the savings cover, out of the six to aim for. */
     cushionMonths: 3,
+    /**
+     * What the milestones are measured on today — the savings and what the
+     * DCA has put by, with their return — so the next one is four months off.
+     */
+    towards: 8600,
   },
   transactions: [
     {
@@ -142,7 +147,43 @@ export const landingSample = {
       amount: -15,
       type: "expense" as CategoryType,
     },
+    {
+      id: "emergency-fund",
+      name: "Emergency fund",
+      schedule: "Monthly · day 12",
+      cadence: "monthly" as Cadence,
+      amount: -150,
+      type: "savings" as CategoryType,
+    },
+    {
+      id: "internet",
+      name: "Internet",
+      schedule: "Monthly · day 10",
+      cadence: "monthly" as Cadence,
+      amount: -30,
+      type: "expense" as CategoryType,
+    },
+    {
+      id: "health",
+      name: "Health insurance",
+      schedule: "Monthly · day 25",
+      cadence: "monthly" as Cadence,
+      amount: -64,
+      type: "expense" as CategoryType,
+    },
   ],
+  /**
+   * What the templates come to in March, as `rollUpRecurring` sums them: the
+   * DCA's four Fridays make 200 €, and what is left each month is the income
+   * less the other three.
+   */
+  rollup: {
+    income: 3200,
+    expense: 959,
+    savings: 150,
+    investment: 200,
+    left: 1891,
+  },
   /**
    * Placements: the three wallets the sample person keeps, each worth
    * `value` for `invested` paid in. They sum to `portfolio` and
@@ -479,6 +520,21 @@ export const landingSample = {
     high: 177000,
     owed: 112400,
     monthly: 690,
+    postcode: "69007",
+    /** What it cost: the price paid and the costs of buying it. */
+    cost: 152000,
+    /** The loan's first figure, of which `owed` is still to repay. */
+    borrowed: 130000,
+    /** The sales the estimate rests on, as the property page cites them. */
+    market: {
+      sales: 38,
+      periodFrom: "2023-01-01",
+      periodTo: "2025-12-31",
+      quarter: "2026-Q1",
+      medianM2: 7000,
+      lowM2: 6625,
+      highM2: 7375,
+    },
   },
 
   /** Where the month's spending went, largest first. Sums to `spent`. */

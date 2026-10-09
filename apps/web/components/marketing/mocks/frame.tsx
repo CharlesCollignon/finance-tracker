@@ -457,18 +457,21 @@ export function MockTabs({
 export function WebShell({
   active,
   space = false,
+  overlay,
   children,
 }: {
   active: Key;
   /** Drawn under « Commun »: the switch in the bar, the shared nav. */
   space?: boolean;
+  /** A sheet open over the whole window, its scrim and all. */
+  overlay?: ReactNode;
   children: ReactNode;
 }) {
   return (
     // The bezel, and the page as a rounded pane set into it — the real shell's
     // `.app-frame`, drawn as a padding and a radius because a picture does
     // not scroll and so has no reason to use the outline the real one needs.
-    <div className="flex size-full bg-frame p-2">
+    <div className="relative flex size-full bg-frame p-2">
       <div className="relative flex min-w-0 flex-1 flex-col overflow-hidden rounded-2xl bg-background pt-[var(--shell-notch-height)]">
         <WebTopNav active={active} space={space} />
         {/* The real app's column at this width, `PageContainer`'s `lg` step,
@@ -478,6 +481,7 @@ export function WebShell({
           {children}
         </div>
       </div>
+      {overlay ? <div className="absolute inset-0 z-20">{overlay}</div> : null}
     </div>
   );
 }
@@ -535,6 +539,7 @@ export function MobileShell({
   title,
   back = false,
   space = false,
+  overlay,
   children,
 }: {
   active: Key;
@@ -543,6 +548,8 @@ export function MobileShell({
   /** A screen pushed over the tabs. */
   back?: boolean;
   space?: boolean;
+  /** A sheet open over the whole screen, its scrim and all. */
+  overlay?: ReactNode;
   children: ReactNode;
 }) {
   const t = useT();
@@ -588,6 +595,7 @@ export function MobileShell({
           <MobileTabBar active={active} space={space} />
         </>
       )}
+      {overlay ? <div className="absolute inset-0 z-20">{overlay}</div> : null}
     </div>
   );
 }

@@ -17,18 +17,22 @@ import { Count } from "./parts";
 type Copy = LocalisedLandingCopy["demos"]["charges"];
 
 /**
- * The month's recurring entries, from the sample's templates: the salary on
- * the 3rd, the rent on the 5th, the savings on the 12th, Netflix on the
- * 15th and the PEA DCA every Friday.
+ * The month's recurring entries, from the sample's templates (`name` is
+ * the template's index): the salary on the 3rd, the rent on the 5th, the
+ * internet on the 10th, the savings on the 12th, Netflix on the 15th, the
+ * health insurance on the 25th and the PEA DCA every Friday. What they
+ * leave is the sample's `rollup.left`, the figure Récurrents leads with.
  */
 const ENTRIES = [
   { day: 3, amount: 3200, name: 0 },
   { day: 5, amount: -850, name: 1 },
   { day: 6, amount: -50, name: 2 },
-  { day: 12, amount: -150, name: -1 },
+  { day: 10, amount: -30, name: 5 },
+  { day: 12, amount: -150, name: 4 },
   { day: 13, amount: -50, name: 2 },
   { day: 15, amount: -15, name: 3 },
   { day: 20, amount: -50, name: 2 },
+  { day: 25, amount: -64, name: 6 },
   { day: 27, amount: -50, name: 2 },
 ];
 
@@ -66,8 +70,7 @@ export function ChargesDemo({ copy }: { copy: Copy }) {
     (sum, entry) => sum + entry.amount,
     0,
   );
-  const nameOf = (index: number) =>
-    index < 0 ? sample.transactions[3]!.name : sample.templates[index]!.name;
+  const nameOf = (index: number) => sample.templates[index]!.name;
 
   return (
     <div

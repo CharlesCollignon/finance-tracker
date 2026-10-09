@@ -44,6 +44,9 @@ export const landingSampleFr = {
     { name: "Loyer", schedule: "Mensuel · le 5" },
     { name: "DCA PEA", schedule: "Hebdomadaire · vendredi" },
     { name: "Netflix", schedule: "Mensuel · le 15" },
+    { name: "Fonds d'urgence", schedule: "Mensuel · le 12" },
+    { name: "Internet", schedule: "Mensuel · le 10" },
+    { name: "Mutuelle", schedule: "Mensuel · le 25" },
   ],
 
   close: {

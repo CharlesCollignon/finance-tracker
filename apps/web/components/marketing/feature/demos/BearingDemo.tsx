@@ -8,8 +8,6 @@ import { useLocale, useT } from "@/lib/locale-context";
 import { useFormatCurrency } from "@/lib/use-currency";
 import { Chip, Count, Range } from "./parts";
 
-/** What a month's income leaves once its recurring charges are out. */
-const EACH_MONTH = 1968;
 /** The days « Il vous reste » covers in the sample, to the eve of pay day. */
 const DAYS = 15;
 
@@ -28,7 +26,7 @@ export function BearingDemo() {
   const t = useT();
   const locale = useLocale();
   const euro = useFormatCurrency();
-  const { leftToSpend } = landingSampleFor(locale);
+  const { leftToSpend, rollup } = landingSampleFor(locale);
   const [amount, setAmount] = useState(180);
   const [monthly, setMonthly] = useState(false);
 
@@ -109,7 +107,7 @@ export function BearingDemo() {
           >
             {monthSentence.before}
             <Count
-              value={EACH_MONTH - amount}
+              value={rollup.left - amount}
               format={(value) => euro(Math.round(value))}
               className="font-mono"
             />
