@@ -438,6 +438,9 @@ export const landingCopyFr: LandingCopySections & {
     privacy: "Vos questions",
     previous: "Précédent",
     next: "Suivant",
+    groupMonth: "Votre mois",
+    groupWealth: "Votre patrimoine",
+    groupMore: "Et aussi",
   },
 
   footer: {

@@ -470,6 +470,10 @@ export const landingCopy = {
     privacy: "Your questions",
     previous: "Previous",
     next: "Next",
+    /** The product menu's three groups of pages. */
+    groupMonth: "Your month",
+    groupWealth: "Your wealth",
+    groupMore: "And also",
   },
 
   footer: {
