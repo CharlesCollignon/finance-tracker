@@ -18,6 +18,7 @@ import {
   TOPBAR_START_CLASS,
 } from "@/lib/nav-notch";
 import { AccountMenu } from "@/components/layout/AccountMenu";
+import { AskButton } from "@/components/ask/AskButton";
 import { Logo } from "@/components/layout/Logo";
 import { OwnerSwitch } from "@/components/layout/OwnerSwitch";
 import { useSpace } from "@/components/layout/SpaceContext";
@@ -299,6 +300,8 @@ export function TopNav({
         <div className={TOPBAR_END_CLASS}>
           {/* The rail had room to print how old the figures were; the bar
               does not, so the age is in the button's name and tooltip. */}
+          {/* « Questions », beside the refresh: the AI, on every screen. */}
+          <AskButton tone="bar" />
           <RefreshButton tone="bar" />
           {/* Up from the page's own header, which from `md` no longer holds
               anything every page shares: the blur is for the whole app, so

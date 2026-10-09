@@ -4,7 +4,6 @@ import { awaitingRole } from "@finance/core/bank-accounts";
 import { getMonthBounds, todayIsoLocal } from "@finance/core/constants";
 
 import { ArrivedCharges } from "@/components/ArrivedCharges";
-import { AskLink } from "@/components/AskLink";
 import { MonthPicker } from "@/components/MonthPicker";
 import { MonthRead } from "@/components/MonthRead";
 import { PurchasesToConfirm } from "@/components/PurchasesToConfirm";
@@ -270,9 +269,6 @@ export default function HomeScreen() {
                       void reloadRead();
                     }}
                   />
-                  {/* The questions the read leaves: the person's own money,
-                      so not under « Commun ». */}
-                  {joint ? null : <AskLink />}
                 </View>
               </StaggerItem>
             ) : null}

@@ -1,7 +1,6 @@
 import { formatMonthLabel } from "@finance/core/constants";
 import { writesRemaining } from "@finance/core/month-read-budget";
 import { MonthRead } from "@/components/finance/MonthRead";
-import { AskLink } from "@/components/ask/AskLink";
 import { getLocale } from "@/lib/locale";
 import { GLASS_CARD } from "@/lib/glass";
 import { ACCOUNT_ALLOWANCE, writerStateFor } from "@/lib/ai/writer";
@@ -73,9 +72,6 @@ export async function MonthReadSlot({
         writer={writer}
         readModel={stored?.read ? stored.model : null}
       />
-      {/* Beside the read, the questions it leaves: the person's own money,
-          so not under « Commun ». */}
-      {writerId === userId ? <AskLink className="mt-3 -ml-2" /> : null}
     </section>
   );
 }
