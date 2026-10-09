@@ -342,6 +342,11 @@ export default function ProfileScreen() {
             label={t("profile.categories")}
             onPress={() => router.push("/categories" as Href)}
           />
+          <ListRow
+            icon="receipt-outline"
+            label={t("tax.profileLink")}
+            onPress={() => router.push("/tax" as Href)}
+          />
           {showBank ? (
             <ListRow
               icon="business-outline"
