@@ -14,11 +14,7 @@ import {
 import { intradayIndexes } from "@finance/core/bank-balance";
 import { buildMerchantIndex } from "@finance/core/merchant-memory";
 import { buildBankMerchantIndex } from "@finance/core/bank-merchant";
-import type {
-  BankAccountRole,
-  Database,
-  TransactionWithCategory,
-} from "@finance/core/types/database";
+import type { BankAccountRole, Database } from "@finance/core/types/database";
 import {
   cleanIban,
   isFollowed,
@@ -377,7 +373,7 @@ async function ownerContext(
     ),
   ]);
 
-  const past = history as TransactionWithCategory[];
+  const past = history;
   // Which ledger rows a bank row could be a copy of. A feed item that already
   // points at a transaction has claimed it, so a later sync cannot file a
   // second bank row against the same one.
@@ -635,7 +631,7 @@ export async function rememberAccounts(
       row.provider_account_id,
       {
         userId,
-        role: row.role as BankAccountRole | null,
+        role: row.role,
         spaceId: row.space_id ?? null,
         historyImportedAt: row.history_imported_at,
       },

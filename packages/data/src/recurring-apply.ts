@@ -126,7 +126,7 @@ export async function loadApplyRecurringData(
   );
 
   return {
-    templates: (templates ?? []) as RecurringTemplateWithCategory[],
+    templates: templates ?? [],
     existingByKey,
     skippedKeys,
   };
