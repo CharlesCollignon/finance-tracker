@@ -3,6 +3,7 @@
 import { useState } from "react";
 import {
   Bank,
+  ChatCircleDots,
   CreditCard,
   EnvelopeSimple,
   Globe,
@@ -87,6 +88,8 @@ interface ProfileViewProps {
   userId: string;
   /** A row to open on arrival: the AI connection, from an invitation. */
   initialOpen?: "aiConnect" | null;
+  /** Where « Envoyer un retour » writes to; null hides the row. */
+  feedbackEmail: string | null;
 }
 
 /** Which row is showing its editor. One at a time, as on the phone. */
@@ -117,6 +120,7 @@ export function ProfileView({
   space,
   userId,
   initialOpen = null,
+  feedbackEmail,
 }: ProfileViewProps) {
   const { toast } = useToast();
   const currency = useCurrency();
@@ -343,6 +347,29 @@ export function ProfileView({
             kinds={shownNotificationKinds({ property: showProperty })}
           />
         </ListSection>
+
+        {feedbackEmail ? (
+          <ListSection title={t("profile.helpSection")}>
+            <ListRow
+              icon={ChatCircleDots}
+              label={t("profile.feedback")}
+              hint={t("profile.feedbackHint")}
+              onClick={() => {
+                // Already addressed, with the browser it came from: nothing
+                // about the reader's money, and all of it seen before sending.
+                const subject = encodeURIComponent(
+                  t("profile.feedbackSubject"),
+                );
+                const body = encodeURIComponent(
+                  t("profile.feedbackBody", {
+                    about: `Pluclair web · ${navigator.userAgent}`,
+                  }),
+                );
+                window.location.href = `mailto:${feedbackEmail}?subject=${subject}&body=${body}`;
+              }}
+            />
+          </ListSection>
+        ) : null}
 
         <ListSection title={t("profile.dataSection")}>
           <AudienceRow on={measureAudience} />

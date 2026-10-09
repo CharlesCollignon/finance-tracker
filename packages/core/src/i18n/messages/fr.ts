@@ -91,6 +91,14 @@ export const fr: Messages = {
     notificationsFooterMobile:
       "Le premier interrupteur ne concerne que ce téléphone. Les autres valent pour tous vos appareils.",
     onThisPhone: "Sur ce téléphone",
+    helpSection: "Aide",
+    feedback: "Envoyer un retour",
+    feedbackHint: "Un bug, une idée\u00A0: un e-mail suffit.",
+    feedbackSubject: "Retour sur Pluclair",
+    feedbackBody:
+      "Ce qui s'est passé, ou ce qui vous manque\u00A0:\n\n\n\n— {about}",
+    feedbackNoMail:
+      "Aucune application d'e-mail sur cet appareil\u00A0: écrivez à {email}.",
     dataSection: "Données",
     audience: "Mesure d'audience",
     audienceHint:

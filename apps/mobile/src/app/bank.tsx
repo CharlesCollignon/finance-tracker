@@ -29,6 +29,7 @@ import { ConnectBankSheet } from "@/components/bank/ConnectBankSheet";
 import { NewAccountsCard } from "@/components/bank/NewAccountsCard";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
+import { ScreenError } from "@/components/ScreenError";
 import { Screen } from "@/components/ui/Screen";
 import { SheetGrabber } from "@/components/ui/SheetGrabber";
 import { ScreenSkeleton } from "@/components/ui/Skeleton";
@@ -67,7 +68,7 @@ export default function BankScreen() {
   const { user } = useAuth();
 
   const { bank, reload } = useBankState();
-  const { data, loading, refreshing, onRefresh } = useRefreshable(
+  const { data, error, loading, refreshing, onRefresh } = useRefreshable(
     async () => {
       if (!user) {
         return { accounts: [], livrets: [] };
@@ -176,6 +177,12 @@ export default function BankScreen() {
     >
       {!bank || (loading && !accounts) ? (
         <ScreenSkeleton rows={4} />
+      ) : error && !accounts ? (
+        // Offline, or the read failed: say so, with a way to try again,
+        // rather than a page that looks like a bank with nothing in it.
+        <View className="flex-1 justify-center">
+          <ScreenError message={error} onRetry={onRefresh} />
+        </View>
       ) : (
         <ScrollView
           refreshControl={

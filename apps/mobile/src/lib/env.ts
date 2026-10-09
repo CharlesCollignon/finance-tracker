@@ -34,3 +34,10 @@ export const SUPABASE_ANON_KEY = required(
  */
 export const WEB_APP_URL =
   process.env.EXPO_PUBLIC_WEB_APP_URL?.trim().replace(/\/+$/, "") || null;
+
+/**
+ * Where « Envoyer un retour » in Profile writes to. Optional: without it the
+ * row is not there.
+ */
+export const FEEDBACK_EMAIL =
+  process.env.EXPO_PUBLIC_FEEDBACK_EMAIL?.trim() || null;
