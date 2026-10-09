@@ -9,7 +9,10 @@ an APK, installed from a link — no store, no review.
 1. On expo.dev, project `salutcharless-team/pluclair`, set the **preview**
    environment's variables, which the `preview` profile reads:
    `EXPO_PUBLIC_SUPABASE_URL`, `EXPO_PUBLIC_SUPABASE_ANON_KEY`,
-   `EXPO_PUBLIC_WEB_APP_URL` — the hosted project's public values only.
+   `EXPO_PUBLIC_WEB_APP_URL` — the hosted project's public values only —
+   and `EXPO_PUBLIC_FEEDBACK_EMAIL`, the address « Envoyer un retour » in
+   Profile writes to (`FEEDBACK_EMAIL` on Vercel does the same on the web).
+   It is in the APK, so a friend can read it.
 2. Build: `cd apps/mobile && eas build --platform android --profile preview`.
    The first build asks to create the signing key; let EAS keep it, so
    every later APK installs over the one before.
