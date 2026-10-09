@@ -1011,7 +1011,6 @@ export const en = {
     refreshQuotes: "Refresh prices",
     refreshingQuotes: "Refreshing…",
     quotesRefreshed: "Prices refreshed",
-    marketValue: "Value today",
     value: "Value",
     invested: "Paid in",
     market: "Today",
@@ -1420,7 +1419,6 @@ export const en = {
     whatsLeft: "What's left",
     expectedImpact: "Expected impact",
     expectedImpactPerMonth: "Expected impact per month",
-    portfolioValue: "Portfolio value",
     /** The Charges mock's share-priced template, which the other three are
      * not: its amount is a quote times a quantity rather than a figure
      * anybody typed. */
