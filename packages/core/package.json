@@ -9,7 +9,6 @@
     "./afford": "./src/afford.ts",
     "./ai-models": "./src/ai-models.ts",
     "./ask": "./src/ask.ts",
-    "./tax-return": "./src/tax-return.ts",
     "./widget-figure": "./src/widget-figure.ts",
     "./allocation": "./src/allocation.ts",
     "./amount-input": "./src/amount-input.ts",

@@ -39,7 +39,6 @@ import { WhereItWentCard } from "@/components/finance/bearing/WhereItWentCard";
 export function BearingMonthView({
   data,
   recapSlot,
-  taxSlot,
   readSlot,
   bankInvite = false,
   bankAttention = null,
@@ -57,8 +56,6 @@ export function BearingMonthView({
    * nothing at all on the days it has nothing to show.
    */
   recapSlot?: ReactNode;
-  /** April to June: the return's amounts are ready (`TaxSeasonCard`). */
-  taxSlot?: ReactNode;
   /**
    * The month read, streamed in behind its own boundary: its facts are the
    * slowest thing on the page to gather, and the figures above it should not
@@ -136,12 +133,6 @@ export function BearingMonthView({
           {!data.empty ? (
             <StaggerItem className="md:col-span-2 xl:col-span-3">
               <BalanceCard data={data} />
-            </StaggerItem>
-          ) : null}
-
-          {taxSlot ? (
-            <StaggerItem className="md:col-span-2 xl:col-span-3">
-              {taxSlot}
             </StaggerItem>
           ) : null}
 
