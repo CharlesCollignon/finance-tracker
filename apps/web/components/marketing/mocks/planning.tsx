@@ -5,8 +5,7 @@ import { CalendarCheck, ShieldCheck, Trophy } from "@phosphor-icons/react";
 import { formatMonthCompact, formatMonthLabel } from "@finance/core/constants";
 import { CUSHION_TARGETS } from "@finance/core/future-plan";
 import {
-  resampleSeries,
-  stackBands,
+  niceTicks,
   YEAR_AHEAD_HORIZONS,
   type YearAhead as YearAheadData,
 } from "@finance/core/year-ahead";
@@ -71,59 +70,64 @@ export function PlanCardFrame({
 
 const color = accountColors(SAMPLE_ENVELOPES);
 
-/** The bands stacked under the gold line of their sum, at rest. */
-function YearBands({
+/**
+ * The gold total in its shaded range, at rest, zoomed on where the money is
+ * with a few round amounts as labelled lines — the card's chart.
+ */
+function YearRange({
   ahead,
   height,
+  euro,
 }: {
   ahead: YearAheadData;
   height: number;
+  euro: (amount: number) => string;
 }) {
   const samples = ahead.total.length;
-  const stacked = stackBands(
-    ahead.bands.map((band) => resampleSeries(band.values, samples)),
-  );
+  const low = ahead.range?.low ?? ahead.total;
+  const high = ahead.range?.high ?? ahead.total;
+  const values = [...ahead.total, ...low, ...high];
+  const pad = (Math.max(...values) - Math.min(...values)) * 0.08 || 1;
+  const min = Math.min(...values) - pad;
+  const max = Math.max(...values) + pad;
   const width = 1000;
-  const top = Math.max(...ahead.total) * 1.06;
   const x = (index: number) => (index / (samples - 1)) * width;
-  const y = (value: number) => 4 + (1 - value / top) * (height - 4);
-  const line = (values: readonly number[]) =>
-    values
+  const y = (value: number) =>
+    6 + ((max - value) / (max - min)) * (height - 12);
+  const line = (series: readonly number[]) =>
+    series
       .map(
         (value, index) =>
           `${index === 0 ? "M" : "L"}${x(index).toFixed(1)} ${y(value).toFixed(1)}`,
       )
       .join(" ");
+  const back = low
+    .map((value, index) => `L${x(index).toFixed(1)} ${y(value).toFixed(1)}`)
+    .reverse()
+    .join(" ");
   return (
     <div className="relative w-full" style={{ height }}>
+      {niceTicks(min, max).map((tick) => (
+        <div
+          key={tick}
+          className="absolute inset-x-0 border-t border-hairline"
+          style={{ top: y(tick) }}
+        >
+          <span className="absolute -top-4 left-0 text-[0.65rem] tabular-nums text-muted-foreground">
+            {euro(tick)}
+          </span>
+        </div>
+      ))}
       <svg
         viewBox={`0 0 ${width} ${height}`}
         preserveAspectRatio="none"
         className="absolute inset-0 size-full overflow-visible"
       >
-        {ahead.bands.map((band, index) => {
-          const { upper, lower } = stacked[index]!;
-          const back = lower
-            .map((value, at) => `L${x(at).toFixed(1)} ${y(value).toFixed(1)}`)
-            .reverse()
-            .join(" ");
-          return (
-            <g key={band.id}>
-              <path
-                d={`${line(upper)} ${back} Z`}
-                fill={color(band.id)}
-                fillOpacity={0.38}
-              />
-              <path
-                d={line(upper)}
-                fill="none"
-                stroke={color(band.id)}
-                strokeWidth={1.25}
-                vectorEffect="non-scaling-stroke"
-              />
-            </g>
-          );
-        })}
+        <path
+          d={`${line(high)} ${back} Z`}
+          fill="var(--primary)"
+          fillOpacity={0.16}
+        />
         <path
           d={line(ahead.total)}
           fill="none"
@@ -138,6 +142,38 @@ function YearBands({
         style={{ left: "100%", top: y(ahead.total[samples - 1]!) }}
       />
     </div>
+  );
+}
+
+/** An account's curve from today, on the scale every row shares. */
+function Spark({
+  values,
+  scale,
+  color: stroke,
+}: {
+  values: readonly number[];
+  scale: { up: number; down: number };
+  color: string;
+}) {
+  const span = scale.up + scale.down || 1;
+  const level = 3 + (scale.up / span) * 22;
+  const start = values[0] ?? 0;
+  const d = values
+    .map(
+      (value, index) =>
+        `${index === 0 ? "M" : "L"}${((index / (values.length - 1)) * 80).toFixed(1)},${(level - ((value - start) / span) * 22).toFixed(1)}`,
+    )
+    .join(" ");
+  return (
+    <svg viewBox="0 0 80 28" className="h-7 w-20 overflow-visible">
+      <path
+        d={d}
+        fill="none"
+        stroke={stroke}
+        strokeWidth={1.75}
+        strokeLinecap="round"
+      />
+    </svg>
   );
 }
 
@@ -161,9 +197,10 @@ function Switch({ options, on }: { options: string[]; on: number }) {
 }
 
 /**
- * « Dans un an », as the card now is: the figure over every account, the
- * bands, the accounts with what each will hold, and « Pourquoi » open on a
- * month's income cut into where it goes.
+ * « Dans un an », as the card now is: the figure over every account with
+ * its range and its value after tax, the gold line in its range, the
+ * accounts as rows with their curves, and « Pourquoi » open on a month's
+ * income cut into where it goes.
  */
 function YearAhead({ compact }: { compact: boolean }) {
   const t = useT();
@@ -212,6 +249,13 @@ function YearAhead({ compact }: { compact: boolean }) {
   ];
   const signed = (value: number) =>
     `${value >= 0 ? "+" : "−"}${euro(Math.abs(Math.round(value)))}`;
+  const changes = ahead.bands.flatMap((band) =>
+    band.values.map((value) => value - band.values[0]!),
+  );
+  const scale = {
+    up: Math.max(0, ...changes),
+    down: Math.max(0, ...changes.map((change) => -change)),
+  };
 
   return (
     <PlanCardFrame
@@ -233,30 +277,72 @@ function YearAhead({ compact }: { compact: boolean }) {
         <p className="mt-2 text-sm text-muted-foreground">
           {t("futurePlan.yearAllGrounded", { month: plan.byLabel })}
         </p>
+        {ahead.range ? (
+          <p className="text-sm text-muted-foreground">
+            {t("futurePlan.rangeLine", {
+              low: euro(Math.round(ahead.range.low[ahead.months]!)),
+              high: euro(Math.round(ahead.range.high[ahead.months]!)),
+            })}
+          </p>
+        ) : null}
+        <p className="text-sm text-muted-foreground">
+          {t("futurePlan.afterTaxLine", {
+            amount: euro(Math.round(ahead.afterTax.total)),
+          })}
+        </p>
+        <p className="mt-2 flex items-center gap-2 text-xs font-medium text-muted-foreground">
+          <span className="flex h-4 w-7 items-center rounded-full bg-foreground/20 px-0.5">
+            <span className="size-3 rounded-full bg-background" />
+          </span>
+          {t("futurePlan.realTerms")}
+        </p>
       </div>
       <div>
-        <YearBands ahead={ahead} height={compact ? 110 : 120} />
+        <YearRange ahead={ahead} height={compact ? 120 : 130} euro={euro} />
         <div className="mt-2 flex justify-between text-xs text-muted-foreground">
           <span>{t("futurePlan.today")}</span>
           <span>{formatMonthCompact(2027, 3, locale)}</span>
         </div>
       </div>
-      <ul className="flex flex-wrap gap-2">
-        {ahead.bands.map((band) => (
-          <li
-            key={band.id}
-            className="flex items-center gap-2 rounded-full border border-border bg-muted/40 px-3 py-1.5 text-sm"
-          >
-            <span
-              className="size-2.5 rounded-full"
-              style={{ background: color(band.id) }}
-            />
-            {name(band.id)}
-            <span className="font-medium tabular-nums">
-              {euro(Math.round(band.values[ahead.months]!))}
-            </span>
-          </li>
-        ))}
+      <ul
+        className={cn("grid gap-x-10", compact ? "grid-cols-1" : "grid-cols-2")}
+      >
+        {ahead.bands.map((band) => {
+          const today = band.values[0]!;
+          const atEnd = band.values[ahead.months]!;
+          return (
+            <li
+              key={band.id}
+              className="flex min-h-11 items-center gap-3 text-sm"
+            >
+              <span
+                className="size-2.5 shrink-0 rounded-full"
+                style={{ background: color(band.id) }}
+              />
+              <span className="min-w-0 flex-1 truncate">{name(band.id)}</span>
+              {compact ? null : (
+                <Spark
+                  values={band.values}
+                  scale={scale}
+                  color={color(band.id)}
+                />
+              )}
+              <span className="flex flex-col items-end tabular-nums">
+                <span>
+                  {compact ? null : (
+                    <span className="text-muted-foreground">
+                      {euro(Math.round(today))} →{" "}
+                    </span>
+                  )}
+                  <span className="font-medium">{euro(Math.round(atEnd))}</span>
+                </span>
+                <span className="text-[0.65rem] text-muted-foreground">
+                  {signed(atEnd - today)}
+                </span>
+              </span>
+            </li>
+          );
+        })}
       </ul>
       <div className="flex flex-col gap-3 border-t border-border pt-4">
         <Switch

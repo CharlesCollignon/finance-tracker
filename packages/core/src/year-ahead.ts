@@ -741,9 +741,9 @@ export function buildYearAhead(input: YearAheadInput): YearAhead {
  * A series stretched or squeezed to a fixed number of samples, by straight
  * lines between its points.
  *
- * Every band is drawn from the same number of points whatever the window, so
- * a path can morph into the next one — six months into five years, an
- * account appearing — instead of being redrawn from nothing.
+ * Every line and range is drawn from the same number of points whatever the
+ * window, so a path can morph into the next one — six months into five
+ * years — instead of being redrawn from nothing.
  */
 export function resampleSeries(
   values: readonly number[],
@@ -762,44 +762,6 @@ export function resampleSeries(
     const above = Math.min(last, below + 1);
     const weight = position - below;
     return values[below]! + (values[above]! - values[below]!) * weight;
-  });
-}
-
-export interface StackedBand {
-  /** The band's lower edge at each sample. */
-  lower: number[];
-  /** Its upper edge. */
-  upper: number[];
-}
-
-/**
- * Bands stacked on one another, sample by sample: what is above zero piles
- * up from zero, what is below piles down from it — a current account that
- * falls into the red is drawn under the axis, never eating into the savings
- * stacked over it.
- */
-export function stackBands(
-  series: readonly (readonly number[])[],
-): StackedBand[] {
-  const length = series[0]?.length ?? 0;
-  const above = Array.from({ length }, () => 0);
-  const below = Array.from({ length }, () => 0);
-  return series.map((values) => {
-    const lower: number[] = [];
-    const upper: number[] = [];
-    for (let index = 0; index < length; index += 1) {
-      const value = values[index] ?? 0;
-      if (value >= 0) {
-        lower.push(above[index]!);
-        above[index]! += value;
-        upper.push(above[index]!);
-      } else {
-        upper.push(below[index]!);
-        below[index]! += value;
-        lower.push(below[index]!);
-      }
-    }
-    return { lower, upper };
   });
 }
 

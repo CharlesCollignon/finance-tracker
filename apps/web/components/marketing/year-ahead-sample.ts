@@ -4,6 +4,7 @@ import type { Locale } from "@finance/core/i18n/locale";
 import type { ProjectionPoint } from "@finance/core/projection";
 import {
   buildYearAhead,
+  YEAR_AHEAD_INFLATION,
   YEAR_AHEAD_MAX_MONTHS,
   type YearAhead,
   type YearAheadAccountId,
@@ -52,6 +53,12 @@ export const SAMPLE_ENVELOPES: Envelope[] = [
   },
 ];
 
+/**
+ * The sample's yearly fees: an MSCI World ETF's 0.2 % or so in the PEA and
+ * the CTO, plus a broker's custody in the CTO — what Placements would read.
+ */
+const SAMPLE_FEES = { pea: 0.0025, cto: 0.003 };
+
 /** What the current account holds on the 19th: Le point's balance. */
 const ON_HAND = 2410;
 const INCOME = 3200;
@@ -82,11 +89,16 @@ function samplePoints(locale: Locale): ProjectionPoint[] {
   });
 }
 
-/** The sample's year ahead over `horizon` months, with an extra if one is played. */
+/**
+ * The sample's year ahead over `horizon` months, with an extra if one is
+ * played — as the app draws it: prices rising, fees off, in today's euros
+ * when asked.
+ */
 export function sampleYearAhead(
   locale: Locale,
   horizon = 12,
   extra?: { monthly: number; to: YearAheadAccountId },
+  realTerms = false,
 ): { ahead: YearAhead; points: ProjectionPoint[] } {
   const points = samplePoints(locale);
   return {
@@ -97,6 +109,9 @@ export function sampleYearAhead(
       envelopes: SAMPLE_ENVELOPES,
       horizon,
       extra,
+      inflation: YEAR_AHEAD_INFLATION,
+      realTerms,
+      fees: SAMPLE_FEES,
     }),
   };
 }
