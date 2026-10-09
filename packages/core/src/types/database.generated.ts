@@ -1943,6 +1943,35 @@ export type Database = {
         };
         Relationships: [];
       };
+      tax_box_categories: {
+        Row: {
+          box: string;
+          category_id: string;
+          created_at: string;
+          user_id: string;
+        };
+        Insert: {
+          box: string;
+          category_id: string;
+          created_at?: string;
+          user_id: string;
+        };
+        Update: {
+          box?: string;
+          category_id?: string;
+          created_at?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "tax_box_categories_category_id_fkey";
+            columns: ["category_id"];
+            isOneToOne: false;
+            referencedRelation: "categories";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       transaction_tags: {
         Row: {
           tag_id: string;

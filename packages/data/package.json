@@ -47,6 +47,7 @@
     "./schema": "./src/schema.ts",
     "./spaces": "./src/spaces.ts",
     "./ask": "./src/ask.ts",
+    "./tax-return": "./src/tax-return.ts",
     "./subscriptions": "./src/subscriptions.ts",
     "./templates": "./src/templates.ts",
     "./wallet-plans": "./src/wallet-plans.ts",
