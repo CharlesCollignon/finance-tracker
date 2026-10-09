@@ -64,7 +64,25 @@
       "expo-font",
       "expo-web-browser",
       "./plugins/with-quick-actions",
-      "expo-sharing"
+      "expo-sharing",
+      [
+        "react-native-android-widget",
+        {
+          "widgets": [
+            {
+              "name": "Figure",
+              "label": "Il vous reste",
+              "description": "Ce qu'il vous reste jusqu'à votre prochain revenu, et un « + » pour noter une dépense.",
+              "minWidth": "180dp",
+              "minHeight": "110dp",
+              "targetCellWidth": 3,
+              "targetCellHeight": 2,
+              "resizeMode": "horizontal|vertical",
+              "updatePeriodMillis": 1800000
+            }
+          ]
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,

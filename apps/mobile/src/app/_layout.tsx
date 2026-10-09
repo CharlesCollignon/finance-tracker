@@ -33,6 +33,7 @@ import { RefreshProvider } from "@/providers/RefreshProvider";
 import { ToastProvider } from "@/providers/ToastProvider";
 import { useNotificationRouting } from "@/lib/notification-routing";
 import { useQuickActionRouting } from "@/lib/quick-action-routing";
+import { useWidgetSync } from "@/widget/useWidgetSync";
 import { initTheme } from "@/lib/theme";
 import { COLORS } from "@/theme/tokens";
 
@@ -69,6 +70,8 @@ function RootNavigator({ fontsReady }: { fontsReady: boolean }) {
   useNotificationRouting(Boolean(session) && !initializing && fontsReady);
   // A home-screen quick action, on the same terms.
   useQuickActionRouting(Boolean(session) && !initializing && fontsReady);
+  // The Android widget's figure, read as the app goes to the background.
+  useWidgetSync(session?.user.id ?? null, !initializing);
 
   // Pinned rather than read: Pluclair has one palette, and NativeWind
   // resolves `dark:` variants from the scheme, so a phone in light mode would

@@ -2479,6 +2479,10 @@ export const fr: Messages = {
     eachMonthAfter: "Chaque mois, il resterait {amount}",
     nothingSaved: "Rien n'est enregistré\u00A0: c'est seulement le calcul.",
   },
+  /** Le widget Android de l'écran d'accueil : « Il vous reste » et deux accès. */
+  widget: {
+    add: "Ajouter une dépense",
+  },
   leftToSpend: {
     title: "Il vous reste",
     missing: "Il vous manque",
