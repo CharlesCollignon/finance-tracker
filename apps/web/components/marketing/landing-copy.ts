@@ -480,7 +480,7 @@ export const landingCopy = {
       shops: [
         { shop: "Carrefour", category: "Groceries" },
         { shop: "SNCF", category: "Transport" },
-        { shop: "Bakery", category: "Eating out" },
+        { shop: "Le Bistrot", category: "Eating out" },
         { shop: "Netflix", category: "Subscriptions" },
       ],
       added: "Added today",

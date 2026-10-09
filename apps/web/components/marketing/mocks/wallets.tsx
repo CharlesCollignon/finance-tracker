@@ -4,7 +4,6 @@ import { ArrowsClockwise, PencilSimple, Plus } from "@phosphor-icons/react";
 import { formatSigned } from "@finance/core/amount-sign";
 import { PRICE_RANGES } from "@finance/core/instrument-price-series";
 import { formatSignedPercent } from "@finance/core/instrument-price-series";
-import type { Key } from "@finance/core/i18n/t";
 import { accountShortName } from "@/components/finance/accounts/account-format";
 import { Sparkline } from "@/components/finance/charts/Sparkline";
 import {
@@ -18,6 +17,7 @@ import {
   MobileHero,
   MobileShell,
   MockCard,
+  MockTabs,
   type Variant,
   WebHero,
   WebShell,
@@ -45,7 +45,7 @@ export function WalletsMock({ variant = "web" }: { variant?: Variant }) {
 
   const views = (
     <div className="flex items-center justify-between gap-2">
-      <ViewTabs
+      <MockTabs
         labels={[
           "nav.walletsPositions",
           "nav.walletsAnalysis",
@@ -185,29 +185,6 @@ export function WalletsMock({ variant = "web" }: { variant?: Variant }) {
       </div>
       {panel}
     </WebShell>
-  );
-}
-
-/** Comptes, Analyse, Composition — the first lit, as `SurfaceTabs` draws it. */
-function ViewTabs({ labels, compact }: { labels: Key[]; compact: boolean }) {
-  const t = useT();
-  return (
-    <span className="flex items-center gap-1">
-      {labels.map((label, index) => (
-        <span
-          key={label}
-          className={cn(
-            "rounded-full py-1.5 text-sm font-medium",
-            compact ? "px-2.5" : "px-3.5",
-            index === 0
-              ? "bg-foreground text-background"
-              : "text-muted-foreground",
-          )}
-        >
-          {t(label)}
-        </span>
-      ))}
-    </span>
   );
 }
 

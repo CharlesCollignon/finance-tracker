@@ -99,6 +99,9 @@ export const landingSampleFr = {
     ],
   },
 
+  /** What is still to leave, in the order `landingSample.bearingMonth.upcoming` holds it. */
+  upcoming: ["DCA PEA", "Livret A", "Mutuelle", "DCA PEA"],
+
   /** The PEA's lines, in the order `landingSample.pea.positions` holds them. */
   peaPositions: ["ETF MSCI World", "ETF S&P 500", "ETF Pays émergents"],
 

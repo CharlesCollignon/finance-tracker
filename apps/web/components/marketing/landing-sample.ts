@@ -97,6 +97,8 @@ export const landingSample = {
     },
   ],
   today: 19,
+  /** How many rows March holds so far: `transactions` are the latest few. */
+  entries: 23,
   /**
    * `id` and `cadence` are the language-neutral halves of a template; `name`
    * and `schedule` are the words. The split is not decoration: the mock
@@ -222,6 +224,82 @@ export const landingSample = {
     netPosition: 14890,
     unrecordedBaseline: 232,
     projectedBalance: 3640,
+  },
+  /**
+   * Le point's balance card and the two cards under it, on the 19th.
+   *
+   * `curve` is the current account day by day, a `[day, balance]` pair
+   * where it moves: 1,180 € on the 1st, the salary on the 3rd, then down to
+   * `bearing.onHand` today, and planned from tomorrow to `bearing.free` on
+   * the 31st — `leaving` (the 620 € of `bearing.committed`) going out and
+   * `arriving` (`bearing.arriving`) coming in. `upcoming` is the first four
+   * of what leaves, and `upcomingMore` the rest of it: together they come to
+   * `leaving`. `lowest` is the curve's lowest planned point.
+   *
+   * `spentTrend` is six months of spending, March so far last, which is
+   * `spent`; `spentBefore` is February's spending on the same day.
+   */
+  bearingMonth: {
+    curve: [
+      [1, 1180],
+      [2, 1180],
+      [3, 4380],
+      [5, 3530],
+      [7, 3466],
+      [8, 3402],
+      [10, 3290],
+      [12, 3140],
+      [13, 3090],
+      [15, 2975],
+      [17, 2730],
+      [19, 2410],
+      [20, 2360],
+      [22, 2210],
+      [25, 2146],
+      [27, 2096],
+      [28, 1790],
+      [30, 2030],
+      [31, 2030],
+    ] as [number, number][],
+    lowest: { day: 28, value: 1790 },
+    arriving: 240,
+    leaving: 620,
+    upcoming: [
+      {
+        day: 20,
+        name: "PEA DCA",
+        amount: 50,
+        type: "investment" as CategoryType,
+      },
+      {
+        day: 22,
+        name: "Livret A",
+        amount: 150,
+        type: "savings" as CategoryType,
+      },
+      {
+        day: 25,
+        name: "Health insurance",
+        amount: 64,
+        type: "expense" as CategoryType,
+      },
+      {
+        day: 27,
+        name: "PEA DCA",
+        amount: 50,
+        type: "investment" as CategoryType,
+      },
+    ],
+    upcomingMore: 1,
+    spentTrend: [
+      { month: 10, total: 2140 },
+      { month: 11, total: 1980 },
+      { month: 12, total: 2390 },
+      { month: 1, total: 2050 },
+      { month: 2, total: 2256 },
+      { month: 3, total: 1953 },
+    ],
+    spentBefore: 2105,
   },
   /**
    * The forward projection's two tracks, over a year.
@@ -362,6 +440,8 @@ export const landingSample = {
   together: {
     name: "Shared",
     me: "Me",
+    /** The two of them, by initial: the sample person first. */
+    members: ["A", "B"],
     balance: 1340,
     share: 50,
     spent: 1120,
@@ -403,11 +483,31 @@ export const landingSample = {
 
   /** Where the month's spending went, largest first. Sums to `spent`. */
   spendByCategory: [
-    { label: "Housing", amount: 850, colorVar: "--chart-1" },
-    { label: "Investments", amount: 400, colorVar: "--chart-4" },
-    { label: "Savings", amount: 300, colorVar: "--chart-3" },
-    { label: "Groceries", amount: 218, colorVar: "--chart-2" },
-    { label: "Everything else", amount: 185, colorVar: "--chart-5" },
+    { label: "Housing", icon: "house", amount: 850, colorVar: "--chart-1" },
+    {
+      label: "Investments",
+      icon: "chart-line",
+      amount: 400,
+      colorVar: "--chart-4",
+    },
+    {
+      label: "Savings",
+      icon: "piggy-bank",
+      amount: 300,
+      colorVar: "--chart-3",
+    },
+    {
+      label: "Groceries",
+      icon: "shopping-cart",
+      amount: 218,
+      colorVar: "--chart-2",
+    },
+    {
+      label: "Everything else",
+      icon: "dots-three",
+      amount: 185,
+      colorVar: "--chart-5",
+    },
   ],
 };
 
@@ -453,6 +553,13 @@ export function landingSampleFor(locale: Locale) {
       standing: fr.read.standing,
     },
     property: { ...landingSample.property, ...fr.property },
+    bearingMonth: {
+      ...landingSample.bearingMonth,
+      upcoming: landingSample.bearingMonth.upcoming.map((row, index) => ({
+        ...row,
+        name: fr.upcoming[index] ?? row.name,
+      })),
+    },
     pea: {
       ...landingSample.pea,
       positions: landingSample.pea.positions.map((row, index) => ({

@@ -444,7 +444,7 @@ export const landingCopyFr: LandingCopySections & {
       shops: [
         { shop: "Carrefour", category: "Courses" },
         { shop: "SNCF", category: "Transports" },
-        { shop: "Boulangerie", category: "Restaurants" },
+        { shop: "Le Bistrot", category: "Restaurants" },
         { shop: "Netflix", category: "Abonnements" },
       ],
       added: "Ajouté aujourd’hui",
