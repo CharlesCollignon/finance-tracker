@@ -890,7 +890,9 @@ specific:
   a chip or at a « Pourquoi » row lights that account's band and dims the
   rest.
   Under the legend, one panel at a time behind a switch, so the card reads
-  calmly (the owner asked for it simpler, October 2026). « Pourquoi » is one
+  calmly (the owner asked for it simpler, October 2026). On a wide card
+  each panel uses the whole width in two columns: « Pourquoi »'s rows, and
+  « Et si… »'s extra beside its events. « Pourquoi » is one
   month's income cut into charges, everyday spending, each account and what
   stays on the current account, with one sentence for interest and returns.
   « Et si… » aims its extra at one account. Events (a raise, a bonus, a big

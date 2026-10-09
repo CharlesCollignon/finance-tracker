@@ -143,14 +143,16 @@ export function YearAheadWhy({
         })}
       </div>
 
-      <ul className="flex flex-col">
+      {/* Two columns on a wide card, so the rows use its width and each
+          label stays a short look from its amount. */}
+      <ul className="lg:columns-2 lg:gap-x-12">
         {segments.map((segment) => (
           <li
             key={segment.key}
             onPointerEnter={() => segment.account && onFocus(segment.account)}
             onPointerLeave={() => onFocus(null)}
             className={cn(
-              "-mx-2 flex min-h-9 flex-col justify-center rounded-control px-2",
+              "-mx-2 flex min-h-9 break-inside-avoid flex-col justify-center rounded-control px-2",
               segment.account &&
                 "transition-colors duration-hover hover:bg-muted/50",
             )}
