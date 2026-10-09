@@ -93,7 +93,7 @@ export function ChargesDemo({ copy }: { copy: Copy }) {
               key={day}
               title={entry ? nameOf(entry.name) : undefined}
               className={cn(
-                "relative flex aspect-square flex-col justify-between overflow-hidden rounded-lg border p-1.5 transition-colors duration-300",
+                "relative flex h-14 flex-col justify-between overflow-hidden rounded-lg border p-1.5 transition-colors duration-300 md:h-16",
                 shown
                   ? "border-white/20 bg-white/[0.05]"
                   : "border-white/[0.06]",

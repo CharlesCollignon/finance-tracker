@@ -64,7 +64,7 @@ export function PlanDemo({ copy }: { copy: Copy }) {
               <span
                 className={cn(
                   "absolute flex flex-col items-center whitespace-nowrap text-center",
-                  index % 2 === 0 ? "bottom-4" : "top-4",
+                  index % 2 === 0 ? "bottom-7" : "top-7",
                 )}
               >
                 <span className="font-mono text-sm text-marketing-ink">

@@ -82,10 +82,6 @@ function Card({
     <m.article
       className="relative overflow-hidden rounded-[2rem] border border-white/10 bg-[linear-gradient(160deg,rgba(255,255,255,0.07),rgba(255,255,255,0.02)_55%),#0b0b12] p-8 shadow-[0_-24px_60px_-30px_rgba(0,0,0,0.9)] md:p-12"
       style={{ scale, transformOrigin: "50% 0%" }}
-      initial={{ opacity: 0, y: 40 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, amount: 0.4 }}
-      transition={{ duration: 0.8, ease: [0.32, 0.72, 0, 1] }}
     >
       <p className="font-mono text-xs text-marketing-faint">
         {index + 1} / {count}

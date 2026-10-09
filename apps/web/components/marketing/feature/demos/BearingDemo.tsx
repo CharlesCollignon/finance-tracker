@@ -78,21 +78,16 @@ export function BearingDemo() {
       </div>
 
       <div aria-live="polite">
-        <p className="text-lg text-marketing-muted">
-          {sentence.before}
+        <p className="text-lg text-marketing-muted">{sentence.before.trim()}</p>
+        <p className="mt-1 font-serif text-[clamp(3rem,8vw,5.5rem)] font-semibold leading-none tracking-[-0.035em]">
           <Count
             value={Math.abs(left)}
             format={(value) => euro(Math.round(value))}
             className={short ? "text-marketing-ink" : "text-primary"}
           />
-          {sentence.after}
         </p>
-        <p className="mt-1 font-serif text-[clamp(3rem,8vw,5.5rem)] font-semibold leading-none tracking-[-0.035em]">
-          <Count
-            value={left}
-            format={(value) => euro(Math.round(value))}
-            className={short ? "text-marketing-ink" : "text-primary"}
-          />
+        <p className="mt-2 text-base text-marketing-ink">
+          {sentence.after.trim()}
         </p>
         <div className="mt-6 h-2 overflow-hidden rounded-full bg-white/10">
           <m.div
