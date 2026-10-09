@@ -5,7 +5,7 @@ figure is computed, and what is known to be wrong. Written for whoever works
 on the repository next, human or agent. Every phase of
 `docs/plans/PLUCLAIR_UPGRADE_PLAN.md` updates it before it closes.
 
-Last updated: Plan du quotidien, phase 7 — Ask Pluclair (2026-10-09;
+Last updated: Plan du quotidien, phase 8 — the tax page (2026-10-09;
 `docs/plans/EVERYDAY_PLAN.md`, `docs/plans/SHARED_SPACE_DESIGN.md`).
 
 ## Shape
@@ -16,7 +16,7 @@ Last updated: Plan du quotidien, phase 7 — Ask Pluclair (2026-10-09;
 | `apps/mobile`   | Expo 57 with expo-router and NativeWind, dark only. Reads and writes Supabase directly under RLS; calls the web app for the month read (`POST /api/month-read`) and a bank refresh (`POST /api/bank/refresh`) with a bearer token.                                                                                                                                                                                                                                                                                                                                 |
 | `packages/core` | Pure TypeScript shared by both apps and shipped to them as source: every calculation, every zod schema, every string (`src/i18n/messages/en.ts`, `fr.ts`).                                                                                                                                                                                                                                                                                                                                                                                                         |
 | `packages/data` | The Supabase reads and writes both apps make, written once and handed the caller's client (`Db`): recurring templates and occurrences, transactions (`ledger`, `month-ledger`, `history`), deletes and their undo (`deletions`), categories and their seeding, fulfilment, the month close, the month's balance, the bank's balance, the review inbox (`bank-inbox`), positions and wallet plans, instrument readings, savings accounts, properties and their loans (`properties`), preferences, the weekly recap, delete-all. `pnpm --filter @finance/data test`. |
-| `supabase/`     | Migrations `001`–`064`, assertion scripts in `tests/`, one edge function (`delete-account`).                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| `supabase/`     | Migrations `001`–`066`, assertion scripts in `tests/`, one edge function (`delete-account`).                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
 
 Vocabulary is fixed by `CONTEXT.md`; product commitments by
 `apps/web/PRODUCT.md`; visual rules by `apps/web/DESIGN.md` and
@@ -394,6 +394,21 @@ twenty on Pluclair's key, none on one's own account. Conversations last
 thirty days (`sweep_ask` in the nightly sweep). The phone asks through
 `POST /api/ask` and reads and deletes its conversations directly. The
 person's own money only, under « Commun » too.
+
+## Déclaration de revenus
+
+`/tax` on the web, `tax` on the phone (migration 066,
+`@finance/core/tax-return`). For an income year — the one before by
+default — each box of the French return the person's rows can fill: the
+categories they filed in it (`tax_box_categories`: 7UF, 7UD, 7DB,
+7GA–7GC), their PER's payments (6NS, the wallet read from the category's
+positions, else its name), their let properties' rents (4BE bare, 5NI
+furnished, from the rent's recurring entry). `taxReturnBoxes` sums the
+year's rows per box, one box per row. The rules are a yearly table read
+from that year's forms; a year without forms borrows the latest and says
+so. Nothing is estimated: no tax, credit or reduction. Le point shows a
+card from April to June; Profile links it all year. The person's own
+money only.
 
 ## Audience measurement
 
