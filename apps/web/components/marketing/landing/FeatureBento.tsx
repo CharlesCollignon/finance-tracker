@@ -33,9 +33,8 @@ const EASE = [...EASE_STANDARD] as [number, number, number, number];
 const SPAN: Record<string, string> = {
   together: "md:col-span-4 md:row-span-2",
   questions: "md:col-span-2 md:row-span-2",
-  tax: "md:col-span-2",
-  year: "md:col-span-2",
-  search: "md:col-span-2",
+  year: "md:col-span-3",
+  search: "md:col-span-3",
   alerts: "md:col-span-3",
   privacy: "md:col-span-3",
 };
@@ -147,8 +146,6 @@ function Picture({
       return <TogetherPicture seen={seen} hover={hover} />;
     case "questions":
       return <QuestionsPicture seen={seen} />;
-    case "tax":
-      return <TaxPicture seen={seen} />;
     case "year":
       return (
         <IconPicture
@@ -299,32 +296,6 @@ function QuestionsPicture({ seen }: { seen: boolean }) {
           );
         })}
       </m.p>
-    </div>
-  );
-}
-
-/** Three boxes, their amounts counting into place. */
-function TaxPicture({ seen }: { seen: boolean }) {
-  const euro = useFormatCurrency();
-  const { tax } = landingSampleFor(useLocale());
-  return (
-    <div className="flex flex-wrap gap-2">
-      {tax.boxes.map((box, index) => (
-        <m.span
-          key={box.id}
-          className="inline-flex items-center gap-2 rounded-lg border border-white/12 bg-white/[0.04] px-2.5 py-1.5 text-xs"
-          initial={{ opacity: 0, y: 8 }}
-          animate={seen ? { opacity: 1, y: 0 } : undefined}
-          transition={{ duration: 0.6, ease: EASE, delay: 0.25 + index * 0.1 }}
-        >
-          <span className="font-mono font-semibold text-marketing-ink">
-            {box.id}
-          </span>
-          <span className="font-mono tabular-nums text-marketing-muted">
-            {euro(box.amount)}
-          </span>
-        </m.span>
-      ))}
     </div>
   );
 }

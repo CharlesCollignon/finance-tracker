@@ -24,7 +24,7 @@ interface FeaturePageProps {
 
 /**
  * How each page opens, alternating along the menu's order so no two
- * neighbours open alike; the two made for the phone open on one.
+ * neighbours open alike; Questions, made for the phone, opens on one.
  */
 const HERO: Record<LandingPageId, HeroVariant> = {
   bearing: "tilt",
@@ -37,7 +37,6 @@ const HERO: Record<LandingPageId, HeroVariant> = {
   "month-read": "stage",
   questions: "phone",
   together: "tilt",
-  tax: "phone",
 };
 
 /**

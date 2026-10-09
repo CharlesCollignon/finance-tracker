@@ -233,8 +233,8 @@ export function MockCard({
  * matching on a key survives both a reword and a change of language. Neither
  * the close nor the read is a surface, so both borrow the one they are met
  * on — the close's « Votre série » card is on Plan, the read is the last card
- * of Le point. Questions and the tax page are not surfaces either: they are
- * stack screens on the phone, so their key is the title the header says. */
+ * of Le point. Questions is not a surface either: it is a stack screen on
+ * the phone, so its key is the title the header says. */
 export const ACTIVE_NAV: Record<LandingPageId, Key> = {
   bearing: "nav.bearing",
   ledger: "nav.ledger",
@@ -248,7 +248,6 @@ export const ACTIVE_NAV: Record<LandingPageId, Key> = {
   // The shared space is every screen under « Commun »; its mock is the
   // Journal, where each row says who added it.
   together: "nav.ledger",
-  tax: "tax.title",
 };
 
 /** The bar's surfaces, from the app's own `navItems`: Immobilier joins them
@@ -527,7 +526,7 @@ function MobileTabBar({ active, space }: { active: Key; space: boolean }) {
  * title — or, under « Commun », the switch in its place — and « Questions »,
  * the refresh, the blur and the account on the right. A tab screen has the
  * docked tab bar and the gold « + » floating over it; a pushed screen —
- * Questions, the tax page, a property — has neither.
+ * Questions, a property — has neither.
  */
 export function MobileShell({
   active,
