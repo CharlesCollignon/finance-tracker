@@ -92,112 +92,120 @@ export function YearAheadWhatIf({
   const full = events.length >= YEAR_AHEAD_MAX_EVENTS;
 
   return (
-    <div className="flex min-w-0 flex-col gap-4">
-      <div className="flex flex-col gap-2">
-        <div className="flex items-baseline justify-between gap-3">
-          <p className="text-sm text-muted-foreground">
-            {t("futurePlan.whatIfLabel")}
-          </p>
-          <span
-            className={cn(
-              "privacy-sensitive shrink-0 text-sm font-medium tabular-nums",
-              extra === 0 && "text-muted-foreground",
-            )}
-          >
-            {t("futurePlan.whatIfPerMonth", { amount: format(extra) })}
-          </span>
+    // Side by side on a wide card: the extra on the left, the events on
+    // the right, so neither leaves half the card empty.
+    <div className="grid min-w-0 gap-6 lg:grid-cols-2 lg:gap-12">
+      <div className="flex min-w-0 flex-col gap-4">
+        <div className="flex flex-col gap-2">
+          <div className="flex items-baseline justify-between gap-3">
+            <p className="text-sm text-muted-foreground">
+              {t("futurePlan.whatIfLabel")}
+            </p>
+            <span
+              className={cn(
+                "privacy-sensitive shrink-0 text-sm font-medium tabular-nums",
+                extra === 0 && "text-muted-foreground",
+              )}
+            >
+              {t("futurePlan.whatIfPerMonth", { amount: format(extra) })}
+            </span>
+          </div>
+          <Slider
+            value={extra}
+            min={0}
+            max={EXTRA_MAX}
+            step={EXTRA_STEP}
+            onChange={onExtraChange}
+            label={t("futurePlan.whatIfLabel")}
+            valueText={t("futurePlan.whatIfPerMonth", {
+              amount: format(extra),
+            })}
+          />
+          <div className="flex flex-wrap gap-2">
+            {QUICK_EXTRAS.map((amount) => {
+              const on = extra === amount;
+              return (
+                <m.button
+                  key={amount}
+                  type="button"
+                  aria-pressed={on}
+                  whileTap={reduce ? undefined : { scale: 0.94 }}
+                  onClick={() => onExtraChange(on ? 0 : amount)}
+                  className={cn(
+                    CHIP,
+                    "tabular-nums",
+                    on
+                      ? "border-foreground/30 bg-muted text-foreground"
+                      : "border-border text-muted-foreground hover:bg-muted hover:text-foreground",
+                  )}
+                >
+                  +{format(amount)}
+                </m.button>
+              );
+            })}
+          </div>
         </div>
-        <Slider
-          value={extra}
-          min={0}
-          max={EXTRA_MAX}
-          step={EXTRA_STEP}
-          onChange={onExtraChange}
-          label={t("futurePlan.whatIfLabel")}
-          valueText={t("futurePlan.whatIfPerMonth", { amount: format(extra) })}
-        />
-        <div className="flex flex-wrap gap-2">
-          {QUICK_EXTRAS.map((amount) => {
-            const on = extra === amount;
+
+        <div
+          role="radiogroup"
+          aria-label={t("futurePlan.whatIfToLabel")}
+          className="flex flex-wrap items-center gap-2"
+        >
+          <span className="text-sm text-muted-foreground">
+            {t("futurePlan.whatIfTo")}
+          </span>
+          {targets.map((id) => {
+            const on = id === target;
             return (
-              <m.button
-                key={amount}
+              <button
+                key={id}
                 type="button"
-                aria-pressed={on}
-                whileTap={reduce ? undefined : { scale: 0.94 }}
-                onClick={() => onExtraChange(on ? 0 : amount)}
+                role="radio"
+                aria-checked={on}
+                onClick={() => onTarget(id)}
                 className={cn(
                   CHIP,
-                  "tabular-nums",
+                  "border-border",
                   on
-                    ? "border-foreground/30 bg-muted text-foreground"
-                    : "border-border text-muted-foreground hover:bg-muted hover:text-foreground",
+                    ? "text-foreground"
+                    : "text-muted-foreground hover:text-foreground",
                 )}
               >
-                +{format(amount)}
-              </m.button>
+                {on ? (
+                  <m.span
+                    layoutId={pillId}
+                    transition={reduce ? { duration: 0 } : FOLLOW}
+                    className="absolute inset-0 -z-10 rounded-full bg-muted"
+                  />
+                ) : null}
+                <span
+                  aria-hidden
+                  className="size-2 rounded-full"
+                  style={{ background: color(id) }}
+                />
+                {name(id)}
+              </button>
             );
           })}
         </div>
+
+        <div aria-live="polite">
+          {result ? (
+            <>
+              <p className="privacy-sensitive text-base font-medium">
+                {result}
+              </p>
+              {milestoneLine}
+            </>
+          ) : (
+            <p className="text-sm text-muted-foreground">
+              {t("futurePlan.whatIfNone")}
+            </p>
+          )}
+        </div>
       </div>
 
-      <div
-        role="radiogroup"
-        aria-label={t("futurePlan.whatIfToLabel")}
-        className="flex flex-wrap items-center gap-2"
-      >
-        <span className="text-sm text-muted-foreground">
-          {t("futurePlan.whatIfTo")}
-        </span>
-        {targets.map((id) => {
-          const on = id === target;
-          return (
-            <button
-              key={id}
-              type="button"
-              role="radio"
-              aria-checked={on}
-              onClick={() => onTarget(id)}
-              className={cn(
-                CHIP,
-                "border-border",
-                on
-                  ? "text-foreground"
-                  : "text-muted-foreground hover:text-foreground",
-              )}
-            >
-              {on ? (
-                <m.span
-                  layoutId={pillId}
-                  transition={reduce ? { duration: 0 } : FOLLOW}
-                  className="absolute inset-0 -z-10 rounded-full bg-muted"
-                />
-              ) : null}
-              <span
-                aria-hidden
-                className="size-2 rounded-full"
-                style={{ background: color(id) }}
-              />
-              {name(id)}
-            </button>
-          );
-        })}
-      </div>
-
-      <div aria-live="polite">
-        {result ? (
-          <>
-            <p className="privacy-sensitive text-base font-medium">{result}</p>
-            {milestoneLine}
-          </>
-        ) : (
-          <p className="text-sm text-muted-foreground">
-            {t("futurePlan.whatIfNone")}
-          </p>
-        )}
-      </div>
-
-      <div className="flex flex-col gap-2 border-t border-border pt-4">
+      <div className="flex min-w-0 flex-col gap-2 border-t border-border pt-4 lg:border-l lg:border-t-0 lg:pl-12 lg:pt-0">
         <ul className="flex flex-col gap-2">
           <AnimatePresence initial={false}>
             {events.map((event) => (
@@ -208,9 +216,9 @@ export function YearAheadWhatIf({
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.96 }}
                 transition={reduce ? { duration: 0 } : FOLLOW}
-                // Two lines on a phone — the event and its cross, then its
-                // amount and month — and one from `sm`.
-                className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2 sm:flex"
+                // Two lines — the event and its cross, then its amount and
+                // month — which fit a phone and the half-card column alike.
+                className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2"
               >
                 <span
                   aria-hidden
@@ -226,7 +234,7 @@ export function YearAheadWhatIf({
                 <span className="min-w-24 flex-1 text-sm">
                   {t(EVENT_NAME_KEYS[event.kind])}
                 </span>
-                <div className="col-span-3 flex gap-2 sm:contents">
+                <div className="col-span-3 flex gap-2">
                   <NumberField
                     label={
                       event.kind === "raise"
@@ -349,7 +357,7 @@ function MonthSelect({
   const t = useT();
   const id = useId();
   return (
-    <div className="min-w-0 flex-1 sm:w-48 sm:flex-none">
+    <div className="min-w-0 flex-1">
       <label htmlFor={id} className="sr-only">
         {t("futurePlan.eventMonth")}
       </label>

@@ -351,8 +351,6 @@ function YearAhead({
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -8 }}
             transition={{ duration: 0.18 }}
-            // A line the eye can follow from a label to its amount.
-            className="max-w-2xl"
           >
             {panel === "why" ? (
               <YearAheadWhy
