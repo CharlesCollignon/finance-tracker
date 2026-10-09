@@ -141,11 +141,64 @@ export const landingSample = {
       type: "expense" as CategoryType,
     },
   ],
+  /**
+   * Placements: the three wallets the sample person keeps, each worth
+   * `value` for `invested` paid in. They sum to `portfolio` and
+   * `portfolioInvested`, and their gains to `portfolioGain`.
+   */
   wallets: [
-    { label: "PEA", value: 6800, colorVar: "--chart-1" },
-    { label: "CTO", value: 4200, colorVar: "--chart-2" },
-    { label: "Crypto", value: 1480, colorVar: "--chart-3" },
+    { id: "pea" as const, value: 6800, invested: 6000 },
+    { id: "cto" as const, value: 4200, invested: 3800 },
+    { id: "crypto" as const, value: 1480, invested: 1200 },
   ],
+  /**
+   * The PEA, open on Placements. Its lines sum to its row in `wallets`; each
+   * carries its price over the year, a point a month, for the sparkline, and
+   * `change` is that line's last point against its first. `openedOn` starts
+   * the five-year clock, and `monthly` is what the PEA DCA in `templates`
+   * sends it in March: 50 € on each of the month's four Fridays.
+   */
+  pea: {
+    openedOn: "2022-06-14",
+    monthly: 200,
+    positions: [
+      {
+        name: "MSCI World ETF",
+        symbol: "CW8.PA",
+        value: 4120,
+        invested: 3600,
+        change: 11.2,
+        trend: [
+          100, 102.1, 101.4, 104.2, 103.1, 105.8, 107.2, 106.1, 108.4, 109.9,
+          108.7, 110.3, 111.2,
+        ],
+      },
+      {
+        name: "S&P 500 ETF",
+        symbol: "PSP5.PA",
+        value: 1910,
+        invested: 1700,
+        change: 13.6,
+        trend: [
+          100, 101.8, 103.5, 101.2, 104.6, 106.9, 105.3, 108.1, 110.2, 109.4,
+          111.8, 112.9, 113.6,
+        ],
+      },
+      {
+        name: "Emerging markets ETF",
+        symbol: "PAEEM.PA",
+        value: 770,
+        invested: 700,
+        change: 4.1,
+        trend: [
+          100, 98.6, 99.9, 101.7, 100.4, 98.9, 100.8, 102.6, 101.5, 103.2,
+          102.4, 103.6, 104.1,
+        ],
+      },
+    ],
+  },
+  /** The crypto wallet, in bitcoin: its 1,480 € at 80,000 € a coin. */
+  btc: 0.0185,
   portfolio: 12480,
   portfolioInvested: 11000,
   portfolioGain: 1480,
@@ -400,6 +453,13 @@ export function landingSampleFor(locale: Locale) {
       standing: fr.read.standing,
     },
     property: { ...landingSample.property, ...fr.property },
+    pea: {
+      ...landingSample.pea,
+      positions: landingSample.pea.positions.map((row, index) => ({
+        ...row,
+        name: fr.peaPositions[index] ?? row.name,
+      })),
+    },
     questions: { ...landingSample.questions, ...fr.questions },
     together: {
       ...landingSample.together,

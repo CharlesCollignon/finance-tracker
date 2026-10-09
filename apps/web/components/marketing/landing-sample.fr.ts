@@ -99,6 +99,9 @@ export const landingSampleFr = {
     ],
   },
 
+  /** The PEA's lines, in the order `landingSample.pea.positions` holds them. */
+  peaPositions: ["ETF MSCI World", "ETF S&P 500", "ETF Pays émergents"],
+
   /** The tax boxes' labels, in the order `landingSample.tax.boxes` holds them. */
   tax: ["Dons", "Emploi à domicile", "Location meublée, recettes"],
 
