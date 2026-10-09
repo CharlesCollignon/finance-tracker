@@ -1,14 +1,22 @@
 "use client";
 
 import type { ReactNode } from "react";
+import { CalendarCheck, ShieldCheck, Trophy } from "@phosphor-icons/react";
+import { formatMonthCompact, formatMonthLabel } from "@finance/core/constants";
+import { CUSHION_TARGETS, type Envelope } from "@finance/core/future-plan";
+import type { Locale } from "@finance/core/i18n/locale";
+import type { ProjectionPoint } from "@finance/core/projection";
 import {
-  CalendarCheck,
-  ShieldCheck,
-  Sparkle,
-  Trophy,
-} from "@phosphor-icons/react";
-import { formatMonthLabel } from "@finance/core/constants";
-import { CUSHION_TARGETS } from "@finance/core/future-plan";
+  buildYearAhead,
+  resampleSeries,
+  stackBands,
+  YEAR_AHEAD_HORIZONS,
+  type YearAhead as YearAheadData,
+} from "@finance/core/year-ahead";
+import {
+  accountColors,
+  accountNameKey,
+} from "@/components/finance/plan/year-ahead-parts";
 import { Orb } from "@/components/brand/Orb";
 import { landingSampleFor } from "@/components/marketing/landing-sample";
 import { MOCK_GLASS } from "@/components/marketing/mocks/bearing";
@@ -23,50 +31,143 @@ import {
 
 /**
  * The Plan, as a landing mock (`./frame.tsx`): the line that says what the
- * page is, the year ahead across the page — its figure, its curve and
- * « Et si… » — then « Vos paliers » beside « Votre matelas de sécurité »,
- * as `PlanView` lays them out.
+ * page is, the year ahead across the page — its figure, one band per
+ * account under the gold total, the accounts, and « Pourquoi » open — then
+ * « Vos paliers » beside « Votre matelas de sécurité », as `PlanView` lays
+ * them out.
  */
 
 /** A card of the Plan with its round icon and name, as `PlanCard` draws it. */
 export function PlanCardFrame({
   icon,
   title,
+  aside,
   className,
   children,
 }: {
   icon: ReactNode;
   title: string;
+  /** Beside the title, at the end of the row. */
+  aside?: ReactNode;
   className?: string;
   children: ReactNode;
 }) {
   return (
     <section className={cn(MOCK_GLASS, "flex flex-col gap-4 p-5", className)}>
-      <h2 className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
-        <span className="flex size-7 items-center justify-center rounded-full bg-muted text-foreground">
-          {icon}
-        </span>
-        {title}
-      </h2>
+      <header className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
+        <h2 className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+          <span className="flex size-7 items-center justify-center rounded-full bg-muted text-foreground">
+            {icon}
+          </span>
+          {title}
+        </h2>
+        {aside}
+      </header>
       {children}
     </section>
   );
 }
 
-/** Twelve months ahead, rising as the plan has it, the gold wash under it. */
-function YearCurve({ height }: { height: number }) {
-  const values = [
-    100, 108, 113, 121, 127, 134, 139, 147, 152, 160, 166, 174, 181,
-  ];
+/**
+ * The sample person's accounts, as the Plan reads them: the Livret A their
+ * « Emergency fund » feeds, the PEA their DCA buys into, and the CTO and
+ * crypto from Placements, at the long view's returns.
+ */
+const SAMPLE_ENVELOPES: Envelope[] = [
+  {
+    id: "livret_a",
+    initial: 2900,
+    monthly: 150,
+    annualReturn: 0.017,
+    taxOnGains: 0,
+  },
+  {
+    id: "pea",
+    initial: 6800,
+    monthly: 200,
+    annualReturn: 0.07,
+    taxOnGains: 0.186,
+  },
+  {
+    id: "cto",
+    initial: 4200,
+    monthly: 0,
+    annualReturn: 0.07,
+    taxOnGains: 0.314,
+  },
+  {
+    id: "crypto",
+    initial: 1480,
+    monthly: 0,
+    annualReturn: 0.05,
+    taxOnGains: 0.314,
+  },
+];
+
+/** What the current account holds on the 19th: Le point's balance. */
+const SAMPLE_ON_HAND = 2410;
+
+/**
+ * The twelve months to March 2027 from the sample's own month: the salary
+ * in, the charges and an everyday's spending out, the savings and the DCA
+ * set aside — so what stays on the current account each month is the rest.
+ */
+function sampleYearAhead(locale: Locale): YearAheadData {
+  const income = 3200;
+  const expense = 959;
+  const setAside = 350;
+  const unrecorded = 1500;
+  const points: ProjectionPoint[] = Array.from({ length: 12 }, (_, index) => {
+    const year = 2026 + Math.floor((3 + index) / 12);
+    const month = ((3 + index) % 12) + 1;
+    const left = (income - expense - setAside - unrecorded) * (index + 1);
+    return {
+      monthKey: `${year}-${String(month).padStart(2, "0")}`,
+      label: formatMonthLabel(year, month, locale),
+      year,
+      month,
+      income,
+      expense,
+      setAside,
+      deployed: 0,
+      unrecorded,
+      onHand: SAMPLE_ON_HAND + left,
+      kept: SAMPLE_ON_HAND + left + setAside * (index + 1),
+    };
+  });
+  return buildYearAhead({
+    points,
+    onHandToday: SAMPLE_ON_HAND,
+    envelopes: SAMPLE_ENVELOPES,
+    horizon: 12,
+  });
+}
+
+const color = accountColors(SAMPLE_ENVELOPES);
+
+/** The bands stacked under the gold line of their sum, at rest. */
+function YearBands({
+  ahead,
+  height,
+}: {
+  ahead: YearAheadData;
+  height: number;
+}) {
+  const samples = ahead.total.length;
+  const stacked = stackBands(
+    ahead.bands.map((band) => resampleSeries(band.values, samples)),
+  );
   const width = 1000;
-  const top = Math.max(...values) * 1.04;
-  const bottom = Math.min(...values) * 0.8;
-  const x = (index: number) => (index / (values.length - 1)) * width;
-  const y = (value: number) =>
-    4 + (1 - (value - bottom) / (top - bottom)) * (height - 8);
-  const line = values
-    .map((value, index) => `${index === 0 ? "M" : "L"}${x(index)} ${y(value)}`)
-    .join(" ");
+  const top = Math.max(...ahead.total) * 1.06;
+  const x = (index: number) => (index / (samples - 1)) * width;
+  const y = (value: number) => 4 + (1 - value / top) * (height - 4);
+  const line = (values: readonly number[]) =>
+    values
+      .map(
+        (value, index) =>
+          `${index === 0 ? "M" : "L"}${x(index).toFixed(1)} ${y(value).toFixed(1)}`,
+      )
+      .join(" ");
   return (
     <div className="relative w-full" style={{ height }}>
       <svg
@@ -74,44 +175,126 @@ function YearCurve({ height }: { height: number }) {
         preserveAspectRatio="none"
         className="absolute inset-0 size-full overflow-visible"
       >
-        <defs>
-          <linearGradient id="mock-year-wash" x1="0" x2="0" y1="0" y2="1">
-            <stop offset="0%" stopColor="var(--primary)" stopOpacity="0.18" />
-            <stop offset="100%" stopColor="var(--primary)" stopOpacity="0" />
-          </linearGradient>
-        </defs>
+        {ahead.bands.map((band, index) => {
+          const { upper, lower } = stacked[index]!;
+          const back = lower
+            .map((value, at) => `L${x(at).toFixed(1)} ${y(value).toFixed(1)}`)
+            .reverse()
+            .join(" ");
+          return (
+            <g key={band.id}>
+              <path
+                d={`${line(upper)} ${back} Z`}
+                fill={color(band.id)}
+                fillOpacity={0.38}
+              />
+              <path
+                d={line(upper)}
+                fill="none"
+                stroke={color(band.id)}
+                strokeWidth={1.25}
+                vectorEffect="non-scaling-stroke"
+              />
+            </g>
+          );
+        })}
         <path
-          d={`${line} L${width} ${height} L0 ${height} Z`}
-          fill="url(#mock-year-wash)"
-        />
-        <path
-          d={line}
+          d={line(ahead.total)}
           fill="none"
           stroke="var(--primary)"
-          strokeWidth={2}
+          strokeWidth={2.25}
           strokeLinejoin="round"
           vectorEffect="non-scaling-stroke"
         />
       </svg>
       <span
         className="absolute size-2.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary"
-        style={{ left: "100%", top: y(values[values.length - 1]!) }}
+        style={{ left: "100%", top: y(ahead.total[samples - 1]!) }}
       />
     </div>
   );
 }
 
-/** « Dans un an »: the figure, its curve, and « Et si… » at rest. */
+/** A row of choices with the one picked lit, as the card's switches are. */
+function Switch({ options, on }: { options: string[]; on: number }) {
+  return (
+    <span className="flex w-fit rounded-full border border-border p-0.5">
+      {options.map((option, index) => (
+        <span
+          key={option}
+          className={cn(
+            "rounded-full px-3 py-1.5 text-xs font-medium tabular-nums",
+            index === on ? "bg-muted text-foreground" : "text-muted-foreground",
+          )}
+        >
+          {option}
+        </span>
+      ))}
+    </span>
+  );
+}
+
+/**
+ * « Dans un an », as the card now is: the figure over every account, the
+ * bands, the accounts with what each will hold, and « Pourquoi » open on a
+ * month's income cut into where it goes.
+ */
 function YearAhead({ compact }: { compact: boolean }) {
   const t = useT();
+  const locale = useLocale();
   const euro = useEuro();
-  const { plan } = landingSampleFor(useLocale());
+  const { plan } = landingSampleFor(locale);
+  const ahead = sampleYearAhead(locale);
+  const end = ahead.total[ahead.months]!;
+  const name = (id: Parameters<typeof accountNameKey>[0]) =>
+    t(accountNameKey(id));
+  const horizons = (
+    <Switch
+      options={YEAR_AHEAD_HORIZONS.map((horizon) =>
+        horizon < 12
+          ? t("futurePlan.horizonMonths", { count: horizon })
+          : t("futurePlan.years", { count: horizon / 12 }),
+      )}
+      on={YEAR_AHEAD_HORIZONS.indexOf(12)}
+    />
+  );
+  const rows = [
+    {
+      key: "committed",
+      label: t("futurePlan.flowCommitted"),
+      amount: -ahead.flow.committed,
+      color: "color-mix(in oklab, var(--muted-foreground) 45%, transparent)",
+    },
+    {
+      key: "everyday",
+      label: t("futurePlan.flowEveryday"),
+      amount: -ahead.flow.everyday,
+      color: "color-mix(in oklab, var(--muted-foreground) 28%, transparent)",
+    },
+    ...ahead.flow.into.map((row) => ({
+      key: row.id,
+      label: name(row.id),
+      amount: row.monthly,
+      color: color(row.id),
+    })),
+    {
+      key: "current",
+      label: t("futurePlan.flowCurrentStays"),
+      amount: ahead.flow.current,
+      color: color("current"),
+    },
+  ];
+  const signed = (value: number) =>
+    `${value >= 0 ? "+" : "−"}${euro(Math.abs(Math.round(value)))}`;
+
   return (
     <PlanCardFrame
       icon={<CalendarCheck size={14} weight="fill" />}
       title={t("futurePlan.yearTitle")}
-      className={compact ? undefined : "p-8"}
+      aside={compact ? undefined : horizons}
+      className={compact ? undefined : "p-6"}
     >
+      {compact ? horizons : null}
       <div>
         <p
           className={cn(
@@ -119,41 +302,78 @@ function YearAhead({ compact }: { compact: boolean }) {
             compact ? "text-[2.75rem]" : "text-6xl",
           )}
         >
-          {euro(plan.yearAhead)}
+          {euro(Math.round(end))}
         </p>
         <p className="mt-2 text-sm text-muted-foreground">
-          {t("futurePlan.yearGrounded", { month: plan.byLabel })}
+          {t("futurePlan.yearAllGrounded", { month: plan.byLabel })}
         </p>
       </div>
-      <YearCurve height={compact ? 90 : 110} />
-      <div className="flex flex-col gap-3 border-t border-border pt-4">
-        <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
-          <h3 className="flex items-center gap-2 font-head text-base">
-            <Sparkle size={16} weight="fill" className="text-primary" />
-            {t("futurePlan.whatIfTitle")}
-          </h3>
-          <p className="text-sm text-muted-foreground">
-            {t("futurePlan.whatIfLabel")}
-          </p>
+      <div>
+        <YearBands ahead={ahead} height={compact ? 110 : 120} />
+        <div className="mt-2 flex justify-between text-xs text-muted-foreground">
+          <span>{t("futurePlan.today")}</span>
+          <span>{formatMonthCompact(2027, 3, locale)}</span>
         </div>
-        <div className="flex items-center gap-3">
-          <span className="relative h-1.5 min-w-0 flex-1 rounded-full bg-foreground/10">
-            <span className="absolute left-0 top-1/2 size-4 -translate-y-1/2 rounded-full border-2 border-primary bg-background" />
-          </span>
-          <span className="w-28 shrink-0 text-right text-sm font-medium tabular-nums text-muted-foreground">
-            {t("futurePlan.whatIfPerMonth", { amount: euro(0) })}
-          </span>
-        </div>
-        <div className="flex gap-2">
-          {[50, 100, 200].map((amount) => (
+      </div>
+      <ul className="flex flex-wrap gap-2">
+        {ahead.bands.map((band) => (
+          <li
+            key={band.id}
+            className="flex items-center gap-2 rounded-full border border-border bg-muted/40 px-3 py-1.5 text-sm"
+          >
             <span
-              key={amount}
-              className="rounded-full border border-border px-4 py-1.5 text-sm tabular-nums text-muted-foreground"
-            >
-              +{euro(amount)}
+              className="size-2.5 rounded-full"
+              style={{ background: color(band.id) }}
+            />
+            {name(band.id)}
+            <span className="font-medium tabular-nums">
+              {euro(Math.round(band.values[ahead.months]!))}
             </span>
+          </li>
+        ))}
+      </ul>
+      <div className="flex flex-col gap-3 border-t border-border pt-4">
+        <Switch
+          options={[t("futurePlan.whyTitle"), t("futurePlan.whatIfTitle")]}
+          on={0}
+        />
+        <p className="text-sm text-muted-foreground">
+          {t("futurePlan.whyLeadIncome", { amount: euro(ahead.flow.income) })}
+        </p>
+        <div className="flex h-3 gap-0.5 overflow-hidden rounded-full">
+          {rows.map((row) => (
+            <span
+              key={row.key}
+              className="h-full"
+              style={{
+                width: `${(Math.abs(row.amount) / ahead.flow.income) * 100}%`,
+                background: row.color,
+              }}
+            />
           ))}
         </div>
+        <ul
+          className={cn(
+            "grid gap-x-10 gap-y-1.5",
+            compact ? "grid-cols-1" : "grid-cols-2",
+          )}
+        >
+          {rows.map((row) => (
+            <li
+              key={row.key}
+              className="flex items-center justify-between gap-3 text-sm"
+            >
+              <span className="flex items-center gap-2">
+                <span
+                  className="size-2.5 rounded-full"
+                  style={{ background: row.color }}
+                />
+                {row.label}
+              </span>
+              <span className="tabular-nums">{signed(row.amount)}</span>
+            </li>
+          ))}
+        </ul>
       </div>
     </PlanCardFrame>
   );

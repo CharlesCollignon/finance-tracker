@@ -37,7 +37,6 @@ export const landingSample = {
   expenses: 1453,
   /** The Plan page: a year ahead, the milestones on the way, the cushion. */
   plan: {
-    yearAhead: 14850,
     byLabel: "March 2027",
     milestones: [
       { amount: 5000, monthsAway: 0 },
