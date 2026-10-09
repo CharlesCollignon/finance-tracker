@@ -1,36 +1,92 @@
 "use client";
 
-import { useCallback, useSyncExternalStore } from "react";
+import {
+  createContext,
+  createElement,
+  useCallback,
+  useContext,
+  useEffect,
+  useSyncExternalStore,
+} from "react";
 import { formatCurrency, type CurrencyCode } from "@finance/core/constants";
+import {
+  CURRENCY_COOKIE,
+  CURRENCY_COOKIE_MAX_AGE,
+  parseCurrency,
+} from "@/lib/currency-cookie";
 import { useLocale } from "@/lib/locale-context";
 
 const CURRENCY_CHANGE_EVENT = "app-currency-change";
-const STORAGE_KEY = "currency";
+/** Where the choice was kept before the cookie, read once to move it over. */
+const LEGACY_STORAGE_KEY = "currency";
 
+// A change in this page announces itself; one made in another tab is read
+// when this one is back in front.
 function subscribe(onChange: () => void): () => void {
   window.addEventListener(CURRENCY_CHANGE_EVENT, onChange);
-  window.addEventListener("storage", onChange);
+  window.addEventListener("focus", onChange);
   return () => {
     window.removeEventListener(CURRENCY_CHANGE_EVENT, onChange);
-    window.removeEventListener("storage", onChange);
+    window.removeEventListener("focus", onChange);
   };
 }
 
-function getCurrency(): CurrencyCode {
-  return window.localStorage.getItem(STORAGE_KEY) === "USD" ? "USD" : "EUR";
+function cookieValue(): string | null {
+  const entry = document.cookie
+    .split("; ")
+    .find((part) => part.startsWith(`${CURRENCY_COOKIE}=`));
+  return entry ? entry.slice(CURRENCY_COOKIE.length + 1) : null;
 }
 
-function getServerSnapshot(): CurrencyCode {
-  return "EUR";
+function readCurrency(): CurrencyCode {
+  return parseCurrency(cookieValue());
 }
 
-/** Current display currency, reactive to changes from any tab/component. */
+function writeCookie(currency: CurrencyCode): void {
+  document.cookie = `${CURRENCY_COOKIE}=${currency}; path=/; max-age=${CURRENCY_COOKIE_MAX_AGE}; samesite=lax`;
+}
+
+/** The currency the server rendered with, for the first paint to agree. */
+const CurrencyContext = createContext<CurrencyCode>("EUR");
+
+/**
+ * Seeded from the cookie the server read (`getCurrency`), as the language
+ * is: the server renders the reader's symbol and hydration agrees with it.
+ * A choice kept in this browser's storage before the cookie existed is moved
+ * into the cookie once.
+ */
+export function CurrencyProvider({
+  currency,
+  children,
+}: {
+  currency: CurrencyCode;
+  children: React.ReactNode;
+}) {
+  useEffect(() => {
+    if (cookieValue() !== null) {
+      return;
+    }
+    try {
+      const legacy = window.localStorage.getItem(LEGACY_STORAGE_KEY);
+      if (legacy === "USD") {
+        setCurrencyPreference("USD");
+      }
+    } catch {
+      // Storage refused: the cookie stays unset, which is euro.
+    }
+  }, []);
+
+  return createElement(CurrencyContext.Provider, { value: currency }, children);
+}
+
+/** Current display currency, reactive to a change made anywhere on the page. */
 export function useCurrency(): CurrencyCode {
-  return useSyncExternalStore(subscribe, getCurrency, getServerSnapshot);
+  const seeded = useContext(CurrencyContext);
+  return useSyncExternalStore(subscribe, readCurrency, () => seeded);
 }
 
 export function setCurrencyPreference(currency: CurrencyCode): void {
-  window.localStorage.setItem(STORAGE_KEY, currency);
+  writeCookie(currency);
   window.dispatchEvent(new Event(CURRENCY_CHANGE_EVENT));
 }
 

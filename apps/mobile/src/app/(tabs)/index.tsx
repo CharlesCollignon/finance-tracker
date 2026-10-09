@@ -13,13 +13,11 @@ import { AttentionRow } from "@/components/bearing/AttentionRow";
 import { SetupCard } from "@/components/bearing/SetupCard";
 import { YearReadyCard } from "@/components/bearing/YearReadyCard";
 import { TaxSeasonCard } from "@/components/bearing/TaxSeasonCard";
-import {
-  BalanceCard,
-  MomentumCard,
-  SpentCard,
-  UpcomingCard,
-  WhereItWentCard,
-} from "@/components/bearing/MonthCards";
+import { BalanceCard } from "@/components/bearing/BalanceCard";
+import { MomentumCard } from "@/components/bearing/MomentumCard";
+import { SpentCard } from "@/components/bearing/SpentCard";
+import { UpcomingCard } from "@/components/bearing/UpcomingCard";
+import { WhereItWentCard } from "@/components/bearing/WhereItWentCard";
 import { WeeklyRecapCard } from "@/components/bearing/WeeklyRecapCard";
 import { StaggerItem } from "@/components/motion/Stagger";
 import { Screen } from "@/components/ui/Screen";

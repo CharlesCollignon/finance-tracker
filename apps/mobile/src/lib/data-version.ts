@@ -119,6 +119,12 @@ const UNDRAWN_RPCS: ReadonlySet<string> = new Set([
   "create_space_invite",
 ]);
 
+/** Database functions that write one area only (migration 067). */
+const RPC_AREAS: Record<string, readonly DataArea[]> = {
+  reprice_occurrences: ["transactions"],
+  set_feed_balances: ["bank"],
+};
+
 /** The web routes the phone writes through, by path. */
 const ROUTE_AREAS: Record<string, readonly DataArea[]> = {
   "/api/bank/feed": ["bank", "transactions"],
@@ -165,6 +171,9 @@ function areasWrittenTo(
     if (rest[1] === "rpc") {
       if (rest[2] && UNDRAWN_RPCS.has(rest[2])) {
         return [];
+      }
+      if (rest[2] && RPC_AREAS[rest[2]]) {
+        return RPC_AREAS[rest[2]];
       }
       return rest[2] && READ_RPCS.has(rest[2]) ? null : ALL_AREAS;
     }

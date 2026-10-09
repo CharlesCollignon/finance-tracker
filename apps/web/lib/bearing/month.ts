@@ -1,165 +1,19 @@
-import { createClient } from "@/lib/supabase/server";
-import { getRecurringTemplates } from "@/lib/queries/finance";
+import { todayIsoLocal } from "@finance/core/constants";
 import {
-  getFulfilledKeys,
-  getFulfilmentReport,
-  type FulfilmentReport,
-} from "@/lib/queries/fulfilment";
-import { getCategories } from "@/lib/queries/categories";
-import { getMonthCloseOverview } from "@/lib/queries/month-close";
-import {
-  countSwallowedFeedItems,
-  getPendingFeedItems,
-  getRecurringProposals,
-  hasBankFeed,
-} from "@/lib/queries/bank";
-import { getWalletPortfolio } from "@/lib/queries/wallet-portfolio";
+  readBearingMonth,
+  type BearingMonth,
+} from "@finance/data/bearing-month";
 import { getLocale } from "@/lib/locale";
-import { buildAttention, type AttentionItem } from "@finance/core/attention";
-import {
-  formatMonthLabel,
-  getMonthBounds,
-  shiftMonth,
-  todayIsoLocal,
-} from "@finance/core/constants";
-import {
-  spendingByMonth,
-  topSpending,
-  type CategorySpend,
-  type DayOutflows,
-  type MonthBalance,
-} from "@finance/core/month-balance";
-import type { PurchaseToConfirm } from "@finance/core/purchases-to-confirm";
-import type { DcaMonth } from "@finance/core/dca-need";
-import type { FulfilmentProposal } from "@finance/core/recurring-fulfilment";
-import type { UpcomingCharge } from "@finance/core/still-to-come";
-import {
-  readMonthBalance,
-  type BalanceSource,
-  type MonthBalanceRead,
-} from "@finance/data/month-balance";
-import { getPurchasesToConfirm } from "@finance/data/purchases-to-confirm";
-import { readLeftToSpend } from "@finance/data/left-to-spend";
-import { payTemplate, type LeftToSpend } from "@finance/core/left-to-spend";
-import { rollUpRecurring } from "@finance/core/recurring-rollup";
-import { firstCloseDay, type SetupFacts } from "@finance/core/setup-steps";
-import { readDismissedPrompts } from "@finance/data/preferences";
-import { reviewedYear, yearReviewPrompt } from "@finance/core/year-review";
-import { getDcaMonth } from "@finance/data/dca-transfer";
-import { readMyShare } from "@finance/data/spaces";
-import { withMyShare } from "@finance/core/my-share";
+import { getRecurringTemplates } from "@/lib/queries/finance";
+import { getWalletPortfolio } from "@/lib/queries/wallet-portfolio";
+import { createClient } from "@/lib/supabase/server";
 
-/** How many months the spending bars look back over, the month shown included. */
-const TREND_MONTHS = 6;
-
-export interface BearingMonth {
-  year: number;
-  month: number;
-  today: string;
-  balance: MonthBalance;
-  /** What the balance is pinned to: the bank's statement, a close, or nothing. */
-  source: BalanceSource;
-  /** With several current accounts, what each held: the balance taken apart. */
-  accounts: MonthBalanceRead["accounts"];
-  /** Recorded this month. */
-  income: number;
-  spent: {
-    total: number;
-    /**
-     * Last month at the same point: its whole month for a month that has
-     * ended, and up to today's day of the month for this one — comparing
-     * three weeks against four would make every month look like a win.
-     */
-    previous: number | null;
-    trend: { monthKey: string; label: string; total: number }[];
-  };
-  spending: {
-    top: CategorySpend[];
-    rest: number;
-    total: number;
-  };
-  /**
-   * « Avec ma part du commun », for someone in a shared space under « Moi »:
-   * whether the spending above counts their part of the space, and that
-   * part. Null where it is not offered.
-   */
-  myShare: { on: boolean; part: number | null } | null;
-  /** What left the account, or is set to, day by day: the curve's markers. */
-  outflows: DayOutflows[];
-  /** Still to come in this month; null for a month that has ended. */
-  upcoming: {
-    charges: UpcomingCharge[];
-    leaving: number;
-    arriving: number;
-  } | null;
-  /** The month in progress only — the run and wallets are about now. */
-  run: { streak: number; best: number } | null;
-  invested: number | null;
-  attention: AttentionItem[];
-  /**
-   * Movements that look like a charge that has arrived, waiting for a yes or
-   * a no. The month in progress only: it is the one whose forecast a salary
-   * already paid would otherwise count a second time.
-   */
-  arrived: FulfilmentReport | null;
-  /**
-   * Purchases inside a wallet whose day has come, waiting for the user to say
-   * whether they went through. The month in progress, with a bank feeding
-   * the ledger, only: without one they are written on their day.
-   */
-  purchases: PurchaseToConfirm[];
-  /**
-   * The DCA card (`dcaMonth`): the month the transfer to the broker pays
-   * for, whether it was sent, its DCAs going through, the months funded in a
-   * row. The month in progress only.
-   */
-  dca: DcaMonth | null;
-  /**
-   * The bank's movement that looks like that transfer, confirmed on the card
-   * and so left out of `arrived`.
-   */
-  dcaProposal: FulfilmentProposal | null;
-  /**
-   * « Il vous reste »: what the account can still give before the next pay
-   * day. The month in progress with a balance only.
-   */
-  left: LeftToSpend | null;
-  /**
-   * « Reste chaque mois »: what a month's income leaves once its recurring
-   * charges are out (`rollUpRecurring`), for « Puis-je me permettre ? ».
-   * Null without a recurring income, and outside the month in progress.
-   */
-  eachMonth: number | null;
-  /**
-   * What Le point's setup cards ask about (`nextSetupStep`), all but the bank
-   * invitation, which the page decides. The month in progress only.
-   */
-  setup: (Omit<SetupFacts, "bankInvited"> & { firstCloseOn: string }) | null;
-  /**
-   * The year « Votre année » is ready for, in January until « Vu »; null
-   * otherwise. The month in progress only.
-   */
-  yearReady: number | null;
-  /** Any recurring template active: without one, nothing is ever to come. */
-  recurring: boolean;
-  /** Nothing recorded, nothing planned and no balance: a first visit. */
-  empty: boolean;
-}
-
-function monthKeyOf(year: number, month: number): string {
-  return `${year}-${String(month).padStart(2, "0")}`;
-}
+export type { BearingMonth };
 
 /**
- * Everything the Bearing shows for one month.
- *
- * One month and not "today", because the question the screen answers is the
- * month's: what the account holds, where the month ends, and what it went
- * on. A past month answers it with what happened, a future one with what the
- * charges call for, and the month in progress with both, joined at today.
- *
- * The balance is `@finance/data/month-balance`'s, shared with the phone's
- * Le point and the overdraft warning, so all three draw the same curve.
+ * Everything the Bearing shows for one month: `@finance/data/bearing-month`,
+ * the gathering the phone's Le point runs too, with the web's own pricing of
+ * the wallets and the templates this render already read.
  */
 export async function gatherBearingMonth(
   userId: string,
@@ -172,231 +26,26 @@ export async function gatherBearingMonth(
    */
   myShare: boolean | null = null,
 ): Promise<BearingMonth> {
-  const today = todayIsoLocal();
-  const { start: first, end: last } = getMonthBounds(year, month);
-  const period = last < today ? "past" : first > today ? "future" : "current";
-  const isCurrent = period === "current";
-  const previousMonth = shiftMonth(year, month, -1);
-  const locale = await getLocale();
-
-  const [templates, fulfilledKeys, closes, bankFed] = await Promise.all([
+  const [db, locale, templates] = await Promise.all([
+    createClient(),
+    getLocale(),
     getRecurringTemplates(userId),
-    getFulfilledKeys(userId),
-    getMonthCloseOverview(userId, today),
-    hasBankFeed(userId),
   ]);
-
-  /* ----------------------------------------------- the balance and rows */
-
-  // The months the spending bars look back over, read with the balance's
-  // own range in one pass.
-  const trendFrom = shiftMonth(year, month, -(TREND_MONTHS - 1));
-  const {
-    balance,
-    source,
-    accounts,
-    rows,
-    upcoming: shownUpcoming,
-    outflows,
-    debited,
-  } = await readMonthBalance(await createClient(), userId, {
+  return readBearingMonth(db, userId, {
     year,
     month,
-    today,
+    today: todayIsoLocal(),
+    locale,
+    myShare,
     templates,
-    fulfilledKeys,
-    closes,
-    bankFed,
-    readFrom: getMonthBounds(trendFrom.year, trendFrom.month).start,
-  });
-
-  /* ------------------------------------------------------- the spending */
-
-  // With the person's part of the space, the spending is counted on their
-  // rows less the transfers to the joint account, plus their part of what
-  // the space spent (`withMyShare`). The balance above is untouched.
-  const shared = myShare
-    ? await readMyShare(
-        await createClient(),
-        userId,
-        getMonthBounds(trendFrom.year, trendFrom.month).start,
-        last,
-      )
-    : null;
-  const spendRows = shared
-    ? withMyShare(rows, shared.rows, shared.share)
-    : rows;
-
-  const inMonth = spendRows.filter(
-    (tx) => tx.occurred_on >= first && tx.occurred_on <= last,
-  );
-  const trendKeys = Array.from({ length: TREND_MONTHS }, (_, index) => {
-    const at = shiftMonth(year, month, index - (TREND_MONTHS - 1));
-    return { ...at, key: monthKeyOf(at.year, at.month) };
-  });
-  const byMonth = spendingByMonth(
-    spendRows,
-    trendKeys.map((entry) => entry.key),
-  );
-  const previousKey = monthKeyOf(previousMonth.year, previousMonth.month);
-  const sameDay = today.slice(8, 10);
-  const previousSoFar = isCurrent
-    ? spendingByMonth(
-        spendRows.filter((tx) => tx.occurred_on.slice(8, 10) <= sameDay),
-        [previousKey],
-      ).get(previousKey)
-    : byMonth.get(previousKey);
-
-  const spending = topSpending(inMonth, 4);
-
-  /* --------------------------------------- what only the present has */
-
-  let run: BearingMonth["run"] = null;
-  let invested: number | null = null;
-  let attention: AttentionItem[] = [];
-  let arrived: FulfilmentReport | null = null;
-  let purchases: PurchaseToConfirm[] = [];
-  let dca: DcaMonth | null = null;
-  let dcaProposal: FulfilmentProposal | null = null;
-  let left: LeftToSpend | null = null;
-  let eachMonth: number | null = null;
-  let yearReady: number | null = null;
-  let setup: BearingMonth["setup"] = null;
-
-  if (isCurrent) {
-    left = await readLeftToSpend(await createClient(), userId, {
-      today,
-      read: { balance, upcoming: shownUpcoming },
-      templates,
-      fulfilledKeys,
-      closes,
-      bankFed,
-    });
-    const rollup = rollUpRecurring(templates, { debited, year, month });
-    eachMonth = rollup.income > 0 ? rollup.left : null;
-    const dismissed = await readDismissedPrompts(await createClient(), userId);
-    // « Votre année », in January, until « Vu ».
-    const reviewed = reviewedYear(today);
-    yearReady =
-      reviewed !== null && !dismissed.includes(yearReviewPrompt(reviewed))
-        ? reviewed
-        : null;
-    setup = {
-      bankFed,
-      hasBalance: source !== "none",
-      hasIncome: payTemplate(templates) !== null,
-      hasCharges: templates.some(
-        (template) => template.active && template.categories.type === "expense",
-      ),
-      hasClosed: closes.history.length > 0,
-      readyToClose: closes.next !== null,
-      dismissed,
-      firstCloseOn: firstCloseDay(today, closes.settings.closeDay),
-    };
-    const categories = await getCategories(userId);
-    arrived = await getFulfilmentReport(
-      userId,
-      templates,
-      categories,
-      year,
-      month,
-    );
-    const [portfolio, pending, swallowed, proposals, waitingPurchases] =
-      await Promise.all([
-        getWalletPortfolio(userId, { includeHistory: false }),
-        bankFed ? getPendingFeedItems(userId, locale) : Promise.resolve([]),
-        bankFed ? countSwallowedFeedItems(userId) : Promise.resolve(0),
-        bankFed ? getRecurringProposals(userId, today) : Promise.resolve([]),
-        bankFed
-          ? getPurchasesToConfirm(await createClient(), userId, {
-              templates,
-              fulfilledKeys,
-              debited,
-              today,
-            })
-          : Promise.resolve([]),
-      ]);
-    purchases = waitingPurchases;
-    dca = await getDcaMonth(await createClient(), userId, today);
-    if (dca && arrived) {
-      const key = `${dca.templateId}:${dca.occurredOn}`;
-      dcaProposal =
-        arrived.proposals.find((proposal) => proposal.key === key) ?? null;
-      arrived = {
-        proposals: arrived.proposals.filter((proposal) => proposal.key !== key),
-      };
-    }
-
-    if (closes.summary.sample > 0) {
-      run = {
-        streak: closes.summary.streak,
-        best: closes.summary.bestStreak,
-      };
-    }
-
-    const total = portfolio.columns.reduce(
-      (sum, column) => sum + column.totalMarketValue,
-      0,
-    );
-    invested = total > 0 ? total : null;
-
-    attention = buildAttention({
-      swallowed,
-      pendingInbox: pending.length,
-      readyToClose: closes.next
-        ? { monthLabel: closes.next.label, isBaseline: closes.next.isBaseline }
-        : null,
-      proposals: proposals.length,
-    });
-  }
-
-  const income = inMonth
-    .filter((tx) => tx.categories.type === "income" && tx.occurred_on <= today)
-    .reduce((sum, tx) => sum + Number(tx.amount), 0);
-
-  return {
-    year,
-    month,
-    today,
-    balance,
-    source,
-    accounts,
-    income,
-    spent: {
-      total: byMonth.get(monthKeyOf(year, month)) ?? 0,
-      previous: previousSoFar ?? null,
-      trend: trendKeys.map((entry) => ({
-        monthKey: entry.key,
-        label: formatMonthLabel(entry.year, entry.month, locale),
-        total: byMonth.get(entry.key) ?? 0,
-      })),
+    investedValue: async () => {
+      const portfolio = await getWalletPortfolio(userId, {
+        includeHistory: false,
+      });
+      return portfolio.columns.reduce(
+        (sum, column) => sum + column.totalMarketValue,
+        0,
+      );
     },
-    spending: {
-      top: spending.top,
-      rest: spending.rest,
-      total: spending.total,
-    },
-    myShare:
-      myShare === null
-        ? null
-        : { on: shared !== null, part: shared?.share ?? null },
-    upcoming: shownUpcoming,
-    outflows,
-    run,
-    invested,
-    attention,
-    arrived: arrived && arrived.proposals.length > 0 ? arrived : null,
-    purchases,
-    dca,
-    dcaProposal,
-    left,
-    eachMonth,
-    setup,
-    yearReady,
-    recurring: templates.some((template) => template.active),
-    empty:
-      source === "none" &&
-      rows.length === 0 &&
-      templates.every((template) => !template.active),
-  };
+  });
 }

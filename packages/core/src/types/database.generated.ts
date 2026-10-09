@@ -2454,6 +2454,10 @@ export type Database = {
         Args: { new_name: string; target_space: string };
         Returns: undefined;
       };
+      reprice_occurrences: {
+        Args: { target_user: string; updates: Json };
+        Returns: number;
+      };
       reserve_ask: {
         Args: { allowance: number; target_month: string };
         Returns: number;
@@ -2639,6 +2643,10 @@ export type Database = {
       };
       restore_transactions: {
         Args: { ids: string[]; target_user: string };
+        Returns: number;
+      };
+      set_feed_balances: {
+        Args: { target_user: string; updates: Json };
         Returns: number;
       };
       set_property_share: {

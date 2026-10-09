@@ -14,11 +14,7 @@ import {
 import { intradayIndexes } from "@finance/core/bank-balance";
 import { buildMerchantIndex } from "@finance/core/merchant-memory";
 import { buildBankMerchantIndex } from "@finance/core/bank-merchant";
-import type {
-  BankAccountRole,
-  Database,
-  TransactionWithCategory,
-} from "@finance/core/types/database";
+import type { BankAccountRole, Database } from "@finance/core/types/database";
 import {
   cleanIban,
   isFollowed,
@@ -377,7 +373,7 @@ async function ownerContext(
     ),
   ]);
 
-  const past = history as TransactionWithCategory[];
+  const past = history;
   // Which ledger rows a bank row could be a copy of. A feed item that already
   // points at a transaction has claimed it, so a later sync cannot file a
   // second bank row against the same one.
@@ -635,7 +631,7 @@ export async function rememberAccounts(
       row.provider_account_id,
       {
         userId,
-        role: row.role as BankAccountRole | null,
+        role: row.role,
         spaceId: row.space_id ?? null,
         historyImportedAt: row.history_imported_at,
       },
@@ -643,11 +639,15 @@ export async function rememberAccounts(
   );
 }
 
+/** Rows per batched write: well inside a request PostgREST will take. */
+const WRITE_CHUNK = 200;
+
 /**
- * How many balance updates to have in flight at once. Small on purpose: this
- * runs inside a sixty-second cron alongside a bank fetch, and firing a couple
- * of hundred concurrent requests at PostgREST to save a second is a poor
- * trade against the run finishing at all.
+ * How many balance updates to have in flight at once when they go a row at
+ * a time (before migration 067, or after a refused batch). Small on purpose:
+ * this runs inside a sixty-second cron alongside a bank fetch, and firing a
+ * couple of hundred concurrent requests at PostgREST to save a second is a
+ * poor trade against the run finishing at all.
  */
 const BALANCE_CHUNK = 25;
 
@@ -683,25 +683,34 @@ async function refreshBalances(
     })
     .filter((row): row is NonNullable<typeof row> => row !== null);
 
-  for (let start = 0; start < rows.length; start += BALANCE_CHUNK) {
-    const chunk = rows.slice(start, start + BALANCE_CHUNK);
-    await Promise.all(
-      chunk.map((row) =>
-        supabase
-          .from("bank_feed_items")
-          .update({
-            balance_after: row.balance_after,
-            intraday_index: row.intraday_index,
-          })
-          .eq("user_id", userId)
-          .eq("provider_id", row.provider_id),
-      ),
-    );
+  // One call per batch (`set_feed_balances`, migration 067); before that
+  // migration, or when a batch is refused, a row at a time.
+  for (let start = 0; start < rows.length; start += WRITE_CHUNK) {
+    const batch = rows.slice(start, start + WRITE_CHUNK);
+    const { error } = await supabase.rpc("set_feed_balances", {
+      target_user: userId,
+      updates: batch,
+    });
+    if (!error) {
+      continue;
+    }
+    for (let one = 0; one < batch.length; one += BALANCE_CHUNK) {
+      const chunk = batch.slice(one, one + BALANCE_CHUNK);
+      await Promise.all(
+        chunk.map((row) =>
+          supabase
+            .from("bank_feed_items")
+            .update({
+              balance_after: row.balance_after,
+              intraday_index: row.intraday_index,
+            })
+            .eq("user_id", userId)
+            .eq("provider_id", row.provider_id),
+        ),
+      );
+    }
   }
 }
-
-/** Rows per batched write: well inside a request PostgREST will take. */
-const WRITE_CHUNK = 200;
 
 /**
  * Write what the plan decided, in a few requests rather than two or three

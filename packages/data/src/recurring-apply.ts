@@ -126,11 +126,17 @@ export async function loadApplyRecurringData(
   );
 
   return {
-    templates: (templates ?? []) as RecurringTemplateWithCategory[],
+    templates: templates ?? [],
     existingByKey,
     skippedKeys,
   };
 }
+
+/** Rows per batched reprice: well inside a request PostgREST will take. */
+const REPRICE_BATCH = 200;
+
+/** Updates in flight at once when repricing a row at a time. */
+const REPRICE_CHUNK = 10;
 
 /**
  * Write a plan's repricing through.
@@ -138,10 +144,11 @@ export async function loadApplyRecurringData(
  * These occurrences are entirely derived from their template — a forecast of
  * a purchase that has not happened yet — so the whole row is brought back in
  * line, category included. There is nothing here the user typed to preserve.
+ *
+ * One call per batch (`reprice_occurrences`, migration 067). Before that
+ * migration, or when the database refuses a batch, a row at a time, so one
+ * bad row costs only itself.
  */
-/** Updates in flight at once when repricing. */
-const REPRICE_CHUNK = 10;
-
 export async function writeReprices(
   db: Db,
   userId: string,
@@ -150,8 +157,38 @@ export async function writeReprices(
   let repriced = 0;
   const failures: string[] = [];
 
-  // A few at a time rather than one after another: a month of quote-priced
-  // charges is a row each, and every one is its own update.
+  for (let start = 0; start < reprices.length; start += REPRICE_BATCH) {
+    const batch = reprices.slice(start, start + REPRICE_BATCH);
+    const { data, error } = await db.rpc("reprice_occurrences", {
+      target_user: userId,
+      updates: batch.map((item) => ({
+        id: item.transactionId,
+        amount: item.amount,
+        note: item.note,
+        category_id: item.categoryId,
+      })),
+    });
+    if (!error) {
+      repriced += data ?? 0;
+      continue;
+    }
+    const one = await repriceOneByOne(db, userId, batch);
+    repriced += one.repriced;
+    failures.push(...one.failures);
+  }
+
+  return { repriced, failures };
+}
+
+/** The same, a row at a time: a few in flight, each its own update. */
+async function repriceOneByOne(
+  db: Db,
+  userId: string,
+  reprices: readonly RecurringOccurrenceUpdate[],
+): Promise<{ repriced: number; failures: string[] }> {
+  let repriced = 0;
+  const failures: string[] = [];
+
   for (let start = 0; start < reprices.length; start += REPRICE_CHUNK) {
     const results = await Promise.all(
       reprices.slice(start, start + REPRICE_CHUNK).map((item) =>

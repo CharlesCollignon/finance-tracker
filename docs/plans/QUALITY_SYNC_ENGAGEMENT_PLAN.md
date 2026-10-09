@@ -102,23 +102,44 @@ Done:
 - [x] `actions/finance.ts` 1 175 → ~420 lines, the phone's `mutations.ts`
       2 521 → ~500, `queries.ts` 1 592 → ~1 060.
 
-Deferred (worth doing, none of it a bug):
+Deferred (worth doing, none of it a bug) — taken up on 2026-10-09, branch
+`quality-leftovers`:
 
-- [ ] The screen loaders — the bearing month (the phone still draws the
-      earlier five-card Bearing, so this waits on that screen's parity),
-      the Plan's and Placements' — and the position writes, which do
-      different jobs on each app.
-- [ ] Splitting the big screen components: web `TransactionsView`,
-      `LookThroughView`, `BankInbox`, `InvestmentsView`, `RecurringForm`,
-      `BearingMonthView`, `LandingMocks` (and rendering it on the server);
-      phone `transactions.tsx` + `calendar.tsx`, `MonthCards`, `import.tsx`,
-      `bank.tsx`, `LookThroughView`.
-- [ ] Currency in a cookie, so amounts render on the server.
-- [ ] Phone: counters on the UI thread, `useEffectEvent` for the
-      ref-syncing pattern, an error boundary per route group, one
-      `ScreenError` with a retry.
-- [ ] Batch the per-row round trips in the bank sync and reprices.
-- [ ] The casts the generated types make unnecessary, as files are touched.
+- [x] The screen loaders: Le point's month is `@finance/data/bearing-month`,
+      one gathering for both apps, each handing in its client and its own
+      pricing of the wallets. Not the Plan's and Placements': the two apps
+      load different shapes there (the phone gathers the accounts and their
+      analysis at once, the web a base the two tabs share), and merging them
+      first needs the two savings-account readers made one. Nor the position
+      writes, which do different jobs on each app. Left for when either is
+      changed for its own reason.
+- [x] Splitting the big screen components, where it is a move: the landing
+      mocks (one file a screen), Le point's cards on both apps, the web's
+      `InvestmentsView` and both look-throughs (their parts), the phone's
+      bank page (its cards and the disconnect sheet) — each checked token
+      for token against the file it came from. Not cut: the screens that are
+      one long component (`TransactionsView`, `RecurringForm`, the phone's
+      `transactions.tsx`, `calendar.tsx`, `import.tsx`, the look-through
+      views' main components), where splitting means turning their state
+      into props, which no one could check on a device or in a browser here.
+      The landing mocks stay client components: rendering them on the server
+      would put the app's `CategoryIcon` on the server's icon build.
+- [x] Currency in a cookie (`pluclair-currency`), read by the server and
+      seeding `useCurrency`, as the language is.
+- [x] Phone: an error boundary per screen and one `ScreenError` with a retry
+      (already there; the bank page, the tax page and « Questions » now use
+      it for a failed read too); `useEffectEvent` where an effect reads the
+      latest callback (`useAppForeground`) — the two `latest` refs left are
+      called from press handlers too, which an effect event may not be.
+      Counters stay on the JS thread: a UI-thread counter is an animated
+      `TextInput`, which loses `adjustsFontSizeToFit` and the privacy
+      blur's wrapper, for some forty renders of one text per change.
+- [x] Batch the per-row round trips: the feed's balances and the reprices
+      in one call per batch (migration 067), a row at a time before it and
+      when a batch is refused. The rest of the sync was batched already;
+      the template quotes are a fetch per instrument, which a batched write
+      would not shorten.
+- [x] The casts the generated types make unnecessary, in the files touched.
 
 Working note: the machine has ~7.8 GiB; two parallel agents running
 typechecks and builds crashed the terminal twice. Work sequentially.

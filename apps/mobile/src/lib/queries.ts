@@ -468,8 +468,6 @@ export async function getRecentBankMovements(
  * phone's client.
  */
 
-export type { FulfilmentReport } from "@finance/data/fulfilment";
-
 export function getFulfilledKeys(userId: string): Promise<Set<string>> {
   return fulfilment.getFulfilledKeys(supabase, userId);
 }

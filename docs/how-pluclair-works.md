@@ -96,6 +96,9 @@ write anywhere has to reach every screen that shows it.
   (`hooks/useAppForeground.ts`, `MonthProvider`).
 - **Both.** Every query that can pass the server's 1,000-row cap goes through
   `allRows` (`packages/core/src/paging.ts`).
+- **The display currency** is a cookie on the web (`pluclair-currency`), read
+  by the server to seed `useCurrency` as the language is, so the first paint
+  has the right symbol; on the phone it stays in the device's storage.
 
 ## Notifications
 
@@ -270,6 +273,12 @@ tax a sale would pay; `propertyGainTax`). The milestones and the long view's
 monthly income leave property out.
 
 ## Le point, first
+
+Both apps gather the month the same way, `@finance/data/bearing-month`
+(`readBearingMonth`): the web's `gatherBearingMonth` and the phone's
+`gatherHomeMonth` hand it their client and their own pricing of the wallets.
+Its cards are a file each on both apps (`BalanceCard`, `SpentCard`…, made of
+`card-parts.tsx`).
 
 « Il vous reste » is one line of the month in progress's balance card, on
 both apps, between its two figures and its curve (`LeftToSpendLine`): what
@@ -447,6 +456,13 @@ retention, the share of the week's users opening on three days or more, and
 the share who closed a month.
 
 ## Bank feed
+
+The sync writes in batches: the feed's rows in a few upserts, and the balance
+the bank printed after each movement in one call per batch
+(`set_feed_balances`, migration 067). Repricing a month's quote-priced
+occurrences is one call too (`reprice_occurrences`). Before 067, and when the
+database refuses a batch, both go a row at a time, so one bad row costs only
+itself.
 
 Built and reachable by one account per deployment: the one whose id is
 `OPEN_BANKING_OWNER_USER_ID` (`apps/web/lib/bank/client.ts`). Everyone else
