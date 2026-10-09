@@ -47,6 +47,7 @@
     "./flags": "./src/flags.ts",
     "./fulfilment-state": "./src/fulfilment-state.ts",
     "./future-plan": "./src/future-plan.ts",
+    "./year-ahead": "./src/year-ahead.ts",
     "./savings-accounts": "./src/savings-accounts.ts",
     "./setup-steps": "./src/setup-steps.ts",
     "./fund-costs": "./src/fund-costs.ts",
