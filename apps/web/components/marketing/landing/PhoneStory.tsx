@@ -88,7 +88,7 @@ export function PhoneStory({ copy }: { copy: StoryCopy }) {
     <section
       id="how"
       ref={ref}
-      className="relative px-6"
+      className="relative overflow-x-clip px-6"
       style={{ height: `${count * 100 + 60}vh` }}
     >
       <div className="sticky top-0 mx-auto grid h-dvh max-w-6xl grid-rows-[auto_minmax(0,1fr)] items-center gap-6 py-20 md:grid-cols-[minmax(0,6fr)_minmax(0,5fr)] md:grid-rows-1 md:gap-16 md:py-0">
@@ -183,9 +183,11 @@ export function PhoneStory({ copy }: { copy: StoryCopy }) {
 }
 
 /**
- * One chapter's screen: it slides up into the glass as its chapter starts
- * and on up and out as the next takes over. The first is there from the
- * start and the last stays to the end.
+ * One chapter's screen. The next one wipes up over it from the bottom of the
+ * glass as its chapter starts, while this one steps back — a little smaller,
+ * a little darker — like a card under the one laid on it. The first is there
+ * from the start; the last stays to the end. Under reduced motion each one
+ * simply replaces the one before.
  */
 function Screen({
   pageId,
@@ -202,29 +204,42 @@ function Screen({
 }) {
   const start = index / count;
   const end = (index + 1) / count;
-  const edge = 0.12 / count;
+  const edge = 0.14 / count;
   const first = index === 0;
   const last = index === count - 1;
-  const input = [start - edge, start + edge, end - edge, end + edge];
-  const opacity = useTransform(progress, input, [
-    first ? 1 : 0,
-    1,
-    1,
-    last ? 1 : 0,
-  ]);
-  const y = useTransform(
+
+  const enter = [start - edge, start + edge];
+  const leave = [end - edge, end + edge];
+  const clipPath = useTransform(
     progress,
-    input,
-    still ? [0, 0, 0, 0] : [first ? 0 : 60, 0, 0, last ? 0 : -60],
+    enter,
+    first || still
+      ? ["inset(0% 0% 0% 0%)", "inset(0% 0% 0% 0%)"]
+      : ["inset(100% 0% 0% 0%)", "inset(0% 0% 0% 0%)"],
+  );
+  const opacity = useTransform(
+    progress,
+    enter,
+    first ? [1, 1] : still ? [0, 1] : [1, 1],
   );
   const scale = useTransform(
     progress,
-    input,
-    still ? [1, 1, 1, 1] : [first ? 1 : 1.06, 1, 1, last ? 1 : 0.96],
+    leave,
+    last || still ? [1, 1] : [1, 0.92],
   );
+  const dim = useTransform(progress, leave, last || still ? [0, 0] : [0, 0.55]);
+
   return (
-    <m.div className="absolute inset-0" style={{ opacity, y, scale }}>
+    <m.div
+      className="absolute inset-0 origin-top"
+      style={{ clipPath, opacity, scale }}
+    >
       <FeatureMock pageId={pageId} variant="mobile" />
+      <m.div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 bg-black"
+        style={{ opacity: dim }}
+      />
     </m.div>
   );
 }

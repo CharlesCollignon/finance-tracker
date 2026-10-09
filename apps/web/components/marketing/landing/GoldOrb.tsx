@@ -64,8 +64,8 @@ void main() {
   vec2 p = (frag - 0.5 * uResolution) / side;
 
   // The orb climbs from behind the horizon to sit above it.
-  float radius = 0.27;
-  vec2 centre = vec2(0.0, mix(-0.62, 0.06, uRise));
+  float radius = 0.2;
+  vec2 centre = vec2(0.0, mix(-0.58, 0.17, uRise));
   vec2 q = (p - centre) / radius;
   float r = length(q);
 
@@ -108,7 +108,7 @@ void main() {
 
   // The horizon: a wide dark curve with a lit rim, hiding the orb's lower
   // half until it rises.
-  float horizon = -0.34;
+  float horizon = -0.38;
   float curve = horizon - 0.55 * pow(p.x / 1.6, 2.0);
   float below = smoothstep(curve + 0.002, curve - 0.002, p.y);
   float rim = exp(-abs(p.y - curve) * 90.0) * (0.35 + 0.65 * uRise);

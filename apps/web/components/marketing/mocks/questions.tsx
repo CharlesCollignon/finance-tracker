@@ -62,33 +62,44 @@ function Conversation({ compact }: { compact: boolean }) {
   );
   return (
     <div className={cn("flex flex-1 flex-col", compact ? "gap-4" : "gap-6")}>
-      <div className="flex justify-end">
-        <p
-          className={cn(
-            "max-w-[80%] rounded-2xl rounded-br-md bg-secondary text-foreground",
-            compact ? "px-3.5 py-2.5 text-sm" : "px-4 py-3 text-base",
-          )}
-        >
-          {questions.question}
-        </p>
-      </div>
-      <div className="flex items-start gap-3">
-        <Orb
-          tone="mark"
-          size={compact ? "22px" : "26px"}
-          className="mt-0.5 shrink-0"
-        />
+      {questions.exchanges.map((exchange) => (
         <div
-          className={cn(
-            "flex flex-col gap-2 leading-relaxed",
-            compact ? "text-sm" : "text-base",
-          )}
+          key={exchange.question}
+          className={cn("flex flex-col", compact ? "gap-4" : "gap-6")}
         >
-          {questions.answer.map((sentence) => (
-            <AnswerSentence key={sentence} text={sentence} figures={figures} />
-          ))}
+          <div className="flex justify-end">
+            <p
+              className={cn(
+                "max-w-[80%] rounded-2xl rounded-br-md bg-secondary text-foreground",
+                compact ? "px-3.5 py-2.5 text-sm" : "px-4 py-3 text-base",
+              )}
+            >
+              {exchange.question}
+            </p>
+          </div>
+          <div className="flex items-start gap-3">
+            <Orb
+              tone="mark"
+              size={compact ? "22px" : "26px"}
+              className="mt-0.5 shrink-0"
+            />
+            <div
+              className={cn(
+                "flex flex-col gap-2 leading-relaxed",
+                compact ? "text-sm" : "text-base",
+              )}
+            >
+              {exchange.answer.map((sentence) => (
+                <AnswerSentence
+                  key={sentence}
+                  text={sentence}
+                  figures={figures}
+                />
+              ))}
+            </div>
+          </div>
         </div>
-      </div>
+      ))}
       <Composer compact={compact} placeholder={t("ask.placeholder")}>
         {t("ask.kept", { days: 30 })}
       </Composer>

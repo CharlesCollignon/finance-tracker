@@ -285,12 +285,20 @@ export const landingSample = {
    * read below quotes, `before` February's by the same day.
    */
   questions: {
-    question: "How much did I spend on groceries this month?",
-    answer: [
-      "Groceries come to {spent} so far in March.",
-      "By the same day in February, it was {before}.",
+    exchanges: [
+      {
+        question: "How much did I spend on groceries this month?",
+        answer: [
+          "Groceries come to {spent} so far in March.",
+          "By the same day in February, it was {before}.",
+        ],
+      },
+      {
+        question: "What is my biggest subscription?",
+        answer: ["Netflix, at {netflix} a month — the only one you have."],
+      },
     ],
-    figures: { spent: 218, before: 241 },
+    figures: { spent: 218, before: 241, netflix: 15 },
   },
 
   /**

@@ -90,8 +90,8 @@ export function ScreenGallery({ copy }: { copy: GalleryCopy }) {
     >
       <div
         className={cn(
-          "flex flex-col justify-center gap-10 overflow-hidden py-24",
-          pinned && "sticky top-0 h-dvh py-0",
+          "flex flex-col justify-center gap-8 overflow-hidden py-24 md:gap-10",
+          pinned && "sticky top-0 h-dvh pb-8 pt-24",
         )}
       >
         <div className="mx-auto w-full max-w-6xl px-6">
@@ -182,7 +182,9 @@ function Slide({
   );
 
   return (
-    <figure className="m-0 w-[86vw] shrink-0 snap-center md:w-[min(64rem,72vw)] [perspective:1800px]">
+    // Sized from the window's height on a desktop, so the heading, the
+    // screen and its caption always fit in it together.
+    <figure className="m-0 w-[86vw] shrink-0 snap-center [perspective:1800px] md:w-[min(64rem,72vw,calc((100dvh-19rem)*2.76))]">
       <m.div style={{ rotateY, scale, opacity }} className="origin-center">
         <Link
           href={featureHref(pageId)}
@@ -191,9 +193,12 @@ function Slide({
             marketingFocus,
           )}
         >
-          <div className="overflow-hidden rounded-[1.2rem] bg-background">
+          {/* The top of the screen, where its figures are: the desktop
+              layouts leave their lower part to lists a picture does not
+              need, so the slide is cut there and fades. */}
+          <div className="aspect-[1200/434] overflow-hidden rounded-[1.2rem] bg-background [mask-image:linear-gradient(to_bottom,black_78%,transparent)]">
             <m.div
-              className="aspect-[12/7] w-[104%] -ml-[2%]"
+              className="-ml-[2%] aspect-[12/7] w-[104%]"
               style={{ x: inner }}
             >
               <FeatureMock pageId={pageId} variant="web" />

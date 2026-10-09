@@ -38,11 +38,9 @@ export function OrbFinale({
     useTransform(scrollYProgress, [0.2, 0.85], [0, 1], { clamp: true }),
     { stiffness: 90, damping: 24, mass: 0.6 },
   );
-  const words = useTransform(
-    scrollYProgress,
-    [0.6, 0.85],
-    still ? [1, 1] : [0, 1],
-  );
+  // The words arrive as the orb clears the horizon: tied to its rise rather
+  // than straight to the scroll, so they move with it.
+  const words = useTransform(rise, [0.55, 0.95], still ? [1, 1] : [0, 1]);
   const y = useTransform(words, [0, 1], [32, 0]);
 
   return (
@@ -53,7 +51,7 @@ export function OrbFinale({
       <div className="sticky top-0 h-dvh overflow-hidden">
         <GoldOrb rise={rise} />
         <m.div
-          className="absolute inset-x-0 bottom-[12vh] mx-auto flex max-w-3xl flex-col items-center px-6 text-center"
+          className="absolute inset-x-0 bottom-[7vh] mx-auto flex max-w-3xl flex-col items-center px-6 text-center"
           style={{ opacity: words, y }}
         >
           <h2 className="marketing-display text-display-section">

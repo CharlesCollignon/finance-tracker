@@ -71,7 +71,10 @@ export function FigureSection({ copy }: { copy: FigureCopy }) {
   return (
     <section
       ref={ref}
-      className={cn("relative px-6", still ? "py-24" : "h-[280vh]")}
+      className={cn(
+        "relative overflow-x-clip px-6",
+        still ? "py-24" : "h-[280vh]",
+      )}
       aria-label={copy.heading}
     >
       <div

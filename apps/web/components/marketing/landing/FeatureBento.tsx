@@ -48,7 +48,7 @@ const SPAN: Record<string, string> = {
  */
 export function FeatureBento({ copy }: { copy: MoreCopy }) {
   return (
-    <section className="relative px-6 py-28 md:py-40">
+    <section className="relative overflow-x-clip px-6 py-28 md:py-40">
       <div className="mx-auto max-w-6xl">
         <h2 className="marketing-display max-w-3xl text-display-section">
           {copy.heading}
@@ -224,6 +224,26 @@ function TogetherPicture({ seen, hover }: { seen: boolean; hover: boolean }) {
           {euro(together.myPart)}
         </span>
       </div>
+      <ul className="flex flex-col gap-1">
+        {together.rows.slice(0, 3).map((row, index) => (
+          <m.li
+            key={row.name}
+            className="flex items-center gap-3 rounded-xl border border-white/[0.06] bg-white/[0.02] px-3 py-2 text-sm"
+            initial={{ opacity: 0, x: 18 }}
+            animate={seen ? { opacity: 1, x: 0 } : undefined}
+            transition={{ duration: 0.7, ease: EASE, delay: 0.7 + index * 0.1 }}
+          >
+            <span className="flex size-7 items-center justify-center rounded-full bg-white/[0.07] text-xs font-semibold">
+              {row.by}
+            </span>
+            <span className="flex-1 text-marketing-ink">{row.name}</span>
+            <span className="text-marketing-faint">{row.meta}</span>
+            <span className="w-20 text-right font-mono tabular-nums text-marketing-muted">
+              {euro(row.amount)}
+            </span>
+          </m.li>
+        ))}
+      </ul>
     </div>
   );
 }
@@ -232,7 +252,13 @@ function TogetherPicture({ seen, hover }: { seen: boolean; hover: boolean }) {
 function QuestionsPicture({ seen }: { seen: boolean }) {
   const { questions } = landingSampleFor(useLocale());
   const still = useReducedMotion() ?? false;
-  const words = questions.question.split(" ");
+  const euro = useFormatCurrency();
+  const exchange = questions.exchanges[0]!;
+  const words = exchange.question.split(" ");
+  const figures = Object.fromEntries(
+    Object.entries(questions.figures).map(([key, value]) => [key, euro(value)]),
+  );
+  const answer = exchange.answer[0]!.split(/(\{\w+\})/);
   return (
     <div className="flex flex-1 flex-col items-start gap-5">
       <Orb size="64px" />
@@ -249,6 +275,30 @@ function QuestionsPicture({ seen }: { seen: boolean }) {
           </m.span>
         ))}
       </p>
+      <m.p
+        className="ml-6 rounded-2xl rounded-br-md bg-white/[0.03] px-4 py-3 text-sm text-marketing-muted"
+        initial={{ opacity: still ? 1 : 0, y: still ? 0 : 10 }}
+        animate={seen ? { opacity: 1, y: 0 } : undefined}
+        transition={{
+          duration: 0.6,
+          ease: EASE,
+          delay: 0.5 + words.length * 0.07,
+        }}
+      >
+        {answer.map((part, index) => {
+          const name = part.match(/^\{(\w+)\}$/)?.[1];
+          return name && figures[name] ? (
+            <span
+              key={index}
+              className="rounded-md bg-primary/15 px-1.5 py-0.5 font-mono text-primary"
+            >
+              {figures[name]}
+            </span>
+          ) : (
+            <span key={index}>{part}</span>
+          );
+        })}
+      </m.p>
     </div>
   );
 }

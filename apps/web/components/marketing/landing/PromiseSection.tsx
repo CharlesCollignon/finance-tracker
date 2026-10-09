@@ -40,7 +40,10 @@ export function PromiseSection({ text }: { text: string }) {
   return (
     <section
       ref={ref}
-      className={cn("relative px-6", still ? "py-24" : "h-[200vh]")}
+      className={cn(
+        "relative overflow-x-clip px-6",
+        still ? "py-24" : "h-[200vh]",
+      )}
     >
       <div
         className={cn(
