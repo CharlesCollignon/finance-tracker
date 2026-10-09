@@ -1,8 +1,8 @@
 "use client";
 
-import { useId, type ReactNode } from "react";
+import { useId, useState, type ReactNode } from "react";
 import { AnimatePresence, m, useReducedMotion } from "motion/react";
-import { Plus, Sparkle, X } from "@phosphor-icons/react";
+import { Plus, X } from "@phosphor-icons/react";
 import {
   YEAR_AHEAD_EVENT_KINDS,
   YEAR_AHEAD_MAX_EVENTS,
@@ -60,7 +60,8 @@ interface YearAheadWhatIfProps {
  * « Et si… »: the one part of the page that is pure play, now with an aim
  * and a calendar. The slider puts so much more aside each month into the
  * account picked under it; the events are what the recurring entries cannot
- * know — a raise, a bonus, the car — each one a marker on the curve.
+ * know — a raise, a bonus, the car — each one a marker on the curve and one
+ * line here, added from a single button that opens to the three kinds.
  *
  * Everything answers at once: the bands and the figure move while the thumb
  * does. The picked account wears a pill that slides from chip to chip.
@@ -87,26 +88,25 @@ export function YearAheadWhatIf({
   const t = useT();
   const reduce = useReducedMotion() ?? false;
   const pillId = useId();
+  const [adding, setAdding] = useState(false);
   const full = events.length >= YEAR_AHEAD_MAX_EVENTS;
 
   return (
-    <div className="flex min-w-0 flex-col gap-3">
-      <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
-        <h3 className="flex items-center gap-2 font-head text-base">
-          <Sparkle
-            size={ICON.md}
-            weight="fill"
-            aria-hidden
-            className="text-primary"
-          />
-          {t("futurePlan.whatIfTitle")}
-        </h3>
-        <p className="text-sm text-muted-foreground">
-          {t("futurePlan.whatIfLabel")}
-        </p>
-      </div>
-
-      <div className="flex items-center gap-3">
+    <div className="flex min-w-0 flex-col gap-4">
+      <div className="flex flex-col gap-2">
+        <div className="flex items-baseline justify-between gap-3">
+          <p className="text-sm text-muted-foreground">
+            {t("futurePlan.whatIfLabel")}
+          </p>
+          <span
+            className={cn(
+              "privacy-sensitive shrink-0 text-sm font-medium tabular-nums",
+              extra === 0 && "text-muted-foreground",
+            )}
+          >
+            {t("futurePlan.whatIfPerMonth", { amount: format(extra) })}
+          </span>
+        </div>
         <Slider
           value={extra}
           min={0}
@@ -115,40 +115,30 @@ export function YearAheadWhatIf({
           onChange={onExtraChange}
           label={t("futurePlan.whatIfLabel")}
           valueText={t("futurePlan.whatIfPerMonth", { amount: format(extra) })}
-          className="min-w-0 flex-1"
         />
-        <span
-          className={cn(
-            "privacy-sensitive w-28 shrink-0 text-right text-sm font-medium tabular-nums",
-            extra === 0 && "text-muted-foreground",
-          )}
-        >
-          {t("futurePlan.whatIfPerMonth", { amount: format(extra) })}
-        </span>
-      </div>
-
-      <div className="flex flex-wrap gap-2">
-        {QUICK_EXTRAS.map((amount) => {
-          const on = extra === amount;
-          return (
-            <m.button
-              key={amount}
-              type="button"
-              aria-pressed={on}
-              whileTap={reduce ? undefined : { scale: 0.94 }}
-              onClick={() => onExtraChange(on ? 0 : amount)}
-              className={cn(
-                CHIP,
-                "tabular-nums",
-                on
-                  ? "border-foreground/30 bg-muted text-foreground"
-                  : "border-border text-muted-foreground hover:bg-muted hover:text-foreground",
-              )}
-            >
-              +{format(amount)}
-            </m.button>
-          );
-        })}
+        <div className="flex flex-wrap gap-2">
+          {QUICK_EXTRAS.map((amount) => {
+            const on = extra === amount;
+            return (
+              <m.button
+                key={amount}
+                type="button"
+                aria-pressed={on}
+                whileTap={reduce ? undefined : { scale: 0.94 }}
+                onClick={() => onExtraChange(on ? 0 : amount)}
+                className={cn(
+                  CHIP,
+                  "tabular-nums",
+                  on
+                    ? "border-foreground/30 bg-muted text-foreground"
+                    : "border-border text-muted-foreground hover:bg-muted hover:text-foreground",
+                )}
+              >
+                +{format(amount)}
+              </m.button>
+            );
+          })}
+        </div>
       </div>
 
       <div
@@ -194,7 +184,7 @@ export function YearAheadWhatIf({
         })}
       </div>
 
-      <div aria-live="polite" className="min-h-12">
+      <div aria-live="polite">
         {result ? (
           <>
             <p className="privacy-sensitive text-base font-medium">{result}</p>
@@ -207,88 +197,49 @@ export function YearAheadWhatIf({
         )}
       </div>
 
-      <div className="flex flex-col gap-3 border-t border-border pt-4">
-        <div>
-          <h4 className="text-sm font-medium">{t("futurePlan.eventsTitle")}</h4>
-          <p className={cn(MICRO, "mt-0.5 text-muted-foreground")}>
-            {t("futurePlan.eventsHint")}
-          </p>
-        </div>
-
-        <div className="flex flex-wrap gap-2">
-          {YEAR_AHEAD_EVENT_KINDS.map((kind) => (
-            <m.button
-              key={kind}
-              type="button"
-              disabled={full}
-              whileTap={reduce || full ? undefined : { scale: 0.94 }}
-              onClick={() => onAddEvent(kind)}
-              className={cn(
-                CHIP,
-                "border-dashed border-border text-muted-foreground hover:border-solid hover:bg-muted hover:text-foreground",
-                "disabled:pointer-events-none disabled:opacity-50",
-              )}
-            >
-              <Plus size={ICON.sm} weight="bold" aria-hidden />
-              {t(EVENT_NAME_KEYS[kind])}
-            </m.button>
-          ))}
-        </div>
-
+      <div className="flex flex-col gap-2 border-t border-border pt-4">
         <ul className="flex flex-col gap-2">
           <AnimatePresence initial={false}>
             {events.map((event) => (
               <m.li
                 key={event.id}
                 layout
-                initial={{ opacity: 0, y: -8, scale: 0.98 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
+                initial={{ opacity: 0, y: -8 }}
+                animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.96 }}
                 transition={reduce ? { duration: 0 } : FOLLOW}
-                className="flex flex-col gap-2 rounded-control border border-border bg-muted/30 p-3"
+                // Two lines on a phone — the event and its cross, then its
+                // amount and month — and one from `sm`.
+                className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2 sm:flex"
               >
-                <div className="flex items-center gap-2">
-                  <span
-                    aria-hidden
-                    className={cn(
-                      "flex size-8 shrink-0 items-center justify-center rounded-full bg-muted",
-                      event.kind === "expense"
-                        ? "text-destructive"
-                        : "text-primary-ink",
-                    )}
-                  >
-                    <EventIcon kind={event.kind} size={ICON.sm} />
-                  </span>
-                  <span className="text-sm font-medium">
-                    {t(EVENT_NAME_KEYS[event.kind])}
-                  </span>
-                  <button
-                    type="button"
-                    aria-label={t("futurePlan.eventRemove", {
-                      name: t(EVENT_NAME_KEYS[event.kind]),
-                    })}
-                    onClick={() => onRemoveEvent(event.id)}
-                    className={cn(
-                      "-my-1 ml-auto flex size-11 items-center justify-center rounded-full text-muted-foreground lg:size-9",
-                      "transition-colors duration-hover hover:bg-muted hover:text-foreground",
-                      "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-                    )}
-                  >
-                    <X size={ICON.sm} weight="bold" aria-hidden />
-                  </button>
-                </div>
-                <div className="grid grid-cols-[minmax(0,2fr)_minmax(0,3fr)] gap-3">
+                <span
+                  aria-hidden
+                  className={cn(
+                    "flex size-8 shrink-0 items-center justify-center rounded-full bg-muted",
+                    event.kind === "expense"
+                      ? "text-destructive"
+                      : "text-primary-ink",
+                  )}
+                >
+                  <EventIcon kind={event.kind} size={ICON.sm} />
+                </span>
+                <span className="min-w-24 flex-1 text-sm">
+                  {t(EVENT_NAME_KEYS[event.kind])}
+                </span>
+                <div className="col-span-3 flex gap-2 sm:contents">
                   <NumberField
                     label={
                       event.kind === "raise"
                         ? t("futurePlan.eventRaiseAmount")
                         : t("futurePlan.eventAmount")
                     }
+                    labelHidden
                     value={event.amount}
                     min={0}
                     max={EVENT_MAX}
                     sensitive
                     onChange={(amount) => onChangeEvent(event.id, { amount })}
+                    className="w-28 shrink-0"
                   />
                   <MonthSelect
                     value={event.month}
@@ -297,20 +248,88 @@ export function YearAheadWhatIf({
                     onChange={(month) => onChangeEvent(event.id, { month })}
                   />
                 </div>
+                <button
+                  type="button"
+                  aria-label={t("futurePlan.eventRemove", {
+                    name: t(EVENT_NAME_KEYS[event.kind]),
+                  })}
+                  onClick={() => onRemoveEvent(event.id)}
+                  className={cn(
+                    "col-start-3 row-start-1 flex size-11 items-center justify-center rounded-full text-muted-foreground",
+                    "transition-colors duration-hover hover:bg-muted hover:text-foreground",
+                    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                  )}
+                >
+                  <X size={ICON.sm} weight="bold" aria-hidden />
+                </button>
               </m.li>
             ))}
           </AnimatePresence>
         </ul>
-
-        {extra > 0 || events.length > 0 ? (
-          <button
-            type="button"
-            onClick={onClear}
-            className="self-end text-sm text-muted-foreground underline-offset-2 transition-colors duration-hover hover:text-foreground hover:underline"
-          >
-            {t("futurePlan.whatIfClear")}
-          </button>
+        {events.length > 0 ? (
+          <p className={cn(MICRO, "text-muted-foreground")}>
+            {t("futurePlan.eventsHint")}
+          </p>
         ) : null}
+
+        <div className="flex flex-wrap items-center gap-2">
+          <AnimatePresence initial={false} mode="popLayout">
+            {adding ? (
+              YEAR_AHEAD_EVENT_KINDS.map((kind, index) => (
+                <m.button
+                  key={kind}
+                  type="button"
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.9 }}
+                  transition={
+                    reduce
+                      ? { duration: 0 }
+                      : { ...FOLLOW, delay: index * 0.04 }
+                  }
+                  onClick={() => {
+                    onAddEvent(kind);
+                    setAdding(false);
+                  }}
+                  className={cn(
+                    CHIP,
+                    "border-border text-foreground hover:bg-muted",
+                  )}
+                >
+                  <EventIcon kind={kind} size={ICON.sm} />
+                  {t(EVENT_NAME_KEYS[kind])}
+                </m.button>
+              ))
+            ) : (
+              <m.button
+                key="add"
+                type="button"
+                disabled={full}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={() => setAdding(true)}
+                className={cn(
+                  CHIP,
+                  "border-dashed border-border text-muted-foreground hover:border-solid hover:bg-muted hover:text-foreground",
+                  "disabled:pointer-events-none disabled:opacity-50",
+                )}
+              >
+                <Plus size={ICON.sm} weight="bold" aria-hidden />
+                {t("futurePlan.eventAdd")}
+              </m.button>
+            )}
+          </AnimatePresence>
+          {extra > 0 || events.length > 0 ? (
+            <button
+              type="button"
+              onClick={onClear}
+              className="ml-auto text-sm text-muted-foreground underline-offset-2 transition-colors duration-hover hover:text-foreground hover:underline"
+            >
+              {t("futurePlan.whatIfClear")}
+            </button>
+          ) : null}
+        </div>
       </div>
     </div>
   );
@@ -330,8 +349,8 @@ function MonthSelect({
   const t = useT();
   const id = useId();
   return (
-    <div className="flex min-w-0 flex-col gap-1">
-      <label htmlFor={id} className="text-xs text-muted-foreground">
+    <div className="min-w-0 flex-1 sm:w-48 sm:flex-none">
+      <label htmlFor={id} className="sr-only">
         {t("futurePlan.eventMonth")}
       </label>
       <select

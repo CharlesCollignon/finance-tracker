@@ -34,8 +34,8 @@ interface Segment {
  * Why the money ends up where the chart puts it: a month's income as one
  * bar, cut into what the charges take, what everyday spending takes, what
  * goes into each account in that account's colour, and what is left on the
- * current account. Under it, what the window adds on top — interest and
- * returns, the events, the extra.
+ * current account. Under it, in one sentence, what interest and returns add
+ * by the end of the window.
  *
  * Pointing at an account's row lights its band on the chart and dims the
  * rest, so the bar and the bands read as one picture.
@@ -43,12 +43,15 @@ interface Segment {
 export function YearAheadWhy({
   flow,
   everydayCounted,
+  endLabel,
   color,
   name,
   onFocus,
   format,
 }: {
   flow: YearAheadFlow;
+  /** "septembre 2027": where the window ends, for the returns' sentence. */
+  endLabel: string;
   /** Whether enough months are closed for everyday spending to be measured. */
   everydayCounted: boolean;
   color: (id: YearAheadAccountId) => string;
@@ -113,39 +116,11 @@ export function YearAheadWhy({
     1,
   );
 
-  const period = [
-    { key: "growth", label: t("futurePlan.flowGrowth"), amount: flow.growth },
-    ...(flow.events !== 0
-      ? [
-          {
-            key: "events",
-            label: t("futurePlan.flowEvents"),
-            amount: flow.events,
-          },
-        ]
-      : []),
-    ...(flow.extra > 0
-      ? [{ key: "extra", label: t("futurePlan.flowExtra"), amount: flow.extra }]
-      : []),
-  ].filter((row) => Math.round(row.amount) !== 0);
-
   return (
     <div className="flex min-w-0 flex-col gap-3">
-      <div className="flex items-baseline justify-between gap-3">
-        <h3 className="font-head text-base">{t("futurePlan.whyTitle")}</h3>
-        <p className="text-sm text-muted-foreground">
-          {t("futurePlan.whyLead")}
-        </p>
-      </div>
-
-      <div className="flex items-baseline justify-between gap-3 text-sm">
-        <span>{t("futurePlan.flowIncome")}</span>
-        <AnimatedAmount
-          value={flow.income}
-          format={(value) => `+${money(value)}`}
-          className="font-medium tabular-nums"
-        />
-      </div>
+      <p className="privacy-sensitive text-sm text-muted-foreground">
+        {t("futurePlan.whyLeadIncome", { amount: money(flow.income) })}
+      </p>
 
       <div
         aria-hidden
@@ -215,25 +190,13 @@ export function YearAheadWhy({
         </p>
       ) : null}
 
-      {period.length > 0 ? (
-        <div className="flex flex-col gap-1 border-t border-border pt-3">
-          <p className={cn(MICRO, "text-muted-foreground")}>
-            {t("futurePlan.flowPeriod")}
-          </p>
-          {period.map((row) => (
-            <div
-              key={row.key}
-              className="flex items-center justify-between gap-3 text-sm"
-            >
-              <span>{row.label}</span>
-              <AnimatedAmount
-                value={row.amount}
-                format={signed}
-                className="tabular-nums"
-              />
-            </div>
-          ))}
-        </div>
+      {Math.round(flow.growth) > 0 ? (
+        <p className="privacy-sensitive text-sm text-muted-foreground">
+          {t("futurePlan.flowGrowthLine", {
+            amount: money(flow.growth),
+            month: endLabel,
+          })}
+        </p>
       ) : null}
     </div>
   );

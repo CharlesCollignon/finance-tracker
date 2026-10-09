@@ -889,11 +889,14 @@ specific:
   "Autres". A legend chip takes an account out of the figure, and pointing at
   a chip or at a « Pourquoi » row lights that account's band and dims the
   rest.
-  « Pourquoi » is one month's income cut into charges, everyday spending, each
-  account and what stays on the current account. « Et si… » aims its extra at
-  one account. Events (a raise, a bonus, a big expense) land on the current
-  account, each as a marker that rides the line and is dragged from month to
-  month. The window (6 mois to 5 ans), the target, the hidden accounts and the
+  Under the legend, one panel at a time behind a switch, so the card reads
+  calmly (the owner asked for it simpler, October 2026). « Pourquoi » is one
+  month's income cut into charges, everyday spending, each account and what
+  stays on the current account, with one sentence for interest and returns.
+  « Et si… » aims its extra at one account. Events (a raise, a bonus, a big
+  expense) are added from one « + Un événement » button and land on the
+  current account, each as a one-line row and a marker that rides the line
+  and is dragged from month to month. The window (6 mois to 5 ans), the target, the hidden accounts and the
   events stay in this browser; the extra does not.
 - **The months ahead morph instead of redrawing.** This is the one exception
   to "arrives, then rests", kept to this card. Every path there is drawn from
@@ -905,9 +908,9 @@ specific:
   once.
 - **The page meets the reader where they scroll.** Each card rises into place
   the first time it comes into view (`Reveal` in `PlanView.tsx`), rather than
-  in one stagger on load that has finished before the run is reached. Every
-  `PlanCard` carries the landing's light under the pointer, in the ink at 6 %
-  and never the accent.
+  in one stagger on load that has finished before the run is reached. The
+  cards carry no light under the pointer: one was tried and the owner had it
+  taken off (October 2026).
 - **The long view is a calculator, and says so.** It opens on the user's own
   figures and the 2026 French rates, every input is theirs to change, the
   edits stay in this browser, and "Revenir à mes chiffres" goes back. The

@@ -220,16 +220,6 @@ export function YearAheadChart({
           {t("planWeb.yearChartLabel")}
         </span>
 
-        {/* The long windows' years, as faint ticks behind everything. */}
-        {yearTicks.map((tick) => (
-          <span
-            key={tick.step}
-            aria-hidden
-            className="pointer-events-none absolute inset-y-2 w-px bg-hairline"
-            style={{ left: percent(tick.step) }}
-          />
-        ))}
-
         <svg
           viewBox={`0 0 ${SPAN} ${HEIGHT}`}
           preserveAspectRatio="none"

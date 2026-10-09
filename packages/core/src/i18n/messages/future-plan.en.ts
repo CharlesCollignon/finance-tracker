@@ -23,10 +23,6 @@ export const futurePlanEn = {
   yearAllAdded:
     "in your savings and investments by {month}, plus what the months leave on your current account",
   yearShownOnly: "in the accounts shown, by {month}",
-  yearFromToday: "{amount} more than today",
-  yearBelowToday: "{amount} less than today",
-  yearScenarioUp: "{amount} more with your what-ifs",
-  yearScenarioDown: "{amount} less with your what-ifs",
   accountCurrent: "Current account",
   accountElsewhere: "Other savings",
   accountsPending: "Investments…",
@@ -37,19 +33,17 @@ export const futurePlanEn = {
     "Put aside from the current account with no account of yours receiving it, like the margin left at a broker above the purchases it pays for.",
 
   /* Why */
+  whyLeadIncome: "Each month, out of {amount} coming in",
+  flowGrowthLine: "Plus {amount} of interest and estimated returns by {month}.",
+  eventAdd: "An event",
+  detailsLabel: "The details",
   whyTitle: "Why",
-  whyLead: "Each month, on average",
-  flowIncome: "Income",
   flowCommitted: "Fixed costs",
   flowEveryday: "Everyday spending",
   flowEverydayUnmeasured:
     "Everyday spending isn't measured yet. Wrap up a few months and it will be taken off here.",
   flowCurrentStays: "Stays on the current account",
   flowCurrentFalls: "Comes out of the current account",
-  flowPeriod: "Over the period",
-  flowGrowth: "Interest and estimated returns",
-  flowEvents: "Your events",
-  flowExtra: "Your what-if",
 
   /* What if, aimed */
   whatIfTo: "Into",
@@ -58,8 +52,7 @@ export const futurePlanEn = {
   whatIfClear: "Clear all",
 
   /* Events */
-  eventsTitle: "Something coming up?",
-  eventsHint: "Add it, then drag its marker along the curve.",
+  eventsHint: "Drag a marker along the curve to change its month.",
   eventRaise: "A raise",
   eventBonus: "A bonus",
   eventExpense: "A big expense",

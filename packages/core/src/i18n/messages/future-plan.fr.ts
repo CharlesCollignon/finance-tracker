@@ -19,10 +19,6 @@ export const futurePlanFr: typeof futurePlanEn = {
   yearAllAdded:
     "sur votre épargne et vos placements d'ici {month}, plus ce que les mois laissent sur le compte courant",
   yearShownOnly: "sur les comptes affichés, d'ici {month}",
-  yearFromToday: "{amount} de plus qu'aujourd'hui",
-  yearBelowToday: "{amount} de moins qu'aujourd'hui",
-  yearScenarioUp: "{amount} de plus avec vos « Et si… »",
-  yearScenarioDown: "{amount} de moins avec vos « Et si… »",
   accountCurrent: "Compte courant",
   accountElsewhere: "Autre épargne",
   accountsPending: "Placements…",
@@ -32,27 +28,25 @@ export const futurePlanFr: typeof futurePlanEn = {
   elsewhereHint:
     "Mis de côté depuis le compte courant sans qu'un de vos comptes le reçoive, comme la marge laissée chez un courtier au-delà des achats qu'elle paie.",
 
+  whyLeadIncome: "Chaque mois, sur {amount} de revenus",
+  flowGrowthLine:
+    "S'y ajoutent {amount} d'intérêts et de rendement estimés d'ici {month}.",
+  eventAdd: "Un événement",
+  detailsLabel: "Le détail",
   whyTitle: "Pourquoi",
-  whyLead: "Chaque mois, en moyenne",
-  flowIncome: "Revenus",
   flowCommitted: "Charges fixes",
   flowEveryday: "Dépenses courantes",
   flowEverydayUnmeasured:
     "Les dépenses courantes ne sont pas encore mesurées. Faites le bilan de quelques mois et elles seront déduites ici.",
   flowCurrentStays: "Reste sur le compte courant",
   flowCurrentFalls: "Sort du compte courant",
-  flowPeriod: "Sur la période",
-  flowGrowth: "Intérêts et rendement estimés",
-  flowEvents: "Vos événements",
-  flowExtra: "Votre « Et si… »",
 
   whatIfTo: "Sur",
   whatIfToLabel: "Où va le supplément",
   whatIfResultBy: "{amount} de plus d'ici {month}",
   whatIfClear: "Tout effacer",
 
-  eventsTitle: "Un événement en vue\u00A0?",
-  eventsHint: "Ajoutez-le, puis faites glisser son repère sur la courbe.",
+  eventsHint: "Faites glisser un repère sur la courbe pour changer son mois.",
   eventRaise: "Une augmentation",
   eventBonus: "Une prime",
   eventExpense: "Une grosse dépense",

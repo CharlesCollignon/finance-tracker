@@ -69,10 +69,11 @@ interface YearAheadCardProps {
  * The figure is every account added up at the end of the window: the
  * current account walked forward by the recurring entries, each savings
  * account and wallet growing by what goes in and what it earns. The chart
- * stacks them as bands under the gold line of their sum, the legend under it
- * takes any of them out, and « Pourquoi » cuts a month's income into where
- * it goes. « Et si… » aims an extra at one account and adds the events the
- * recurring entries cannot know, each a marker that rides the line.
+ * stacks them as bands under the gold line of their sum, and the legend
+ * under it takes any of them out. Under that, one panel at a time:
+ * « Pourquoi » cuts a month's income into where it goes; « Et si… » aims an
+ * extra at one account and adds the events the recurring entries cannot
+ * know, each a marker that rides the line.
  */
 export function YearAheadCard(props: YearAheadCardProps) {
   const t = useT();
@@ -128,6 +129,8 @@ function YearAhead({
   const format = useFormatCurrency();
   const money = (value: number) => format(Math.round(value));
   const [focus, setFocus] = useState<YearAheadAccountId | null>(null);
+  // « Pourquoi » or « Et si… »: one at a time, so the card reads calmly.
+  const [panel, setPanel] = useState<"why" | "whatIf">("why");
 
   const { points, opening, makeup, summary } = projection;
   const grounded = opening.onHand !== null;
@@ -197,8 +200,6 @@ function YearAhead({
       : [];
 
   const end = ahead.total[months] ?? 0;
-  const today = ahead.total[0] ?? 0;
-  const baselineEnd = ahead.baseline[months] ?? 0;
   const played = ahead.total.some(
     (value, step) => Math.abs(value - (ahead.baseline[step] ?? 0)) >= 1,
   );
@@ -255,9 +256,17 @@ function YearAhead({
       icon={<CalendarCheck size={ICON.sm} weight="fill" />}
       title={title}
       aside={
-        <HorizonPicker
+        <Segmented
+          label={t("futurePlan.horizon")}
+          options={YEAR_AHEAD_HORIZONS.map((horizon) => ({
+            value: horizon,
+            label:
+              horizon < 12
+                ? t("futurePlan.horizonMonths", { count: horizon })
+                : t("futurePlan.years", { count: horizon / 12 }),
+          }))}
           value={settings.horizon}
-          onChange={(horizon) => update({ horizon })}
+          onChange={(horizon: YearAheadHorizon) => update({ horizon })}
         />
       }
       className={cn(GLASS_HERO, "md:p-8")}
@@ -288,34 +297,6 @@ function YearAhead({
               ? t("futurePlan.yearAllGrounded", { month: endLabel })
               : t("futurePlan.yearAllAdded", { month: endLabel })}
         </p>
-        <div className="mt-3 flex flex-wrap gap-2">
-          <Pill>
-            {end >= today
-              ? t("futurePlan.yearFromToday", { amount: money(end - today) })
-              : t("futurePlan.yearBelowToday", { amount: money(today - end) })}
-          </Pill>
-          <AnimatePresence>
-            {played ? (
-              <m.span
-                key="played"
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.9 }}
-                transition={FOLLOW}
-              >
-                <Pill tone="gold">
-                  {end >= baselineEnd
-                    ? t("futurePlan.yearScenarioUp", {
-                        amount: money(end - baselineEnd),
-                      })
-                    : t("futurePlan.yearScenarioDown", {
-                        amount: money(baselineEnd - end),
-                      })}
-                </Pill>
-              </m.span>
-            ) : null}
-          </AnimatePresence>
-        </div>
       </div>
 
       <YearAheadChart
@@ -349,56 +330,85 @@ function YearAhead({
         </p>
       ) : null}
 
-      <div className="grid gap-6 border-t border-border pt-5 lg:grid-cols-2 lg:gap-10">
-        <YearAheadWhy
-          flow={ahead.flow}
-          everydayCounted={summary?.unrecordedCounted ?? false}
-          color={color}
-          name={name}
-          onFocus={setFocus}
-          format={format}
-        />
-        <YearAheadWhatIf
-          extra={extra}
-          onExtraChange={onExtraChange}
-          targets={targets}
-          target={target}
-          onTarget={(id) =>
-            update({
-              to: id,
-              hidden: settings.hidden.filter((other) => other !== id),
-            })
-          }
-          result={
-            extra > 0
-              ? t("futurePlan.whatIfResultBy", {
-                  amount: money(extraGain),
-                  month: endLabel,
-                })
-              : null
-          }
-          milestoneLine={milestoneLine}
-          events={settings.events}
-          onAddEvent={addEvent}
-          onChangeEvent={changeEvent}
-          onRemoveEvent={(id) =>
-            update({
-              events: settings.events.filter((event) => event.id !== id),
-            })
-          }
-          onClear={() => {
-            onExtraChange(0);
-            update({ events: [] });
+      <div className="flex flex-col gap-4 border-t border-border pt-5">
+        <Segmented
+          label={t("futurePlan.detailsLabel")}
+          options={[
+            { value: "why", label: t("futurePlan.whyTitle") },
+            { value: "whatIf", label: t("futurePlan.whatIfTitle") },
+          ]}
+          value={panel}
+          onChange={(next) => {
+            setFocus(null);
+            setPanel(next);
           }}
-          monthOptions={points.map((point, index) => ({
-            month: index + 1,
-            label: point.label,
-          }))}
-          months={months}
-          color={color}
-          name={name}
-          format={format}
+          className="self-start"
         />
+        <AnimatePresence mode="wait" initial={false}>
+          <m.div
+            key={panel}
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            transition={{ duration: 0.18 }}
+            // A line the eye can follow from a label to its amount.
+            className="max-w-2xl"
+          >
+            {panel === "why" ? (
+              <YearAheadWhy
+                flow={ahead.flow}
+                everydayCounted={summary?.unrecordedCounted ?? false}
+                endLabel={endLabel}
+                color={color}
+                name={name}
+                onFocus={setFocus}
+                format={format}
+              />
+            ) : (
+              <YearAheadWhatIf
+                extra={extra}
+                onExtraChange={onExtraChange}
+                targets={targets}
+                target={target}
+                onTarget={(id) =>
+                  update({
+                    to: id,
+                    hidden: settings.hidden.filter((other) => other !== id),
+                  })
+                }
+                result={
+                  extra > 0
+                    ? t("futurePlan.whatIfResultBy", {
+                        amount: money(extraGain),
+                        month: endLabel,
+                      })
+                    : null
+                }
+                milestoneLine={milestoneLine}
+                events={settings.events}
+                onAddEvent={addEvent}
+                onChangeEvent={changeEvent}
+                onRemoveEvent={(id) =>
+                  update({
+                    events: settings.events.filter((event) => event.id !== id),
+                  })
+                }
+                onClear={() => {
+                  onExtraChange(0);
+                  update({ events: [] });
+                }}
+                monthOptions={points.map((point, index) => ({
+                  month: index + 1,
+                  label: point.label,
+                }))}
+                months={months}
+                color={color}
+                name={name}
+                format={format}
+              />
+            )}
+          </m.div>
+        </AnimatePresence>
       </div>
     </PlanCard>
   );
@@ -406,56 +416,40 @@ function YearAhead({
 
 /* ------------------------------------------------------------ the pieces */
 
-function Pill({
-  tone = "neutral",
-  children,
-}: {
-  tone?: "neutral" | "gold";
-  children: ReactNode;
-}) {
-  return (
-    <span
-      className={cn(
-        "privacy-sensitive inline-flex min-h-7 items-center rounded-full border px-3 text-xs font-medium tabular-nums",
-        tone === "gold"
-          ? "border-primary/40 bg-primary/10 text-primary-ink"
-          : "border-border text-muted-foreground",
-      )}
-    >
-      {children}
-    </span>
-  );
-}
-
 /**
- * Six months to five years, as one row of choices with a pill that slides to
- * the one picked.
+ * A row of choices with a pill that slides to the one picked: the window,
+ * and « Pourquoi » against « Et si… ».
  */
-function HorizonPicker({
+function Segmented<T extends string | number>({
+  label,
+  options,
   value,
   onChange,
+  className,
 }: {
-  value: YearAheadHorizon;
-  onChange: (value: YearAheadHorizon) => void;
+  label: string;
+  options: { value: T; label: string }[];
+  value: T;
+  onChange: (value: T) => void;
+  className?: string;
 }) {
-  const t = useT();
   const pillId = useId();
   const reduce = useReducedMotion() ?? false;
   return (
     <div
       role="radiogroup"
-      aria-label={t("futurePlan.horizon")}
-      className="flex rounded-full border border-border p-0.5"
+      aria-label={label}
+      className={cn("flex rounded-full border border-border p-0.5", className)}
     >
-      {YEAR_AHEAD_HORIZONS.map((horizon) => {
-        const on = horizon === value;
+      {options.map((option) => {
+        const on = option.value === value;
         return (
           <button
-            key={horizon}
+            key={option.value}
             type="button"
             role="radio"
             aria-checked={on}
-            onClick={() => onChange(horizon)}
+            onClick={() => onChange(option.value)}
             className={cn(
               "relative isolate min-h-9 rounded-full px-3 text-xs font-medium tabular-nums",
               "transition-colors duration-hover",
@@ -472,9 +466,7 @@ function HorizonPicker({
                 className="absolute inset-0 -z-10 rounded-full bg-muted"
               />
             ) : null}
-            {horizon < 12
-              ? t("futurePlan.horizonMonths", { count: horizon })
-              : t("futurePlan.years", { count: horizon / 12 })}
+            {option.label}
           </button>
         );
       })}
