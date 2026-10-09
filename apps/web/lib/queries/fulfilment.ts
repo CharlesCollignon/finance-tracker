@@ -17,8 +17,6 @@ import { createClient } from "@/lib/supabase/server";
  * in, which is how the unattended digest reads with the service role.
  */
 
-export type { FulfilmentReport } from "@finance/data/fulfilment";
-
 export async function getFulfilledKeys(
   userId: string,
   client?: Db,
@@ -33,24 +31,6 @@ export async function getConfirmedTransactionIds(
   return fulfilment.getConfirmedTransactionIds(
     client ?? (await createClient()),
     userId,
-  );
-}
-
-export async function getFulfilmentReport(
-  userId: string,
-  templates: readonly RecurringTemplateWithCategory[],
-  categories: readonly Category[],
-  year: number,
-  month: number,
-  client?: Db,
-): Promise<fulfilment.FulfilmentReport> {
-  return fulfilment.getFulfilmentReport(
-    client ?? (await createClient()),
-    userId,
-    templates,
-    categories,
-    year,
-    month,
   );
 }
 
