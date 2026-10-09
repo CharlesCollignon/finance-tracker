@@ -13,11 +13,15 @@ import { useT } from "@/providers/LocaleProvider";
 import { CHART_COLORS } from "@/theme/tokens";
 import { useThemeColors } from "@/theme/useThemeColors";
 
-/** Never the gold: that is for what a page wants decided, or celebrated. */
-const SHARE_COLORS = [
+/**
+ * Never the gold: that is for what a page wants decided, or celebrated. In
+ * the web's order (`SHARE_COLORS` in `LongViewCard.tsx`, chart-4, -2, -3,
+ * -5), so an account wears the same colour on both, and in the year ahead.
+ */
+export const SHARE_COLORS = [
   CHART_COLORS[3],
-  CHART_COLORS[2],
   CHART_COLORS[1],
+  CHART_COLORS[2],
   CHART_COLORS[4],
 ] as const;
 
