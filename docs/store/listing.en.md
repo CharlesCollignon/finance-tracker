@@ -57,8 +57,6 @@ never the other's own money.
 AND ALSO
 
 - "Your year": your year in figures, to keep or share.
-- Income tax return: the amounts for your boxes (donations, home help,
-  childcare, PER, rents), to check on impots.gouv.fr.
 - CSV and OFX statement import.
 - Search across all your months.
 - The Monday recap and a warning before an overdraft.
@@ -74,7 +72,7 @@ Pluclair is free, and the same on pluclair.com.
 
 ## App Store keywords (100 at most, comma-separated, no spaces)
 
-budget,expenses,savings,bank,net worth,pea,life insurance,month close,subscriptions,tax,france
+budget,expenses,savings,bank,net worth,pea,life insurance,month close,subscriptions,france
 
 ## What's new in 1.0
 
