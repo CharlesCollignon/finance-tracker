@@ -28,6 +28,9 @@ export function GoogleSignInButton({ label }: GoogleSignInButtonProps) {
       provider: "google",
       options: {
         redirectTo: `${window.location.origin}/auth/callback`,
+        // Without it Google signs in with the last account used, and there is
+        // no way to pick another.
+        queryParams: { prompt: "select_account" },
       },
     });
 

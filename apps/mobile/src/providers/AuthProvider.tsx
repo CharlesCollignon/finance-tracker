@@ -135,6 +135,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           options: {
             redirectTo,
             skipBrowserRedirect: true,
+            // Without it Google signs in with the last account used, and there
+            // is no way to pick another.
+            queryParams: { prompt: "select_account" },
           },
         });
 
