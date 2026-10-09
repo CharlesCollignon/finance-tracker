@@ -35,6 +35,7 @@ import type { ReadSegment } from "@finance/core/month-read";
 import { ConnectAiInvite } from "@/components/ConnectAiInvite";
 import { Orb } from "@/components/Orb";
 import { PrivateAmount } from "@/components/PrivateAmount";
+import { ScreenError } from "@/components/ScreenError";
 import { Screen } from "@/components/ui/Screen";
 import { Text } from "@/components/ui/Text";
 import { useRefreshable } from "@/hooks/useRefreshable";
@@ -81,7 +82,11 @@ export default function AskScreen() {
   const [asking, setAsking] = useState<string | null>(null);
   const scroll = useRef<ScrollView>(null);
 
-  const { data: side, reload: reloadSide } = useRefreshable(
+  const {
+    data: side,
+    error: sideError,
+    reload: reloadSide,
+  } = useRefreshable(
     async () =>
       user
         ? {
@@ -92,7 +97,11 @@ export default function AskScreen() {
     [user?.id],
     { reads: [] },
   );
-  const { data: messages, reload: reloadMessages } = useRefreshable(
+  const {
+    data: messages,
+    error: messagesError,
+    reload: reloadMessages,
+  } = useRefreshable(
     async () => (currentId ? await getConversationMessages(currentId) : []),
     [currentId],
     { reads: [] },
@@ -205,7 +214,17 @@ export default function AskScreen() {
           contentContainerClassName="gap-4 px-4 pb-4 pt-2"
           keyboardShouldPersistTaps="handled"
         >
-          {side && !writable ? (
+          {(!side && sideError) || (currentId && messagesError) ? (
+            // Offline, or a read failed: a way to try again rather than an
+            // empty conversation.
+            <ScreenError
+              message={!side ? sideError : messagesError}
+              onRetry={() => {
+                void reloadSide();
+                void reloadMessages();
+              }}
+            />
+          ) : side && !writable ? (
             // No AI account connected: how to connect one, where the
             // conversation would be.
             <View className="items-center gap-4 py-6">

@@ -19,6 +19,7 @@ import { getTaxBoxes, readTaxRows, setTaxBox } from "@finance/data/tax-return";
 
 import { AnimatedAmount } from "@/components/AnimatedAmount";
 import { PrivateAmount } from "@/components/PrivateAmount";
+import { ScreenError } from "@/components/ScreenError";
 import { Screen } from "@/components/ui/Screen";
 import { Text } from "@/components/ui/Text";
 import { useRefreshable } from "@/hooks/useRefreshable";
@@ -57,7 +58,7 @@ export default function TaxScreen() {
   const years = Array.from({ length: YEARS_BACK }, (_, index) => latest - index);
   const [year, setYear] = useState(latest);
 
-  const { data, reload } = useRefreshable(
+  const { data, error, reload } = useRefreshable(
     async () => {
       if (!user) {
         return null;
@@ -134,6 +135,10 @@ export default function TaxScreen() {
                 })
               : t("tax.forms", { forms: data.rules.formsYear })}
           </Text>
+        ) : null}
+
+        {error && !data ? (
+          <ScreenError message={error} onRetry={() => void reload()} />
         ) : null}
 
         {data?.boxes.map((box, index) => (
