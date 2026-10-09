@@ -129,13 +129,15 @@ export const futurePlanEn = {
   withdrawalHint:
     "The share of your wealth you would take out each year to live on. 4% is the usual rule of thumb.",
   accountsTitle: "Your accounts",
-  accountsFromData: "Filled in from your investments and recurring payments.",
+  accountsFromData:
+    "Filled in from your investments, your recurring payments and their fees.",
   accountsReset: "Back to my figures",
   accountAdd: "Add an account",
   accountRemove: "Remove {name}",
   fieldInitial: "In it today",
   fieldMonthly: "Each month",
   fieldReturn: "Return per year",
+  fieldFees: "Fees per year",
   fieldTax: "Tax on gains",
   envelopeLivret: "Savings accounts (Livret A, LDDS, LEP)",
   taxPea: "18.6% social contributions on gains after 5 years (31.4% before).",

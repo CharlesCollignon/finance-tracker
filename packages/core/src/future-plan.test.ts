@@ -15,6 +15,7 @@ import {
   projectEnvelopes,
   wealthToday,
   withExtraSaving,
+  withKnownFees,
   type Envelope,
 } from "./future-plan";
 import type { ProjectionPoint } from "./projection";
@@ -441,5 +442,49 @@ describe("wealthToday", () => {
     expect(
       wealthToday([{ initial: 1_000 }, { initial: 2_500 }] as Envelope[]),
     ).toBe(3_500);
+  });
+});
+
+describe("fees", () => {
+  const pea: Envelope = {
+    id: "pea",
+    initial: 10_000,
+    monthly: 0,
+    annualReturn: 0.07,
+    taxOnGains: 0,
+  };
+
+  it("come off the return before it compounds", () => {
+    const gross = projectEnvelopes({
+      envelopes: [pea],
+      years: 10,
+      inflation: 0,
+      withdrawalRate: 0.04,
+    });
+    const net = projectEnvelopes({
+      envelopes: [{ ...pea, fees: 0.005 }],
+      years: 10,
+      inflation: 0,
+      withdrawalRate: 0.04,
+    });
+    expect(gross.futureValue).toBeCloseTo(10_000 * 1.07 ** 10, -1);
+    expect(net.futureValue).toBeCloseTo(10_000 * 1.065 ** 10, -1);
+  });
+
+  it("are read from the wallets, as Placements knows them", () => {
+    const envelopes = envelopesFromData({
+      wallets: { pea: 5_000, cto: 1_000 },
+      savingsReserve: 0,
+      monthly: {},
+      fees: { pea: 0.002 },
+    });
+    expect(envelopes.find((each) => each.id === "pea")?.fees).toBe(0.002);
+    expect(envelopes.find((each) => each.id === "cto")?.fees).toBeUndefined();
+  });
+
+  it("fill a saved long view that predates them, and keep a reader's 0", () => {
+    const fromData = [{ ...pea, fees: 0.004 }];
+    expect(withKnownFees([pea], fromData)[0]?.fees).toBe(0.004);
+    expect(withKnownFees([{ ...pea, fees: 0 }], fromData)[0]?.fees).toBe(0);
   });
 });

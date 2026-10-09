@@ -21,6 +21,7 @@ import {
   type EnvelopeProjection,
   type EnvelopeShare,
 } from "@finance/core/future-plan";
+import { isSavingsKind } from "@finance/core/savings-accounts";
 import { AnimatedAmount } from "@/components/finance/AnimatedAmount";
 import { ICON } from "@/lib/icon-scale";
 import { useT } from "@/lib/locale-context";
@@ -479,6 +480,17 @@ function EnvelopeRow({
           max={30}
           suffix="%"
         />
+        {/* Livrets charge nothing; a fund and its envelope do. */}
+        {isSavingsAccount(envelope.id) ? null : (
+          <NumberField
+            label={t("futurePlan.fieldFees")}
+            value={round2((envelope.fees ?? 0) * 100)}
+            onChange={(value) => onChange({ fees: value / 100 })}
+            min={0}
+            max={5}
+            suffix="%"
+          />
+        )}
         <NumberField
           label={t("futurePlan.fieldTax")}
           value={round2(envelope.taxOnGains * 100)}
@@ -517,4 +529,9 @@ function StepButton({
       {children}
     </button>
   );
+}
+
+/** A savings account — a livret, a PEL, everything saved in one — charges no fees. */
+function isSavingsAccount(id: EnvelopeId): boolean {
+  return id === "savings" || isSavingsKind(id);
 }

@@ -36,6 +36,8 @@ export const SAMPLE_ENVELOPES: Envelope[] = [
     monthly: 200,
     annualReturn: 0.07,
     taxOnGains: 0.186,
+    // An MSCI World ETF's 0.2 % or so, and a little for the broker.
+    fees: 0.0025,
   },
   {
     id: "cto",
@@ -43,6 +45,7 @@ export const SAMPLE_ENVELOPES: Envelope[] = [
     monthly: 0,
     annualReturn: 0.07,
     taxOnGains: 0.314,
+    fees: 0.003,
   },
   {
     id: "crypto",
@@ -52,12 +55,6 @@ export const SAMPLE_ENVELOPES: Envelope[] = [
     taxOnGains: 0.314,
   },
 ];
-
-/**
- * The sample's yearly fees: an MSCI World ETF's 0.2 % or so in the PEA and
- * the CTO, plus a broker's custody in the CTO — what Placements would read.
- */
-const SAMPLE_FEES = { pea: 0.0025, cto: 0.003 };
 
 /** What the current account holds on the 19th: Le point's balance. */
 const ON_HAND = 2410;
@@ -111,7 +108,6 @@ export function sampleYearAhead(
       extra,
       inflation: YEAR_AHEAD_INFLATION,
       realTerms,
-      fees: SAMPLE_FEES,
     }),
   };
 }

@@ -121,13 +121,14 @@ export const futurePlanFr: typeof futurePlanEn = {
     "La part de votre patrimoine que vous retireriez chaque année pour en vivre. Le repère le plus répandu est 4\u00A0%.",
   accountsTitle: "Vos comptes",
   accountsFromData:
-    "Pré-rempli avec vos placements et vos versements récurrents.",
+    "Pré-rempli avec vos placements, vos versements récurrents et leurs frais.",
   accountsReset: "Revenir à mes chiffres",
   accountAdd: "Ajouter un compte",
   accountRemove: "Retirer {name}",
   fieldInitial: "Dessus aujourd'hui",
   fieldMonthly: "Chaque mois",
   fieldReturn: "Rendement par an",
+  fieldFees: "Frais par an",
   fieldTax: "Impôt sur les gains",
   envelopeLivret: "Livrets d'épargne (Livret A, LDDS, LEP)",
   taxPea:

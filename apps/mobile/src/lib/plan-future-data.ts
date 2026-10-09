@@ -165,6 +165,7 @@ export function planEnvelopes(
       rate: view.rate,
     })),
     savingsReserve: base.savingsReserve,
+    fees: wealth?.fees,
     monthly: monthlyContributions({
       templates: base.templates,
       wallets: wealth?.wallets ?? {},
@@ -227,6 +228,10 @@ function readEnvelopes(value: unknown): Envelope[] | null {
         monthly: Math.max(0, finite(row.monthly, 0)),
         annualReturn: finite(row.annualReturn, 0),
         taxOnGains: Math.min(1, Math.max(0, finite(row.taxOnGains, 0))),
+        // Absent in settings saved before fees: the known ones fill it.
+        ...(typeof row.fees === "number" && Number.isFinite(row.fees)
+          ? { fees: Math.min(0.05, Math.max(0, row.fees)) }
+          : {}),
       },
     ];
   });

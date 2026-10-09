@@ -20,6 +20,7 @@ import {
   projectEnvelopes,
   type EnvelopeId,
   wealthToday,
+  withKnownFees,
 } from "@finance/core/future-plan";
 import { EASE_STANDARD } from "@finance/core/motion";
 import { buildRunway } from "@finance/core/projection";
@@ -52,9 +53,6 @@ import {
 } from "./plan-storage";
 import { MonthsCard, RunCard } from "./RunCard";
 import { YearAheadCard } from "./YearAheadCard";
-
-/** Fees not known yet, or none: one object, so the card's memo holds. */
-const NO_FEES = {};
 
 /** Where the long view opens, before the reader changes anything. */
 const DEFAULT_YEARS = 20;
@@ -138,7 +136,6 @@ export function PlanView({ base, wealth, bankInvite }: PlanViewProps) {
                 hasTemplates={base.hasTemplates}
                 envelopes={yearEnvelopes}
                 pending={!wealthDone}
-                fees={wealthValue?.fees ?? NO_FEES}
                 settings={yearAhead}
                 onSettingsChange={(next) =>
                   saveYearAheadSettings(base.userId, next)
@@ -478,12 +475,15 @@ function LongView({
   const { envelopes } = useFromData(base, wealth);
   const view = useMemo<LongViewDraft>(
     () =>
-      draft ?? {
-        years: DEFAULT_YEARS,
-        inflation: DEFAULT_INFLATION,
-        withdrawalRate: DEFAULT_WITHDRAWAL,
-        envelopes,
-      },
+      draft
+        ? // An edit saved before accounts had fees takes the known ones.
+          { ...draft, envelopes: withKnownFees(draft.envelopes, envelopes) }
+        : {
+            years: DEFAULT_YEARS,
+            inflation: DEFAULT_INFLATION,
+            withdrawalRate: DEFAULT_WITHDRAWAL,
+            envelopes,
+          },
     [draft, envelopes],
   );
   const projection = useMemo(() => projectEnvelopes(view), [view]);

@@ -10,7 +10,9 @@ import type { PlanBase, PlanWealth } from "@/lib/queries/plan";
  * The accounts as the user's own figures describe them.
  *
  * The monthly payments come from the shared rule in core, so the phone opens
- * the long view on the same figures. Savings logged in a declared account's
+ * the long view on the same figures; each wallet carries the fees Placements
+ * knows, which the milestones, the long view and the year ahead all take off
+ * its return. Savings logged in a declared account's
  * own category go to that account; the rest go to the Livret A, or the first
  * account at hand — or, when none is declared, to everything saved in one.
  */
@@ -23,6 +25,7 @@ export function planEnvelopes(
     wallets: wealth?.wallets ?? {},
     savingsAccounts: base.savingsAccounts,
     savingsReserve: base.savingsReserve,
+    fees: wealth?.fees,
     monthly: monthlyContributions({
       templates: base.templates,
       wallets: wealth?.wallets ?? {},
