@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import {
   AnimatePresence,
   m,
@@ -43,8 +43,8 @@ const LIFT = { type: "spring", stiffness: 300, damping: 22 } as const;
 /**
  * Placements' own extra: the envelopes a French saver keeps, as a hand of
  * cards. The hand is closed until it scrolls in, and fans open as it
- * arrives; a card lifts under the pointer and, chosen, rises out of the
- * hand while the panel beside it opens on that envelope — a small moving
+ * arrives; a card lifts under the pointer and, chosen, comes out to the
+ * front of the hand while the panel beside it opens on that envelope — a small moving
  * picture of what it is about, what Pluclair keeps for it, and what tax
  * takes from it in 2026. On a phone the hand is a row of cards to swipe.
  */
@@ -104,7 +104,7 @@ export function EnvelopeDeck() {
             <FanCard
               key={card.id}
               card={card}
-              offset={index - (ORDER.length - 1) / 2}
+              slot={index - (ORDER.length - 1) / 2}
               order={index}
               chosen={card.id === chosen}
               onChoose={() => setChosen(card.id)}
@@ -201,13 +201,16 @@ function CardHead({ card }: { card: Card }) {
 }
 
 /**
- * One card of the hand. Its place in the fan — the turn about a point well
- * below it, and the step sideways — grows with `opened`; the lift is its
- * own, from the pointer and from being chosen.
+ * One card of the hand. Left in the hand, its place in the fan — the turn
+ * about a point well below it, and the step sideways — grows with
+ * `opened`, and only its name shows, as a held card shows its corner.
+ * Chosen, it leaves its place for the front of the hand, upright and
+ * raised, and turns its figure up; the gap it leaves says where it came
+ * from. `pick` carries it between the two on a spring.
  */
 function FanCard({
   card,
-  offset,
+  slot,
   order,
   chosen,
   onChoose,
@@ -215,25 +218,34 @@ function FanCard({
   still,
 }: {
   card: Card;
-  offset: number;
+  slot: number;
   order: number;
   chosen: boolean;
   onChoose: () => void;
   opened: MotionValue<number>;
   still: boolean;
 }) {
-  const rotate = useTransform(opened, (value) =>
-    still ? offset * 9 : offset * 9 * value,
-  );
-  const x = useTransform(opened, (value) =>
-    still ? offset * 22 : offset * 22 * value,
-  );
+  const pick = useSpring(chosen ? 1 : 0, { stiffness: 170, damping: 22 });
+  useEffect(() => {
+    if (still) {
+      pick.jump(chosen ? 1 : 0);
+    } else {
+      pick.set(chosen ? 1 : 0);
+    }
+  }, [pick, chosen, still]);
+  const spread = () => (1 - pick.get()) * (still ? 1 : opened.get());
+  const rotate = useTransform(() => slot * 6.5 * spread());
+  const x = useTransform(() => slot * 16 * spread());
+  const y = useTransform(() => pick.get() * -40);
+  const scale = useTransform(() => 1 + pick.get() * 0.06);
   return (
     <m.div
-      className="absolute bottom-4 left-1/2 -ml-[5.75rem] h-64 w-46"
+      className="absolute bottom-6 left-1/2 -ml-[5.5rem] h-60 w-44"
       style={{
         rotate,
         x,
+        y,
+        scale,
         transformOrigin: "50% 150%",
         zIndex: chosen ? 20 : order,
       }}
@@ -242,8 +254,7 @@ function FanCard({
         type="button"
         aria-pressed={chosen}
         onClick={onChoose}
-        animate={{ y: chosen ? -56 : 0, scale: chosen ? 1.05 : 1 }}
-        whileHover={still ? undefined : { y: chosen ? -62 : -22 }}
+        whileHover={still || chosen ? undefined : { y: -16 }}
         whileTap={{ scale: 0.97 }}
         transition={LIFT}
         className={cn(
@@ -260,14 +271,17 @@ function FanCard({
             {card.full}
           </span>
         </span>
-        <span>
+        <m.span
+          animate={{ opacity: chosen ? 1 : 0, y: chosen ? 0 : 8 }}
+          transition={{ duration: 0.35, delay: chosen ? 0.15 : 0 }}
+        >
           <span className="block font-head text-2xl leading-tight text-marketing-ink">
             {card.badge}
           </span>
           <span className="mt-1 block text-xs text-marketing-muted">
             {card.badgeLabel}
           </span>
-        </span>
+        </m.span>
       </m.button>
     </m.div>
   );

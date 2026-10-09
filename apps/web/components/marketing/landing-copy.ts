@@ -595,7 +595,7 @@ export const landingCopy = {
           crypto: {
             name: "Crypto",
             full: "Bitcoin",
-            badge: "₿",
+            badge: "BTC",
             badgeLabel: "noted in bitcoin",
             inApp:
               "Note what you hold in bitcoin: its value in euros follows the price.",

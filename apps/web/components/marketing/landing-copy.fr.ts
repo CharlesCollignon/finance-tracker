@@ -564,7 +564,7 @@ export const landingCopyFr: LandingCopySections & {
           crypto: {
             name: "Crypto",
             full: "Bitcoin",
-            badge: "₿",
+            badge: "BTC",
             badgeLabel: "noté en bitcoins",
             inApp:
               "Notez ce que vous détenez en bitcoins : la valeur en euros suit le cours.",

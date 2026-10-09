@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { m, useReducedMotion } from "motion/react";
+import { CurrencyBtc } from "@phosphor-icons/react";
 import { formatEuro, formatFullDate } from "@finance/core/constants";
 import { FRENCH_TAX_2026 } from "@finance/core/future-plan";
 import { INTL_LOCALES } from "@finance/core/i18n/locale";
@@ -54,7 +55,7 @@ function usePercentOf() {
 export function PeaVisual({ copy }: { copy: Items["pea"] }) {
   const locale = useLocale();
   const sample = landingSampleFor(locale);
-  const euro = (value: number) => formatEuro(value, locale);
+  const euro = (value: number) => formatEuro(Math.round(value), locale);
   const paidIn = sample.wallets.find((wallet) => wallet.id === "pea")!.invested;
   const status = buildPeaStatus(paidIn, sample.pea.openedOn, TODAY);
   const elapsed =
@@ -141,7 +142,7 @@ const AV_YEAR = 7;
 
 export function AvVisual({ copy }: { copy: Items["av"] }) {
   const locale = useLocale();
-  const euro = (value: number) => formatEuro(value, locale);
+  const euro = (value: number) => formatEuro(Math.round(value), locale);
   const { single, couple } = FRENCH_TAX_2026.lifeInsuranceAllowance;
   return (
     <div className="flex flex-col gap-7">
@@ -271,7 +272,7 @@ const PER_MONTHLY = 200;
 
 export function PerVisual({ copy }: { copy: Items["per"] }) {
   const locale = useLocale();
-  const euro = (value: number) => formatEuro(value, locale);
+  const euro = (value: number) => formatEuro(Math.round(value), locale);
   const year = 2025;
   return (
     <div className="grid items-center gap-6 sm:grid-cols-[minmax(0,1fr)_auto]">
@@ -354,7 +355,7 @@ export function CryptoVisual({ copy }: { copy: Items["crypto"] }) {
               "border-2 border-primary/70 [background:radial-gradient(circle_at_35%_30%,#f6d79a,#ecb25e_45%,#9a6a26)] text-[#3a2508] shadow-[0_20px_40px_-16px_rgb(236_178_94/0.6)]",
             )}
           >
-            <span className="text-5xl font-semibold leading-none">₿</span>
+            <CurrencyBtc size={56} weight="bold" />
             <span className="mt-2 font-mono text-xs">{btc} BTC</span>
           </span>
           <span
@@ -389,7 +390,7 @@ const LIVRET_BALANCE = 8400;
 export function LivretVisual({ copy }: { copy: Items["livret"] }) {
   const locale = useLocale();
   const percent = usePercentOf();
-  const euro = (value: number) => formatEuro(value, locale);
+  const euro = (value: number) => formatEuro(Math.round(value), locale);
   const { ceiling, rate } = FRENCH_SAVINGS_2026.livret_a;
   const share = LIVRET_BALANCE / ceiling!;
   return (
