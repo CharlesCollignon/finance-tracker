@@ -168,6 +168,38 @@ describe("buildYearAhead", () => {
     expect(result.flow.events).toBe(-600);
   });
 
+  it("keeps on the current account what a full livret turns away", () => {
+    // 22 800 on a Livret A capped at 22 950: one payment of 150, then none.
+    const result = buildYearAhead({
+      points: steadyPoints(3),
+      onHandToday: 0,
+      envelopes: [envelope("livret_a", 22_800, 700)],
+      horizon: 3,
+    });
+
+    const [current, livret] = result.bands;
+    expect(livret!.values).toEqual([22_800, 22_950, 22_950, 22_950]);
+    // The projection had taken 700 a month off; 550, then 700, come back.
+    expect(current!.values[1]).toBe(2_500 + 550);
+    expect(current!.values[3]).toBe(3_500 + 550 + 700 + 700);
+  });
+
+  it("waits for the wallets before naming anything elsewhere", () => {
+    const result = buildYearAhead({
+      points: steadyPoints(12),
+      onHandToday: 0,
+      envelopes: [envelope("livret_a", 0, 300)],
+      horizon: 12,
+      complete: false,
+    });
+
+    expect(result.flow.into).toEqual([{ id: "livret_a", monthly: 300 }]);
+    expect(result.bands.map((band) => band.id)).toEqual([
+      "current",
+      "livret_a",
+    ]);
+  });
+
   it("leaves a hidden account out of the figure but keeps it listed", () => {
     const result = buildYearAhead({
       points: steadyPoints(12),

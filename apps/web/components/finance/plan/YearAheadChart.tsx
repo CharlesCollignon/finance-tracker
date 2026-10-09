@@ -363,7 +363,11 @@ export function YearAheadChart({
                         : "-50%",
                 }}
                 transition={follow}
-                className="absolute top-0 z-10 min-w-44 rounded-control border border-foreground/10 bg-popover px-3 py-2 text-left"
+                className={cn(
+                  "absolute z-10 min-w-44 rounded-control border border-foreground/10 bg-popover px-3 py-2 text-left",
+                  // Out from under the finger while a marker is dragged.
+                  dragging ? "bottom-0" : "top-0",
+                )}
               >
                 <p className={cn(MICRO, "text-muted-foreground")}>
                   {stepLabel(shown)}

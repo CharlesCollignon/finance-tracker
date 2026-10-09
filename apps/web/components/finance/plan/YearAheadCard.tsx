@@ -143,10 +143,11 @@ function YearAhead({
         extra: { monthly: extra, to: target },
         events: settings.events,
         hidden,
+        complete: !pending,
       });
     const built = build(settings.hidden);
     return built.bands.every((band) => band.hidden) ? build([]) : built;
-  }, [points, opening.onHand, envelopes, settings, extra, target]);
+  }, [points, opening.onHand, envelopes, settings, extra, target, pending]);
 
   // What the extra alone adds: the figure with it, against the figure
   // without it, events and all, on the same accounts.
@@ -162,9 +163,10 @@ function YearAhead({
             hidden: ahead.bands
               .filter((band) => band.hidden)
               .map((band) => band.id),
+            complete: !pending,
           })
         : null,
-    [points, opening.onHand, envelopes, settings, extra, ahead.bands],
+    [points, opening.onHand, envelopes, settings, extra, ahead.bands, pending],
   );
 
   const months = ahead.months;
@@ -179,13 +181,16 @@ function YearAhead({
     const point = points[step - 1];
     return point ? formatMonthCompact(point.year, point.month, locale) : "";
   };
-  // A tick where each year turns, once the window is long enough to need it.
+  // A tick where each year turns, once the window is long enough to need it,
+  // and never on top of the labels at either end.
   const yearTicks =
     months >= 24
       ? points
           .slice(0, months - 1)
           .flatMap((point, index) =>
-            point.month === 1
+            point.month === 1 &&
+            index + 1 >= months * 0.1 &&
+            index + 1 <= months * 0.9
               ? [{ step: index + 1, label: String(point.year) }]
               : [],
           )

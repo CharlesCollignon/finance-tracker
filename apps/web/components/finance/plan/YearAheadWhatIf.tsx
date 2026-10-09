@@ -245,52 +245,58 @@ export function YearAheadWhatIf({
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.96 }}
                 transition={reduce ? { duration: 0 } : FOLLOW}
-                className="flex flex-wrap items-end gap-3 rounded-control border border-border bg-muted/30 p-3"
+                className="flex flex-col gap-2 rounded-control border border-border bg-muted/30 p-3"
               >
-                <span
-                  aria-hidden
-                  className={cn(
-                    "flex size-9 shrink-0 items-center justify-center rounded-full bg-muted",
-                    event.kind === "expense"
-                      ? "text-destructive"
-                      : "text-primary-ink",
-                  )}
-                >
-                  <EventIcon kind={event.kind} size={ICON.md} />
-                </span>
-                <NumberField
-                  label={
-                    event.kind === "raise"
-                      ? t("futurePlan.eventRaiseAmount")
-                      : t("futurePlan.eventAmount")
-                  }
-                  value={event.amount}
-                  min={0}
-                  max={EVENT_MAX}
-                  sensitive
-                  onChange={(amount) => onChangeEvent(event.id, { amount })}
-                  className="w-32"
-                />
-                <MonthSelect
-                  value={event.month}
-                  options={monthOptions}
-                  months={months}
-                  onChange={(month) => onChangeEvent(event.id, { month })}
-                />
-                <button
-                  type="button"
-                  aria-label={t("futurePlan.eventRemove", {
-                    name: t(EVENT_NAME_KEYS[event.kind]),
-                  })}
-                  onClick={() => onRemoveEvent(event.id)}
-                  className={cn(
-                    "ml-auto flex size-11 items-center justify-center rounded-full text-muted-foreground lg:size-9",
-                    "transition-colors duration-hover hover:bg-muted hover:text-foreground",
-                    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-                  )}
-                >
-                  <X size={ICON.sm} weight="bold" aria-hidden />
-                </button>
+                <div className="flex items-center gap-2">
+                  <span
+                    aria-hidden
+                    className={cn(
+                      "flex size-8 shrink-0 items-center justify-center rounded-full bg-muted",
+                      event.kind === "expense"
+                        ? "text-destructive"
+                        : "text-primary-ink",
+                    )}
+                  >
+                    <EventIcon kind={event.kind} size={ICON.sm} />
+                  </span>
+                  <span className="text-sm font-medium">
+                    {t(EVENT_NAME_KEYS[event.kind])}
+                  </span>
+                  <button
+                    type="button"
+                    aria-label={t("futurePlan.eventRemove", {
+                      name: t(EVENT_NAME_KEYS[event.kind]),
+                    })}
+                    onClick={() => onRemoveEvent(event.id)}
+                    className={cn(
+                      "-my-1 ml-auto flex size-11 items-center justify-center rounded-full text-muted-foreground lg:size-9",
+                      "transition-colors duration-hover hover:bg-muted hover:text-foreground",
+                      "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                    )}
+                  >
+                    <X size={ICON.sm} weight="bold" aria-hidden />
+                  </button>
+                </div>
+                <div className="grid grid-cols-[minmax(0,2fr)_minmax(0,3fr)] gap-3">
+                  <NumberField
+                    label={
+                      event.kind === "raise"
+                        ? t("futurePlan.eventRaiseAmount")
+                        : t("futurePlan.eventAmount")
+                    }
+                    value={event.amount}
+                    min={0}
+                    max={EVENT_MAX}
+                    sensitive
+                    onChange={(amount) => onChangeEvent(event.id, { amount })}
+                  />
+                  <MonthSelect
+                    value={event.month}
+                    options={monthOptions}
+                    months={months}
+                    onChange={(month) => onChangeEvent(event.id, { month })}
+                  />
+                </div>
               </m.li>
             ))}
           </AnimatePresence>
@@ -333,7 +339,7 @@ function MonthSelect({
         value={value}
         onChange={(event) => onChange(Number(event.target.value))}
         className={cn(
-          "min-h-11 rounded-control border border-border bg-input px-3 py-2 text-sm text-foreground",
+          "min-h-11 w-full min-w-0 rounded-control border border-border bg-input px-3 py-2 text-sm text-foreground",
           "transition-colors duration-hover",
           "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
           value > months && "text-muted-foreground",

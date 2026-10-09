@@ -15,9 +15,9 @@ import { MORPH } from "./year-ahead-parts";
 
 /** The two ways money leaves for good, quieter than any account. */
 const COMMITTED_COLOR =
-  "color-mix(in oklab, var(--muted-foreground) 32%, transparent)";
+  "color-mix(in oklab, var(--muted-foreground) 45%, transparent)";
 const EVERYDAY_COLOR =
-  "color-mix(in oklab, var(--muted-foreground) 18%, transparent)";
+  "color-mix(in oklab, var(--muted-foreground) 28%, transparent)";
 
 interface Segment {
   key: string;

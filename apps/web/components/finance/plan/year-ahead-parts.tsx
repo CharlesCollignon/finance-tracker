@@ -47,7 +47,7 @@ const ENVELOPE_COLORS = [
   "var(--chart-3)",
   "var(--chart-5)",
 ] as const;
-const CURRENT_COLOR = "color-mix(in oklab, var(--foreground) 62%, transparent)";
+const CURRENT_COLOR = "color-mix(in oklab, var(--foreground) 85%, transparent)";
 const OTHERS_COLOR =
   "color-mix(in oklab, var(--muted-foreground) 45%, transparent)";
 

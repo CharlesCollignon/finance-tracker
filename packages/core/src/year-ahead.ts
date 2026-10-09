@@ -233,6 +233,12 @@ export interface YearAheadInput {
   extra?: { monthly: number; to: YearAheadAccountId };
   events?: readonly YearAheadEvent[];
   hidden?: readonly YearAheadAccountId[];
+  /**
+   * Whether the envelopes are all there. False while the wallets' market
+   * value is on its way: what goes into them would otherwise read as set
+   * aside with no account, so « Autre épargne » waits for them.
+   */
+  complete?: boolean;
 }
 
 export interface YearAheadBand {
@@ -285,11 +291,19 @@ function mean(values: readonly number[]): number {
   );
 }
 
-/** Each account's value month by month, today first. */
+/**
+ * Each account's value month by month, today first, and what the full ones
+ * turned away: a livret at its ceiling takes no more, and the transfer then
+ * stays on the current account — the bank refuses it rather than losing it.
+ */
 function envelopeSeries(
   envelopes: readonly Envelope[],
   months: number,
-): { values: Map<EnvelopeId, number[]>; growth: number } {
+): {
+  values: Map<EnvelopeId, number[]>;
+  turnedAway: number[];
+  growth: number;
+} {
   const run = projectEnvelopes({
     envelopes,
     years: months / 12,
@@ -297,13 +311,25 @@ function envelopeSeries(
     withdrawalRate: 0,
   });
   const values = new Map<EnvelopeId, number[]>();
+  const turnedAway = Array.from({ length: months + 1 }, () => 0);
   for (const envelope of envelopes) {
-    const series =
-      run.monthlyByAccount.find((account) => account.id === envelope.id)
-        ?.values ?? [];
-    values.set(envelope.id, [roundMoney(envelope.initial), ...series]);
+    const account = run.monthlyByAccount.find((row) => row.id === envelope.id);
+    values.set(envelope.id, [
+      roundMoney(envelope.initial),
+      ...(account?.values ?? []),
+    ]);
+    account?.paid.forEach((paid, index) => {
+      turnedAway[index + 1]! += Math.max(
+        0,
+        envelope.monthly * (index + 1) - paid,
+      );
+    });
   }
-  return { values, growth: run.gains };
+  return {
+    values,
+    turnedAway: turnedAway.map(roundMoney),
+    growth: run.gains,
+  };
 }
 
 /**
@@ -327,29 +353,13 @@ export function buildYearAhead(input: YearAheadInput): YearAhead {
     }));
   const named = into.reduce((sum, row) => sum + row.monthly, 0);
   // Under a euro a month is rounding between two averages, not a place.
-  const elsewhere = setAside - named >= 1 ? roundMoney(setAside - named) : 0;
+  const elsewhere =
+    input.complete !== false && setAside - named >= 1
+      ? roundMoney(setAside - named)
+      : 0;
   if (elsewhere > 0) {
     into.push({ id: "elsewhere", monthly: elsewhere });
   }
-
-  /* The current account: the projection's on-hand track, with the events
-     and, when it is the one picked, the extra. */
-  const opening = input.onHandToday ?? 0;
-  const currentBaseline = [
-    roundMoney(opening),
-    ...window.map((point) => point.onHand),
-  ];
-  const currentValues = currentBaseline.map((value, step) => {
-    if (step === 0) {
-      return value;
-    }
-    const fromEvents = events.reduce(
-      (sum, event) => sum + eventEffect(event, step),
-      0,
-    );
-    const fromExtra = extra?.to === "current" ? extra.monthly * step : 0;
-    return roundMoney(value + fromEvents + fromExtra);
-  });
 
   /* The envelopes, twice when the extra goes into one of them: compounding
      makes it worth more than the sum of the payments. */
@@ -368,6 +378,33 @@ export function buildYearAhead(input: YearAheadInput): YearAhead {
         months,
       )
     : asTheyStand;
+
+  /* The current account: the projection's on-hand track, with the events,
+     what a full account turned away and, when it is the one picked, the
+     extra. */
+  const opening = input.onHandToday ?? 0;
+  const currentBaseline = [
+    roundMoney(opening),
+    ...window.map((point, index) =>
+      roundMoney(point.onHand + (asTheyStand.turnedAway[index + 1] ?? 0)),
+    ),
+  ];
+  const currentValues = currentBaseline.map((_, step) => {
+    if (step === 0) {
+      return roundMoney(opening);
+    }
+    const fromEvents = events.reduce(
+      (sum, event) => sum + eventEffect(event, step),
+      0,
+    );
+    const fromExtra = extra?.to === "current" ? extra.monthly * step : 0;
+    return roundMoney(
+      window[step - 1]!.onHand +
+        (withExtra.turnedAway[step] ?? 0) +
+        fromEvents +
+        fromExtra,
+    );
+  });
 
   const elsewhereSeries = Array.from({ length: months + 1 }, (_, step) =>
     roundMoney(elsewhere * step),
