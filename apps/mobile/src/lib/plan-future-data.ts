@@ -17,6 +17,12 @@ import {
   type ForwardProjection,
 } from "@finance/core/projection";
 import type { RecurringTemplateWithCategory } from "@finance/core/types/database";
+import {
+  parseYearAheadSettings,
+  YEAR_AHEAD_DEFAULT_SETTINGS,
+  YEAR_AHEAD_MAX_MONTHS,
+  type YearAheadSettings,
+} from "@finance/core/year-ahead";
 import * as preferences from "@finance/data/preferences";
 
 import {
@@ -61,7 +67,10 @@ export interface PlanBase {
    * and cannot read one of them. Empty otherwise.
    */
   closeWait: CloseWaitAccount[];
-  /** The next twelve months, from the recurring templates. */
+  /**
+   * The months ahead from the recurring templates, as far as the year
+   * ahead's longest window: the card draws as many as the reader asks.
+   */
   projection: ForwardProjection;
 }
 
@@ -100,7 +109,7 @@ export async function gatherPlanBase(
       year,
       month,
       today,
-      months: 12,
+      months: YEAR_AHEAD_MAX_MONTHS,
       // Never a partial sum: a reading missing an account is short by what
       // that account holds, so it is not a balance.
       onHand: cash?.ok ? cash.total : null,
@@ -240,6 +249,41 @@ export async function savePlanSettings(
     await AsyncStorage.setItem(SETTINGS_KEY + userId, JSON.stringify(settings));
   } catch {
     // A plan that is not remembered is still a plan.
+  }
+}
+
+/**
+ * How the reader last left the year ahead: its window, where « Et si… »
+ * goes, the accounts taken out, the events added — read with the web's own
+ * rule, so a setting means the same thing on both. The extra is not kept:
+ * it is something to play with.
+ */
+const YEAR_AHEAD_KEY = "plan-year-ahead:v1:";
+
+export async function loadYearAheadSettings(
+  userId: string,
+): Promise<YearAheadSettings> {
+  try {
+    const raw = await AsyncStorage.getItem(YEAR_AHEAD_KEY + userId);
+    return raw
+      ? parseYearAheadSettings(JSON.parse(raw))
+      : YEAR_AHEAD_DEFAULT_SETTINGS;
+  } catch {
+    return YEAR_AHEAD_DEFAULT_SETTINGS;
+  }
+}
+
+export async function saveYearAheadSettings(
+  userId: string,
+  settings: YearAheadSettings,
+): Promise<void> {
+  try {
+    await AsyncStorage.setItem(
+      YEAR_AHEAD_KEY + userId,
+      JSON.stringify(settings),
+    );
+  } catch {
+    // Settings that are not remembered still drew the card.
   }
 }
 

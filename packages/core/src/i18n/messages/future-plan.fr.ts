@@ -7,10 +7,8 @@ export const futurePlanFr: typeof futurePlanEn = {
 
   yearTitle: "Dans un an",
   yearGrounded: "sur vos comptes et de côté, d'ici {month}",
-  yearAdded: "mis de côté d'ici {month}, en plus de ce que vous avez",
   scrubHint: "Faites glisser sur la courbe pour voir chaque mois",
   scrubPoint: "{month} : {amount}",
-  scrubWithExtra: "{amount} avec le supplément",
 
   inMonthsTitle: "Dans {count} mois",
   inYearsTitle: { one: "Dans un an", other: "Dans {count} ans" },
@@ -64,7 +62,6 @@ export const futurePlanFr: typeof futurePlanEn = {
   whatIfLabel: "Mettre de côté en plus chaque mois",
   whatIfPerMonth: "+{amount} par mois",
   whatIfNone: "Faites glisser pour voir ce qu'un petit effort change.",
-  whatIfResult: "{amount} de plus en un an",
   whatIfSooner: {
     one: "{milestone} atteint {count} mois plus tôt",
     other: "{milestone} atteint {count} mois plus tôt",
