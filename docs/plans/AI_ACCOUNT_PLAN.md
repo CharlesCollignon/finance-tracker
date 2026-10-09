@@ -16,9 +16,13 @@ the reads are written with.
 - **No AI without a connected account.** The reads appear only for a user
   who has connected one; Pluclair's Mistral key no longer writes them.
   Reads already stored stay readable.
-  _Superseded 2026-10-09 (`EVERYDAY_PLAN.md`, phase 7, migration 065):
-  `ai.account` is on for everyone and means the person's own account when
-  connected, Pluclair's key with its allowances otherwise._
+  _Briefly superseded on 2026-10-09 (`EVERYDAY_PLAN.md`, phase 7,
+  migration 065: Pluclair's key with its allowances for anyone without an
+  account), then restored the same day: the owner removed Pluclair's
+  Mistral key altogether. `ai.account` stays on for everyone; reads,
+  questions and instrument readings are written only on the person's own
+  OpenRouter account, and every screen without one shows the invitation to
+  connect it, with its three steps._
 - **No monthly ceiling on one's own account.** The user pays for every
   call, so a connected account has no monthly allowance; the cooldown
   between two presses and the guard against a double press stay.

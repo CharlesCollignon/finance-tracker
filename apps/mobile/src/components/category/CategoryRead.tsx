@@ -82,10 +82,10 @@ export function CategoryRead({
   if (!rendered && thin) {
     return null;
   }
-  // Nothing to show and nothing that could be written: nothing — or, on
-  // one's own AI account, the line that says how to get one.
+  // Nothing to show and nothing that could be written: with no AI account
+  // connected, the card that says how to connect one, where the read would be.
   if (!rendered && !writable) {
-    return account ? <ConnectAiInvite /> : null;
+    return !account ? <ConnectAiInvite variant="card" /> : null;
   }
 
   async function write() {
@@ -194,7 +194,7 @@ export function CategoryRead({
           </View>
         ) : null}
 
-        {!writable && account ? (
+        {!writable && !account ? (
           <ConnectAiInvite />
         ) : writable ? (
           <Pressable

@@ -194,19 +194,25 @@ today's prices) leaves it unmarked, so the Plan still shows it as new.
 
 ## AI features
 
-Mistral, called only from the web server (the phone goes through
-`/api/month-read`). The model never writes a figure: it names a fact by id and
-the app substitutes its own value; `verify*` functions in core reject or trim
-anything else. One model for every feature (`MISTRAL_MODEL`, else
-`mistral-medium-latest`).
+Only on the user's own AI account: connected from Profile through OpenRouter,
+paid by them, with the model they chose (`lib/ai/writer.ts`). Pluclair has no
+model key of its own; without an account nothing is written and the screens
+invite the person to connect one (`ConnectAiInvite`). Called only from the web
+server (the phone goes through `/api/month-read`, `/api/ask` and the like). The
+model never writes a figure: it names a fact by id and the app substitutes its
+own value; `verify*` functions in core reject or trim anything else.
 
-| Feature                                             | Web entry                               | Quota                                              |
-| --------------------------------------------------- | --------------------------------------- | -------------------------------------------------- |
-| Month read                                          | `lib/month-read/`                       | 5 per month written about                          |
-| Category read                                       | `lib/category-read/`                    | 10 per calendar month                              |
-| Finding ordering                                    | `lib/category-selection/`               | 5 per calendar month                               |
-| Wallet read                                         | `lib/wallet-read/`                      | 5 per calendar month, refused when nothing changed |
-| Instrument reading (web search, then transcription) | `lib/instrument-reading/`, nightly cron | 40 per calendar month                              |
+Each feature keeps its reservation — a cooldown and one call in flight — under
+`ACCOUNT_ALLOWANCE`, a ceiling no month reaches, against a runaway client.
+
+| Feature                                             | Web entry                               | Besides the ceiling          |
+| --------------------------------------------------- | --------------------------------------- | ---------------------------- |
+| Month read                                          | `lib/month-read/`                       | —                            |
+| Category read                                       | `lib/category-read/`                    | —                            |
+| Finding ordering                                    | `lib/category-selection/`               | —                            |
+| Wallet read                                         | `lib/wallet-read/`                      | Refused when nothing changed |
+| Instrument reading (web search, then transcription) | `lib/instrument-reading/`, nightly cron | Only ISINs the user holds    |
+| Ask Pluclair                                        | `lib/ask/`                              | Kept 30 days, then swept     |
 
 What goes over the wire: aggregates and names the user typed (category and
 holding names), the month's category totals, and for the
@@ -389,8 +395,9 @@ too); the second writes at most four sentences with `{{fact:id}}` holes.
 was not given, or advises (`givesAdvice`); an advice question ends with
 « Pluclair ne conseille pas ». The answer is stored with the figures it was
 written from (`ask_messages.body`). The month's count is taken before the
-model is asked (`reserve_ask`) and handed back if it was never reached;
-twenty on Pluclair's key, none on one's own account. Conversations last
+model is asked (`reserve_ask`) and handed back if it was never reached,
+under the account ceiling; only with an AI account connected, on it.
+Conversations last
 thirty days (`sweep_ask` in the nightly sweep). The phone asks through
 `POST /api/ask` and reads and deletes its conversations directly. The
 person's own money only, under « Commun » too.

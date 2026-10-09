@@ -85,6 +85,8 @@ interface ProfileViewProps {
   /** The shared space this person is in, or null. */
   space: Space | null;
   userId: string;
+  /** A row to open on arrival: the AI connection, from an invitation. */
+  initialOpen?: "aiConnect" | null;
 }
 
 /** Which row is showing its editor. One at a time, as on the phone. */
@@ -114,12 +116,13 @@ export function ProfileView({
   aiAccount,
   space,
   userId,
+  initialOpen = null,
 }: ProfileViewProps) {
   const { toast } = useToast();
   const currency = useCurrency();
   const locale = useLocale();
   const t = useT();
-  const [open, setOpen] = useState<OpenRow>(null);
+  const [open, setOpen] = useState<OpenRow>(initialOpen);
   const [pending, setPending] = useState(false);
 
   function toggle(row: Exclude<OpenRow, null>) {

@@ -7,7 +7,6 @@ import {
 import {
   CATEGORY_SELECTION_COOLDOWN_SECONDS,
   CATEGORY_SELECTION_RESERVATION_SECONDS,
-  CATEGORY_SELECTION_WRITES_PER_MONTH,
   findingsDigest,
   MIN_FINDINGS_TO_RANK,
   verifyCategorySelection,
@@ -32,7 +31,6 @@ import {
   reserveSelection,
   storeSelection,
 } from "@/lib/category-selection/store";
-import { createClient } from "@/lib/supabase/server";
 import { getLocale, getT } from "@/lib/locale";
 
 type Client = SupabaseClient<Database>;
@@ -70,22 +68,15 @@ export async function rerankFindings(
   const locale = await getLocale();
   const t = await getT();
 
-  const { writer, account } = await writerFor(
-    userId,
-    client ?? (await createClient()),
-  );
+  const writer = await writerFor(userId);
   if (!writer) {
     return {
       written: false,
-      message: account
-        ? t("aiAccount.connectFirst")
-        : t("categoryRead.noWriter"),
+      message: t("aiAccount.connectFirst"),
       writesLeft: 0,
     };
   }
-  const allowance = account
-    ? ACCOUNT_ALLOWANCE
-    : CATEGORY_SELECTION_WRITES_PER_MONTH;
+  const allowance = ACCOUNT_ALLOWANCE;
   const source = readSource(CATEGORY_SELECTION_SOURCE, writer);
 
   const [state, findings] = await Promise.all([

@@ -46,8 +46,8 @@ interface MonthReadProps {
   readLocale: Locale;
   writesLeft: number;
   /**
-   * Who would write, and whether anyone can: Pluclair's key or the user's own
-   * AI account, and the name for the control that spends a call — « Écrire
+   * Who would write, and whether anyone can: the user's own AI account, or
+   * nobody, and the name for the control that spends a call — « Écrire
    * avec Mistral ». The button said « Write one », and the line beside it
    * said « a model », which between them named neither what would happen nor
    * what would do it.
@@ -109,7 +109,9 @@ export function MonthRead({
   // On one's own AI account, a line where the read would be says how to get
   // one, rather than nothing at all.
   if (!writer.writable && !rendered) {
-    return writer.account && !facts.thin ? <ConnectAiInvite /> : null;
+    return !writer.account && !facts.thin ? (
+      <ConnectAiInvite variant="card" bare />
+    ) : null;
   }
 
   // A month with nothing in it is not worth offering a read of, and the
@@ -231,7 +233,7 @@ export function MonthRead({
           ) : null}
         </p>
 
-        {!writer.writable && writer.account ? (
+        {!writer.writable && !writer.account ? (
           <ConnectAiInvite />
         ) : writer.writable ? (
           <Button

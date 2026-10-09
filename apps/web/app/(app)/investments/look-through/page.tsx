@@ -98,14 +98,11 @@ export default async function LookThroughPage() {
           : null
       }
       stale={stale}
-      readsLeft={walletReadsRemaining(
-        stored?.tally ?? null,
-        writer.account ? ACCOUNT_ALLOWANCE : undefined,
-      )}
+      readsLeft={walletReadsRemaining(stored?.tally ?? null, ACCOUNT_ALLOWANCE)}
       canReview={writer.writable}
       reviewAccount={writer.account}
-      // The writer's name, for the button: Pluclair's model or the user's
-      // own. The exact model that wrote a stored read is a different
+      // The writer's name, for the button: the model the user chose on their
+      // own account. The exact model that wrote a stored read is a different
       // question and comes off the read itself, below.
       writerBrand={writer.name}
       readModel={stored?.read ? stored.model : null}

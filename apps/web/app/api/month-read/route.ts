@@ -3,13 +3,14 @@ import { writeMonthRead } from "@/lib/month-read/write";
 import { sessionFromBearer } from "@/lib/supabase/bearer";
 
 /**
- * Writing a month read, for a client that cannot hold the key.
+ * Writing a month read, for a client that cannot open the key.
  *
  * Write-only, deliberately. The phone *reads* the stored row straight out of
  * Supabase like every other query — `month_reads` is select-own under row
  * level security — so there is no need for a route in that direction and no
  * round trip spent on one. The only thing the phone genuinely cannot do is
- * hold `MISTRAL_API_KEY`, which is what this exists for.
+ * open the person's AI account key, sealed with a server secret, which is
+ * what this exists for.
  *
  * Same shape as `api/bank/refresh`: the Supabase access token the phone
  * already has, verified here, with every query below carrying it so row

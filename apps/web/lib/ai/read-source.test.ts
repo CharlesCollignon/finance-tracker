@@ -110,6 +110,43 @@ describe("readSource", () => {
     ).resolves.toEqual({ fine: true });
   });
 
+  it("asks once more after a 429, a moment later", async () => {
+    let calls = 0;
+    const post = vi.fn(async () => {
+      calls += 1;
+      if (calls === 1) {
+        throw new Error("answered 429");
+      }
+      return { choices: [{ message: { content: '{"ok":true}' } }] };
+    });
+    const wait = vi.fn(async () => undefined);
+    const source = readSource(CONFIG, writer({ label: "account:busy" }), {
+      post,
+      wait,
+    });
+    await expect(source.write(REQUEST)).resolves.toEqual({ ok: true });
+    expect(wait).toHaveBeenCalledOnce();
+    expect(source.failure()).toBeNull();
+  });
+
+  it.each([
+    [429, "busy"],
+    [403, "refused"],
+    [402, "no-credit"],
+    [500, "unreachable"],
+  ] as const)("says why it has no answer after a %i", async (status, why) => {
+    const post = vi.fn(async () => {
+      throw new Error(`answered ${status}`);
+    });
+    const source = readSource(
+      CONFIG,
+      writer({ label: `account:status-${status}` }),
+      { post, wait: async () => undefined },
+    );
+    await expect(source.write(REQUEST)).resolves.toBeNull();
+    expect(source.failure()).toBe(why);
+  });
+
   it("is null for an answer that is not JSON", async () => {
     const post = vi.fn(async () => ({
       choices: [{ message: { content: "not json" } }],

@@ -7,11 +7,10 @@ import type { Writer } from "./writer";
  * One adapter for every written read — the month, a category, the band's
  * order, the portfolio — whoever writes it.
  *
- * Mistral and OpenRouter speak the same chat-completions dialect, structured
- * output included, so what differs between Pluclair's key and a user's
- * account is the `Writer`: where to send, with which key, which model, and
- * what else the service wants. What differs between one read and another is
- * the `ReadSourceConfig`. Everything else — the request, the timeout, the
+ * Every call goes to OpenRouter's chat completions on the person's own
+ * account, structured output included; the `Writer` says with which key and
+ * which model, and what else the service wants. What differs between one
+ * read and another is the `ReadSourceConfig`. Everything else — the request, the timeout, the
  * failure count and its cooldown, the envelope — is the same call.
  *
  * `null` covers every way of not getting an answer — unreachable,
@@ -42,7 +41,40 @@ export interface ReadRequest {
 export interface ReadSource {
   write(request: ReadRequest): Promise<unknown | null>;
   readonly model: string;
+  /**
+   * Why the last `write` came back null, when the provider said: busy (429),
+   * refused — the key or the model (401, 403) — out of credit (402), or
+   * anything else. Null after an answer, or before any call.
+   */
+  failure(): ReadFailure | null;
 }
+
+export type ReadFailure = "busy" | "refused" | "no-credit" | "unreachable";
+
+/** What a provider's status says, for the person asking. */
+export function failureOf(status: number | null): ReadFailure {
+  if (status === 429) {
+    return "busy";
+  }
+  if (status === 401 || status === 403) {
+    return "refused";
+  }
+  return status === 402 ? "no-credit" : "unreachable";
+}
+
+/** The provider's status, out of the error `postCompletion` throws. */
+function statusOf(error: unknown): number | null {
+  const match =
+    error instanceof Error ? /answered (\d{3})/.exec(error.message) : null;
+  return match ? Number(match[1]) : null;
+}
+
+/**
+ * How long to wait before asking again after a 429. Once: a free tier
+ * allows about a request a second, and Ask Pluclair asks twice in a row; a
+ * provider still busy after this is busy, and the person is told so.
+ */
+const BUSY_RETRY_MS = 1500;
 
 /** Failures in a row, and the door closed after too many. */
 const FAILURE_THRESHOLD = 3;
@@ -53,6 +85,8 @@ export interface ReadSourceOptions {
   /** The network call, injected so failure handling is testable. */
   post?: (writer: Writer, body: unknown, timeoutMs: number) => Promise<unknown>;
   now?: () => number;
+  /** The pause before asking again after a 429, injected for the tests. */
+  wait?: (ms: number) => Promise<void>;
 }
 
 async function postCompletion(
@@ -107,10 +141,16 @@ export function readSource(
 ): ReadSource {
   const post = options.post ?? postCompletion;
   const now = options.now ?? Date.now;
+  const wait =
+    options.wait ??
+    ((ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms)));
   const breakerKey = `${config.logPrefix}:${writer.label}`;
+  let lastFailure: ReadFailure | null = null;
 
   return {
     model: writer.model,
+
+    failure: () => lastFailure,
 
     async write(request) {
       const breaker = breakers.get(breakerKey) ?? {
@@ -118,27 +158,37 @@ export function readSource(
         closedUntil: 0,
       };
       if (now() < breaker.closedUntil) {
+        lastFailure = "unreachable";
         return null;
       }
 
+      const body = {
+        ...writer.extra,
+        model: writer.model,
+        ...sampling(writer, config.maxTokens),
+        response_format: config.responseFormat(request.locale),
+        messages: [
+          { role: "system", content: request.system },
+          { role: "user", content: request.user },
+        ],
+      };
+      const timeout = patience(writer, config.timeoutMs);
       try {
-        const raw = await post(
-          writer,
-          {
-            ...writer.extra,
-            model: writer.model,
-            ...sampling(writer, config.maxTokens),
-            response_format: config.responseFormat(request.locale),
-            messages: [
-              { role: "system", content: request.system },
-              { role: "user", content: request.user },
-            ],
-          },
-          patience(writer, config.timeoutMs),
-        );
+        let raw: unknown;
+        try {
+          raw = await post(writer, body, timeout);
+        } catch (error) {
+          if (statusOf(error) !== 429) {
+            throw error;
+          }
+          await wait(BUSY_RETRY_MS);
+          raw = await post(writer, body, timeout);
+        }
         breakers.delete(breakerKey);
+        lastFailure = null;
         return parseAnswer(raw);
       } catch (error) {
+        lastFailure = failureOf(statusOf(error));
         // The status and the model, on the server, once — never the body.
         // The status alone is what says whether the provider was down, the
         // key unentitled to the model, or the account out of credit.

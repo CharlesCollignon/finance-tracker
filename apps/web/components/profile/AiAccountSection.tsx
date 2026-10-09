@@ -14,6 +14,7 @@ import {
 import { aiBrandOf } from "@finance/core/ai-brands";
 import { formatCurrency } from "@finance/core/constants";
 import { AiMark } from "@/components/finance/AiMark";
+import { AiSetupSteps } from "@/components/finance/ConnectAiInvite";
 import type { Locale } from "@finance/core/i18n/locale";
 import { chooseAiModel, disconnectAiAccount } from "@/lib/actions/ai-account";
 import { useLocale, useT } from "@/lib/locale-context";
@@ -66,6 +67,17 @@ export function AiAccountSection({
   const [pending, setPending] = useState(false);
   const [credit, setCredit] = useState<AiCreditState | null>(null);
   const connected = model !== null;
+  const consentRef = useRef<HTMLDivElement>(null);
+
+  // Arrived from an invitation (`?ai=connect`): the row is open, and in view.
+  useEffect(() => {
+    if (open === "aiConnect") {
+      consentRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "center",
+      });
+    }
+  }, [open]);
 
   // Said once, then taken off the address: a reload must not say it again.
   const announced = useRef(false);
@@ -152,7 +164,9 @@ export function AiAccountSection({
 
   const consent =
     open === "aiConnect" ? (
-      <div className="flex flex-col gap-3">
+      <div ref={consentRef} className="flex flex-col gap-3">
+        {/* The way in, step by step, before what connecting means. */}
+        <AiSetupSteps />
         <p className="text-sm">{t("aiAccount.consentWhat")}</p>
         <p className={cn("text-muted-foreground", MICRO)}>
           {t("aiAccount.consentSent")}

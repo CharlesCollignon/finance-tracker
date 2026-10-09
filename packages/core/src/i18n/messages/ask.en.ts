@@ -13,12 +13,8 @@ export const askEn = {
   delete: "Delete this conversation",
   deleted: "Conversation deleted",
   kept: "Kept {days} days, then deleted.",
-  left: {
-    one: "One question left this month",
-    other: "{count} questions left this month",
-  },
   none: "No questions left this month: they come back on the 1st.",
-  onAccount: "On your AI account: no count.",
+  onAccount: "Paid on your AI account, a few cents each.",
   noAdvice:
     "Pluclair gives the figures, not advice: what to do with them is yours to decide.",
   outside:
@@ -34,7 +30,9 @@ export const askEn = {
   noAnswer: "No answer right now. Try again in a moment.",
   unusable:
     "The answer could not be shown: nothing in it held up. Try asking another way.",
-  noWriter: "Questions are not available here.",
+  busy: "Too many requests to the AI right now: try again in a minute.",
+  accountRefused: "Your AI account refused the request: check it in Profile.",
+  noCredit: "Your AI account has no credit left: top it up on OpenRouter.",
   tooLong: "Shorter, please: {max} characters at most.",
   suggest1: "How much did I spend on groceries this month?",
   suggest2: "What is my largest recurring charge?",

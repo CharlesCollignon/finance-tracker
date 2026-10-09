@@ -39,16 +39,6 @@ type Client = SupabaseClient<Database>;
  */
 
 /**
- * How many instruments may be read a month.
- *
- * Generous against a real portfolio — nobody holds forty positions — and a
- * cap all the same, because a client could otherwise re-read the same
- * portfolio every day. `reserve_instrument_reading` also refuses any ISIN the
- * caller does not actually hold, which is the tighter of the two bounds.
- */
-export const READINGS_PER_MONTH = 40;
-
-/**
  * How long the tally must have been quiet before a press may reserve.
  *
  * A second press on the same button is one call. Note what this is keyed on:
@@ -70,11 +60,11 @@ const COOLDOWN_SECONDS = 2;
  *
  * Dropping the quiet period for a walk is safe because it was never the thing
  * bounding this. `pending_since` still allows exactly one call in flight per
- * user, `READINGS_PER_MONTH` still caps the month, and the reservation
- * function still refuses any ISIN the caller does not hold. The cooldown only
- * ever added a window *after* a call returned, which a genuine double-press
- * never lands in — the call takes tens of seconds, so the second press of a
- * double-press lands during it, on `pending_since`.
+ * user, and the reservation function still refuses any ISIN the caller does
+ * not hold. The cooldown only ever added a window *after* a call returned,
+ * which a genuine double-press never lands in — the call takes tens of
+ * seconds, so the second press of a double-press lands during it, on
+ * `pending_since`.
  */
 export const DRAIN_COOLDOWN_SECONDS = 0;
 
@@ -119,12 +109,6 @@ export interface ReadInstrumentOptions {
    * so in its own code instead of inheriting a refusal it cannot explain.
    */
   cooldownSeconds?: number;
-  /**
-   * `client` holds the service role — the nightly walk, not the user asking —
-   * so whether the user writes with their own AI account is read from the
-   * tables rather than from a session that is not there.
-   */
-  service?: boolean;
 }
 
 function thisMonthColumn(): string {
@@ -143,17 +127,16 @@ export async function readInstrument(
     client,
     now = new Date(),
     cooldownSeconds = COOLDOWN_SECONDS,
-    service = false,
   } = options;
 
   const supabase = client ?? (await createClient());
-  // Pluclair's key, or the user's own AI account — and on that account, no
-  // monthly allowance and nothing read without a connection.
-  const { writer, account } = await writerFor(userId, supabase, { service });
+  // The person's own AI account, which pays for the reading: no monthly
+  // allowance on it, and nothing read without one.
+  const writer = await writerFor(userId);
   if (!writer) {
     return { status: "no-reader" };
   }
-  const allowance = account ? ACCOUNT_ALLOWANCE : READINGS_PER_MONTH;
+  const allowance = ACCOUNT_ALLOWANCE;
   const source = instrumentReadingSourceFor(writer);
   const normalised = isin.trim().toUpperCase();
 

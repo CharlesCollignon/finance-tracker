@@ -32,6 +32,7 @@ import { formatShortDate } from "@finance/core/constants";
 import { resolveMessage } from "@finance/core/i18n/t";
 import type { ReadSegment } from "@finance/core/month-read";
 
+import { ConnectAiInvite } from "@/components/ConnectAiInvite";
 import { Orb } from "@/components/Orb";
 import { PrivateAmount } from "@/components/PrivateAmount";
 import { Screen } from "@/components/ui/Screen";
@@ -42,7 +43,6 @@ import {
   deleteConversation,
   getConversationMessages,
   listConversations,
-  questionsLeft,
 } from "@/lib/ask";
 import { getWriterState } from "@/lib/ai-writer";
 import { cn } from "@/lib/cn";
@@ -87,7 +87,6 @@ export default function AskScreen() {
         ? {
             conversations: await listConversations(user.id),
             writer: await getWriterState(user.id),
-            left: await questionsLeft(user.id),
           }
         : null,
     [user?.id],
@@ -100,9 +99,7 @@ export default function AskScreen() {
   );
 
   const writable = side?.writer.writable ?? false;
-  const left = side?.writer.account ? null : (side?.left ?? null);
-  const spent = left !== null && left <= 0;
-  const canAsk = writable && !spent && asking === null;
+  const canAsk = writable && asking === null;
 
   async function ask(question: string) {
     const text = question.trim();
@@ -208,7 +205,16 @@ export default function AskScreen() {
           contentContainerClassName="gap-4 px-4 pb-4 pt-2"
           keyboardShouldPersistTaps="handled"
         >
-          {empty ? (
+          {side && !writable ? (
+            // No AI account connected: how to connect one, where the
+            // conversation would be.
+            <View className="items-center gap-4 py-6">
+              <Orb size="nav" />
+              <View className="w-full">
+                <ConnectAiInvite variant="card" />
+              </View>
+            </View>
+          ) : empty ? (
             <Animated.View
               entering={FadeIn.duration(300)}
               className="items-center gap-4 py-8"
@@ -264,48 +270,44 @@ export default function AskScreen() {
           )}
         </ScrollView>
 
-        <View className="gap-1.5 border-t border-border px-4 pb-6 pt-3">
-          <View className="flex-row items-end gap-2 rounded-card border border-border px-3 py-1.5">
-            <TextInput
-              value={draft}
-              onChangeText={setDraft}
-              placeholder={t("ask.placeholder")}
-              placeholderTextColor={colors.mutedForeground}
-              accessibilityLabel={t("ask.placeholder")}
-              editable={writable && !spent}
-              multiline
-              maxLength={MAX_ASK_QUESTION}
-              className="max-h-32 min-h-10 flex-1 py-2 text-base text-foreground"
-            />
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel={t("ask.send")}
-              disabled={!canAsk || draft.trim().length === 0}
-              onPress={() => void ask(draft)}
-              className="mb-1 h-9 w-9 items-center justify-center rounded-full bg-primary"
-              style={{
-                opacity: canAsk && draft.trim().length > 0 ? 1 : 0.4,
-              }}
-            >
-              <Ionicons
-                name="arrow-up"
-                size={ICON.md}
-                color={colors.primaryForeground}
+        {writable ? (
+          <View className="gap-1.5 border-t border-border px-4 pb-6 pt-3">
+            <View className="flex-row items-end gap-2 rounded-card border border-border px-3 py-1.5">
+              <TextInput
+                value={draft}
+                onChangeText={setDraft}
+                placeholder={t("ask.placeholder")}
+                placeholderTextColor={colors.mutedForeground}
+                accessibilityLabel={t("ask.placeholder")}
+                editable={writable}
+                multiline
+                maxLength={MAX_ASK_QUESTION}
+                className="max-h-32 min-h-10 flex-1 py-2 text-base text-foreground"
               />
-            </Pressable>
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={t("ask.send")}
+                disabled={!canAsk || draft.trim().length === 0}
+                onPress={() => void ask(draft)}
+                className="mb-1 h-9 w-9 items-center justify-center rounded-full bg-primary"
+                style={{
+                  opacity: canAsk && draft.trim().length > 0 ? 1 : 0.4,
+                }}
+              >
+                <Ionicons
+                  name="arrow-up"
+                  size={ICON.md}
+                  color={colors.primaryForeground}
+                />
+              </Pressable>
+            </View>
+            <Text variant="micro" className="text-center">
+              {t("ask.onAccount")}
+              {" · "}
+              {t("ask.kept", { days: ASK_KEEP_DAYS })}
+            </Text>
           </View>
-          <Text variant="micro">
-            {!writable
-              ? t("ask.noWriter")
-              : left === null
-                ? t("ask.onAccount")
-                : spent
-                  ? t("ask.none")
-                  : t("ask.left", { count: left })}
-            {" · "}
-            {t("ask.kept", { days: ASK_KEEP_DAYS })}
-          </Text>
-        </View>
+        ) : null}
       </KeyboardAvoidingView>
     </Screen>
   );

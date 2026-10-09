@@ -11,6 +11,7 @@ import { Orb } from "@/components/Orb";
 import { OwnerSwitch } from "@/components/OwnerSwitch";
 import { PrivacyToggle } from "@/components/PrivacyToggle";
 import { RefreshButton } from "@/components/RefreshButton";
+import { AskButton } from "@/components/AskButton";
 import { Text } from "@/components/ui/Text";
 import { hapticLight } from "@/lib/haptics";
 import { CHROME_MAX_FONT_SCALE, useChromeFontScale } from "@/theme/chrome";
@@ -60,7 +61,9 @@ const TITLE_SIZE = 18;
  * the comment in the header explains — and it has to grow when a control is
  * added, or the title starts negotiating width with it again.
  */
-const ACTIONS_WIDTH = 136;
+// Four controls since « Questions » joined the refresh, the blur and the
+// account menu.
+const ACTIONS_WIDTH = 180;
 
 /**
  * Standard screen shell, mirroring the web PageHeader + PageContainer: title
@@ -171,6 +174,9 @@ export function Screen({
 
           <View className="absolute inset-y-0 right-4 flex-row items-center gap-2">
             {headerActions}
+            {/* « Questions », beside the refresh, on every screen of the
+                app — the account menu says it is one. */}
+            {showAccountMenu ? <AskButton /> : null}
             {showRefresh ? <RefreshButton /> : null}
             {showPrivacyToggle ? <PrivacyToggle /> : null}
             {showAccountMenu ? <AccountMenu /> : null}

@@ -12,6 +12,7 @@ import { HeaderTitle } from "@/components/layout/OwnerSwitch";
 import { PageTitle } from "@/components/layout/PageTitle";
 import { PrivacyToggle } from "@/components/layout/PrivacyToggle";
 import { RefreshButton } from "@/components/layout/RefreshButton";
+import { AskButton } from "@/components/ask/AskButton";
 
 interface PageHeaderProps {
   /**
@@ -80,10 +81,11 @@ export function PageHeader({ titleKey, children, className }: PageHeaderProps) {
         </div>
         <div className={SHELL_HEADER_ACTIONS_CLASS}>
           {children}
-          {/* All three phone only: from `md` the top bar carries them, and
+          {/* All four phone only: from `md` the top bar carries them, and
               these would be second buttons saying the same thing. The
               refresh and the account menu render nothing outside the app
               shell, so the auth and marketing headers are unaffected. */}
+          <AskButton className="md:hidden" />
           <RefreshButton className="md:hidden" />
           <PrivacyToggle className="md:hidden" />
           <HeaderAccountMenu />

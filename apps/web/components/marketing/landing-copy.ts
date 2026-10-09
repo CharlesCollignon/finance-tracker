@@ -101,7 +101,7 @@ export const landingCopy = {
       {
         question: "Does it cost anything?",
         answer:
-          "No. Creating an account and everything described above is free, and no card is asked for. Reads and questions are offered within a monthly limit; with the AI of your choice — Mistral, ChatGPT or Claude on your own OpenRouter account — you pay that service for them, a few cents each, with no limit. The bank connection, when it comes, will be paid to its service.",
+          "Pluclair is free, and no card is asked for. Reads and questions, written by an AI, need your own OpenRouter account: you choose the model there — Mistral, ChatGPT or Claude — and pay that service directly, a few cents each. The bank connection, when it comes, will be paid to its service.",
       },
       {
         question: "Can Pluclair touch my money?",
@@ -289,7 +289,7 @@ export const landingCopy = {
       title: "Written reads",
       body: "A few sentences about your month or your investments. The words are the AI’s; every figure is Pluclair’s.",
       utility:
-        "The other screens give you figures and lists. A read puts them together and says what stands out — without being allowed to invent a number. Useful in months where the totals look normal and something underneath is not. Written on Pluclair’s key within a monthly limit, or on your own OpenRouter account with the model you choose — Mistral, ChatGPT or Claude — at your expense.",
+        "The other screens give you figures and lists. A read puts them together and says what stands out — without being allowed to invent a number. Useful in months where the totals look normal and something underneath is not. Written on your own OpenRouter account, with the model you choose — Mistral, ChatGPT or Claude — at your expense: a few cents each.",
       steps: [
         {
           title: "Ask for one",

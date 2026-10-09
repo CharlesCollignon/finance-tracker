@@ -1,4 +1,5 @@
 import { isMissingSchema } from "@finance/data/schema";
+import { ACCOUNT_ALLOWANCE } from "@finance/core/ai-models";
 import { monthColumnValue } from "@finance/core/month-close";
 import {
   describeReadFreshness,
@@ -32,10 +33,10 @@ import { announcingFetch } from "@/lib/data-version";
  * query — no round trip through the web app, and the card still works with
  * the network down.
  *
- * Writing does need one, and only for one reason: `MISTRAL_API_KEY` lives in
- * the web server's environment and must never reach a phone. So a press posts
- * to `/api/month-read` with the Supabase access token the app already holds,
- * exactly as the bank refresh does.
+ * Writing does need one, and only for one reason: the person's AI account key
+ * is opened in the web server, sealed with a secret that must never reach a
+ * phone. So a press posts to `/api/month-read` with the Supabase access token
+ * the app already holds, exactly as the bank refresh does.
  */
 
 /**
@@ -145,7 +146,11 @@ export async function getMonthRead(
   const storedFacts = (row?.facts as MonthFacts | null) ?? null;
 
   if (!row || !read || !storedFacts || !row.written_at) {
-    return { view: null, writesLeft: writesRemaining(tally), tracked: true };
+    return {
+      view: null,
+      writesLeft: writesRemaining(tally, ACCOUNT_ALLOWANCE),
+      tracked: true,
+    };
   }
 
   return {
@@ -167,7 +172,7 @@ export async function getMonthRead(
         now: new Date().toISOString(),
       }),
     },
-    writesLeft: writesRemaining(tally),
+    writesLeft: writesRemaining(tally, ACCOUNT_ALLOWANCE),
     tracked: true,
   };
 }

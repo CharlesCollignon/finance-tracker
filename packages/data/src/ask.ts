@@ -7,9 +7,10 @@ import { isMissingSchemaOrFunction } from "./schema";
 
 /**
  * Ask Pluclair's storage (migration 064): a person's conversations, kept
- * thirty days, and the month's questions on Pluclair's key. Shared by both
- * apps: the phone reads and deletes through here directly, and asks through
- * the web's route, which holds the key.
+ * thirty days, and the month's count of questions — a ceiling against a
+ * runaway client. Shared by both apps: the phone reads and deletes through
+ * here directly, and asks through the web's route, which opens the person's
+ * AI account key.
  */
 
 export interface AskConversation {

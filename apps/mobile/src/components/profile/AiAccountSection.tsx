@@ -12,6 +12,7 @@ import { formatCurrency } from "@finance/core/constants";
 import { resolveMessage } from "@finance/core/i18n/t";
 
 import { AiMark } from "@/components/AiMark";
+import { AiSetupSteps } from "@/components/ConnectAiInvite";
 import { Button } from "@/components/ui/Button";
 import { ListRow, ListSection } from "@/components/ui/ListRow";
 import { Text } from "@/components/ui/Text";
@@ -126,6 +127,7 @@ export function AiAccountSection({
   const consent =
     open === "aiConnect" ? (
       <View className="gap-3">
+        <AiSetupSteps />
         <Text>{t("aiAccount.consentWhat")}</Text>
         <Text variant="micro">{t("aiAccount.consentSent")}</Text>
         <Text variant="micro">{t("aiAccount.consentWhere")}</Text>

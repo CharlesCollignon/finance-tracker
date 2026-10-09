@@ -126,7 +126,7 @@ const RUNAWAY_BASIS = 16;
 /**
  * The shape the model is asked for, and the shape it is held to.
  *
- * Enforced here rather than trusted from the provider. Mistral's strict
+ * Enforced here rather than trusted from the provider. A provider's strict
  * json_schema mode does not reliably honour `minItems`, `maxItems` or
  * `maxLength`, and a provider guarantee is an optimisation that reduces
  * retries in any case — never the contract. `.strict()` so an extra
@@ -179,7 +179,7 @@ export interface MonthRead {
 /* ----------------------------------------------------- the JSON schema */
 
 /**
- * Sent to Mistral as `response_format`.
+ * Sent to the model as `response_format`.
  *
  * Exported so the prompt tests and the adapter cannot drift apart. Counts and
  * lengths are deliberately absent: see `monthReadAnswerSchema`. No `$defs` or

@@ -29,6 +29,11 @@ export function AccountLabelProvider({
   );
 }
 
+/** Who is signed in, or null outside the app shell. */
+export function useAccountLabel(): AccountLabelValue | null {
+  return useContext(AccountLabelContext);
+}
+
 /**
  * The account menu in the page header, on a phone only: from `md` the top
  * bar carries it. It left the bottom bar so the bar holds surfaces alone.

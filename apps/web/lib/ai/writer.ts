@@ -3,10 +3,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { aiModel, type WriterState } from "@finance/core/ai-models";
 
 export { ACCOUNT_ALLOWANCE } from "@finance/core/ai-models";
-import { isFlagOn } from "@finance/core/flags";
-import { describeModel, DEFAULT_WRITER_MODEL } from "@finance/core/model-name";
 import type { Database } from "@finance/core/types/database";
-import { flagsFor } from "../flags";
 import { createAdminClient } from "../supabase/admin";
 import { getSiteUrl } from "../supabase/env";
 import { aiSealer } from "./secrets";
@@ -14,20 +11,18 @@ import { aiSealer } from "./secrets";
 type Client = SupabaseClient<Database>;
 
 /**
- * Who writes a user's reads, and on whose account
- * (docs/plans/AI_ACCOUNT_PLAN.md, Phase 2).
- *
- * Behind the `ai.account` flag. Off — every account until the connection is
- * opened to all — and nothing changes: Pluclair's own Mistral key writes, as
- * it always has, within the monthly allowances. On, the reads are the user's
- * own AI account's, through OpenRouter, with no allowance but the cooldown;
- * without a connected account, nothing is written at all.
+ * Who writes a person's reads and answers their questions: their own AI
+ * account, through OpenRouter, and nothing else (the owner's call,
+ * 2026-10-09). Pluclair holds no model key of its own: without a connected
+ * account there is no writer, and the screens invite the person to connect
+ * one. No monthly allowance on one's own account — only the cooldown and the
+ * guard against a double press.
  */
 
 /** One way of reaching a model: everything a request needs but the prompt. */
 export interface Writer {
-  /** Pluclair's own key, or the user's AI account. */
-  kind: "pluclair" | "account";
+  /** The person's own AI account, the one kind there is. */
+  kind: "account";
   /** The model id sent, and recorded on every read it writes. */
   model: string;
   endpoint: string;
@@ -42,47 +37,15 @@ export interface Writer {
   headers: Record<string, string>;
   /**
    * One failure count per label: a user's failing account must never close
-   * the door on everyone else's, nor Pluclair's on theirs.
+   * the door on everyone else's.
    */
   label: string;
 }
 
-const MISTRAL_ENDPOINT = "https://api.mistral.ai/v1/chat/completions";
 const OPENROUTER_ENDPOINT = "https://openrouter.ai/api/v1/chat/completions";
 
 /** The temperature the reads are written at, where a model takes one. */
 const TEMPERATURE = 0.2;
-
-/**
- * The model Pluclair's own key writes with, chosen on quality: a read is a
- * few thousand tokens, a few cents a month at most, so cost cannot decide
- * it. Small open models write sentences that do not parse — « your 720,00 €
- * left over is 720,00 € » — and put a figure where a category's name
- * belongs. `MISTRAL_MODEL` overrides it, and has to on Mistral's free plan,
- * whose keys reach only the open-weight models (`ministral-14b-latest`).
- */
-export function pluclairModel(): string {
-  return process.env.MISTRAL_MODEL?.trim() || DEFAULT_WRITER_MODEL;
-}
-
-/** Pluclair's own Mistral key, or null on a deployment without one. */
-export function pluclairWriter(): Writer | null {
-  const key = process.env.MISTRAL_API_KEY?.trim();
-  if (!key) {
-    return null;
-  }
-  return {
-    kind: "pluclair",
-    model: pluclairModel(),
-    endpoint: MISTRAL_ENDPOINT,
-    key,
-    temperature: TEMPERATURE,
-    reasoning: false,
-    extra: {},
-    headers: {},
-    label: "pluclair",
-  };
-}
 
 /** A user's connected AI account, opened for one request; null without one. */
 async function accountWriter(userId: string): Promise<Writer | null> {
@@ -134,102 +97,29 @@ async function accountWriter(userId: string): Promise<Writer | null> {
 }
 
 /**
- * Whether `ai.account` is on for this user.
- *
- * Through `client` when it acts as them — `evaluated_feature_flags()` reads
- * `auth.uid()`. A job that runs with the service role has no `auth.uid()`
- * and would be told every flag is off, so for it (`service`) the same rule
- * is read from the tables: the user's override, else the flag's default,
- * else whether the account was created after its cut-off.
+ * The writer for this person's next read or question: their own connected
+ * AI account, or none — and then nothing is written.
  */
-async function onAccount(
-  userId: string,
-  client: Client,
-  service: boolean,
-): Promise<boolean> {
-  if (!service) {
-    return isFlagOn(await flagsFor(client), "ai.account");
-  }
-  const [{ data: flag }, { data: override }] = await Promise.all([
-    client
-      .from("feature_flags")
-      .select("enabled_by_default, enabled_from")
-      .eq("key", "ai.account")
-      .maybeSingle(),
-    client
-      .from("user_feature_flags")
-      .select("enabled")
-      .eq("user_id", userId)
-      .eq("flag_key", "ai.account")
-      .maybeSingle(),
-  ]);
-  if (override) {
-    return override.enabled;
-  }
-  if (!flag) {
-    return false;
-  }
-  if (flag.enabled_by_default) {
-    return true;
-  }
-  if (!flag.enabled_from) {
-    return false;
-  }
-  const { data } = await client.auth.admin.getUserById(userId);
-  return Boolean(data.user && data.user.created_at >= flag.enabled_from);
+export function writerFor(userId: string): Promise<Writer | null> {
+  return accountWriter(userId);
 }
 
 /**
- * The writer for this user's next read. `account` says which rules apply:
- * true, the user's own connected account — no monthly allowance; false,
- * Pluclair's key and its allowances, which is also what someone with
- * `ai.account` on but nothing connected gets.
+ * What a screen needs to know of the writer: whether there is one, and its
+ * model's name. Without a connected account, nothing is writable and the
+ * screens invite the person to connect one.
  */
-export async function writerFor(
-  userId: string,
-  client: Client,
-  {
-    service = false,
-  }: {
-    /** `client` holds the service role: a job, not the user asking. */
-    service?: boolean;
-  } = {},
-): Promise<{ writer: Writer | null; account: boolean }> {
-  // The person's own account when they have connected one; Pluclair's key,
-  // with its allowances, otherwise (the owner's call, 2026-10-09: « L'IA de
-  // votre choix » for everyone without taking the AI from anyone).
-  if (await onAccount(userId, client, service)) {
-    const own = await accountWriter(userId);
-    if (own) {
-      return { writer: own, account: true };
-    }
-  }
-  return { writer: pluclairWriter(), account: false };
-}
-
 export async function writerStateFor(
   userId: string,
   client: Client,
 ): Promise<WriterState> {
-  if (!(await onAccount(userId, client, false))) {
-    return {
-      account: false,
-      writable: pluclairWriter() !== null,
-      name: describeModel(pluclairModel()).brand,
-    };
-  }
   const { data } = await client
     .from("ai_connections")
     .select("model")
     .eq("user_id", userId)
     .maybeSingle();
-  // No account connected, or none this server can open: Pluclair's key.
   if (!data || !aiSealer.configured()) {
-    return {
-      account: false,
-      writable: pluclairWriter() !== null,
-      name: describeModel(pluclairModel()).brand,
-    };
+    return { account: false, writable: false, name: "" };
   }
   return { account: true, writable: true, name: aiModel(data.model).name };
 }

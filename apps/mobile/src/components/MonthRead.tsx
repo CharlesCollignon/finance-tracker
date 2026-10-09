@@ -109,10 +109,10 @@ export function MonthRead({
   if (!rendered && facts.thin) {
     return null;
   }
-  // Nothing to show and no way to write one: nothing — or, on one's own AI
-  // account, the line that says how to get one.
+  // Nothing to show and no way to write one: with no AI account connected,
+  // the card that says how to connect one, where the read would be.
   if (!rendered && !writable) {
-    return account ? <ConnectAiInvite /> : null;
+    return !account ? <ConnectAiInvite variant="card" bare /> : null;
   }
 
   function write() {
@@ -236,7 +236,7 @@ export function MonthRead({
           </View>
         ) : null}
 
-        {!writable && account ? (
+        {!writable && !account ? (
           <ConnectAiInvite />
         ) : writable ? (
           <Pressable

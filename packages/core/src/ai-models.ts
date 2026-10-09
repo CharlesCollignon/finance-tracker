@@ -42,9 +42,9 @@ export function aiModel(id: string | null | undefined): AiModel {
 
 /**
  * What a screen needs to know about who would write a read — never the key.
- * `account` says which rules apply: the user's own AI account (no monthly
- * allowance, and nothing until one is connected) or Pluclair's key (its
- * allowances).
+ * `account` says whether the user has connected an AI account: there is no
+ * other writer, so without one nothing is written and the screens invite
+ * them to connect one.
  */
 export interface WriterState {
   account: boolean;

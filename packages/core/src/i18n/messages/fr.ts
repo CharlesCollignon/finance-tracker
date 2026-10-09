@@ -1850,7 +1850,6 @@ export const fr: Messages = {
     inFlight: "Une lecture est déjà en cours d'écriture.",
     nothingToSay: "Il n'y a pas encore assez dans {month} pour en écrire.",
     untracked: "Les lectures mensuelles ne sont pas encore disponibles ici.",
-    noWriter: "Aucun rédacteur n'est configuré.",
     noAnswer: "Le rédacteur n'a pas répondu à l'instant.",
     unusable: "La réponse du rédacteur n'était pas utilisable.",
     writeFailed: "Impossible d'écrire la lecture pour le moment.",
@@ -1897,7 +1896,6 @@ export const fr: Messages = {
       claimHadFigure: "Elle a écrit un chiffre de son invention",
     },
 
-    noWriter: "Aucun rédacteur n'est configuré.",
     gone: "Cette catégorie n'est plus disponible.",
 
     writtenInOtherLanguage: "Écrit en {language}.",
@@ -2082,20 +2080,34 @@ export const fr: Messages = {
   aiAccount: {
     writeOne: "Écrire avec {model}",
     writeAgain: "Réécrire avec {model}",
-    connectFirst: "Connectez un compte IA pour des lectures écrites.",
+    connectFirst:
+      "Connectez votre compte IA pour les lectures et les questions.",
+    ctaTitle: "Branchez votre IA",
+    ctaBody:
+      "Les lectures et les questions sont écrites par le modèle de votre choix, sur votre propre compte OpenRouter. Pluclair n'en fournit pas.",
+    ctaButton: "Connecter mon compte IA",
+    step1Title: "Un compte OpenRouter",
+    step1Body:
+      "Gratuit à créer, au moment de connecter\u00A0: OpenRouter ouvre sa page, puis vous ramène ici.",
+    step2Title: "Quelques euros de crédit",
+    step2Body:
+      "Ajoutés sur openrouter.ai. Une lecture ou une question coûte quelques centimes, payés à OpenRouter.",
+    step3Title: "Le modèle de votre choix",
+    step3Body:
+      "Mistral, ChatGPT ou Claude — à changer quand vous voulez, dans le Profil.",
     unavailable:
       "La connexion d'un compte IA n'est pas disponible pour le moment.",
     notEnabled: "La connexion d'un compte IA n'est pas encore ouverte.",
     /** Le Profil : la section « Compte IA ». */
     section: "Compte IA",
     footer:
-      "Les lectures écrites — votre mois, une catégorie, vos placements — sont rédigées sur votre propre compte IA, avec le modèle de votre choix.",
+      "Les lectures écrites — votre mois, une catégorie, vos placements — et les réponses à vos questions sont rédigées sur votre propre compte IA, avec le modèle de votre choix.",
     footerConnected:
       "Pluclair garde la clé chiffrée et ne s'en sert que pour vos lectures. Le solde de votre compte se consulte sur openrouter.ai.",
     connect: "Connecter un compte IA",
     connectHint: "Avec OpenRouter, en une fois",
     consentWhat:
-      "Les lectures écrites — votre mois, une catégorie, vos placements, un fonds — seront rédigées par le modèle que vous choisissez, sur votre compte OpenRouter, et facturées sur vos crédits.",
+      "Les lectures écrites — votre mois, une catégorie, vos placements, un fonds — et les réponses à vos questions seront rédigées par le modèle que vous choisissez, sur votre compte OpenRouter, et facturées sur vos crédits.",
     consentSent:
       "Pour chaque lecture, Pluclair envoie les chiffres de la page concernée : totaux, noms de catégories, lignes de vos placements. Jamais votre nom, votre e-mail, vos opérations une à une ni vos identifiants bancaires.",
     consentWhere:
@@ -2152,7 +2164,6 @@ export const fr: Messages = {
       "Trop peu a été lu pour dire quoi que ce soit de l'ensemble de vos placements.",
     unchanged: "Rien n'a bougé depuis la dernière revue.",
     untracked: "Les revues de placements ne sont pas encore disponibles ici.",
-    noWriter: "Aucun rédacteur n'est configuré.",
     noAnswer: "Le rédacteur n'a pas répondu à l'instant.",
     threwAway: "La réponse du rédacteur a été écartée. ({detail})",
 

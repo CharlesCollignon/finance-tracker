@@ -1,6 +1,5 @@
 import "server-only";
 import {
-  ASK_QUESTIONS_PER_MONTH,
   askTitle,
   buildAskAnswerRequest,
   buildAskPlanRequest,
@@ -20,7 +19,7 @@ import {
 } from "@finance/data/ask";
 import type { Db } from "@finance/data/client";
 import { searchAllMonths } from "@finance/data/ledger-search";
-import { readSource } from "@/lib/ai/read-source";
+import { readSource, type ReadSource } from "@/lib/ai/read-source";
 import { ACCOUNT_ALLOWANCE, writerFor } from "@/lib/ai/writer";
 import { gatherAskFacts } from "@/lib/ask/facts";
 import { ASK_ANSWER_SOURCE, ASK_PLAN_SOURCE } from "@/lib/ask/client";
@@ -33,8 +32,6 @@ export interface AskOutcome {
   conversationId: string | null;
   /** What to say instead of an answer, when there is none. */
   message: string | null;
-  /** Questions left this month on Pluclair's key; null on one's own account. */
-  questionsLeft: number | null;
 }
 
 /**
@@ -64,43 +61,57 @@ export async function askQuestion(
     return {
       conversationId,
       message: t("ask.tooLong", { max: MAX_ASK_QUESTION }),
-      questionsLeft: null,
     };
   }
 
-  const { writer, account } = await writerFor(userId, db);
+  const writer = await writerFor(userId);
   if (!writer) {
     return {
       conversationId,
-      message: account ? t("aiAccount.connectFirst") : t("ask.noWriter"),
-      questionsLeft: null,
+      message: t("aiAccount.connectFirst"),
     };
   }
-  const allowance = account ? ACCOUNT_ALLOWANCE : ASK_QUESTIONS_PER_MONTH;
-  const left = (asked: number) =>
-    account ? null : Math.max(0, allowance - asked);
-
-  const taken = await reserveQuestion(db, today, allowance);
+  // One's own account pays for every question: the allowance is only a
+  // ceiling against a runaway client.
+  const taken = await reserveQuestion(db, today, ACCOUNT_ALLOWANCE);
   if (taken === null) {
     const asked = await questionsAsked(db, userId, today);
     return {
       conversationId,
-      message: asked >= allowance ? t("ask.none") : t("ask.noWriter"),
-      questionsLeft: left(asked),
+      message: asked >= ACCOUNT_ALLOWANCE ? t("ask.none") : t("ask.noAnswer"),
     };
   }
 
-  const plan = verifyAskPlan(
-    await readSource(ASK_PLAN_SOURCE, writer).write(
-      buildAskPlanRequest(text, locale),
-    ),
-  );
-  if (!plan) {
+  // Why no answer came, in the person's words: a busy service, a key or a
+  // model refused, an account out of credit — or just none right now.
+  const unanswered = (source: ReadSource): string => {
+    switch (source.failure()) {
+      case "busy":
+        return t("ask.busy");
+      case "refused":
+        return t("ask.accountRefused");
+      case "no-credit":
+        return t("ask.noCredit");
+      default:
+        return t("ask.noAnswer");
+    }
+  };
+
+  const planSource = readSource(ASK_PLAN_SOURCE, writer);
+  const planned = await planSource.write(buildAskPlanRequest(text, locale));
+  if (planned === null) {
+    // Never answered: nothing was spent, so the question is handed back.
     await refundQuestion(db, today);
     return {
       conversationId,
-      message: t("ask.noAnswer"),
-      questionsLeft: left(taken - 1),
+      message: unanswered(planSource),
+    };
+  }
+  const plan = verifyAskPlan(planned);
+  if (!plan) {
+    return {
+      conversationId,
+      message: t("ask.unusable"),
     };
   }
 
@@ -139,7 +150,8 @@ export async function askQuestion(
     if (facts.length === 0) {
       answer = { kind: "empty", advice: plan.advice, locale };
     } else {
-      const raw = await readSource(ASK_ANSWER_SOURCE, writer).write(
+      const answerSource = readSource(ASK_ANSWER_SOURCE, writer);
+      const raw = await answerSource.write(
         buildAskAnswerRequest(
           text,
           { facts },
@@ -156,8 +168,7 @@ export async function askQuestion(
         await refundQuestion(db, today);
         return {
           conversationId,
-          message: t("ask.noAnswer"),
-          questionsLeft: left(taken - 1),
+          message: unanswered(answerSource),
         };
       }
       const verdict = verifyAskAnswer(raw, { facts });
@@ -165,7 +176,6 @@ export async function askQuestion(
         return {
           conversationId,
           message: t("ask.unusable"),
-          questionsLeft: left(taken),
         };
       }
       answer = {
@@ -185,5 +195,5 @@ export async function askQuestion(
     question: { text },
     answer,
   });
-  return { conversationId: id, message: null, questionsLeft: left(taken) };
+  return { conversationId: id, message: null };
 }

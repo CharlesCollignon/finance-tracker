@@ -6,11 +6,10 @@ import { translator } from "./i18n/t";
  * Two unrelated questions that share a row in the database, so they share a
  * module. Both are pure.
  *
- * The allowance is not really about money — `mistral-small-latest` over a
- * two-thousand-token prompt is a fraction of a cent, and nobody presses a
- * button five times a month by accident. It is about a bug: a retry loop, a
- * stuck effect, a client that re-presses on every render. A ceiling turns
- * that from a bill into a refusal.
+ * The allowance is not about rationing — every call is the person's own, on
+ * their AI account, and a two-thousand-token prompt is a fraction of a cent.
+ * It is about a bug: a retry loop, a stuck effect, a client that re-presses
+ * on every render. A ceiling turns that from a bill into a refusal.
  *
  * The freshness half exists because a read ages differently from the figures
  * under it. The figures on screen are always current — they are rendered from

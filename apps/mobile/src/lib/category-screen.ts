@@ -1,10 +1,6 @@
 import { ACCOUNT_ALLOWANCE, type WriterState } from "@finance/core/ai-models";
-import { CATEGORY_READ_WRITES_PER_MONTH } from "@finance/core/category-read";
 import type { CategoryScreen } from "@finance/core/category-screen";
-import {
-  CATEGORY_SELECTION_WRITES_PER_MONTH,
-  MIN_FINDINGS_TO_RANK,
-} from "@finance/core/category-selection";
+import { MIN_FINDINGS_TO_RANK } from "@finance/core/category-selection";
 import type { Locale } from "@finance/core/i18n/locale";
 import { writesRemaining } from "@finance/core/month-read-budget";
 import { readCategoryScreen } from "@finance/data/category-screen";
@@ -28,7 +24,7 @@ import { supabase } from "@/lib/supabase";
 
 export interface PhoneCategoryScreen {
   screen: CategoryScreen;
-  /** Who would write: Pluclair's key or the user's own AI account. */
+  /** Who would write: the user's own AI account, or nobody. */
   writer: WriterState;
   /** Whether a read can be asked for from this build at all. */
   readWritable: boolean;
@@ -61,7 +57,7 @@ export async function getCategoryScreen(
             lastWrittenAt: null,
             pendingSince: null,
           },
-          writer.account ? ACCOUNT_ALLOWANCE : CATEGORY_READ_WRITES_PER_MONTH,
+          ACCOUNT_ALLOWANCE,
         )
       : 0,
     rerankWritable:
@@ -71,9 +67,7 @@ export async function getCategoryScreen(
     rerankWritesLeft: selection.tracked
       ? writesRemaining(
           selection.tally,
-          writer.account
-            ? ACCOUNT_ALLOWANCE
-            : CATEGORY_SELECTION_WRITES_PER_MONTH,
+          ACCOUNT_ALLOWANCE,
         )
       : 0,
   };

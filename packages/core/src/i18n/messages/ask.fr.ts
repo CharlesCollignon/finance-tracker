@@ -12,12 +12,8 @@ export const askFr: typeof askEn = {
   delete: "Supprimer cette conversation",
   deleted: "Conversation supprimée",
   kept: "Gardées {days} jours, puis supprimées.",
-  left: {
-    one: "Une question restante ce mois-ci",
-    other: "{count} questions restantes ce mois-ci",
-  },
   none: "Plus de questions ce mois-ci : elles reviennent le 1er.",
-  onAccount: "Sur votre compte IA : sans limite.",
+  onAccount: "Payées sur votre compte IA, quelques centimes chacune.",
   noAdvice:
     "Pluclair donne les chiffres, pas de conseil : ce que vous en faites vous appartient.",
   outside:
@@ -34,7 +30,11 @@ export const askFr: typeof askEn = {
   noAnswer: "Pas de réponse pour l'instant. Réessayez dans un moment.",
   unusable:
     "La réponse n'a pas pu être montrée : rien n'y tenait. Essayez de la poser autrement.",
-  noWriter: "Les questions ne sont pas disponibles ici.",
+  busy: "Trop de demandes au service d'IA pour l'instant\u00A0: réessayez dans une minute.",
+  accountRefused:
+    "Votre compte IA a refusé la demande\u00A0: vérifiez-le dans Profil.",
+  noCredit:
+    "Votre compte IA n'a plus de crédit\u00A0: rechargez-le sur OpenRouter.",
   tooLong: "Plus court, s'il vous plaît : {max} caractères au plus.",
   suggest1: "Combien ai-je dépensé en courses ce mois-ci ?",
   suggest2: "Quelle est ma plus grosse dépense récurrente ?",

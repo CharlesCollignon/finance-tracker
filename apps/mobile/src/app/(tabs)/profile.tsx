@@ -1,6 +1,6 @@
-import { useEffect, useState, type ComponentProps } from "react";
+import { useEffect, useRef, useState, type ComponentProps } from "react";
 import { ScrollView, Switch, View } from "react-native";
-import { type Href, useRouter } from "expo-router";
+import { type Href, useLocalSearchParams, useRouter } from "expo-router";
 import type { Ionicons } from "@expo/vector-icons";
 
 import { resolveMessage } from "@finance/core/i18n/t";
@@ -127,6 +127,30 @@ export default function ProfileScreen() {
   useEffect(() => {
     void remindersEnabled().then(setReminders);
   }, []);
+
+  // `?ai=connect`, from an invitation to connect an AI account: the connect
+  // row open as the link arrives, scrolled into view, then the link
+  // forgotten so a return to the tab does not open it again.
+  const { ai } = useLocalSearchParams<{ ai?: string }>();
+  const [linkSeen, setLinkSeen] = useState<string>();
+  if (ai !== linkSeen) {
+    setLinkSeen(ai);
+    if (ai === "connect") {
+      setOpen("aiConnect");
+    }
+  }
+  const scroll = useRef<ScrollView>(null);
+  const aiTop = useRef(0);
+  useEffect(() => {
+    if (ai !== "connect") {
+      return;
+    }
+    const timer = setTimeout(() => {
+      scroll.current?.scrollTo({ y: Math.max(aiTop.current - 16, 0) });
+      router.setParams({ ai: undefined });
+    }, 250);
+    return () => clearTimeout(timer);
+  }, [ai, router]);
 
   function toggle(row: Exclude<OpenRow, null>) {
     setOpen((current) => (current === row ? null : row));
@@ -264,6 +288,7 @@ export default function ProfileScreen() {
   return (
     <Screen title={t("nav.profile")}>
       <ScrollView
+        ref={scroll}
         contentContainerClassName="gap-6 pt-1"
         contentContainerStyle={{ paddingBottom: tabBarClearance }}
         showsVerticalScrollIndicator={false}
@@ -382,12 +407,18 @@ export default function ProfileScreen() {
         {/* Beside the money it reads: the written reads are what an AI
             account is for. */}
         {connectsAi && user ? (
-          <AiAccountSection
-            userId={user.id}
-            open={open}
-            onToggle={toggle}
-            onClose={() => setOpen(null)}
-          />
+          <View
+            onLayout={(event) => {
+              aiTop.current = event.nativeEvent.layout.y;
+            }}
+          >
+            <AiAccountSection
+              userId={user.id}
+              open={open}
+              onToggle={toggle}
+              onClose={() => setOpen(null)}
+            />
+          </View>
         ) : null}
 
         <ListSection title={t("profile.securitySection")}>

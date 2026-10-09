@@ -3,7 +3,6 @@ import { formatCurrency, formatMonthLabel } from "@finance/core/constants";
 import {
   decideMonthReadWrite,
   explainWriteRefusal,
-  MONTH_READ_WRITES_PER_MONTH,
   writesRemaining,
 } from "@finance/core/month-read-budget";
 import { factsDigest } from "@finance/core/month-facts";
@@ -17,7 +16,6 @@ import { readSource } from "@/lib/ai/read-source";
 import { ACCOUNT_ALLOWANCE, writerFor } from "@/lib/ai/writer";
 import { MONTH_READ_SOURCE } from "@/lib/month-read/client";
 import { gatherMonthFacts } from "@/lib/month-read/facts";
-import { createClient } from "@/lib/supabase/server";
 import { getLocale, getT } from "@/lib/locale";
 import {
   readMonthReadState,
@@ -66,18 +64,15 @@ export async function writeMonthRead(
   const t = await getT();
   const monthLabel = formatMonthLabel(year, month, locale);
 
-  const { writer, account } = await writerFor(
-    writerId,
-    client ?? (await createClient()),
-  );
+  const writer = await writerFor(writerId);
   if (!writer) {
     return {
       written: false,
-      message: account ? t("aiAccount.connectFirst") : t("monthRead.noWriter"),
+      message: t("aiAccount.connectFirst"),
       writesLeft: 0,
     };
   }
-  const allowance = account ? ACCOUNT_ALLOWANCE : MONTH_READ_WRITES_PER_MONTH;
+  const allowance = ACCOUNT_ALLOWANCE;
   const source = readSource(MONTH_READ_SOURCE, writer);
 
   const [{ stored, tracked }, facts] = await Promise.all([
