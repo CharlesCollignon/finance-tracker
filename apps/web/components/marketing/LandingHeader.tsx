@@ -585,7 +585,7 @@ function FeaturedCard({
       aria-current={active ? "page" : undefined}
       className={cn(
         cardBase,
-        "h-full flex-col justify-between gap-6 bg-[radial-gradient(120%_90%_at_0%_0%,rgb(236_178_94/0.16),transparent_60%),rgb(255_255_255/0.03)]",
+        "h-full flex-col justify-between gap-6 [background:radial-gradient(120%_90%_at_0%_0%,rgb(236_178_94/0.16),transparent_60%),rgb(255_255_255/0.03)]",
         compact ? "p-4" : "p-5",
         marketingFocus,
       )}

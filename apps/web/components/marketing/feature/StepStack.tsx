@@ -80,7 +80,7 @@ function Card({
   );
   return (
     <m.article
-      className="relative overflow-hidden rounded-[2rem] border border-white/10 bg-[linear-gradient(160deg,rgba(255,255,255,0.07),rgba(255,255,255,0.02)_55%),#0b0b12] p-8 shadow-[0_-24px_60px_-30px_rgba(0,0,0,0.9)] md:p-12"
+      className="relative overflow-hidden rounded-[2rem] border border-white/10 [background:linear-gradient(160deg,rgba(255,255,255,0.07),rgba(255,255,255,0.02)_55%),#0b0b12] p-8 shadow-[0_-24px_60px_-30px_rgba(0,0,0,0.9)] md:p-12"
       style={{ scale, transformOrigin: "50% 0%" }}
     >
       <p className="font-mono text-xs text-marketing-faint">

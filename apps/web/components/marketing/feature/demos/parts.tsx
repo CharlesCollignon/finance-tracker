@@ -87,7 +87,7 @@ export function Stage({
   return (
     <div
       className={cn(
-        "relative overflow-hidden rounded-[2rem] border border-white/10 bg-[radial-gradient(90%_70%_at_50%_0%,rgb(236_178_94/0.08),transparent_65%),rgba(255,255,255,0.025)] p-6 md:p-10",
+        "relative overflow-hidden rounded-[2rem] border border-white/10 [background:radial-gradient(90%_70%_at_50%_0%,rgb(236_178_94/0.08),transparent_65%),rgba(255,255,255,0.025)] p-6 md:p-10",
         className,
       )}
     >
