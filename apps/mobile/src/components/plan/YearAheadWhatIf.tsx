@@ -30,6 +30,7 @@ import {
   EVENT_ICONS,
   EVENT_NAME_KEYS,
   eventTone,
+  useTwoColumns,
 } from "./year-ahead-parts";
 
 const EXTRA_MAX = 500;
@@ -94,130 +95,145 @@ export function YearAheadWhatIf({
   const reduce = useReducedMotion();
   const full = events.length >= YEAR_AHEAD_MAX_EVENTS;
   const [adding, setAdding] = useState(false);
+  const [wide, onLayout] = useTwoColumns();
 
   return (
-    <View className="gap-3">
-      <View className="flex-row items-baseline justify-between gap-3">
-        <Text variant="muted" className="min-w-0 flex-1 text-sm">
-          {t("futurePlan.whatIfLabel")}
-        </Text>
-        <Text
-          className={cn(
-            "font-semibold tabular-nums",
-            extra > 0 ? "text-primary" : "text-muted-foreground",
-          )}
-          style={{ fontSize: 17 }}
-        >
-          {t("futurePlan.whatIfPerMonth", { amount: whole(extra) })}
-        </Text>
-      </View>
+    // Side by side on a wide screen, as on the web: the extra on the left,
+    // the events on the right. One column on a phone held upright.
+    <View
+      onLayout={onLayout}
+      className={wide ? "flex-row gap-6" : "gap-3"}
+    >
+      <View className={cn("gap-3", wide && "min-w-0 flex-1")}>
+        <View className="flex-row items-baseline justify-between gap-3">
+          <Text variant="muted" className="min-w-0 flex-1 text-sm">
+            {t("futurePlan.whatIfLabel")}
+          </Text>
+          <Text
+            className={cn(
+              "font-semibold tabular-nums",
+              extra > 0 ? "text-primary" : "text-muted-foreground",
+            )}
+            style={{ fontSize: 17 }}
+          >
+            {t("futurePlan.whatIfPerMonth", { amount: whole(extra) })}
+          </Text>
+        </View>
 
-      <ExtraSlider
-        value={extra}
-        max={EXTRA_MAX}
-        step={EXTRA_STEP}
-        onChange={onExtraChange}
-        label={t("futurePlan.whatIfLabel")}
-        valueText={t("futurePlan.whatIfPerMonth", { amount: whole(extra) })}
-      />
+        <ExtraSlider
+          value={extra}
+          max={EXTRA_MAX}
+          step={EXTRA_STEP}
+          onChange={onExtraChange}
+          label={t("futurePlan.whatIfLabel")}
+          valueText={t("futurePlan.whatIfPerMonth", { amount: whole(extra) })}
+        />
 
-      <View className="flex-row gap-2">
-        {EXTRA_CHIPS.map((amount) => {
-          const selected = extra === amount;
-          return (
-            <Pressable
-              key={amount}
-              accessibilityRole="button"
-              accessibilityState={{ selected }}
-              accessibilityLabel={t("futurePlan.whatIfPerMonth", {
-                amount: whole(amount),
-              })}
-              onPress={() => {
-                void hapticSelection();
-                onExtraChange(selected ? 0 : amount);
-              }}
-              className={cn(
-                "min-h-12 flex-1 items-center justify-center rounded-full border",
-                selected ? "border-foreground bg-foreground" : "border-border",
-              )}
-            >
-              <Text
+        <View className="flex-row gap-2">
+          {EXTRA_CHIPS.map((amount) => {
+            const selected = extra === amount;
+            return (
+              <Pressable
+                key={amount}
+                accessibilityRole="button"
+                accessibilityState={{ selected }}
+                accessibilityLabel={t("futurePlan.whatIfPerMonth", {
+                  amount: whole(amount),
+                })}
+                onPress={() => {
+                  void hapticSelection();
+                  onExtraChange(selected ? 0 : amount);
+                }}
                 className={cn(
-                  "text-sm font-medium tabular-nums",
-                  selected ? "text-background" : "text-foreground",
+                  "min-h-12 flex-1 items-center justify-center rounded-full border",
+                  selected ? "border-foreground bg-foreground" : "border-border",
                 )}
               >
-                {t("planPhone.chipExtra", { amount: whole(amount) })}
+                <Text
+                  className={cn(
+                    "text-sm font-medium tabular-nums",
+                    selected ? "text-background" : "text-foreground",
+                  )}
+                >
+                  {t("planPhone.chipExtra", { amount: whole(amount) })}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </View>
+
+        <View
+          accessibilityRole="radiogroup"
+          accessibilityLabel={t("futurePlan.whatIfToLabel")}
+          className="flex-row flex-wrap items-center gap-2"
+        >
+          <Text variant="muted" className="text-sm">
+            {t("futurePlan.whatIfTo")}
+          </Text>
+          {targets.map((id) => {
+            const on = id === target;
+            return (
+              <Pressable
+                key={id}
+                accessibilityRole="radio"
+                accessibilityState={{ checked: on }}
+                onPress={() => {
+                  void hapticSelection();
+                  onTarget(id);
+                }}
+                className={cn(
+                  "min-h-11 flex-row items-center gap-2 rounded-full border px-3.5",
+                  on ? "border-foreground/40 bg-muted" : "border-border",
+                )}
+              >
+                <View
+                  style={{
+                    width: 8,
+                    height: 8,
+                    borderRadius: 4,
+                    backgroundColor: color(id),
+                  }}
+                />
+                <Text
+                  className={cn(
+                    "text-sm",
+                    on ? "font-medium text-foreground" : "text-muted-foreground",
+                  )}
+                >
+                  {name(id)}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </View>
+
+        <View accessibilityLiveRegion="polite" className="min-h-12 gap-1">
+          {result ? (
+            <Text className="text-base font-medium">{result}</Text>
+          ) : (
+            <Text variant="muted" className="text-sm">
+              {t("futurePlan.whatIfNone")}
+            </Text>
+          )}
+          {result && soonerLine ? (
+            <View className="flex-row items-center gap-1.5">
+              <Ionicons name="sparkles" size={ICON.sm} color={colors.primary} />
+              <Text className="shrink text-sm font-medium text-primary">
+                {soonerLine}
               </Text>
-            </Pressable>
-          );
-        })}
+            </View>
+          ) : null}
+        </View>
       </View>
 
       <View
-        accessibilityRole="radiogroup"
-        accessibilityLabel={t("futurePlan.whatIfToLabel")}
-        className="flex-row flex-wrap items-center gap-2"
-      >
-        <Text variant="muted" className="text-sm">
-          {t("futurePlan.whatIfTo")}
-        </Text>
-        {targets.map((id) => {
-          const on = id === target;
-          return (
-            <Pressable
-              key={id}
-              accessibilityRole="radio"
-              accessibilityState={{ checked: on }}
-              onPress={() => {
-                void hapticSelection();
-                onTarget(id);
-              }}
-              className={cn(
-                "min-h-11 flex-row items-center gap-2 rounded-full border px-3.5",
-                on ? "border-foreground/40 bg-muted" : "border-border",
-              )}
-            >
-              <View
-                style={{
-                  width: 8,
-                  height: 8,
-                  borderRadius: 4,
-                  backgroundColor: color(id),
-                }}
-              />
-              <Text
-                className={cn(
-                  "text-sm",
-                  on ? "font-medium text-foreground" : "text-muted-foreground",
-                )}
-              >
-                {name(id)}
-              </Text>
-            </Pressable>
-          );
-        })}
-      </View>
-
-      <View accessibilityLiveRegion="polite" className="min-h-12 gap-1">
-        {result ? (
-          <Text className="text-base font-medium">{result}</Text>
-        ) : (
-          <Text variant="muted" className="text-sm">
-            {t("futurePlan.whatIfNone")}
-          </Text>
+        className={cn(
+          "gap-3",
+          wide
+            ? "min-w-0 flex-1 border-l border-border pl-6"
+            : "border-t border-border pt-4",
         )}
-        {result && soonerLine ? (
-          <View className="flex-row items-center gap-1.5">
-            <Ionicons name="sparkles" size={ICON.sm} color={colors.primary} />
-            <Text className="shrink text-sm font-medium text-primary">
-              {soonerLine}
-            </Text>
-          </View>
-        ) : null}
-      </View>
-
-      <View className="gap-3 border-t border-border pt-4">
+      >
         {events.map((event) => (
           <Animated.View
             key={event.id}

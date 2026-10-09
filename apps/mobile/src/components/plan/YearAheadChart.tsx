@@ -41,8 +41,13 @@ const AnimatedPath = Animated.createAnimatedComponent(Path);
 const EASING = Easing.bezier(...EASE_STANDARD);
 
 const HEIGHT = 200;
-/** Room above for a marker riding the line at its highest. */
-const PAD_TOP = 48;
+/**
+ * Room above the plot: enough for a marker riding the line at its highest
+ * when there is one, a sliver otherwise — the strip is not left blank for
+ * markers that are not there.
+ */
+const PAD_TOP_MARKERS = 48;
+const PAD_TOP = 14;
 const PAD_BOTTOM = 8;
 const PAD_X = 6;
 /**
@@ -142,6 +147,9 @@ export function YearAheadChart({
   const [active, setActive] = useState<number | null>(null);
   const lastTick = useRef<number | null>(null);
   const months = ahead.months;
+  const padTop = events.some((event) => event.month <= months)
+    ? PAD_TOP_MARKERS
+    : PAD_TOP;
 
   const target = useMemo(() => {
     if (width === 0) {
@@ -170,7 +178,7 @@ export function YearAheadChart({
       min -= 1;
     }
     const y = (value: number) =>
-      PAD_TOP + ((max - value) / (max - min)) * (HEIGHT - PAD_TOP - PAD_BOTTOM);
+      padTop + ((max - value) / (max - min)) * (HEIGHT - padTop - PAD_BOTTOM);
     const xOfSample = (index: number) =>
       PAD_X + (index / (SAMPLES - 1)) * (width - PAD_X * 2);
     const xOfStep = (step: number) =>
@@ -195,7 +203,7 @@ export function YearAheadChart({
       y,
       xOfStep,
     };
-  }, [ahead, showBaseline, width, months]);
+  }, [ahead, showBaseline, width, months, padTop]);
 
   const geom = useSharedValue<{ from: Shape; to: Shape; xs: number[] }>({
     from: EMPTY,
@@ -296,7 +304,7 @@ export function YearAheadChart({
       >
         {target ? (
           <Svg width={width} height={HEIGHT} pointerEvents="none">
-            {target.shape.floor > PAD_TOP &&
+            {target.shape.floor > padTop &&
             target.shape.floor < HEIGHT - PAD_BOTTOM - 1 ? (
               <Line
                 x1={0}
@@ -343,7 +351,7 @@ export function YearAheadChart({
                 <Line
                   x1={target.xOfStep(shown)}
                   x2={target.xOfStep(shown)}
-                  y1={PAD_TOP - 8}
+                  y1={Math.max(2, padTop - 8)}
                   y2={HEIGHT - 2}
                   stroke={colors.hairlineStrong}
                   strokeWidth={1}

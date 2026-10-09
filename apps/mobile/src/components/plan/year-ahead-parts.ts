@@ -1,4 +1,5 @@
-import type { ComponentProps } from "react";
+import { useCallback, useState, type ComponentProps } from "react";
+import type { LayoutChangeEvent } from "react-native";
 import type { Ionicons } from "@expo/vector-icons";
 
 import {
@@ -28,6 +29,23 @@ export const MORPH_MS = 550;
 
 /** Something following the finger: quick, and settled. */
 export const FOLLOW = { damping: 22, stiffness: 320, mass: 0.6 } as const;
+
+/**
+ * Wide enough for « Pourquoi » and « Et si… » to run in two columns, as the
+ * web's do: a tablet, a phone on its side, a foldable open. A phone held
+ * upright stays in one column, which already fills it.
+ */
+export const TWO_COLUMNS_MIN = 560;
+
+/** Whether the view this lays out is wide enough for two columns. */
+export function useTwoColumns(): [boolean, (event: LayoutChangeEvent) => void] {
+  const [width, setWidth] = useState(0);
+  const onLayout = useCallback(
+    (event: LayoutChangeEvent) => setWidth(event.nativeEvent.layout.width),
+    [],
+  );
+  return [width >= TWO_COLUMNS_MIN, onLayout];
+}
 
 /** The current account is the ink at 85 %, brighter than the CTO's warm grey. */
 const CURRENT_COLOR = `${COLORS.foreground}D9`;

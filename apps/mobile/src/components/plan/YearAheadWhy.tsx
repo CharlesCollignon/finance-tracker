@@ -24,7 +24,7 @@ import { useT } from "@/providers/LocaleProvider";
 import { COLORS, ICON } from "@/theme/tokens";
 import { useThemeColors } from "@/theme/useThemeColors";
 
-import { MORPH_MS } from "./year-ahead-parts";
+import { MORPH_MS, useTwoColumns } from "./year-ahead-parts";
 
 const EASING = Easing.bezier(...EASE_STANDARD);
 
@@ -75,6 +75,7 @@ export function YearAheadWhy({
 }) {
   const t = useT();
   const colors = useThemeColors();
+  const [wide, onLayout] = useTwoColumns();
   const signed = (value: number) =>
     `${value >= 0 ? "+" : "−"}${whole(Math.abs(value))}`;
 
@@ -129,8 +130,76 @@ export function YearAheadWhy({
     1,
   );
 
+  const half = Math.ceil(segments.length / 2);
+  const renderRow = (segment: Segment) => {
+    const on = segment.account !== null && focus === segment.account;
+    const row = (
+      <View className="min-h-11 justify-center gap-0.5">
+        <View className="flex-row items-center justify-between gap-3">
+          <View className="min-w-0 flex-1 flex-row items-center gap-2">
+            <View
+              style={{
+                width: 10,
+                height: 10,
+                borderRadius: 5,
+                backgroundColor: segment.color,
+              }}
+            />
+            <Text
+              numberOfLines={1}
+              className={cn("shrink text-sm", on && "font-semibold")}
+            >
+              {segment.label}
+            </Text>
+          </View>
+          <AnimatedAmount
+            value={segment.amount}
+            format={signed}
+            className={cn(
+              "text-sm tabular-nums",
+              segment.key === "current" &&
+                segment.amount < 0 &&
+                "text-destructive",
+            )}
+          />
+        </View>
+        {segment.hint && on ? (
+          <View className="flex-row items-start gap-1.5 pl-[18px]">
+            <Ionicons
+              name="information-circle-outline"
+              size={ICON.sm}
+              color={colors.mutedForeground}
+            />
+            <Text variant="muted" className="shrink text-xs">
+              {segment.hint}
+            </Text>
+          </View>
+        ) : null}
+      </View>
+    );
+    return segment.account ? (
+      <Pressable
+        key={segment.key}
+        accessibilityRole="button"
+        accessibilityState={{ selected: on }}
+        onPress={() => {
+          void hapticSelection();
+          onFocus(on ? null : segment.account);
+        }}
+        className={cn(
+          "-mx-2 rounded-control px-2",
+          on && "bg-muted",
+        )}
+      >
+        {row}
+      </Pressable>
+    ) : (
+      <View key={segment.key}>{row}</View>
+    );
+  };
+
   return (
-    <View className="gap-3">
+    <View className="gap-3" onLayout={onLayout}>
       <Text variant="muted" className="text-sm">
         {t("futurePlan.whyLeadIncome", { amount: shown(flow.income) })}
       </Text>
@@ -157,74 +226,19 @@ export function YearAheadWhy({
         ))}
       </View>
 
-      <View>
-        {segments.map((segment) => {
-          const on = segment.account !== null && focus === segment.account;
-          const row = (
-            <View className="min-h-11 justify-center gap-0.5">
-              <View className="flex-row items-center justify-between gap-3">
-                <View className="min-w-0 flex-1 flex-row items-center gap-2">
-                  <View
-                    style={{
-                      width: 10,
-                      height: 10,
-                      borderRadius: 5,
-                      backgroundColor: segment.color,
-                    }}
-                  />
-                  <Text
-                    numberOfLines={1}
-                    className={cn("shrink text-sm", on && "font-semibold")}
-                  >
-                    {segment.label}
-                  </Text>
-                </View>
-                <AnimatedAmount
-                  value={segment.amount}
-                  format={signed}
-                  className={cn(
-                    "text-sm tabular-nums",
-                    segment.key === "current" &&
-                      segment.amount < 0 &&
-                      "text-destructive",
-                  )}
-                />
-              </View>
-              {segment.hint && on ? (
-                <View className="flex-row items-start gap-1.5 pl-[18px]">
-                  <Ionicons
-                    name="information-circle-outline"
-                    size={ICON.sm}
-                    color={colors.mutedForeground}
-                  />
-                  <Text variant="muted" className="shrink text-xs">
-                    {segment.hint}
-                  </Text>
-                </View>
-              ) : null}
-            </View>
-          );
-          return segment.account ? (
-            <Pressable
-              key={segment.key}
-              accessibilityRole="button"
-              accessibilityState={{ selected: on }}
-              onPress={() => {
-                void hapticSelection();
-                onFocus(on ? null : segment.account);
-              }}
-              className={cn(
-                "-mx-2 rounded-control px-2",
-                on && "bg-muted",
-              )}
-            >
-              {row}
-            </Pressable>
-          ) : (
-            <View key={segment.key}>{row}</View>
-          );
-        })}
-      </View>
+      {/* Two columns on a wide screen, as on the web; one on a phone. */}
+      {wide ? (
+        <View className="flex-row gap-8">
+          <View className="min-w-0 flex-1">
+            {segments.slice(0, half).map(renderRow)}
+          </View>
+          <View className="min-w-0 flex-1">
+            {segments.slice(half).map(renderRow)}
+          </View>
+        </View>
+      ) : (
+        <View>{segments.map(renderRow)}</View>
+      )}
 
       {!everydayCounted ? (
         <Text variant="muted" className="text-xs">
