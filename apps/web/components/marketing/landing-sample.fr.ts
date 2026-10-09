@@ -56,7 +56,7 @@ export const landingSampleFr = {
     headline:
       "Mars tient, et la part qui ne tient pas est celle que vous n'avez pas enregistrée.",
     observations: [
-      "Il vous reste 1 247 € à douze jours de la fin, soit devant là où février en était le même jour.",
+      "Vous êtes à +1 247 € sur le mois à douze jours de la fin, devant là où février en était le même jour.",
       "Les dépenses non enregistrées de février se montent à 218 € — dans votre marge de 260 €, mais c'est la plus grosse ligne pour laquelle vous n'avez aucune écriture.",
       "Le logement, à 850 €, est inchangé pour le quatrième mois et représente maintenant 44 % de ce que vous dépensez.",
     ],
@@ -70,6 +70,29 @@ export const landingSampleFr = {
     name: "Studio, Lyon 7e",
     kindLine: "Appartement · Location meublée · 24 m²",
   },
+
+  questions: {
+    question: "Combien ai-je dépensé en courses ce mois-ci ?",
+    answer: [
+      "Les courses en sont à {spent} en mars.",
+      "Au même jour de février, c'était {before}.",
+    ],
+  },
+
+  /** In the order `landingSample.together.rows` holds them. */
+  together: {
+    name: "Commun",
+    me: "Moi",
+    rows: [
+      { meta: "Courses" },
+      { meta: "Internet" },
+      { meta: "Restaurants" },
+      { name: "Versement de B.", meta: "Virement" },
+    ],
+  },
+
+  /** The tax boxes' labels, in the order `landingSample.tax.boxes` holds them. */
+  tax: ["Dons", "Emploi à domicile", "Location meublée, recettes"],
 
   spendByCategory: [
     "Logement",

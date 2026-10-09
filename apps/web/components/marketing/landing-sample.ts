@@ -247,7 +247,7 @@ export const landingSample = {
     observations: [
       {
         tone: "good" as const,
-        text: "You have €1,247 left with twelve days to go, which is ahead of where February sat on the same day.",
+        text: "You are €1,247 up on the month with twelve days to go, ahead of where February sat on the same day.",
       },
       {
         tone: "bad" as const,
@@ -262,6 +262,68 @@ export const landingSample = {
       "Groceries are at €218 with twelve days to go. Writing down the small shops this week would show whether the unrecorded line is groceries too.",
     ],
     standing: "Written today. Nothing has moved since.",
+  },
+
+  /**
+   * « Il vous reste » on the 19th: the accounts (`bearing.onHand`), less the
+   * charges still due before the salary on 3 April (`bearing.committed`),
+   * less the margin's share of those fifteen days — 2,410 − 620 − 140 =
+   * 1,650, and 1,650 over the fifteen days to the 2nd is 110 a day.
+   */
+  leftToSpend: {
+    balance: 2410,
+    charges: 620,
+    marge: 140,
+    amount: 1650,
+    perDay: 110,
+    through: "2026-04-02",
+  },
+
+  /**
+   * One exchange in « Questions ». The answer's figures are chips the app
+   * puts in, as the real feature does: `spent` is the groceries figure the
+   * read below quotes, `before` February's by the same day.
+   */
+  questions: {
+    question: "How much did I spend on groceries this month?",
+    answer: [
+      "Groceries come to {spent} so far in March.",
+      "By the same day in February, it was {before}.",
+    ],
+    figures: { spent: 218, before: 241 },
+  },
+
+  /**
+   * The shared space of the sample couple: the joint account, the share
+   * they set, and its month's rows with the initial of who added each.
+   * `myPart` is half of `spent`, as `share` says.
+   */
+  together: {
+    name: "Shared",
+    me: "Me",
+    balance: 1340,
+    share: 50,
+    spent: 1120,
+    myPart: 560,
+    rows: [
+      { name: "Monoprix", meta: "Groceries", amount: -86.4, by: "A" },
+      { name: "Free", meta: "Internet", amount: -29.99, by: "B" },
+      { name: "Le Bistrot", meta: "Restaurants", amount: -54, by: "A" },
+      { name: "From B.", meta: "Transfer", amount: 600, by: "B" },
+    ],
+  },
+
+  /**
+   * The tax page for 2025, filed in 2026: the boxes the sample year fills.
+   * 5NI is the studio's year of rent, twelve months of `property.monthly`.
+   */
+  tax: {
+    year: 2025,
+    boxes: [
+      { id: "7UF", label: "Donations", amount: 240 },
+      { id: "7DB", label: "Home help", amount: 1860 },
+      { id: "5NI", label: "Furnished let, receipts", amount: 8280 },
+    ],
   },
 
   /**
@@ -330,6 +392,23 @@ export function landingSampleFor(locale: Locale) {
       standing: fr.read.standing,
     },
     property: { ...landingSample.property, ...fr.property },
+    questions: { ...landingSample.questions, ...fr.questions },
+    together: {
+      ...landingSample.together,
+      name: fr.together.name,
+      me: fr.together.me,
+      rows: landingSample.together.rows.map((row, index) => ({
+        ...row,
+        ...fr.together.rows[index],
+      })),
+    },
+    tax: {
+      ...landingSample.tax,
+      boxes: landingSample.tax.boxes.map((box, index) => ({
+        ...box,
+        label: fr.tax[index] ?? box.label,
+      })),
+    },
     spendByCategory: landingSample.spendByCategory.map((row, index) => ({
       ...row,
       label: fr.spendByCategory[index] ?? row.label,

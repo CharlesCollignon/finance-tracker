@@ -243,6 +243,12 @@ export const ACTIVE_NAV: Record<LandingPageId, Key> = {
   "month-close": "nav.plan",
   "month-read": "nav.plan",
   property: "nav.property",
+  // Neither is a tab: Questions opens from the header's sparkle, and the tax
+  // page from Profile. The chrome lights nothing; the title names the screen.
+  questions: "ask.title",
+  // The shared space is every screen under « Commun »; its mock is Le point.
+  together: "nav.bearing",
+  tax: "tax.title",
 };
 
 /** The bar's surfaces: Immobilier joins them on its own screen. */

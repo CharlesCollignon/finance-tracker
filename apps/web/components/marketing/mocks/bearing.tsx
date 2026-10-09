@@ -1,7 +1,8 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { CaretDown } from "@phosphor-icons/react";
+import { CaretDown, CaretRight } from "@phosphor-icons/react";
+import { formatDayMonth } from "@finance/core/constants";
 import { landingSampleFor } from "@/components/marketing/landing-sample";
 import { cn } from "@/lib/utils";
 import { useLocale, useT } from "@/lib/locale-context";
@@ -118,6 +119,38 @@ function BearingRow({
 }
 
 /**
+ * « Il vous reste », the line under the two figures that opens « Puis-je me
+ * permettre ? » — the app's `LeftToSpendLine`, with the sample's figure.
+ */
+function LeftToSpendLine({ compact }: { compact: boolean }) {
+  const t = useT();
+  const locale = useLocale();
+  const euro = useEuro();
+  const { leftToSpend } = landingSampleFor(locale);
+  return (
+    <div
+      className={cn(
+        "flex items-center justify-between gap-3 rounded-xl border border-border",
+        compact ? "px-3 py-2.5 text-xs" : "px-4 py-3 text-sm",
+      )}
+    >
+      <span className="min-w-0 flex-1 text-muted-foreground">
+        {t("leftToSpend.title")}{" "}
+        <span className="font-semibold text-foreground tabular-nums">
+          {euro(leftToSpend.amount)}
+        </span>{" "}
+        {t("leftToSpend.untilPayDay", {
+          date: formatDayMonth(leftToSpend.through, locale),
+        })}
+        {" · "}
+        {t("leftToSpend.perDay", { amount: euro(leftToSpend.perDay) })}
+      </span>
+      <CaretRight size={14} className="shrink-0 text-muted-foreground" />
+    </div>
+  );
+}
+
+/**
  * The Bearing: two figures, then five cards.
  *
  * Replaces the Month mock, which drew a screen the app no longer has. Every
@@ -216,6 +249,7 @@ export function BearingMock({ variant = "web" }: { variant?: Variant }) {
             amountClassName="text-primary-ink"
           />
         </div>
+        <LeftToSpendLine compact />
         {cards}
       </MobileShell>
     );
@@ -234,6 +268,7 @@ export function BearingMock({ variant = "web" }: { variant?: Variant }) {
           amountClassName="text-primary-ink"
         />
       </div>
+      <LeftToSpendLine compact={false} />
       <div className="flex flex-col gap-3">{cards}</div>
     </WebShell>
   );
