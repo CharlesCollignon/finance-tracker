@@ -8,10 +8,10 @@ import { translator, type Translate } from "@finance/core/i18n/t";
  * The language, for the half of the app that runs in the browser.
  *
  * A context seeded from the server rather than a `useSyncExternalStore` over
- * storage, which is how the currency and the privacy blur work. The
- * difference matters: those two are read after hydration and a wrong first
- * paint is a flicker on one figure, whereas the language decides every word
- * on the page. Reading it on the client would mean the server renders English,
+ * storage, which is how the privacy blur works. The difference matters: the
+ * blur is read after hydration and a wrong first paint is a flicker on one
+ * figure, whereas the language decides every word on the page. (The
+ * currency is seeded the same way since October 2026: `use-currency.ts`.) Reading it on the client would mean the server renders English,
  * the browser corrects it, and the entire page changes under the reader.
  * Seeded from the cookie the server already read, the first paint is right.
  *

@@ -10,6 +10,8 @@ import { Fraunces, IBM_Plex_Mono, Instrument_Sans } from "next/font/google";
 import "./globals.css";
 import { getLocale } from "@/lib/locale";
 import { LocaleProvider } from "@/lib/locale-context";
+import { getCurrency } from "@/lib/currency";
+import { CurrencyProvider } from "@/lib/use-currency";
 import { LocaleSuggestion } from "@/components/layout/LocaleSuggestion";
 
 const instrumentSans = Instrument_Sans({
@@ -94,7 +96,7 @@ export default async function RootLayout({
   // Reading a cookie makes this layout dynamic, which costs nothing here:
   // both group layouts below already call `getAuthUser()`, so every route in
   // the app was dynamic before this line existed.
-  const locale = await getLocale();
+  const [locale, currency] = await Promise.all([getLocale(), getCurrency()]);
 
   return (
     // `dark` is rendered on the server rather than applied by a script, so
@@ -112,8 +114,10 @@ export default async function RootLayout({
       <body className="flex min-h-full flex-col bg-background text-foreground antialiased">
         <script dangerouslySetInnerHTML={{ __html: scrollbarGutterScript }} />
         <LocaleProvider locale={locale}>
-          <LocaleSuggestion />
-          {children}
+          <CurrencyProvider currency={currency}>
+            <LocaleSuggestion />
+            {children}
+          </CurrencyProvider>
         </LocaleProvider>
       </body>
     </html>
