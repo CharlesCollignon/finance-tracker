@@ -426,10 +426,13 @@ tiers 0 to 3 of the upgrade plan: explain, compare, simulate, rules of
 thumb, budgeting tips — never a product, a fund or an allocation, which the
 system prompt forbids.
 
-The web streams the answer (`POST /api/ask/stream`, one JSON event a line:
-each tool as it is called, the words as they come, then the conversation);
-the phone asks through `POST /api/ask` and gets the whole answer. Both read
-and delete their conversations directly. The month's count is taken before
+Both apps stream the answer from `POST /api/ask/stream` (one JSON event a
+line: each tool as it is called, the words as they come, then the
+conversation) — the web with its cookie session, the phone with its
+Supabase token as a bearer and its language and currency in the body, read
+as it comes through `expo/fetch`. `POST /api/ask`, the whole answer at
+once, stays for phones on an older build. Both apps read and delete their
+conversations directly. The month's count is taken before
 the model is asked (`reserve_ask`) and handed back if it was never reached,
 under the account ceiling; only with an AI account connected, on it.
 Conversations last thirty days (`sweep_ask` in the nightly sweep). The

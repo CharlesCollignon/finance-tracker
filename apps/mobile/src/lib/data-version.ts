@@ -130,6 +130,7 @@ const ROUTE_AREAS: Record<string, readonly DataArea[]> = {
   "/api/month-read": ["reads"],
   // A question asked: nothing but the Questions screen draws it.
   "/api/ask": [],
+  "/api/ask/stream": [],
   "/api/category-read": ["reads"],
   "/api/category-rerank": ["reads"],
   "/api/instrument-reading": ["positions"],

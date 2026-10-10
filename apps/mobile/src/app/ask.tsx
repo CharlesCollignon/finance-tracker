@@ -13,6 +13,7 @@ import Animated, {
   FadeIn,
   FadeInDown,
   FadeOut,
+  ZoomIn,
   useAnimatedStyle,
   useReducedMotion,
   useSharedValue,
@@ -28,7 +29,11 @@ import {
   renderAskSentences,
   type AskAnswerBody,
 } from "@finance/core/ask";
-import type { AskChatBody } from "@finance/core/ask-chat";
+import type {
+  AskChatBody,
+  AskChatTool,
+  AskStreamEvent,
+} from "@finance/core/ask-chat";
 import { formatShortDate } from "@finance/core/constants";
 import { resolveMessage } from "@finance/core/i18n/t";
 import type { ReadSegment } from "@finance/core/month-read";
@@ -42,10 +47,10 @@ import { Screen } from "@/components/ui/Screen";
 import { Text } from "@/components/ui/Text";
 import { useRefreshable } from "@/hooks/useRefreshable";
 import {
-  askQuestion,
   deleteConversation,
   getConversationMessages,
   listConversations,
+  streamQuestion,
 } from "@/lib/ask";
 import { getWriterState } from "@/lib/ai-writer";
 import { cn } from "@/lib/cn";
@@ -64,13 +69,44 @@ const SUGGESTIONS = [
   "ask.suggest4",
 ] as const;
 
+/** Each tool's mark, beside its name while the model is at work. */
+const STEP_ICONS: Record<AskChatTool, keyof typeof Ionicons.glyphMap> = {
+  month: "calendar-outline",
+  cashflow: "swap-vertical-outline",
+  categories: "pie-chart-outline",
+  transactions: "list-outline",
+  merchants: "storefront-outline",
+  recurring: "repeat-outline",
+  savings: "wallet-outline",
+  investments: "trending-up-outline",
+  loans: "home-outline",
+  loan_prepayment: "hourglass-outline",
+  calculate: "calculator-outline",
+};
+
+/** A question on its way: what was asked, what was looked at, the words so far. */
+interface Live {
+  question: string;
+  steps: AskChatTool[];
+  text: string;
+  /**
+   * The conversation it belongs to: the one it was asked in, or — asked in a
+   * new one — the one it was kept in. Shown there only.
+   */
+  conversationId: string | null;
+  /** How many messages the conversation had when it was asked. */
+  before: number;
+  /** Kept on the server: drawn from the conversation once it is read back. */
+  done: boolean;
+}
+
 /**
  * « Questions » — Ask Pluclair on the phone, the twin of the web's `/ask`:
  * the conversations of the last thirty days along the top, the one open
- * below, a question at the bottom. The question in flight shows at once,
- * with Pluclair at work until the whole answer lands — the web streams it
- * word by word; the phone waits for it. The person's own money, never the
- * space's.
+ * below, a question at the bottom. The answer streams in as on the web
+ * (`api/ask/stream`): each thing the model looks at pops in as a chip,
+ * then the words arrive with a caret at their end; the send button turns
+ * into a stop. The person's own money, never the space's.
  */
 export default function AskScreen() {
   const t = useT();
@@ -83,8 +119,9 @@ export default function AskScreen() {
   const params = useLocalSearchParams<{ c?: string }>();
   const [currentId, setCurrentId] = useState<string | null>(params.c ?? null);
   const [draft, setDraft] = useState("");
-  const [asking, setAsking] = useState<string | null>(null);
+  const [live, setLive] = useState<Live | null>(null);
   const scroll = useRef<ScrollView>(null);
+  const abort = useRef<AbortController | null>(null);
 
   const {
     data: side,
@@ -112,7 +149,18 @@ export default function AskScreen() {
   );
 
   const writable = side?.writer.writable ?? false;
-  const canAsk = writable && asking === null;
+  const asking = live !== null && !live.done;
+  const canAsk = writable && !asking;
+  const shown = currentId ? (messages ?? []) : [];
+  // In its own conversation only, and only until the kept exchange has been
+  // read back: then the live one gives way to it.
+  const settled = live?.done === true && live.conversationId === currentId;
+  const liveShown =
+    live &&
+    live.conversationId === currentId &&
+    !(settled && shown.length > live.before)
+      ? live
+      : null;
 
   async function ask(question: string) {
     const text = question.trim();
@@ -120,22 +168,82 @@ export default function AskScreen() {
       return;
     }
     void hapticLight();
-    setAsking(text);
+    const controller = new AbortController();
+    abort.current = controller;
+    const asked = currentId;
     setDraft("");
-    const outcome = await askQuestion(text, currentId, locale, currency);
-    setAsking(null);
-    if (outcome.message) {
-      toast(resolveMessage(t, outcome.message), "error");
+    setLive({
+      question: text,
+      steps: [],
+      text: "",
+      conversationId: asked,
+      before: asked ? shown.length : 0,
+      done: false,
+    });
+
+    let finished = false;
+    const fail = (message: string) => {
+      setLive(null);
       setDraft(text);
-      return;
+      toast(resolveMessage(t, message), "error");
+    };
+    const onEvent = (event: AskStreamEvent) => {
+      switch (event.type) {
+        case "step":
+          setLive((now) =>
+            now ? { ...now, steps: [...now.steps, event.tool] } : now,
+          );
+          break;
+        case "text":
+          setLive((now) =>
+            now ? { ...now, text: now.text + event.text } : now,
+          );
+          break;
+        case "reset":
+          setLive((now) => (now ? { ...now, text: "" } : now));
+          break;
+        case "error":
+          finished = true;
+          fail(event.message);
+          break;
+        case "done":
+          finished = true;
+          void hapticSuccess();
+          setLive((now) =>
+            now
+              ? { ...now, done: true, conversationId: event.conversationId }
+              : now,
+          );
+          if (event.conversationId !== asked) {
+            setCurrentId(event.conversationId);
+          } else {
+            void reloadMessages();
+          }
+          void reloadSide();
+          break;
+      }
+    };
+
+    try {
+      await streamQuestion(
+        { question: text, conversationId: asked, locale, currency },
+        onEvent,
+        controller.signal,
+      );
+      if (!finished) {
+        fail("ask.noAnswer");
+      }
+    } catch {
+      if (controller.signal.aborted) {
+        setLive(null);
+        setDraft(text);
+        toast(t("ask.stopped"), "success");
+      } else {
+        fail("ask.noAnswer");
+      }
+    } finally {
+      abort.current = null;
     }
-    void hapticSuccess();
-    if (outcome.conversationId && outcome.conversationId !== currentId) {
-      setCurrentId(outcome.conversationId);
-    } else {
-      void reloadMessages();
-    }
-    void reloadSide();
   }
 
   async function remove(id: string) {
@@ -148,17 +256,16 @@ export default function AskScreen() {
     void reloadSide();
   }
 
-  // The latest message in view as it lands.
+  // The latest message in view as it lands, and as the answer grows.
   useEffect(() => {
     const timer = setTimeout(
       () => scroll.current?.scrollToEnd({ animated: true }),
       60,
     );
     return () => clearTimeout(timer);
-  }, [messages, asking]);
+  }, [messages, live?.steps.length, live?.text.length]);
 
-  const shown = currentId ? (messages ?? []) : [];
-  const empty = shown.length === 0 && !asking;
+  const empty = shown.length === 0 && !liveShown;
 
   return (
     <Screen
@@ -267,10 +374,16 @@ export default function AskScreen() {
             </Animated.View>
           ) : (
             <>
-              {shown.map((message) => (
+              {shown.map((message, index) => (
                 <Animated.View
                   key={message.id}
-                  entering={FadeInDown.springify().damping(18)}
+                  // The exchange just answered live is already on screen: it
+                  // takes the live one's place without arriving again.
+                  entering={
+                    settled && index >= (live?.before ?? 0)
+                      ? undefined
+                      : FadeInDown.springify().damping(18)
+                  }
                 >
                   {message.role === "question" ? (
                     <Question text={message.body.text} />
@@ -279,13 +392,13 @@ export default function AskScreen() {
                   )}
                 </Animated.View>
               ))}
-              {asking ? (
+              {liveShown ? (
                 <>
                   <Animated.View entering={FadeInDown.springify().damping(18)}>
-                    <Question text={asking} />
+                    <Question text={liveShown.question} />
                   </Animated.View>
                   <Animated.View entering={FadeIn} exiting={FadeOut}>
-                    <Thinking label={t("ask.thinking")} />
+                    <LiveAnswer live={liveShown} />
                   </Animated.View>
                 </>
               ) : null}
@@ -309,19 +422,27 @@ export default function AskScreen() {
               />
               <Pressable
                 accessibilityRole="button"
-                accessibilityLabel={t("ask.send")}
-                disabled={!canAsk || draft.trim().length === 0}
-                onPress={() => void ask(draft)}
+                accessibilityLabel={asking ? t("ask.stop") : t("ask.send")}
+                disabled={!asking && (!canAsk || draft.trim().length === 0)}
+                onPress={() =>
+                  asking ? abort.current?.abort() : void ask(draft)
+                }
                 className="mb-1 h-9 w-9 items-center justify-center rounded-full bg-primary"
                 style={{
-                  opacity: canAsk && draft.trim().length > 0 ? 1 : 0.4,
+                  opacity:
+                    asking || (canAsk && draft.trim().length > 0) ? 1 : 0.4,
                 }}
               >
-                <Ionicons
-                  name="arrow-up"
-                  size={ICON.md}
-                  color={colors.primaryForeground}
-                />
+                <Animated.View
+                  key={asking ? "stop" : "send"}
+                  entering={ZoomIn.springify().damping(14)}
+                >
+                  <Ionicons
+                    name={asking ? "stop" : "arrow-up"}
+                    size={ICON.md}
+                    color={colors.primaryForeground}
+                  />
+                </Animated.View>
               </Pressable>
             </View>
             <Text variant="micro" className="text-center">
@@ -378,13 +499,83 @@ function Answer({ body }: { body: AskAnswerBody }) {
   );
 }
 
+/** One thing the model looked at: its mark, its name, a tick once read. */
+function StepChip({ tool, working }: { tool: AskChatTool; working: boolean }) {
+  const t = useT();
+  const colors = useThemeColors();
+  return (
+    <Animated.View entering={ZoomIn.springify().damping(16)}>
+      <View
+        className={cn(
+          "flex-row items-center gap-1.5 rounded-full border border-border px-2.5 py-1",
+          working && "bg-muted",
+        )}
+      >
+        <Ionicons
+          name={STEP_ICONS[tool]}
+          size={ICON.xs}
+          color={colors.mutedForeground}
+        />
+        <Text variant="micro">{t(`ask.step.${tool}`)}</Text>
+        {working ? null : (
+          <Ionicons name="checkmark" size={ICON.xs} color={colors.success} />
+        )}
+      </View>
+    </Animated.View>
+  );
+}
+
 /**
- * A conversation's answer: how many things were looked at, the answer, and
- * a word on the figures the app could not find.
+ * The answer being written: the things looked at so far, each popping in,
+ * then the words with a caret at their end. Before any word, the dots say
+ * Pluclair is at it.
+ */
+function LiveAnswer({ live }: { live: Live }) {
+  const t = useT();
+  return (
+    <View className="flex-row items-start gap-3">
+      <View className="mt-0.5">
+        <Orb size="sm" />
+      </View>
+      <View className="min-w-0 flex-1 gap-2.5">
+        {live.steps.length > 0 ? (
+          <View className="flex-row flex-wrap gap-1.5">
+            {live.steps.map((tool, index) => (
+              <StepChip
+                key={`${tool}-${index}`}
+                tool={tool}
+                working={!live.text && index === live.steps.length - 1}
+              />
+            ))}
+          </View>
+        ) : null}
+        {live.text ? (
+          <AskMarkdown
+            markdown={live.text}
+            trailing={
+              live.done ? null : (
+                <Text variant="muted" className="text-sm">
+                  {" ▍"}
+                </Text>
+              )
+            }
+          />
+        ) : (
+          <Thinking label={t("ask.thinking")} bare />
+        )}
+      </View>
+    </View>
+  );
+}
+
+/**
+ * A conversation's answer: what was looked at, folded into one line that
+ * opens; the answer; and a word on the figures the app could not find.
  */
 function ChatAnswer({ body }: { body: AskChatBody }) {
   const t = useT();
   const colors = useThemeColors();
+  const [open, setOpen] = useState(false);
   return (
     <View className="flex-row items-start gap-3">
       <View className="mt-0.5">
@@ -392,9 +583,34 @@ function ChatAnswer({ body }: { body: AskChatBody }) {
       </View>
       <View className="min-w-0 flex-1 gap-2.5">
         {body.steps.length > 0 ? (
-          <Text variant="micro">
-            {t("ask.looked", { count: body.steps.length })}
-          </Text>
+          <View className="gap-1.5">
+            <Pressable
+              accessibilityRole="button"
+              accessibilityState={{ expanded: open }}
+              onPress={() => setOpen((now) => !now)}
+              className="flex-row items-center gap-1 self-start"
+            >
+              <Text variant="micro">
+                {t("ask.looked", { count: body.steps.length })}
+              </Text>
+              <Ionicons
+                name={open ? "chevron-up" : "chevron-down"}
+                size={ICON.xs}
+                color={colors.mutedForeground}
+              />
+            </Pressable>
+            {open ? (
+              <View className="flex-row flex-wrap gap-1.5">
+                {body.steps.map((step, index) => (
+                  <StepChip
+                    key={`${step.tool}-${index}`}
+                    tool={step.tool}
+                    working={false}
+                  />
+                ))}
+              </View>
+            ) : null}
+          </View>
         ) : null}
         <AskMarkdown markdown={body.markdown} untraced={body.untraced} />
         {body.untraced.length > 0 ? (
@@ -504,13 +720,14 @@ function Segments({ segments }: { segments: ReadSegment[] }) {
 
 /**
  * Pluclair at work: three dots rising in turn while the answer is on its
- * way, and only then; with reduced motion, the words alone.
+ * way, and only then; with reduced motion, the words alone. `bare` leaves
+ * the orb out, for an answer that already has one.
  */
-function Thinking({ label }: { label: string }) {
+function Thinking({ label, bare = false }: { label: string; bare?: boolean }) {
   const reduced = useReducedMotion();
   return (
     <View className="flex-row items-center gap-3">
-      <Orb size="sm" />
+      {bare ? null : <Orb size="sm" />}
       <Text variant="muted" className="text-sm">
         {label}
       </Text>

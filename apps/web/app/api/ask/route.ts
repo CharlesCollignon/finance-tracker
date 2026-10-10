@@ -10,8 +10,9 @@ import { sessionFromBearer } from "@/lib/supabase/bearer";
  * level security; asking is the one thing it needs a server for. Same shape
  * as `api/month-read`: the Supabase token it already has, verified here.
  *
- * The whole answer at once, once it is written and kept: the web's screen
- * streams it instead (`api/ask/stream`).
+ * The whole answer at once, once it is written and kept. Both apps now ask
+ * through `api/ask/stream`, which streams it; this stays for the phones
+ * still on a build from before, until they are updated.
  */
 
 // A few rounds of tools, then the answer.
