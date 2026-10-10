@@ -107,6 +107,12 @@ interface Live {
   question: string;
   steps: AskChatTool[];
   text: string;
+  /**
+   * The conversation it belongs to: the one it was asked in, or — asked in a
+   * new one — the one it was kept in. Shown there only, so « Nouvelle
+   * question » opens on an empty page rather than on the last answer.
+   */
+  conversationId: string | null;
   /** How many messages the conversation had when it was asked. */
   before: number;
   /** Kept on the server: drawn from the conversation once it is read back. */
@@ -148,9 +154,15 @@ export function AskView({
   const abort = useRef<AbortController | null>(null);
 
   const asking = live !== null && !live.done;
-  // Once the kept exchange has been read back, the live one gives way to it.
+  // In its own conversation only, and only until the kept exchange has been
+  // read back: then the live one gives way to it.
+  const settled = live?.done === true && live.conversationId === currentId;
   const shown =
-    live && !(live.done && messages.length > live.before) ? live : null;
+    live &&
+    live.conversationId === currentId &&
+    !(settled && messages.length > live.before)
+      ? live
+      : null;
   const canAsk = writable && !asking && !pending;
 
   // The latest message in view as it lands, and as the answer grows.
@@ -170,6 +182,7 @@ export function AskView({
       question: text,
       steps: [],
       text: "",
+      conversationId: currentId,
       before: currentId ? messages.length : 0,
       done: false,
     });
@@ -226,8 +239,10 @@ export function AskView({
             fail(event.message);
           } else {
             finished = true;
-            setLive((now) => (now ? { ...now, done: true } : now));
             const id = event.conversationId;
+            setLive((now) =>
+              now ? { ...now, done: true, conversationId: id } : now,
+            );
             startTransition(() => {
               if (id !== currentId) {
                 router.replace(`/ask?c=${id}`);
@@ -350,7 +365,7 @@ export function AskView({
                     // The exchange just answered live is already on screen:
                     // it takes the live one's place without arriving again.
                     initial={
-                      live?.done && index >= live.before
+                      settled && index >= (live?.before ?? 0)
                         ? false
                         : ARRIVE.initial
                     }
