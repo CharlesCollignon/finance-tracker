@@ -592,10 +592,10 @@ function LiveAnswer({ live }: { live: Live }) {
         </ul>
       ) : null}
       {live.text ? (
-        <div className="relative">
-          <AskMarkdown markdown={live.text} />
-          {live.done ? null : <Caret />}
-        </div>
+        <AskMarkdown
+          markdown={live.text}
+          trailing={live.done ? null : <Caret />}
+        />
       ) : (
         <Thinking label={t("ask.thinking")} />
       )}

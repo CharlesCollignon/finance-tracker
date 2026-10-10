@@ -1,6 +1,6 @@
 "use client";
 
-import { Fragment, useMemo } from "react";
+import { Fragment, useMemo, type ReactNode } from "react";
 import {
   parseAskMarkdown,
   type AskAlign,
@@ -24,43 +24,53 @@ const ALIGN: Record<AskAlign, string> = {
  * underlined in dots, with why on hover.
  *
  * Read again on every piece while the answer streams in: a half-written
- * table is a paragraph until its separator arrives.
+ * table is a paragraph until its separator arrives. `trailing` — the caret
+ * while it streams — sits at the end of the last words, wherever they are.
  */
 export function AskMarkdown({
   markdown,
   untraced = [],
+  trailing = null,
 }: {
   markdown: string;
   untraced?: readonly string[];
+  trailing?: ReactNode;
 }) {
   const blocks = useMemo(
     () => parseAskMarkdown(markdown, untraced),
     [markdown, untraced],
   );
+  const lastBlock = blocks.length - 1;
+  const lastKind = blocks[lastBlock]?.kind;
   return (
     <div className="flex flex-col gap-3 text-sm leading-relaxed">
       {blocks.map((block, index) => {
+        const tail = index === lastBlock ? trailing : null;
         switch (block.kind) {
           case "heading":
             return block.level === 2 ? (
               <h3 key={index} className="pt-1 text-base font-semibold">
                 <Inline nodes={block.inline} />
+                {tail}
               </h3>
             ) : (
               <h4 key={index} className="pt-1 font-semibold">
                 <Inline nodes={block.inline} />
+                {tail}
               </h4>
             );
           case "paragraph":
             return (
               <p key={index}>
                 <Inline nodes={block.inline} />
+                {tail}
               </p>
             );
           case "list": {
             const items = block.items.map((item, at) => (
               <li key={at} className="pl-1">
                 <Inline nodes={item} />
+                {at === block.items.length - 1 ? tail : null}
               </li>
             ));
             return block.ordered ? (
@@ -129,12 +139,15 @@ export function AskMarkdown({
                 className="border-l-2 border-border pl-3 text-muted-foreground"
               >
                 <Inline nodes={block.inline} />
+                {tail}
               </blockquote>
             );
           case "rule":
             return <hr key={index} className="border-border" />;
         }
       })}
+      {/* After a table or a rule, the caret has no words to follow. */}
+      {lastKind === "table" || lastKind === "rule" ? <p>{trailing}</p> : null}
     </div>
   );
 }
