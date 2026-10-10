@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, type ReactNode } from "react";
 import { ScrollView, View } from "react-native";
 
 import {
@@ -22,22 +22,29 @@ const ALIGN: Record<AskAlign, string> = {
  * the same blocks (`@finance/core/ask-markdown`) drawn with the phone's own
  * text. A table scrolls sideways on its own; every figure is a
  * `PrivateAmount`, so the privacy mode hides it, and one the app found
- * nowhere is underlined in dots.
+ * nowhere is underlined in dots. `trailing` — the caret while the answer
+ * streams in — sits at the end of the last words, wherever they are.
  */
 export function AskMarkdown({
   markdown,
   untraced = [],
+  trailing = null,
 }: {
   markdown: string;
   untraced?: readonly string[];
+  /** Text, to sit inside the last words' own. */
+  trailing?: ReactNode;
 }) {
   const blocks = useMemo(
     () => parseAskMarkdown(markdown, untraced),
     [markdown, untraced],
   );
+  const lastBlock = blocks.length - 1;
+  const lastKind = blocks[lastBlock]?.kind;
   return (
     <View className="gap-3">
       {blocks.map((block, index) => {
+        const tail = index === lastBlock ? trailing : null;
         switch (block.kind) {
           case "heading":
             return (
@@ -50,12 +57,14 @@ export function AskMarkdown({
                 )}
               >
                 <Inline nodes={block.inline} />
+                {tail}
               </Text>
             );
           case "paragraph":
             return (
               <Text key={index} className="text-sm leading-5">
                 <Inline nodes={block.inline} />
+                {tail}
               </Text>
             );
           case "list":
@@ -68,6 +77,7 @@ export function AskMarkdown({
                     </Text>
                     <Text className="flex-1 text-sm leading-5">
                       <Inline nodes={item} />
+                      {at === block.items.length - 1 ? tail : null}
                     </Text>
                   </View>
                 ))}
@@ -112,6 +122,7 @@ export function AskMarkdown({
               <View key={index} className="border-l-2 border-border pl-3">
                 <Text variant="muted" className="text-sm leading-5">
                   <Inline nodes={block.inline} />
+                  {tail}
                 </Text>
               </View>
             );
@@ -119,6 +130,10 @@ export function AskMarkdown({
             return <View key={index} className="h-px bg-border" />;
         }
       })}
+      {/* After a table or a rule, the caret has no words to follow. */}
+      {lastKind === "table" || lastKind === "rule" ? (
+        <Text className="text-sm">{trailing}</Text>
+      ) : null}
     </View>
   );
 }

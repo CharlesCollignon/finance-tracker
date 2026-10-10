@@ -351,7 +351,9 @@ model yet.
       The landing's « jamais un conseil » lines and the privacy policy draft
       say so; the footer now reads « Aucun conseil en investissement ».
 - [ ] Try it against each of the three models on a real account.
-- [ ] Stream on the phone too (`expo/fetch` reads a body as it comes).
+- [x] Stream on the phone too (2026-10-10): the same route with the
+      phone's token, read as it comes through `expo/fetch`, chips, caret
+      and stop as on the web.
 - [ ] The route's sixty seconds: a slow model on a long question can run out
       (the loop asks for an answer at 38 s and gives up at 56 s). Raising
       `maxDuration` depends on the Vercel plan.
