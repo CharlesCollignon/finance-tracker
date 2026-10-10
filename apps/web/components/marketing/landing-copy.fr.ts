@@ -77,7 +77,7 @@ export const landingCopyFr: LandingCopySections & {
       {
         id: "questions",
         title: "Demandez, avec vos mots",
-        body: "« Combien en courses ce mois-ci ? » La réponse vient avec les chiffres de Pluclair, écrite par l’IA de votre choix — jamais un conseil.",
+        body: "« Où part mon argent depuis janvier ? » L’IA de votre choix va chercher dans vos chiffres et vous répond en détail — explications, comparaisons, simulations.",
       },
     ],
   },
@@ -367,21 +367,21 @@ export const landingCopyFr: LandingCopySections & {
     },
     questions: {
       title: "Questions",
-      body: "Interrogez votre argent avec vos propres mots.",
+      body: "Discutez de votre argent avec vos propres mots.",
       utility:
-        "Tapez une question comme elle vous vient. Pluclair choisit les chiffres utiles, l’IA de votre choix écrit quelques phrases, et chaque nombre y est celui de Pluclair. Sur votre propre compte IA, et jamais un conseil.",
+        "Tapez une question comme elle vous vient, puis creusez. L’IA de votre choix va chercher ce qu’il lui faut dans vos chiffres — vos mois, vos catégories, vos opérations, votre épargne, vos prêts — et répond en détail, avec un tableau quand il faut comparer. Elle explique, compare et simule ; elle ne vous recommande jamais un placement. Sur votre propre compte IA.",
       steps: [
         {
           title: "Posez-la à votre façon",
-          body: "« Combien en courses ce mois-ci ? », « Quel est mon plus gros abonnement ? » — la question telle qu’elle vient. Un commerce reçoit ses opérations et leur total.",
+          body: "« Où part mon argent ? », « Et si je remboursais 10 000 € de mon prêt ? » — puis une autre à la suite : la conversation se souvient de ce qui a été dit.",
         },
         {
-          title: "Les chiffres de Pluclair, les mots de l’IA",
-          body: "L’IA n’écrit jamais un nombre : elle nomme un chiffre et Pluclair y met le sien. Une phrase qui en inventerait un, ou qui dirait quoi faire, est retirée.",
+          title: "Vos chiffres, vérifiés",
+          body: "Vous voyez ce que l’IA consulte, au fil de la question. Ses calculs passent par la calculatrice de Pluclair, et un chiffre que Pluclair ne retrouve pas dans vos données est souligné en pointillé.",
         },
         {
           title: "Sur votre propre compte",
-          body: "Connectez une fois un compte OpenRouter et choisissez Mistral, ChatGPT ou Claude : chaque question coûte quelques centimes, payés à OpenRouter. Les conversations sont gardées 30 jours.",
+          body: "Connectez une fois un compte OpenRouter et choisissez Mistral, ChatGPT ou Claude : chaque question se paie à OpenRouter, en général quelques centimes. Les conversations sont gardées 30 jours.",
         },
       ],
     },
@@ -596,7 +596,7 @@ export const landingCopyFr: LandingCopySections & {
     imageCredit:
       "Image de la Terre : NASA, Blue Marble Next Generation (Reto Stöckli).",
     disclaimer:
-      "Aucun conseil. Aucune pub. Pluclair ne touche jamais à votre argent.",
+      "Aucun conseil en investissement. Aucune pub. Pluclair ne touche jamais à votre argent.",
   },
 
   cta: {

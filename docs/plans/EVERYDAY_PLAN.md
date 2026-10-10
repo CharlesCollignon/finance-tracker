@@ -329,6 +329,33 @@ or against a live model yet.
       to Profile with the connect row open. Out of « Bientôt » on the
       landing.
 
+## Phase 7b — Ask as a conversation (branch `ask-chat`) — built
+
+Built 2026-10-10 after the owner found the first version « super limited »:
+four short sentences that only repeated the app's figures, no memory of the
+conversation, three of six aggregate families. Not tried against a live
+model yet.
+
+- [x] The model calls tools over the person's own data — the month, cash
+      flow, categories, single entries, shops, recurring entries, savings,
+      investments, loans, an early-repayment what-if and a calculator — over
+      up to six rounds, with the last eight exchanges as context.
+- [x] Markdown answers as long as the question deserves (headings, lists,
+      tables), streamed on the web with each tool shown as it is called and
+      a stop button; the phone draws the same answers whole.
+- [x] The model writes its own figures; one the app cannot find among what
+      it handed over is underlined in dots, not dropped.
+- [x] The owner's calls: advice at tiers 0 to 3 (explain, compare, simulate,
+      rules of thumb, budgeting tips — never a product or an allocation);
+      single entries may reach the model when the question is about them.
+      The landing's « jamais un conseil » lines and the privacy policy draft
+      say so; the footer now reads « Aucun conseil en investissement ».
+- [ ] Try it against each of the three models on a real account.
+- [ ] Stream on the phone too (`expo/fetch` reads a body as it comes).
+- [ ] The route's sixty seconds: a slow model on a long question can run out
+      (the loop asks for an answer at 38 s and gives up at 56 s). Raising
+      `maxDuration` depends on the Vercel plan.
+
 ## Phase 8 — Tax time and PDF statements (branch `everyday-tax`) — tax page removed, PDF waiting
 
 Built 2026-10-09: the tax page, migration 066. Removed the same day at the

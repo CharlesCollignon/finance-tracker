@@ -117,8 +117,12 @@ auprès desquels l'utilisateur a lui-même ouvert un compte.
 - **Données transmises** à OpenRouter (États-Unis), puis au fournisseur du
   modèle (Mistral, OpenAI ou Anthropic) : noms des catégories et totaux du
   mois, ou fonds d'un portefeuille et leurs valeurs, le nom et l'ISIN d'un
-  fonds à lire, la question telle que tapée avec les seuls totaux utiles pour
-  y répondre ; jamais le nom, l'e-mail ni les opérations une à une.
+  fonds à lire ; pour « Questions », les questions telles que tapées, les
+  réponses déjà données dans la conversation et ce que le modèle consulte
+  pour répondre — totaux par mois, catégorie ou commerce, opérations
+  récurrentes, comptes d'épargne, placements, prêts et, quand la question
+  porte sur elles, des opérations une à une (date, libellé, catégorie,
+  montant) ; jamais le nom, l'e-mail ni les identifiants bancaires.
 - **Base légale** : le consentement de l'utilisateur, recueilli avant la
   connexion (art. 6.1.a). La clé du compte est conservée chiffrée (AES-256-GCM,
   clé maître `AI_SECRETS_KEY`) et supprimée à la déconnexion.
