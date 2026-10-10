@@ -85,7 +85,7 @@ export const landingCopy = {
       {
         id: "questions",
         title: "Ask, in your own words",
-        body: "“How much on groceries this month?” The answer comes with Pluclair’s own figures, written by the AI of your choice — never advice.",
+        body: "“Where has my money gone since January?” The AI of your choice digs through your figures and answers in detail — explanations, comparisons, what-ifs.",
       },
     ],
   },
@@ -396,21 +396,21 @@ export const landingCopy = {
     {
       id: "questions",
       title: "Questions",
-      body: "Ask about your money in your own words.",
+      body: "Talk about your money in your own words.",
       utility:
-        "Type a question the way it comes to you. Pluclair picks the figures it needs, the AI of your choice writes a few sentences, and every number in them is Pluclair’s own. On your own AI account, and never advice.",
+        "Type a question the way it comes to you, then dig deeper. The AI of your choice fetches what it needs from your figures — your months, categories, entries, savings, loans — and answers in detail, with a table when there is something to compare. It explains, compares and simulates; it never recommends an investment. On your own AI account.",
       steps: [
         {
           title: "Ask it your way",
-          body: "“How much on groceries this month?”, “What is my biggest subscription?” — the question as it comes. A shop is answered with its rows and their total.",
+          body: "“Where does my money go?”, “What if I repaid €10,000 of my loan?” — then another one after it: the conversation remembers what was said.",
         },
         {
-          title: "Pluclair’s figures, the AI’s words",
-          body: "The AI never writes a number: it names a figure and Pluclair puts in its own. A sentence that would invent one, or tell you what to do, is removed.",
+          title: "Your figures, checked",
+          body: "You see what the AI looks at as it goes. Its sums go through Pluclair’s calculator, and a figure Pluclair cannot find in your data is underlined in dots.",
         },
         {
           title: "On your own account",
-          body: "Connect an OpenRouter account once and choose Mistral, ChatGPT or Claude: each question costs a few cents, paid to OpenRouter. Conversations are kept 30 days.",
+          body: "Connect an OpenRouter account once and choose Mistral, ChatGPT or Claude: each question is paid to OpenRouter, usually a few cents. Conversations are kept 30 days.",
         },
       ],
     },
@@ -626,7 +626,8 @@ export const landingCopy = {
     copyright: "© 2026 Pluclair",
     imageCredit:
       "Earth imagery: NASA, Blue Marble Next Generation (Reto Stöckli).",
-    disclaimer: "No advice. No ads. Pluclair never touches your money.",
+    disclaimer:
+      "No investment advice. No ads. Pluclair never touches your money.",
   },
 
   cta: {

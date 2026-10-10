@@ -28,10 +28,12 @@ import {
   renderAskSentences,
   type AskAnswerBody,
 } from "@finance/core/ask";
+import type { AskChatBody } from "@finance/core/ask-chat";
 import { formatShortDate } from "@finance/core/constants";
 import { resolveMessage } from "@finance/core/i18n/t";
 import type { ReadSegment } from "@finance/core/month-read";
 
+import { AskMarkdown } from "@/components/AskMarkdown";
 import { ConnectAiInvite } from "@/components/ConnectAiInvite";
 import { Orb } from "@/components/Orb";
 import { PrivateAmount } from "@/components/PrivateAmount";
@@ -49,7 +51,7 @@ import { getWriterState } from "@/lib/ai-writer";
 import { cn } from "@/lib/cn";
 import { hapticLight, hapticSuccess } from "@/lib/haptics";
 import { useAuth } from "@/providers/AuthProvider";
-import { useFormatCurrency } from "@/providers/CurrencyProvider";
+import { useCurrency, useFormatCurrency } from "@/providers/CurrencyProvider";
 import { useLocale, useT } from "@/providers/LocaleProvider";
 import { useToast } from "@/providers/ToastProvider";
 import { ICON } from "@/theme/tokens";
@@ -66,8 +68,9 @@ const SUGGESTIONS = [
  * « Questions » — Ask Pluclair on the phone, the twin of the web's `/ask`:
  * the conversations of the last thirty days along the top, the one open
  * below, a question at the bottom. The question in flight shows at once,
- * with Pluclair looking at the figures until the answer lands. The person's
- * own money, never the space's.
+ * with Pluclair at work until the whole answer lands — the web streams it
+ * word by word; the phone waits for it. The person's own money, never the
+ * space's.
  */
 export default function AskScreen() {
   const t = useT();
@@ -75,6 +78,7 @@ export default function AskScreen() {
   const router = useRouter();
   const { toast } = useToast();
   const { user } = useAuth();
+  const { currency } = useCurrency();
   const colors = useThemeColors();
   const params = useLocalSearchParams<{ c?: string }>();
   const [currentId, setCurrentId] = useState<string | null>(params.c ?? null);
@@ -118,7 +122,7 @@ export default function AskScreen() {
     void hapticLight();
     setAsking(text);
     setDraft("");
-    const outcome = await askQuestion(text, currentId, locale);
+    const outcome = await askQuestion(text, currentId, locale, currency);
     setAsking(null);
     if (outcome.message) {
       toast(resolveMessage(t, outcome.message), "error");
@@ -321,6 +325,8 @@ export default function AskScreen() {
               </Pressable>
             </View>
             <Text variant="micro" className="text-center">
+              {t("ask.disclaimer")}
+              {" · "}
               {t("ask.onAccount")}
               {" · "}
               {t("ask.kept", { days: ASK_KEEP_DAYS })}
@@ -345,6 +351,9 @@ function Question({ text }: { text: string }) {
 function Answer({ body }: { body: AskAnswerBody }) {
   const t = useT();
   const colors = useThemeColors();
+  if (body.kind === "chat") {
+    return <ChatAnswer body={body} />;
+  }
   return (
     <View className="flex-row items-start gap-3">
       <View className="mt-0.5">
@@ -369,7 +378,43 @@ function Answer({ body }: { body: AskAnswerBody }) {
   );
 }
 
-function AnswerBody({ body }: { body: AskAnswerBody }) {
+/**
+ * A conversation's answer: how many things were looked at, the answer, and
+ * a word on the figures the app could not find.
+ */
+function ChatAnswer({ body }: { body: AskChatBody }) {
+  const t = useT();
+  const colors = useThemeColors();
+  return (
+    <View className="flex-row items-start gap-3">
+      <View className="mt-0.5">
+        <Orb size="sm" />
+      </View>
+      <View className="min-w-0 flex-1 gap-2.5">
+        {body.steps.length > 0 ? (
+          <Text variant="micro">
+            {t("ask.looked", { count: body.steps.length })}
+          </Text>
+        ) : null}
+        <AskMarkdown markdown={body.markdown} untraced={body.untraced} />
+        {body.untraced.length > 0 ? (
+          <View className="flex-row items-start gap-1.5">
+            <Ionicons
+              name="information-circle-outline"
+              size={ICON.sm}
+              color={colors.mutedForeground}
+            />
+            <Text variant="micro" className="flex-1">
+              {t("ask.untracedNote", { count: body.untraced.length })}
+            </Text>
+          </View>
+        ) : null}
+      </View>
+    </View>
+  );
+}
+
+function AnswerBody({ body }: { body: Exclude<AskAnswerBody, AskChatBody> }) {
   const t = useT();
   const locale = useLocale();
   const format = useFormatCurrency();

@@ -78,14 +78,13 @@ export const landingSampleFr = {
     exchanges: [
       {
         question: "Combien ai-je dépensé en courses ce mois-ci ?",
-        answer: [
-          "Les courses en sont à {spent} en mars.",
-          "Au même jour de février, c'était {before}.",
-        ],
+        answer:
+          "**{spent}** de courses depuis le début de mars, {gap} de moins que les {before} dépensés au même jour de février.\n\n- Votre deuxième poste de dépenses, après le logement à {housing}.\n- À ce rythme, mars finirait autour de {pace}.",
       },
       {
         question: "Quel est mon plus gros abonnement ?",
-        answer: ["Netflix, à {netflix} par mois — le seul que vous ayez."],
+        answer:
+          "Netflix, à **{netflix}** par mois — votre seul abonnement, soit {netflixYear} par an.",
       },
     ],
   },

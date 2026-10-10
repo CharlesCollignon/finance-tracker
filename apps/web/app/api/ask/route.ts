@@ -1,7 +1,7 @@
 import { z } from "zod";
-import { LOCALES } from "@finance/core/i18n/locale";
 import { MAX_ASK_QUESTION } from "@finance/core/ask";
-import { askQuestion } from "@/lib/ask/ask";
+import { LOCALES } from "@finance/core/i18n/locale";
+import { askChat } from "@/lib/ask/chat";
 import { sessionFromBearer } from "@/lib/supabase/bearer";
 
 /**
@@ -9,9 +9,12 @@ import { sessionFromBearer } from "@/lib/supabase/bearer";
  * reads its conversations and deletes them straight from Supabase under row
  * level security; asking is the one thing it needs a server for. Same shape
  * as `api/month-read`: the Supabase token it already has, verified here.
+ *
+ * The whole answer at once, once it is written and kept: the web's screen
+ * streams it instead (`api/ask/stream`).
  */
 
-// Two model calls in a row.
+// A few rounds of tools, then the answer.
 export const maxDuration = 60;
 export const dynamic = "force-dynamic";
 
@@ -20,6 +23,7 @@ const bodySchema = z
     question: z.string().min(1).max(MAX_ASK_QUESTION),
     conversationId: z.string().uuid().nullable().optional(),
     locale: z.enum(LOCALES as unknown as [string, ...string[]]),
+    currency: z.enum(["EUR", "USD"]).optional(),
   })
   .strict();
 
@@ -33,10 +37,11 @@ export async function POST(request: Request) {
     return Response.json({ error: "errors.invalidInput" }, { status: 400 });
   }
   try {
-    const outcome = await askQuestion(session.supabase, session.userId, {
+    const outcome = await askChat(session.supabase, session.userId, {
       question: parsed.data.question,
       conversationId: parsed.data.conversationId ?? null,
       locale: parsed.data.locale as (typeof LOCALES)[number],
+      currency: parsed.data.currency ?? "EUR",
     });
     // Every refusal is an answer with a reason, as on the other routes.
     return Response.json(outcome);

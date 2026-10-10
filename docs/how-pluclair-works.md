@@ -406,22 +406,34 @@ as for any home. `property.track` is on by default since 063.
 ## Questions (Ask Pluclair)
 
 `/ask` on the web, `ask` on the phone (migration 064,
-`@finance/core/ask`). A question is two asks of the model with the app in
-between: the first says which families of figures it needs — `month`,
-`spending`, `charges`, `cushion`, `wallets`, `loans` — or that it is about
-a shop (then `searchAllMonths` answers, with the app's own sum) or about
-nothing the app holds; the app gathers those families as aggregates
-(`lib/ask/facts.ts`, with the client handed in so the phone's token works
-too); the second writes at most four sentences with `{{fact:id}}` holes.
-`verifyAskAnswer` drops a sentence that writes a number, cites a figure it
-was not given, or advises (`givesAdvice`); an advice question ends with
-« Pluclair ne conseille pas ». The answer is stored with the figures it was
-written from (`ask_messages.body`). The month's count is taken before the
-model is asked (`reserve_ask`) and handed back if it was never reached,
+`@finance/core/ask-chat`), rebuilt as a conversation on 2026-10-10. The
+question goes to the person's model with the conversation so far (the last
+eight exchanges) and eleven tools (`ASK_CHAT_TOOLS`): `month`, `cashflow`,
+`categories`, `transactions` (single entries), `merchants`, `recurring`,
+`savings`, `investments`, `loans`, `loan_prepayment` (a what-if on the real
+schedule) and `calculate`. The model calls what it needs over up to six
+rounds (`lib/ask/chat.ts`); the tools run on the web's server with the
+client handed in, so row level security holds for the phone's token too
+(`lib/ask/tools.ts`). The answer is Markdown, as long as the question
+deserves, read by `@finance/core/ask-markdown` on both apps.
+
+The model writes its own figures. Afterwards every amount and percentage
+in the answer is looked for among the values it was handed — the tools'
+results, the calculator's, the question, the conversation so far
+(`@finance/core/ask-figures`); one found nowhere is kept in
+`ask_messages.body.untraced` and drawn underlined in dots. Advice stops at
+tiers 0 to 3 of the upgrade plan: explain, compare, simulate, rules of
+thumb, budgeting tips — never a product, a fund or an allocation, which the
+system prompt forbids.
+
+The web streams the answer (`POST /api/ask/stream`, one JSON event a line:
+each tool as it is called, the words as they come, then the conversation);
+the phone asks through `POST /api/ask` and gets the whole answer. Both read
+and delete their conversations directly. The month's count is taken before
+the model is asked (`reserve_ask`) and handed back if it was never reached,
 under the account ceiling; only with an AI account connected, on it.
-Conversations last
-thirty days (`sweep_ask` in the nightly sweep). The phone asks through
-`POST /api/ask` and reads and deletes its conversations directly. The
+Conversations last thirty days (`sweep_ask` in the nightly sweep). The
+first version's answers (`facts`, `search`) stay drawable until then. The
 person's own money only, under « Commun » too.
 
 ## Audience measurement

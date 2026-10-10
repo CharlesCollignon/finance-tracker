@@ -1,3 +1,4 @@
+import type { AskChatTool } from "@finance/core/ask-chat";
 import type { Locale } from "@finance/core/i18n/locale";
 // Relative, where the rest of this tree writes `@/components/...`. The two
 // `@finance/core` imports above are erased as types, so this is the module's
@@ -458,25 +459,36 @@ export const landingSample = {
   },
 
   /**
-   * One exchange in « Questions ». The answer's figures are chips the app
-   * puts in, as the real feature does: `spent` is the groceries figure the
-   * read below quotes, `before` February's by the same day.
+   * Two exchanges in « Questions », as the conversation draws them: what
+   * the model looked at, then its Markdown answer. `{name}` is a figure the
+   * mock writes in the reader's currency: `spent` is the groceries figure
+   * the read below quotes, `before` February's by the same day, `housing`
+   * the largest category, `pace` March at this rate over its 31 days.
    */
   questions: {
     exchanges: [
       {
         question: "How much did I spend on groceries this month?",
-        answer: [
-          "Groceries come to {spent} so far in March.",
-          "By the same day in February, it was {before}.",
-        ],
+        steps: ["month", "categories"] as AskChatTool[],
+        answer:
+          "**{spent}** on groceries so far in March, {gap} less than the {before} spent by the same day in February.\n\n- Your second-largest spending, after housing at {housing}.\n- At this pace, March would end around {pace}.",
       },
       {
         question: "What is my biggest subscription?",
-        answer: ["Netflix, at {netflix} a month — the only one you have."],
+        steps: ["recurring"] as AskChatTool[],
+        answer:
+          "Netflix, at **{netflix}** a month — your only subscription, so {netflixYear} a year.",
       },
     ],
-    figures: { spent: 218, before: 241, netflix: 15 },
+    figures: {
+      spent: 218,
+      before: 241,
+      gap: 23,
+      housing: 850,
+      pace: 356,
+      netflix: 15,
+      netflixYear: 180,
+    },
   },
 
   /**
@@ -655,7 +667,13 @@ export function landingSampleFor(locale: Locale) {
         name: fr.peaPositions[index] ?? row.name,
       })),
     },
-    questions: { ...landingSample.questions, ...fr.questions },
+    questions: {
+      ...landingSample.questions,
+      exchanges: landingSample.questions.exchanges.map((exchange, index) => ({
+        ...exchange,
+        ...fr.questions.exchanges[index],
+      })),
+    },
     together: {
       ...landingSample.together,
       name: fr.together.name,

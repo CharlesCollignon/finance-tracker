@@ -6,6 +6,7 @@ import {
   useState,
   useTransition,
   type FormEvent,
+  type ReactNode,
 } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -18,13 +19,29 @@ import {
   useReducedMotion,
 } from "motion/react";
 import {
+  ArrowsDownUp,
   ArrowUp,
+  Calculator,
+  CalendarBlank,
+  CaretDown,
+  ChartPieSlice,
   ChatCircleText,
+  Check,
   ClockCounterClockwise,
+  Copy,
+  HourglassMedium,
+  House,
   Info,
+  ListBullets,
+  PiggyBank,
   Plus,
+  Repeat,
+  Stop,
+  Storefront,
   Trash,
+  TrendUp,
   X,
+  type Icon,
 } from "@phosphor-icons/react";
 import {
   ASK_KEEP_DAYS,
@@ -32,6 +49,11 @@ import {
   renderAskSentences,
   type AskAnswerBody,
 } from "@finance/core/ask";
+import type {
+  AskChatBody,
+  AskChatTool,
+  AskStreamEvent,
+} from "@finance/core/ask-chat";
 import { formatShortDate } from "@finance/core/constants";
 import { resolveMessage } from "@finance/core/i18n/t";
 import { EASE_STANDARD } from "@finance/core/motion";
@@ -41,12 +63,13 @@ import { Orb } from "@/components/brand/Orb";
 import { ConnectAiInvite } from "@/components/finance/ConnectAiInvite";
 import { PrivateAmount } from "@/components/layout/PrivateAmount";
 import { useToast } from "@/components/layout/ToastProvider";
-import { askAction, deleteConversationAction } from "@/lib/actions/ask";
+import { deleteConversationAction } from "@/lib/actions/ask";
 import { ICON } from "@/lib/icon-scale";
 import { useLocale, useT } from "@/lib/locale-context";
 import { MICRO } from "@/lib/type-scale";
 import { useFormatCurrency } from "@/lib/use-currency";
 import { cn } from "@/lib/utils";
+import { AskMarkdown } from "./AskMarkdown";
 
 const EASE = [...EASE_STANDARD] as [number, number, number, number];
 
@@ -64,13 +87,43 @@ const SUGGESTIONS = [
   "ask.suggest4",
 ] as const;
 
+/** Each tool's mark, beside its name while the model is at work. */
+const STEP_ICONS: Record<AskChatTool, Icon> = {
+  month: CalendarBlank,
+  cashflow: ArrowsDownUp,
+  categories: ChartPieSlice,
+  transactions: ListBullets,
+  merchants: Storefront,
+  recurring: Repeat,
+  savings: PiggyBank,
+  investments: TrendUp,
+  loans: House,
+  loan_prepayment: HourglassMedium,
+  calculate: Calculator,
+};
+
+/** A question on its way: what was asked, what was looked at, the words so far. */
+interface Live {
+  question: string;
+  steps: AskChatTool[];
+  text: string;
+  /** How many messages the conversation had when it was asked. */
+  before: number;
+  /** Kept on the server: drawn from the conversation once it is read back. */
+  done: boolean;
+}
+
 /**
  * « Questions » (Ask Pluclair): one centred column, as a conversation reads
  * — the messages, and the question box pinned to the bottom of the screen
  * above the bar. The last thirty days' conversations slide in from the side
- * on demand. The question in flight shows at once, with Pluclair looking at
- * the figures until the answer springs in. With no AI account connected,
- * the page says how to connect one instead.
+ * on demand.
+ *
+ * A question is answered as it is written (`api/ask/stream`): each thing the
+ * model looks at pops in as a chip, then the answer's words arrive under
+ * them; the box's button stops it. Once kept, the exchange is read back
+ * from the server and the live one gives way to it. With no AI account
+ * connected, the page says how to connect one instead.
  */
 export function AskView({
   conversations,
@@ -88,42 +141,126 @@ export function AskView({
   const router = useRouter();
   const { toast } = useToast();
   const [draft, setDraft] = useState("");
-  const [asking, setAsking] = useState<string | null>(null);
+  const [live, setLive] = useState<Live | null>(null);
   const [history, setHistory] = useState(false);
   const [pending, startTransition] = useTransition();
   const end = useRef<HTMLDivElement>(null);
+  const abort = useRef<AbortController | null>(null);
 
-  const canAsk = writable && !pending;
+  const asking = live !== null && !live.done;
+  // Once the kept exchange has been read back, the live one gives way to it.
+  const shown =
+    live && !(live.done && messages.length > live.before) ? live : null;
+  const canAsk = writable && !asking && !pending;
 
-  // The latest message in view as it lands.
+  // The latest message in view as it lands, and as the answer grows.
   useEffect(() => {
     end.current?.scrollIntoView({ behavior: "smooth", block: "end" });
-  }, [messages.length, asking]);
+  }, [messages.length, live?.steps.length, live?.text.length]);
 
-  function ask(question: string) {
+  async function ask(question: string) {
     const text = question.trim();
     if (!text || !canAsk) {
       return;
     }
-    setAsking(text);
+    const controller = new AbortController();
+    abort.current = controller;
     setDraft("");
-    startTransition(async () => {
-      const outcome = await askAction(text, currentId);
-      setAsking(null);
-      if (outcome.message) {
-        toast(resolveMessage(t, outcome.message), "error");
-        setDraft(text);
+    setLive({
+      question: text,
+      steps: [],
+      text: "",
+      before: currentId ? messages.length : 0,
+      done: false,
+    });
+
+    const fail = (message: string) => {
+      setLive(null);
+      setDraft(text);
+      toast(resolveMessage(t, message), "error");
+    };
+
+    try {
+      const response = await fetch("/api/ask/stream", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ question: text, conversationId: currentId }),
+        signal: controller.signal,
+      });
+      if (!response.ok || !response.body) {
+        const body = (await response.json().catch(() => null)) as {
+          error?: string;
+        } | null;
+        fail(body?.error ?? "ask.noAnswer");
         return;
       }
-      if (outcome.conversationId && outcome.conversationId !== currentId) {
-        router.replace(`/ask?c=${outcome.conversationId}`);
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+      let finished = false;
+      for (;;) {
+        const { value, done } = await reader.read();
+        if (done) {
+          break;
+        }
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split("\n");
+        buffer = lines.pop() ?? "";
+        for (const line of lines) {
+          if (!line.trim()) {
+            continue;
+          }
+          const event = JSON.parse(line) as AskStreamEvent;
+          if (event.type === "step") {
+            setLive((now) =>
+              now ? { ...now, steps: [...now.steps, event.tool] } : now,
+            );
+          } else if (event.type === "text") {
+            setLive((now) =>
+              now ? { ...now, text: now.text + event.text } : now,
+            );
+          } else if (event.type === "reset") {
+            setLive((now) => (now ? { ...now, text: "" } : now));
+          } else if (event.type === "error") {
+            finished = true;
+            fail(event.message);
+          } else {
+            finished = true;
+            setLive((now) => (now ? { ...now, done: true } : now));
+            const id = event.conversationId;
+            startTransition(() => {
+              if (id !== currentId) {
+                router.replace(`/ask?c=${id}`);
+              } else {
+                router.refresh();
+              }
+            });
+          }
+        }
       }
-    });
+      if (!finished) {
+        fail("ask.noAnswer");
+      }
+    } catch {
+      if (controller.signal.aborted) {
+        setLive(null);
+        setDraft(text);
+        toast(t("ask.stopped"), "success");
+      } else {
+        fail("ask.noAnswer");
+      }
+    } finally {
+      abort.current = null;
+    }
   }
 
   function submit(event: FormEvent) {
     event.preventDefault();
-    ask(draft);
+    if (asking) {
+      abort.current?.abort();
+      return;
+    }
+    void ask(draft);
   }
 
   function remove(id: string) {
@@ -139,7 +276,7 @@ export function AskView({
     });
   }
 
-  const empty = messages.length === 0 && !asking;
+  const empty = messages.length === 0 && !shown;
 
   return (
     <LazyMotion features={domAnimation} strict>
@@ -167,7 +304,7 @@ export function AskView({
           </div>
 
           {/* Room under the last message for the box pinned below. */}
-          <section className="flex min-h-[55vh] flex-col gap-4 pb-48">
+          <section className="flex min-h-[55vh] flex-col gap-4 pb-52">
             {!writable ? (
               <div className="my-auto flex flex-col items-center gap-4 py-6">
                 <Orb size="56px" />
@@ -196,7 +333,7 @@ export function AskView({
                       }}
                       whileTap={{ scale: 0.97 }}
                       disabled={!canAsk}
-                      onClick={() => ask(t(key))}
+                      onClick={() => void ask(t(key))}
                       className="rounded-full border border-border px-3 py-1.5 text-sm transition-colors duration-hover hover:bg-muted disabled:opacity-50"
                     >
                       {t(key)}
@@ -205,9 +342,19 @@ export function AskView({
                 </div>
               </m.div>
             ) : (
-              <ol className="flex flex-col gap-4" aria-live="polite">
-                {messages.map((message) => (
-                  <m.li key={message.id} {...ARRIVE}>
+              <ol className="flex flex-col gap-5" aria-live="polite">
+                {messages.map((message, index) => (
+                  <m.li
+                    key={message.id}
+                    {...ARRIVE}
+                    // The exchange just answered live is already on screen:
+                    // it takes the live one's place without arriving again.
+                    initial={
+                      live?.done && index >= live.before
+                        ? false
+                        : ARRIVE.initial
+                    }
+                  >
                     {message.role === "question" ? (
                       <Question text={message.body.text} />
                     ) : (
@@ -215,13 +362,13 @@ export function AskView({
                     )}
                   </m.li>
                 ))}
-                {asking ? (
+                {shown ? (
                   <>
                     <m.li key="asking" {...ARRIVE}>
-                      <Question text={asking} />
+                      <Question text={shown.question} />
                     </m.li>
-                    <m.li key="thinking" {...ARRIVE}>
-                      <Thinking label={t("ask.thinking")} />
+                    <m.li key="answering" {...ARRIVE}>
+                      <LiveAnswer live={shown} />
                     </m.li>
                   </>
                 ) : null}
@@ -250,28 +397,50 @@ export function AskView({
                   onKeyDown={(event) => {
                     if (event.key === "Enter" && !event.shiftKey) {
                       event.preventDefault();
-                      ask(draft);
+                      void ask(draft);
                     }
                   }}
                   rows={1}
                   maxLength={MAX_ASK_QUESTION}
                   placeholder={t("ask.placeholder")}
                   aria-label={t("ask.placeholder")}
-                  className="max-h-40 min-h-10 flex-1 resize-none bg-transparent px-2 py-2 text-base outline-none placeholder:text-muted-foreground"
+                  className="field-sizing-content max-h-40 min-h-10 flex-1 resize-none bg-transparent px-2 py-2 text-base outline-none placeholder:text-muted-foreground"
                 />
                 <m.button
                   type="submit"
                   whileTap={{ scale: 0.92 }}
-                  disabled={!canAsk || draft.trim().length === 0}
-                  aria-label={t("ask.send")}
+                  disabled={!asking && (!canAsk || draft.trim().length === 0)}
+                  aria-label={asking ? t("ask.stop") : t("ask.send")}
+                  title={asking ? t("ask.stop") : undefined}
                   className="flex size-10 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground transition-opacity duration-hover disabled:opacity-40"
                 >
-                  <ArrowUp size={ICON.md} weight="bold" />
+                  <AnimatePresence mode="popLayout" initial={false}>
+                    <m.span
+                      key={asking ? "stop" : "send"}
+                      initial={{ scale: 0.4, opacity: 0 }}
+                      animate={{ scale: 1, opacity: 1 }}
+                      exit={{ scale: 0.4, opacity: 0 }}
+                      transition={{
+                        type: "spring",
+                        stiffness: 500,
+                        damping: 30,
+                      }}
+                      className="flex"
+                    >
+                      {asking ? (
+                        <Stop size={ICON.md} weight="fill" />
+                      ) : (
+                        <ArrowUp size={ICON.md} weight="bold" />
+                      )}
+                    </m.span>
+                  </AnimatePresence>
                 </m.button>
               </div>
               <p
                 className={cn("px-2 text-center text-muted-foreground", MICRO)}
               >
+                {t("ask.disclaimer")}
+                {" · "}
                 {t("ask.onAccount")}
                 {" · "}
                 {t("ask.kept", { days: ASK_KEEP_DAYS })}
@@ -381,34 +550,210 @@ export function AskView({
 function Question({ text }: { text: string }) {
   return (
     <div className="flex justify-end">
-      <p className="max-w-[85%] rounded-card rounded-br-control bg-muted px-4 py-2.5 text-sm">
+      <p className="max-w-[85%] whitespace-pre-wrap rounded-card rounded-br-control bg-muted px-4 py-2.5 text-sm">
         {text}
       </p>
     </div>
   );
 }
 
-function Answer({ body }: { body: AskAnswerBody }) {
-  const t = useT();
+/** Pluclair's side of the conversation: its mark, then what it says. */
+function Turn({ children }: { children: ReactNode }) {
   return (
     <div className="flex items-start gap-3">
-      <span className="mt-1 shrink-0">
+      <span className="mt-0.5 shrink-0">
         <Orb size="22px" tone="mark" />
       </span>
-      <div className="flex min-w-0 flex-1 flex-col gap-2 text-sm leading-relaxed">
-        <AnswerBody body={body} />
-        {"advice" in body && body.advice ? (
-          <p className="flex items-start gap-1.5 text-xs text-muted-foreground">
-            <Info size={ICON.sm} className="mt-0.5 shrink-0" />
-            {t("ask.noAdvice")}
-          </p>
-        ) : null}
-      </div>
+      <div className="flex min-w-0 flex-1 flex-col gap-2.5">{children}</div>
     </div>
   );
 }
 
-function AnswerBody({ body }: { body: AskAnswerBody }) {
+/**
+ * The answer being written: the things looked at so far, each popping in,
+ * then the words with a caret at their end. Before any word, the steps and
+ * three dots say Pluclair is at it.
+ */
+function LiveAnswer({ live }: { live: Live }) {
+  const t = useT();
+  return (
+    <Turn>
+      {live.steps.length > 0 ? (
+        <ul className="flex flex-wrap gap-1.5">
+          <AnimatePresence initial={false}>
+            {live.steps.map((tool, index) => (
+              <StepChip
+                key={`${tool}-${index}`}
+                tool={tool}
+                working={!live.text && index === live.steps.length - 1}
+              />
+            ))}
+          </AnimatePresence>
+        </ul>
+      ) : null}
+      {live.text ? (
+        <AskMarkdown
+          markdown={live.text}
+          trailing={live.done ? null : <Caret />}
+        />
+      ) : (
+        <Thinking label={t("ask.thinking")} />
+      )}
+    </Turn>
+  );
+}
+
+function StepChip({ tool, working }: { tool: AskChatTool; working: boolean }) {
+  const t = useT();
+  const Mark = STEP_ICONS[tool];
+  return (
+    <m.li
+      layout
+      initial={{ opacity: 0, scale: 0.6, y: 6 }}
+      animate={{ opacity: 1, scale: 1, y: 0 }}
+      transition={{ type: "spring", stiffness: 520, damping: 28 }}
+      className={cn(
+        "flex items-center gap-1.5 rounded-full border border-border px-2.5 py-1 text-xs text-muted-foreground",
+        working && "bg-muted/60",
+      )}
+    >
+      <Mark size={ICON.sm} />
+      {t(`ask.step.${tool}`)}
+      {working ? null : (
+        <m.span
+          initial={{ scale: 0 }}
+          animate={{ scale: 1 }}
+          transition={{ type: "spring", stiffness: 600, damping: 22 }}
+          className="flex"
+        >
+          <Check size={ICON.xs} weight="bold" className="text-success" />
+        </m.span>
+      )}
+    </m.li>
+  );
+}
+
+/** The end of the words still coming: a bar that breathes. */
+function Caret() {
+  const reduced = useReducedMotion();
+  return (
+    <m.span
+      aria-hidden
+      className="ml-0.5 inline-block h-4 w-[3px] translate-y-0.5 rounded-full bg-foreground/70 align-baseline"
+      animate={reduced ? undefined : { opacity: [1, 0.2, 1] }}
+      transition={{ duration: 1, repeat: Infinity, ease: EASE }}
+    />
+  );
+}
+
+function Answer({ body }: { body: AskAnswerBody }) {
+  const t = useT();
+  if (body.kind === "chat") {
+    return <ChatAnswer body={body} />;
+  }
+  return (
+    <Turn>
+      <div className="flex flex-col gap-2 text-sm leading-relaxed">
+        <FirstAnswerBody body={body} />
+      </div>
+      {"advice" in body && body.advice ? (
+        <p className="flex items-start gap-1.5 text-xs text-muted-foreground">
+          <Info size={ICON.sm} className="mt-0.5 shrink-0" />
+          {t("ask.noAdvice")}
+        </p>
+      ) : null}
+    </Turn>
+  );
+}
+
+/**
+ * A kept answer: what was looked at, folded into one line that opens; the
+ * answer; a word on the figures the app could not find; and a copy.
+ */
+function ChatAnswer({ body }: { body: AskChatBody }) {
+  const t = useT();
+  const [open, setOpen] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const steps = body.steps;
+
+  async function copy() {
+    try {
+      await navigator.clipboard.writeText(body.markdown);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1600);
+    } catch {
+      // No clipboard here (an insecure origin, a refusal): nothing to undo.
+    }
+  }
+
+  return (
+    <Turn>
+      {steps.length > 0 ? (
+        <div className="flex flex-col gap-1.5">
+          <button
+            type="button"
+            onClick={() => setOpen((now) => !now)}
+            aria-expanded={open}
+            className="flex w-fit items-center gap-1 text-xs text-muted-foreground transition-colors duration-hover hover:text-foreground"
+          >
+            {t("ask.looked", { count: steps.length })}
+            <m.span
+              animate={{ rotate: open ? 180 : 0 }}
+              transition={{ duration: 0.2, ease: EASE }}
+              className="flex"
+            >
+              <CaretDown size={ICON.xs} />
+            </m.span>
+          </button>
+          <AnimatePresence initial={false}>
+            {open ? (
+              <m.ul
+                key="steps"
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: "auto" }}
+                exit={{ opacity: 0, height: 0 }}
+                transition={{ duration: 0.2, ease: EASE }}
+                className="flex flex-wrap gap-1.5 overflow-hidden"
+              >
+                {steps.map((step, index) => (
+                  <StepChip
+                    key={`${step.tool}-${index}`}
+                    tool={step.tool}
+                    working={false}
+                  />
+                ))}
+              </m.ul>
+            ) : null}
+          </AnimatePresence>
+        </div>
+      ) : null}
+      <AskMarkdown markdown={body.markdown} untraced={body.untraced} />
+      <div className="flex items-center gap-3">
+        <button
+          type="button"
+          onClick={() => void copy()}
+          className="flex items-center gap-1 rounded-full py-1 text-xs text-muted-foreground transition-colors duration-hover hover:text-foreground"
+        >
+          {copied ? <Check size={ICON.xs} /> : <Copy size={ICON.xs} />}
+          {copied ? t("ask.copied") : t("ask.copy")}
+        </button>
+        {body.untraced.length > 0 ? (
+          <p className="flex items-center gap-1 text-xs text-muted-foreground">
+            <Info size={ICON.xs} className="shrink-0" />
+            {t("ask.untracedNote", { count: body.untraced.length })}
+          </p>
+        ) : null}
+      </div>
+    </Turn>
+  );
+}
+
+/** An answer from before the conversations: sentences, or a search's rows. */
+function FirstAnswerBody({
+  body,
+}: {
+  body: Exclude<AskAnswerBody, AskChatBody>;
+}) {
   const t = useT();
   const locale = useLocale();
   const format = useFormatCurrency();
@@ -497,28 +842,25 @@ function Segments({ segments }: { segments: ReadSegment[] }) {
 function Thinking({ label }: { label: string }) {
   const reduced = useReducedMotion();
   return (
-    <div className="flex items-center gap-3" role="status">
-      <Orb size="22px" tone="mark" />
-      <span className="flex items-center gap-2 text-sm text-muted-foreground">
-        {label}
-        {reduced ? null : (
-          <span aria-hidden className="flex gap-1">
-            {[0, 1, 2].map((dot) => (
-              <m.span
-                key={dot}
-                className="size-1.5 rounded-full bg-muted-foreground"
-                animate={{ y: [0, -3, 0], opacity: [0.4, 1, 0.4] }}
-                transition={{
-                  duration: 0.9,
-                  repeat: Infinity,
-                  delay: dot * 0.15,
-                  ease: EASE,
-                }}
-              />
-            ))}
-          </span>
-        )}
-      </span>
+    <div className="flex items-center gap-2" role="status">
+      <span className="text-sm text-muted-foreground">{label}</span>
+      {reduced ? null : (
+        <span aria-hidden className="flex gap-1">
+          {[0, 1, 2].map((dot) => (
+            <m.span
+              key={dot}
+              className="size-1.5 rounded-full bg-muted-foreground"
+              animate={{ y: [0, -3, 0], opacity: [0.4, 1, 0.4] }}
+              transition={{
+                duration: 0.9,
+                repeat: Infinity,
+                delay: dot * 0.15,
+                ease: EASE,
+              }}
+            />
+          ))}
+        </span>
+      )}
     </div>
   );
 }

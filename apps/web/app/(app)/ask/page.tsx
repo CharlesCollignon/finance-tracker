@@ -7,9 +7,6 @@ import { writerStateFor } from "@/lib/ai/writer";
 import { getAuthUser } from "@/lib/auth/get-user";
 import { createClient } from "@/lib/supabase/server";
 
-// Two model calls stand behind a question.
-export const maxDuration = 60;
-
 /**
  * « Questions » — Ask Pluclair: the person's own money, asked about in
  * words and answered with the app's figures (`@finance/core/ask`). The

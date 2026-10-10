@@ -1,3 +1,4 @@
+import { ilikeWords } from "@finance/core/ledger-search";
 import { allRows } from "@finance/core/paging";
 import type { AskAnswerBody, AskQuestionBody } from "@finance/core/ask";
 import type { Json } from "@finance/core/types/database";
@@ -263,25 +264,155 @@ export async function readSpendingByMonth(
   return [...totals.values()];
 }
 
-/** Income recorded over a span of days, as the month figures count it. */
-export async function readIncomeTotal(
+/* ---------------------------------------------------- the chat's ledger */
+
+export interface AskMonthFlow {
+  /** YYYY-MM. */
+  monthKey: string;
+  income: number;
+  expense: number;
+  savings: number;
+  investment: number;
+}
+
+/**
+ * Each month's money in, out, saved and invested, over a span of days, as
+ * the month figures count it: categories that count toward the summary
+ * only, so a purchase inside a wallet is not counted on top of the transfer
+ * that paid for it. Months with nothing recorded are left out.
+ */
+export async function readMonthlyFlows(
   db: Db,
   userId: string,
   from: string,
   to: string,
-): Promise<number> {
+): Promise<AskMonthFlow[]> {
   const rows = await allRows((start, end) =>
     db
       .from("transactions")
-      .select("amount, categories!inner(type, counts_toward_summary)")
+      .select(
+        "occurred_on, amount, categories!inner(type, counts_toward_summary)",
+      )
       .eq("user_id", userId)
-      .eq("categories.type", "income")
       .gte("occurred_on", from)
       .lte("occurred_on", to)
       .order("id")
       .range(start, end),
   );
-  return rows
-    .filter((row) => row.categories.counts_toward_summary !== false)
-    .reduce((sum, row) => sum + Number(row.amount), 0);
+  const months = new Map<string, AskMonthFlow>();
+  for (const row of rows) {
+    if (row.categories.counts_toward_summary === false) {
+      continue;
+    }
+    const monthKey = row.occurred_on.slice(0, 7);
+    const flow = months.get(monthKey) ?? {
+      monthKey,
+      income: 0,
+      expense: 0,
+      savings: 0,
+      investment: 0,
+    };
+    flow[row.categories.type] += Number(row.amount);
+    months.set(monthKey, flow);
+  }
+  return [...months.values()].sort((a, b) =>
+    a.monthKey.localeCompare(b.monthKey),
+  );
+}
+
+export interface AskLedgerFilter {
+  /** Words in the note, where a bank puts the shop. */
+  query?: string;
+  /** Part of a category's name. */
+  category?: string;
+  /** YYYY-MM-DD, both included. */
+  from?: string;
+  to?: string;
+  /** Unsigned bounds on the amount. */
+  min?: number;
+  max?: number;
+  type?: "income" | "expense" | "savings" | "investment";
+}
+
+export interface AskLedgerRow {
+  occurredOn: string;
+  note: string | null;
+  amount: number;
+  category: string;
+  type: "income" | "expense" | "savings" | "investment";
+}
+
+/** Most rows one filter reads, newest first: a decade of a busy ledger. */
+const LEDGER_CAP = 20_000;
+
+/**
+ * The ledger's rows that pass a filter, newest first, for Ask Pluclair's
+ * tools: single entries, which the person agreed the model may read when a
+ * question is about them (2026-10-10). A category asked for that matches
+ * none, and nothing is found.
+ */
+export async function readLedgerRows(
+  db: Db,
+  userId: string,
+  filter: AskLedgerFilter,
+): Promise<AskLedgerRow[]> {
+  let categoryIds: string[] | null = null;
+  const categoryWords = filter.category ? ilikeWords(filter.category) : "";
+  if (categoryWords) {
+    const { data, error } = await db
+      .from("categories")
+      .select("id")
+      .eq("user_id", userId)
+      .ilike("name", `%${categoryWords}%`);
+    if (error) {
+      throw error;
+    }
+    categoryIds = (data ?? []).map((row) => row.id);
+    if (categoryIds.length === 0) {
+      return [];
+    }
+  }
+  const queryWords = filter.query ? ilikeWords(filter.query) : "";
+
+  const rows = await allRows(
+    (start, end) => {
+      let query = db
+        .from("transactions")
+        .select("id, occurred_on, note, amount, categories!inner(name, type)")
+        .eq("user_id", userId);
+      if (queryWords) {
+        query = query.ilike("note", `%${queryWords}%`);
+      }
+      if (categoryIds) {
+        query = query.in("category_id", categoryIds);
+      }
+      if (filter.type) {
+        query = query.eq("categories.type", filter.type);
+      }
+      if (filter.from) {
+        query = query.gte("occurred_on", filter.from);
+      }
+      if (filter.to) {
+        query = query.lte("occurred_on", filter.to);
+      }
+      if (filter.min !== undefined) {
+        query = query.gte("amount", filter.min);
+      }
+      if (filter.max !== undefined) {
+        query = query.lte("amount", filter.max);
+      }
+      return query
+        .order("occurred_on", { ascending: false })
+        .order("id")
+        .range(start, end);
+    },
+    { max: LEDGER_CAP },
+  );
+  return rows.map((row) => ({
+    occurredOn: row.occurred_on,
+    note: row.note,
+    amount: Number(row.amount),
+    category: row.categories.name,
+    type: row.categories.type,
+  }));
 }
