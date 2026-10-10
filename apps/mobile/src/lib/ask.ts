@@ -1,3 +1,4 @@
+import type { CurrencyCode } from "@finance/core/constants";
 import type { Locale } from "@finance/core/i18n/locale";
 import * as ask from "@finance/data/ask";
 
@@ -33,14 +34,18 @@ export interface AskOutcome {
   message: string | null;
 }
 
-/** One question into a conversation — a new one when none is given. */
+/**
+ * One question into a conversation — a new one when none is given — in the
+ * reader's currency, which the answer writes its amounts in.
+ */
 export async function askQuestion(
   question: string,
   conversationId: string | null,
   locale: Locale,
+  currency: CurrencyCode,
 ): Promise<AskOutcome> {
   const result = await callWebApi<AskOutcome>("/api/ask", {
-    body: { question, conversationId, locale },
+    body: { question, conversationId, locale, currency },
   });
   return result.ok
     ? { conversationId: result.conversationId, message: result.message }
