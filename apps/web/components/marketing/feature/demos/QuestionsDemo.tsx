@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { AnimatePresence, m, useReducedMotion } from "motion/react";
+import type { AskChatTool } from "@finance/core/ask-chat";
 import { formatDayMonth } from "@finance/core/constants";
 import { Orb } from "@/components/brand/Orb";
 import { landingSampleFor } from "@/components/marketing/landing-sample";
@@ -14,8 +15,10 @@ type Copy = LocalisedLandingCopy["demos"]["questions"];
 
 /**
  * « Questions », played: pick one, it rises as asked, the orb looks at the
- * figures for a beat, and the answer arrives word by word with Pluclair's
- * own figures set in gold.
+ * figures for a beat — what it looks at popping in as chips — and the
+ * answer arrives word by word with its figures set in gold. The sample's
+ * Markdown is read as words here: the bold and the list are the app's to
+ * draw, the rhythm is the demo's.
  */
 export function QuestionsDemo({ copy }: { copy: Copy }) {
   const t = useT();
@@ -23,9 +26,13 @@ export function QuestionsDemo({ copy }: { copy: Copy }) {
   const euro = useFormatCurrency();
   const still = useReducedMotion() ?? false;
   const { questions, leftToSpend } = landingSampleFor(locale);
-  const exchanges = [
+  const exchanges: {
+    question: string;
+    steps: AskChatTool[];
+    answer: string;
+  }[] = [
     ...questions.exchanges,
-    { question: copy.third, answer: [copy.thirdAnswer] },
+    { question: copy.third, steps: ["month"], answer: copy.thirdAnswer },
   ];
   const figures: Record<string, string> = {
     ...Object.fromEntries(
@@ -55,7 +62,8 @@ export function QuestionsDemo({ copy }: { copy: Copy }) {
 
   const exchange = exchanges[chosen]!;
   const answer = exchange.answer
-    .join(" ")
+    .replace(/\*\*/g, "")
+    .replace(/\s*\n+(?:- )?/g, " ")
     .split(/(\{\w+\})/)
     .filter(Boolean)
     .flatMap((part) => {
@@ -102,9 +110,29 @@ export function QuestionsDemo({ copy }: { copy: Copy }) {
             <div className="flex items-start gap-3">
               <Orb size="34px" className="mt-0.5 shrink-0" />
               {thinking ? (
-                <p className="text-sm text-marketing-muted">
-                  {t("ask.thinking")}
-                </p>
+                <div className="flex flex-col gap-2">
+                  <div className="flex flex-wrap gap-1.5">
+                    {exchange.steps.map((tool, index) => (
+                      <m.span
+                        key={tool}
+                        className="rounded-full border border-white/15 px-2.5 py-1 text-xs text-marketing-muted"
+                        initial={{ opacity: 0, scale: 0.6, y: 6 }}
+                        animate={{ opacity: 1, scale: 1, y: 0 }}
+                        transition={{
+                          type: "spring",
+                          stiffness: 520,
+                          damping: 28,
+                          delay: 0.25 * index,
+                        }}
+                      >
+                        {t(`ask.step.${tool}`)}
+                      </m.span>
+                    ))}
+                  </div>
+                  <p className="text-sm text-marketing-muted">
+                    {t("ask.thinking")}
+                  </p>
+                </div>
               ) : (
                 <m.p
                   className="max-w-xl text-lg leading-relaxed text-marketing-ink"

@@ -1,6 +1,12 @@
 "use client";
 
-import { ArrowUp, ClockCounterClockwise, Plus } from "@phosphor-icons/react";
+import {
+  ArrowUp,
+  CaretDown,
+  ClockCounterClockwise,
+  Plus,
+} from "@phosphor-icons/react";
+import { AskMarkdown } from "@/components/ask/AskMarkdown";
 import { Orb } from "@/components/brand/Orb";
 import { landingSampleFor } from "@/components/marketing/landing-sample";
 import {
@@ -16,41 +22,19 @@ import { cn } from "@/lib/utils";
 /**
  * Questions, as a landing mock (`./frame.tsx`), drawn as `AskView` draws
  * it: the questions in their bubbles on the right, each answer beside the
- * orb with the figures in it as plain text — they are Pluclair's, put in
- * after the AI named them — and the question box with its two small lines.
- * On a desktop « Vos conversations » and « Nouvelle question » head the
- * column; on the phone it is a screen pushed over the tabs, the
- * conversations a row of chips under its header.
+ * orb — what was looked at folded into one line, then the answer itself
+ * through the same `AskMarkdown`, its figures written in the reader's
+ * currency — and the question box with its line under it. On a desktop
+ * « Vos conversations » and « Nouvelle question » head the column; on the
+ * phone it is a screen pushed over the tabs, the conversations a row of
+ * chips under its header.
  */
 
-/** A sentence with its `{figure}`s filled in, in medium weight. */
-function AnswerSentence({
-  text,
-  figures,
-}: {
-  text: string;
-  figures: Record<string, string>;
-}) {
-  return (
-    <p>
-      {text.split(/(\{\w+\})/).map((part, index) => {
-        const name = part.match(/^\{(\w+)\}$/)?.[1];
-        return name && figures[name] ? (
-          <span key={index} className="font-medium tabular-nums">
-            {figures[name]}
-          </span>
-        ) : (
-          <span key={index}>{part}</span>
-        );
-      })}
-    </p>
-  );
-}
-
 function Conversation() {
+  const t = useT();
   const euro = useEuro();
   const { questions } = landingSampleFor(useLocale());
-  const figures = Object.fromEntries(
+  const figures: Record<string, string> = Object.fromEntries(
     Object.entries(questions.figures).map(([key, value]) => [key, euro(value)]),
   );
   return (
@@ -63,15 +47,18 @@ function Conversation() {
             </p>
           </div>
           <div className="flex items-start gap-3">
-            <Orb tone="mark" size="22px" className="mt-1 shrink-0" />
-            <div className="flex min-w-0 flex-1 flex-col gap-2 text-sm leading-relaxed">
-              {exchange.answer.map((sentence) => (
-                <AnswerSentence
-                  key={sentence}
-                  text={sentence}
-                  figures={figures}
-                />
-              ))}
+            <Orb tone="mark" size="22px" className="mt-0.5 shrink-0" />
+            <div className="flex min-w-0 flex-1 flex-col gap-2.5">
+              <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                {t("ask.looked", { count: exchange.steps.length })}
+                <CaretDown size={12} />
+              </span>
+              <AskMarkdown
+                markdown={exchange.answer.replace(
+                  /\{(\w+)\}/g,
+                  (whole, name: string) => figures[name] ?? whole,
+                )}
+              />
             </div>
           </div>
         </li>
@@ -94,6 +81,8 @@ function Composer() {
         </span>
       </div>
       <p className="px-2 text-center text-[11px] text-muted-foreground">
+        {t("ask.disclaimer")}
+        {" · "}
         {t("ask.onAccount")}
         {" · "}
         {t("ask.kept", { days: 30 })}
