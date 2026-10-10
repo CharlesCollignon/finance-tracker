@@ -25,6 +25,9 @@ import { type Locale } from "./i18n/locale";
  * web's server (`apps/web/lib/ask/tools.ts`).
  */
 
+/** Rounds of tools before the model must answer with what it has. */
+export const MAX_ASK_ROUNDS = 6;
+
 /** Earlier exchanges the model reads with a question. */
 const HISTORY_EXCHANGES = 8;
 
@@ -228,6 +231,15 @@ export interface AskChatBody {
   model: string;
 }
 
+/** What the screen is told while a question is answered, a line each. */
+export type AskStreamEvent =
+  | { type: "step"; tool: AskChatTool }
+  | { type: "text"; text: string }
+  /** The words so far were the model thinking aloud before a tool: gone. */
+  | { type: "reset" }
+  | { type: "done"; conversationId: string }
+  | { type: "error"; message: string };
+
 /* ------------------------------------------------------------- the history */
 
 export interface AskChatTurn {
@@ -243,7 +255,7 @@ export interface AskChatTurn {
 export function askChatHistory(
   messages: readonly (
     | { role: "question"; body: AskQuestionBody }
-    | { role: "answer"; body: AskAnswerBody | AskChatBody }
+    | { role: "answer"; body: AskAnswerBody }
   )[],
   formatMoney: (amount: number) => string,
 ): AskChatTurn[] {
@@ -258,7 +270,7 @@ export function askChatHistory(
 }
 
 function answerText(
-  body: AskAnswerBody | AskChatBody,
+  body: AskAnswerBody,
   formatMoney: (amount: number) => string,
 ): string {
   switch (body.kind) {
