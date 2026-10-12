@@ -1026,6 +1026,18 @@ little slower than the page. One loop is new, the « Bêta ouverte » dot's ring
 (`.about-live`), in the status green rather than gold. Under reduced motion
 nothing leans, rolls or drifts, and every section stands at its final state.
 
+The Journal's list moves when the reader asks it to (October 2026). The
+week strip above it (`LedgerWeekStrip.tsx`) grows its bars up from the
+baseline once, segment after segment, and its pill slides on the tabs'
+spring. Choosing a week slides the days that stay into their new places,
+fades the ones leaving and raises the ones arriving a beat apart, capped at
+eight so a long month is never left blank; the In and Out figures count to
+their new values. Turning the order over deals the list again from the top
+instead, because slid, every day would cross every other with no ground
+under the text (`AnimatedDays.tsx`). A row gives a little under a press.
+Nothing plays on arrival but the bars, and under reduced motion every state
+is its end state.
+
 The marketing nav is one glass shape (`LandingHeader.tsx`): « Le produit »
 (the burger on a phone) grows the pill down into its own panel on a spring,
 the pages arriving in it as cards — Le point featured with its figure, the
