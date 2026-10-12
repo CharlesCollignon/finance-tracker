@@ -22,6 +22,8 @@ interface AppShellProps {
   showProperty?: boolean;
   /** The shared space this person is in, and whether it is on screen. */
   space?: SpaceView | null;
+  /** « Nouveautés » this person has not seen yet, for the account menu. */
+  nouveautes?: number;
 }
 
 export function AppShell({
@@ -31,10 +33,15 @@ export function AppShell({
   badges = NO_BADGES,
   showProperty = false,
   space = null,
+  nouveautes = 0,
 }: AppShellProps) {
   return (
     <SpaceProvider space={space}>
-      <AccountLabelProvider displayName={displayName} initial={initial}>
+      <AccountLabelProvider
+        displayName={displayName}
+        initial={initial}
+        nouveautes={nouveautes}
+      >
         <div className="flex min-h-screen flex-col">
           {/* Outside the scrolling column and fixed to the viewport, so the veil
           stays put while content moves over it. */}
@@ -42,6 +49,7 @@ export function AppShell({
           <TopNav
             displayName={displayName}
             initial={initial}
+            nouveautes={nouveautes}
             badges={badges}
             showProperty={showProperty}
           />

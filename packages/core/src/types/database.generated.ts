@@ -2069,6 +2069,7 @@ export type Database = {
       user_preferences: {
         Row: {
           bearing_pins: Json | null;
+          changelog_seen: string | null;
           dismissed_prompts: string[];
           locale: string;
           measure_audience: boolean;
@@ -2080,6 +2081,7 @@ export type Database = {
         };
         Insert: {
           bearing_pins?: Json | null;
+          changelog_seen?: string | null;
           dismissed_prompts?: string[];
           locale?: string;
           measure_audience?: boolean;
@@ -2091,6 +2093,7 @@ export type Database = {
         };
         Update: {
           bearing_pins?: Json | null;
+          changelog_seen?: string | null;
           dismissed_prompts?: string[];
           locale?: string;
           measure_audience?: boolean;

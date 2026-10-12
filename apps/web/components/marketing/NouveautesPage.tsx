@@ -1,10 +1,17 @@
 /* Hallmark · genre: atmospheric · macrostructure: Index-First (with a held rail) · theme: design.md (Pluclair) · enrichment: none — the week strip is data, not decoration · nav: kept · footer: kept */
 
 import { GithubLogo, RssSimple } from "@phosphor-icons/react/dist/ssr";
-import { changelogPulse, daysBetween } from "@finance/core/changelog";
+import {
+  changelogPulse,
+  daysBetween,
+  unseenEntries,
+} from "@finance/core/changelog";
 import { CHANGELOG, CHANGELOG_STATS } from "@finance/core/changelog-entries";
 import { formatFullDate, todayIsoLocal } from "@finance/core/constants";
+import { readChangelogSeen } from "@finance/data/preferences";
+import { getAuthUser } from "@/lib/auth/get-user";
 import { getLocale } from "@/lib/locale";
+import { createClient } from "@/lib/supabase/server";
 import { SOURCE_URL } from "@/components/marketing/about-copy";
 import { ElsewhereLink } from "@/components/marketing/ElsewhereLink";
 import { FadeUp, RiseWords } from "@/components/marketing/LandingReveal";
@@ -35,6 +42,21 @@ export async function NouveautesPage({ openId }: { openId: string | null }) {
   const locale = await getLocale();
   const copy = nouveautesCopyFor(locale);
   const today = todayIsoLocal();
+
+  // Signed in, what is new is the account's — the same as the dot on its
+  // menu, on the web and on the phone — and reading here clears it. A
+  // visitor's is kept in the browser (`ChangelogRiver`).
+  // Before migration 069 an account has no marker, and is read as a visitor.
+  const user = await getAuthUser();
+  const accountSeen = user
+    ? await createClient()
+        .then((db) => readChangelogSeen(db, user.id))
+        .catch((): undefined => undefined)
+    : undefined;
+  const accountFresh =
+    accountSeen === undefined
+      ? null
+      : unseenEntries(CHANGELOG, accountSeen, today).map((entry) => entry.id);
 
   const days = Math.max(0, daysBetween(CHANGELOG[0]!.date, today));
   const updated =
@@ -79,6 +101,7 @@ export async function NouveautesPage({ openId }: { openId: string | null }) {
         copy={copy}
         locale={locale}
         openId={openId}
+        accountFresh={accountFresh}
       />
 
       <Roadmap items={openRoadmap()} copy={copy} locale={locale} />

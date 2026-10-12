@@ -1,3 +1,4 @@
+import { isLaterEntry } from "@finance/core/changelog";
 import { todayIsoLocal } from "@finance/core/constants";
 import { MILESTONE_TIERS } from "@finance/core/future-plan";
 import type { ActionResult } from "@finance/core/action-result";
@@ -122,6 +123,7 @@ async function writePreferences(
   userId: string,
   locale: Locale,
   change: {
+    changelog_seen?: string;
     dismissed_prompts?: string[];
     milestone_seen?: number;
     notification_prefs?: NotificationPrefs;
@@ -302,4 +304,53 @@ export async function setAudienceMeasurement(
   locale: Locale,
 ): Promise<ActionResult> {
   return writePreferences(db, userId, locale, { measure_audience: wanted });
+}
+
+/**
+ * The newest « Nouveautés » entry this person has seen, on any device
+ * (migration 069): null when they have never opened the list, undefined on a
+ * database behind 069 — where nothing can be marked read, so the apps show
+ * no dot at all rather than one that would never go.
+ */
+export async function readChangelogSeen(
+  db: Db,
+  userId: string,
+): Promise<string | null | undefined> {
+  const { data, error } = await db
+    .from("user_preferences")
+    .select("changelog_seen")
+    .eq("user_id", userId)
+    .maybeSingle();
+  if (error) {
+    if (isMissingSchema(error)) {
+      return undefined;
+    }
+    throw error;
+  }
+  return data?.changelog_seen ?? null;
+}
+
+/**
+ * Remember that « Nouveautés » has been read up to `entryId`, on every
+ * device. Only ever moved forward: a device holding an older list must not
+ * bring back a dot another has already cleared.
+ */
+export async function markChangelogSeen(
+  db: Db,
+  userId: string,
+  entryId: string,
+  locale: Locale,
+): Promise<ActionResult> {
+  if (!/^\d{4}-\d{2}-\d{2}-[a-z0-9-]+$/.test(entryId)) {
+    return { error: "errors.invalidInput" };
+  }
+  const current = await readChangelogSeen(db, userId);
+  if (
+    current === undefined ||
+    current === entryId ||
+    !isLaterEntry(entryId, current)
+  ) {
+    return { success: true };
+  }
+  return writePreferences(db, userId, locale, { changelog_seen: entryId });
 }

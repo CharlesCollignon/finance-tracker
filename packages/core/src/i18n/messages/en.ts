@@ -96,6 +96,10 @@ export const en = {
 
     /** The count on a destination that has things waiting behind it. */
     waiting: "{count} waiting",
+    /** « Nouveautés », in the account menus of both apps. */
+    nouveautes: "What's new",
+    /** How many changes this account has not seen yet. */
+    nouveautesUnseen: "{count} new",
     /** The control that folds a surface's views away, and unfolds them. */
   },
 

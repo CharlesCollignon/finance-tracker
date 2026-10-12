@@ -55,6 +55,8 @@ export const fr: Messages = {
     walletsLookThrough: "Composition",
 
     waiting: "{count} en attente",
+    nouveautes: "Nouveautés",
+    nouveautesUnseen: "{count} à découvrir",
   },
 
   pages: {

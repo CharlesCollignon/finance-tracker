@@ -30,6 +30,7 @@ import {
 import { monthLong } from "@finance/core/i18n/calendar-names";
 import type { Locale } from "@finance/core/i18n/locale";
 import { DURATION, EASE_STANDARD, STAGGER_STEP_MS } from "@finance/core/motion";
+import { markNouveautesSeen } from "@/lib/actions/nouveautes";
 import { marketingFocus } from "@/components/marketing/marketing-focus";
 import {
   countLabel,
@@ -97,12 +98,18 @@ export function ChangelogRiver({
   copy,
   locale,
   openId,
+  accountFresh,
 }: {
   entries: RiverEntry[];
   copy: NouveautesCopy;
   locale: Locale;
   /** An entry opened by its own address (`/nouveautes/<id>`). */
   openId: string | null;
+  /**
+   * Signed in: the entries new to the account, which this visit marks
+   * read. Null for a visitor, whose marker is the browser's.
+   */
+  accountFresh: string[] | null;
 }) {
   const [kind, setKind] = useState<KindFilter>("all");
   const [platform, setPlatform] = useState<PlatformFilter>("all");
@@ -112,7 +119,17 @@ export function ChangelogRiver({
   const [unfolded, setUnfolded] = useState<ReadonlySet<string>>(
     () => new Set(),
   );
-  const fresh = useFresh(entries);
+  const fresh = useFresh(entries, accountFresh);
+
+  // Read: the account's marker moves to the newest entry, so the dot on its
+  // menu goes here and on the phone.
+  const newestId = entries[0]?.id;
+  const signedIn = accountFresh !== null;
+  useEffect(() => {
+    if (signedIn && newestId) {
+      void markNouveautesSeen(newestId);
+    }
+  }, [signedIn, newestId]);
   const listRef = useRef<HTMLDivElement>(null);
 
   const shown = useMemo(
@@ -348,16 +365,20 @@ export function ChangelogRiver({
  * The ids new since this browser last listed the entries.
  *
  * Worked out once per visit — on the first read of the session, from the
- * marker the last visit left — and kept for the session, so a reload does
- * not take the highlight away; the marker then moves to the newest entry.
- * Empty on the server and on a first visit (there is no « since » yet), and
- * wherever storage is refused.
+ * account's marker when signed in, else from the one this browser's last
+ * visit left — and kept for the session, so a reload does not take the
+ * highlight away; the browser's marker then moves to the newest entry.
+ * Empty on the server, on a visitor's first visit (there is no « since »
+ * yet), and wherever storage is refused.
  */
-function useFresh(entries: RiverEntry[]): ReadonlySet<string> {
+function useFresh(
+  entries: RiverEntry[],
+  accountFresh: string[] | null,
+): ReadonlySet<string> {
   const newest = entries[0]?.id ?? "";
   const raw = useSyncExternalStore(
     subscribeNever,
-    () => readFresh(entries, newest),
+    () => readFresh(entries, newest, accountFresh),
     () => "",
   );
   return useMemo(() => new Set(raw ? raw.split(",") : []), [raw]);
@@ -367,16 +388,22 @@ function subscribeNever(): () => void {
   return () => {};
 }
 
-function readFresh(entries: RiverEntry[], newest: string): string {
+function readFresh(
+  entries: RiverEntry[],
+  newest: string,
+  accountFresh: string[] | null,
+): string {
   try {
     const kept = window.sessionStorage.getItem(FRESH_KEY);
     if (kept !== null) {
       return kept;
     }
-    const seen = window.localStorage.getItem(SEEN_KEY);
-    const ids = entriesSince(entries, seen)
-      .map((entry) => entry.id)
-      .join(",");
+    const ids = (
+      accountFresh ??
+      entriesSince(entries, window.localStorage.getItem(SEEN_KEY)).map(
+        (entry) => entry.id,
+      )
+    ).join(",");
     window.sessionStorage.setItem(FRESH_KEY, ids);
     window.localStorage.setItem(SEEN_KEY, newest);
     return ids;
