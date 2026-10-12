@@ -1053,7 +1053,10 @@ back to its top if it ends above the screen. Most entries are rows ruled off
 like a ledger's; a featured one is a glass card whose screen — the
 landing's mock — tilts up from its bottom edge as it is scrolled in, as the
 feature pages' do. « Plus » opens an entry in place, the rows below sliding
-down. What arrived since the reader's last visit carries a status-green
+down. Under each change, « J'adore », « Utile » and « Enfin ! » (and
+« J'attends ça » on « Bientôt »): a press pops the mark filled on a short
+spring and rolls its count, in ink rather than gold, before the write
+returns. What arrived since the reader's last visit carries a status-green
 hairline, said once in the rail; green there means _arrived_, as on the live
 dot, and gold is not spent anywhere on the page. Under reduced motion
 nothing rolls, tilts or grows, and every section stands at its final state.

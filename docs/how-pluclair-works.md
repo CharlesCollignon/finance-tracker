@@ -361,6 +361,16 @@ the phone through its own `nouveautes` screen. A visitor's « depuis votre
 dernière visite » is kept in their browser instead. Behind migration 069
 there is no dot at all, since nothing could clear it.
 
+Readers react to each change — « J'adore », « Utile », « Enfin ! » — and
+vote « J'attends ça » on « Bientôt » (`reactions`, migration 070, one row
+per person, thing and kind; `packages/core/src/reactions.ts`,
+`packages/data/src/reactions.ts`). Everyone reads the counts, through
+`reaction_counts`, which hands out numbers and never a user id; a person
+reads, adds and takes back their own rows only, at most 120 in an hour. A
+visitor's press asks them to sign in, and the sign-in brings them back
+(`?next=`, now honoured by the password, Google and passkey sign-ins). The
+votes do not reorder « Bientôt ».
+
 On the phone, the first launch after the APK was updated shows « Quoi de
 neuf », the unseen entries as a sheet, once; and when the site's APK is
 newer than the one installed, Le point says so with a download button,

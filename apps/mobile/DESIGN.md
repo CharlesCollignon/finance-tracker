@@ -486,8 +486,10 @@ account has changes it has not seen, and the « Nouveautés » row their count
 re-deals them when the filter changes, and opens one in place with the rest
 sliding down (`LinearTransition`); what was new on arrival keeps a green
 hairline for the visit. After an update, « Quoi de neuf » slides up as a
-sheet whose cards rise one after another. Under reduced motion every card is
-simply there.
+sheet whose cards rise one after another. Under each change, « J'adore »,
+« Utile » and « Enfin ! » (and « J'attends ça » on « Bientôt »): the mark
+zooms in filled on a spring with a light haptic, in ink rather than gold.
+Under reduced motion every card and mark is simply there.
 
 ### Signature: The Privacy Blur
 
