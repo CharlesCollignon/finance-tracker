@@ -58,7 +58,13 @@ one command does a whole release — steps 2 and 3 above included:
 ```sh
 node scripts/release-android.mjs          # 1.0.0 → 1.1.0; `patch`, `major`
 node scripts/release-android.mjs --dry-run
+node scripts/release-android.mjs --draft  # build now, publish later
 ```
+
+Until the legal pages are final (below), a release is staged with
+`--draft`: unpublished, invisible to anyone but the owner and to the site.
+Publishing it is `gh release edit android-<version> --draft=false --latest`,
+then `ANDROID_APK_URL` on Vercel the first time.
 
 It raises `version` in `apps/mobile/app.json` and commits it, builds the
 APK on EAS (the `preview` profile raises the build number by itself, so

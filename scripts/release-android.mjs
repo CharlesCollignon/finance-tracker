@@ -5,6 +5,13 @@
  *   node scripts/release-android.mjs            # 1.0.0 → 1.1.0
  *   node scripts/release-android.mjs patch      # 1.0.0 → 1.0.1
  *   node scripts/release-android.mjs --dry-run  # say what it would do
+ *   node scripts/release-android.mjs --draft    # build it, publish later
+ *
+ * `--draft` stages the release unpublished: invisible to anyone else, and
+ * to the site, which only reads published releases. Publish it with
+ * `gh release edit android-<version> --draft=false --latest` — for now
+ * after the legal pages are final (docs/store/README.md, « Before the
+ * public download »).
  *
  * 1. Raises `version` in `apps/mobile/app.json` — what the app compares
  *    against the site's to offer a newer APK — and commits it.
@@ -32,6 +39,7 @@ const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const appJsonPath = join(root, "apps/mobile/app.json");
 const args = process.argv.slice(2);
 const dryRun = args.includes("--dry-run");
+const draft = args.includes("--draft");
 const bump =
   args.find((arg) => ["major", "minor", "patch"].includes(arg)) ?? "minor";
 
@@ -79,7 +87,9 @@ const tag = `android-${version}`;
 let since = null;
 try {
   since = JSON.parse(
-    run("gh", ["release", "view", "--json", "tagName,publishedAt"]),
+    run("gh", ["release", "view", "--json", "tagName,publishedAt"], {
+      stdio: ["ignore", "pipe", "ignore"],
+    }),
   ).publishedAt.slice(0, 10);
 } catch {
   // No release yet: the notes list the latest changes instead.
@@ -122,6 +132,9 @@ run("git", [
   "-m",
   "Changelog: none",
 ]);
+// The release points here, whatever is checked out by the time the build
+// is done.
+const releaseSha = run("git", ["rev-parse", "HEAD"]);
 
 // ------------------------------------------------------------------- build
 console.log("Building on EAS — this takes a while…");
@@ -177,9 +190,17 @@ run("gh", [
   "--notes-file",
   notesPath,
   "--target",
-  run("git", ["rev-parse", "HEAD"]),
+  releaseSha,
+  ...(draft ? ["--draft"] : []),
 ]);
 
+if (draft) {
+  console.log(
+    `\n✓ ${tag} is staged as a draft. Publish it with\n` +
+      `  gh release edit ${tag} --draft=false --latest`,
+  );
+  process.exit(0);
+}
 console.log(`\n✓ ${tag} is published.`);
 console.log(
   "The site offers it as soon as ANDROID_APK_URL points at\n" +
