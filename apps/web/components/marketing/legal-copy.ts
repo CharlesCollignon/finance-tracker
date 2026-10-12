@@ -277,6 +277,7 @@ export const legalCopy: LegalCopy = {
         heading: "Availability",
         body: [
           "We work to keep Pluclair available and your data safe, but we cannot promise it will never be interrupted: maintenance, faults and outages at the services it relies on can all make it unavailable for a while.",
+          "Pluclair is in open beta: what it offers works, but the app still changes often, and a mistake can slip in. Check an important figure against your bank before relying on it, and export your entries if you want a copy of your own. The Android app is distributed from our website, outside the stores: only install it from pluclair.com.",
         ],
       },
       {

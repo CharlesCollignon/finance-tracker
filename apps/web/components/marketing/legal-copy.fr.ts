@@ -226,6 +226,7 @@ export const legalCopyFr: LegalCopy = {
         heading: "Disponibilité",
         body: [
           "Nous faisons en sorte que Pluclair reste disponible et vos données en sécurité, mais nous ne pouvons pas promettre qu'il ne sera jamais interrompu : maintenance, pannes et incidents chez les services dont il dépend peuvent le rendre indisponible un temps.",
+          "Pluclair est en bêta ouverte\u00A0: ce qui est proposé fonctionne, mais l'application change encore souvent, et une erreur peut s'y glisser. Vérifiez un chiffre important auprès de votre banque avant de vous y fier, et exportez vos écritures si vous voulez en garder une copie à vous. L'application Android est distribuée depuis notre site, hors des stores\u00A0: ne l'installez que depuis pluclair.com.",
         ],
       },
       {
