@@ -12,9 +12,14 @@ import { useT } from "@/lib/locale-context";
 
 interface PasskeySignInButtonProps {
   label?: string;
+  /** Where to land once signed in; the Bearing if not given. */
+  next?: string;
 }
 
-export function PasskeySignInButton({ label }: PasskeySignInButtonProps) {
+export function PasskeySignInButton({
+  label,
+  next = "/bearing",
+}: PasskeySignInButtonProps) {
   const t = useT();
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -44,7 +49,7 @@ export function PasskeySignInButton({ label }: PasskeySignInButtonProps) {
     // stays on the login page until the reader reloads it. A page load also
     // lets the server render the Bearing with the session the browser has
     // just stored.
-    window.location.assign("/bearing");
+    window.location.assign(next);
   }
 
   return (

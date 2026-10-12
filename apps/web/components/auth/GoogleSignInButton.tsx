@@ -12,9 +12,11 @@ import { useT } from "@/lib/locale-context";
 interface GoogleSignInButtonProps {
   /** Defaults to the neutral wording, which suits neither form in particular. */
   label?: string;
+  /** Where to land once signed in, through the callback; the Bearing if not given. */
+  next?: string;
 }
 
-export function GoogleSignInButton({ label }: GoogleSignInButtonProps) {
+export function GoogleSignInButton({ label, next }: GoogleSignInButtonProps) {
   const t = useT();
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -27,7 +29,9 @@ export function GoogleSignInButton({ label }: GoogleSignInButtonProps) {
     const { error: oauthError } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
+        redirectTo: `${window.location.origin}/auth/callback${
+          next && next !== "/bearing" ? `?next=${encodeURIComponent(next)}` : ""
+        }`,
         // Without it Google signs in with the last account used, and there is
         // no way to pick another.
         queryParams: { prompt: "select_account" },
