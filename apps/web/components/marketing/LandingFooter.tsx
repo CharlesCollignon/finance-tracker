@@ -11,6 +11,7 @@ import {
   legalPagesVisible,
 } from "@/components/marketing/legal-copy";
 import { marketingFocus } from "@/components/marketing/marketing-focus";
+import { NOUVEAUTES_HREF } from "@/components/marketing/nouveautes-copy";
 import { cn } from "@/lib/utils";
 import { getLocale, getT } from "@/lib/locale";
 
@@ -75,6 +76,11 @@ export async function LandingFooter({ isLoggedIn }: { isLoggedIn: boolean }) {
                   </Link>
                 </li>
               ))}
+              <li>
+                <Link href={NOUVEAUTES_HREF} className={footerLink}>
+                  {copy.nav.nouveautes}
+                </Link>
+              </li>
             </ul>
           </nav>
 

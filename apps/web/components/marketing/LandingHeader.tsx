@@ -23,6 +23,7 @@ import { LandingCtas } from "@/components/marketing/LandingCtas";
 import { LocaleChoices, LocaleMenu } from "@/components/marketing/LocaleSwitch";
 import { marketingFocus } from "@/components/marketing/marketing-focus";
 import { ABOUT_HREF } from "@/components/marketing/about-copy";
+import { NOUVEAUTES_HREF } from "@/components/marketing/nouveautes-copy";
 import {
   featureHref,
   landingCopyFor,
@@ -55,6 +56,7 @@ const SECTION_LINKS = [
   { href: "/#how", key: "howItWorks" },
   { href: "/#privacy", key: "privacy" },
   { href: ABOUT_HREF, key: "about" },
+  { href: NOUVEAUTES_HREF, key: "nouveautes" },
 ] as const;
 
 /** The pages in three groups, Le point apart as the featured card. */
