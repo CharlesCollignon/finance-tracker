@@ -3194,15 +3194,6 @@ export const en = {
       other: "months, my longest run",
     },
   },
-  subscriptions: {
-    title: "Subscriptions",
-    hint: "Found in your transactions: what comes back every month or every year, at about the same price.",
-    total: "{monthly} a month · {yearly} a year",
-    perMonth: "{amount}/month",
-    perYear: "{amount}/year",
-    stopped: "No longer charged",
-    changes: "What changed",
-  },
   afford: {
     title: "Can I afford it?",
     amount: "Amount",

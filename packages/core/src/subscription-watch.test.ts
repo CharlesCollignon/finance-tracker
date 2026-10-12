@@ -3,7 +3,6 @@ import { describe, expect, it } from "vitest";
 import {
   findingsBetween,
   subscriptionKind,
-  subscriptionTotals,
   watchSubscriptions,
   type SubscriptionCharge,
 } from "./subscription-watch";
@@ -153,10 +152,6 @@ describe("watchSubscriptions", () => {
       TODAY,
     );
     expect(subscriptions).toMatchObject([{ cadence: "yearly", monthly: 10 }]);
-    expect(subscriptionTotals(subscriptions)).toEqual({
-      monthly: 10,
-      yearly: 120,
-    });
   });
 });
 

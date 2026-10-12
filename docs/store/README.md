@@ -152,7 +152,7 @@ real data. Le point first, since it is what the listing promises.
 2. The add sheet, a shop typed and its category found.
 3. « Puis-je me permettre ? ».
 4. The month close and what slipped through.
-5. Récurrents with « Abonnements ».
+5. Récurrents: the month's charges.
 6. Placements: a PEA and what its funds hold.
 7. Android only: the widget on a home screen.
 8. « Votre année ».
