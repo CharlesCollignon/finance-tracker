@@ -17,6 +17,38 @@ import type { ChangelogEntry, RoadmapItem } from "./changelog";
  */
 export const CHANGELOG: readonly ChangelogEntry[] = [
   {
+    id: "2026-10-12-nouveautes",
+    date: "2026-10-12",
+    kind: "new",
+    platforms: ["web"],
+    fr: {
+      title: "« Nouveautés »",
+      body: "Tout ce qui change dans Pluclair, semaine après semaine, sur une page à suivre — ou dans votre lecteur de flux RSS.",
+      detail:
+        "Ce qui est arrivé depuis votre dernière visite est marqué en vert, chaque nouveauté a son lien à partager, et « Bientôt » dit ce qui se prépare.",
+    },
+    en: {
+      title: "“What's new”",
+      body: "Everything that changes in Pluclair, week after week, on one page to follow — or in your RSS reader.",
+      detail:
+        "What arrived since your last visit is marked in green, each change has its own link to share, and “Coming soon” says what is being built.",
+    },
+  },
+  {
+    id: "2026-10-12-link-previews",
+    date: "2026-10-12",
+    kind: "better",
+    platforms: ["web"],
+    fr: {
+      title: "Un aperçu quand vous partagez un lien",
+      body: "Un lien vers pluclair.com envoyé dans une messagerie s’affiche avec son titre et son image.",
+    },
+    en: {
+      title: "A preview when you share a link",
+      body: "A link to pluclair.com sent in a messaging app shows with its title and its image.",
+    },
+  },
+  {
     id: "2026-10-12-journal-weeks",
     date: "2026-10-12",
     kind: "better",
@@ -907,8 +939,8 @@ export const CHANGELOG: readonly ChangelogEntry[] = [
  * where Vercel's shallow clone would count a handful.
  */
 export const CHANGELOG_STATS = {
-  /** `git rev-list --count main` on `asOf`. */
-  commits: 917,
+  /** `git rev-list --count HEAD` on the branch that wrote the newest entry. */
+  commits: 928,
   /** The repository's first commit. */
   since: "2026-06-15",
   asOf: "2026-10-12",
