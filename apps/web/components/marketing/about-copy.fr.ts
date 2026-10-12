@@ -20,10 +20,10 @@ export const aboutCopyFr: AboutCopy = {
     status: "Bêta ouverte · Android et web",
     titleLines: ["Bonjour,", "je suis Charles."],
     intro:
-      "Engineering manager — produit et design — dans une start-up de macroéconomie à Paris. Et, à côté, celui qui fait Pluclair.",
+      "Engineering manager — produit et design — dans une start-up de macroéconomie à Paris. Et, à côté, je construis Pluclair.",
     name: "Charles Collignon",
     portraitAlt:
-      "Charles Collignon, souriant, une canette à la main devant une supérette",
+      "Charles Collignon sourit, une canette à la main, devant une supérette",
     place: "Paris, 2026",
   },
 

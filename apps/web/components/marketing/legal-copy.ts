@@ -336,7 +336,7 @@ export const legalCopy: LegalCopy = {
         id: "publisher",
         heading: "Publisher",
         body: [
-          "The pluclair.com website and the Pluclair apps are published, not as a business, by Charles Collignon, who can be reached at pluclair.app@gmail.com. As article 1-1, II, of French law no. 2004-575 of 21 June 2004 on confidence in the digital economy allows, his home address is not published: his identification details have been given to the host, whose name and address are below.",
+          "The pluclair.com website and the Pluclair apps are published, not as a business, by Charles Collignon, who can be reached at pluclair.app@gmail.com. As article 1-1, II, of French law no. 2004-575 of 21 June 2004 on confidence in the digital economy allows, the publisher's home address is not published: the publisher's identification details have been given to the host, whose name and address are below.",
         ],
       },
       {

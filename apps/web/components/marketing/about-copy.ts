@@ -82,14 +82,14 @@ export const aboutCopy: AboutCopy = {
   meta: {
     title: "About",
     description:
-      "Charles Collignon, an engineering manager in Paris, built Pluclair to follow his own money. Free, in open beta.",
+      "Charles Collignon, an engineering manager in Paris, built Pluclair to see where the money goes. Free, in open beta.",
   },
 
   hero: {
     status: "Open beta · Android and web",
     titleLines: ["Hello,", "I'm Charles."],
     intro:
-      "Engineering manager — product and design — at a macroeconomics start-up in Paris. And, alongside it, the person who makes Pluclair.",
+      "Engineering manager — product and design — at a macroeconomics start-up in Paris. And, alongside it, I build Pluclair.",
     name: "Charles Collignon",
     portraitAlt:
       "Charles Collignon, smiling, holding up a can outside a convenience store",
