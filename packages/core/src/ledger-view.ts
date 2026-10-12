@@ -8,6 +8,10 @@
  * a query could match across the seam between them, while the phone looked
  * in each on its own. Each field on its own is the rule now, and an amount
  * typed finds the rows of that amount (`@finance/core/ledger-search`).
+ *
+ * A month can run to two hundred rows, so the list can also be read a week
+ * at a time (`ledgerWeeks`, and `range` on the filter) and in either order
+ * (`LedgerOrder`).
  */
 
 import type { PlannedOccurrence } from "./apply-recurring";
@@ -27,6 +31,38 @@ export interface LedgerFilter {
    * rows that one brought in. Read through `accountOf`.
    */
   accountId?: string;
+  /** Only the rows dated within, both days included: one week of the month. */
+  range?: LedgerRange | null;
+}
+
+/** Two days, YYYY-MM-DD, both included. */
+export interface LedgerRange {
+  from: string;
+  to: string;
+}
+
+/** Which end of the month the list starts from. */
+export type LedgerOrder = "newest" | "oldest";
+
+/** One day of a week strip: how many rows the list shows on it. */
+export interface LedgerWeekDay {
+  /** YYYY-MM-DD. */
+  date: string;
+  recorded: number;
+  planned: number;
+}
+
+/** One week of the month, as the strip above the list draws it. */
+export interface LedgerWeek extends LedgerRange {
+  /**
+   * Monday to Sunday, always seven. A day outside the month is null, so the
+   * first and last weeks keep each weekday in its place and every week of
+   * the strip is drawn the same width — a week of one day still has to be a
+   * target a thumb can find.
+   */
+  days: (LedgerWeekDay | null)[];
+  recorded: number;
+  planned: number;
 }
 
 export interface LedgerDay {
@@ -43,10 +79,14 @@ export interface LedgerDay {
   net: number;
 }
 
+function inRange(date: string, range: LedgerRange | null | undefined) {
+  return !range || (date >= range.from && date <= range.to);
+}
+
 /** The recorded rows a filter keeps. */
 export function filterLedger(
   transactions: readonly TransactionWithCategory[],
-  { type, categoryId, query, accountId = "all" }: LedgerFilter,
+  { type, categoryId, query, accountId = "all", range }: LedgerFilter,
   /** Which bank account brought each row in, by transaction id. */
   accountOf: ReadonlyMap<string, string> = new Map(),
 ): TransactionWithCategory[] {
@@ -56,6 +96,7 @@ export function filterLedger(
       (type === "all" || tx.categories.type === type) &&
       (categoryId === "all" || tx.category_id === categoryId) &&
       (accountId === "all" || accountOf.get(tx.id) === accountId) &&
+      inRange(tx.occurred_on, range) &&
       (!needle ||
         matchesNeedle(
           needle,
@@ -72,7 +113,7 @@ export function filterLedger(
  */
 export function filterPlanned(
   planned: readonly PlannedOccurrence[],
-  { type, categoryId, query, accountId = "all" }: LedgerFilter,
+  { type, categoryId, query, accountId = "all", range }: LedgerFilter,
 ): PlannedOccurrence[] {
   if (accountId !== "all") {
     return [];
@@ -82,6 +123,7 @@ export function filterPlanned(
     (occurrence) =>
       (type === "all" || occurrence.categoryType === type) &&
       (categoryId === "all" || occurrence.categoryId === categoryId) &&
+      inRange(occurrence.occurredOn, range) &&
       (!needle ||
         matchesNeedle(
           needle,
@@ -103,12 +145,14 @@ export function ledgerTotals(
 }
 
 /**
- * The list as it is read: a day at a time, newest first, each heading with
- * its rows, so a date can never be drawn with nothing under it.
+ * The list as it is read: a day at a time, newest first unless asked
+ * otherwise, each heading with its rows, so a date can never be drawn with
+ * nothing under it.
  */
 export function ledgerDays(
   transactions: readonly TransactionWithCategory[],
   planned: readonly PlannedOccurrence[],
+  order: LedgerOrder = "newest",
 ): LedgerDay[] {
   const byDate = new Map<string, LedgerDay>();
   const day = (date: string) => {
@@ -130,5 +174,69 @@ export function ledgerDays(
     day(occurrence.occurredOn).planned.push(occurrence);
   }
 
-  return [...byDate.values()].sort((a, b) => b.date.localeCompare(a.date));
+  const days = [...byDate.values()];
+  return order === "newest"
+    ? days.sort((a, b) => b.date.localeCompare(a.date))
+    : days.sort((a, b) => a.date.localeCompare(b.date));
+}
+
+function isoDay(year: number, month: number, day: number): string {
+  return `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+}
+
+/**
+ * The month cut into its weeks, Monday to Sunday as a French calendar has
+ * them, the first and last cut at the month's edges — and each day with the
+ * number of rows the list shows on it, so the strip drawn from this says
+ * where the month's rows are before any week is chosen.
+ *
+ * Given the rows the other filters keep, not the week's: a search lights up
+ * the days it found something on, across the whole month.
+ */
+export function ledgerWeeks(
+  year: number,
+  month: number,
+  transactions: readonly TransactionWithCategory[],
+  planned: readonly PlannedOccurrence[],
+): LedgerWeek[] {
+  const counts = new Map<string, { recorded: number; planned: number }>();
+  const count = (date: string) => {
+    let entry = counts.get(date);
+    if (!entry) {
+      entry = { recorded: 0, planned: 0 };
+      counts.set(date, entry);
+    }
+    return entry;
+  };
+  for (const tx of transactions) {
+    count(tx.occurred_on).recorded += 1;
+  }
+  for (const occurrence of planned) {
+    count(occurrence.occurredOn).planned += 1;
+  }
+
+  const lastDay = new Date(year, month, 0).getDate();
+  // Monday is 0: where the 1st sits in its week.
+  const lead = (new Date(year, month - 1, 1).getDay() + 6) % 7;
+  const weeks: LedgerWeek[] = [];
+  for (let start = 1 - lead; start <= lastDay; start += 7) {
+    const days: (LedgerWeekDay | null)[] = [];
+    for (let day = start; day < start + 7; day++) {
+      if (day < 1 || day > lastDay) {
+        days.push(null);
+        continue;
+      }
+      const date = isoDay(year, month, day);
+      days.push({ date, ...(counts.get(date) ?? { recorded: 0, planned: 0 }) });
+    }
+    const inMonth = days.filter((day): day is LedgerWeekDay => day !== null);
+    weeks.push({
+      from: inMonth[0]!.date,
+      to: inMonth[inMonth.length - 1]!.date,
+      days,
+      recorded: inMonth.reduce((sum, day) => sum + day.recorded, 0),
+      planned: inMonth.reduce((sum, day) => sum + day.planned, 0),
+    });
+  }
+  return weeks;
 }
