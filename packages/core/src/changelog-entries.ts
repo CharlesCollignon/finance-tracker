@@ -17,6 +17,24 @@ import type { ChangelogEntry, RoadmapItem } from "./changelog";
  */
 export const CHANGELOG: readonly ChangelogEntry[] = [
   {
+    id: "2026-10-12-reactions",
+    date: "2026-10-12",
+    kind: "new",
+    platforms: ["web", "phone"],
+    fr: {
+      title: "Réagir aux nouveautés",
+      body: "« J’adore », « Utile » ou « Enfin ! » sous chaque nouveauté, et « J’attends ça » sur ce qui se prépare.",
+      detail:
+        "Tout le monde voit les compteurs ; réagir demande d’être connecté, et chacun ne voit que ses propres réactions.",
+    },
+    en: {
+      title: "React to what's new",
+      body: "“Love it”, “Useful” or “At last!” under each change, and “I want this” on what is being built.",
+      detail:
+        "Everyone sees the counts; reacting needs an account, and each person sees only their own reactions.",
+    },
+  },
+  {
     id: "2026-10-12-nouveautes-in-app",
     date: "2026-10-12",
     kind: "new",
@@ -982,7 +1000,7 @@ export const CHANGELOG: readonly ChangelogEntry[] = [
  */
 export const CHANGELOG_STATS = {
   /** `git rev-list --count HEAD` on the branch that wrote the newest entry. */
-  commits: 936,
+  commits: 945,
   /** The repository's first commit. */
   since: "2026-06-15",
   asOf: "2026-10-12",
