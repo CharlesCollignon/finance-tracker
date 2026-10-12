@@ -7,6 +7,7 @@ import Animated, {
   FadeInDown,
   LinearTransition,
   useReducedMotion,
+  ZoomIn,
 } from "react-native-reanimated";
 
 import {
@@ -18,13 +19,25 @@ import {
 import { formatDayMonth } from "@finance/core/constants";
 import { monthLong } from "@finance/core/i18n/calendar-names";
 import { DURATION, STAGGER_STEP_MS } from "@finance/core/motion";
+import {
+  CHANGELOG_REACTIONS,
+  changelogTarget,
+  ROADMAP_VOTE,
+  roadmapTarget,
+  type ReactionKind,
+  type ReactionTally,
+} from "@finance/core/reactions";
 
 import { Screen } from "@/components/ui/Screen";
 import { SegmentedControl } from "@/components/ui/SegmentedControl";
 import { Text } from "@/components/ui/Text";
 import { WEB_APP_URL } from "@/lib/env";
 import { hapticLight } from "@/lib/haptics";
-import { markNouveautesSeen, useNouveautes } from "@/lib/nouveautes";
+import {
+  markNouveautesSeen,
+  useNouveautes,
+  useReactions,
+} from "@/lib/nouveautes";
 import { cn } from "@/lib/cn";
 import { useAuth } from "@/providers/AuthProvider";
 import { useLocale, useT } from "@/providers/LocaleProvider";
@@ -78,6 +91,15 @@ export default function NouveautesScreen() {
       void markNouveautesSeen(userId, locale);
     }
   }, [arrived, userId, locale]);
+
+  const targets = useMemo(
+    () => [
+      ...feed.entries.map((entry) => changelogTarget(entry.id)),
+      ...feed.roadmap.map((item) => roadmapTarget(item.id)),
+    ],
+    [feed.entries, feed.roadmap],
+  );
+  const { tally, say } = useReactions(targets, userId);
 
   const months = useMemo(
     () =>
@@ -139,6 +161,8 @@ export default function NouveautesScreen() {
                     <EntryCard
                       entry={entry}
                       fresh={fresh?.has(entry.id) ?? false}
+                      tally={tally(changelogTarget(entry.id))}
+                      onReact={(kind) => say(changelogTarget(entry.id), kind)}
                       open={open.has(entry.id)}
                       onToggle={() => {
                         void hapticLight();
@@ -171,6 +195,12 @@ export default function NouveautesScreen() {
                   {item[locale].title}
                 </Text>
                 <Text variant="muted">{item[locale].body}</Text>
+                <ReactionRow
+                  kinds={[ROADMAP_VOTE]}
+                  tally={tally(roadmapTarget(item.id))}
+                  onReact={(kind) => say(roadmapTarget(item.id), kind)}
+                  vote
+                />
               </View>
             ))}
           </Animated.View>
@@ -202,11 +232,15 @@ export default function NouveautesScreen() {
 function EntryCard({
   entry,
   fresh,
+  tally,
+  onReact,
   open,
   onToggle,
 }: {
   entry: ChangelogEntry;
   fresh: boolean;
+  tally: ReactionTally;
+  onReact: (kind: ReactionKind) => Promise<{ ok: boolean }>;
   open: boolean;
   onToggle: () => void;
 }) {
@@ -279,7 +313,113 @@ function EntryCard({
           />
         </View>
       ) : null}
+      <ReactionRow
+        kinds={CHANGELOG_REACTIONS}
+        tally={tally}
+        onReact={onReact}
+      />
     </Pressable>
+  );
+}
+
+const REACTION_ICONS: Record<
+  ReactionKind,
+  [filled: keyof typeof Ionicons.glyphMap, outline: keyof typeof Ionicons.glyphMap]
+> = {
+  love: ["heart", "heart-outline"],
+  useful: ["thumbs-up", "thumbs-up-outline"],
+  finally: ["sparkles", "sparkles-outline"],
+  want: ["hourglass", "hourglass-outline"],
+};
+
+/**
+ * « J'adore », « Utile », « Enfin ! » under a change, or « J'attends ça » on
+ * « Bientôt », as on the site: the mark pops filled as soon as it is
+ * pressed, with a light haptic, and goes back if the write is refused.
+ */
+function ReactionRow({
+  kinds,
+  tally,
+  onReact,
+  vote = false,
+}: {
+  kinds: readonly ReactionKind[];
+  tally: ReactionTally;
+  onReact: (kind: ReactionKind) => Promise<{ ok: boolean }>;
+  vote?: boolean;
+}) {
+  const t = useT();
+  const colors = useThemeColors();
+  const [pops, setPops] = useState<Partial<Record<ReactionKind, number>>>({});
+  const [failed, setFailed] = useState(false);
+  const labels: Record<ReactionKind, string> = {
+    love: t("nouveautes.reactLove"),
+    useful: t("nouveautes.reactUseful"),
+    finally: t("nouveautes.reactFinally"),
+    want: t("nouveautes.reactWant"),
+  };
+
+  return (
+    <View className="gap-1 pt-3">
+      <View className="flex-row flex-wrap gap-1.5">
+        {kinds.map((kind) => {
+          const mine = tally.mine.includes(kind);
+          const count = tally.counts[kind] ?? 0;
+          const [filled, outline] = REACTION_ICONS[kind];
+          return (
+            <Pressable
+              key={kind}
+              accessibilityRole="button"
+              accessibilityState={{ selected: mine }}
+              accessibilityLabel={`${labels[kind]}${count > 0 ? ` (${count})` : ""}`}
+              onPress={() => {
+                void hapticLight();
+                setFailed(false);
+                if (!mine) {
+                  setPops((current) => ({
+                    ...current,
+                    [kind]: (current[kind] ?? 0) + 1,
+                  }));
+                }
+                void onReact(kind).then(({ ok }) => setFailed(!ok));
+              }}
+              className={cn(
+                "min-h-11 flex-row items-center gap-1.5 rounded-full border px-3",
+                mine ? "border-foreground/20 bg-foreground/10" : "border-border",
+              )}
+            >
+              <Animated.View
+                key={pops[kind] ?? 0}
+                entering={pops[kind] ? ZoomIn.springify() : undefined}
+              >
+                <Ionicons
+                  name={mine ? filled : outline}
+                  size={15}
+                  color={mine ? colors.foreground : colors.mutedForeground}
+                />
+              </Animated.View>
+              {vote ? <Text className="text-sm">{labels[kind]}</Text> : null}
+              {count > 0 ? (
+                <Text
+                  className={cn(
+                    "text-sm",
+                    mine ? "text-foreground" : "text-muted-foreground",
+                  )}
+                  style={{ fontVariant: ["tabular-nums"] }}
+                >
+                  {count}
+                </Text>
+              ) : null}
+            </Pressable>
+          );
+        })}
+      </View>
+      {failed ? (
+        <Text variant="muted" className="text-xs">
+          {t("nouveautes.reactFailed")}
+        </Text>
+      ) : null}
+    </View>
   );
 }
 

@@ -58,6 +58,11 @@ export const fr: Messages = {
     updateBody: "La version {version} de Pluclair est prête à télécharger.",
     updateDownload: "Télécharger",
     updateLater: "Plus tard",
+    reactLove: "J’adore",
+    reactUseful: "Utile",
+    reactFinally: "Enfin !",
+    reactWant: "J’attends ça",
+    reactFailed: "Pas enregistré. Réessayez.",
   },
 
   nav: {
