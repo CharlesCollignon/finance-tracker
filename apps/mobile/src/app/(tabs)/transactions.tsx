@@ -8,7 +8,14 @@ import {
   TextInput,
   View,
 } from "react-native";
+import Animated, {
+  Easing,
+  useAnimatedStyle,
+  useDerivedValue,
+  withTiming,
+} from "react-native-reanimated";
 
+import { DURATION, EASE_STANDARD } from "@finance/core/motion";
 import {
   formatShortDate,
   getCurrentMonth,
@@ -42,6 +49,7 @@ import type {
 } from "@finance/core/types/database";
 
 import { MonthPicker } from "@/components/MonthPicker";
+import { LedgerWeekStrip } from "@/components/LedgerWeekStrip";
 import { StaggerItem } from "@/components/motion/Stagger";
 import { AuthorBadge } from "@/components/AuthorBadge";
 import { CategoryIcon } from "@/components/CategoryIcon";
@@ -119,6 +127,8 @@ import {
   filterPlanned,
   ledgerDays,
   ledgerTotals,
+  ledgerWeeks,
+  type LedgerOrder,
   type LedgerTypeFilter,
 } from "@finance/core/ledger-view";
 
@@ -160,6 +170,11 @@ export default function TransactionsScreen() {
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [accountFilter, setAccountFilter] = useState<string>("all");
   const [optionsOpen, setOptionsOpen] = useState(false);
+  // The week the list is narrowed to, by its first day. Kept by date rather
+  // than by position, so another month — which has no such week — simply
+  // shows all of itself, with nothing to reset.
+  const [weekFrom, setWeekFrom] = useState<string | null>(null);
+  const [order, setOrder] = useState<LedgerOrder>("newest");
   const [editing, setEditing] = useState<TransactionWithCategory | null>(null);
   const [duplicating, setDuplicating] =
     useState<TransactionWithCategory | null>(null);
@@ -412,16 +427,30 @@ export default function TransactionsScreen() {
     }),
     [filter, categoryFilter, search, accountFilter, bankAccounts],
   );
+  // The strip counts what every filter but the week's keeps, so it shows
+  // where in the month the rows are — and where a search found something.
+  const weeks = useMemo(
+    () =>
+      ledgerWeeks(
+        year,
+        month,
+        filterLedger(transactions, ledgerFilter, accountOf),
+        filterPlanned(planned, ledgerFilter),
+      ),
+    [year, month, transactions, planned, ledgerFilter, accountOf],
+  );
+  const week = weeks.find((each) => each.from === weekFrom) ?? null;
   // Category name and note, each on its own, as on the web.
   const filtered = useMemo(
-    () => filterLedger(transactions, ledgerFilter, accountOf),
-    [transactions, ledgerFilter, accountOf],
+    () =>
+      filterLedger(transactions, { ...ledgerFilter, range: week }, accountOf),
+    [transactions, ledgerFilter, week, accountOf],
   );
   // The same filters over the planned rows, so choosing "Expense" or a
   // category narrows what is to come as well as what has happened.
   const filteredPlanned = useMemo(
-    () => filterPlanned(planned, ledgerFilter),
-    [planned, ledgerFilter],
+    () => filterPlanned(planned, { ...ledgerFilter, range: week }),
+    [planned, ledgerFilter, week],
   );
   // The figures describe what is on screen, which is the whole reason they
   // are here: the month's own totals are Month's job, and repeating them
@@ -433,13 +462,20 @@ export default function TransactionsScreen() {
   // here keeps a heading and its rows in the same object, so the list can
   // never draw a date with nothing under it.
   //
-  // Planned rows go into the same days, newest first like the rest. A day's
+  // Planned rows go into the same days, after the rest. A day's
   // net counts only what has happened, and a day with nothing but planned
   // rows has no net at all — a figure there would be a forecast set in the
   // same type as the record.
+  //
+  // Oldest first is the list turned over, rows within a day included, so a
+  // day reads in the order its rows were written.
   const days = useMemo(
     () =>
-      ledgerDays(filtered, filteredPlanned).map((day) => ({
+      ledgerDays(
+        order === "newest" ? filtered : [...filtered].reverse(),
+        filteredPlanned,
+        order,
+      ).map((day) => ({
         date: day.date,
         net: day.net,
         recorded: day.rows.length,
@@ -450,7 +486,7 @@ export default function TransactionsScreen() {
           ),
         ],
       })),
-    [filtered, filteredPlanned],
+    [filtered, filteredPlanned, order],
   );
 
   const visibleIds = useMemo(() => filtered.map((tx) => tx.id), [filtered]);
@@ -570,6 +606,7 @@ export default function TransactionsScreen() {
     setFilter("all");
     setCategoryFilter("all");
     setAccountFilter("all");
+    setWeekFrom(null);
     setSearch("");
   }
 
@@ -859,6 +896,13 @@ export default function TransactionsScreen() {
             </View>
           ) : null}
 
+          <LedgerWeekStrip
+            weeks={weeks}
+            value={week?.from ?? null}
+            onChange={setWeekFrom}
+            className="mt-3"
+          />
+
           {skipped.length > 0 ? (
             <SkippedLine
               skipped={skipped}
@@ -890,6 +934,14 @@ export default function TransactionsScreen() {
                 value={formatEuro(shownOut)}
                 className="text-destructive"
               />
+              <SortToggle
+                order={order}
+                onPress={() =>
+                  setOrder((current) =>
+                    current === "newest" ? "oldest" : "newest",
+                  )
+                }
+              />
             </View>
           </View>
         </>
@@ -903,8 +955,11 @@ export default function TransactionsScreen() {
           the full width and start right under the figures. */}
       <SectionList
         sections={loading && !data ? [] : days}
+        // The order is in the key so that turning it over deals the rows
+        // again: each mounts anew and rises in, as on the web, rather than
+        // the list jumping to its new order under the thumb.
         keyExtractor={(item) =>
-          item.kind === "tx" ? item.tx.id : `planned:${item.occurrence.key}`
+          `${order}:${item.kind === "tx" ? item.tx.id : `planned:${item.occurrence.key}`}`
         }
         keyboardShouldPersistTaps="handled"
         keyboardDismissMode="on-drag"
@@ -1304,5 +1359,58 @@ function SummaryFigure({
         {value}
       </PrivateAmount>
     </View>
+  );
+}
+
+const EASING = Easing.bezier(...EASE_STANDARD);
+
+/**
+ * Which way the list runs, at the end of the figures' row, where it costs
+ * no line of its own. The arrow turns over with the order.
+ */
+function SortToggle({
+  order,
+  onPress,
+}: {
+  order: LedgerOrder;
+  onPress: () => void;
+}) {
+  const t = useT();
+  const colors = useThemeColors();
+  const turn = useDerivedValue(() =>
+    withTiming(order === "oldest" ? 180 : 0, {
+      duration: DURATION.enter,
+      easing: EASING,
+    }),
+  );
+  const arrow = useAnimatedStyle(() => ({
+    transform: [{ rotate: `${turn.get()}deg` }],
+  }));
+  const label =
+    order === "newest" ? t("ledger.sortNewest") : t("ledger.sortOldest");
+
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      accessibilityHint={t("ledger.sortFlip")}
+      hitSlop={6}
+      onPress={() => {
+        void hapticLight();
+        onPress();
+      }}
+      className="min-h-11 flex-row items-center gap-1.5 self-center"
+    >
+      <Animated.View style={arrow}>
+        <Ionicons
+          name="arrow-down"
+          size={ICON.sm}
+          color={colors.mutedForeground}
+        />
+      </Animated.View>
+      <Text variant="muted" numberOfLines={1} className="text-xs">
+        {label}
+      </Text>
+    </Pressable>
   );
 }

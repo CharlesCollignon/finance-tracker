@@ -9,6 +9,7 @@ import {
 } from "react";
 import Link from "next/link";
 import {
+  ArrowDown,
   ArrowRight,
   DownloadSimple,
   MagnifyingGlass,
@@ -33,8 +34,13 @@ import {
   filterPlanned,
   ledgerDays,
   ledgerTotals,
+  ledgerWeeks,
+  type LedgerOrder,
   type LedgerTypeFilter,
 } from "@finance/core/ledger-view";
+import { AnimatedAmount } from "@/components/finance/AnimatedAmount";
+import { AnimatedDay, AnimatedDays } from "@/components/finance/AnimatedDays";
+import { LedgerWeekStrip } from "@/components/finance/LedgerWeekStrip";
 import { amountSign } from "@finance/core/amount-sign";
 import {
   categoryTypeLabels,
@@ -271,6 +277,14 @@ export function TransactionsView({
   // The phone's filters-and-actions panel. On a wider screen everything in it
   // sits in the toolbar, so the flag only means anything below `md`.
   const [optionsOpen, setOptionsOpen] = useState(false);
+  // The week the list is narrowed to, by its first day. Kept by date rather
+  // than by position, so another month — which has no such week — simply
+  // shows all of itself, with nothing to reset.
+  const [weekFrom, setWeekFrom] = useState<string | null>(null);
+  const [order, setOrder] = useState<LedgerOrder>("newest");
+  // How many times the order has been turned over: each time, the list is
+  // dealt again from the top (see `AnimatedDays`).
+  const [deals, setDeals] = useState(0);
 
   const ledgerFilter = useMemo(
     () => ({
@@ -281,21 +295,38 @@ export function TransactionsView({
     }),
     [filter, categoryFilter, search, accountFilter, bankAccounts],
   );
+  // The strip counts what every filter but the week's keeps, so it shows
+  // where in the month the rows are — and where a search found something.
+  const weeks = useMemo(
+    () =>
+      ledgerWeeks(
+        year,
+        month,
+        filterLedger(transactions, ledgerFilter, accountOf),
+        filterPlanned(planned, ledgerFilter),
+      ),
+    [year, month, transactions, planned, ledgerFilter, accountOf],
+  );
+  const week = weeks.find((each) => each.from === weekFrom) ?? null;
   const filtered = useMemo(
-    () => filterLedger(transactions, ledgerFilter, accountOf),
-    [transactions, ledgerFilter, accountOf],
+    () =>
+      filterLedger(transactions, { ...ledgerFilter, range: week }, accountOf),
+    [transactions, ledgerFilter, week, accountOf],
   );
   // The same filters, so a planned rent does not survive an "Income" chip.
   const filteredPlanned = useMemo(
-    () => filterPlanned(planned, ledgerFilter),
-    [planned, ledgerFilter],
+    () => filterPlanned(planned, { ...ledgerFilter, range: week }),
+    [planned, ledgerFilter, week],
   );
 
-  const sortedRows = useMemo(
-    () =>
-      [...filtered].sort((a, b) => b.occurred_on.localeCompare(a.occurred_on)),
-    [filtered],
-  );
+  // Oldest first is the newest-first list turned over, rows within a day
+  // included, so a day reads in the order its rows were written.
+  const sortedRows = useMemo(() => {
+    const newest = [...filtered].sort((a, b) =>
+      b.occurred_on.localeCompare(a.occurred_on),
+    );
+    return order === "newest" ? newest : newest.reverse();
+  }, [filtered, order]);
 
   const dropdownFilters =
     (categoryFilter !== "all" ? 1 : 0) +
@@ -304,6 +335,7 @@ export function TransactionsView({
     filter !== "all" ||
     categoryFilter !== "all" ||
     ledgerFilter.accountId !== "all" ||
+    week !== null ||
     search.trim().length > 0;
 
   const visibleIds = useMemo(() => sortedRows.map((tx) => tx.id), [sortedRows]);
@@ -385,8 +417,8 @@ export function TransactionsView({
   // Planned rows join their day but not its net: the net says what the day
   // did, and a planned row has not done anything yet.
   const days = useMemo(
-    () => ledgerDays(sortedRows, filteredPlanned),
-    [sortedRows, filteredPlanned],
+    () => ledgerDays(sortedRows, filteredPlanned, order),
+    [sortedRows, filteredPlanned, order],
   );
 
   // The figures describe what is on screen, which is the whole reason they
@@ -695,14 +727,48 @@ export function TransactionsView({
                   </div>
                 </div>
               ) : null}
+
+              <LedgerWeekStrip
+                weeks={weeks}
+                value={week?.from ?? null}
+                onChange={setWeekFrom}
+              />
             </div>
 
-            <div className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1 border-t border-border pt-3 text-xs md:text-sm">
+            <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-1 border-t border-border pt-3 text-xs md:text-sm">
+              {/* Which way the list runs. The arrow turns over with it and
+                  the list is dealt again from the top, so the change is seen
+                  as well as read. The hit area is the 44px a thumb needs; the
+                  line stays the height of its text. */}
+              <button
+                type="button"
+                onClick={() => {
+                  setOrder((current) =>
+                    current === "newest" ? "oldest" : "newest",
+                  );
+                  setDeals((count) => count + 1);
+                }}
+                title={t("ledger.sortFlip")}
+                className="-my-3.5 inline-flex min-h-11 items-center gap-1.5 text-muted-foreground transition-colors duration-hover hover:text-foreground"
+              >
+                <ArrowDown
+                  size={ICON.sm}
+                  weight="bold"
+                  aria-hidden
+                  className={cn(
+                    "transition-transform duration-enter",
+                    order === "oldest" && "rotate-180",
+                  )}
+                />
+                {order === "newest"
+                  ? t("ledger.sortNewest")
+                  : t("ledger.sortOldest")}
+              </button>
               {/* On a phone the count only earns its line when a filter is
                   hiding something. */}
               <p
                 className={cn(
-                  "text-muted-foreground",
+                  "mr-auto text-muted-foreground",
                   filtered.length === transactions.length && "hidden md:block",
                 )}
               >
@@ -718,17 +784,21 @@ export function TransactionsView({
                   <span className="text-muted-foreground">
                     {t("ledger.in")}{" "}
                   </span>
-                  <span className="privacy-amount tabular-nums text-success">
-                    {formatEuro(shown.income)}
-                  </span>
+                  <AnimatedAmount
+                    value={shown.income}
+                    format={formatEuro}
+                    className="text-success"
+                  />
                 </span>
                 <span>
                   <span className="text-muted-foreground">
                     {t("ledger.out")}{" "}
                   </span>
-                  <span className="privacy-amount tabular-nums text-destructive">
-                    {formatEuro(shownOut)}
-                  </span>
+                  <AnimatedAmount
+                    value={shownOut}
+                    format={formatEuro}
+                    className="text-destructive"
+                  />
                 </span>
               </p>
             </div>
@@ -746,6 +816,7 @@ export function TransactionsView({
                       setFilter("all");
                       setCategoryFilter("all");
                       setAccountFilter("all");
+                      setWeekFrom(null);
                       setSearch("");
                     }}
                   >
@@ -754,9 +825,13 @@ export function TransactionsView({
                 ) : null}
               </EmptyState>
             ) : (
-              <div className="flex flex-col gap-5">
-                {days.map((day) => (
-                  <div key={day.date} className="flex flex-col gap-1">
+              <AnimatedDays deal={deals} className="flex flex-col gap-5">
+                {days.map((day, index) => (
+                  <AnimatedDay
+                    key={day.date}
+                    index={index}
+                    className="flex flex-col gap-1"
+                  >
                     <div
                       className={cn(
                         "flex items-baseline justify-between gap-3",
@@ -800,7 +875,8 @@ export function TransactionsView({
                           }
                           className={cn(
                             "-mx-2 flex w-[calc(100%+1rem)] items-center justify-between gap-3 rounded-control px-2 py-2.5 text-left",
-                            "transition-colors hover:bg-muted/40",
+                            // A press gives a little under the finger.
+                            "transition-[background-color,scale] duration-press hover:bg-muted/40 active:scale-[0.985]",
                             LEDGER_COLUMNS,
                             // The checkbox says which rows are picked; the
                             // wash only has to group them, which the raised
@@ -887,9 +963,9 @@ export function TransactionsView({
                         />
                       ))}
                     </div>
-                  </div>
+                  </AnimatedDay>
                 ))}
-              </div>
+              </AnimatedDays>
             )}
 
             <EveryMonthResults query={search} year={year} month={month} />

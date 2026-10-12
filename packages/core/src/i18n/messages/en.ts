@@ -384,6 +384,14 @@ export const en = {
     receivedOn: "Received on {date}",
     paidOn: "Paid on {date}",
     recurringEntry: "Recurring entry",
+    /** The strip above the list: the month, then each of its weeks. */
+    weeks: "Weeks of the month",
+    wholeMonth: "Month",
+    wholeMonthLabel: "The whole month",
+    weekLabel: "{from} to {to}",
+    sortNewest: "Newest first",
+    sortOldest: "Oldest first",
+    sortFlip: "Reverse the date order",
   },
 
   /** Bringing a bank statement in from a file, step by step. */
