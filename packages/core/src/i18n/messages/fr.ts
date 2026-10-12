@@ -279,6 +279,13 @@ export const fr: Messages = {
     receivedOn: "Reçu le {date}",
     paidOn: "Payé le {date}",
     recurringEntry: "Opération récurrente",
+    weeks: "Semaines du mois",
+    wholeMonth: "Mois",
+    wholeMonthLabel: "Tout le mois",
+    weekLabel: "Du {from} au {to}",
+    sortNewest: "Récentes d'abord",
+    sortOldest: "Anciennes d'abord",
+    sortFlip: "Inverser l'ordre des dates",
   },
 
   importer: {
