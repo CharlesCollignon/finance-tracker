@@ -30,6 +30,11 @@ import {
 import { monthLong } from "@finance/core/i18n/calendar-names";
 import type { Locale } from "@finance/core/i18n/locale";
 import { DURATION, EASE_STANDARD, STAGGER_STEP_MS } from "@finance/core/motion";
+import {
+  changelogTarget,
+  NO_TALLY,
+  type ReactionTally,
+} from "@finance/core/reactions";
 import { markNouveautesSeen } from "@/lib/actions/nouveautes";
 import { marketingFocus } from "@/components/marketing/marketing-focus";
 import {
@@ -99,8 +104,14 @@ export function ChangelogRiver({
   locale,
   openId,
   accountFresh,
+  tallies,
+  signedIn,
 }: {
   entries: RiverEntry[];
+  /** Readers' reactions to each change, by `changelog:<id>`. */
+  tallies: Record<string, ReactionTally>;
+  /** Whether the reader may react, or is asked to sign in first. */
+  signedIn: boolean;
   copy: NouveautesCopy;
   locale: Locale;
   /** An entry opened by its own address (`/nouveautes/<id>`). */
@@ -124,12 +135,12 @@ export function ChangelogRiver({
   // Read: the account's marker moves to the newest entry, so the dot on its
   // menu goes here and on the phone.
   const newestId = entries[0]?.id;
-  const signedIn = accountFresh !== null;
+  const tracked = accountFresh !== null;
   useEffect(() => {
-    if (signedIn && newestId) {
+    if (tracked && newestId) {
       void markNouveautesSeen(newestId);
     }
-  }, [signedIn, newestId]);
+  }, [tracked, newestId]);
   const listRef = useRef<HTMLDivElement>(null);
 
   const shown = useMemo(
@@ -337,6 +348,8 @@ export function ChangelogRiver({
                       copy={copy}
                       locale={locale}
                       fresh={fresh}
+                      tallies={tallies}
+                      signedIn={signedIn}
                       open={open}
                       onToggle={toggle}
                       onUnfold={(key) =>
@@ -475,6 +488,8 @@ function RowView({
   copy,
   locale,
   fresh,
+  tallies,
+  signedIn,
   open,
   onToggle,
   onUnfold,
@@ -484,6 +499,8 @@ function RowView({
   copy: NouveautesCopy;
   locale: Locale;
   fresh: ReadonlySet<string>;
+  tallies: Record<string, ReactionTally>;
+  signedIn: boolean;
   open: ReadonlySet<string>;
   onToggle: (id: string) => void;
   onUnfold: (key: string) => void;
@@ -520,6 +537,8 @@ function RowView({
           fresh={fresh.has(row.entry.id)}
           open={open.has(row.entry.id)}
           onToggle={() => onToggle(row.entry.id)}
+          tally={tallies[changelogTarget(row.entry.id)] ?? NO_TALLY}
+          signedIn={signedIn}
           compact={row.compact}
         />
       );

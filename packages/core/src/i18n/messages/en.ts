@@ -99,6 +99,11 @@ export const en = {
     updateBody: "Version {version} of Pluclair is ready to download.",
     updateDownload: "Download",
     updateLater: "Later",
+    reactLove: "Love it",
+    reactUseful: "Useful",
+    reactFinally: "At last!",
+    reactWant: "I want this",
+    reactFailed: "Not saved. Try again.",
   },
 
   nav: {

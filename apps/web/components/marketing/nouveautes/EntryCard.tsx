@@ -19,6 +19,11 @@ import {
   LinkSimple,
 } from "@phosphor-icons/react";
 import type { ChangeKind } from "@finance/core/changelog";
+import {
+  CHANGELOG_REACTIONS,
+  changelogTarget,
+  type ReactionTally,
+} from "@finance/core/reactions";
 import { DURATION, EASE_STANDARD } from "@finance/core/motion";
 import { featureHref } from "@/components/marketing/landing-copy";
 import { FeatureMock } from "@/components/marketing/LandingMocks";
@@ -28,6 +33,7 @@ import {
   type NouveautesCopy,
 } from "@/components/marketing/nouveautes-copy";
 import { PAGE_ICON } from "@/components/marketing/page-icons";
+import { Reactions } from "@/components/marketing/nouveautes/Reactions";
 import type { RiverEntry } from "@/components/marketing/nouveautes/river-entry";
 import { cn } from "@/lib/utils";
 
@@ -65,6 +71,8 @@ export function EntryCard({
   fresh,
   open,
   onToggle,
+  tally,
+  signedIn,
   compact = false,
 }: {
   entry: RiverEntry;
@@ -72,6 +80,9 @@ export function EntryCard({
   fresh: boolean;
   open: boolean;
   onToggle: () => void;
+  /** What readers have said about it, and what this reader did. */
+  tally: ReactionTally;
+  signedIn: boolean;
   compact?: boolean;
 }) {
   const featured = entry.featured && !compact;
@@ -134,6 +145,18 @@ export function EntryCard({
             ) : null}
           </AnimatePresence>
           <Actions entry={entry} copy={copy} open={open} onToggle={onToggle} />
+          {compact ? null : (
+            <div className="-ml-1 mt-3">
+              <Reactions
+                target={changelogTarget(entry.id)}
+                kinds={CHANGELOG_REACTIONS}
+                initial={tally}
+                copy={copy.reactions}
+                signedIn={signedIn}
+                loginHref={`/login?next=${encodeURIComponent(nouveautesEntryHref(entry.id))}`}
+              />
+            </div>
+          )}
         </div>
         {featured && entry.feature ? (
           <FeatureScreen pageId={entry.feature.id} />

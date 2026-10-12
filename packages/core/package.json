@@ -136,6 +136,7 @@
     "./property-form": "./src/property-form.ts",
     "./price-index": "./src/price-index.ts",
     "./market-reading": "./src/market-reading.ts",
+    "./reactions": "./src/reactions.ts",
     "./rent-reference": "./src/rent-reference.ts",
     "./rental": "./src/rental.ts"
   },

@@ -54,6 +54,17 @@ export interface NouveautesCopy {
     empty: string;
     reset: string;
   };
+  /** The reactions under a change, and the vote on « Bientôt ». */
+  reactions: {
+    label: string;
+    love: string;
+    useful: string;
+    finally: string;
+    want: string;
+    signIn: string;
+    signInCta: string;
+    failed: string;
+  };
   entry: {
     more: string;
     less: string;
@@ -114,6 +125,16 @@ export const nouveautesCopy: NouveautesCopy = {
     fixes: { one: "1 fix", many: "{count} fixes" },
     empty: "Nothing under this filter yet.",
     reset: "Show everything",
+  },
+  reactions: {
+    label: "React",
+    love: "Love it",
+    useful: "Useful",
+    finally: "At last!",
+    want: "I want this",
+    signIn: "Sign in to react",
+    signInCta: "Sign in",
+    failed: "Not saved. Try again.",
   },
   entry: {
     more: "More",

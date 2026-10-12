@@ -9,6 +9,8 @@ import {
 import { CHANGELOG, CHANGELOG_STATS } from "@finance/core/changelog-entries";
 import { formatFullDate, todayIsoLocal } from "@finance/core/constants";
 import { readChangelogSeen } from "@finance/data/preferences";
+import { readReactions } from "@finance/data/reactions";
+import { changelogTarget, roadmapTarget } from "@finance/core/reactions";
 import { getAuthUser } from "@/lib/auth/get-user";
 import { getLocale } from "@/lib/locale";
 import { createClient } from "@/lib/supabase/server";
@@ -58,6 +60,24 @@ export async function NouveautesPage({ openId }: { openId: string | null }) {
       ? null
       : unseenEntries(CHANGELOG, accountSeen, today).map((entry) => entry.id);
 
+  // What readers have said about each change and each item coming, and
+  // what this one did. Nothing said, where the database cannot answer.
+  const roadmap = openRoadmap();
+  const tallies = Object.fromEntries(
+    await createClient()
+      .then((db) =>
+        readReactions(
+          db,
+          [
+            ...CHANGELOG.map((entry) => changelogTarget(entry.id)),
+            ...roadmap.map((item) => roadmapTarget(item.id)),
+          ],
+          user?.id ?? null,
+        ),
+      )
+      .catch(() => new Map()),
+  );
+
   const days = Math.max(0, daysBetween(CHANGELOG[0]!.date, today));
   const updated =
     days === 0
@@ -102,9 +122,17 @@ export async function NouveautesPage({ openId }: { openId: string | null }) {
         locale={locale}
         openId={openId}
         accountFresh={accountFresh}
+        tallies={tallies}
+        signedIn={Boolean(user)}
       />
 
-      <Roadmap items={openRoadmap()} copy={copy} locale={locale} />
+      <Roadmap
+        items={roadmap}
+        copy={copy}
+        locale={locale}
+        tallies={tallies}
+        signedIn={Boolean(user)}
+      />
 
       {/* ------------------------------------------------------- follow */}
       <section className="relative px-6 pb-28 md:pb-36">

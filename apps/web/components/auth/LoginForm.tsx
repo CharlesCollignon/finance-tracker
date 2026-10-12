@@ -15,6 +15,7 @@ import { resolveMessage } from "@finance/core/i18n/t";
 import { GoogleSignInButton } from "@/components/auth/GoogleSignInButton";
 import { PasskeySignInButton } from "@/components/auth/PasskeySignInButton";
 import { AuthDivider } from "@/components/auth/AuthDivider";
+import { sanitizeNextPath } from "@/lib/auth/next-path";
 import { ICON } from "@/lib/icon-scale";
 import { useT } from "@/lib/locale-context";
 import type { FormState } from "@finance/core/action-result";
@@ -24,6 +25,9 @@ export function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const authError = searchParams.get("error");
+  // Where the reader was sent from — « Nouveautés », to react to a change —
+  // and goes back to once signed in, whichever way they sign in.
+  const next = sanitizeNextPath(searchParams.get("next"), "/bearing");
   const [state, action, pending] = useActionState<FormState, FormData>(
     signIn,
     {},
@@ -31,10 +35,10 @@ export function LoginForm() {
 
   useEffect(() => {
     if (state.success) {
-      router.push("/bearing");
+      router.push(next);
       router.refresh();
     }
-  }, [state.success, router]);
+  }, [state.success, router, next]);
 
   return (
     <Card.Bezel
@@ -48,8 +52,8 @@ export function LoginForm() {
         {t("auth.signInHeading")}
       </p>
       <div className="mt-6 flex flex-col gap-2">
-        <GoogleSignInButton label={t("auth.withGoogleSignIn")} />
-        <PasskeySignInButton />
+        <GoogleSignInButton label={t("auth.withGoogleSignIn")} next={next} />
+        <PasskeySignInButton next={next} />
       </div>
       <AuthDivider />
       <form action={action} className="flex flex-col gap-4">

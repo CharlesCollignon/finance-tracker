@@ -47,6 +47,16 @@ export const nouveautesCopyFr: NouveautesCopy = {
     empty: "Rien dans ce filtre pour l’instant.",
     reset: "Tout afficher",
   },
+  reactions: {
+    label: "Réagir",
+    love: "J’adore",
+    useful: "Utile",
+    finally: "Enfin !",
+    want: "J’attends ça",
+    signIn: "Connectez-vous pour réagir",
+    signInCta: "Se connecter",
+    failed: "Pas enregistré. Réessayez.",
+  },
   entry: {
     more: "Plus",
     less: "Moins",

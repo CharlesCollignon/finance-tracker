@@ -1,4 +1,4 @@
-import { useEffect, useSyncExternalStore } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import Constants from "expo-constants";
 
@@ -11,7 +11,14 @@ import {
 import { CHANGELOG, ROADMAP } from "@finance/core/changelog-entries";
 import { todayIsoLocal } from "@finance/core/constants";
 import type { Locale } from "@finance/core/i18n/locale";
+import {
+  NO_TALLY,
+  toggledTally,
+  type ReactionKind,
+  type ReactionTally,
+} from "@finance/core/reactions";
 import * as preferences from "@finance/data/preferences";
+import * as reactions from "@finance/data/reactions";
 
 import { WEB_APP_URL } from "@/lib/env";
 import { supabase } from "@/lib/supabase";
@@ -196,4 +203,65 @@ export async function setApkLater(version: string): Promise<void> {
   } catch {
     // Refused: the banner comes back next time, which is all that is lost.
   }
+}
+
+/**
+ * Readers' reactions to the changes and votes for « Bientôt » (migration
+ * 070), read once for the screen; `say` shows a press at once and writes it
+ * after, taking it back if the write is refused.
+ */
+export function useReactions(
+  targets: readonly string[],
+  userId: string | null,
+) {
+  const [tallies, setTallies] = useState<Map<string, ReactionTally>>(
+    () => new Map(),
+  );
+  const key = targets.join(",");
+
+  useEffect(() => {
+    let cancelled = false;
+    void reactions
+      .readReactions(supabase, key ? key.split(",") : [], userId)
+      .then((read) => {
+        if (!cancelled) {
+          setTallies(read);
+        }
+      })
+      .catch(() => undefined);
+    return () => {
+      cancelled = true;
+    };
+  }, [key, userId]);
+
+  async function say(
+    target: string,
+    kind: ReactionKind,
+  ): Promise<{ ok: boolean }> {
+    if (!userId) {
+      return { ok: false };
+    }
+    const before = tallies.get(target) ?? NO_TALLY;
+    const on = !before.mine.includes(kind);
+    const put = (tally: ReactionTally) =>
+      setTallies((current) => new Map(current).set(target, tally));
+    put(toggledTally(before, kind, on));
+    const result = await reactions.setReaction(
+      supabase,
+      userId,
+      target,
+      kind,
+      on,
+    );
+    if (!result.success) {
+      put(before);
+      return { ok: false };
+    }
+    return { ok: true };
+  }
+
+  return {
+    tally: (target: string) => tallies.get(target) ?? NO_TALLY,
+    say,
+  };
 }

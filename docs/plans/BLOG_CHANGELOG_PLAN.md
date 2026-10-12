@@ -188,7 +188,12 @@ entries curated from the 106 merges, fixes grouped.
 - **On the landing**, a pill under the hero: live dot, « Nouveau », the latest
   featured entry's title, linking to it.
 
-## Phase 2 — Reactions and votes (branch `nouveautes-reactions`)
+## Phase 2 — Reactions and votes (branch `nouveautes-reactions`) — built, waiting on the owner
+
+Built as below, on the site and on the phone's `nouveautes` screen, with
+migration 070 for the owner to run. Signing in from a reaction now comes
+back to the change (`?next=` on all three sign-ins). Icons: a heart, a
+thumb, clapping hands (sparkles on the phone), an hourglass for the vote.
 
 - **Three reactions**, drawn icons rather than emoji: « J'adore », « Utile »,
   « Enfin ! ». One of each per account per entry, a toggle. **One vote**,
