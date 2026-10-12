@@ -13,6 +13,8 @@
     "./ask-figures": "./src/ask-figures.ts",
     "./ask-markdown": "./src/ask-markdown.ts",
     "./calculator": "./src/calculator.ts",
+    "./changelog": "./src/changelog.ts",
+    "./changelog-entries": "./src/changelog-entries.ts",
     "./widget-figure": "./src/widget-figure.ts",
     "./allocation": "./src/allocation.ts",
     "./amount-input": "./src/amount-input.ts",

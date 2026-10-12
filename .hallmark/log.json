@@ -1,6 +1,15 @@
 [
   {
     "date": "2026-10-12",
+    "macrostructure": "Index-First (with a held rail)",
+    "theme": "design.md (Pluclair: dark ground, Lamplit Gold, Instrument Sans + Fraunces)",
+    "enrichment": "none — the week strip is data",
+    "nav": "kept",
+    "footer": "kept",
+    "brief": "Pluclair « Nouveautés »: the changelog, filters that re-deal, a rolling month rail, featured screens, « Bientôt »"
+  },
+  {
+    "date": "2026-10-12",
     "macrostructure": "Letter (scroll-told)",
     "theme": "design.md (Pluclair: dark ground, Lamplit Gold, Instrument Sans + Fraunces)",
     "enrichment": "portrait in the bezel tray, orb until the photo",

@@ -1038,6 +1038,26 @@ under the text (`AnimatedDays.tsx`). A row gives a little under a press.
 Nothing plays on arrival but the bars, and under reduced motion every state
 is its end state.
 
+« Nouveautés » (`NouveautesPage.tsx`, October 2026) is the site's index: an
+entry list rather than a story, so less of it moves. Its name rises out of a
+mask; beside it the rhythm of the work, one bar a week since the first
+commit, grows up from its baseline bar after bar (the Journal's week strip
+at the scale of the project), names a week under a pointer and takes the
+list to it on a press; this week's bar is in the status green while it holds
+something, the live dot's colour. Below, the list runs beside a rail held
+while it scrolls: the month being read rolls its name over to the next as
+the list crosses into it, up or down with the scroll. Choosing a filter
+re-deals the list with the Journal's choreography (stayers slide, leavers
+fade, arrivals rise a beat apart, capped at eight), and the list is brought
+back to its top if it ends above the screen. Most entries are rows ruled off
+like a ledger's; a featured one is a glass card whose screen — the
+landing's mock — tilts up from its bottom edge as it is scrolled in, as the
+feature pages' do. « Plus » opens an entry in place, the rows below sliding
+down. What arrived since the reader's last visit carries a status-green
+hairline, said once in the rail; green there means _arrived_, as on the live
+dot, and gold is not spent anywhere on the page. Under reduced motion
+nothing rolls, tilts or grows, and every section stands at its final state.
+
 The marketing nav is one glass shape (`LandingHeader.tsx`): « Le produit »
 (the burger on a phone) grows the pill down into its own panel on a spring,
 the pages arriving in it as cards — Le point featured with its figure, the
