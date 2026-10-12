@@ -22,7 +22,11 @@ import Svg, { Defs, RadialGradient, Rect, Stop } from "react-native-svg";
  * know it is there.
  */
 
-/** Matching `apps/web/components/layout/AppBackdrop.tsx`. */
+/**
+ * Matching `apps/web/components/layout/AppBackdrop.tsx`, turned down with it
+ * in October 2026: each violet about a quarter fainter, the magenta nearly
+ * halved, for a little less purple.
+ */
 const LIGHTS = [
   {
     id: "violet",
@@ -30,7 +34,7 @@ const LIGHTS = [
     cy: "-8%",
     r: "85%",
     color: "#8b4aff",
-    opacity: 0.55,
+    opacity: 0.42,
   },
   {
     id: "magenta",
@@ -38,7 +42,7 @@ const LIGHTS = [
     cy: "12%",
     r: "50%",
     color: "#e84ab2",
-    opacity: 0.3,
+    opacity: 0.17,
   },
   {
     id: "indigo",
@@ -46,7 +50,7 @@ const LIGHTS = [
     cy: "42%",
     r: "55%",
     color: "#5834c4",
-    opacity: 0.28,
+    opacity: 0.21,
   },
   {
     id: "gold",

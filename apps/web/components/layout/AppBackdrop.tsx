@@ -53,18 +53,25 @@ const DarkVeil = dynamic(() => import("@/components/DarkVeil"), {
  * cannot be commented, and this is the one thing on the screen most likely to
  * be tuned by hand.
  */
+/*
+ * Turned down in October 2026, at the owner's ask for "a little less purple":
+ * the same hues and placements, each violet about a quarter fainter and the
+ * magenta nearly halved, since it is the pinkest of them and the first thing
+ * read as purple. A bluer violet was tried beside it and lost the room's
+ * identity; this keeps the light and takes out the cast.
+ */
 const BLOOM = [
   // The main light, centred on the content rather than on the window — see
   // `--bloom-x` below.
-  "radial-gradient(95% 60% at var(--bloom-x) -10%, rgba(139,74,255,0.55) 0%, rgba(124,58,237,0.24) 44%, transparent 72%)",
+  "radial-gradient(95% 60% at var(--bloom-x) -10%, rgba(139,74,255,0.42) 0%, rgba(124,58,237,0.18) 44%, transparent 72%)",
   // A second source off to the right, as if out of frame.
-  "radial-gradient(55% 45% at 92% 8%, rgba(232,74,178,0.26) 0%, transparent 66%)",
+  "radial-gradient(55% 45% at 92% 8%, rgba(232,74,178,0.15) 0%, transparent 66%)",
   // Indigo down the left, which keeps the side rail from reading as a
   // separate black panel bolted onto a coloured page.
-  "radial-gradient(45% 55% at 0% 30%, rgba(88,52,196,0.26) 0%, transparent 70%)",
+  "radial-gradient(45% 55% at 0% 30%, rgba(88,52,196,0.20) 0%, transparent 70%)",
   // The lower half was dead black, which made the page look like a bloom
   // pasted onto a void rather than a lit room. This is the bounce.
-  "radial-gradient(95% 60% at var(--bloom-x) 82%, rgba(84,48,160,0.30) 0%, transparent 74%)",
+  "radial-gradient(95% 60% at var(--bloom-x) 82%, rgba(84,48,160,0.22) 0%, transparent 74%)",
   // The brand gold, low and faint, so the palette still belongs to Pluclair
   // rather than to the reference it was drawn from.
   "radial-gradient(60% 40% at 12% 100%, rgba(236,178,94,0.10) 0%, transparent 70%)",
@@ -123,10 +130,11 @@ export function AppBackdrop() {
 
           `scale-110` because a blur of this radius samples nothing outside
           the element and fades the edges towards transparent; oversizing puts
-          those soft edges off-screen. */}
+          those soft edges off-screen. Its opacity came down with the bloom
+          under it, so the drift stays in the same proportion to the light. */}
       {!shaderFailed ? (
         <div
-          className="absolute inset-0 scale-110 opacity-45 mix-blend-screen"
+          className="absolute inset-0 scale-110 opacity-35 mix-blend-screen"
           style={{ filter: SHADER_BLUR }}
         >
           <DarkVeil
