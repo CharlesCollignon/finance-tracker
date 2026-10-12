@@ -60,12 +60,52 @@ export function storeLinks(): StoreLinks {
 }
 
 /**
- * The version of the APK `ANDROID_APK_URL` hands out (`ANDROID_APK_VERSION`,
- * as `apps/mobile/app.json` had it at that build), or null where it is not
- * set or not a version. The phone compares its own against it and offers
- * the newer one (`/nouveautes/feed.json`); unset, it offers nothing.
+ * `ANDROID_APK_VERSION`, when it is set and is a version: an override for
+ * `latestApkVersion`, which otherwise reads the release itself.
  */
 export function androidApkVersion(): string | null {
   const value = process.env.ANDROID_APK_VERSION?.trim();
   return value && /^\d+(\.\d+){0,3}$/.test(value) ? value : null;
+}
+
+/** This repository, public: its releases carry the APK. */
+const GITHUB_REPO = "CharlesCollignon/finance-tracker";
+
+/** « 1.1.0 » from a release tag such as `android-1.1.0`, or null. */
+export function versionFromTag(tag: string): string | null {
+  return /^android-(\d+(?:\.\d+){0,3})(?:$|-)/.exec(tag)?.[1] ?? null;
+}
+
+/**
+ * The version of the APK the site hands out, for the phone to compare its
+ * own against (`/nouveautes/feed.json`): `ANDROID_APK_VERSION` where set,
+ * else the tag of the repository's latest release, which
+ * `scripts/release-android.mjs` names after `app.json`'s version — so
+ * publishing an APK is all it takes. Asked of GitHub at most every ten
+ * minutes; null when neither says, and the phone then offers nothing.
+ */
+export async function latestApkVersion(): Promise<string | null> {
+  const pinned = androidApkVersion();
+  if (pinned) {
+    return pinned;
+  }
+  try {
+    const response = await fetch(
+      `https://api.github.com/repos/${GITHUB_REPO}/releases/latest`,
+      {
+        headers: { Accept: "application/vnd.github+json" },
+        next: { revalidate: 600 },
+        signal: AbortSignal.timeout(3000),
+      },
+    );
+    if (!response.ok) {
+      return null;
+    }
+    const release = (await response.json()) as { tag_name?: unknown };
+    return typeof release.tag_name === "string"
+      ? versionFromTag(release.tag_name)
+      : null;
+  } catch {
+    return null;
+  }
 }

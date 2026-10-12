@@ -3,7 +3,7 @@ import { CHANGELOG } from "@finance/core/changelog-entries";
 import { openRoadmap } from "@/components/marketing/nouveautes/open-roadmap";
 import {
   ANDROID_DOWNLOAD_PATH,
-  androidApkVersion,
+  latestApkVersion,
   storeLinks,
 } from "@/lib/store-links";
 import { getSiteUrl } from "@/lib/supabase/env";
@@ -13,12 +13,13 @@ import { getSiteUrl } from "@/lib/supabase/env";
  * languages, what is coming, and the APK the site hands out with its
  * version. Read by the app rather than bundled into it, so an APK installed
  * months ago still hears of what shipped since — and of a newer APK to
- * download. Built once per deployment, as the entries are.
+ * download. Built again at most every ten minutes, so a release published
+ * between deployments is offered without one (`latestApkVersion`).
  */
-export const dynamic = "force-static";
+export const revalidate = 600;
 
-export function GET() {
-  const version = androidApkVersion();
+export async function GET() {
+  const version = await latestApkVersion();
   const feed: NouveautesFeed = {
     entries: [...CHANGELOG],
     roadmap: [...openRoadmap()],

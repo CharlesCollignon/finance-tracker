@@ -348,7 +348,8 @@ says so, and a Claude Code hook holds it: `scripts/changelog-guard.mjs`).
 The site draws them at `/nouveautes` (and `/nouveautes/<id>` with one open),
 an RSS feed at `/nouveautes/rss.xml`, and the phone reads
 `/nouveautes/feed.json` — the same list, « Bientôt », and the APK the site
-hands out with its version (`ANDROID_APK_VERSION`).
+hands out with its version, read from the tag of the latest GitHub release
+(`scripts/release-android.mjs` makes those).
 
 What a person has seen is theirs, on every device:
 `user_preferences.changelog_seen` (migration 069), the newest entry read.
