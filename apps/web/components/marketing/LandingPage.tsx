@@ -1,6 +1,11 @@
 /* Hallmark · genre: atmospheric · macrostructure: Split Studio · theme: design.md (Pluclair) · enrichment: kept (WebGL Earth hero) · nav: kept · footer: kept */
 
-import { AppleLogo, GooglePlayLogo } from "@phosphor-icons/react/dist/ssr";
+import Link from "next/link";
+import {
+  AndroidLogo,
+  AppleLogo,
+  GooglePlayLogo,
+} from "@phosphor-icons/react/dist/ssr";
 import { getLocale } from "@/lib/locale";
 import { LandingCtas } from "@/components/marketing/LandingCtas";
 import { LandingEarth } from "@/components/marketing/LandingEarth";
@@ -12,9 +17,10 @@ import {
   RiseLines,
   RiseWords,
 } from "@/components/marketing/LandingReveal";
+import { ABOUT_HREF } from "@/components/marketing/about-copy";
 import { landingCopyFor } from "@/components/marketing/landing-copy";
 import { marketingFocus } from "@/components/marketing/marketing-focus";
-import { storeLinks } from "@/lib/store-links";
+import { ANDROID_DOWNLOAD_PATH, storeLinks } from "@/lib/store-links";
 import { FeatureBento } from "@/components/marketing/landing/FeatureBento";
 import { FigureSection } from "@/components/marketing/landing/FigureSection";
 import { OrbFinale } from "@/components/marketing/landing/OrbFinale";
@@ -62,11 +68,16 @@ export async function LandingPage({ isLoggedIn }: LandingPageProps) {
     faq,
     finalCta,
   } = landingCopyFor(locale);
-  // The phone app leaves « Bientôt » once a store has it.
+  // The phone app leaves « Bientôt » once a store has it, or the site hands
+  // out its APK. The APK goes through `/android`, which follows the file
+  // wherever it is hosted; Google Play, once it has the app, replaces it.
   const stores = storeLinks();
+  const apk =
+    stores.androidApk && !stores.googlePlay ? ANDROID_DOWNLOAD_PATH : null;
   const inStores = [
     { href: stores.appStore, label: phone.appStore, Icon: AppleLogo },
     { href: stores.googlePlay, label: phone.googlePlay, Icon: GooglePlayLogo },
+    { href: apk, label: phone.androidApk, Icon: AndroidLogo },
   ].filter((store): store is typeof store & { href: string } =>
     Boolean(store.href),
   );
@@ -172,6 +183,20 @@ export async function LandingPage({ isLoggedIn }: LandingPageProps) {
                   </a>
                 ))}
               </div>
+              {apk ? (
+                <p className="mt-4 text-sm leading-relaxed text-marketing-faint">
+                  {phone.apkNote}{" "}
+                  <Link
+                    href={`${ABOUT_HREF}#android`}
+                    className={cn(
+                      "rounded-control text-marketing-muted underline underline-offset-4 transition-colors duration-hover hover:text-white",
+                      marketingFocus,
+                    )}
+                  >
+                    {phone.apkHelp}
+                  </Link>
+                </p>
+              ) : null}
             </FadeUp>
           </div>
         </section>

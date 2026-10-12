@@ -1,26 +1,43 @@
 # Pluclair in the stores
 
-## For now: an APK for a few friends on Android
+## For now: an APK, from the site
 
 The stores are set aside (the owner, 2026-10-09: no Apple account, no
-iPhone to test on). The app goes to a few friends with Android phones as
-an APK, installed from a link — no store, no review.
+iPhone to test on). The Android app is an APK anyone can download from the
+site — no store, no review — in open beta (owner's call, 2026-10-12). The
+landing's « Sur votre téléphone » and the about page (`/a-propos#android`)
+offer it once `ANDROID_APK_URL` is set; every button goes through
+`/android`, which redirects to the file, so a new build never breaks a link
+already shared.
 
 1. On expo.dev, project `salutcharless-team/pluclair`, set the **preview**
    environment's variables, which the `preview` profile reads:
    `EXPO_PUBLIC_SUPABASE_URL`, `EXPO_PUBLIC_SUPABASE_ANON_KEY`,
    `EXPO_PUBLIC_WEB_APP_URL` — the hosted project's public values only —
    and `EXPO_PUBLIC_FEEDBACK_EMAIL`, the address « Envoyer un retour » in
-   Profile writes to (`FEEDBACK_EMAIL` on Vercel does the same on the web).
-   It is in the APK, so a friend can read it.
+   Profile writes to (`FEEDBACK_EMAIL` on Vercel does the same on the web,
+   and the about page's « M'écrire »). It is in the APK, so anyone can read it.
 2. Build: `cd apps/mobile && eas build --platform android --profile preview`.
    The first build asks to create the signing key; let EAS keep it, so
-   every later APK installs over the one before.
-3. Send the build's page (expo.dev shows a link and a QR code). On the
-   friend's phone: open it, download the APK, allow the browser to install
-   apps when Android asks, and press « Installer quand même » if Play
-   Protect warns about an unknown developer.
-4. Once, for what a standalone app does differently from Expo Go:
+   every later APK installs over the one before. Never let it make a new
+   one: a phone refuses an update signed with another key.
+3. Publish the file as a GitHub release of this (public) repository, named
+   `pluclair.apk` and not marked as a pre-release, so the address below
+   always means the latest one:
+
+   ```sh
+   cp ~/Downloads/<the build>.apk pluclair.apk
+   gh release create android-1.0.0-beta.1 pluclair.apk \
+     --title "Pluclair Android 1.0.0 bêta 1" --notes "…"
+   ```
+
+   GitHub shows each file's SHA-256 beside it on the release page.
+4. Once, on Vercel: `ANDROID_APK_URL` =
+   `https://github.com/CharlesCollignon/finance-tracker/releases/latest/download/pluclair.apk`,
+   then a redeploy (Vercel reads new variables only on a new deployment).
+   Any HTTPS address ending in `.apk` is taken (`lib/store-links.ts`);
+   anything else leaves the download hidden.
+5. Once, for what a standalone app does differently from Expo Go:
    - **Google sign-in** comes back to `pluclair://auth/callback`: Supabase
      → Authentication → URL Configuration → Redirect URLs must allow
      `pluclair://**`.
@@ -28,11 +45,47 @@ an APK, installed from a link — no store, no review.
      `ANDROID_SHA256_FINGERPRINTS` on Vercel (`eas credentials -p android`
      prints its SHA-256), then a redeploy — `/.well-known/assetlinks.json`
      is built from it.
-5. The widget: a long press on the home screen → Widgets → Pluclair,
+6. The widget: a long press on the home screen → Widgets → Pluclair,
    « Il vous reste ». Expo Go cannot show it; the APK can.
 
-A change to the app reaches the friends with a new build: they install the
-new APK over the old one, and their data stays (it lives in Supabase).
+A change to the app reaches people with a new build and a new release:
+they install the new APK over the old one, and their data stays (it lives
+in Supabase). An APK does not update itself.
+
+### Before 2027: register with Google
+
+Distributing outside Google Play is legal, but Google is making certified
+Android phones refuse apps from developers it has not verified — installs
+from a website included. It applies since 30 September 2026 in Brazil,
+Indonesia, Singapore and Thailand, and is planned for everywhere else,
+France included, in 2027 (support.google.com/android-developer-console,
+answer 16561738). Unregistered, the APK would need Android's "advanced
+flow" (a day's wait, then biometrics) — most people would stop there.
+
+- An **Android Developer Console** account with full distribution (25 $
+  once, an identity check; an organisation needs a D-U-N-S number). The free
+  "limited distribution" account covers 20 devices: not a public download.
+- Register the package, `com.salut_charles.pluclair`, with the signing
+  certificate's SHA-256 (`eas credentials -p android`).
+- No closed test with 12 testers: that is Google Play's rule, not this one.
+
+### Before the public download: the legal pages
+
+`LEGAL_DRAFT` is still `true` (`apps/web/components/marketing/legal-status.ts`),
+so the privacy policy, the terms and the mentions légales answer 404 in
+production. A public site must show its mentions légales (LCEN), and an app
+holding other people's bank data must show its privacy notice before signup
+(RGPD art. 13). The blanks were filled on 2026-10-12 (published as a
+private individual, under LCEN art. 1-1 II, with pluclair.app@gmail.com as
+the contact) but one: open-banking.io's role under the RGPD, from their
+answer to the owner's letter. Then have the text read, and flip the flag.
+The terms already say Pluclair is an open beta and that the APK comes from
+pluclair.com only.
+
+That exception keeps the home address off the site only if the host has
+the publisher's identification details — name, home address and phone
+(LCEN art. 1-1, II and I). Check that Vercel's account holds them (the
+billing details, on a paid plan), or publish the address instead.
 
 ## Later: the stores
 

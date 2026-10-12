@@ -29,8 +29,8 @@ export const legalCopyFr: LegalCopy = {
         id: "who",
         heading: "Qui sommes-nous",
         body: [
-          "Pluclair est édité par [[le nom légal de l'éditeur — et, pour une société, sa forme juridique, son siège et son numéro d'immatriculation]] (« nous »). Nous sommes responsables du traitement des données décrites ici, sauf quand une section désigne quelqu'un d'autre.",
-          "Pour toute question sur vos données, écrivez à [[une adresse de contact confidentialité]]. Nous répondons sous un mois.",
+          "Pluclair est édité à titre non professionnel par Charles Collignon («\u00A0nous\u00A0»). Nous sommes responsables du traitement des données décrites ici, sauf quand une section désigne quelqu'un d'autre.",
+          "Pour toute question sur vos données, écrivez à pluclair.app@gmail.com. Nous répondons sous un mois.",
         ],
       },
       {
@@ -68,6 +68,7 @@ export const legalCopyFr: LegalCopy = {
         ],
         points: [
           "Pour chaque compte : son nom, sa devise et le solde que la banque indique.",
+          "Une empreinte de l'IBAN de chaque compte (SHA-256) — jamais l'IBAN lui-même —, qui sert à reconnaître le même compte joint quand les deux personnes d'un espace commun le connectent.",
           "Pour chaque mouvement : sa date, son montant, sa devise et son sens, le libellé de la banque, le commerçant ou le payeur quand la banque le nomme, et le code de catégorie du commerçant quand il existe.",
           "L'état de la connexion, et la date de fin du consentement donné à votre banque.",
         ],
@@ -75,6 +76,16 @@ export const legalCopyFr: LegalCopy = {
           "De ce fichier, nous ne conservons que les deux clés, scellées en AES-256-GCM sous une clé que seul notre serveur détient. Aucune application ne peut lire cette table — pas même pour votre propre compte — et ces clés ne sont jamais renvoyées à un navigateur ou à un téléphone, ni écrites dans un journal. Votre navigateur ou votre téléphone transmet le fichier une seule fois, à notre serveur, et ne le conserve pas.",
           "Pluclair ne demande de nouvelles données à votre banque que lorsque vous demandez une actualisation\u00A0; le reste du temps, il lit ce que votre compte open-banking.io contient déjà. Le consentement donné à votre banque dure environ 180 jours\u00A0; vous le renouvelez sur open-banking.io, et nous vous prévenons avant qu'il se termine.",
           "Vous pouvez déconnecter votre banque à tout moment depuis Profil → Banque. Nous supprimons aussitôt le fichier. Sa clé API continue d'exister chez open-banking.io jusqu'à ce que vous la supprimiez là-bas, ce que la page Banque vous rappelle de faire. Vous choisissez si les écritures apportées par votre banque restent dans vos comptes ou sont retirées\u00A0; elles restent, sauf si vous en décidez autrement. La fermeture de votre compte open-banking.io se fait auprès d'eux.",
+        ],
+      },
+      {
+        id: "space",
+        heading: "Un espace commun, à deux",
+        body: [
+          "Créer ou rejoindre un espace commun est facultatif. Il réunit deux personnes autour de ce qu'elles partagent — un compte joint, des dépenses communes, un bien acheté ensemble —, et chacune garde son espace personnel, que l'autre ne voit jamais.",
+          "Ce que l'un de vous met dans l'espace commun, l'autre le voit et peut le modifier\u00A0: ses opérations, catégories et charges, la part de chacun dans les dépenses communes, les biens et les prêts déclarés ensemble avec la part de chacun dans l'acte, et, si l'un de vous classe un compte bancaire «\u00A0Compte commun\u00A0», les mouvements et le solde de ce compte. L'autre voit aussi votre nom — celui de votre compte Google, sinon le début de votre adresse e-mail —, et son initiale à côté des lignes que vous avez ajoutées. Jamais votre espace personnel, ni votre fichier d'identifiants bancaires, ni rien de votre compte au-delà de ce nom.",
+          "Vous invitez par un lien, valable sept jours pour une seule personne, que vous transmettez comme vous voulez\u00A0: Pluclair n'envoie aucun e-mail pour cela. Quitter l'espace, ou supprimer votre compte, vous en retire aussitôt, un export de ses lignes vous étant proposé avant\u00A0; l'espace reste à l'autre personne, et disparaît avec ses lignes quand la dernière le quitte.",
+          "La base légale est le contrat qui nous lie (article 6.1.b)\u00A0: c'est vous qui choisissez de partager, et avec qui.",
         ],
       },
       {
@@ -99,7 +110,7 @@ export const legalCopyFr: LegalCopy = {
           "Ces sociétés traitent des données pour notre compte, uniquement pour faire fonctionner Pluclair, dans le cadre d'un accord de sous-traitance :",
         ],
         points: [
-          "Supabase\u00A0: la base de données et la connexion, dans l'Union européenne ([[la région exacte du projet Supabase dans l'UE]]).",
+          "Supabase\u00A0: la base de données et la connexion, dans l'Union européenne, à Francfort (Allemagne).",
           "Vercel\u00A0: l'hébergement du site et du serveur, les fonctions serveur s'exécutant à Paris, en France.",
           "OpenRouter (États-Unis), seulement si vous connectez votre propre compte IA\u00A0: Pluclair n'a pas de modèle d'IA à lui, et les lectures et les questions ne sont rédigées que par le modèle que vous avez choisi, sur votre compte et à vos frais. OpenRouter reçoit les chiffres à partir desquels une lecture est écrite — noms de catégories et totaux du mois, fonds d'un portefeuille et leurs valeurs, nom et identifiant d'un fonds à lire —, et, pour une conversation dans «\u00A0Questions\u00A0», vos questions telles que vous les avez tapées — ce que vous y écrivez lui parvient tel quel —, les réponses déjà données dans cette conversation, et ce que le modèle consulte pour y répondre\u00A0: des totaux par mois, catégorie ou commerce, vos opérations récurrentes, vos comptes d'épargne, vos placements et vos prêts, et, quand la question porte sur elles, des opérations une à une (date, libellé, catégorie, montant). Il les transmet au fournisseur du modèle (Mistral, OpenAI ou Anthropic). Jamais votre nom, votre e-mail ni vos identifiants bancaires. La clé de ce compte est conservée chiffrée sur notre serveur, et vous pouvez le déconnecter à tout moment.",
           "Google : seulement si vous vous connectez avec Google.",
@@ -108,7 +119,7 @@ export const legalCopyFr: LegalCopy = {
           "La recherche d'adresse : quand vous saisissez l'adresse d'un bien, notre serveur demande au service de géocodage de l'État (Géoplateforme de l'IGN) de la retrouver. L'IGN reçoit l'adresse saisie, jamais votre adresse IP ni rien d'autre vous concernant. Pour estimer ce que vaut un bien, nous consultons les ventes immobilières publiques (DVF) et l'indice des prix Notaires-INSEE, en n'envoyant qu'un code de commune ou l'identifiant de l'indice. Pour un bien loué, nous téléchargeons la carte des loyers de l'ANIL en entier, sans rien envoyer vous concernant.",
         ],
         after: [
-          "Vercel Inc. est une société américaine certifiée au titre du cadre de protection des données UE–États-Unis, sur lequel repose tout transfert vers elle. Supabase conserve les données dans l'Union européenne, et s'appuie sur les clauses contractuelles types de la Commission européenne pour tout accès depuis l'extérieur. [[Vérifier l'accord de sous-traitance en vigueur de chaque prestataire.]]",
+          "Vercel Inc. est une société américaine certifiée au titre du cadre de protection des données UE–États-Unis, sur lequel repose tout transfert vers elle. Supabase conserve les données dans l'Union européenne, et s'appuie sur les clauses contractuelles types de la Commission européenne pour tout accès depuis l'extérieur. L'accord de traitement des données de chacun (DPA) fait partie de ses conditions d'utilisation et s'applique dès l'ouverture du compte.",
           "Si vous connectez un compte IA, OpenRouter et le fournisseur du modèle choisi peuvent traiter ces chiffres hors de l'Union européenne, le plus souvent aux États-Unis\u00A0: ce transfert a lieu sur votre compte, à votre demande, et vous en êtes informé avant de le connecter.",
         ],
       },
@@ -118,8 +129,8 @@ export const legalCopyFr: LegalCopy = {
         body: [],
         points: [
           "Votre compte et tout ce qu'il contient : tant que vous gardez le compte.",
-          "Une écriture supprimée : [[conservée 30 jours pour pouvoir annuler la suppression, puis effacée — la tâche qui les efface n'est pas encore programmée]].",
-          "Quand vous supprimez votre compte (Profil → Supprimer le compte), votre fichier d'identifiants est d'abord supprimé, puis tout est retiré de la base en service d'un coup. Les sauvegardes sont écrasées sous [[la durée de conservation des sauvegardes de l'offre Supabase]].",
+          "Une écriture supprimée\u00A0: conservée 30 jours pour pouvoir annuler la suppression, puis effacée par une tâche qui passe chaque nuit.",
+          "Quand vous supprimez votre compte (Profil → Supprimer le compte), votre fichier d'identifiants est d'abord supprimé, puis tout est retiré de la base d'un coup. L'offre Supabase utilisée ne comprend pas de sauvegardes\u00A0: ce qui est retiré ne peut pas être restauré.",
           "Votre fichier d'identifiants\u00A0: jusqu'à ce que vous déconnectiez la banque, remplaciez le fichier ou supprimiez votre compte.",
           "La mesure d'audience\u00A0: 13 mois, puis effacée\u00A0; supprimer votre compte l'efface aussitôt.",
           "Vos questions et leurs réponses («\u00A0Questions\u00A0»)\u00A0: 30 jours, puis effacées\u00A0; chacune peut être supprimée avant, et supprimer votre compte les efface aussitôt.",
@@ -130,7 +141,7 @@ export const legalCopyFr: LegalCopy = {
         id: "security",
         heading: "Comment c'est protégé",
         body: [
-          "Chaque ligne est rattachée à son compte, et la base elle-même refuse de la montrer à quiconque d'autre (sécurité au niveau des lignes). Tous les échanges sont chiffrés en transit. Les clés bancaires sont chiffrées au repos sous une clé conservée à part de la base. L'accès aux systèmes de production est limité à [[qui dispose d'un accès d'administration]].",
+          "Chaque ligne est rattachée à son compte, et la base elle-même refuse de la montrer à quiconque d'autre — sauf, pour celles d'un espace commun, aux deux personnes qui le partagent (sécurité au niveau des lignes). Tous les échanges sont chiffrés en transit. Les clés bancaires sont chiffrées au repos sous une clé conservée à part de la base. L'accès aux systèmes de production est réservé à l'éditeur seul.",
           "Si une violation met vos données en danger, nous le signalerons à la CNIL sous 72 heures et vous en informerons dans les meilleurs délais, comme la loi l'exige.",
         ],
       },
@@ -138,7 +149,7 @@ export const legalCopyFr: LegalCopy = {
         id: "rights",
         heading: "Vos droits",
         body: [
-          "Vous pouvez demander à consulter les données que nous détenons sur vous, les faire rectifier ou effacer, limiter leur usage ou vous y opposer, les recevoir dans un format portable, et retirer tout consentement donné. L'essentiel se fait dans l'application : modifier ou supprimer une écriture, exporter un mois du Journal en CSV, déconnecter votre banque, ou supprimer votre compte. Pour le reste, écrivez à [[l'adresse de contact confidentialité]].",
+          "Vous pouvez demander à consulter les données que nous détenons sur vous, les faire rectifier ou effacer, limiter leur usage ou vous y opposer, les recevoir dans un format portable, et retirer tout consentement donné. L'essentiel se fait dans l'application\u00A0: modifier ou supprimer une écriture, exporter un mois du Journal en CSV, déconnecter votre banque, quitter un espace commun, ou supprimer votre compte. Pour le reste, écrivez à {EMAIL}.",
           "Si vous estimez que nous n'avons pas traité vos données correctement, vous pouvez adresser une réclamation à la CNIL (cnil.fr) ou à l'autorité de protection des données de votre pays.",
         ],
       },
@@ -168,7 +179,7 @@ export const legalCopyFr: LegalCopy = {
         id: "about",
         heading: "À propos de ces conditions",
         body: [
-          "Ces conditions forment un accord entre vous et [[le nom légal de l'éditeur]], qui édite Pluclair. En créant un compte, vous les acceptez. La politique de confidentialité explique comment vos données sont traitées, et fait partie de cet accord.",
+          "Ces conditions forment un accord entre vous et Charles Collignon, qui édite Pluclair à titre non professionnel. En créant un compte, vous les acceptez. La politique de confidentialité explique comment vos données sont traitées, et fait partie de cet accord.",
         ],
       },
       {
@@ -183,7 +194,7 @@ export const legalCopyFr: LegalCopy = {
         id: "account",
         heading: "Votre compte",
         body: [
-          "Vous devez avoir au moins 15 ans et utiliser une vraie adresse e-mail à laquelle vous recevez du courrier. Un compte est destiné à une seule personne. Gardez vos moyens de connexion pour vous ; ce qui est fait avec votre compte relève de votre responsabilité, alors prévenez-nous tout de suite à [[une adresse de contact assistance]] si vous pensez que quelqu'un d'autre l'a utilisé.",
+          "Vous devez avoir au moins 15 ans et utiliser une vraie adresse e-mail à laquelle vous recevez du courrier. Un compte est destiné à une seule personne. Gardez vos moyens de connexion pour vous\u00A0; ce qui est fait avec votre compte relève de votre responsabilité, alors prévenez-nous tout de suite à {EMAIL} si vous pensez que quelqu'un d'autre l'a utilisé.",
         ],
       },
       {
@@ -226,6 +237,7 @@ export const legalCopyFr: LegalCopy = {
         heading: "Disponibilité",
         body: [
           "Nous faisons en sorte que Pluclair reste disponible et vos données en sécurité, mais nous ne pouvons pas promettre qu'il ne sera jamais interrompu : maintenance, pannes et incidents chez les services dont il dépend peuvent le rendre indisponible un temps.",
+          "Pluclair est en bêta ouverte\u00A0: ce qui est proposé fonctionne, mais l'application change encore souvent, et une erreur peut s'y glisser. Vérifiez un chiffre important auprès de votre banque avant de vous y fier, et exportez vos écritures si vous voulez en garder une copie à vous. L'application Android est distribuée depuis notre site, hors des stores\u00A0: ne l'installez que depuis pluclair.com.",
         ],
       },
       {
@@ -239,29 +251,27 @@ export const legalCopyFr: LegalCopy = {
         id: "ending",
         heading: "Fin de l'accord",
         body: [
-          "Vous pouvez arrêter à tout moment en supprimant votre compte depuis Profil. Si nous devions fermer Pluclair, nous vous préviendrons au moins [[30 jours]] à l'avance, en vous laissant le moyen d'exporter vos écritures d'abord.",
+          "Vous pouvez arrêter à tout moment en supprimant votre compte depuis Profil. Si nous devions fermer Pluclair, nous vous préviendrons au moins 30 jours à l'avance, en vous laissant le moyen d'exporter vos écritures d'abord.",
         ],
       },
       {
         id: "changes",
         heading: "Modifications de ces conditions",
         body: [
-          "Si ces conditions changent de façon importante, nous vous prévenons dans l'application au moins [[30 jours]] avant l'entrée en vigueur. Si vous ne les acceptez pas, vous pouvez supprimer votre compte d'ici là ; continuer à utiliser Pluclair ensuite vaut acceptation des nouvelles conditions.",
+          "Si ces conditions changent de façon importante, nous vous prévenons dans l'application au moins 30 jours avant l'entrée en vigueur. Si vous ne les acceptez pas, vous pouvez supprimer votre compte d'ici là ; continuer à utiliser Pluclair ensuite vaut acceptation des nouvelles conditions.",
         ],
       },
       {
         id: "law",
         heading: "Droit applicable et litiges",
         body: [
-          "Ces conditions sont régies par le droit français. En cas de problème, écrivez-nous d'abord à [[l'adresse de contact assistance]] et nous chercherons à y remédier. [[Si l'éditeur est un professionnel s'adressant à des consommateurs : indiquer ici le médiateur de la consommation, que vous pouvez saisir gratuitement.]] Vous pouvez aussi saisir les tribunaux français compétents, ou ceux de votre lieu de résidence quand la loi vous en donne le droit.",
+          "Ces conditions sont régies par le droit français. En cas de problème, écrivez-nous d'abord à pluclair.app@gmail.com et nous chercherons à y remédier. Vous pouvez aussi saisir les tribunaux français compétents, ou ceux de votre lieu de résidence quand la loi vous en donne le droit.",
         ],
       },
       {
         id: "contact",
         heading: "Contact",
-        body: [
-          "[[Le nom légal et l'adresse postale de l'éditeur]]. E-mail : [[l'adresse de contact assistance]].",
-        ],
+        body: ["Charles Collignon. E-mail\u00A0: pluclair.app@gmail.com."],
       },
     ],
   },
@@ -275,22 +285,20 @@ export const legalCopyFr: LegalCopy = {
         id: "publisher",
         heading: "Éditeur",
         body: [
-          "Le site pluclair.com et les applications Pluclair sont édités par [[les nom et prénoms de l'éditeur — ou, pour une société, sa dénomination, sa forme juridique et son capital social]], [[adresse du domicile ou du siège social]], téléphone [[un numéro de téléphone]], e-mail [[une adresse e-mail de contact]]. [[Numéro d'immatriculation (SIREN / RCS) si l'éditeur est immatriculé\u00A0; sinon, supprimer cette phrase]].",
+          "Le site pluclair.com et les applications Pluclair sont édités à titre non professionnel par Charles Collignon, que vous pouvez joindre à pluclair.app@gmail.com. Comme le permet l'article 1-1, II, de la loi n° 2004-575 du 21 juin 2004 pour la confiance dans l'économie numérique, son adresse personnelle n'est pas publiée\u00A0: ses éléments d'identification ont été communiqués à l'hébergeur, dont le nom et l'adresse figurent ci-dessous.",
         ],
       },
       {
         id: "director",
         heading: "Directeur de la publication",
-        body: [
-          "[[Nom du directeur de la publication — en général l'éditeur lui-même]].",
-        ],
+        body: ["Charles Collignon."],
       },
       {
         id: "hosting",
         heading: "Hébergement",
         body: [
-          "Le site et ses serveurs sont hébergés par Vercel Inc., 440 N Barranca Ave #4133, Covina, CA 91723, États-Unis, téléphone [[numéro de téléphone de Vercel]]. Les fonctions serveur de Pluclair s'exécutent à Paris, en France.",
-          "Les données de l'application sont stockées par [[dénomination et adresse de Supabase]], dans l'Union européenne ([[région exacte du projet Supabase dans l'UE]]).",
+          "Le site et ses serveurs sont hébergés par Vercel Inc., 440 N Barranca Ave #4133, Covina, CA 91723, États-Unis. Les fonctions serveur de Pluclair s'exécutent à Paris, en France.",
+          "Les données de l'application sont stockées par Supabase Pte. Ltd., 65 Chulia Street #38-02/03, OCBC Centre, Singapour 049513, dans l'Union européenne, à Francfort (Allemagne).",
         ],
       },
       {

@@ -80,8 +80,8 @@ export const legalCopy: LegalCopy = {
         id: "who",
         heading: "Who we are",
         body: [
-          'Pluclair is run by [[the operator\'s legal name — and, for a company, its legal form, registered office and registration number]] ("we", "us"). We are the controller of the personal data described here, except where a section says someone else is.',
-          "For anything about your data, write to [[a privacy contact address]]. We answer within one month.",
+          'Pluclair is run, not as a business, by Charles Collignon ("we", "us"). We are the controller of the personal data described here, except where a section says someone else is.',
+          "For anything about your data, write to pluclair.app@gmail.com. We answer within one month.",
         ],
       },
       {
@@ -119,6 +119,7 @@ export const legalCopy: LegalCopy = {
         ],
         points: [
           "For each account: its name, currency, and the balance the bank reports.",
+          "A fingerprint of each account's IBAN (SHA-256) — never the IBAN itself — used to recognise the same joint account when both people in a shared space connect it.",
           "For each movement: its date, amount, currency and direction, the bank's description, the merchant or payer where the bank names one, and the merchant category code where there is one.",
           "The connection's state, and when your bank's consent ends.",
         ],
@@ -126,6 +127,16 @@ export const legalCopy: LegalCopy = {
           "Of that file we keep only the two keys, sealed with AES-256-GCM under a key that only our server holds. No app can read that table — not even for your own account — and the keys are never sent back to a browser or phone, or written to a log. Your browser or phone carries the file once, to our server, and does not keep it.",
           "Pluclair asks your bank for new data only when you ask for a refresh; the rest of the time it reads what your open-banking.io account already holds. Your bank's consent lasts about 180 days; you renew it on open-banking.io, and we remind you before it ends.",
           "You can disconnect at any time from Profile → Bank. We delete the file straight away. Its API key keeps existing at open-banking.io until you delete it there, which the Bank page reminds you to do. You choose whether the entries your bank brought in stay in your records or are removed; they stay unless you say otherwise. Closing your open-banking.io account is done with them.",
+        ],
+      },
+      {
+        id: "space",
+        heading: "A shared space, for two",
+        body: [
+          "Creating or joining a shared space is optional. It brings two people together around what they share — a joint account, joint spending, a home bought together — and each keeps a personal space the other never sees.",
+          "What either of you puts in the shared space, the other sees and can change: its entries, categories and charges, each person's share of the joint spending, the homes and loans declared together with each person's share of the deed, and, if one of you files a bank account as \u201cJoint account\u201d, that account's movements and balance. The other person also sees your name — your Google account's, otherwise the start of your email address — and its initial next to the rows you added. Never your personal space, your bank credentials file, or anything of your account beyond that name.",
+          "You invite with a link, valid for seven days and for one person, which you pass on however you like: Pluclair sends no email for it. Leaving the space, or deleting your account, takes you out of it at once, after offering you an export of its rows; the space stays with the other person, and is deleted with its rows when the last one leaves.",
+          "The legal basis is the contract between us (article 6.1.b): you choose to share, and with whom.",
         ],
       },
       {
@@ -150,7 +161,7 @@ export const legalCopy: LegalCopy = {
           "These companies process data on our behalf, only to run Pluclair, and under a data processing agreement:",
         ],
         points: [
-          "Supabase: the database and sign-in, in the European Union ([[the exact EU region of the Supabase project]]).",
+          "Supabase: the database and sign-in, in the European Union, in Frankfurt (Germany).",
           "Vercel: hosting for the website and the server, with the server functions running in Paris, France.",
           "OpenRouter (United States), only if you connect your own AI account: Pluclair has no AI model of its own, and reads and questions are written only by the model you chose, on your account and at your expense. OpenRouter receives the figures a read is written from — category names and monthly totals, the funds in a wallet and their values, the name and identifier of a fund to read — and, for a conversation in « Questions », your questions as you typed them — what you write there reaches it as it is —, the answers already given in that conversation, and what the model looks up to answer: totals by month, category or shop, your recurring entries, savings accounts, investments and loans, and, when the question is about them, individual entries (date, label, category, amount). It passes them to the model's provider (Mistral, OpenAI or Anthropic). Never your name, your email or your bank credentials. The account's key is kept encrypted on our server, and you can disconnect it at any time.",
           "Google: only if you sign in with Google.",
@@ -159,7 +170,7 @@ export const legalCopy: LegalCopy = {
           "Address search: when you type a property's address, our server asks the French State's geocoding service (IGN Géoplateforme) to find it. IGN receives the address you typed, never your IP address or anything else about you. To estimate what a property is worth we read the public record of property sales (DVF) and the Notaires–INSEE price index, sending only a town code or the index's identifier. For a let property we download the ANIL's rent map whole, sending nothing about you.",
         ],
         after: [
-          "Vercel Inc. is a US company certified under the EU–US Data Privacy Framework, on which any transfer to it relies. Supabase keeps the data in the European Union, and relies on the European Commission's standard contractual clauses for any access from outside it. [[Confirm each provider's current data processing agreement.]]",
+          "Vercel Inc. is a US company certified under the EU–US Data Privacy Framework, on which any transfer to it relies. Supabase keeps the data in the European Union, and relies on the European Commission's standard contractual clauses for any access from outside it. Each one's data processing agreement (DPA) is part of its terms of service and applies from the moment the account is opened.",
           "If you connect an AI account, OpenRouter and the chosen model's provider may process those figures outside the European Union, most often in the United States: that transfer happens on your account, at your request, and you are told before you connect it.",
         ],
       },
@@ -169,8 +180,8 @@ export const legalCopy: LegalCopy = {
         body: [],
         points: [
           "Your account and everything in it: for as long as you keep the account.",
-          "A deleted entry: [[kept for 30 days so the deletion can be undone, then erased — the job that erases them is not scheduled yet]].",
-          "When you delete your account (Profile → Delete account), your credentials file is deleted first, then everything is removed from the live database at once. Backups are overwritten within [[the backup retention of the Supabase plan]].",
+          "A deleted entry: kept for 30 days so the deletion can be undone, then erased by a job that runs every night.",
+          "When you delete your account (Profile → Delete account), your credentials file is deleted first, then everything is removed from the database at once. The Supabase plan in use includes no backups: what is removed cannot be restored.",
           "Your credentials file: until you disconnect the bank, replace the file, or delete your account.",
           "The audience measurement: 13 months, then erased; deleting your account erases it at once.",
           "Your questions and their answers (« Questions »): 30 days, then erased; each can be deleted sooner, and deleting your account erases them at once.",
@@ -181,7 +192,7 @@ export const legalCopy: LegalCopy = {
         id: "security",
         heading: "How it is protected",
         body: [
-          "Every row is tied to its account and the database itself refuses to show it to anyone else (row-level security). All traffic is encrypted in transit. Bank keys are encrypted at rest under a key held apart from the database. Access to the production systems is limited to [[who has administrative access]].",
+          "Every row is tied to its account and the database itself refuses to show it to anyone else — except, for a shared space's rows, the two people who share it (row-level security). All traffic is encrypted in transit. Bank keys are encrypted at rest under a key held apart from the database. Access to the production systems is reserved to the publisher alone.",
           "If a breach puts your data at risk, we will tell the CNIL within 72 hours and tell you without undue delay, as the law requires.",
         ],
       },
@@ -189,7 +200,7 @@ export const legalCopy: LegalCopy = {
         id: "rights",
         heading: "Your rights",
         body: [
-          "You can ask to see the data we hold about you, have it corrected or erased, restrict or object to how it is used, receive it in a portable format, and withdraw any consent you gave. Most of this is in the app: edit or delete any entry, export a month of the Ledger as a CSV file, disconnect your bank, or delete your account. For anything else, write to [[the privacy contact address]].",
+          "You can ask to see the data we hold about you, have it corrected or erased, restrict or object to how it is used, receive it in a portable format, and withdraw any consent you gave. Most of this is in the app: edit or delete any entry, export a month of the Ledger as a CSV file, disconnect your bank, leave a shared space, or delete your account. For anything else, write to pluclair.app@gmail.com.",
           "If you think we have not handled your data properly, you can complain to the CNIL (cnil.fr) or to the data protection authority where you live.",
         ],
       },
@@ -219,7 +230,7 @@ export const legalCopy: LegalCopy = {
         id: "about",
         heading: "About these terms",
         body: [
-          "These terms are an agreement between you and [[the operator's legal name]], who runs Pluclair. By creating an account you accept them. The privacy policy explains how your data is handled, and is part of this agreement.",
+          "These terms are an agreement between you and Charles Collignon, who runs Pluclair, not as a business. By creating an account you accept them. The privacy policy explains how your data is handled, and is part of this agreement.",
         ],
       },
       {
@@ -234,7 +245,7 @@ export const legalCopy: LegalCopy = {
         id: "account",
         heading: "Your account",
         body: [
-          "You must be at least 15 and use a real email address you can receive mail at. An account is for one person. Keep your sign-in methods to yourself; what is done with your account is your responsibility, so tell us straight away at [[a support contact address]] if you think someone else has used it.",
+          "You must be at least 15 and use a real email address you can receive mail at. An account is for one person. Keep your sign-in methods to yourself; what is done with your account is your responsibility, so tell us straight away at pluclair.app@gmail.com if you think someone else has used it.",
         ],
       },
       {
@@ -277,6 +288,7 @@ export const legalCopy: LegalCopy = {
         heading: "Availability",
         body: [
           "We work to keep Pluclair available and your data safe, but we cannot promise it will never be interrupted: maintenance, faults and outages at the services it relies on can all make it unavailable for a while.",
+          "Pluclair is in open beta: what it offers works, but the app still changes often, and a mistake can slip in. Check an important figure against your bank before relying on it, and export your entries if you want a copy of your own. The Android app is distributed from our website, outside the stores: only install it from pluclair.com.",
         ],
       },
       {
@@ -290,29 +302,27 @@ export const legalCopy: LegalCopy = {
         id: "ending",
         heading: "Ending the agreement",
         body: [
-          "You can stop at any time by deleting your account from Profile. If we ever close Pluclair, we will tell you at least [[30 days]] ahead, and leave you the means to export your records first.",
+          "You can stop at any time by deleting your account from Profile. If we ever close Pluclair, we will tell you at least 30 days ahead, and leave you the means to export your records first.",
         ],
       },
       {
         id: "changes",
         heading: "Changes to these terms",
         body: [
-          "If these terms change in a way that matters, we will tell you in the app at least [[30 days]] before the change takes effect. If you do not accept it, you can delete your account before then; continuing to use Pluclair afterwards means you accept the new terms.",
+          "If these terms change in a way that matters, we will tell you in the app at least 30 days before the change takes effect. If you do not accept it, you can delete your account before then; continuing to use Pluclair afterwards means you accept the new terms.",
         ],
       },
       {
         id: "law",
         heading: "Applicable law and disputes",
         body: [
-          "These terms are governed by French law. If something goes wrong, write to us first at [[the support contact address]] and we will try to put it right. [[If the operator is a business dealing with consumers: name the consumer mediator here, whom you can contact free of charge.]] You can also bring a claim before the competent French courts, or those where you live if the law gives you that right.",
+          "These terms are governed by French law. If something goes wrong, write to us first at pluclair.app@gmail.com and we will try to put it right. You can also bring a claim before the competent French courts, or those where you live if the law gives you that right.",
         ],
       },
       {
         id: "contact",
         heading: "Contact",
-        body: [
-          "[[The operator's legal name and postal address]]. Email: [[the support contact address]].",
-        ],
+        body: ["Charles Collignon. Email: pluclair.app@gmail.com."],
       },
     ],
   },
@@ -326,20 +336,20 @@ export const legalCopy: LegalCopy = {
         id: "publisher",
         heading: "Publisher",
         body: [
-          "The pluclair.com website and the Pluclair apps are published by [[the publisher's full name — or, for a company, its name, legal form and share capital]], [[home address or registered office]], telephone [[a telephone number]], email [[a contact email address]]. [[Registration number (SIREN / RCS) if the publisher is registered; otherwise remove this sentence]].",
+          "The pluclair.com website and the Pluclair apps are published, not as a business, by Charles Collignon, who can be reached at pluclair.app@gmail.com. As article 1-1, II, of French law no. 2004-575 of 21 June 2004 on confidence in the digital economy allows, the publisher's home address is not published: the publisher's identification details have been given to the host, whose name and address are below.",
         ],
       },
       {
         id: "director",
         heading: "Publication director",
-        body: ["[[Name of the publication director — usually the publisher]]."],
+        body: ["Charles Collignon."],
       },
       {
         id: "hosting",
         heading: "Hosting",
         body: [
-          "The website and its servers are hosted by Vercel Inc., 440 N Barranca Ave #4133, Covina, CA 91723, United States, telephone [[Vercel's telephone number]]. Pluclair's server functions run in Paris, France.",
-          "The app's data is stored by [[Supabase's legal name and address]], in the European Union ([[the exact EU region of the Supabase project]]).",
+          "The website and its servers are hosted by Vercel Inc., 440 N Barranca Ave #4133, Covina, CA 91723, United States. Pluclair's server functions run in Paris, France.",
+          "The app's data is stored by Supabase Pte. Ltd., 65 Chulia Street #38-02/03, OCBC Centre, Singapore 049513, in the European Union, in Frankfurt (Germany).",
         ],
       },
       {

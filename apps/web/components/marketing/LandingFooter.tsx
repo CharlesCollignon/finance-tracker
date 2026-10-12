@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Orb } from "@/components/brand/Orb";
+import { ABOUT_HREF } from "@/components/marketing/about-copy";
 import { LocaleChoices } from "@/components/marketing/LocaleSwitch";
 import {
   featureHref,
@@ -148,7 +149,18 @@ export async function LandingFooter({ isLoggedIn }: { isLoggedIn: boolean }) {
         <div className="marketing-rule" />
 
         <div className="flex flex-col gap-2 text-sm text-marketing-faint sm:flex-row sm:items-center sm:justify-between">
-          <p>{copy.footer.copyright}</p>
+          <p>
+            {copy.footer.copyright} ·{" "}
+            <Link
+              href={ABOUT_HREF}
+              className={cn(
+                "rounded-control underline-offset-4 transition-colors duration-hover hover:text-white hover:underline",
+                marketingFocus,
+              )}
+            >
+              {copy.footer.madeBy}
+            </Link>
+          </p>
           <p>{copy.footer.disclaimer}</p>
         </div>
         {/* The hero's Earth is NASA's imagery, which asks for its credit. */}
