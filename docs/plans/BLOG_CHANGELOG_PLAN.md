@@ -208,7 +208,15 @@ entries curated from the 106 merges, fixes grouped.
   optimistic and rolled back with a toast if it fails. The page stays static;
   counts and one's own reactions load on the client.
 
-## Phase 3 — Nouveautés in the apps (branch `nouveautes-in-app`)
+## Phase 3 — Nouveautés in the apps (branch `nouveautes-in-app`) — built, waiting on the owner
+
+Built with two changes from below: the web's « Nouveautés » row opens the
+public page rather than a sheet (one place to read, and reading it clears
+the dot), and the `news` push waits for assumption 9 to be confirmed. The
+dot is the status green, not gold. Migration 069 has to be run on the
+hosted database; until then there is no dot. `ANDROID_APK_VERSION` on
+Vercel, raised with `app.json`'s version at each APK
+(`docs/store/README.md`), turns the banner on.
 
 - **Seen, once for both apps**: `user_preferences.changelog_seen` (the newest
   entry id read), so reading on the phone clears the web's dot.
