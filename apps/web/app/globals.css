@@ -1424,6 +1424,33 @@ html:has(.marketing-shell) {
   }
 }
 
+/* The about page's « Bêta ouverte » dot: a ring that leaves it and fades,
+   once every two and a half seconds, the way a status light says live. It
+   is the dot's own green, never the accent. Off under reduced motion, where
+   the dot simply stays lit. */
+.about-live {
+  animation: about-live 2.5s cubic-bezier(0.32, 0.72, 0, 1) infinite;
+}
+
+@keyframes about-live {
+  0% {
+    opacity: 0.6;
+    transform: scale(1);
+  }
+  80%,
+  100% {
+    opacity: 0;
+    transform: scale(2.6);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .about-live {
+    animation: none;
+    opacity: 0;
+  }
+}
+
 /* --- ground texture ------------------------------------------------------ */
 
 /* A handful of hand-placed sparks. Cheaper than a canvas field and, at this

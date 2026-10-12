@@ -366,6 +366,12 @@ hairline ring; the flame is gold while the run lasts and grey when it ends; a
 closed month's Kept counts up in gold. Gold on anything that is not a moment is
 still the accent spent.
 
+The about page (`/a-propos`, October 2026) spends it in two places of its own,
+both read the same way. Its run from the first line of code to the beta fills
+each stop's dot in gold as the scroll draws the line to it — Pluclair's own
+milestones, passed, in the gold the user's are — and its bill lands on « 0 € »,
+the one figure on the page. Its buttons are the site's pair.
+
 **The Semantic Amount Rule.** An amount's colour says what kind of money it is —
 income, expense, savings or investment — never whether it is positive or
 negative. Do not colour an amount by sign, and do not invent a fifth category
@@ -999,6 +1005,20 @@ page closes on a WebGL gold orb (`landing/GoldOrb.tsx`) rising out of a
 horizon — the hero's sunrise, answered — its light following the pointer.
 Under reduced motion none of it pins or turns: each section stands at its
 final state, the scroll is not smoothed, and the orb draws one still frame.
+
+The about page (`AboutPage.tsx`, the owner's call in October 2026 for a
+"Framer-style" page on who makes Pluclair) joins that surface rather than
+starting a second one. Its name rises out of a mask like the landing's
+headline; why Pluclair exists is lit word by word with the promise's own
+section; the three trades light one at a time as they cross the middle of the
+screen, beside a heading that holds still; the run is a line the scroll draws
+down the page, each stop lighting as the line reaches it; and the bill prints
+its rows one after another, then rolls its total from 9 down to 0 in the
+figure face — fading in as the roll starts, so no other digit is ever read
+standing. The portrait leans toward the pointer on a spring and drifts a
+little slower than the page. One loop is new, the « Bêta ouverte » dot's ring
+(`.about-live`), in the status green rather than gold. Under reduced motion
+nothing leans, rolls or drifts, and every section stands at its final state.
 
 The marketing nav is one glass shape (`LandingHeader.tsx`): « Le produit »
 (the burger on a phone) grows the pill down into its own panel on a spring,
