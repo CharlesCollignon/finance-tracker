@@ -1,0 +1,17 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "p=$(cat); case \"$p\" in *'git merge'*|*'git push'*) printf '%s' \"$p\" | node \"$CLAUDE_PROJECT_DIR/scripts/changelog-guard.mjs\";; esac",
+            "timeout": 30,
+            "statusMessage": "Checking « Nouveautés » is up to date"
+          }
+        ]
+      }
+    ]
+  }
+}

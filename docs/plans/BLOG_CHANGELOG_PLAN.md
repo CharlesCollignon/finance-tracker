@@ -13,6 +13,23 @@ both `DESIGN.md` files wherever it changes what they say. Every new motion is
 written into the Motion section of `apps/web/DESIGN.md`, as the about page's
 was.
 
+## Standing rule: « Nouveautés » is never behind
+
+Decided 2026-10-12, after Phase 1 shipped. Every change that reaches `main`
+and that someone using Pluclair can see adds its entry to
+`packages/core/src/changelog-entries.ts` in the same branch, before the
+merge, dated the day it lands; `node scripts/changelog-draft.mjs` lists what
+has landed since the newest entry, and `--stats` updates the figures the
+page states. A change nobody can see says so with a `Changelog: none` line
+in a commit or in the merge message.
+
+Held three ways: the rule in `AGENTS.md`, which every agent session reads;
+this section; and a Claude Code hook in `.claude/settings.json`
+(`scripts/changelog-guard.mjs`) that refuses a merge into `main`, or a push
+of `main`, touching the apps, the shared packages or the migrations without
+an entry or a `Changelog:` line. The hook only sees what Claude Code runs; a
+merge made by hand is held by the rule alone.
+
 ## What is there today
 
 - **The marketing site** (`app/(marketing)`: `/`, `/features/[slug]`,
