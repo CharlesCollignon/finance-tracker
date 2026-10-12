@@ -88,7 +88,7 @@ tabs' sliding pill, the cards' pointer light, the figure face's rolling digits,
 the « Bêta ouverte » live ring (`.about-live`), and the existing app mocks
 (`components/marketing/mocks`, `feature/demos`).
 
-## Phase 0 — Groundwork (branch `site-groundwork`)
+## Phase 0 — Groundwork (branch `site-groundwork`) — built, waiting on the owner
 
 - `app/sitemap.ts` (landing, feature pages, about, legal when visible, then
   Nouveautés entries and blog pages as they arrive) and `app/robots.ts`.
@@ -100,7 +100,18 @@ the « Bêta ouverte » live ring (`.about-live`), and the existing app mocks
   the RSS helper comes with the first feed (Phase 1), and each nav entry with
   its page.
 
-## Phase 1 — Nouveautés, the page (branch `nouveautes-page`)
+## Phase 1 — Nouveautés, the page (branch `nouveautes-page`) — built, waiting on the owner
+
+Built as planned, with these differences: 58 entries (the backfill runs
+from 15 June); the hero's figures are entries listed and commits, and
+beside them a strip of one bar per week since the first commit, which takes
+the list to a week when pressed; most entries are ruled rows and only the
+featured ones glass cards; the « new since your visit » marker is the status
+green, not gold (DESIGN.md's Rare Accent Rule: nothing here is a figure or a
+moment). The landing's « Bientôt » now reads `ROADMAP`, so in production it
+shows the blog, Entraide and the stores. Checked in a component harness
+with headless Chromium at 1440, 375 and 320 px and under reduced motion; not
+yet on a Vercel preview.
 
 **Data**, in `packages/core/src/changelog.ts`, so the web and the phone read
 the same list:
