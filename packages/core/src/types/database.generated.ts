@@ -1481,6 +1481,27 @@ export type Database = {
         };
         Relationships: [];
       };
+      reactions: {
+        Row: {
+          created_at: string;
+          kind: string;
+          target: string;
+          user_id: string;
+        };
+        Insert: {
+          created_at?: string;
+          kind: string;
+          target: string;
+          user_id: string;
+        };
+        Update: {
+          created_at?: string;
+          kind?: string;
+          target?: string;
+          user_id?: string;
+        };
+        Relationships: [];
+      };
       recurring_fulfilment_refusals: {
         Row: {
           occurred_on: string;
@@ -2249,6 +2270,14 @@ export type Database = {
           space_id: string;
           space_name: string;
           usable: boolean;
+        }[];
+      };
+      reaction_counts: {
+        Args: { targets: string[] };
+        Returns: {
+          count: number;
+          kind: string;
+          target: string;
         }[];
       };
       record_activity: { Args: { event?: string }; Returns: undefined };
