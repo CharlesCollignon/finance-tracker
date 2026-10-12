@@ -64,7 +64,7 @@ export function AboutHero({
         <Portrait
           src={portrait}
           alt={copy.portraitAlt}
-          name={copy.portraitAlt}
+          name={copy.name}
           place={copy.place}
         />
       </div>

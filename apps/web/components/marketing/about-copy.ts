@@ -29,6 +29,7 @@ export interface AboutCopy {
     status: string;
     titleLines: string[];
     intro: string;
+    name: string;
     portraitAlt: string;
     place: string;
   };
@@ -89,7 +90,9 @@ export const aboutCopy: AboutCopy = {
     titleLines: ["Hello,", "I'm Charles."],
     intro:
       "Engineering manager — product and design — at a macroeconomics start-up in Paris. And, alongside it, the person who makes Pluclair.",
-    portraitAlt: "Charles Collignon",
+    name: "Charles Collignon",
+    portraitAlt:
+      "Charles Collignon, smiling, holding up a can outside a convenience store",
     place: "Paris, 2026",
   },
 

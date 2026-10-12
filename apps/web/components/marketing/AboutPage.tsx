@@ -21,11 +21,10 @@ import { marketingFocus } from "@/components/marketing/marketing-focus";
 import { cn } from "@/lib/utils";
 
 /**
- * The owner's photo, once it is in `public/` (4:5, say
- * `public/about/charles.jpg`), as its path. Null until then, and the
- * portrait's frame holds the orb instead.
+ * The owner's photo, in `public/` at 4:5 (1200 × 1500, metadata stripped:
+ * the repository is public). Null puts the orb in the frame instead.
  */
-const PORTRAIT: string | null = null;
+const PORTRAIT: string | null = "/about/charles.jpg";
 
 /**
  * Who makes Pluclair, told as a letter the page is scrolled through: a
