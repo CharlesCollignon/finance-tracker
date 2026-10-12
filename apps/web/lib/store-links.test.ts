@@ -2,12 +2,13 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("server-only", () => ({}));
 
-const { storeLinks } = await import("./store-links");
+const { androidApkVersion, storeLinks } = await import("./store-links");
 
 beforeEach(() => {
   vi.stubEnv("APP_STORE_URL", "");
   vi.stubEnv("PLAY_STORE_URL", "");
   vi.stubEnv("ANDROID_APK_URL", "");
+  vi.stubEnv("ANDROID_APK_VERSION", "");
 });
 
 afterEach(() => {
@@ -59,5 +60,15 @@ describe("storeLinks", () => {
     expect(storeLinks().androidApk).toBeNull();
     vi.stubEnv("ANDROID_APK_URL", "not a url");
     expect(storeLinks().androidApk).toBeNull();
+  });
+});
+
+describe("androidApkVersion", () => {
+  it("takes a version, and nothing else", () => {
+    expect(androidApkVersion()).toBeNull();
+    vi.stubEnv("ANDROID_APK_VERSION", " 1.2.0 ");
+    expect(androidApkVersion()).toBe("1.2.0");
+    vi.stubEnv("ANDROID_APK_VERSION", "latest");
+    expect(androidApkVersion()).toBeNull();
   });
 });

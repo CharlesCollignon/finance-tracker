@@ -217,3 +217,15 @@ export function isLaterEntry(
 ): boolean {
   return current === null || candidate.slice(0, 10) >= current.slice(0, 10);
 }
+
+/**
+ * `/nouveautes/feed.json`: what the phone reads, so an APK already
+ * installed still hears of what shipped after it was built, and of a newer
+ * APK to download.
+ */
+export interface NouveautesFeed {
+  entries: ChangelogEntry[];
+  roadmap: RoadmapItem[];
+  /** The APK the site hands out, where its version is known. */
+  apk: { version: string; url: string } | null;
+}

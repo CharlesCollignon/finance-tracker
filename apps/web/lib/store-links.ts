@@ -58,3 +58,14 @@ export function storeLinks(): StoreLinks {
     androidApk: apkUrl(process.env.ANDROID_APK_URL),
   };
 }
+
+/**
+ * The version of the APK `ANDROID_APK_URL` hands out (`ANDROID_APK_VERSION`,
+ * as `apps/mobile/app.json` had it at that build), or null where it is not
+ * set or not a version. The phone compares its own against it and offers
+ * the newer one (`/nouveautes/feed.json`); unset, it offers nothing.
+ */
+export function androidApkVersion(): string | null {
+  const value = process.env.ANDROID_APK_VERSION?.trim();
+  return value && /^\d+(\.\d+){0,3}$/.test(value) ? value : null;
+}
