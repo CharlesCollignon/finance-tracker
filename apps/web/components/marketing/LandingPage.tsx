@@ -4,8 +4,10 @@ import Link from "next/link";
 import {
   AndroidLogo,
   AppleLogo,
+  ArrowRight,
   GooglePlayLogo,
 } from "@phosphor-icons/react/dist/ssr";
+import { CHANGELOG } from "@finance/core/changelog-entries";
 import { getLocale } from "@/lib/locale";
 import { LandingCtas } from "@/components/marketing/LandingCtas";
 import { LandingEarth } from "@/components/marketing/LandingEarth";
@@ -20,6 +22,11 @@ import {
 import { ABOUT_HREF } from "@/components/marketing/about-copy";
 import { landingCopyFor } from "@/components/marketing/landing-copy";
 import { marketingFocus } from "@/components/marketing/marketing-focus";
+import {
+  nouveautesCopyFor,
+  nouveautesEntryHref,
+} from "@/components/marketing/nouveautes-copy";
+import { openRoadmap } from "@/components/marketing/nouveautes/open-roadmap";
 import { ANDROID_DOWNLOAD_PATH, storeLinks } from "@/lib/store-links";
 import { FeatureBento } from "@/components/marketing/landing/FeatureBento";
 import { FigureSection } from "@/components/marketing/landing/FigureSection";
@@ -81,10 +88,15 @@ export async function LandingPage({ isLoggedIn }: LandingPageProps) {
   ].filter((store): store is typeof store & { href: string } =>
     Boolean(store.href),
   );
-  const comingSoon =
-    inStores.length > 0
-      ? soon.items.filter((item) => item.id !== "app")
-      : soon.items;
+  // What is coming is Nouveautés' « Bientôt », so the two never disagree;
+  // the phone app heads it until a store or the APK has it.
+  const comingSoon = [
+    ...(inStores.length > 0 ? [] : soon.items),
+    ...openRoadmap().map((item) => ({ id: item.id, ...item[locale] })),
+  ];
+  // The latest change worth a screen of its own, under the buttons.
+  const latest = CHANGELOG.find((entry) => entry.featured);
+  const nouveautes = nouveautesCopyFor(locale);
 
   return (
     <>
@@ -136,6 +148,33 @@ export async function LandingPage({ isLoggedIn }: LandingPageProps) {
               className="mt-8"
             />
           </FadeUp>
+          {latest ? (
+            <FadeUp trigger="mount" delay={1.45}>
+              <Link
+                href={nouveautesEntryHref(latest.id)}
+                className={cn(
+                  "group mt-6 inline-flex min-h-11 max-w-full items-center gap-3 rounded-full border border-white/12 bg-white/[0.06] pl-3.5 pr-4 text-sm backdrop-blur-xl transition-colors duration-hover hover:bg-white/[0.1]",
+                  marketingFocus,
+                )}
+              >
+                <span className="inline-flex shrink-0 items-center gap-1.5 font-medium text-marketing-ink">
+                  <span
+                    className="size-1.5 rounded-full bg-success"
+                    aria-hidden
+                  />
+                  {nouveautes.landing.label}
+                </span>
+                <span className="min-w-0 truncate text-marketing-muted">
+                  {latest[locale].title}
+                </span>
+                <ArrowRight
+                  size={14}
+                  aria-hidden
+                  className="shrink-0 text-marketing-muted transition-transform duration-hover group-hover:translate-x-0.5"
+                />
+              </Link>
+            </FadeUp>
+          ) : null}
         </HeroDrift>
       </section>
 
