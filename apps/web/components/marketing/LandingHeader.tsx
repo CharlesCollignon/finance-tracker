@@ -22,6 +22,7 @@ import { Orb } from "@/components/brand/Orb";
 import { LandingCtas } from "@/components/marketing/LandingCtas";
 import { LocaleChoices, LocaleMenu } from "@/components/marketing/LocaleSwitch";
 import { marketingFocus } from "@/components/marketing/marketing-focus";
+import { ABOUT_HREF } from "@/components/marketing/about-copy";
 import {
   featureHref,
   landingCopyFor,
@@ -53,6 +54,7 @@ const TIGHTEN_AT = 120;
 const SECTION_LINKS = [
   { href: "/#how", key: "howItWorks" },
   { href: "/#privacy", key: "privacy" },
+  { href: ABOUT_HREF, key: "about" },
 ] as const;
 
 /** The pages in three groups, Le point apart as the featured card. */

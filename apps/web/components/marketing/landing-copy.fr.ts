@@ -18,9 +18,9 @@ import type { LandingPageId } from "./landing-copy";
  *   votre banque » se vérifie ; « une clarté sans effort », non.
  *
  *   Never promise what the app does not do. Ce qui n'est pas encore ouvert à
- *   tous — l'application mobile, tant qu'aucun store ne l'a — est dit une
- *   fois, sous « Bientôt », au futur. La banque en est sortie quand elle
- *   s'est ouverte à tous (octobre 2026).
+ *   tous — l'application mobile, tant qu'aucun store ni l'APK du site ne
+ *   l'a — est dit une fois, sous « Bientôt », au futur. La banque en est
+ *   sortie quand elle s'est ouverte à tous (octobre 2026).
  *
  * The nouns come from the app, not from the dictionary: « Le point »,
  * « Journal », « Récurrents », « Placements », « Clôture du mois ». A landing
@@ -152,6 +152,10 @@ export const landingCopyFr: LandingCopySections & {
     body: "Le même compte et les mêmes chiffres, où que vous soyez. Sur Android, « Il vous reste » s’affiche sur l’écran d’accueil, avec un + pour noter une dépense.",
     appStore: "App Store",
     googlePlay: "Google Play",
+    androidApk: "Android (APK)",
+    apkNote:
+      "Sur Android : une bêta ouverte, à installer depuis ce site plutôt que depuis un store.",
+    apkHelp: "Comment l’installer",
   },
 
   faq: {
@@ -578,6 +582,7 @@ export const landingCopyFr: LandingCopySections & {
   nav: {
     howItWorks: "Comment ça marche",
     privacy: "Vos questions",
+    about: "À propos",
     previous: "Précédent",
     next: "Suivant",
     groupMonth: "Votre mois",
@@ -589,6 +594,7 @@ export const landingCopyFr: LandingCopySections & {
     tagline:
       "Vos revenus, vos dépenses, votre épargne et vos placements au même endroit — vérifiés chaque mois avec votre banque.",
     copyright: "© 2026 Pluclair",
+    madeBy: "Fait à Paris par Charles Collignon",
     imageCredit:
       "Image de la Terre : NASA, Blue Marble Next Generation (Reto Stöckli).",
     disclaimer:

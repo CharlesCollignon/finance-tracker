@@ -16,7 +16,7 @@ import { landingCopyFr } from "@/components/marketing/landing-copy.fr";
  *   to before can tell the difference in about a second.
  *
  *   Never promise what the app does not do. What is not open to everyone yet
- *   — the mobile app until a store has it —
+ *   — the mobile app until a store or the site's own APK has it —
  *   is said once, under "Coming soon", in the future tense, and nowhere in
  *   the present (the owner's call, October 2026). The bank connection left
  *   that list once it opened to everyone (October 2026).
@@ -154,7 +154,7 @@ export const landingCopy = {
     heading: "Coming soon",
     items: [
       {
-        /** Leaves this list for `phone` below once a store has the app. */
+        /** Leaves this list for `phone` below once a store or the APK has the app. */
         id: "app",
         title: "The mobile app",
         body: "Pluclair in your pocket, with the same figures as on your computer.",
@@ -163,14 +163,19 @@ export const landingCopy = {
   },
 
   /**
-   * The phone app, once the App Store or Google Play has it
-   * (`lib/store-links.ts`); until then it is under "Coming soon".
+   * The phone app, once the App Store, Google Play or the site's own APK has
+   * it (`lib/store-links.ts`); until then it is under "Coming soon". The APK
+   * is installed from outside a store, so it says how, on the about page.
    */
   phone: {
     heading: "On your phone",
     body: 'The same account and the same figures, wherever you are. On Android, "You have" sits on your home screen, with a + to note a spend.',
     appStore: "App Store",
     googlePlay: "Google Play",
+    androidApk: "Android (APK)",
+    apkNote:
+      "Android: an open beta, installed from this site rather than a store.",
+    apkHelp: "How to install it",
   },
 
   /** The worries a first visit has, answered plainly. Anchored as #privacy. */
@@ -608,6 +613,7 @@ export const landingCopy = {
   nav: {
     howItWorks: "How it works",
     privacy: "Your questions",
+    about: "About",
     previous: "Previous",
     next: "Next",
     /** The product menu's three groups of pages. */
@@ -620,6 +626,7 @@ export const landingCopy = {
     tagline:
       "Your income, spending, savings and investments in one place — checked every month against your bank.",
     copyright: "© 2026 Pluclair",
+    madeBy: "Made in Paris by Charles Collignon",
     imageCredit:
       "Earth imagery: NASA, Blue Marble Next Generation (Reto Stöckli).",
     disclaimer:
