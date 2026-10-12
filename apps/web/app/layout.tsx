@@ -19,6 +19,7 @@ import { LocaleProvider } from "@/lib/locale-context";
 import { getCurrency } from "@/lib/currency";
 import { CurrencyProvider } from "@/lib/use-currency";
 import { LocaleSuggestion } from "@/components/layout/LocaleSuggestion";
+import { getSiteUrl } from "@/lib/supabase/env";
 
 const instrumentSans = localFont({
   src: "./fonts/instrument-sans-latin.woff2",
@@ -58,6 +59,9 @@ const plexMono = localFont({
 });
 
 export const metadata: Metadata = {
+  // What a page's relative addresses resolve against: its canonical link and
+  // its Open Graph image (`lib/og`), which a crawler needs whole.
+  metadataBase: new URL(getSiteUrl()),
   title: "Pluclair",
   // The landing hero's tagline verbatim. This is the sentence search results
   // and link previews show, so the two have to agree — which is the whole

@@ -1,12 +1,19 @@
 import type { Metadata } from "next";
 import { getAuthUser } from "@/lib/auth/get-user";
 import { AboutPage } from "@/components/marketing/AboutPage";
-import { aboutCopyFor } from "@/components/marketing/about-copy";
+import { ABOUT_HREF, aboutCopyFor } from "@/components/marketing/about-copy";
 import { getLocale } from "@/lib/locale";
+import { shareMetadata } from "@/lib/og/share-metadata";
 
 export async function generateMetadata(): Promise<Metadata> {
-  const { meta } = aboutCopyFor(await getLocale());
-  return { title: `${meta.title} — Pluclair`, description: meta.description };
+  const locale = await getLocale();
+  const { meta } = aboutCopyFor(locale);
+  return shareMetadata({
+    title: `${meta.title} — Pluclair`,
+    description: meta.description,
+    path: ABOUT_HREF,
+    locale,
+  });
 }
 
 /** Who makes Pluclair, and why (`components/marketing/AboutPage.tsx`). */
