@@ -218,6 +218,21 @@ export function isLaterEntry(
   return current === null || candidate.slice(0, 10) >= current.slice(0, 10);
 }
 
+/** Whether version `a` (« 1.2.0 ») is newer than `b`, part by part. */
+export function isNewerVersion(a: string, b: string): boolean {
+  const parts = (version: string) =>
+    version.split(".").map((part) => Number.parseInt(part, 10) || 0);
+  const left = parts(a);
+  const right = parts(b);
+  for (let i = 0; i < Math.max(left.length, right.length); i++) {
+    const diff = (left[i] ?? 0) - (right[i] ?? 0);
+    if (diff !== 0) {
+      return diff > 0;
+    }
+  }
+  return false;
+}
+
 /**
  * `/nouveautes/feed.json`: what the phone reads, so an APK already
  * installed still hears of what shipped after it was built, and of a newer

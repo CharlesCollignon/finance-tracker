@@ -38,6 +38,28 @@ import { askFr } from "./ask.fr";
  * ship a word the glossary would refuse.
  */
 export const fr: Messages = {
+  nouveautes: {
+    title: "Nouveautés",
+    all: "Tout",
+    kindNew: "Nouveau",
+    kindBetter: "Amélioré",
+    kindFixed: "Corrigé",
+    fresh: "Nouveau pour vous",
+    soon: "Bientôt",
+    more: "Plus",
+    less: "Moins",
+    onSite: "Voir sur le site",
+    back: "Retour",
+    whatsNewTitle: "Quoi de neuf",
+    whatsNewIntro: "Depuis votre dernière version :",
+    whatsNewAll: "Tout voir",
+    whatsNewClose: "Fermer",
+    updateTitle: "Une nouvelle version est disponible",
+    updateBody: "La version {version} de Pluclair est prête à télécharger.",
+    updateDownload: "Télécharger",
+    updateLater: "Plus tard",
+  },
+
   nav: {
     yearReview: "Votre année",
     bearing: "Le point",

@@ -32,6 +32,7 @@ import {
   gatherHomeRead,
   gatherHomeRecap,
 } from "@/lib/home-data";
+import { NewVersionBanner } from "@/components/nouveautes/NewVersionBanner";
 import { useAuth } from "@/providers/AuthProvider";
 import { useOwner } from "@/providers/OwnerProvider";
 import { useLocale, useT } from "@/providers/LocaleProvider";
@@ -148,6 +149,9 @@ export default function HomeScreen() {
         showsVerticalScrollIndicator={false}
       >
         <MonthPicker prominent year={year} month={month} onChange={setMonth} />
+
+        {/* A newer APK on the site: nothing else would say so. */}
+        <NewVersionBanner />
 
         {/* Above the figures, because a bank feed that has stopped leaves
             every one of them quietly stale. */}

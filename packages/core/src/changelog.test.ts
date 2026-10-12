@@ -5,6 +5,7 @@ import {
   daysBetween,
   entriesSince,
   isLaterEntry,
+  isNewerVersion,
   unseenEntries,
   weekMonday,
   type ChangelogEntry,
@@ -120,11 +121,18 @@ describe("unseenEntries", () => {
   });
 });
 
-describe("isLaterEntry", () => {
+describe("isLaterEntry and isNewerVersion", () => {
   it("never moves the marker back a day", () => {
     expect(isLaterEntry("2026-10-12-a", null)).toBe(true);
     expect(isLaterEntry("2026-10-12-a", "2026-10-12-b")).toBe(true);
     expect(isLaterEntry("2026-10-09-a", "2026-10-12-b")).toBe(false);
+  });
+
+  it("compares versions part by part", () => {
+    expect(isNewerVersion("1.1.0", "1.0.9")).toBe(true);
+    expect(isNewerVersion("1.10.0", "1.9.0")).toBe(true);
+    expect(isNewerVersion("1.0", "1.0.0")).toBe(false);
+    expect(isNewerVersion("1.0.0", "1.0.1")).toBe(false);
   });
 });
 
