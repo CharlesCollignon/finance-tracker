@@ -23,6 +23,7 @@ import { LandingCtas } from "@/components/marketing/LandingCtas";
 import { LocaleChoices, LocaleMenu } from "@/components/marketing/LocaleSwitch";
 import { marketingFocus } from "@/components/marketing/marketing-focus";
 import { ABOUT_HREF } from "@/components/marketing/about-copy";
+import { NOUVEAUTES_HREF } from "@/components/marketing/nouveautes-copy";
 import {
   featureHref,
   landingCopyFor,
@@ -50,11 +51,17 @@ const TIGHTEN_AT = 120;
 
 /** Section anchors on the homepage. Written absolute so they also work from a
  * feature page, where the section itself is not on screen. The href is a
- * route and lives here; the word is copy and lives with the rest of it. */
+ * route and lives here; the word is copy and lives with the rest of it.
+ *
+ * `wide`: in the pill only from the xl width up. Between lg and xl the pill
+ * cannot hold five links beside the wordmark and both buttons on one line,
+ * and a link on two lines is not one to keep; « Nouveautés » is still in
+ * the sheet below lg, the footer, and the landing's pill under its hero. */
 const SECTION_LINKS = [
-  { href: "/#how", key: "howItWorks" },
-  { href: "/#privacy", key: "privacy" },
-  { href: ABOUT_HREF, key: "about" },
+  { href: "/#how", key: "howItWorks", wide: false },
+  { href: "/#privacy", key: "privacy", wide: false },
+  { href: ABOUT_HREF, key: "about", wide: false },
+  { href: NOUVEAUTES_HREF, key: "nouveautes", wide: true },
 ] as const;
 
 /** The pages in three groups, Le point apart as the featured card. */
@@ -99,7 +106,7 @@ function Wordmark({ folded }: { folded: boolean }) {
 }
 
 const linkClass =
-  "rounded-control text-sm text-marketing-muted transition-colors duration-hover " +
+  "whitespace-nowrap rounded-control text-sm text-marketing-muted transition-colors duration-hover " +
   `hover:text-white ${marketingFocus}`;
 
 /**
@@ -175,7 +182,9 @@ export function LandingHeader({ isLoggedIn }: { isLoggedIn: boolean }) {
         className="relative mx-auto"
         initial={false}
         animate={{
-          maxWidth: tight ? "52rem" : "72rem",
+          // Tightened, still wide enough for its five links on one line
+          // (836px of them in French, measured).
+          maxWidth: tight ? "54rem" : "72rem",
           y: tight ? -8 : 0,
         }}
         transition={transition}
@@ -203,14 +212,14 @@ export function LandingHeader({ isLoggedIn }: { isLoggedIn: boolean }) {
           <nav
             className={cn(
               "hidden items-center lg:flex",
-              tight ? "gap-6" : "gap-8",
+              tight ? "gap-6" : "gap-5 xl:gap-8",
             )}
             aria-label={t("common.marketing")}
           >
             <button
               type="button"
               className={cn(
-                "flex items-center gap-1.5 rounded-control text-sm transition-colors duration-hover",
+                "flex items-center gap-1.5 whitespace-nowrap rounded-control text-sm transition-colors duration-hover",
                 marketingFocus,
                 panel === "product" || pathname.startsWith("/features/")
                   ? "text-marketing-ink"
@@ -233,7 +242,7 @@ export function LandingHeader({ isLoggedIn }: { isLoggedIn: boolean }) {
               <Link
                 key={link.href}
                 href={link.href}
-                className={linkClass}
+                className={cn(linkClass, link.wide && "hidden xl:inline")}
                 onClick={close}
               >
                 {copy.nav[link.key]}

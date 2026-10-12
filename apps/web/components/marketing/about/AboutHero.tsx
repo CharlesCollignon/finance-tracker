@@ -15,6 +15,7 @@ import { Orb } from "@/components/brand/Orb";
 import type { AboutCopy } from "@/components/marketing/about-copy";
 import { LandingBloom } from "@/components/marketing/LandingOrb";
 import { FadeUp, RiseLines } from "@/components/marketing/LandingReveal";
+import { LiveStatus } from "@/components/marketing/LiveStatus";
 
 const EASE = [...EASE_STANDARD] as [number, number, number, number];
 
@@ -48,7 +49,7 @@ export function AboutHero({
       <div className="mx-auto grid max-w-6xl items-end gap-14 md:grid-cols-[minmax(0,7fr)_minmax(0,5fr)] md:gap-16">
         <div className="min-w-0">
           <FadeUp trigger="mount" delay={0.1}>
-            <Status label={copy.status} />
+            <LiveStatus label={copy.status} />
           </FadeUp>
           <RiseLines
             lines={copy.titleLines}
@@ -69,19 +70,6 @@ export function AboutHero({
         />
       </div>
     </section>
-  );
-}
-
-/** The beta's state, said once at the top: a live dot and its words. */
-function Status({ label }: { label: string }) {
-  return (
-    <p className="inline-flex min-h-9 items-center gap-2.5 rounded-full border border-white/12 bg-white/[0.06] px-4 text-sm text-marketing-ink backdrop-blur-xl">
-      <span className="relative flex size-2" aria-hidden>
-        <span className="about-live absolute inset-0 rounded-full bg-success" />
-        <span className="relative size-2 rounded-full bg-success" />
-      </span>
-      {label}
-    </p>
   );
 }
 

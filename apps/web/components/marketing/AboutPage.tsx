@@ -1,11 +1,6 @@
 /* Hallmark · genre: atmospheric · macrostructure: Letter (scroll-told) · theme: design.md (Pluclair) · enrichment: portrait in the bezel, orb until the photo · nav: kept · footer: kept */
 
-import type { ReactNode } from "react";
-import {
-  ArrowUpRight,
-  EnvelopeSimple,
-  GithubLogo,
-} from "@phosphor-icons/react/dist/ssr";
+import { EnvelopeSimple, GithubLogo } from "@phosphor-icons/react/dist/ssr";
 import type { Locale } from "@finance/core/i18n/locale";
 import { getLocale } from "@/lib/locale";
 import { ANDROID_DOWNLOAD_PATH, storeLinks } from "@/lib/store-links";
@@ -16,9 +11,8 @@ import { Hats } from "@/components/marketing/about/Hats";
 import { Run } from "@/components/marketing/about/Run";
 import { TryBeta } from "@/components/marketing/about/TryBeta";
 import { PromiseSection } from "@/components/marketing/landing/PromiseSection";
+import { ElsewhereLink } from "@/components/marketing/ElsewhereLink";
 import { FadeUp, RiseWords } from "@/components/marketing/LandingReveal";
-import { marketingFocus } from "@/components/marketing/marketing-focus";
-import { cn } from "@/lib/utils";
 
 /**
  * The owner's photo, in `public/` at 4:5 (1200 × 1500, metadata stripped:
@@ -111,7 +105,7 @@ function AboutView({
           <ul className="mt-10 grid gap-4 sm:grid-cols-2">
             <li>
               <FadeUp>
-                <Elsewhere
+                <ElsewhereLink
                   href={SOURCE_URL}
                   title={copy.elsewhere.source.title}
                   detail={copy.elsewhere.source.detail}
@@ -122,7 +116,7 @@ function AboutView({
             {email ? (
               <li>
                 <FadeUp delay={0.08}>
-                  <Elsewhere
+                  <ElsewhereLink
                     href={`mailto:${email}`}
                     title={copy.elsewhere.write.title}
                     detail={email}
@@ -142,45 +136,4 @@ function AboutView({
 function feedbackEmail(): string | null {
   const value = process.env.FEEDBACK_EMAIL?.trim();
   return value && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value) ? value : null;
-}
-
-function Elsewhere({
-  href,
-  title,
-  detail,
-  icon,
-}: {
-  href: string;
-  title: string;
-  detail: string;
-  icon: ReactNode;
-}) {
-  const external = href.startsWith("http");
-  return (
-    <a
-      href={href}
-      {...(external ? { target: "_blank", rel: "noopener noreferrer" } : {})}
-      className={cn(
-        "glass-flat glass-flat-hover group flex min-h-24 items-center gap-5 rounded-[1.75rem] p-6",
-        marketingFocus,
-      )}
-    >
-      <span className="grid size-12 shrink-0 place-items-center rounded-full border border-white/12 text-marketing-ink">
-        {icon}
-      </span>
-      <span className="min-w-0 flex-1">
-        <span className="block font-head text-lg text-marketing-ink">
-          {title}
-        </span>
-        <span className="mt-0.5 block truncate text-sm text-marketing-muted">
-          {detail}
-        </span>
-      </span>
-      <ArrowUpRight
-        size={18}
-        aria-hidden
-        className="shrink-0 text-marketing-muted transition-transform duration-hover group-hover:-translate-y-0.5 group-hover:translate-x-0.5"
-      />
-    </a>
-  );
 }

@@ -614,6 +614,7 @@ export const landingCopy = {
     howItWorks: "How it works",
     privacy: "Your questions",
     about: "About",
+    nouveautes: "What's new",
     previous: "Previous",
     next: "Next",
     /** The product menu's three groups of pages. */

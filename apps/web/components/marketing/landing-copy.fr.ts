@@ -583,6 +583,7 @@ export const landingCopyFr: LandingCopySections & {
     howItWorks: "Comment ça marche",
     privacy: "Vos questions",
     about: "À propos",
+    nouveautes: "Nouveautés",
     previous: "Précédent",
     next: "Suivant",
     groupMonth: "Votre mois",

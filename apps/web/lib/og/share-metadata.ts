@@ -14,17 +14,24 @@ export function shareMetadata({
   title,
   description,
   path,
+  canonical = path,
   locale,
 }: {
   title: string;
   description: string;
   path: string;
+  /**
+   * The address search engines should keep, when it is not this one: one
+   * Nouveautés entry is the whole list with that entry open, so it shares
+   * as itself and is indexed as the list.
+   */
+  canonical?: string;
   locale: Locale;
 }): Metadata {
   return {
     title,
     description,
-    alternates: { canonical: path },
+    alternates: { canonical },
     openGraph: {
       type: "website",
       siteName: "Pluclair",

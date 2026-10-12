@@ -13,6 +13,23 @@ both `DESIGN.md` files wherever it changes what they say. Every new motion is
 written into the Motion section of `apps/web/DESIGN.md`, as the about page's
 was.
 
+## Standing rule: « Nouveautés » is never behind
+
+Decided 2026-10-12, after Phase 1 shipped. Every change that reaches `main`
+and that someone using Pluclair can see adds its entry to
+`packages/core/src/changelog-entries.ts` in the same branch, before the
+merge, dated the day it lands; `node scripts/changelog-draft.mjs` lists what
+has landed since the newest entry, and `--stats` updates the figures the
+page states. A change nobody can see says so with a `Changelog: none` line
+in a commit or in the merge message.
+
+Held three ways: the rule in `AGENTS.md`, which every agent session reads;
+this section; and a Claude Code hook in `.claude/settings.json`
+(`scripts/changelog-guard.mjs`) that refuses a merge into `main`, or a push
+of `main`, touching the apps, the shared packages or the migrations without
+an entry or a `Changelog:` line. The hook only sees what Claude Code runs; a
+merge made by hand is held by the rule alone.
+
 ## What is there today
 
 - **The marketing site** (`app/(marketing)`: `/`, `/features/[slug]`,
@@ -88,7 +105,7 @@ tabs' sliding pill, the cards' pointer light, the figure face's rolling digits,
 the « Bêta ouverte » live ring (`.about-live`), and the existing app mocks
 (`components/marketing/mocks`, `feature/demos`).
 
-## Phase 0 — Groundwork (branch `site-groundwork`)
+## Phase 0 — Groundwork (branch `site-groundwork`) — built, waiting on the owner
 
 - `app/sitemap.ts` (landing, feature pages, about, legal when visible, then
   Nouveautés entries and blog pages as they arrive) and `app/robots.ts`.
@@ -100,7 +117,18 @@ the « Bêta ouverte » live ring (`.about-live`), and the existing app mocks
   the RSS helper comes with the first feed (Phase 1), and each nav entry with
   its page.
 
-## Phase 1 — Nouveautés, the page (branch `nouveautes-page`)
+## Phase 1 — Nouveautés, the page (branch `nouveautes-page`) — built, waiting on the owner
+
+Built as planned, with these differences: 58 entries (the backfill runs
+from 15 June); the hero's figures are entries listed and commits, and
+beside them a strip of one bar per week since the first commit, which takes
+the list to a week when pressed; most entries are ruled rows and only the
+featured ones glass cards; the « new since your visit » marker is the status
+green, not gold (DESIGN.md's Rare Accent Rule: nothing here is a figure or a
+moment). The landing's « Bientôt » now reads `ROADMAP`, so in production it
+shows the blog, Entraide and the stores. Checked in a component harness
+with headless Chromium at 1440, 375 and 320 px and under reduced motion; not
+yet on a Vercel preview.
 
 **Data**, in `packages/core/src/changelog.ts`, so the web and the phone read
 the same list:
