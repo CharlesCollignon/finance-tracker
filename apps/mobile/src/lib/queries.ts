@@ -8,7 +8,6 @@ import {
   type LedgerSearch,
 } from "@finance/data/ledger-search";
 import { readYearReview } from "@finance/data/year-review";
-import { readSubscriptions } from "@finance/data/subscriptions";
 import * as fulfilment from "@finance/data/fulfilment";
 import * as closes from "@finance/data/month-close";
 import { isMissingSchema } from "@finance/data/schema";
@@ -635,13 +634,6 @@ export function searchEveryMonth(
   query: string,
 ): Promise<LedgerSearch> {
   return searchAllMonths(supabase, userId, query);
-}
-
-/** The services the ledger shows being paid, for « Abonnements » (`readSubscriptions`). */
-export function getSubscriptions(
-  userId: string,
-): ReturnType<typeof readSubscriptions> {
-  return readSubscriptions(supabase, userId, todayIsoLocal());
 }
 
 /** « Votre année » for one year (`readYearReview`). */

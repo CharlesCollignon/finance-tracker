@@ -16,8 +16,6 @@ import { isFlagOn } from "@finance/core/flags";
 import { getFlags } from "@/lib/flags";
 import { getPropertyNames } from "@/lib/queries/properties";
 import { RecurringView } from "@/components/finance/RecurringView";
-import { readSubscriptions } from "@finance/data/subscriptions";
-import { createClient } from "@/lib/supabase/server";
 
 interface RecurringPageProps {
   searchParams: Promise<{ edit?: string }>;
@@ -36,28 +34,17 @@ export default async function RecurringPage({
   const owner = await getOwner();
   const ownerId = owner?.ownerId ?? user.id;
 
-  const [
-    templates,
-    categories,
-    bankFed,
-    recordedThisMonth,
-    params,
-    flags,
-    watched,
-  ] = await Promise.all([
-    getRecurringTemplates(ownerId),
-    getCategories(ownerId),
-    hasBankFeed(ownerId),
-    // What editing a charge asks about: the days it is already recorded on
-    // this month.
-    getRecordedThisMonth(ownerId),
-    searchParams,
-    getFlags(),
-    // The services the ledger shows being paid, for « Abonnements ».
-    readSubscriptions(await createClient(), ownerId, todayIsoLocal()).catch(
-      () => ({ subscriptions: [], findings: [] }),
-    ),
-  ]);
+  const [templates, categories, bankFed, recordedThisMonth, params, flags] =
+    await Promise.all([
+      getRecurringTemplates(ownerId),
+      getCategories(ownerId),
+      hasBankFeed(ownerId),
+      // What editing a charge asks about: the days it is already recorded on
+      // this month.
+      getRecordedThisMonth(ownerId),
+      searchParams,
+      getFlags(),
+    ]);
   // What a charge can belong to, for an account that keeps properties.
   const properties = isFlagOn(flags, "property.track")
     ? await getPropertyNames(ownerId)
@@ -84,7 +71,6 @@ export default async function RecurringPage({
       initialEditId={params.edit}
       properties={properties}
       debitedCategoryIds={debited}
-      subscriptions={watched}
     />
   );
 }

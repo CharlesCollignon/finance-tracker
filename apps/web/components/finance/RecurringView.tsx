@@ -11,14 +11,9 @@ import {
 } from "react";
 import Link from "next/link";
 import { CheckCircle, Circle, House, Plus } from "@phosphor-icons/react";
-import { SubscriptionsCard } from "@/components/finance/SubscriptionsCard";
 import { Button, ButtonNub } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { RecurringProposals } from "@/components/finance/RecurringProposals";
-import type {
-  Subscription,
-  SubscriptionFinding,
-} from "@finance/core/subscription-watch";
 import type { RecurringProposal } from "@finance/core/recurring-detection";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { PageContainer } from "@/components/layout/PageContainer";
@@ -108,11 +103,6 @@ interface RecurringViewProps {
    * bought at the broker does not.
    */
   debitedCategoryIds?: string[];
-  /** What the ledger shows being paid every month or year (`readSubscriptions`). */
-  subscriptions?: {
-    subscriptions: Subscription[];
-    findings: SubscriptionFinding[];
-  };
 }
 
 /** Each property's name by id, for the row of a charge that belongs to one. */
@@ -564,7 +554,6 @@ export function RecurringView({
   initialEditId,
   properties = [],
   debitedCategoryIds = [],
-  subscriptions,
 }: RecurringViewProps) {
   const t = useT();
   const { toast } = useToast();
@@ -822,15 +811,6 @@ export function RecurringView({
               </Button>
             </EmptyState>
           )}
-
-          {/* After the charges, and whether or not there are any: a bank
-              shows what is paid every month before anyone has set it up. */}
-          {subscriptions ? (
-            <SubscriptionsCard
-              subscriptions={subscriptions.subscriptions}
-              findings={subscriptions.findings}
-            />
-          ) : null}
         </PageContainer>
 
         <RecurringForm

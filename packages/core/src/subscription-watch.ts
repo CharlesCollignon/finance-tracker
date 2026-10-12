@@ -334,17 +334,6 @@ export function watchSubscriptions(
   return { subscriptions, findings };
 }
 
-/** What the active ones cost, a month and a year. */
-export function subscriptionTotals(subscriptions: readonly Subscription[]): {
-  monthly: number;
-  yearly: number;
-} {
-  const monthly = subscriptions
-    .filter((subscription) => subscription.status === "active")
-    .reduce((sum, subscription) => sum + subscription.monthly, 0);
-  return { monthly: roundMoney(monthly), yearly: roundMoney(monthly * 12) };
-}
-
 /** The findings dated within a span: what is news for a week's recap. */
 export function findingsBetween(
   findings: readonly SubscriptionFinding[],

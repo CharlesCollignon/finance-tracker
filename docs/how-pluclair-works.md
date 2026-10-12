@@ -157,8 +157,9 @@ card, the moment is a gold pill that pops the first time a device sees it
 The recap says, of last week, what changed in the subscriptions too: a price
 that went up, a new one, one that stopped, two of a kind
 (`watchSubscriptions`, worked out from the year of rows the recap already
-reads, no push of its own). Récurrents lists them all under « Abonnements »,
-with what they cost a month and a year.
+reads, no push of its own). The recap is the only place they are told:
+Récurrents listed them all under « Abonnements » until October 2026, when
+the owner took the block off both apps.
 
 The recap is also a card on Le point, Monday to Wednesday, until « Vu »
 (`dismissed_prompts`, `recap:<monday>`); the `recap` switch hides both. On

@@ -2422,15 +2422,6 @@ export const fr: Messages = {
       other: "mois de série record",
     },
   },
-  subscriptions: {
-    title: "Abonnements",
-    hint: "Repérés dans vos opérations\u00A0: ce qui revient chaque mois ou chaque année, au même prix ou presque.",
-    total: "{monthly} par mois · {yearly} par an",
-    perMonth: "{amount}/mois",
-    perYear: "{amount}/an",
-    stopped: "Plus prélevé",
-    changes: "Ce qui a changé",
-  },
   afford: {
     title: "Puis-je me permettre\u00A0?",
     amount: "Montant",
