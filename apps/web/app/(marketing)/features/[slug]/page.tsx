@@ -4,10 +4,12 @@ import { getAuthUser } from "@/lib/auth/get-user";
 import { FeaturePage } from "@/components/marketing/FeaturePage";
 import { getLocale } from "@/lib/locale";
 import {
+  featureHref,
   isLandingPageId,
   getLandingPage,
   landingCopy,
 } from "@/components/marketing/landing-copy";
+import { shareMetadata } from "@/lib/og/share-metadata";
 
 interface FeatureRouteProps {
   params: Promise<{ slug: string }>;
@@ -26,11 +28,14 @@ export async function generateMetadata({
   if (!isLandingPageId(slug)) {
     return { title: "Pluclair" };
   }
-  const page = getLandingPage(slug, await getLocale());
-  return {
+  const locale = await getLocale();
+  const page = getLandingPage(slug, locale);
+  return shareMetadata({
     title: `${page.title} — Pluclair`,
     description: page.body,
-  };
+    path: featureHref(slug),
+    locale,
+  });
 }
 
 export default async function FeatureRoutePage({ params }: FeatureRouteProps) {
