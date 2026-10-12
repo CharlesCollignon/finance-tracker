@@ -200,11 +200,14 @@ function NavBadge({ count }: { count: number }) {
 export function TopNav({
   displayName,
   initial,
+  nouveautes = 0,
   badges = NO_BADGES,
   showProperty = false,
 }: {
   displayName: string;
   initial: string;
+  /** « Nouveautés » not seen yet, for the account menu's dot. */
+  nouveautes?: number;
   badges?: NavBadges;
   /** The Immobilier surface, for an account with `property.track`. */
   showProperty?: boolean;
@@ -307,7 +310,11 @@ export function TopNav({
               anything every page shares: the blur is for the whole app, so
               it sits with the other controls for the whole app. */}
           <PrivacyToggle tone="bar" />
-          <AccountMenu displayName={displayName} initial={initial} />
+          <AccountMenu
+            displayName={displayName}
+            initial={initial}
+            nouveautes={nouveautes}
+          />
         </div>
       </header>
     </div>

@@ -477,6 +477,18 @@ Bottom sheets carry a grabber and are the default for a focused sub-task;
 confirmation uses a dedicated sheet rather than a system alert. Honour
 swipe-to-dismiss unless dismissing would lose data.
 
+### Nouveautés
+
+The account menu's monogram carries a dot in the status green while the
+account has changes it has not seen, and the « Nouveautés » row their count
+— green means _arrived_, as on the site, and no gold is spent. The
+`nouveautes` screen deals its cards in, a beat apart and capped at eight,
+re-deals them when the filter changes, and opens one in place with the rest
+sliding down (`LinearTransition`); what was new on arrival keeps a green
+hairline for the visit. After an update, « Quoi de neuf » slides up as a
+sheet whose cards rise one after another. Under reduced motion every card is
+simply there.
+
 ### Signature: The Privacy Blur
 
 Amounts render through a dedicated private-amount component backed by a native

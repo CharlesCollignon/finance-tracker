@@ -4,6 +4,9 @@ import {
   changelogPulse,
   daysBetween,
   entriesSince,
+  isLaterEntry,
+  isNewerVersion,
+  unseenEntries,
   weekMonday,
   type ChangelogEntry,
 } from "./changelog";
@@ -92,6 +95,44 @@ describe("weekMonday and changelogPulse", () => {
       { week: "2026-10-05", count: 0 },
       { week: "2026-10-12", count: 2 },
     ]);
+  });
+});
+
+describe("unseenEntries", () => {
+  const list = [
+    entry("2026-10-12-c", "2026-10-12"),
+    entry("2026-10-01-b", "2026-10-01"),
+    entry("2026-09-02-a", "2026-09-02"),
+  ];
+
+  it("gives what is above the marker", () => {
+    expect(
+      unseenEntries(list, "2026-09-02-a", "2026-10-12").map((e) => e.id),
+    ).toEqual(["2026-10-12-c", "2026-10-01-b"]);
+    expect(unseenEntries(list, "2026-10-12-c", "2026-10-12")).toEqual([]);
+  });
+
+  it("gives the last two weeks to someone who has never looked", () => {
+    expect(unseenEntries(list, null, "2026-10-12").map((e) => e.id)).toEqual([
+      "2026-10-12-c",
+      "2026-10-01-b",
+    ]);
+    expect(unseenEntries(list, "gone", "2026-10-12")).toHaveLength(2);
+  });
+});
+
+describe("isLaterEntry and isNewerVersion", () => {
+  it("never moves the marker back a day", () => {
+    expect(isLaterEntry("2026-10-12-a", null)).toBe(true);
+    expect(isLaterEntry("2026-10-12-a", "2026-10-12-b")).toBe(true);
+    expect(isLaterEntry("2026-10-09-a", "2026-10-12-b")).toBe(false);
+  });
+
+  it("compares versions part by part", () => {
+    expect(isNewerVersion("1.1.0", "1.0.9")).toBe(true);
+    expect(isNewerVersion("1.10.0", "1.9.0")).toBe(true);
+    expect(isNewerVersion("1.0", "1.0.0")).toBe(false);
+    expect(isNewerVersion("1.0.0", "1.0.1")).toBe(false);
   });
 });
 

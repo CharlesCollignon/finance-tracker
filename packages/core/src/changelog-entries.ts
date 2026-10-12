@@ -17,6 +17,48 @@ import type { ChangelogEntry, RoadmapItem } from "./changelog";
  */
 export const CHANGELOG: readonly ChangelogEntry[] = [
   {
+    id: "2026-10-12-nouveautes-in-app",
+    date: "2026-10-12",
+    kind: "new",
+    platforms: ["web", "phone"],
+    fr: {
+      title: "« Nouveautés » dans l’app",
+      body: "Un point vert sur votre compte quand quelque chose de nouveau est arrivé. Lire « Nouveautés » le fait partir, sur le web comme sur le téléphone.",
+    },
+    en: {
+      title: "“What's new” in the app",
+      body: "A green dot on your account when something new has arrived. Reading “What's new” clears it, on the web and on the phone.",
+    },
+  },
+  {
+    id: "2026-10-12-whats-new-sheet",
+    date: "2026-10-12",
+    kind: "new",
+    platforms: ["phone"],
+    fr: {
+      title: "Quoi de neuf, après une mise à jour",
+      body: "Au premier lancement d’une nouvelle version de l’application, ce qu’elle apporte, en quelques cartes.",
+    },
+    en: {
+      title: "What's new, after an update",
+      body: "The first time a new version of the app opens, what it brings, in a few cards.",
+    },
+  },
+  {
+    id: "2026-10-12-new-version-banner",
+    date: "2026-10-12",
+    kind: "new",
+    platforms: ["phone"],
+    fr: {
+      title: "Une nouvelle version, signalée",
+      body: "Quand le site propose une application Android plus récente, Le point le dit, avec un bouton pour la télécharger.",
+    },
+    en: {
+      title: "A new version, announced",
+      body: "When the site offers a newer Android app, Le point says so, with a button to download it.",
+    },
+  },
+  {
     id: "2026-10-12-nouveautes",
     date: "2026-10-12",
     kind: "new",
@@ -940,7 +982,7 @@ export const CHANGELOG: readonly ChangelogEntry[] = [
  */
 export const CHANGELOG_STATS = {
   /** `git rev-list --count HEAD` on the branch that wrote the newest entry. */
-  commits: 928,
+  commits: 936,
   /** The repository's first commit. */
   since: "2026-06-15",
   asOf: "2026-10-12",

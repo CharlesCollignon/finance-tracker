@@ -17,7 +17,10 @@ import { bankFeedBelongsTo } from "@/lib/bank/client";
 import { countFulfilmentProposals } from "@/lib/queries/fulfilment";
 import { countPendingFeedItems } from "@/lib/queries/bank";
 import { getRecurringTemplates } from "@/lib/queries/finance";
-import { getCurrentMonth } from "@finance/core/constants";
+import { unseenEntries } from "@finance/core/changelog";
+import { CHANGELOG } from "@finance/core/changelog-entries";
+import { getCurrentMonth, todayIsoLocal } from "@finance/core/constants";
+import { readChangelogSeen } from "@finance/data/preferences";
 import type { PullFreshness } from "@finance/core/bank-pull";
 import { readPullFreshness } from "@/lib/bank/pull";
 import { createClient } from "@/lib/supabase/server";
@@ -69,7 +72,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
       ])
     : [false, NO_QUICK_ENTRY, null, null];
 
-  const [freshness, arrivedCount, inboxCount] = await Promise.all([
+  const [freshness, arrivedCount, inboxCount, newsSeen] = await Promise.all([
     // One small read for a control on every surface, and only where there is
     // a bank for it to describe. A failure here would take down every app
     // page to report the age of a figure, which is a poor trade: the control
@@ -99,7 +102,20 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
     // month still needs one. Whether or not the bank still syncs: rows kept
     // after a disconnect are reviewed all the same.
     user ? countPendingFeedItems(ownerId).catch(() => 0) : 0,
+    // The newest « Nouveautés » entry this person has read, on any device,
+    // for the dot on their account menu. Theirs, not the space's: what one
+    // partner has read says nothing of the other.
+    user
+      ? createClient()
+          .then((supabase) => readChangelogSeen(supabase, user.id))
+          .catch((): undefined => undefined)
+      : undefined,
   ]);
+  // No dot where nothing could clear it (before migration 069).
+  const nouveautes =
+    newsSeen === undefined
+      ? 0
+      : unseenEntries(CHANGELOG, newsSeen, todayIsoLocal()).length;
 
   // Different on every render, which is the point: `LiveRefresh` tells a
   // render it asked for from one a write caused. A server component renders
@@ -125,6 +141,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
             initial={initial}
             badges={{ bearing: arrivedCount, ledger: inboxCount }}
             showProperty={flags ? isFlagOn(flags, "property.track") : false}
+            nouveautes={nouveautes}
             space={
               owner?.space
                 ? {

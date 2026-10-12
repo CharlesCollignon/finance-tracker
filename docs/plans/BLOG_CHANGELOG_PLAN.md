@@ -208,7 +208,15 @@ entries curated from the 106 merges, fixes grouped.
   optimistic and rolled back with a toast if it fails. The page stays static;
   counts and one's own reactions load on the client.
 
-## Phase 3 — Nouveautés in the apps (branch `nouveautes-in-app`)
+## Phase 3 — Nouveautés in the apps (branch `nouveautes-in-app`) — built, waiting on the owner
+
+Built with two changes from below: the web's « Nouveautés » row opens the
+public page rather than a sheet (one place to read, and reading it clears
+the dot), and the `news` push waits for assumption 9 to be confirmed. The
+dot is the status green, not gold. Migration 069 was run on the hosted
+database by the owner on 2026-10-12. A release is one command,
+`node scripts/release-android.mjs`: version, EAS build, GitHub release;
+the site reads the version from the release's tag (`docs/store/README.md`).
 
 - **Seen, once for both apps**: `user_preferences.changelog_seen` (the newest
   entry id read), so reading on the phone clears the web's dot.

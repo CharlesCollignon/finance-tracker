@@ -339,6 +339,33 @@ handed on by the browser's share sheet or the phone's (`expo-sharing`). Le
 point offers it in January until « Vu » (`dismissed_prompts`, `year:<year>`),
 and the notify cron says so once, under the `year` switch.
 
+## Nouveautés
+
+Everything that changed, newest first: the entries are in
+`packages/core/src/changelog-entries.ts`, French and English side by side,
+one per change that reached `main` and that someone can see (`AGENTS.md`
+says so, and a Claude Code hook holds it: `scripts/changelog-guard.mjs`).
+The site draws them at `/nouveautes` (and `/nouveautes/<id>` with one open),
+an RSS feed at `/nouveautes/rss.xml`, and the phone reads
+`/nouveautes/feed.json` — the same list, « Bientôt », and the APK the site
+hands out with its version, read from the tag of the latest GitHub release
+(`scripts/release-android.mjs` makes those).
+
+What a person has seen is theirs, on every device:
+`user_preferences.changelog_seen` (migration 069), the newest entry read.
+Both apps' account menus put a dot on the avatar and a count on the
+« Nouveautés » row while there is something past it — before any marker,
+the last two weeks (`unseenEntries`). Opening the list moves the marker
+(`markChangelogSeen`, forward only), on the web through `/nouveautes`, on
+the phone through its own `nouveautes` screen. A visitor's « depuis votre
+dernière visite » is kept in their browser instead. Behind migration 069
+there is no dot at all, since nothing could clear it.
+
+On the phone, the first launch after the APK was updated shows « Quoi de
+neuf », the unseen entries as a sheet, once; and when the site's APK is
+newer than the one installed, Le point says so with a download button,
+until « Plus tard » for that version (`docs/store/README.md`).
+
 ## Shared space
 
 A couple's joint money beside each partner's own (migrations 060–061,

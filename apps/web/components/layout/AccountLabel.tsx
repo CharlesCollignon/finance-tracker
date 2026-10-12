@@ -6,6 +6,8 @@ import { AccountMenu } from "@/components/layout/AccountMenu";
 interface AccountLabelValue {
   displayName: string;
   initial: string;
+  /** « Nouveautés » this account has not seen yet, for the menu's dot. */
+  nouveautes: number;
 }
 
 const AccountLabelContext = createContext<AccountLabelValue | null>(null);
@@ -20,10 +22,11 @@ const AccountLabelContext = createContext<AccountLabelValue | null>(null);
 export function AccountLabelProvider({
   displayName,
   initial,
+  nouveautes,
   children,
 }: AccountLabelValue & { children: ReactNode }) {
   return (
-    <AccountLabelContext.Provider value={{ displayName, initial }}>
+    <AccountLabelContext.Provider value={{ displayName, initial, nouveautes }}>
       {children}
     </AccountLabelContext.Provider>
   );
@@ -49,6 +52,7 @@ export function HeaderAccountMenu() {
       <AccountMenu
         displayName={account.displayName}
         initial={account.initial}
+        nouveautes={account.nouveautes}
       />
     </span>
   );

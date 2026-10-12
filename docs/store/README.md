@@ -50,7 +50,25 @@ already shared.
 
 A change to the app reaches people with a new build and a new release:
 they install the new APK over the old one, and their data stays (it lives
-in Supabase). An APK does not update itself.
+in Supabase). An APK does not update itself, so the app says when there is
+a newer one (« Une nouvelle version est disponible » on Le point), and
+after an update shows « Quoi de neuf » once. Both rest on the version, and
+one command does a whole release — steps 2 and 3 above included:
+
+```sh
+node scripts/release-android.mjs          # 1.0.0 → 1.1.0; `patch`, `major`
+node scripts/release-android.mjs --dry-run
+```
+
+It raises `version` in `apps/mobile/app.json` and commits it, builds the
+APK on EAS (the `preview` profile raises the build number by itself, so
+every APK installs over the one before), pushes `main`, and publishes the
+release `android-<version>` with `pluclair.apk` and notes from the phone's
+« Nouveautés » entries. The site reads the version from that release's tag
+(`latestApkVersion`, within ten minutes), so there is nothing to set on
+Vercel after the first `ANDROID_APK_URL`; `ANDROID_APK_VERSION` there would
+override the tag. The entries themselves are written with the changes, as
+always (`AGENTS.md`).
 
 ### Before 2027: register with Google
 

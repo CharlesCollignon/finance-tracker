@@ -2,12 +2,14 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("server-only", () => ({}));
 
-const { storeLinks } = await import("./store-links");
+const { androidApkVersion, latestApkVersion, storeLinks, versionFromTag } =
+  await import("./store-links");
 
 beforeEach(() => {
   vi.stubEnv("APP_STORE_URL", "");
   vi.stubEnv("PLAY_STORE_URL", "");
   vi.stubEnv("ANDROID_APK_URL", "");
+  vi.stubEnv("ANDROID_APK_VERSION", "");
 });
 
 afterEach(() => {
@@ -59,5 +61,51 @@ describe("storeLinks", () => {
     expect(storeLinks().androidApk).toBeNull();
     vi.stubEnv("ANDROID_APK_URL", "not a url");
     expect(storeLinks().androidApk).toBeNull();
+  });
+});
+
+describe("androidApkVersion", () => {
+  it("takes a version, and nothing else", () => {
+    expect(androidApkVersion()).toBeNull();
+    vi.stubEnv("ANDROID_APK_VERSION", " 1.2.0 ");
+    expect(androidApkVersion()).toBe("1.2.0");
+    vi.stubEnv("ANDROID_APK_VERSION", "latest");
+    expect(androidApkVersion()).toBeNull();
+  });
+});
+
+describe("versionFromTag", () => {
+  it("reads the release's own naming", () => {
+    expect(versionFromTag("android-1.1.0")).toBe("1.1.0");
+    expect(versionFromTag("android-1.0.0-beta.1")).toBe("1.0.0");
+    expect(versionFromTag("v1.1.0")).toBeNull();
+  });
+});
+
+describe("latestApkVersion", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it("takes the variable over the release", async () => {
+    vi.stubEnv("ANDROID_APK_VERSION", "1.2.0");
+    vi.stubGlobal("fetch", vi.fn());
+    expect(await latestApkVersion()).toBe("1.2.0");
+    expect(fetch).not.toHaveBeenCalled();
+  });
+
+  it("reads the latest release's tag, and nothing when GitHub does not answer", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => Response.json({ tag_name: "android-1.3.0" })),
+    );
+    expect(await latestApkVersion()).toBe("1.3.0");
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => {
+        throw new Error("offline");
+      }),
+    );
+    expect(await latestApkVersion()).toBeNull();
   });
 });

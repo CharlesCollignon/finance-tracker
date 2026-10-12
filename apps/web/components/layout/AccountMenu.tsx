@@ -11,10 +11,11 @@ import {
 import { createPortal } from "react-dom";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Compass, Gear, SignOut } from "@phosphor-icons/react";
+import { Compass, Gear, Newspaper, SignOut } from "@phosphor-icons/react";
 import { UserInitial } from "@/components/layout/UserInitial";
 import { signOut } from "@/lib/actions/finance";
 import { PROFILE_NAV_ITEM } from "@/lib/navigation";
+import { NOUVEAUTES_HREF } from "@/components/marketing/nouveautes-copy";
 import { cn } from "@/lib/utils";
 import { GLASS_PANEL } from "@/lib/glass";
 import { ICON } from "@/lib/icon-scale";
@@ -28,6 +29,12 @@ import { useT } from "@/lib/locale-context";
 interface AccountMenuProps {
   displayName: string;
   initial: string;
+  /**
+   * « Nouveautés » this account has not seen yet (`unseenEntries`): a dot
+   * on the avatar in the status green — arrived, as on the page — and the
+   * count beside the menu's row.
+   */
+  nouveautes?: number;
 }
 
 /** Nothing to subscribe to: the answer only differs between server and client. */
@@ -35,7 +42,11 @@ function subscribeToNothing() {
   return () => {};
 }
 
-export function AccountMenu({ displayName, initial }: AccountMenuProps) {
+export function AccountMenu({
+  displayName,
+  initial,
+  nouveautes = 0,
+}: AccountMenuProps) {
   const t = useT();
   const pathname = usePathname();
   const triggerRef = useRef<HTMLButtonElement>(null);
@@ -158,6 +169,27 @@ export function AccountMenu({ displayName, initial }: AccountMenuProps) {
                     than on any one screen for the same reason: this menu is
                     on every screen, and a route that only exists while an
                     account is empty is not re-findable. */}
+                {/* The public page, where the marketing shell tells the
+                    changes properly; reading it there clears the dot here
+                    and on the phone (`markNouveautesSeen`). */}
+                <Link
+                  href={NOUVEAUTES_HREF}
+                  className={rowClass}
+                  onClick={() => setOpenAt(null)}
+                >
+                  <Newspaper size={ICON.lg} />
+                  <span className="flex-1">{t("nav.nouveautes")}</span>
+                  {nouveautes > 0 ? (
+                    <span
+                      aria-label={t("nav.nouveautesUnseen", {
+                        count: nouveautes,
+                      })}
+                      className="inline-flex min-w-5 items-center justify-center rounded-full bg-success px-1.5 py-0.5 text-[10px] leading-none font-semibold text-background tabular-nums"
+                    >
+                      {nouveautes > 9 ? "9+" : nouveautes}
+                    </span>
+                  ) : null}
+                </Link>
                 <Link
                   href="/welcome"
                   className={rowClass}
@@ -188,16 +220,26 @@ export function AccountMenu({ displayName, initial }: AccountMenuProps) {
         type="button"
         aria-haspopup="dialog"
         aria-expanded={open}
-        aria-label={displayName}
+        aria-label={
+          nouveautes > 0
+            ? `${displayName}, ${t("nav.nouveautesUnseen", { count: nouveautes })}`
+            : displayName
+        }
         onClick={toggle}
         className={cn(
-          "flex size-11 shrink-0 cursor-pointer items-center justify-center rounded-full",
+          "relative flex size-11 shrink-0 cursor-pointer items-center justify-center rounded-full",
           "transition-colors duration-hover",
           "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
           active ? "bg-muted" : "hover:bg-muted",
         )}
       >
         <UserInitial initial={initial} name={displayName} size="md" />
+        {nouveautes > 0 ? (
+          <span
+            aria-hidden
+            className="absolute right-1.5 top-1.5 size-2.5 rounded-full bg-success ring-2 ring-background"
+          />
+        ) : null}
       </button>
       {panel}
     </>

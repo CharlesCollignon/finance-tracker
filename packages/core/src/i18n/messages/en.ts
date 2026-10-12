@@ -78,6 +78,29 @@ export const en = {
    * `/transactions` and `/investments` all outlived the words above, so
    * matching on the route finds nothing.
    */
+  /** « Nouveautés » on the phone: its screen, the sheet after an update, the new-APK banner. */
+  nouveautes: {
+    title: "What's new",
+    all: "All",
+    kindNew: "New",
+    kindBetter: "Improved",
+    kindFixed: "Fixed",
+    fresh: "New for you",
+    soon: "Coming soon",
+    more: "More",
+    less: "Less",
+    onSite: "See it on the site",
+    back: "Back",
+    whatsNewTitle: "What's new",
+    whatsNewIntro: "Since your last version:",
+    whatsNewAll: "See everything",
+    whatsNewClose: "Close",
+    updateTitle: "A new version is out",
+    updateBody: "Version {version} of Pluclair is ready to download.",
+    updateDownload: "Download",
+    updateLater: "Later",
+  },
+
   nav: {
     yearReview: "Your year",
     bearing: "Overview",
@@ -96,6 +119,10 @@ export const en = {
 
     /** The count on a destination that has things waiting behind it. */
     waiting: "{count} waiting",
+    /** « Nouveautés », in the account menus of both apps. */
+    nouveautes: "What's new",
+    /** How many changes this account has not seen yet. */
+    nouveautesUnseen: "{count} new",
     /** The control that folds a surface's views away, and unfolds them. */
   },
 

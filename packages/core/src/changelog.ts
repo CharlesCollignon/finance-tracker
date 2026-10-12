@@ -182,3 +182,65 @@ export function changelogPulse<T extends { date: string }>(
     cursor.setUTCDate(cursor.getUTCDate() + 7);
   }
 }
+
+/**
+ * How far back a first look reaches: someone who has never opened the list
+ * is told about the last two weeks, not about everything since June.
+ */
+const FIRST_LOOK_DAYS = 14;
+
+/**
+ * What is new for an account, newest first: the entries above the one it
+ * last saw (`user_preferences.changelog_seen`) or, before it has seen any,
+ * those of the last two weeks. Drives the dot in both apps' account menus.
+ */
+export function unseenEntries<T extends { id: string; date: string }>(
+  entries: readonly T[],
+  seenId: string | null,
+  today: string,
+): T[] {
+  if (seenId && entries.some((entry) => entry.id === seenId)) {
+    return entriesSince(entries, seenId);
+  }
+  return entries.filter(
+    (entry) => daysBetween(entry.date, today) <= FIRST_LOOK_DAYS,
+  );
+}
+
+/**
+ * Whether `candidate` is a newer entry than `current`, by the day in their
+ * ids — so a device a step behind never moves the marker back.
+ */
+export function isLaterEntry(
+  candidate: string,
+  current: string | null,
+): boolean {
+  return current === null || candidate.slice(0, 10) >= current.slice(0, 10);
+}
+
+/** Whether version `a` (« 1.2.0 ») is newer than `b`, part by part. */
+export function isNewerVersion(a: string, b: string): boolean {
+  const parts = (version: string) =>
+    version.split(".").map((part) => Number.parseInt(part, 10) || 0);
+  const left = parts(a);
+  const right = parts(b);
+  for (let i = 0; i < Math.max(left.length, right.length); i++) {
+    const diff = (left[i] ?? 0) - (right[i] ?? 0);
+    if (diff !== 0) {
+      return diff > 0;
+    }
+  }
+  return false;
+}
+
+/**
+ * `/nouveautes/feed.json`: what the phone reads, so an APK already
+ * installed still hears of what shipped after it was built, and of a newer
+ * APK to download.
+ */
+export interface NouveautesFeed {
+  entries: ChangelogEntry[];
+  roadmap: RoadmapItem[];
+  /** The APK the site hands out, where its version is known. */
+  apk: { version: string; url: string } | null;
+}

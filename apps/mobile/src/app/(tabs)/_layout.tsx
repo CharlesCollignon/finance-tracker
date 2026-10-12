@@ -7,6 +7,7 @@ import { useTabBarHeight } from "@/theme/chrome";
 
 import { SharedBackdrop } from "@/components/AppBackdrop";
 import { Blur } from "@/components/ui/Blur";
+import { WhatsNewSheet } from "@/components/nouveautes/WhatsNewSheet";
 import { notifyDataChanged } from "@/lib/data-version";
 import { recordAppOpened } from "@/lib/mutations";
 import { MonthProvider } from "@/providers/MonthProvider";
@@ -261,6 +262,8 @@ export default function TabsLayout() {
               {/* Reachable from the header account menu, not the tab bar. */}
               <Tabs.Screen name="profile" options={{ href: null }} />
             </Tabs>
+            {/* Once, after the APK was updated: what it brought. */}
+            <WhatsNewSheet />
           </SharedBackdrop>
         </QuickAddProvider>
       </MonthProvider>
