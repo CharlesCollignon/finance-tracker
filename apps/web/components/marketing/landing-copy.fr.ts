@@ -18,8 +18,9 @@ import type { LandingPageId } from "./landing-copy";
  *   votre banque » se vérifie ; « une clarté sans effort », non.
  *
  *   Never promise what the app does not do. Ce qui n'est pas encore ouvert à
- *   tous — la banque, l'application mobile — est dit une fois, sous
- *   « Bientôt », au futur.
+ *   tous — l'application mobile, tant qu'aucun store ne l'a — est dit une
+ *   fois, sous « Bientôt », au futur. La banque en est sortie quand elle
+ *   s'est ouverte à tous (octobre 2026).
  *
  * The nouns come from the app, not from the dictionary: « Le point »,
  * « Journal », « Récurrents », « Placements », « Clôture du mois ». A landing
@@ -139,11 +140,6 @@ export const landingCopyFr: LandingCopySections & {
     heading: "Bientôt dans Pluclair",
     items: [
       {
-        id: "bank",
-        title: "Votre banque, connectée",
-        body: "En lecture seule : vos opérations arriveront toutes seules, et Pluclair ne pourra jamais faire de paiement.",
-      },
-      {
         id: "app",
         title: "L’application mobile",
         body: "Pluclair dans votre poche, avec les mêmes chiffres que sur l’ordinateur.",
@@ -169,12 +165,12 @@ export const landingCopyFr: LandingCopySections & {
       {
         question: "C’est payant ?",
         answer:
-          "Pluclair est gratuit, sans carte bancaire. Les lectures et les questions, écrites par une IA, demandent votre propre compte OpenRouter : vous y choisissez le modèle — Mistral, ChatGPT ou Claude — et vous payez ce service directement, quelques centimes chacune. La connexion bancaire, quand elle arrivera, se paiera chez son service.",
+          "Pluclair est gratuit, sans carte bancaire. Deux options se paient à part, directement à leur service et jamais à Pluclair. La connexion bancaire passe par votre propre compte open-banking.io : environ 3 € par mois, et 1 € par compte en plus. Les lectures et les questions, écrites par une IA, demandent votre propre compte OpenRouter : vous y choisissez le modèle — Mistral, ChatGPT ou Claude — et vous payez quelques centimes chacune.",
       },
       {
         question: "Pluclair peut-il toucher à mon argent ?",
         answer:
-          "Non, jamais. Il ne fait ni virement ni paiement, et la connexion bancaire qui arrive ne pourra que lire.",
+          "Non, jamais. Il ne fait ni virement ni paiement, et la connexion bancaire ne peut que lire.",
       },
       {
         question: "Où vont mes données ?",
@@ -184,7 +180,7 @@ export const landingCopyFr: LandingCopySections & {
       {
         question: "Faut-il connecter sa banque ?",
         answer:
-          "Non. Vous notez vos opérations vous-même, ou vous importez un relevé CSV de votre banque. Une connexion en lecture seule arrive bientôt, pour ceux qui la veulent.",
+          "Non. Vous notez vos opérations vous-même, ou vous importez un relevé CSV de votre banque. Si vous préférez qu’elles arrivent toutes seules, une connexion en lecture seule les apporte, par votre propre compte open-banking.io.",
       },
       {
         question: "Que voit l’IA ?",

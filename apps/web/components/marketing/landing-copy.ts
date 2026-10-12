@@ -16,9 +16,10 @@ import { landingCopyFr } from "@/components/marketing/landing-copy.fr";
  *   to before can tell the difference in about a second.
  *
  *   Never promise what the app does not do. What is not open to everyone yet
- *   — the bank connection, the mobile app until a store has it —
+ *   — the mobile app until a store has it —
  *   is said once, under "Coming soon", in the future tense, and nowhere in
- *   the present (the owner's call, October 2026).
+ *   the present (the owner's call, October 2026). The bank connection left
+ *   that list once it opened to everyone (October 2026).
  */
 
 export const landingCopy = {
@@ -153,11 +154,6 @@ export const landingCopy = {
     heading: "Coming soon",
     items: [
       {
-        id: "bank",
-        title: "Your bank, connected",
-        body: "Read-only: your transactions will arrive on their own, and Pluclair will never be able to make a payment.",
-      },
-      {
         /** Leaves this list for `phone` below once a store has the app. */
         id: "app",
         title: "The mobile app",
@@ -189,12 +185,12 @@ export const landingCopy = {
       {
         question: "Does it cost anything?",
         answer:
-          "Pluclair is free, and no card is asked for. Reads and questions, written by an AI, need your own OpenRouter account: you choose the model there — Mistral, ChatGPT or Claude — and pay that service directly, a few cents each. The bank connection, when it comes, will be paid to its service.",
+          "Pluclair is free, and no card is asked for. Two options are paid apart, directly to their own service and never to Pluclair. The bank connection goes through your own open-banking.io account: about €3 a month, and €1 for each extra account. Reads and questions, written by an AI, need your own OpenRouter account: you choose the model there — Mistral, ChatGPT or Claude — and pay a few cents each.",
       },
       {
         question: "Can Pluclair touch my money?",
         answer:
-          "No, never. It makes no transfer and no payment, and the bank connection on its way will only be able to read.",
+          "No, never. It makes no transfer and no payment, and the bank connection can only read.",
       },
       {
         question: "Where does my data go?",
@@ -204,7 +200,7 @@ export const landingCopy = {
       {
         question: "Do I need to connect my bank?",
         answer:
-          "No. You note your transactions yourself, or import a CSV statement from your bank. A read-only connection is coming for those who want it.",
+          "No. You note your transactions yourself, or import a CSV statement from your bank. If you would rather they arrive on their own, a read-only connection brings them in, through your own open-banking.io account.",
       },
       {
         question: "What does the AI see?",
