@@ -42,6 +42,7 @@ import type {
 } from "@finance/core/types/database";
 
 import { MonthPicker } from "@/components/MonthPicker";
+import { LedgerWeekStrip } from "@/components/LedgerWeekStrip";
 import { StaggerItem } from "@/components/motion/Stagger";
 import { AuthorBadge } from "@/components/AuthorBadge";
 import { CategoryIcon } from "@/components/CategoryIcon";
@@ -119,6 +120,7 @@ import {
   filterPlanned,
   ledgerDays,
   ledgerTotals,
+  ledgerWeeks,
   type LedgerTypeFilter,
 } from "@finance/core/ledger-view";
 
@@ -160,6 +162,10 @@ export default function TransactionsScreen() {
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [accountFilter, setAccountFilter] = useState<string>("all");
   const [optionsOpen, setOptionsOpen] = useState(false);
+  // The week the list is narrowed to, by its first day. Kept by date rather
+  // than by position, so another month — which has no such week — simply
+  // shows all of itself, with nothing to reset.
+  const [weekFrom, setWeekFrom] = useState<string | null>(null);
   const [editing, setEditing] = useState<TransactionWithCategory | null>(null);
   const [duplicating, setDuplicating] =
     useState<TransactionWithCategory | null>(null);
@@ -412,16 +418,30 @@ export default function TransactionsScreen() {
     }),
     [filter, categoryFilter, search, accountFilter, bankAccounts],
   );
+  // The strip counts what every filter but the week's keeps, so it shows
+  // where in the month the rows are — and where a search found something.
+  const weeks = useMemo(
+    () =>
+      ledgerWeeks(
+        year,
+        month,
+        filterLedger(transactions, ledgerFilter, accountOf),
+        filterPlanned(planned, ledgerFilter),
+      ),
+    [year, month, transactions, planned, ledgerFilter, accountOf],
+  );
+  const week = weeks.find((each) => each.from === weekFrom) ?? null;
   // Category name and note, each on its own, as on the web.
   const filtered = useMemo(
-    () => filterLedger(transactions, ledgerFilter, accountOf),
-    [transactions, ledgerFilter, accountOf],
+    () =>
+      filterLedger(transactions, { ...ledgerFilter, range: week }, accountOf),
+    [transactions, ledgerFilter, week, accountOf],
   );
   // The same filters over the planned rows, so choosing "Expense" or a
   // category narrows what is to come as well as what has happened.
   const filteredPlanned = useMemo(
-    () => filterPlanned(planned, ledgerFilter),
-    [planned, ledgerFilter],
+    () => filterPlanned(planned, { ...ledgerFilter, range: week }),
+    [planned, ledgerFilter, week],
   );
   // The figures describe what is on screen, which is the whole reason they
   // are here: the month's own totals are Month's job, and repeating them
@@ -570,6 +590,7 @@ export default function TransactionsScreen() {
     setFilter("all");
     setCategoryFilter("all");
     setAccountFilter("all");
+    setWeekFrom(null);
     setSearch("");
   }
 
@@ -858,6 +879,13 @@ export default function TransactionsScreen() {
               </View>
             </View>
           ) : null}
+
+          <LedgerWeekStrip
+            weeks={weeks}
+            value={week?.from ?? null}
+            onChange={setWeekFrom}
+            className="mt-3"
+          />
 
           {skipped.length > 0 ? (
             <SkippedLine
