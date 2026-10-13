@@ -205,19 +205,21 @@ to stop it:
 Phases 0–2 make the import as easy as a file can be; 3–5 each add a way in
 and can be taken or left on their own.
 
-## Assumed — to confirm before Phase 0
+## Decided, and assumed
 
-1. **Imports go through the bank's pipeline**: recognised lines filed,
+The owner chose 1 to 4 on 2026-10-13, each the recommended option; 5 to 7
+stand as written unless they say otherwise.
+
+1. **Decided — imports go through the bank's pipeline**: recognised lines filed,
    the rest in « À vérifier », as the bank feed does — rather than every
    row written straight into the Journal with a category picked by hand.
-2. **AI for scanned PDFs and screenshots**: through an EU provider
+2. **Decided — AI for scanned PDFs and screenshots**: through an EU provider
    (Mistral), only when a file cannot be read otherwise, with the person's
-   consent each time; the file is sent, read and not kept. Or no AI, and
-   such files are refused with the export guide instead.
-3. **E-mail import**: the owner signs up to an inbound-mail service (a
+   consent each time; the file is sent, read and not kept.
+3. **Decided — e-mail import**: the owner signs up to an inbound-mail service (a
    click-through free tier; I propose one in Phase 4) and adds one DNS
    record at Namecheap; I guide both.
-4. **Bank notifications on Android**: acceptable to ask for « Accès aux
+4. **Decided — bank notifications on Android**: acceptable to ask for « Accès aux
    notifications », read only the bank apps chosen, on the phone only.
 5. **The old wizard goes**; column mapping survives only as the fallback
    for a CSV nobody can read alone.
