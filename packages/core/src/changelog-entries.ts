@@ -17,6 +17,24 @@ import type { ChangelogEntry, RoadmapItem } from "./changelog";
  */
 export const CHANGELOG: readonly ChangelogEntry[] = [
   {
+    id: "2026-10-13-statements-pdf",
+    date: "2026-10-13",
+    kind: "new",
+    platforms: ["web"],
+    fr: {
+      title: "Vos relevés PDF, et même une capture d’écran",
+      body: "Le relevé PDF que votre banque envoie chaque mois s’importe comme n’importe quel fichier : Pluclair lit ses colonnes, et les soldes du relevé confirment la lecture au centime près — ou disent qu’il manque quelque chose. Vous pouvez aussi voir les opérations lues avant d’importer.",
+      detail:
+        "Un relevé scanné ou une capture de l’appli de votre banque peut être lu par votre compte IA, avec Mistral, si vous le demandez, fichier par fichier ; chaque ligne lue attend alors dans « À vérifier ».",
+    },
+    en: {
+      title: "Your PDF statements, and even a screenshot",
+      body: "The PDF statement your bank sends each month imports like any other file: Pluclair reads its columns, and the statement’s own balances confirm the reading to the cent — or say something is missing. You can also see the transactions read before importing.",
+      detail:
+        "A scanned statement or a screenshot of your bank’s app can be read by your AI account, with Mistral, if you ask, file by file; every line read then waits in “Review”.",
+    },
+  },
+  {
     id: "2026-10-13-statements-anywhere",
     date: "2026-10-13",
     kind: "better",
@@ -1140,7 +1158,7 @@ export const CHANGELOG: readonly ChangelogEntry[] = [
  */
 export const CHANGELOG_STATS = {
   /** `git rev-list --count HEAD` on the branch that wrote the newest entry. */
-  commits: 1027,
+  commits: 1035,
   /** The repository's first commit. */
   since: "2026-06-15",
   asOf: "2026-10-13",
