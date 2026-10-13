@@ -157,6 +157,9 @@ function Inline({ nodes }: { nodes: readonly AskInline[] }) {
                 <Inline nodes={node.children} />
               </Text>
             );
+          case "link":
+            // Ask never asks for links: its words, should one come.
+            return <Inline key={index} nodes={node.children} />;
           case "code":
             return (
               <Text key={index} className="bg-muted font-mono text-sm">

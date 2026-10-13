@@ -5,8 +5,11 @@ import { FIGURE_PATTERN, figureKey } from "./ask-figures";
  * both apps draw with their own components (`./ask-chat`).
  *
  * Headings, paragraphs, lists, tables, quotes and rules; bold, italics and
- * code inside them. Nothing else: no links, images or HTML — what the model
- * writes as one is shown as its text. Lenient by necessity, because the
+ * code inside them. Nothing else: no images or HTML, and no links — what
+ * the model writes as one is shown as its text — except where `links` is
+ * asked for (Entraide, where members may point to a source): then
+ * `[text](https://…)` and a bare `https://…` are links, and nothing that is
+ * not http or https ever is. Lenient by necessity, because the
  * answer is read while it is still being written: an unclosed `**` is two
  * asterisks until its partner arrives, and a table is a paragraph until its
  * separator line does.
@@ -20,7 +23,8 @@ export type AskInline =
   | { kind: "strong"; children: AskInline[] }
   | { kind: "em"; children: AskInline[] }
   | { kind: "code"; text: string }
-  | { kind: "figure"; text: string; traced: boolean };
+  | { kind: "figure"; text: string; traced: boolean }
+  | { kind: "link"; href: string; children: AskInline[] };
 
 export type AskAlign = "left" | "center" | "right";
 
@@ -51,9 +55,11 @@ const TABLE_SEPARATOR = /^\s*\|?\s*:?-{2,}:?\s*(?:\|\s*:?-{2,}:?\s*)*\|?\s*$/;
 export function parseAskMarkdown(
   markdown: string,
   untraced: readonly string[] = [],
+  options: { links?: boolean } = {},
 ): AskBlock[] {
   const unknown = new Set(untraced.map(figureKey));
-  const inline = (text: string) => parseInline(text, unknown);
+  const inline = (text: string) =>
+    parseInline(text, unknown, options.links ?? false);
   const lines = markdown.replace(/\r\n?/g, "\n").split("\n");
   const blocks: AskBlock[] = [];
   let paragraph: string[] = [];
@@ -198,16 +204,36 @@ function alignOf(separator: string): AskAlign {
  * Bold, italics, code and links, earliest first; what is left is text, its
  * figures split out. An opening mark with no partner stays as written.
  */
-const INLINE =
-  /`([^`]+)`|\*\*(?=\S)([\s\S]+?)(?<=\S)\*\*|__(?=\S)([\s\S]+?)(?<=\S)__|\*(?=[^\s*])([\s\S]+?)(?<=[^\s*])\*(?!\*)|(?<![\w])_(?=\S)([\s\S]+?)(?<=\S)_(?![\w])|\[([^\]]+)\]\([^)]*\)/g;
+const INLINE_SOURCE =
+  /`([^`]+)`|\*\*(?=\S)([\s\S]+?)(?<=\S)\*\*|__(?=\S)([\s\S]+?)(?<=\S)__|\*(?=[^\s*])([\s\S]+?)(?<=[^\s*])\*(?!\*)|(?<![\w])_(?=\S)([\s\S]+?)(?<=\S)_(?![\w])|\[([^\]]+)\]\(([^)]*)\)/
+    .source;
+const INLINE = new RegExp(INLINE_SOURCE, "g");
+// With links: a bare web address too, without the punctuation that ends
+// the sentence around it.
+const INLINE_WITH_URLS = new RegExp(
+  `${INLINE_SOURCE}|(https?:\\/\\/[^\\s<>()\\]]*[^\\s<>()\\].,;:!?'"»])`,
+  "g",
+);
+
+function webAddress(href: string): string | null {
+  try {
+    const url = new URL(href.trim());
+    return url.protocol === "https:" || url.protocol === "http:"
+      ? url.toString()
+      : null;
+  } catch {
+    return null;
+  }
+}
 
 export function parseInline(
   text: string,
   untraced: ReadonlySet<string> = new Set(),
+  links = false,
 ): AskInline[] {
   const out: AskInline[] = [];
   let last = 0;
-  for (const match of text.matchAll(INLINE)) {
+  for (const match of text.matchAll(links ? INLINE_WITH_URLS : INLINE)) {
     if (match.index > last) {
       out.push(...withFigures(text.slice(last, match.index), untraced));
     }
@@ -216,16 +242,28 @@ export function parseInline(
     } else if (match[2] !== undefined || match[3] !== undefined) {
       out.push({
         kind: "strong",
-        children: parseInline((match[2] ?? match[3])!, untraced),
+        children: parseInline((match[2] ?? match[3])!, untraced, links),
       });
     } else if (match[4] !== undefined || match[5] !== undefined) {
       out.push({
         kind: "em",
-        children: parseInline((match[4] ?? match[5])!, untraced),
+        children: parseInline((match[4] ?? match[5])!, untraced, links),
       });
+    } else if (match[8] !== undefined) {
+      const href = webAddress(match[8]);
+      out.push(
+        href
+          ? { kind: "link", href, children: [{ kind: "text", text: match[8] }] }
+          : { kind: "text", text: match[8] },
+      );
     } else {
-      // A link is shown as its words: an answer sends no one anywhere.
-      out.push(...withFigures(match[6]!, untraced));
+      // Without `links`, a link is shown as its words: an answer sends no
+      // one anywhere. With them, only to a web address.
+      const href = links ? webAddress(match[7] ?? "") : null;
+      const words = withFigures(match[6]!, untraced);
+      out.push(
+        ...(href ? [{ kind: "link" as const, href, children: words }] : words),
+      );
     }
     last = match.index + match[0].length;
   }
