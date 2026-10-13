@@ -236,18 +236,37 @@ export async function createPost(
   return { success: true, id: data.id };
 }
 
+/**
+ * What an update of one's own row says: done, refused by name, or — when
+ * no row was the writer's to change — not allowed, rather than a success
+ * that changed nothing (and would be kept as an edit that never was).
+ */
+function ownRowChanged(result: {
+  data: unknown[] | null;
+  error: Parameters<typeof entraideError>[0] | null;
+}): ActionResult {
+  if (result.error) {
+    return { error: entraideError(result.error) };
+  }
+  return result.data && result.data.length > 0
+    ? { success: true }
+    : { error: "errors.notAllowed" };
+}
+
 export async function editPost(
   db: Db,
   userId: string,
   id: number,
   post: { title: string; body: string },
 ): Promise<ActionResult> {
-  const { error } = await db
-    .from("entraide_posts")
-    .update({ title: post.title.trim(), body: post.body.trim() })
-    .eq("id", id)
-    .eq("author_id", userId);
-  return error ? { error: entraideError(error) } : { success: true };
+  return ownRowChanged(
+    await db
+      .from("entraide_posts")
+      .update({ title: post.title.trim(), body: post.body.trim() })
+      .eq("id", id)
+      .eq("author_id", userId)
+      .select("id"),
+  );
 }
 
 /** The author's own: emptied, and shown as « Message supprimé ». */
@@ -256,12 +275,14 @@ export async function deletePost(
   userId: string,
   id: number,
 ): Promise<ActionResult> {
-  const { error } = await db
-    .from("entraide_posts")
-    .update({ status: "deleted" })
-    .eq("id", id)
-    .eq("author_id", userId);
-  return error ? { error: entraideError(error) } : { success: true };
+  return ownRowChanged(
+    await db
+      .from("entraide_posts")
+      .update({ status: "deleted" })
+      .eq("id", id)
+      .eq("author_id", userId)
+      .select("id"),
+  );
 }
 
 /** The asker marks an answer « Résolu », or takes the mark back (`null`). */
@@ -271,18 +292,14 @@ export async function markSolved(
   postId: number,
   replyId: number | null,
 ): Promise<ActionResult> {
-  const { data, error } = await db
-    .from("entraide_posts")
-    .update({ solved_reply_id: replyId })
-    .eq("id", postId)
-    .eq("author_id", userId)
-    .select("id");
-  if (error) {
-    return { error: entraideError(error) };
-  }
-  return data && data.length > 0
-    ? { success: true }
-    : { error: "errors.notAllowed" };
+  return ownRowChanged(
+    await db
+      .from("entraide_posts")
+      .update({ solved_reply_id: replyId })
+      .eq("id", postId)
+      .eq("author_id", userId)
+      .select("id"),
+  );
 }
 
 export async function createReply(
@@ -308,12 +325,14 @@ export async function editReply(
   id: number,
   body: string,
 ): Promise<ActionResult> {
-  const { error } = await db
-    .from("entraide_replies")
-    .update({ body: body.trim() })
-    .eq("id", id)
-    .eq("author_id", userId);
-  return error ? { error: entraideError(error) } : { success: true };
+  return ownRowChanged(
+    await db
+      .from("entraide_replies")
+      .update({ body: body.trim() })
+      .eq("id", id)
+      .eq("author_id", userId)
+      .select("id"),
+  );
 }
 
 export async function deleteReply(
@@ -321,12 +340,14 @@ export async function deleteReply(
   userId: string,
   id: number,
 ): Promise<ActionResult> {
-  const { error } = await db
-    .from("entraide_replies")
-    .update({ status: "deleted" })
-    .eq("id", id)
-    .eq("author_id", userId);
-  return error ? { error: entraideError(error) } : { success: true };
+  return ownRowChanged(
+    await db
+      .from("entraide_replies")
+      .update({ status: "deleted" })
+      .eq("id", id)
+      .eq("author_id", userId)
+      .select("id"),
+  );
 }
 
 /**
