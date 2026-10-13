@@ -1,4 +1,4 @@
-import type { EntraideCopy } from "@/components/marketing/entraide-copy";
+import type { EntraideCopy } from "./entraide-copy";
 
 /** Entraide, en français : la langue de ceux qui y écrivent. */
 export const entraideCopyFr: EntraideCopy = {

@@ -16,6 +16,7 @@
     "./changelog": "./src/changelog.ts",
     "./changelog-entries": "./src/changelog-entries.ts",
     "./entraide": "./src/entraide.ts",
+    "./entraide-copy": "./src/entraide-copy.ts",
     "./entraide-mask": "./src/entraide-mask.ts",
     "./widget-figure": "./src/widget-figure.ts",
     "./allocation": "./src/allocation.ts",

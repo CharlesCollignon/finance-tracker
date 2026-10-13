@@ -43,7 +43,7 @@ import {
 import {
   entraideErrorText,
   type EntraideCopy,
-} from "@/components/marketing/entraide-copy";
+} from "@finance/core/entraide-copy";
 import { AuthorLine } from "@/components/marketing/entraide/AuthorLine";
 import { DecisionNotice } from "@/components/marketing/entraide/DecisionNotice";
 import { fieldClass } from "@/components/marketing/entraide/Composer";

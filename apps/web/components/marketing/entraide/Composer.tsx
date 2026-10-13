@@ -24,7 +24,7 @@ import type { EntraideCard } from "@/lib/entraide-cards";
 import {
   entraideErrorText,
   type EntraideCopy,
-} from "@/components/marketing/entraide-copy";
+} from "@finance/core/entraide-copy";
 import { EntraideText } from "@/components/marketing/entraide/EntraideText";
 import { marketingFocus } from "@/components/marketing/marketing-focus";
 import { SegmentedPills } from "@/components/marketing/SegmentedPills";
