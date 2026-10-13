@@ -1,0 +1,77 @@
+export const metadata = {
+  title: "Le bilan du mois : ce que le solde de la banque révèle",
+  description:
+    "Pluclair sait ce que vous notez. Une fois par mois, un seul chiffre, le solde de votre compte, dit tout le reste : ce qui a filé sans être noté, et ce que le mois vous a vraiment laissé.",
+  rubrique: "mois",
+  published: "2026-10-13",
+  updated: "2026-10-13",
+  minutes: 4,
+  cover: 2,
+};
+
+Une application de budget ne connaît que ce qu'on lui dit. Les paiements notés, les charges qui reviennent chaque mois, le salaire : tout cela s'additionne. Mais le café payé en espèces, la boulangerie, le cadeau de dernière minute ne deviennent jamais une ligne. Aucune addition de ce qui est noté ne peut retrouver ce qui ne l'a pas été.
+
+Un chiffre le peut : le solde de votre compte.
+
+## Un chiffre par mois
+
+Une fois par mois, au [jour de lecture](/blog/jour-de-lecture), vous notez ce que votre compte courant contient. C'est le bilan du mois. Le seul chiffre de Pluclair qui est un solde plutôt qu'un mouvement, et le seul que vous devez aller lire plutôt que noter au fil de l'eau.
+
+## Ce que Pluclair en tire
+
+Pluclair part du solde du dernier bilan, et y applique tout ce que vous avez noté depuis : ce qui est entré, ce qui est sorti, ce qui a été mis de côté ou placé. Il obtient le solde que le compte _devrait_ avoir.
+
+<Calc
+  lines={[
+    { label: "Solde au dernier bilan", amount: 2400 },
+    { label: "Revenus notés", amount: 3200 },
+    { label: "Dépenses notées", amount: -2750 },
+    { label: "Mis de côté et placé", amount: -300 },
+  ]}
+  result={{
+    label: "Solde attendu",
+    amount: 2550,
+    note: "Un exemple, pas les chiffres de quelqu'un.",
+  }}
+/>
+
+Puis il compare avec le solde que vous avez lu.
+
+<Calc
+  lines={[
+    { label: "Solde attendu", amount: 2550 },
+    { label: "Solde lu à la banque", amount: -2410 },
+  ]}
+  result={{ label: "Dépenses non notées", amount: 140 }}
+/>
+
+Ces 140 € ont bien quitté le compte, et aucune ligne ne les explique. Ce sont les <Term def="Ce que le solde prouve être parti du compte sans qu'aucune opération notée ne l'explique : les espèces, les petits achats, les oublis.">dépenses non notées</Term> : mesurées, pas devinées.
+
+<Aside>
+  Elles ne sont jamais négatives. Si la banque montre plus que ce que les
+  opérations permettent, il manque quelque chose (un revenu non noté, par
+  exemple), et Pluclair marque le mois « à vérifier » plutôt que d'inventer des
+  dépenses en moins.
+</Aside>
+
+## Ce que le mois vous a laissé
+
+Le même bilan dit aussi ce que le mois a ajouté à votre patrimoine : l'argent resté en plus sur le compte, et tout ce que vous avez mis de côté. Dans l'exemple, le compte a gagné 10 € (de 2 400 € à 2 410 €) et 300 € ont été mis de côté : le mois vous a laissé 310 €. Pluclair l'appelle « économisé ».
+
+## Et les mois suivants
+
+Après deux bilans, Pluclair connaît vos dépenses non notées habituelles : la valeur du milieu de vos mois. Il s'en sert pour regarder devant :
+
+- « Il vous reste », en tête du point, garde une marge pour ce que vous ne notez jamais ;
+- les projections du Plan retirent chaque mois ce montant mesuré, et pas un chiffre au hasard ;
+- une marge pour les dépenses non notées, tirée de vos propres mois, compte la série de mois où vous restez en dessous.
+
+<InPluclair where="Le point">
+  Au jour de lecture, Pluclair vous propose « Faire le bilan » du mois écoulé :
+  un seul chiffre à taper. Avec une banque reliée, le solde est déjà rempli, et
+  un mois peut même être bouclé tout seul : il vous le dit.
+</InPluclair>
+
+## Ce que le bilan ne fait pas
+
+Il ne juge pas. 140 € de dépenses non notées, ce n'est ni beaucoup ni peu : c'est ce qui s'est passé. Pluclair le mesure, le garde, et s'en sert pour que les chiffres d'après tiennent face à votre banque.

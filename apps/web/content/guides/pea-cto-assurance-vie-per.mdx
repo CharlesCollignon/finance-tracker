@@ -1,0 +1,124 @@
+export const metadata = {
+  title: "PEA, CTO, assurance-vie, PER : ce qu'est chaque enveloppe",
+  description:
+    "Quatre façons de détenir des placements en France, chacune avec ses règles : ce qu'on peut y mettre, quand l'argent peut en sortir, et comment les gains sont imposés en 2026.",
+  rubrique: "placements",
+  published: "2026-10-13",
+  updated: "2026-10-13",
+  minutes: 5,
+  cover: 3,
+};
+
+Un même fonds peut se trouver dans un PEA, sur un compte-titres ou dans une assurance-vie. Ce qui change d'un endroit à l'autre, ce n'est pas le placement : c'est l'**enveloppe** qui le contient. Elle décide de ce qu'on peut y mettre, du moment où l'argent peut en sortir, et de la façon dont les gains sont imposés.
+
+Ce guide explique les quatre enveloppes les plus courantes en France. Il ne dit pas laquelle choisir : cela dépend de chacun, et Pluclair ne donne pas de conseil.
+
+## Le PEA, plan d'épargne en actions
+
+Le PEA reçoit des actions de sociétés européennes, et des fonds qui en contiennent au moins 75 %. On ne peut en avoir qu'un par personne.
+
+- **Plafond** : 150 000 € de versements. Avec un PEA-PME-ETI à côté, 225 000 € au total.
+- **Avant 5 ans** : un retrait ferme en général le plan, sauf quelques cas prévus par la loi (licenciement, invalidité, mise à la retraite anticipée, création ou reprise d'entreprise). Les gains sont alors imposés.
+- **Après 5 ans** : les gains sont exonérés d'impôt sur le revenu. Restent les <Term def="CSG, CRDS et prélèvement de solidarité, dus sur les revenus du capital. 18,6 % dans le cas général en 2026 ; 17,2 % pour l'assurance-vie et quelques produits d'épargne.">prélèvements sociaux</Term> : 18,6 % en 2026 dans le cas général.
+
+<Aside>
+  Un jeune majeur encore rattaché au foyer fiscal de ses parents peut ouvrir un
+  PEA plafonné à 20 000 €.
+</Aside>
+
+## Le compte-titres, ou CTO
+
+Le compte-titres ordinaire n'a presque pas de règles : on y met des titres du monde entier, sans plafond, et l'argent peut en sortir à tout moment.
+
+En contrepartie, il n'a pas d'avantage fiscal. Les dividendes sont imposés l'année où on les touche, les plus-values l'année où on vend. En 2026, le prélèvement forfaitaire unique, ou <Term def="Prélèvement forfaitaire unique : 12,8 % d'impôt sur le revenu et 18,6 % de prélèvements sociaux en 2026, soit 31,4 %. On peut opter à la place pour le barème progressif de l'impôt.">flat tax</Term>, est de 31,4 % : 12,8 % d'impôt et 18,6 % de prélèvements sociaux. On peut choisir le barème progressif de l'impôt sur le revenu à la place.
+
+## L'assurance-vie
+
+Une assurance-vie est un contrat avec un assureur. On y place de l'argent sur deux sortes de supports :
+
+- le <Term def="Le support dont le capital est garanti par l'assureur : sa valeur ne baisse pas, et les intérêts s'y ajoutent chaque année.">fonds en euros</Term>, dont l'assureur garantit le capital ;
+- les <Term def="Des parts de fonds (actions, obligations, immobilier…) dont la valeur monte et descend : le capital n'est pas garanti.">unités de compte</Term>, dont la valeur varie et n'est pas garantie.
+
+Il n'y a pas de plafond de versements, et l'argent peut être retiré à tout moment (on parle de « rachat »). Ce qui compte, c'est l'âge du contrat au moment du retrait. Pour les versements faits depuis le 27 septembre 2017 :
+
+- **Avant 8 ans** : les gains retirés sont imposés à 12,8 %.
+- **Après 8 ans** : les gains retirés bénéficient d'un abattement de 4 600 € par an (9 200 € pour un couple), tous contrats confondus ; au-delà, ils sont imposés à 7,5 % (12,8 % pour la part liée aux versements au-delà de 150 000 €).
+
+Les prélèvements sociaux, eux, restent à 17,2 % : l'assurance-vie n'a pas suivi la hausse de 2026. L'assurance-vie obéit aussi à des règles propres en cas de décès, que ce guide ne détaille pas.
+
+## Le PER, plan d'épargne retraite
+
+Le PER est fait pour la retraite : l'argent y reste jusqu'au départ en retraite, sauf dans des cas prévus par la loi, comme l'achat de la résidence principale, le décès du conjoint, une invalidité, le surendettement ou la fin des droits au chômage.
+
+En échange, les versements volontaires sont déductibles du revenu imposable, dans une limite : en 2026, 10 % des revenus professionnels de 2025, entre 4 710 € et 37 680 €. Depuis le 1er janvier 2026, les versements faits après 70 ans ne sont plus déductibles.
+
+À la retraite, on récupère l'argent en capital ou en rente. En capital, la part qui vient de versements déduits est imposée au barème de l'impôt sur le revenu, et les gains au prélèvement forfaitaire de 31,4 %. En rente, la part qui vient de versements déduits est imposée comme une pension.
+
+## Les quatre, côte à côte
+
+<Envelopes
+  checked="2026-10-13"
+  rows={[
+    {
+      name: "PEA",
+      holds: "Actions européennes, et fonds qui en contiennent au moins 75 %",
+      ceiling: "150 000 €",
+      out: "Après 5 ans, sans fermer le plan",
+      tax: "Après 5 ans : prélèvements sociaux seulement (18,6 %)",
+    },
+    {
+      name: "Compte-titres",
+      holds: "Titres du monde entier",
+      ceiling: "Aucun",
+      out: "À tout moment",
+      tax: "31,4 % (ou barème), chaque année",
+    },
+    {
+      name: "Assurance-vie",
+      holds: "Fonds en euros et unités de compte",
+      ceiling: "Aucun",
+      out: "À tout moment",
+      tax: "Après 8 ans : abattement de 4 600 €, puis 7,5 % ; prélèvements sociaux 17,2 %",
+    },
+    {
+      name: "PER",
+      holds: "Fonds, selon le contrat",
+      ceiling: "Pas de plafond de versements ; déduction limitée",
+      out: "À la retraite, sauf cas prévus",
+      tax: "Versements déduits à l'entrée, imposés à la sortie",
+    },
+  ]}
+/>
+
+<InPluclair where="Placements">
+  Pluclair range vos comptes par enveloppe (PEA, compte-titres, assurance-vie,
+  PER), montre ce que contiennent les fonds dans « Composition », et retire les
+  frais de vos placements de ses projections. Il montre ce que vous avez ; il ne
+  dit pas où le mettre.
+</InPluclair>
+
+<Sources
+  items={[
+    {
+      label: "Plan d'épargne en actions (PEA), service-public.gouv.fr",
+      href: "https://www.service-public.gouv.fr/particuliers/vosdroits/F2385",
+      checked: "2026-10-13",
+    },
+    {
+      label: "Fiscalité de l'assurance-vie, service-public.gouv.fr",
+      href: "https://www.service-public.gouv.fr/particuliers/vosdroits/F22414",
+      checked: "2026-10-13",
+    },
+    {
+      label: "Plan d'épargne retraite (PER), service-public.gouv.fr",
+      href: "https://www.service-public.gouv.fr/particuliers/vosdroits/F34982",
+      checked: "2026-10-13",
+    },
+    {
+      label:
+        "Prélèvements sociaux sur les revenus du capital, service-public.gouv.fr",
+      href: "https://www.service-public.gouv.fr/particuliers/vosdroits/F2329",
+      checked: "2026-10-13",
+    },
+  ]}
+/>

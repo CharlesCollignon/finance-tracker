@@ -1451,6 +1451,42 @@ html:has(.marketing-shell) {
   }
 }
 
+/* --- a guide's cover ---------------------------------------------------- */
+
+/* « Le blog »'s covers (`blog/GuideCover.tsx`): the room's own light — the
+   Ground Bloom's violet, magenta and indigo, at the marketing ambient's
+   strength — placed differently for each guide by three custom properties,
+   over a horizon the orb rises from. No photograph, nothing borrowed. */
+.guide-cover {
+  background:
+    radial-gradient(
+      60% 70% at var(--cover-a-x, 30%) var(--cover-a-y, 30%),
+      rgba(139, 74, 255, 0.55) 0%,
+      rgba(124, 58, 237, 0.2) 44%,
+      transparent 72%
+    ),
+    radial-gradient(
+      45% 55% at var(--cover-b-x, 80%) var(--cover-b-y, 20%),
+      rgba(232, 74, 178, 0.3) 0%,
+      transparent 70%
+    ),
+    radial-gradient(
+      70% 50% at 50% 115%,
+      rgba(84, 48, 160, 0.45) 0%,
+      transparent 70%
+    ),
+    var(--marketing-ground);
+}
+
+.guide-cover-horizon {
+  background: linear-gradient(
+    to bottom,
+    transparent,
+    rgba(6, 6, 10, 0.85) 60%,
+    var(--marketing-ground)
+  );
+}
+
 /* --- ground texture ------------------------------------------------------ */
 
 /* A handful of hand-placed sparks. Cheaper than a canvas field and, at this

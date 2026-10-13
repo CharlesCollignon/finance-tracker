@@ -15,6 +15,7 @@ export function shareMetadata({
   description,
   path,
   canonical = path,
+  feed,
   locale,
 }: {
   title: string;
@@ -26,12 +27,17 @@ export function shareMetadata({
    * as itself and is indexed as the list.
    */
   canonical?: string;
+  /** The RSS feed the page belongs to, named in its head for feed readers. */
+  feed?: string;
   locale: Locale;
 }): Metadata {
   return {
     title,
     description,
-    alternates: { canonical },
+    alternates: {
+      canonical,
+      ...(feed ? { types: { "application/rss+xml": feed } } : {}),
+    },
     openGraph: {
       type: "website",
       siteName: "Pluclair",

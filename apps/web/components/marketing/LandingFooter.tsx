@@ -12,6 +12,7 @@ import {
 } from "@/components/marketing/legal-copy";
 import { marketingFocus } from "@/components/marketing/marketing-focus";
 import { NOUVEAUTES_HREF } from "@/components/marketing/nouveautes-copy";
+import { BLOG_HREF } from "@/lib/guide-list";
 import { cn } from "@/lib/utils";
 import { getLocale, getT } from "@/lib/locale";
 
@@ -79,6 +80,11 @@ export async function LandingFooter({ isLoggedIn }: { isLoggedIn: boolean }) {
               <li>
                 <Link href={NOUVEAUTES_HREF} className={footerLink}>
                   {copy.nav.nouveautes}
+                </Link>
+              </li>
+              <li>
+                <Link href={BLOG_HREF} className={footerLink}>
+                  {copy.nav.blog}
                 </Link>
               </li>
             </ul>

@@ -105,7 +105,7 @@ tabs' sliding pill, the cards' pointer light, the figure face's rolling digits,
 the « Bêta ouverte » live ring (`.about-live`), and the existing app mocks
 (`components/marketing/mocks`, `feature/demos`).
 
-## Phase 0 — Groundwork (branch `site-groundwork`) — built, waiting on the owner
+## Phase 0 — Groundwork (branch `site-groundwork`) — merged 2026-10-12
 
 - `app/sitemap.ts` (landing, feature pages, about, legal when visible, then
   Nouveautés entries and blog pages as they arrive) and `app/robots.ts`.
@@ -117,7 +117,7 @@ the « Bêta ouverte » live ring (`.about-live`), and the existing app mocks
   the RSS helper comes with the first feed (Phase 1), and each nav entry with
   its page.
 
-## Phase 1 — Nouveautés, the page (branch `nouveautes-page`) — built, waiting on the owner
+## Phase 1 — Nouveautés, the page (branch `nouveautes-page`) — merged 2026-10-12
 
 Built as planned, with these differences: 58 entries (the backfill runs
 from 15 June); the hero's figures are entries listed and commits, and
@@ -188,7 +188,7 @@ entries curated from the 106 merges, fixes grouped.
 - **On the landing**, a pill under the hero: live dot, « Nouveau », the latest
   featured entry's title, linking to it.
 
-## Phase 2 — Reactions and votes (branch `nouveautes-reactions`) — built, waiting on the owner
+## Phase 2 — Reactions and votes (branch `nouveautes-reactions`) — merged 2026-10-12
 
 Built as below, on the site and on the phone's `nouveautes` screen, with
 migration 070 for the owner to run. Signing in from a reaction now comes
@@ -213,7 +213,7 @@ thumb, clapping hands (sparkles on the phone), an hourglass for the vote.
   optimistic and rolled back with a toast if it fails. The page stays static;
   counts and one's own reactions load on the client.
 
-## Phase 3 — Nouveautés in the apps (branch `nouveautes-in-app`) — built, waiting on the owner
+## Phase 3 — Nouveautés in the apps (branch `nouveautes-in-app`) — merged 2026-10-12
 
 Built with two changes from below: the web's « Nouveautés » row opens the
 public page rather than a sheet (one place to read, and reading it clears
@@ -242,7 +242,23 @@ the site reads the version from the release's tag (`docs/store/README.md`).
   `docs/store/README.md`.
 - The `news` push kind (assumption 9) in `notification-kinds.ts`.
 
-## Phase 4 — Le blog: Guides (branch `blog-guides`)
+## Phase 4 — Le blog: Guides (branch `blog-guides`) — built, waiting on the owner
+
+Built with these differences from below. No remark plugin was needed. With
+three guides, the index has no rubrique chips or search yet (they come when
+there are enough to look through), and every cover is CSS, WebGL for none.
+Reading progress is not in the nav pill, in gold: it is a line beside the
+contents on a desktop and a hairline across the top on a phone, in ink, as a
+guide read is not a figure or a moment. Headings do not rise and no sentence
+is lit word by word; the text holds still. The kit became `<Steps>`,
+`<Aside>`, `<Term>`, `<Calc>` (a worked sum, for `<Figure>`), `<Envelopes>`
+(a table, cards on a phone, for `<Compare>`), `<InPluclair>` (where it is in
+the app, for `<Mock>`) and `<Sources>`. « Une question ? » writes to the
+feedback address until Entraide opens. The second guide is « Le bilan du
+mois : ce que le solde de la banque révèle ». The PEA guide's rules were read
+on service-public.gouv.fr on 2026-10-13, and each guide waits for the
+owner's edit. « Le blog » is in the menu sheet and the footer, not in the
+desktop pill, which is full.
 
 - **Content in the repository** as MDX: `@next/mdx`, one file per guide under
   `apps/web/content/guides/`, each exporting its `metadata` (title,
