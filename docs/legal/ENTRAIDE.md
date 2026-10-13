@@ -70,8 +70,6 @@ juridique.
 
 - Fait le 13 octobre 2026 : le registre (section 11) et l'AIPD décrivent
   Entraide ; les deux blancs des règles sont remplis (questions 1 et 4).
-- Dans le commit qui ouvre Entraide : une ligne de la politique de
-  confidentialité et une des conditions d'utilisation renvoient aux règles,
-  et `ENTRAIDE_RULES_DRAFT` passe à `false` ; `entraide-rules-copy.test.ts`
-  échoue si un blanc subsiste. La politique et les conditions doivent alors
-  être publiées (`LEGAL_DRAFT` à `false`), les règles y renvoyant.
+- Ouvert le 13 octobre 2026, après la publication de la politique de
+  confidentialité et des conditions : une ligne de chacune renvoie aux
+  règles, et `ENTRAIDE_RULES_DRAFT` est à `false`.

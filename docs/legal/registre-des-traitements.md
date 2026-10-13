@@ -232,8 +232,8 @@ application tierce. Ce qui suit vaut pour ce seul compte, et si elle rouvre.
 
 ## 11. Entraide
 
-Ouvert au public avec ses règles (`ENTRAIDE_RULES_DRAFT`) ; d'ici là, rien
-n'est publié en production.
+Ouvert au public le 13 octobre 2026, avec ses règles
+(`/blog/entraide/regles`).
 
 - **Finalité** : permettre aux membres de poser des questions sur l'argent au
   quotidien et d'y répondre publiquement ; modérer ; tenir les obligations

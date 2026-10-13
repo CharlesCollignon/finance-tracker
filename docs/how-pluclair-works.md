@@ -384,11 +384,10 @@ until « Plus tard » for that version (`docs/store/README.md`).
 ## Entraide
 
 Questions and answers between the people who use Pluclair, in « Le blog »:
-`/blog/entraide` and `/blog/entraide/<id>-<title>`. It opens with its rules,
-« Les règles d'Entraide » (`/blog/entraide/regles`,
-`apps/web/components/marketing/entraide-rules-copy.ts`): while
-`ENTRAIDE_RULES_DRAFT` is true, production answers 404 on all three and
-refuses every write; preview and local builds show them.
+`/blog/entraide` and `/blog/entraide/<id>-<title>`. It opened on 13 October 2026, with its rules, « Les règles d'Entraide »
+(`/blog/entraide/regles`, `apps/web/components/marketing/entraide-rules-copy.ts`),
+which the privacy policy and the terms point to; `ENTRAIDE_RULES_DRAFT`
+closes all three again if it is ever set back to true.
 
 Migration 071 holds it: `entraide_profiles` (a pseudonym per account,
 unique whatever its case, never Pluclair's but the owner's, marked
