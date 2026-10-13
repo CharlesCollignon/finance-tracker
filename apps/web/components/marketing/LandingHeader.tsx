@@ -54,17 +54,16 @@ const TIGHTEN_AT = 120;
  * feature page, where the section itself is not on screen. The href is a
  * route and lives here; the word is copy and lives with the rest of it.
  *
- * `pill`: where the desktop pill shows it. "xl" from the xl width up:
- * between lg and xl the pill cannot hold five links beside the wordmark and
- * both buttons on one line, and a link on two lines is not one to keep.
- * "never": the pill is full at five (836px of its 864 tightened, measured
- * on 2026-10-12), so « Le blog » is in the sheet and the footer only. */
+ * `wide`: in the pill only from the xl width up. Between lg and xl the pill
+ * cannot hold six links beside the wordmark and both buttons on one line,
+ * and a link on two lines is not one to keep; « Nouveautés » and « Le blog »
+ * are still in the sheet below lg, and in the footer. */
 const SECTION_LINKS = [
-  { href: "/#how", key: "howItWorks", pill: "always" },
-  { href: "/#privacy", key: "privacy", pill: "always" },
-  { href: ABOUT_HREF, key: "about", pill: "always" },
-  { href: NOUVEAUTES_HREF, key: "nouveautes", pill: "xl" },
-  { href: BLOG_HREF, key: "blog", pill: "never" },
+  { href: "/#how", key: "howItWorks", wide: false },
+  { href: "/#privacy", key: "privacy", wide: false },
+  { href: ABOUT_HREF, key: "about", wide: false },
+  { href: NOUVEAUTES_HREF, key: "nouveautes", wide: true },
+  { href: BLOG_HREF, key: "blog", wide: true },
 ] as const;
 
 /** The pages in three groups, Le point apart as the featured card. */
@@ -185,9 +184,9 @@ export function LandingHeader({ isLoggedIn }: { isLoggedIn: boolean }) {
         className="relative mx-auto"
         initial={false}
         animate={{
-          // Tightened, still wide enough for its five links on one line
-          // (836px of them in French, measured).
-          maxWidth: tight ? "54rem" : "72rem",
+          // Tightened, still wide enough for its six links on one line
+          // (906px of them in French, measured on 2026-10-13).
+          maxWidth: tight ? "58rem" : "72rem",
           y: tight ? -8 : 0,
         }}
         transition={transition}
@@ -215,7 +214,7 @@ export function LandingHeader({ isLoggedIn }: { isLoggedIn: boolean }) {
           <nav
             className={cn(
               "hidden items-center lg:flex",
-              tight ? "gap-6" : "gap-5 xl:gap-8",
+              tight ? "gap-6" : "gap-5 xl:gap-6",
             )}
             aria-label={t("common.marketing")}
           >
@@ -241,21 +240,16 @@ export function LandingHeader({ isLoggedIn }: { isLoggedIn: boolean }) {
                 <CaretDown size={12} weight="bold" />
               </m.span>
             </button>
-            {SECTION_LINKS.filter((link) => link.pill !== "never").map(
-              (link) => (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  className={cn(
-                    linkClass,
-                    link.pill === "xl" && "hidden xl:inline",
-                  )}
-                  onClick={close}
-                >
-                  {copy.nav[link.key]}
-                </Link>
-              ),
-            )}
+            {SECTION_LINKS.map((link) => (
+              <Link
+                key={link.href}
+                href={link.href}
+                className={cn(linkClass, link.wide && "hidden xl:inline")}
+                onClick={close}
+              >
+                {copy.nav[link.key]}
+              </Link>
+            ))}
           </nav>
 
           <div className="flex shrink-0 items-center gap-2">

@@ -257,8 +257,9 @@ the app, for `<Mock>`) and `<Sources>`. « Une question ? » writes to the
 feedback address until Entraide opens. The second guide is « Le bilan du
 mois : ce que le solde de la banque révèle ». The PEA guide's rules were read
 on service-public.gouv.fr on 2026-10-13, and each guide waits for the
-owner's edit. « Le blog » is in the menu sheet and the footer, not in the
-desktop pill, which is full.
+owner's edit. « Le blog » is in the menu sheet, the footer and, at the
+owner's word on 2026-10-13, the desktop pill from the xl width up, beside
+« Nouveautés »: the links a little closer, and the tightened pill 58rem.
 
 - **Content in the repository** as MDX: `@next/mdx`, one file per guide under
   `apps/web/content/guides/`, each exporting its `metadata` (title,
