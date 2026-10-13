@@ -294,7 +294,13 @@ owner's word on 2026-10-13, the desktop pill from the xl width up, beside
   « Clore son mois : ce que le solde de la banque révèle »,
   « PEA, CTO, assurance-vie, PER : ce qu'est chaque enveloppe ».
 
-## Phase 5 — Le blog: Entraide
+## Phase 5 — Le blog: Entraide — opened 2026-10-13
+
+Opened at the owner's word once the legal pages were published, the rules
+completed (no lawyer: the most careful option everywhere, `docs/legal/`),
+migrations 071 to 073 run and the owner made the « Pluclair » pseudonym and
+moderator.
+
 
 Publishing what users write makes Pluclair a host of other people's content,
 with duties that do not apply today. The rules come first and Entraide stays
