@@ -557,8 +557,11 @@ database refuses a batch, both go a row at a time, so one bad row costs only
 itself.
 
 Built and reachable by one account per deployment: the one whose id is
-`OPEN_BANKING_OWNER_USER_ID` (`apps/web/lib/bank/client.ts`). Everyone else
-enters balances and transactions by hand or imports a CSV. Rows the matcher
+`OPEN_BANKING_OWNER_USER_ID` (`apps/web/lib/bank/client.ts`, `bankOpenTo`),
+whatever the `bank.connect` flag or a stored file says. It was open to every
+account from 12 to 13 October 2026, until open-banking.io answered that its
+customers may not give their access to an app reading on their behalf.
+Everyone else enters balances and transactions by hand or imports a CSV. Rows the matcher
 would not file wait in the review inbox at `?review=inbox`.
 
 Connecting is a four-step wizard on both apps (`ConnectBankSheet`): the

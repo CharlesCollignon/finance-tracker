@@ -93,8 +93,9 @@ Le point, the Journal or the calendar is the month the other two open on, for
 as long as the app is open. A new account starts with its default categories
 named in its language ("Courses", "Salaire"…); `DEFAULT_CATEGORIES` keeps both
 names so an account seeded in English is never handed French duplicates. Money reaches the ledger typed by
-the user, written by a recurring template on its own, or brought in by the optional
-read-only bank connection or a mapped CSV export; rows the app will not file on
+the user, written by a recurring template on its own, or brought in by a mapped
+CSV export — or, for the owner's account alone, the read-only bank connection
+(closed to everyone else since 13 October 2026, `apps/web/PRODUCT.md`); rows the app will not file on
 its own wait in the review inbox at `?review=inbox`, the same address as on web,
 every shop at once, with what was decided lately (and its undo) kept until it
 is undone or ages out. A user connects their bank from the phone as on the web —

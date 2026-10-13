@@ -50,8 +50,12 @@ missed, because that requires asking the user for a balance and then being
 willing to publish the gap. Unrecorded spending is the output of that, and the
 forward projection is allowed to subtract it precisely because it was measured.
 
-The per-user bank connection is **built, and opened one account at a time**;
-the positioning above does not rest on it. Each user brings their own
+The per-user bank connection is **built, and closed to everyone but the
+owner since 13 October 2026**: asked in writing, open-banking.io answered that
+its customers may not give their access to an app that reads on their behalf
+("not possible for now"). `bankOpenTo` (`lib/bank/client.ts`) holds it to the
+owner's account whatever a flag or a stored file says, and the site promises
+it nowhere. The positioning above never rested on it. Each user brings their own
 open-banking.io account — signs up and pays open-banking.io directly, about €3
 a month for one bank account, connects their bank there — and uploads the
 credentials file it lets them download, on `/bank`. Pluclair stays free. It is
