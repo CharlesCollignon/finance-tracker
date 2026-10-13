@@ -17,6 +17,24 @@ import type { ChangelogEntry, RoadmapItem } from "./changelog";
  */
 export const CHANGELOG: readonly ChangelogEntry[] = [
   {
+    id: "2026-10-13-statements-anywhere",
+    date: "2026-10-13",
+    kind: "better",
+    platforms: ["web"],
+    fr: {
+      title: "Votre relevé, de partout",
+      body: "Déposez le fichier de votre banque n’importe où dans Pluclair, ou copiez le tableau des opérations sur son site et collez-le dans l’import : il se lit pareil. L’import est aussi dans le menu de votre compte.",
+      detail:
+        "Le 5 de chaque mois, si vous importez vos relevés, un rappel vous demande celui du mois passé ; il se coupe dans le Profil.",
+    },
+    en: {
+      title: "Your statement, from anywhere",
+      body: "Drop your bank’s file anywhere in Pluclair, or copy the table of transactions on its website and paste it into the import: it reads the same. The import is in your account menu too.",
+      detail:
+        "On the 5th of each month, if you import your statements, a reminder asks for last month’s; it can be turned off in Profile.",
+    },
+  },
+  {
     id: "2026-10-13-statements-import",
     date: "2026-10-13",
     kind: "new",
@@ -1122,7 +1140,7 @@ export const CHANGELOG: readonly ChangelogEntry[] = [
  */
 export const CHANGELOG_STATS = {
   /** `git rev-list --count HEAD` on the branch that wrote the newest entry. */
-  commits: 1022,
+  commits: 1027,
   /** The repository's first commit. */
   since: "2026-06-15",
   asOf: "2026-10-13",
