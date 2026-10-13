@@ -22,6 +22,12 @@ if (!key || !secret) {
   console.error("Set BREVO_API_KEY and STATEMENT_INBOUND_SECRET first.");
   process.exit(1);
 }
+// A header carries only plain characters: a « … » left in place of a value
+// is said so, rather than failing deep inside fetch.
+if (![key, secret].every((value) => /^[\x21-\x7e]+$/.test(value))) {
+  console.error("BREVO_API_KEY and STATEMENT_INBOUND_SECRET must be the real values, without spaces or « … ».");
+  process.exit(1);
+}
 
 const headers = { "api-key": key, accept: "application/json", "content-type": "application/json" };
 
@@ -38,7 +44,14 @@ async function call(method, path = "", body) {
   return text ? JSON.parse(text) : null;
 }
 
-const listed = await call("GET", "?type=inbound");
+// With no inbound webhook yet, Brevo answers 400 « document_not_found »
+// rather than an empty list.
+const listed = await call("GET", "?type=inbound").catch((error) => {
+  if (/document_not_found/.test(error.message)) {
+    return { webhooks: [] };
+  }
+  throw error;
+});
 const existing = (listed?.webhooks ?? []).filter((hook) => hook.domain === DOMAIN || hook.url === url);
 
 if (existing.length > 0 && !replace) {
