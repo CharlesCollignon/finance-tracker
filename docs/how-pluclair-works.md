@@ -109,19 +109,24 @@ off (`user_preferences.notification_prefs`, every kind on unless set to
 logging it so the next run sends it, and logs each key in `notification_log`
 before sending, so nothing is said twice.
 
-| Kind        | What                                                                                                      | Sent by                   | Key                                                                                                                         |
-| ----------- | --------------------------------------------------------------------------------------------------------- | ------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
-| `recap`     | Monday: last week, the month so far, still to come                                                        | notify cron, Mondays      | `recap:<monday>`                                                                                                            |
-| `overdraft` | The balance dips below zero on a day ahead                                                                | notify cron               | `overdraft:<month>`                                                                                                         |
-| `close`     | The reading day; a month a bank closed                                                                    | notify cron; refresh cron | `close:` / `closed:`                                                                                                        |
-| `bigCharge` | Tomorrow, a charge over twice the usual, or yearly                                                        | notify cron               | `big-charge:<tomorrow>`                                                                                                     |
-| `arrived`   | Movements that look like a planned charge arrived                                                         | notify cron               | `arrived:<day>`                                                                                                             |
-| `review`    | New bank rows waiting for a category                                                                      | refresh cron              | `bank-review:<day>`                                                                                                         |
-| `milestone` | A new milestone passed since the last one celebrated                                                      | notify cron               | `milestone:<amount>`                                                                                                        |
-| `year`      | January: « Votre année » is ready, for a year with something to tell                                      | notify cron               | `year:<year>`                                                                                                               |
-| `property`  | Half a loan repaid, its last payment, half a home the user's; a home's new estimate after a DVF half-year | notify cron; market cron  | `property:half:<loan>`, `property:last:<loan>`, `property:equity-half:<property>`, `property:market:<property>:<half-year>` |
-| `monthOpen` | A new month has opened                                                                                    | notify cron               | `month-open:<month>`                                                                                                        |
-| `bank`      | The connection needs renewing or has stopped                                                              | notify cron               | `bank-consent:`, `bank-expired:`, `bank-paused:`                                                                            |
+| Kind        | What                                                                                                      | Sent by                           | Key                                                                                                                         |
+| ----------- | --------------------------------------------------------------------------------------------------------- | --------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| `recap`     | Monday: last week, the month so far, still to come                                                        | notify cron, Mondays              | `recap:<monday>`                                                                                                            |
+| `overdraft` | The balance dips below zero on a day ahead                                                                | notify cron                       | `overdraft:<month>`                                                                                                         |
+| `close`     | The reading day; a month a bank closed                                                                    | notify cron; refresh cron         | `close:` / `closed:`                                                                                                        |
+| `bigCharge` | Tomorrow, a charge over twice the usual, or yearly                                                        | notify cron                       | `big-charge:<tomorrow>`                                                                                                     |
+| `arrived`   | Movements that look like a planned charge arrived                                                         | notify cron                       | `arrived:<day>`                                                                                                             |
+| `review`    | New bank rows waiting for a category                                                                      | refresh cron                      | `bank-review:<day>`                                                                                                         |
+| `milestone` | A new milestone passed since the last one celebrated                                                      | notify cron                       | `milestone:<amount>`                                                                                                        |
+| `year`      | January: « Votre année » is ready, for a year with something to tell                                      | notify cron                       | `year:<year>`                                                                                                               |
+| `property`  | Half a loan repaid, its last payment, half a home the user's; a home's new estimate after a DVF half-year | notify cron; market cron          | `property:half:<loan>`, `property:last:<loan>`, `property:equity-half:<property>`, `property:market:<property>:<half-year>` |
+| `monthOpen` | A new month has opened                                                                                    | notify cron                       | `month-open:<month>`                                                                                                        |
+| `bank`      | The connection needs renewing or has stopped                                                              | notify cron                       | `bank-consent:`, `bank-expired:`, `bank-paused:`                                                                            |
+| `community` | Entraide: an answer to the reader's question; their answer marked « Résolu »                              | Entraide's actions, as it happens | `community:answer:<reply>`, `community:solved:<reply>`                                                                      |
+
+Entraide's two are not a cron's: they are sent as the answer or the mark
+happens (`apps/web/lib/entraide-push.ts`, after the reply has gone back), so
+one held by the quiet hours is not sent later.
 
 The messages are built in `packages/core/src/push-messages.ts`,
 `push-digest.ts` and `weekly-recap.ts`; the figures behind them come from the
@@ -375,6 +380,44 @@ On the phone, the first launch after the APK was updated shows « Quoi de
 neuf », the unseen entries as a sheet, once; and when the site's APK is
 newer than the one installed, Le point says so with a download button,
 until « Plus tard » for that version (`docs/store/README.md`).
+
+## Entraide
+
+Questions and answers between the people who use Pluclair, in « Le blog »:
+`/blog/entraide` and `/blog/entraide/<id>-<title>`. It opens with its rules,
+« Les règles d'Entraide » (`/blog/entraide/regles`,
+`apps/web/components/marketing/entraide-rules-copy.ts`): while
+`ENTRAIDE_RULES_DRAFT` is true, production answers 404 on all three and
+refuses every write; preview and local builds show them.
+
+Migration 071 holds it: `entraide_profiles` (a pseudonym per account,
+unique whatever its case, never Pluclair's but the owner's, marked
+`is_pluclair` by hand; `banned_at` bars one), `entraide_posts` (a question
+or a share, bigint ids for short addresses, a French full-text index) and
+`entraide_replies`. They are the first rows anyone may read, so they are
+read only through `entraide_list`, `entraide_thread`, `entraide_replies`
+and `entraide_search`, which name authors by pseudonym and never by user
+id. A person writes, edits and deletes their own rows; triggers hold the
+rest — a pseudonym first, 5 questions and 30 answers a day, no link from
+an account less than a day old, nothing from a barred pseudonym, and no
+author changing a post's author, kind or a moderator's decision. A deleted
+post, or a deleted account's (`on delete set null`), stays in its thread
+with its text erased: « Message supprimé ». `supabase/tests/071_entraide.test.sql`
+checks all of it.
+
+Before anything is saved, the web masks what looks like an IBAN, a card or
+account number, an email or a phone number (`packages/core/src/entraide-mask.ts`),
+and the form shows what it will mask first. Posts are the Ask Markdown
+subset with links to web addresses only (`parseAskMarkdown` with `links`),
+drawn as React text, links marked `rel="ugc nofollow"`. Reactions are
+« Utile » and « Merci » (`post:<id>`, `reply:<id>` in `reactions`). Shared
+rules for both apps are in `packages/core/src/entraide.ts`; reads and
+writes in `packages/data/src/entraide.ts`; the web's actions in
+`apps/web/lib/actions/entraide.ts`.
+
+Moderation — « Signaler », the owner's queue, hiding with a reason sent —
+is the next phase (`docs/plans/BLOG_CHANGELOG_PLAN.md`, 5c); until then
+`hidden` and `banned_at` are set by hand with the service role.
 
 ## Shared space
 

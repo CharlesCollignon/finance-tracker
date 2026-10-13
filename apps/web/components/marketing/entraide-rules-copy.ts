@@ -8,9 +8,9 @@ import { entraideRulesCopyFr } from "./entraide-rules-copy.fr";
  *
  * A document of its own rather than sections of the terms and the privacy
  * policy, so those can be signed off now, before Entraide exists, and this
- * when it opens (`ENTRAIDE_RULES_DRAFT`, in `legal-status.ts`). Once
- * Entraide's code stores posts, the privacy policy and the terms each point
- * here in a line, in the same commit (as `legal-copy.ts` asks).
+ * when it opens (`ENTRAIDE_RULES_DRAFT`, in `legal-status.ts`). The commit
+ * that opens Entraide gives the privacy policy and the terms each a line
+ * pointing here, since that is when it starts storing anyone's posts.
  *
  * Written for the duties of a host of other people's words: the Digital
  * Services Act's notices (art. 16), statements of reasons (art. 17) and

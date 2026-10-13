@@ -1,6 +1,15 @@
 [
   {
     "date": "2026-10-13",
+    "macrostructure": "Index-First (a composer, then the list) and Long Document (a thread)",
+    "theme": "design.md (Pluclair: dark ground, Lamplit Gold, Instrument Sans + Fraunces)",
+    "enrichment": "none — the questions are the page",
+    "nav": "kept",
+    "footer": "kept",
+    "brief": "Pluclair « Entraide »: a pill that grows into the editor and becomes the card, « Déjà demandé ? », masking shown before publishing, « Résolu » lifting the answer in gold"
+  },
+  {
+    "date": "2026-10-13",
     "macrostructure": "Editorial (index: one wide, then a grid; guide: long read with a held margin)",
     "theme": "design.md (Pluclair: dark ground, Lamplit Gold, Instrument Sans + Fraunces)",
     "enrichment": "CSS covers: the room's lights and the orb half risen on a horizon",

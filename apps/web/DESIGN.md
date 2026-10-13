@@ -1082,6 +1082,22 @@ focus. At the top of a guide the cover drifts slower than the page as it is
 scrolled past. Under reduced motion the sum is all there at once, the card
 simply appears, and the covers hold still.
 
+Entraide (`EntraideBoard.tsx`, `ThreadView.tsx`, October 2026) is the blog's
+one place where people write, so its motion follows what they do.
+« Posez votre question… » is a glass pill that grows, in place, into the
+editor on the glass's spring — the same element, by `layoutId` — its fields
+arriving a beat after; published, the editor becomes the new card at the
+top of the list, as the nav's pill becomes its panel. As the title is
+typed, « Déjà demandé ? » slides open with the threads and guides it may
+already be, one after another. The kind of post and the list's four doors
+are the sliding pill of « Nouveautés » (`SegmentedPills`); a door changes
+the list with the Journal's choreography. In a thread, a new answer rises
+in on a spring; the one the asker marks « Résolu » moves up under the
+question (one `layoutId` again), its check drawing itself, and the mark is
+gold — a question solved is a moment, the only gold on the page; the
+« Pluclair » mark on the owner's answers is ink. Under reduced motion
+(`MotionConfig reducedMotion="user"`) everything stands where it ends.
+
 The marketing nav is one glass shape (`LandingHeader.tsx`): « Le produit »
 (the burger on a phone) grows the pill down into its own panel on a spring,
 the pages arriving in it as cards — Le point featured with its figure, the
