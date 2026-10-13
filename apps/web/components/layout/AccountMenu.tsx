@@ -11,7 +11,13 @@ import {
 import { createPortal } from "react-dom";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Compass, Gear, Newspaper, SignOut } from "@phosphor-icons/react";
+import {
+  Compass,
+  FileArrowUp,
+  Gear,
+  Newspaper,
+  SignOut,
+} from "@phosphor-icons/react";
 import { UserInitial } from "@/components/layout/UserInitial";
 import { signOut } from "@/lib/actions/finance";
 import { PROFILE_NAV_ITEM } from "@/lib/navigation";
@@ -172,6 +178,14 @@ export function AccountMenu({
                 {/* The public page, where the marketing shell tells the
                     changes properly; reading it there clears the dot here
                     and on the phone (`markNouveautesSeen`). */}
+                <Link
+                  href="/import"
+                  className={rowClass}
+                  onClick={() => setOpenAt(null)}
+                >
+                  <FileArrowUp size={ICON.lg} />
+                  {t("statements.heading")}
+                </Link>
                 <Link
                   href={NOUVEAUTES_HREF}
                   className={rowClass}

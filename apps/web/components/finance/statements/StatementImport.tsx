@@ -25,6 +25,7 @@ import {
   isBankId,
   readMappedTable,
   readStatementFile,
+  readStatementText,
   statementKey,
   withDirection,
   type Statement,
@@ -54,6 +55,7 @@ import {
   undoStatementImport,
 } from "@/lib/actions/statements";
 import { ICON } from "@/lib/icon-scale";
+import { takeStatementFile } from "@/lib/statements/pending";
 import { useLocale, useT } from "@/lib/locale-context";
 import type { StatementOutcome } from "@finance/core/validations/statements";
 import { cn } from "@/lib/utils";
@@ -66,9 +68,12 @@ const MAX_FILE_BYTES = 10 * 1024 * 1024;
 /** How long an import can be undone, as the server holds it. */
 const UNDO_DAYS = 30;
 
+/** How the file came: picked or dropped, or a table pasted. */
+type Source = StatementImportInput["source"];
+
 type Stage =
   | { kind: "start" }
-  | { kind: "read"; statement: Statement; fileName: string }
+  | { kind: "read"; statement: Statement; fileName: string; source: Source }
   | { kind: "done"; added: number; waiting: number; importIds: string[] };
 
 /** What one block sends: its lines, turned if the person said so, on its account. */
@@ -77,6 +82,7 @@ function inputFor(
   block: StatementBlock,
   choice: BlockChoice,
   fileName: string,
+  source: Source,
 ): StatementImportInput | null {
   const format = statement.format;
   if (
@@ -112,7 +118,7 @@ function inputFor(
     from: block.from,
     to: block.to,
     closing: block.closing,
-    source: "file",
+    source,
   };
 }
 
@@ -161,7 +167,11 @@ export function StatementImport({
     }
   }
 
-  function open(statement: Statement, fileName: string) {
+  function open(
+    statement: Statement,
+    fileName: string,
+    source: Source = "file",
+  ) {
     setChoices(
       statement.blocks.map((block) =>
         initialChoice(
@@ -173,8 +183,46 @@ export function StatementImport({
       ),
     );
     setOutcomes(statement.blocks.map(() => null));
-    setStage({ kind: "read", statement, fileName });
+    setStage({ kind: "read", statement, fileName, source });
   }
+
+  // A file dropped on another page, which opened this one with it.
+  useEffect(() => {
+    const held = takeStatementFile();
+    if (held) {
+      // After this commit, not inside it: reading sets the page's state.
+      void Promise.resolve().then(() => readFile(held));
+    }
+    // Once, on arrival.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // A table copied from the bank's website, pasted anywhere on the page —
+  // not into a field being typed in.
+  const starting = stage.kind === "start";
+  useEffect(() => {
+    if (!starting) {
+      return;
+    }
+    const onPaste = (event: ClipboardEvent) => {
+      const target = event.target as HTMLElement | null;
+      if (target?.closest("input, textarea, select, [contenteditable]")) {
+        return;
+      }
+      const html = event.clipboardData?.getData("text/html") ?? "";
+      const text = event.clipboardData?.getData("text/plain") ?? "";
+      const pasted = /<table[\s>]/i.test(html) ? html : text;
+      if (!pasted.trim()) {
+        return;
+      }
+      event.preventDefault();
+      open(readStatementText(pasted), "", "paste");
+    };
+    document.addEventListener("paste", onPaste);
+    return () => document.removeEventListener("paste", onPaste);
+    // `open` is this render's; whether the page is at its start is what changes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [starting]);
 
   // What importing would do, asked again whenever an answer changes it.
   const reading = stage.kind === "read" ? stage : null;
@@ -192,6 +240,7 @@ export function StatementImport({
                 block,
                 choices[index]!,
                 reading.fileName,
+                reading.source,
               )
             : null;
           return input ? previewStatement(input) : Promise.resolve(null);
@@ -224,6 +273,7 @@ export function StatementImport({
           block,
           choices[index]!,
           reading.fileName,
+          reading.source,
         );
         if (!input) {
           continue;
@@ -386,6 +436,9 @@ export function StatementImport({
                       {t("statements.formats")}
                     </p>
                   </m.div>
+                  <p className="text-sm text-muted-foreground">
+                    {t("statements.pasteHint")}
+                  </p>
                   {problem ? (
                     <p
                       role="alert"

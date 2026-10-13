@@ -37,6 +37,7 @@ const MOBILE_ROUTES = [
   "/property",
   "/year",
   "/entraide",
+  "/import",
 ] as const;
 
 /** A property's own screen, the same address on both apps. */

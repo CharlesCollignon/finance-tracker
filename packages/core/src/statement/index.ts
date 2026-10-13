@@ -3,7 +3,7 @@
  * downloads from their bank — CSV, Excel, OFX, QIF, CAMT, MT940, CFONB — as
  * the lines the bank feed takes. `docs/plans/STATEMENTS_PLAN.md`.
  */
-export { readStatementFile } from "./read";
+export { readStatementFile, readStatementText } from "./read";
 export { readMappedTable, type TableMapping } from "./table";
 export {
   accountTail,

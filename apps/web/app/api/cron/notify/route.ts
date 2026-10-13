@@ -28,6 +28,10 @@ import {
 } from "@finance/data/preferences";
 import { milestoneToAnnounce } from "@finance/core/future-plan";
 import { wantsNotification } from "@finance/core/notification-kinds";
+import {
+  STATEMENT_REMINDER_DAY,
+  statementReminder,
+} from "@finance/core/statement-reminder";
 import { getWealthToday } from "@finance/data/plan-wealth";
 import type { Locale } from "@finance/core/i18n/locale";
 import { translator } from "@finance/core/i18n/t";
@@ -263,7 +267,7 @@ async function notificationsFor(
   // to stop are the things here that get worse by waiting, and neither needs
   // a template. Nor does the reading day, which belongs to anyone who closes
   // their months, or the Monday recap, which belongs to anyone with a ledger.
-  const [overdraft, bank, close, recap, milestone, yearReview] =
+  const [overdraft, bank, close, recap, milestone, yearReview, statement] =
     await Promise.all([
       overdraftFor(supabase, userId, today, locale),
       bankNotificationFor(supabase, userId, today, locale),
@@ -271,8 +275,9 @@ async function notificationsFor(
       recapFor(supabase, userId, today, locale),
       milestoneFor(supabase, userId, today, recipient),
       yearReviewFor(supabase, userId, today, recipient),
+      statementReminderFor(supabase, userId, today, recipient),
     ]);
-  const lead = [overdraft, bank, close, recap, milestone, yearReview]
+  const lead = [overdraft, bank, close, recap, milestone, yearReview, statement]
     .filter(
       (notification): notification is PendingNotification =>
         notification !== null,
@@ -435,6 +440,40 @@ async function bankNotificationFor(
     },
   );
   return notification;
+}
+
+/**
+ * « Votre relevé de septembre est prêt ? », on the 5th, for someone who
+ * brings their statements and has not brought last month's
+ * (`statementReminder`). Not with a bank connected: it brings them itself.
+ */
+async function statementReminderFor(
+  supabase: AdminClient,
+  userId: string,
+  today: string,
+  { locale, prefs }: Recipient,
+): Promise<PendingNotification | null> {
+  if (
+    Number(today.slice(8, 10)) !== STATEMENT_REMINDER_DAY ||
+    !wantsNotification(prefs, "statement") ||
+    (await hasBankFeed(supabase, userId))
+  ) {
+    return null;
+  }
+  const { data } = await supabase
+    .from("statement_imports")
+    .select("period_to")
+    .eq("user_id", userId)
+    .is("undone_at", null)
+    .order("period_to", { ascending: false, nullsFirst: false })
+    .limit(1)
+    .maybeSingle();
+  return statementReminder({
+    today,
+    lastImport: data ? { periodTo: data.period_to } : null,
+    t: translator(locale),
+    locale,
+  });
 }
 
 /**

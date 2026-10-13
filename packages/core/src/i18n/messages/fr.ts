@@ -320,12 +320,19 @@ export const fr: Messages = {
 
   statements: {
     heading: "Importer un relevé",
+    inviteTitle: "Vos opérations, sans les taper",
+    inviteBody:
+      "Importez le fichier que donne votre banque\u00A0: Pluclair range ce qu'il connaît, et vous vérifiez le reste.",
+    inviteDismiss: "Pas maintenant",
     intro:
       "Déposez le fichier que donne votre banque, tel qu'il est. Pluclair le lit, reconnaît ce qu'il connaît déjà, et ne garde que les opérations, jamais le fichier.",
     drop: "Déposez ici le fichier de votre banque",
     dropping: "Lâchez pour le lire",
+    dropAnywhere: "Déposez le relevé pour l'importer",
     choose: "Choisir un fichier",
     formats: "CSV, Excel, OFX, QIF, CAMT, MT940 ou CFONB",
+    pasteHint:
+      "Ou copiez le tableau des opérations sur le site de votre banque, et collez-le ici.",
     where: "Où trouver l'export de ma banque\u00A0?",
     wherePick: "Votre banque",
     otherBank: "Une autre banque",
@@ -380,6 +387,10 @@ export const fr: Messages = {
     undone: "Import annulé.",
     undoTooLate: "Un import s'annule pendant 30\u00A0jours.",
     another: "Importer un autre fichier",
+    nextFile: {
+      one: "Fichier suivant ({count} restant)",
+      other: "Fichier suivant ({count} restants)",
+    },
     history: "Vos imports",
     undoneTag: "Annulé",
     tooBig: "Ce fichier est trop lourd pour un relevé (plus de 10\u00A0Mo).",
@@ -1607,6 +1618,10 @@ export const fr: Messages = {
       label: "Connexion bancaire",
       hint: "Quand il faut la renouveler, ou si elle s'est arrêtée.",
     },
+    statement: {
+      label: "Relevé du mois",
+      hint: "Le 5, si le relevé du mois passé n'est pas encore importé.",
+    },
     community: {
       label: "Entraide",
       hint: "Une réponse à votre question, ou votre réponse marquée « Résolu ».",
@@ -1776,6 +1791,10 @@ export const fr: Messages = {
         other:
           "Il commence avec {count} opérations récurrentes. Voyez ce qu'il reste.",
       },
+    },
+    statement: {
+      title: "Votre relevé de {month} est prêt\u00A0?",
+      body: "Partagez-le à Pluclair, ou déposez-le sur le site\u00A0: ce que Pluclair connaît se range tout seul.",
     },
     arrived: {
       title: {

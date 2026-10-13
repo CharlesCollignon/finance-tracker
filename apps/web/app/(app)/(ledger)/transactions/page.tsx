@@ -36,6 +36,7 @@ import { ledgerAccounts } from "@finance/core/bank-accounts";
 import { groupPendingFeed } from "@finance/core/bank-inbox-groups";
 import { SwallowedRecovery } from "@/components/finance/SwallowedRecovery";
 import { ConnectBankInvite } from "@/components/finance/bank/ConnectBankInvite";
+import { ImportInvite } from "@/components/finance/statements/ImportInvite";
 import { shouldInviteToConnect } from "@/lib/bank/invite";
 import { getLocale } from "@/lib/locale";
 
@@ -215,7 +216,9 @@ export default async function TransactionsPage({
           </div>
         ) : bankInvite ? (
           <ConnectBankInvite surface="ledger" />
-        ) : null
+        ) : (
+          <ImportInvite />
+        )
       }
     />
   );

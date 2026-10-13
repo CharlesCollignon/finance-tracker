@@ -41,6 +41,8 @@ export const NOTIFICATION_KINDS = [
   "monthOpen",
   /** The bank connection needs a renewal or has stopped. */
   "bank",
+  /** On the 5th, last month's statement not yet brought (`statement-reminder`). */
+  "statement",
   /** Entraide: an answer to the reader's question, or theirs marked « Résolu ». */
   "community",
 ] as const;

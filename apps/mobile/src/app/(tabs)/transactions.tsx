@@ -56,6 +56,7 @@ import { CategoryIcon } from "@/components/CategoryIcon";
 import { PrivateAmount } from "@/components/PrivateAmount";
 import { FulfilmentDot } from "@/components/FulfilmentDot";
 import { BankInboxSheet } from "@/components/BankInboxSheet";
+import { ImportInvite } from "@/components/statements/ImportInvite";
 import { SwallowedRecovery } from "@/components/bank/SwallowedRecovery";
 import { ConnectBankInvite } from "@/components/bank/ConnectBankInvite";
 import { useBankState } from "@/hooks/useBankState";
@@ -236,6 +237,7 @@ export default function TransactionsScreen() {
           swallowed: 0,
           bank: null as BankForecast | null,
           accounts: null as LedgerAccounts | null,
+          feedShown: false,
         };
       }
       const [
@@ -311,6 +313,7 @@ export default function TransactionsScreen() {
         swallowed,
         bank,
         accounts,
+        feedShown,
       };
     }, [ownerId, year, month], {
       reads: ["transactions", "templates", "categories", "bank"],
@@ -712,7 +715,11 @@ export default function TransactionsScreen() {
           </View>
         </Pressable>
       ) : (
-        <ConnectBankInvite surface="ledger" bank={bank} className="mt-3" />
+        <>
+          <ConnectBankInvite surface="ledger" bank={bank} className="mt-3" />
+          {/* No line has come in yet, from a bank or a statement. */}
+          {data && !data.feedShown ? <ImportInvite className="mt-3" /> : null}
+        </>
       )}
 
       {toConfirm > 0 ? (
