@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from "react";
+import { useRef, useState, type ReactNode } from "react";
 import {
   KeyboardAvoidingView,
   Platform,
@@ -32,6 +32,7 @@ import {
   entraideWhen,
   type EntraideCopy,
 } from "@finance/core/entraide-copy";
+import { maskPersonalData } from "@finance/core/entraide-mask";
 import { DURATION, STAGGER_STEP_MS } from "@finance/core/motion";
 import {
   ENTRAIDE_REACTIONS,
@@ -69,6 +70,61 @@ const STAGGER_CAP = 8;
 /** What is being edited: the question, or one answer. */
 type Editing = { kind: "post" } | { kind: "reply"; id: number } | null;
 
+/** An answer as drawn: `sending` while it is still on its way. */
+type ShownReply = EntraideReply & { sending?: boolean };
+
+/**
+ * What this visit wrote, drawn at once rather than after the next read
+ * brings it back: answers sent (an in-flight one with a negative id), and
+ * the question's or an answer's new words, or its deletion.
+ */
+interface Local {
+  added: ShownReply[];
+  post: { title: string; body: string } | "deleted" | null;
+  replies: ReadonlyMap<number, { body: string } | "deleted">;
+}
+
+const NO_LOCAL: Local = { added: [], post: null, replies: new Map() };
+
+/** The words as the server saves them: masked, then trimmed. */
+function saved(text: string): string {
+  return maskPersonalData(text).text.trim();
+}
+
+function withLocal(
+  post: EntraidePost,
+  replies: readonly EntraideReply[],
+  local: Local,
+): { post: EntraidePost; replies: ShownReply[] } {
+  const now = new Date().toISOString();
+  const gone = <T extends EntraidePost | EntraideReply>(row: T): T => ({
+    ...row,
+    gone: true,
+    status: "deleted",
+    body: "",
+  });
+  const known = new Set(replies.map((reply) => reply.id));
+  return {
+    post:
+      local.post === "deleted"
+        ? gone(post)
+        : local.post
+          ? { ...post, ...local.post, editedAt: post.editedAt ?? now }
+          : post,
+    replies: [
+      ...replies.map((reply) => {
+        const patch = local.replies.get(reply.id);
+        return patch === "deleted"
+          ? gone(reply)
+          : patch
+            ? { ...reply, body: patch.body, editedAt: reply.editedAt ?? now }
+            : reply;
+      }),
+      ...local.added.filter((reply) => !known.has(reply.id)),
+    ],
+  };
+}
+
 /**
  * A thread on the phone, read and answered as on the site: the question
  * (or share) and its reactions; the author's own « Modifier » and
@@ -100,11 +156,25 @@ export default function EntraideThreadScreen() {
       { reads: ["community"] },
     );
   const thread = data?.thread ?? null;
-  const post = thread?.post ?? null;
-  const replies = thread?.replies ?? [];
+  const [local, setLocal] = useState<Local>(NO_LOCAL);
+  const shown = thread
+    ? withLocal(thread.post, thread.replies, local)
+    : null;
+  const post = shown?.post ?? null;
+  const replies = shown?.replies ?? [];
+  // A pseudonym chosen with this visit's first answer, before a read has it.
+  const [handleNow, setHandleNow] = useState<string | null>(null);
+  const scroll = useRef<ScrollView>(null);
+  // The ids of answers still on their way: negative, never a real one.
+  const nextTemp = useRef(-1);
 
   const targets = post
-    ? [postTarget(post.id), ...replies.map((reply) => replyTarget(reply.id))]
+    ? [
+        postTarget(post.id),
+        ...replies
+          .filter((reply) => !reply.sending)
+          .map((reply) => replyTarget(reply.id)),
+      ]
     : [];
   const { tally, say } = useReactions(targets, userId);
 
@@ -203,7 +273,74 @@ export default function EntraideThreadScreen() {
     setDeleting(null);
     if (!result.ok) {
       setFailed(entraideErrorText(copy, result.error));
+      return;
     }
+    setLocal((current) =>
+      kind === "post"
+        ? { ...current, post: "deleted" }
+        : {
+            ...current,
+            replies: new Map(current.replies).set(Number(raw), "deleted"),
+          },
+    );
+  }
+
+  /**
+   * An answer, drawn at once — dimmed while it travels — and confirmed when
+   * the server has it; refused, it leaves and its words go back in the
+   * field. Null when it went, or what to say.
+   */
+  async function sendReply(
+    text: string,
+    typed: string | undefined,
+  ): Promise<string | null> {
+    if (!post) {
+      return null;
+    }
+    const temp = nextTemp.current;
+    nextTemp.current -= 1;
+    const draft: ShownReply = {
+      id: temp,
+      body: saved(text),
+      author: {
+        handle: thread?.handle ?? handleNow ?? typed?.trim() ?? null,
+        isPluclair: false,
+        isMine: true,
+      },
+      status: "visible",
+      gone: false,
+      createdAt: new Date().toISOString(),
+      editedAt: null,
+      sending: true,
+    };
+    setLocal((current) => ({ ...current, added: [...current.added, draft] }));
+    requestAnimationFrame(() => scroll.current?.scrollToEnd({ animated: true }));
+    const result = await writeEntraide<{ id: number }>({
+      action: "reply",
+      postId: post.id,
+      text,
+      handle: typed,
+    });
+    if (!result.ok) {
+      setLocal((current) => ({
+        ...current,
+        added: current.added.filter((reply) => reply.id !== temp),
+      }));
+      return entraideErrorText(copy, result.error);
+    }
+    void hapticSuccess();
+    if (typed) {
+      setHandleNow(typed.trim());
+    }
+    setLocal((current) => ({
+      ...current,
+      added: current.added.map((reply) =>
+        reply.id === temp
+          ? { ...reply, id: result.value.id, sending: false }
+          : reply,
+      ),
+    }));
+    return null;
   }
 
   let index = 0;
@@ -217,9 +354,28 @@ export default function EntraideThreadScreen() {
     ? undefined
     : LinearTransition.duration(DURATION.panel);
 
-  const replyItem = (reply: EntraideReply, isSolved: boolean) => {
+  const replyItem = (reply: ShownReply, isSolved: boolean) => {
     const target = replyTarget(reply.id);
     const hidden = reply.status === "hidden";
+    if (reply.sending) {
+      return (
+        <View className="opacity-60">
+          <ReplyItem
+            reply={reply}
+            when={copy.thread.replying}
+            copy={copy}
+            isSolved={false}
+            canSolve={false}
+            onSolve={() => undefined}
+            notice={null}
+            reactions={null}
+            report={null}
+            own={null}
+            editor={null}
+          />
+        </View>
+      );
+    }
     return (
       <ReplyItem
         reply={reply}
@@ -270,7 +426,14 @@ export default function EntraideThreadScreen() {
             <ReplyEditor
               reply={reply}
               copy={copy}
-              onDone={() => setEditing(null)}
+              onCancel={() => setEditing(null)}
+              onSaved={(body) => {
+                setEditing(null);
+                setLocal((current) => ({
+                  ...current,
+                  replies: new Map(current.replies).set(reply.id, { body }),
+                }));
+              }}
             />
           ) : null
         }
@@ -293,6 +456,7 @@ export default function EntraideThreadScreen() {
         keyboardVerticalOffset={Platform.OS === "ios" ? 90 : 0}
       >
         <ScrollView
+          ref={scroll}
           keyboardShouldPersistTaps="handled"
           contentContainerClassName="gap-5 px-4 pb-10 pt-4"
           refreshControl={
@@ -328,7 +492,11 @@ export default function EntraideThreadScreen() {
               <PostEditor
                 post={post}
                 copy={copy}
-                onDone={() => setEditing(null)}
+                onCancel={() => setEditing(null)}
+                onSaved={(words) => {
+                  setEditing(null);
+                  setLocal((current) => ({ ...current, post: words }));
+                }}
               />
             ) : (
               <>
@@ -455,7 +623,11 @@ export default function EntraideThreadScreen() {
         </ScrollView>
 
         {postHidden || (post.gone && post.author.isMine) ? null : (
-          <ReplyComposer postId={post.id} handle={thread.handle} copy={copy} />
+          <ReplyComposer
+            handle={thread.handle ?? handleNow}
+            copy={copy}
+            onSend={sendReply}
+          />
         )}
       </KeyboardAvoidingView>
 
@@ -624,11 +796,13 @@ function ReportButton({
 function PostEditor({
   post,
   copy,
-  onDone,
+  onCancel,
+  onSaved,
 }: {
   post: EntraidePost;
   copy: EntraideCopy;
-  onDone: () => void;
+  onCancel: () => void;
+  onSaved: (words: { title: string; body: string }) => void;
 }) {
   const [title, setTitle] = useState(post.title);
   const [body, setBody] = useState(post.body);
@@ -653,7 +827,7 @@ function PostEditor({
       setError(entraideErrorText(copy, result.error));
       return;
     }
-    onDone();
+    onSaved({ title: saved(title), body: saved(body) });
   }
 
   return (
@@ -683,10 +857,10 @@ function PostEditor({
         <Button
           label={copy.thread.cancel}
           variant="ghost"
-          onPress={onDone}
+          onPress={onCancel}
         />
         <Button
-          label={copy.thread.save}
+          label={pending ? copy.thread.saving : copy.thread.save}
           disabled={!ready}
           onPress={() => void save()}
         />
@@ -698,11 +872,13 @@ function PostEditor({
 function ReplyEditor({
   reply,
   copy,
-  onDone,
+  onCancel,
+  onSaved,
 }: {
   reply: EntraideReply;
   copy: EntraideCopy;
-  onDone: () => void;
+  onCancel: () => void;
+  onSaved: (body: string) => void;
 }) {
   const [text, setText] = useState(reply.body);
   const [pending, setPending] = useState(false);
@@ -722,7 +898,7 @@ function ReplyEditor({
       setError(entraideErrorText(copy, result.error));
       return;
     }
-    onDone();
+    onSaved(saved(text));
   }
 
   return (
@@ -746,10 +922,10 @@ function ReplyEditor({
         <Button
           label={copy.thread.cancel}
           variant="ghost"
-          onPress={onDone}
+          onPress={onCancel}
         />
         <Button
-          label={copy.thread.save}
+          label={pending ? copy.thread.saving : copy.thread.save}
           disabled={!ready}
           onPress={() => void save()}
         />
@@ -764,43 +940,36 @@ function ReplyEditor({
  * send that springs in once there is something to send.
  */
 function ReplyComposer({
-  postId,
   handle,
   copy,
+  onSend,
 }: {
-  postId: number;
   handle: string | null;
   copy: EntraideCopy;
+  /** Sends the answer; what to say if it was refused, or null. */
+  onSend: (text: string, handle: string | undefined) => Promise<string | null>;
 }) {
   const colors = useThemeColors();
   const [text, setText] = useState("");
   const [typed, setTyped] = useState("");
-  const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const ready =
     text.trim().length >= ENTRAIDE_LIMITS.replyMin &&
-    handleReady(handle, typed) &&
-    !pending;
+    handleReady(handle, typed);
 
   async function send() {
     if (!ready) {
       return;
     }
-    setPending(true);
-    setError(null);
-    const result = await writeEntraide({
-      action: "reply",
-      postId,
-      text,
-      handle: handle ? undefined : typed,
-    });
-    setPending(false);
-    if (!result.ok) {
-      setError(entraideErrorText(copy, result.error));
-      return;
-    }
-    void hapticSuccess();
+    // The field empties at once: the answer is already drawn above.
+    const sent = text;
     setText("");
+    setError(null);
+    const refused = await onSend(sent, handle ? undefined : typed);
+    if (refused) {
+      setError(refused);
+      setText((now) => (now ? now : sent));
+    }
   }
 
   return (
@@ -827,7 +996,7 @@ function ReplyComposer({
         />
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel={pending ? copy.thread.replying : copy.thread.reply}
+          accessibilityLabel={copy.thread.reply}
           disabled={!ready}
           onPress={() => void send()}
           className="mb-1 h-9 w-9 items-center justify-center rounded-full bg-primary"

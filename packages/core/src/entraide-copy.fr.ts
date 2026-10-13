@@ -88,6 +88,7 @@ export const entraideCopyFr: EntraideCopy = {
     solvedAnswer: "La réponse qui a résolu la question",
     edit: "Modifier",
     save: "Enregistrer",
+    saving: "Enregistrement…",
     cancel: "Annuler",
     delete: "Supprimer",
     confirmDelete:

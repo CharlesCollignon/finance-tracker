@@ -84,6 +84,7 @@ export interface EntraideCopy {
     solvedAnswer: string;
     edit: string;
     save: string;
+    saving: string;
     cancel: string;
     delete: string;
     confirmDelete: string;
@@ -247,6 +248,7 @@ export const entraideCopy: EntraideCopy = {
     solvedAnswer: "The answer that solved it",
     edit: "Edit",
     save: "Save",
+    saving: "Saving…",
     cancel: "Cancel",
     delete: "Delete",
     confirmDelete:

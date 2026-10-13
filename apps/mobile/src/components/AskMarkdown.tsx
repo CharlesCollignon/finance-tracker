@@ -12,6 +12,9 @@ import { PrivateAmount } from "@/components/PrivateAmount";
 import { Text } from "@/components/ui/Text";
 import { cn } from "@/lib/cn";
 
+/** One empty list for every call, so the parse below is not redone each render. */
+const ALL_TRACED: readonly string[] = [];
+
 const ALIGN: Record<AskAlign, string> = {
   left: "text-left",
   center: "text-center",
@@ -32,7 +35,7 @@ const ALIGN: Record<AskAlign, string> = {
  */
 export function AskMarkdown({
   markdown,
-  untraced = [],
+  untraced = ALL_TRACED,
   trailing = null,
   community = false,
 }: {
