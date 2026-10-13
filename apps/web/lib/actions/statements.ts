@@ -13,12 +13,10 @@ import type { StatementOutcome } from "@finance/core/validations/statements";
 import {
   dismissMailItem,
   importMailItem,
-  inboxView,
   renewInbox,
   startInbox,
   stopInbox,
 } from "@/lib/statements/inbox";
-import type { InboxView } from "@finance/data/statements";
 import { readPdfStatement } from "@/lib/statements/pdf";
 import { scanStatement } from "@/lib/statements/scan";
 import { planStatement, undoStatement } from "@/lib/statements/service";
@@ -141,12 +139,6 @@ export async function scanStatementFile(form: FormData): Promise<Read> {
 }
 
 /* ------------------------------------------------- the e-mail way in */
-
-/** The person's address and what waits from it — theirs alone, never a space's. */
-export async function readStatementInbox(): Promise<InboxView | null> {
-  const owner = await getOwner();
-  return owner ? inboxView(await createClient(), owner.userId) : null;
-}
 
 async function asPerson<T>(run: (userId: string) => Promise<T>): Promise<T | { error: string }> {
   const owner = await getOwner();

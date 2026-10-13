@@ -20,7 +20,6 @@ import { Card } from "@/components/ui/Card";
 import { ChoiceChips } from "@/components/ui/Picker";
 import {
   dismissStatementMail,
-  readStatementInbox,
   renewStatementInbox,
   startStatementInbox,
   stopStatementInbox,
@@ -28,6 +27,19 @@ import {
 import { ICON } from "@/lib/icon-scale";
 import { useLocale, useT } from "@/lib/locale-context";
 import type { InboxView } from "@finance/data/statements";
+
+/**
+ * The address and what waits, read again: from a route rather than a server
+ * action, which a page from an earlier deployment can no longer call.
+ */
+async function readInbox(): Promise<InboxView | null> {
+  try {
+    const response = await fetch("/api/statements/inbox", { cache: "no-store" });
+    return response.ok ? ((await response.json()) as InboxView) : null;
+  } catch {
+    return null;
+  }
+}
 
 /** How long a forwarding code is worth showing. */
 const CODE_FRESH_MS = 60 * 60 * 1000;
@@ -182,7 +194,7 @@ export function MailInbox({
         clearInterval(timer);
         return;
       }
-      void readStatementInbox().then((next) => {
+      void readInbox().then((next) => {
         if (next) {
           setView(next);
           onView?.(next);
@@ -203,7 +215,7 @@ export function MailInbox({
         toast(resolveMessage(t, result.error), "error");
         return;
       }
-      const next = await readStatementInbox();
+      const next = await readInbox();
       if (next) {
         setView(next);
         onView?.(next);
