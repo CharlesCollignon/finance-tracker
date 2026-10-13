@@ -23,3 +23,17 @@ export const LEGAL_DRAFT = true;
 export function legalPagesVisible(): boolean {
   return !LEGAL_DRAFT || process.env.VERCEL_ENV !== "production";
 }
+
+/**
+ * Whether « Les règles d'Entraide » (`entraide-rules-copy.ts`) is still a
+ * draft. Apart from `LEGAL_DRAFT`, so the privacy policy and the terms can
+ * be signed off before Entraide exists. While true, production answers 404
+ * on the page; flip it when every `[[…]]` in it is filled, the text has been
+ * checked, and Entraide is about to open.
+ */
+export const ENTRAIDE_RULES_DRAFT = true;
+
+/** Whether « Les règles d'Entraide » may be served on this deployment. */
+export function entraideRulesVisible(): boolean {
+  return !ENTRAIDE_RULES_DRAFT || process.env.VERCEL_ENV !== "production";
+}

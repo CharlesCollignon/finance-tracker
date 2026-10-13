@@ -78,7 +78,10 @@ Three commitments stated on the marketing site and binding on all future work
   everything else waits in the review inbox, and a recurring template writes
   into each month exactly what the user set it up to write, and nothing else.
 - **It does not tell the user what to do.** No advice, no score, no nudge to
-  switch products.
+  switch products. This binds Pluclair's own voice: the app, the guides, and
+  the owner's answers in Entraide, marked « Pluclair ». What members write in
+  Entraide is their own view, shown as theirs and never as Pluclair's advice
+  (the owner's call, 2026-10-13; `docs/plans/BLOG_CHANGELOG_PLAN.md`).
 
 The one place prose is written for the user — the month read — never writes a
 number. The model refers to a figure by name and the app substitutes its own

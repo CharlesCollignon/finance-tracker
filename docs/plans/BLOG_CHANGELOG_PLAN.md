@@ -67,6 +67,10 @@ merge made by hand is held by the rule alone.
 
 ## Assumed — to confirm before the phase that needs it
 
+Confirmed by the owner on 2026-10-13, as written: 1 to 5, 7 and 8 (« all as
+proposed »), so Phase 5 can start. 6 was built that way in Phase 4. 9 is
+still open.
+
 1. **Entraide is read by anyone, written by an account.** Threads are public
    and indexed (that is most of the "life" and the search traffic); posting,
    answering, reacting and voting need to be signed in.
@@ -296,7 +300,22 @@ Publishing what users write makes Pluclair a host of other people's content,
 with duties that do not apply today. The rules come first and Entraide stays
 behind a flag until they are signed.
 
-### 5a — The rules (branch `entraide-rules`)
+### 5a — The rules (branch `entraide-rules`) — drafted, waiting on the owner and a lawyer
+
+Drafted as one document rather than sections of the terms and the privacy
+policy: « Les règles d'Entraide » (`entraide-rules-copy.ts`, French and
+English), on `/blog/entraide/regles`, with its own draft switch
+(`ENTRAIDE_RULES_DRAFT`), so the terms and the policy can be signed off now
+for the APK while Entraide's rules wait for Entraide. It holds the rules, the
+members' views, the pseudonym, the masking and limits, the licence, the
+moderation, DSA notices (art. 16), statements of reasons (art. 17) and
+challenges, Pluclair as host, and the data Entraide keeps. Two retention
+periods are blanks for the lawyer, whose questions are in
+`docs/legal/ENTRAIDE.md`. When Entraide stores its first post (5b), the
+terms and the policy each gain a line pointing to it, and the register and
+the DPIA gain the processing, in the same commit.
+
+As first planned:
 
 - **« Les règles d'Entraide »**, a page: be kind; no personal data (IBAN,
   account numbers, address); no promotion, referral codes or sponsored links;
