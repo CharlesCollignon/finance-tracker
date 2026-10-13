@@ -1,30 +1,18 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
-import { after } from "next/server";
 import type { ActionResult } from "@finance/core/action-result";
 import {
-  ENTRAIDE_HREF,
-  ENTRAIDE_LIMITS,
-  entraideTargetOf,
-  handleProblem,
-  isEntraideRule,
-  type EntraideTarget,
   isEntraideFilter,
   isEntraideSort,
   threadHref,
   type EntraideMatch,
   type PostKind,
 } from "@finance/core/entraide";
-import { maskPersonalData } from "@finance/core/entraide-mask";
 import type { Db } from "@finance/data/client";
 import * as entraide from "@finance/data/entraide";
-import { asUser } from "@/lib/actions/as-user";
 import { toCard, type EntraideCard } from "@/lib/entraide-cards";
-import { pushAnswer, pushReport, pushSolved } from "@/lib/entraide-push";
-import { recordAuthorship } from "@/lib/entraide-authorship";
+import * as write from "@/lib/entraide-write";
 import { getAuthUser } from "@/lib/auth/get-user";
-import { isGuideSlug } from "@/lib/guide-list";
 import { matchGuides } from "@/lib/guide-search";
 import { allGuides } from "@/lib/guides";
 import { getLocale } from "@/lib/locale";
@@ -32,71 +20,24 @@ import { createClient } from "@/lib/supabase/server";
 import { entraideRulesVisible } from "@/components/marketing/legal-status";
 
 /**
- * Entraide's writes and its two client-side reads. Every write is the
- * signed-in person's own (`asUser`), masked before it is saved
- * (`maskPersonalData`, which the form's preview has already shown), and
- * refused while Entraide is closed — it opens with its rules
- * (`ENTRAIDE_RULES_DRAFT`). What the database refuses comes back by name
- * (`entraideError`), for the form to say in words.
+ * Entraide's writes and its two client-side reads. The writes are
+ * `lib/entraide-write.ts`'s, which the phone reaches too
+ * (`app/api/entraide`), run here as the cookie session's person: masked,
+ * kept with who wrote them, refused while Entraide is closed.
  *
  * The pages read cookies, so they are drawn fresh on each visit; a write
- * still marks the list and the thread stale, for the router's cache. An
- * answer, and an answer marked « Résolu », are pushed to whoever they
- * concern once the reply has gone back (`lib/entraide-push.ts`).
+ * still marks the list and the thread stale, for the router's cache.
  */
 
-const CLOSED = { error: "errors.notAllowed" } as const;
-
-function fits(text: string, min: number, max: number): boolean {
-  const length = text.trim().length;
-  return length >= min && length <= max;
-}
-
-/** Who did it, kept a year as the law asks of a host (migration 073). */
-async function written(
-  target: EntraideTarget,
-  operation: "create" | "edit" | "delete",
-) {
+/** Run `work` as the signed-in person, or refuse if there is none. */
+async function asWriter<T extends object>(
+  work: (db: Db, writer: write.EntraideWriter) => Promise<ActionResult<T>>,
+): Promise<ActionResult<T>> {
   const user = await getAuthUser();
-  if (user) {
-    await recordAuthorship(target, operation, user);
+  if (!user) {
+    return { error: "errors.notAuthenticated" } as ActionResult<T>;
   }
-}
-
-function redraw(href?: string) {
-  revalidatePath(ENTRAIDE_HREF);
-  if (href) {
-    revalidatePath(href);
-  }
-}
-
-/**
- * The writer's pseudonym: theirs already, or `chosen`, taken now if it may
- * be. The error names what is wrong with `chosen` otherwise.
- */
-async function ensureHandle(
-  db: Db,
-  userId: string,
-  chosen: string | undefined,
-): Promise<{ handle: string } | { error: string }> {
-  const current = await entraide.readMyHandle(db, userId);
-  if (current) {
-    return { handle: current };
-  }
-  const handle = chosen?.trim() ?? "";
-  const problem = handleProblem(handle);
-  if (problem) {
-    return {
-      error:
-        problem === "reserved"
-          ? "entraide.handleReserved"
-          : handle
-            ? "entraide.handleInvalid"
-            : "entraide.noHandle",
-    };
-  }
-  const taken = await entraide.chooseHandle(db, userId, handle);
-  return taken.success ? { handle } : { error: taken.error };
+  return work(await createClient(), { id: user.id, email: user.email ?? null });
 }
 
 /** « Déjà demandé ? »: open threads and guides close to what is being typed. */
@@ -163,106 +104,46 @@ export async function publishPost(input: {
   handle?: string;
   guideSlug?: string | null;
 }): Promise<ActionResult<{ card: EntraideCard }>> {
-  if (!entraideRulesVisible()) {
-    return CLOSED;
-  }
-  const title = maskPersonalData(input.title).text;
-  const body = maskPersonalData(input.body).text;
-  if (
-    (input.kind !== "question" && input.kind !== "share") ||
-    !fits(title, ENTRAIDE_LIMITS.titleMin, ENTRAIDE_LIMITS.titleMax) ||
-    body.trim().length > ENTRAIDE_LIMITS.bodyMax
-  ) {
-    return { error: "errors.invalidInput" };
-  }
   const locale = await getLocale();
-  return asUser<{ card: EntraideCard }>(
-    async (db, userId): Promise<ActionResult<{ card: EntraideCard }>> => {
-      const writer = await ensureHandle(db, userId, input.handle);
-      if ("error" in writer) {
-        return { error: writer.error };
-      }
-      const { handle } = writer;
-      const created = await entraide.createPost(db, userId, {
-        kind: input.kind,
-        title,
-        body,
-        guideSlug:
-          input.guideSlug && isGuideSlug(input.guideSlug)
-            ? input.guideSlug
-            : null,
-      });
-      if (!created.success) {
-        return { error: created.error };
-      }
-      redraw();
-      await written(`post:${created.id}`, "create");
-      // Drawn from what was just written; the list's next read has the rest.
-      const now = new Date();
-      return {
-        success: true,
-        card: toCard(
-          {
-            id: created.id,
-            kind: input.kind,
-            title: title.trim(),
-            excerpt: body.trim(),
-            author: { handle, isPluclair: false, isMine: true },
-            gone: false,
-            createdAt: now.toISOString(),
-            lastActivityAt: now.toISOString(),
-            replyCount: 0,
-            solved: false,
-            usefulCount: 0,
-          },
-          locale,
-          now,
-        ),
-      };
-    },
-    { redraw: "never" },
-  );
+  return asWriter<{ card: EntraideCard }>(async (db, writer) => {
+    const created = await write.writePost(db, writer, input);
+    if (!created.success) {
+      return { error: created.error };
+    }
+    // Drawn from what was just written; the list's next read has the rest.
+    const now = new Date();
+    return {
+      success: true,
+      card: toCard(
+        {
+          id: created.id,
+          kind: input.kind,
+          title: created.title,
+          excerpt: created.body,
+          author: { handle: created.handle, isPluclair: false, isMine: true },
+          gone: false,
+          createdAt: now.toISOString(),
+          lastActivityAt: now.toISOString(),
+          replyCount: 0,
+          solved: false,
+          usefulCount: 0,
+        },
+        locale,
+        now,
+      ),
+    };
+  });
 }
 
 export async function editPost(
   id: number,
   input: { title: string; body: string },
 ): Promise<ActionResult> {
-  if (!entraideRulesVisible()) {
-    return CLOSED;
-  }
-  const title = maskPersonalData(input.title).text;
-  const body = maskPersonalData(input.body).text;
-  if (
-    !fits(title, ENTRAIDE_LIMITS.titleMin, ENTRAIDE_LIMITS.titleMax) ||
-    body.trim().length > ENTRAIDE_LIMITS.bodyMax
-  ) {
-    return { error: "errors.invalidInput" };
-  }
-  const result = await asUser(
-    (db, userId) => entraide.editPost(db, userId, id, { title, body }),
-    { redraw: "never" },
-  );
-  if (result.success) {
-    redraw(threadHref(id, title));
-    await written(`post:${id}`, "edit");
-  }
-  return result;
+  return asWriter((db, writer) => write.changePost(db, writer, id, input));
 }
 
 export async function deletePost(id: number): Promise<ActionResult> {
-  if (!entraideRulesVisible()) {
-    return CLOSED;
-  }
-  const result = await asUser(
-    (db, userId) => entraide.deletePost(db, userId, id),
-    { redraw: "never" },
-  );
-  if (result.success) {
-    redraw();
-    await written(`post:${id}`, "delete");
-  }
-  return result;
+  return asWriter((db, writer) => write.removePost(db, writer, id));
 }
 
 /** An answer to a thread. */
@@ -271,66 +152,20 @@ export async function publishReply(
   text: string,
   handle?: string,
 ): Promise<ActionResult<{ id: number }>> {
-  if (!entraideRulesVisible()) {
-    return CLOSED;
-  }
-  const body = maskPersonalData(text).text;
-  if (!fits(body, ENTRAIDE_LIMITS.replyMin, ENTRAIDE_LIMITS.replyMax)) {
-    return { error: "errors.invalidInput" };
-  }
-  const result = await asUser(
-    async (db, userId): Promise<ActionResult<{ id: number }>> => {
-      const writer = await ensureHandle(db, userId, handle);
-      if ("error" in writer) {
-        return { error: writer.error };
-      }
-      return entraide.createReply(db, userId, postId, body);
-    },
-    { redraw: "never" },
+  return asWriter((db, writer) =>
+    write.writeReply(db, writer, postId, text, handle),
   );
-  if (result.success) {
-    redraw();
-    const replyId = result.id;
-    await written(`reply:${replyId}`, "create");
-    after(() => pushAnswer(replyId));
-  }
-  return result;
 }
 
 export async function editReply(
   id: number,
   text: string,
 ): Promise<ActionResult> {
-  if (!entraideRulesVisible()) {
-    return CLOSED;
-  }
-  const body = maskPersonalData(text).text;
-  if (!fits(body, ENTRAIDE_LIMITS.replyMin, ENTRAIDE_LIMITS.replyMax)) {
-    return { error: "errors.invalidInput" };
-  }
-  const result = await asUser(
-    (db, userId) => entraide.editReply(db, userId, id, body),
-    { redraw: "never" },
-  );
-  if (result.success) {
-    await written(`reply:${id}`, "edit");
-  }
-  return result;
+  return asWriter((db, writer) => write.changeReply(db, writer, id, text));
 }
 
 export async function deleteReply(id: number): Promise<ActionResult> {
-  if (!entraideRulesVisible()) {
-    return CLOSED;
-  }
-  const result = await asUser(
-    (db, userId) => entraide.deleteReply(db, userId, id),
-    { redraw: "never" },
-  );
-  if (result.success) {
-    redraw();
-    await written(`reply:${id}`, "delete");
-  }
-  return result;
+  return asWriter((db, writer) => write.removeReply(db, writer, id));
 }
 
 /** The asker marks an answer « Résolu », or takes the mark back (`null`). */
@@ -338,47 +173,16 @@ export async function setSolved(
   postId: number,
   replyId: number | null,
 ): Promise<ActionResult> {
-  if (!entraideRulesVisible()) {
-    return CLOSED;
-  }
-  const result = await asUser(
-    (db, userId) => entraide.markSolved(db, userId, postId, replyId),
-    { redraw: "never" },
-  );
-  if (result.success) {
-    redraw();
-    if (replyId !== null) {
-      after(() => pushSolved(postId));
-    }
-  }
-  return result;
+  return asWriter((db, writer) => write.settle(db, writer, postId, replyId));
 }
 
-/**
- * « Signaler »: a member reports a question or an answer, with the rule it
- * breaks. The moderators hear of it; a third report hides it at once
- * (migration 072), and its author hears too.
- */
+/** « Signaler »: a question or an answer, with the rule it breaks. */
 export async function reportTarget(
   target: string,
   reason: string,
   note: string,
 ): Promise<ActionResult> {
-  const reported = entraideTargetOf(target);
-  if (!entraideRulesVisible()) {
-    return CLOSED;
-  }
-  if (!reported || !isEntraideRule(reason)) {
-    return { error: "errors.invalidInput" };
-  }
-  const result = await asUser(
-    (db, userId) => entraide.reportContent(db, userId, reported, reason, note),
-    { redraw: "never" },
+  return asWriter((db, writer) =>
+    write.report(db, writer, target, reason, note),
   );
-  if (result.success && result.id !== null) {
-    const reportId = result.id;
-    after(() => pushReport(reportId, reported));
-    redraw();
-  }
-  return result.success ? { success: true } : { error: result.error };
 }
