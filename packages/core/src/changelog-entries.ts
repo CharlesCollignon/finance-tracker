@@ -17,6 +17,20 @@ import type { ChangelogEntry, RoadmapItem } from "./changelog";
  */
 export const CHANGELOG: readonly ChangelogEntry[] = [
   {
+    id: "2026-10-13-header-small-phones",
+    date: "2026-10-13",
+    kind: "fixed",
+    platforms: ["web"],
+    fr: {
+      title: "Le menu du site, sur les petits téléphones",
+      body: "Sur un téléphone étroit, l’icône du menu sortait de la barre en haut du site. Connecté, son bouton s’appelle maintenant « Ouvrir », et sur les écrans les plus étroits le nom Pluclair se replie derrière son orbe.",
+    },
+    en: {
+      title: "The site's menu, on small phones",
+      body: "On a narrow phone, the menu icon was pushed out of the bar at the top of the site. Signed in, its button now says “Open”, and on the narrowest screens the Pluclair name folds behind its orb.",
+    },
+  },
+  {
     id: "2026-10-13-blog-guides",
     date: "2026-10-13",
     kind: "new",
@@ -1018,7 +1032,7 @@ export const CHANGELOG: readonly ChangelogEntry[] = [
  */
 export const CHANGELOG_STATS = {
   /** `git rev-list --count HEAD` on the branch that wrote the newest entry. */
-  commits: 948,
+  commits: 980,
   /** The repository's first commit. */
   since: "2026-06-15",
   asOf: "2026-10-13",

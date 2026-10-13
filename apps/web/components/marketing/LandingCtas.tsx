@@ -58,7 +58,19 @@ export function LandingCtas({
     return (
       <div className={cn("flex flex-wrap items-center gap-3", className)}>
         <Link href="/bearing" className={cn(base, sizes[size], gold)}>
-          {layout === "solo" ? copy.cta.openApp : copy.cta.goToDashboard}
+          {layout === "solo" ? (
+            copy.cta.openApp
+          ) : layout === "pair-compact" ? (
+            // The nav pill at phone width holds the wordmark, one button
+            // and the menu trigger; « Voir où vous en êtes » pushed the
+            // trigger out of it.
+            <>
+              <span className="max-sm:hidden">{copy.cta.goToDashboard}</span>
+              <span className="sm:hidden">{copy.cta.openShort}</span>
+            </>
+          ) : (
+            copy.cta.goToDashboard
+          )}
         </Link>
       </div>
     );

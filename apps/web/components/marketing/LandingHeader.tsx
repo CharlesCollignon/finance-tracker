@@ -93,11 +93,15 @@ function Wordmark({ folded }: { folded: boolean }) {
       aria-label="Pluclair"
     >
       <Orb size="26px" tone="mark" className="shrink-0" />
-      {/* The word folds behind the orb once the pill tightens. */}
+      {/* The word folds behind the orb once the pill tightens — and on the
+          narrowest phones, where the pill cannot hold it beside the button
+          and the menu trigger. */}
       <span
         className={cn(
           "overflow-hidden whitespace-nowrap transition-[max-width,opacity] duration-500",
-          folded ? "max-w-0 opacity-0" : "max-w-32 opacity-100",
+          folded
+            ? "max-w-0 opacity-0"
+            : "max-w-32 opacity-100 max-[374px]:max-w-0 max-[374px]:opacity-0",
         )}
         aria-hidden
       >
