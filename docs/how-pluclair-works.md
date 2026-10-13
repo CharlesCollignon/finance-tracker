@@ -605,6 +605,24 @@ statement engine below; its lines go to the server (the web's actions in
   (`readMappedTable`); a PDF, an old Excel or an image says what to take
   instead, until Phase 3.
 
+Ways in, besides the page's own drop zone and picker:
+
+- **Partager vers Pluclair** (Android): `expo-sharing` receives files of
+  the statement types (`app.json`, `SEND` and `SEND_MULTIPLE`), and
+  `app/+native-intent.ts` opens the import with them; several files are
+  taken one after another, and shared text is read as a pasted table.
+- **A table pasted** on `/import` (`readStatementText`): copied from the
+  operations page of any bank's website, as HTML or as text.
+- **A file dropped anywhere** in the web app (`StatementDropTarget`, in the
+  shell): the page dims, and the drop opens the import with the file
+  (`lib/statements/pending.ts`).
+- **The account menu** on both apps, and the Journal's invitation
+  (`ImportInvite`) where no line has come in yet, waved away on the device.
+- **The monthly reminder**: on the 5th, « Votre relevé de septembre est
+  prêt ? » for someone who imports and has not brought last month's
+  (`statement-reminder.ts`, the `statement` notification kind, said by
+  the notify job; never with a bank connected).
+
 The Journal shows « À vérifier » for any lines, the bank's or a
 statement's (`hasFeedLines`), and offers the bank's whole statement only
 to someone with a bank. Real exports, anonymised with
