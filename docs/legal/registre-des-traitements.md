@@ -28,6 +28,7 @@
 | Supabase                                | Base de données, authentification                                       | Union européenne — Francfort (`eu-central-1`)       | Accord de sous-traitance (DPA v1, 1ᵉʳ août 2026) ; clauses contractuelles types pour tout accès hors UE |
 | Vercel Inc.                             | Hébergement du site et des fonctions serveur                            | Fonctions à Paris (`cdg1`) ; société aux États-Unis | Certification au cadre UE–États-Unis (Data Privacy Framework) ; DPA                                     |
 | OpenRouter, Inc.                        | Si l'utilisateur connecte son propre compte IA — seule voie vers les lectures et les questions : transmission au modèle qu'il a choisi | États-Unis, puis selon le fournisseur du modèle | Sur le compte de l'utilisateur, à sa demande, après consentement ; OpenRouter agit selon les conditions que l'utilisateur a acceptées en ouvrant ce compte, auxquelles Pluclair n'est pas partie |
+| Brevo (Sendinblue SAS, France)          | Si l'utilisateur crée son adresse de relevés : réception des e-mails que sa messagerie y fait suivre, remis à Pluclair par webhook (pièces jointes téléchargées une fois) | Union européenne                                    | Accord de sous-traitance de Brevo, accepté à l'ouverture du compte                                      |
 | Expo, Apple, Google, Mozilla, Microsoft | Acheminement des notifications                                          | Selon le service                                    | Notifications web chiffrées de bout en bout ; Expo ne reçoit que le jeton de l'appareil, le titre et le texte du rappel, pour l'acheminer |
 | Google                                  | Connexion « Se connecter avec Google », si l'utilisateur la choisit     | Selon Google                                        | Responsable de traitement distinct                                                                      |
 
@@ -67,7 +68,14 @@ auprès desquels l'utilisateur a lui-même ouvert un compte.
   la trace de l'import (période, nombre de lignes), qui permet de l'annuler
   pendant 30 jours. Le fichier lui-même n'est jamais gardé (migration 074).
   Une image ou un PDF scanné n'est lu qu'à la demande, par le compte IA de
-  l'utilisateur (traitement 5).
+  l'utilisateur (traitement 5). S'il crée son adresse de relevés
+  (`statement_inboxes`, migration 075), les e-mails que sa messagerie y fait
+  suivre sont lus à leur arrivée : un relevé joint est importé, une alerte
+  de sa banque devient une opération provisoire ; ce qui attend qu'il
+  choisisse le compte est gardé lu (`statement_mail_items`, effacé un mois
+  après sa décision, deux mois au plus), jamais l'e-mail ni ses pièces
+  jointes. L'adresse, son code de confirmation Gmail (effacé après un jour)
+  et le compte des e-mails reçus sont gardés tant qu'il la garde.
 - **Destinataires** : Supabase, Vercel.
 - **Durée** : tant que le compte existe. Une écriture supprimée est conservée
   30 jours pour permettre l'annulation, puis effacée par la tâche de chaque
