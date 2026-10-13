@@ -66,7 +66,7 @@ export const legalCopy: LegalCopy = {
     notice: "Legal notice",
   },
   updatedLabel: "Last updated:",
-  updated: "2026-10-04",
+  updated: "2026-10-13",
   contents: "On this page",
   draftNotice:
     "Draft for review. Highlighted blanks are for the operator to fill in, and the text has not been checked by a lawyer yet.",
@@ -80,7 +80,7 @@ export const legalCopy: LegalCopy = {
         id: "who",
         heading: "Who we are",
         body: [
-          'Pluclair is run, not as a business, by Charles Collignon. We are the controller of the personal data described here, except where a section says someone else is.',
+          "Pluclair is run, not as a business, by Charles Collignon. We are the controller of the personal data described here, except where a section says someone else is.",
           "For anything about your data, write to pluclair.app@gmail.com. We answer within one month.",
         ],
       },
@@ -102,7 +102,8 @@ export const legalCopy: LegalCopy = {
         points: [
           "Your account: your email address and, if you sign in with Google, the name and account identifier Google shares with us. If you add a passkey we keep its public key; the private half never leaves your device.",
           "What you enter or import: transactions, categories, charges, caps, goals, wallets and their positions, month closes and the balances you record, tags and notes. When you import a bank export, the file is read to propose entries and only the entries you keep are stored; the file itself is not.",
-          "Your preferences: language, and which invitations you have dismissed.",
+          "Your preferences: language, which invitations you have dismissed, and the latest change in “What's new” you have read.",
+          "Your reactions to “What's new” and your votes on “Coming soon”: everyone sees how many there are, never who gave them.",
           "The audience measurement, unless you turn it off: the days the app is opened, and how many times that day you added a transaction, closed a month or asked “Can I afford it?”. Under an identifier worked out from your account with a secret key, which does not name you. No amount, no shop, no text.",
           "Notifications, if you turn them on: the delivery address your browser or phone gives us (a push subscription, or a push token for the phone app), the browser's user agent, and a log of which reminders we have sent, so none is sent twice.",
           "Your properties, if you add any: what each cost and how it is used, its area and energy class, your share of it, the loans behind it and their terms, and what it is worth to you. Of its address we keep the town and the point it stands on, to compare it with the sales around it; the full address only if you ask us to.",
@@ -115,7 +116,7 @@ export const legalCopy: LegalCopy = {
         body: [
           "Not offered at the moment: open-banking.io does not let its customers give their access to an app like Pluclair, so the bank connection is closed to every account but the publisher's own. What follows is how it works, should it reopen.",
           "Connecting a bank is optional. It works through your own open-banking.io account: you sign up there and pay them directly (at the time of writing, about €3 a month for the first account and €1 for each extra one), and your bank asks for your consent on its own pages, through Enable Banking Oy, a licensed account information service provider. Pluclair never sees your bank login, never collects or handles that payment, and is not itself a licensed or registered payment service provider.",
-          "open-banking.io, Enable Banking and your bank process your data under their own privacy policies, as [[independent controllers — confirm with open-banking.io how they describe the roles]].",
+          "open-banking.io, Enable Banking and your bank process your data under their own privacy policies, as independent controllers: each answers for what it does with your data, and Pluclair only for what it receives and keeps.",
           "To let Pluclair read that account, you give it the credentials file open-banking.io lets you download (credentials.json): an API key that reads your open-banking.io account, and the private key that decrypts what it returns. What Pluclair then receives:",
         ],
         points: [

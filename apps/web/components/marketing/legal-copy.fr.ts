@@ -15,7 +15,7 @@ export const legalCopyFr: LegalCopy = {
     notice: "Mentions légales",
   },
   updatedLabel: "Dernière mise à jour\u00A0:",
-  updated: "2026-10-04",
+  updated: "2026-10-13",
   contents: "Sur cette page",
   draftNotice:
     "Brouillon à relire. Les blancs surlignés sont à compléter par l'éditeur, et le texte n'a pas encore été vérifié par un juriste.",
@@ -51,7 +51,8 @@ export const legalCopyFr: LegalCopy = {
         points: [
           "Votre compte : votre adresse e-mail et, si vous vous connectez avec Google, le nom et l'identifiant de compte que Google nous transmet. Si vous ajoutez une clé d'accès (passkey), nous gardons sa clé publique ; la partie privée ne quitte jamais votre appareil.",
           "Ce que vous saisissez ou importez : opérations, catégories, charges, plafonds, objectifs, portefeuilles et leurs positions, clôtures de mois et soldes relevés, étiquettes et notes. Quand vous importez un relevé, le fichier est lu pour proposer des écritures et seules celles que vous gardez sont enregistrées ; le fichier lui-même ne l'est pas.",
-          "Vos préférences : la langue, et les invitations que vous avez écartées.",
+          "Vos préférences\u00A0: la langue, les invitations que vous avez écartées, et la dernière nouveauté que vous avez lue dans «\u00A0Nouveautés\u00A0».",
+          "Vos réactions aux «\u00A0Nouveautés\u00A0» et vos votes sur «\u00A0Bientôt\u00A0»\u00A0: tout le monde voit combien il y en a, mais pas qui les a données.",
           "La mesure d'audience, sauf si vous la coupez\u00A0: les jours où l'application est ouverte, et combien de fois ce jour-là vous avez ajouté une opération, clôturé un mois ou demandé «\u00A0Puis-je me permettre\u00A0?\u00A0». Sous un identifiant calculé à partir de votre compte avec une clé secrète, qui ne vous nomme pas. Aucun montant, aucun commerce, aucun texte.",
           "Les notifications, si vous les activez : l'adresse de distribution que votre navigateur ou votre téléphone nous donne (un abonnement push, ou un jeton push pour l'application mobile), l'identifiant du navigateur (user agent), et la liste des rappels déjà envoyés, pour qu'aucun ne parte deux fois.",
           "Vos biens immobiliers, si vous en ajoutez : ce que chacun a coûté et son usage, sa surface et sa classe énergie, votre part, les prêts qui l'ont financé et leurs conditions, et ce qu'il vaut à vos yeux. De son adresse nous gardons la commune et le point où il se trouve, pour le comparer aux ventes alentour ; l'adresse complète seulement si vous le demandez.",
@@ -64,7 +65,7 @@ export const legalCopyFr: LegalCopy = {
         body: [
           "Pas proposée pour le moment\u00A0: open-banking.io ne permet pas à ses clients de confier leur accès à une application comme Pluclair, si bien que la connexion bancaire est fermée à tous les comptes, sauf celui de l'éditeur. Ce qui suit dit comment elle fonctionne, si elle rouvre.",
           "Connecter une banque est facultatif. Cela passe par votre propre compte open-banking.io\u00A0: vous vous y inscrivez et le payez directement (à ce jour, environ 3\u00A0€ par mois pour le premier compte et 1\u00A0€ par compte supplémentaire), et c'est votre banque qui recueille votre consentement, sur ses propres pages, par l'intermédiaire d'Enable Banking Oy, prestataire de services d'information sur les comptes agréé. Pluclair ne voit jamais vos identifiants bancaires, n'encaisse ni ne manipule jamais ce paiement, et n'est pas lui-même un prestataire de services de paiement agréé ou enregistré.",
-          "open-banking.io, Enable Banking et votre banque traitent vos données selon leurs propres politiques de confidentialité, en tant que [[responsables de traitement distincts — à confirmer avec open-banking.io]].",
+          "open-banking.io, Enable Banking et votre banque traitent vos données selon leurs propres politiques de confidentialité, en tant que responsables de traitement distincts\u00A0: chacun répond de ce qu'il fait de vos données, et Pluclair seulement de ce qu'il reçoit et conserve.",
           "Pour que Pluclair puisse lire ce compte, vous lui confiez le fichier d'identifiants qu'open-banking.io vous permet de télécharger (credentials.json)\u00A0: une clé API qui lit votre compte open-banking.io, et la clé privée qui déchiffre ce qu'il renvoie. Ce que Pluclair reçoit alors\u00A0:",
         ],
         points: [
