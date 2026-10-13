@@ -29,7 +29,7 @@ export const legalCopyFr: LegalCopy = {
         id: "who",
         heading: "Qui sommes-nous",
         body: [
-          "Pluclair est édité à titre non professionnel par Charles Collignon («\u00A0nous\u00A0»). Nous sommes responsables du traitement des données décrites ici, sauf quand une section désigne quelqu'un d'autre.",
+          "Pluclair est édité à titre non professionnel par Charles Collignon. Nous sommes responsables du traitement des données décrites ici, sauf quand une section désigne quelqu'un d'autre.",
           "Pour toute question sur vos données, écrivez à pluclair.app@gmail.com. Nous répondons sous un mois.",
         ],
       },

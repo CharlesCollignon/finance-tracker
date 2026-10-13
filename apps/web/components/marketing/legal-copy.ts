@@ -80,7 +80,7 @@ export const legalCopy: LegalCopy = {
         id: "who",
         heading: "Who we are",
         body: [
-          'Pluclair is run, not as a business, by Charles Collignon ("we", "us"). We are the controller of the personal data described here, except where a section says someone else is.',
+          'Pluclair is run, not as a business, by Charles Collignon. We are the controller of the personal data described here, except where a section says someone else is.',
           "For anything about your data, write to pluclair.app@gmail.com. We answer within one month.",
         ],
       },
