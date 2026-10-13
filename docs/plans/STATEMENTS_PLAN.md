@@ -180,7 +180,10 @@ to stop it:
 
 ## Phases
 
-0. **One engine** (`statements-engine`). The readers above in core, bank
+0. **One engine** (`statements-engine`) — built 2026-10-13: the readers
+   and their tests, migration 074, the shared write path. The import's
+   own orchestration (the account, the import row, undo) comes with the
+   screens that call it, in Phase 1, so that nothing lands unused. The readers above in core, bank
    detection, stable line ids, fixtures and tests; migration 074
    (`bank_feed_items.source`, `statement_imports`, file accounts on
    `bank_accounts`, `hasBankFeed` counting the bank alone); the feed's
