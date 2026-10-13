@@ -1,6 +1,6 @@
-# Entraide — cadre juridique et questions pour l'avocat
+# Entraide — cadre juridique et choix retenus
 
-Brouillon du 13 octobre 2026. Entraide n'est pas encore construit (phase 5b de `docs/plans/BLOG_CHANGELOG_PLAN.md`). Ses règles, « Les règles d'Entraide », sont un document à part : `apps/web/components/marketing/entraide-rules-copy.fr.ts` (et sa version anglaise), servi sur `/blog/entraide/regles`. Il a son propre interrupteur de brouillon, `ENTRAIDE_RULES_DRAFT` (`legal-status.ts`) : la page répond 404 en production tant qu'il vaut `true`, comme la politique de confidentialité et les conditions avec `LEGAL_DRAFT`. Les deux se signent séparément, pour que la politique et les conditions puissent l'être avant qu'Entraide existe.
+Tenu à jour au 13 octobre 2026. Entraide est construit (phases 5b et 5c de `docs/plans/BLOG_CHANGELOG_PLAN.md`) et fermé au public jusqu'à son ouverture. Ses règles, « Les règles d'Entraide », sont un document à part : `apps/web/components/marketing/entraide-rules-copy.fr.ts` (et sa version anglaise), servi sur `/blog/entraide/regles`. Il a son propre interrupteur de brouillon, `ENTRAIDE_RULES_DRAFT` (`legal-status.ts`) : la page répond 404 en production tant qu'il vaut `true`, comme la politique de confidentialité et les conditions avec `LEGAL_DRAFT`. Les deux se signent séparément, pour que la politique et les conditions puissent l'être avant qu'Entraide existe.
 
 ## Ce qu'est Entraide
 
@@ -25,20 +25,53 @@ Décidé avec l'éditeur le 13 octobre 2026 :
   - de façon volontaire : une contestation possible pendant six mois, réexaminée par une personne (sur le modèle de l'art. 20), et l'exclusion d'un pseudonyme qui récidive (sur le modèle de l'art. 23).
 - **RGPD.** Bases légales retenues : l'exécution du contrat pour publier et afficher les messages, l'intérêt légitime pour la modération, l'obligation légale pour la conservation imposée aux hébergeurs.
 
-## Questions pour l'avocat
+## Les questions, et ce qui a été retenu
 
-1. **Données à conserver sur qui a publié quoi.** Le décret n° 2021-1362 du 20 octobre 2021 fixe les données qu'un hébergeur doit conserver pour identifier l'auteur d'un contenu (identité, informations du compte, données techniques comme l'adresse IP), et pour combien de temps (un an à compter de la création du contenu, d'après les textes consultés — à confirmer). Que doit conserver Pluclair, éditeur particulier sans activité commerciale, pour chaque question et chaque réponse ? Faut-il enregistrer l'adresse IP de chaque publication ? Ces données doivent-elles survivre à la suppression du compte ?
-2. **Exemption des petites entreprises.** L'art. 19 du DSA écarte les micro et petites entreprises des obligations propres aux plateformes (art. 20 à 28, sauf art. 24 §3), et l'art. 15 §2 des rapports de transparence. S'applique-t-elle à un particulier qui édite Pluclair sans activité commerciale ? Si non : traitement interne des réclamations, règlement extrajudiciaire des litiges (art. 21), signaleurs de confiance (art. 22), rapports de transparence, transmission des exposés des motifs à la base de données de la Commission (art. 24 §5).
-3. **Références de la LCEN.** La loi n° 2024-449 du 21 mai 2024 (SREN) a renuméroté la LCEN. Le texte cite donc la loi sans numéro d'article. Quels articles citer aujourd'hui pour le statut d'hébergeur et pour l'obligation de conservation ? Le décret n° 2021-1362 est-il toujours le texte applicable ?
-4. **Durée de conservation des signalements et des décisions.** Proposition : un an après la décision, pour répondre à une contestation ou à une autorité. Suffisant, ou trop ?
-5. **Licence sur les contenus.** La section « Ce que vous publiez » accorde à Pluclair, gratuitement et tant que le message reste dans Entraide, le droit de le conserver, de l'afficher et de le garder dans sa conversation. Suffisant ? Faut-il la faire accepter explicitement à la première publication ?
-6. **Mineurs.** Un compte Pluclair est ouvert dès 15 ans. Un espace public demande-t-il des précautions particulières pour les 15–17 ans ?
-7. **Forme du document.** « Les règles d'Entraide » peut-il valoir conditions générales au sens de l'art. 14 du DSA en étant rattaché aux conditions d'utilisation par une ligne, ou faut-il l'intégrer aux conditions elles-mêmes ?
+L'éditeur a choisi, le 13 octobre 2026, de ne pas consulter d'avocat et de
+retenir partout l'option la plus prudente. Ce qui suit n'est pas un avis
+juridique.
 
-8. **L'exposé des motifs.** Pluclair n'envoie aucun e-mail de lui-même. L'exposé des motifs (art. 17) est affiché à l'auteur sur le message masqué dès que la mesure prend effet, avec une notification ; l'éditeur envoie le même par e-mail depuis son adresse. Cela suffit-il, ou faut-il un envoi automatique par e-mail, et donc un service d'envoi ?
+1. **Données à conserver sur qui a publié quoi.** Retenu : pour chaque
+   question ou réponse écrite, modifiée ou supprimée, l'identifiant et
+   l'adresse e-mail du compte, l'adresse IP de la connexion et l'heure,
+   gardés un an après l'opération, même après la suppression du compte, lus
+   par personne et remis aux seules autorités qui les demandent légalement
+   (migration 073, `entraide_authorship` ; balayage de nuit `sweep_entraide`).
+   C'est la lecture la plus large du décret n° 2021-1362.
+2. **Exemption des petites entreprises (DSA, art. 19).** Retenu : ne pas s'en
+   prévaloir pour ce qui coûte peu — contestation possible pendant six mois et
+   réexamen par une personne (sur le modèle de l'art. 20), exposé des motifs
+   à chaque mesure (art. 17), exclusion d'un pseudonyme qui récidive (sur le
+   modèle de l'art. 23). Pour le reste (rapports de transparence, base de
+   données de la Commission, signaleurs de confiance, règlement
+   extrajudiciaire), Pluclair, sans salarié ni chiffre d'affaires, est au plus
+   une microentreprise et en est dispensé ; risque jugé faible.
+3. **Références de la LCEN.** Retenu : citer la loi sans numéro d'article,
+   la numérotation ayant changé avec la loi SREN de 2024. Aucun effet sur les
+   obligations.
+4. **Durée de conservation des signalements et des décisions.** Retenu : un
+   an après la décision ; une décision tant que la mesure qu'elle porte dure.
+5. **Licence sur les contenus.** Retenu : la licence des règles (gratuite,
+   limitée au fonctionnement d'Entraide, tant que le message y reste), acceptée
+   par la mention « En publiant, vous acceptez les règles d'Entraide » à côté
+   du bouton. Une case à cocher n'est pas exigée.
+6. **Mineurs.** Retenu : rien de plus que l'âge minimum du compte (15 ans,
+   majorité numérique en France), le pseudonyme et le masquage des
+   coordonnées ; les règles interdisent les données personnelles.
+7. **Forme du document.** Retenu : « Les règles d'Entraide » valent conditions
+   au sens de l'art. 14 du DSA ; les conditions d'utilisation et la politique
+   de confidentialité y renvoient par une ligne, ajoutée à l'ouverture.
+8. **L'exposé des motifs.** Retenu : affiché à l'auteur sur le message dès que
+   la mesure prend effet, avec une notification ; l'éditeur envoie le même par
+   e-mail depuis la file de modération. L'art. 17 n'exige pas de canal
+   particulier.
 
-## À l'ouverture d'Entraide (phase 5b)
+## À l'ouverture d'Entraide
 
-- La politique de confidentialité et les conditions d'utilisation reçoivent chacune une ligne qui renvoie à ces règles, dans le commit qui ouvre Entraide.
-- Le registre des traitements et l'AIPD reçoivent le traitement « Entraide ».
-- Les blancs `[[…]]` des règles sont remplis avec les réponses aux questions 1 et 4, et `ENTRAIDE_RULES_DRAFT` passe à `false` une fois le texte relu ; `entraide-rules-copy.test.ts` échoue si un blanc subsiste.
+- Fait le 13 octobre 2026 : le registre (section 11) et l'AIPD décrivent
+  Entraide ; les deux blancs des règles sont remplis (questions 1 et 4).
+- Dans le commit qui ouvre Entraide : une ligne de la politique de
+  confidentialité et une des conditions d'utilisation renvoient aux règles,
+  et `ENTRAIDE_RULES_DRAFT` passe à `false` ; `entraide-rules-copy.test.ts`
+  échoue si un blanc subsiste. La politique et les conditions doivent alors
+  être publiées (`LEGAL_DRAFT` à `false`), les règles y renvoyant.
