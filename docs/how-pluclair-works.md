@@ -654,8 +654,36 @@ downloads from their bank as the very lines the bank connection sends
   nothing twice and two real coffees stay two. Prefixed by the account when
   stored.
 
-PDFs, old binary Excel files and images are named and left for later
-phases. Such lines are kept beside the bank's in `bank_feed_items`, with a
+- **PDF statements** (`pdf.ts`), opened on the server with `unpdf`
+  (`apps/web/lib/statements/pdf.ts`): each run of text with its place;
+  words at one height make a row, the row that names the columns (« Date »,
+  « Libellé », « Débit », « Crédit », « Montant », « Solde » and their
+  variants, even over two rows) says which is which, and an amount is money
+  out or in by the column it sits under. A label that runs onto the rows
+  below is joined back, a day written without its year takes the stated
+  period's (a December line on a January statement is last year's), and
+  balances, totals and carried figures are told from lines by their first
+  words (« VIR SEPA SOLDE DE TOUT COMPTE » stays a line). With no named
+  columns: a date first and a signed amount last. Accounts named between
+  tables part the lines. A PDF with no text is a scan (`problem:
+  "scanned"`); one locked by a password says so.
+- **The statement's own word** (`check.ts`): wherever a reading has an
+  opening and a closing balance — CAMT, MT940, CFONB, a PDF, a scan — the
+  lines must join them to the cent; a PDF also tries every pair of the
+  balances it prints, then its « Total des opérations ». The block card says
+  « Les soldes du relevé confirment la lecture », or the gap. A PDF's or a
+  scan's balances are kept only when the lines join them.
+- **Scans and screenshots** (`scan.ts`), only when the person asks, file by
+  file: read by their own AI account (`apps/web/lib/statements/scan.ts`) —
+  always `mistralai/mistral-medium-3-5` on OpenRouter's `mistral/eu`
+  endpoint with no fallback, whatever model they chose for the rest — each
+  line answered as `date|label|amount|balance` to fit the route's minute,
+  then checked as a file's would be. Every line read so waits in « À
+  vérifier » (`reviewEverything` over the feed's plan), its category
+  suggested where the merchant is known. Without an AI account, the screen
+  says how to connect one.
+
+Old binary Excel files are named and left aside. Such lines are kept beside the bank's in `bank_feed_items`, with a
 `source` (`file`, later `email` and `notification`) and the
 `statement_imports` row they came with (migration `074`); accounts known
 from their files are `bank_accounts` rows with `source = 'file'` and a

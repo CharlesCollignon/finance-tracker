@@ -197,9 +197,14 @@ to stop it:
    (the reminder on the 5th, the day banks have published): Partager vers Pluclair on
    Android, drop anywhere and paste a table on the web, the entry points
    (Le point, onboarding, account menu), the monthly nudge. New APK.
-3. **PDF and screenshots** (`statements-pdf`): text PDFs per bank layout,
-   checked against the statement's totals; scanned PDFs and screenshots by
-   AI if question 2 says so.
+3. **PDF and screenshots** (`statements-pdf`) — built 2026-10-13: text
+   PDFs read on the server from where their words sit, one reading for
+   every bank's layout rather than one per bank, held to the statement's
+   own balances or totals to the cent (`check.ts`, also applied to CAMT,
+   MT940 and CFONB); scanned PDFs and screenshots by the person's own AI
+   account, at their word for each file, every line then « À vérifier ».
+   Tested on synthetic layouts modelled on BoursoBank, Crédit Agricole, BNP
+   Paribas and Revolut; real PDFs, anonymised, are the next fixtures.
 4. **By e-mail** (`statements-email`): the personal address, attachments,
    alert e-mails per bank with a careful fallback, the Gmail and Outlook
    guides, the confirmation code in the app.
@@ -220,7 +225,11 @@ stand as written unless they say otherwise.
    row written straight into the Journal with a category picked by hand.
 2. **Decided — AI for scanned PDFs and screenshots**: through an EU provider
    (Mistral), only when a file cannot be read otherwise, with the person's
-   consent each time; the file is sent, read and not kept.
+   consent each time; the file is sent, read and not kept. Since Pluclair
+   holds no model key of its own (2026-10-09), this runs on the person's
+   own OpenRouter account, pinned to Mistral's EU endpoint whatever model
+   they chose; without an account, the screen shows how to connect one and
+   the bank's export guide.
 3. **Decided — e-mail import**: the owner signs up to an inbound-mail service (a
    click-through free tier; I propose one in Phase 4) and adds one DNS
    record at Namecheap; I guide both.
