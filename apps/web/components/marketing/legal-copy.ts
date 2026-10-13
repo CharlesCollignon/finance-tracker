@@ -107,6 +107,7 @@ export const legalCopy: LegalCopy = {
           "The audience measurement, unless you turn it off: the days the app is opened, and how many times that day you added a transaction, closed a month or asked “Can I afford it?”. Under an identifier worked out from your account with a secret key, which does not name you. No amount, no shop, no text.",
           "Notifications, if you turn them on: the delivery address your browser or phone gives us (a push subscription, or a push token for the phone app), the browser's user agent, and a log of which reminders we have sent, so none is sent twice.",
           "Your properties, if you add any: what each cost and how it is used, its area and energy class, your share of it, the loans behind it and their terms, and what it is worth to you. Of its address we keep the town and the point it stands on, to compare it with the sales around it; the full address only if you ask us to.",
+          "What you write in Entraide, if you post there: your pseudonym and your questions and answers are public; what else is kept about them, and for how long, is set out in Entraide's rules (pluclair.com/blog/entraide/regles), which this policy includes.",
           "Your bank, if you connect one: see the next section.",
         ],
       },
@@ -241,6 +242,7 @@ export const legalCopy: LegalCopy = {
         body: [
           "Pluclair keeps a record of your personal finances: what comes in and goes out, what repeats, what you set aside and invest, and how each month closes. It works out figures from what you enter, import, or let your bank send.",
           "Pluclair is free. If that ever changes, nothing you use today will start costing money without your explicit agreement. Features may change over time; we try to tell you before one you rely on goes away.",
+          "Entraide, where people who use Pluclair ask and answer each other's questions, has its own rules, which are part of these terms: pluclair.com/blog/entraide/regles. What members write there is their own view, never advice from Pluclair.",
         ],
       },
       {

@@ -56,6 +56,7 @@ export const legalCopyFr: LegalCopy = {
           "La mesure d'audience, sauf si vous la coupez\u00A0: les jours où l'application est ouverte, et combien de fois ce jour-là vous avez ajouté une opération, clôturé un mois ou demandé «\u00A0Puis-je me permettre\u00A0?\u00A0». Sous un identifiant calculé à partir de votre compte avec une clé secrète, qui ne vous nomme pas. Aucun montant, aucun commerce, aucun texte.",
           "Les notifications, si vous les activez : l'adresse de distribution que votre navigateur ou votre téléphone nous donne (un abonnement push, ou un jeton push pour l'application mobile), l'identifiant du navigateur (user agent), et la liste des rappels déjà envoyés, pour qu'aucun ne parte deux fois.",
           "Vos biens immobiliers, si vous en ajoutez : ce que chacun a coûté et son usage, sa surface et sa classe énergie, votre part, les prêts qui l'ont financé et leurs conditions, et ce qu'il vaut à vos yeux. De son adresse nous gardons la commune et le point où il se trouve, pour le comparer aux ventes alentour ; l'adresse complète seulement si vous le demandez.",
+          "Ce que vous écrivez dans Entraide, si vous y publiez\u00A0: votre pseudonyme et vos questions et réponses sont publics\u00A0; ce qui en est gardé d'autre, et combien de temps, est dit dans les règles d'Entraide (pluclair.com/blog/entraide/regles), qui font partie de cette politique.",
           "Votre banque, si vous la connectez : voir la section suivante.",
         ],
       },
@@ -190,6 +191,7 @@ export const legalCopyFr: LegalCopy = {
         body: [
           "Pluclair tient le registre de vos finances personnelles : ce qui entre et ce qui sort, ce qui revient, ce que vous mettez de côté et investissez, et comment chaque mois se clôt. Il calcule ses chiffres à partir de ce que vous saisissez, importez, ou laissez votre banque envoyer.",
           "Pluclair est gratuit. Si cela devait changer, rien de ce que vous utilisez aujourd'hui ne deviendra payant sans votre accord explicite. Les fonctionnalités peuvent évoluer ; nous essayons de vous prévenir avant qu'une fonctionnalité sur laquelle vous comptez ne disparaisse.",
+          "Entraide, où les personnes qui utilisent Pluclair posent leurs questions et répondent à celles des autres, a ses propres règles, qui font partie de ces conditions\u00A0: pluclair.com/blog/entraide/regles. Ce que les membres y écrivent est leur avis, jamais un conseil de Pluclair.",
         ],
       },
       {

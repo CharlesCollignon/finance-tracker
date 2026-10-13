@@ -31,7 +31,7 @@ export function legalPagesVisible(): boolean {
  * on the page; flip it when every `[[…]]` in it is filled, the text has been
  * checked, and Entraide is about to open.
  */
-export const ENTRAIDE_RULES_DRAFT = true;
+export const ENTRAIDE_RULES_DRAFT = false;
 
 /** Whether « Les règles d'Entraide » may be served on this deployment. */
 export function entraideRulesVisible(): boolean {
