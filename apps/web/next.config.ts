@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import createMDX from "@next/mdx";
 
 const securityHeaders = [
   { key: "X-Frame-Options", value: "DENY" },
@@ -102,4 +103,12 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default nextConfig;
+/**
+ * « Le blog »'s guides are MDX files in `content/guides/`, imported by their
+ * route (`app/(marketing)/blog/[slug]`), with no remark or rehype plugin:
+ * what Markdown lacks — tables, notes in the margin, a term explained on a
+ * press — is a component of the site's own (`mdx-components.tsx`).
+ */
+const withMDX = createMDX({});
+
+export default withMDX(nextConfig);

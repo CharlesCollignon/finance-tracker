@@ -117,6 +117,11 @@
         // `components/layout/ServiceWorkerRegistration.tsx` (`register("/sw.js")`)
         // and served as a static asset, so no import ever points at it.
         "public/sw.js",
+
+        // « Le blog »'s guides, loaded by a template import in
+        // `lib/guides.ts` (`content/guides/${slug}.mdx`) that knip cannot
+        // follow; `lib/guides.test.ts` reads each one the list names.
+        "content/guides/*.mdx",
       ],
       "ignoreDependencies": [
         // `import "server-only"` in `lib/locale-cookies.ts`. The package ships

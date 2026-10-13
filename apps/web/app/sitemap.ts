@@ -3,6 +3,7 @@ import { ABOUT_HREF } from "@/components/marketing/about-copy";
 import { featureHref, landingCopy } from "@/components/marketing/landing-copy";
 import { legalPagesVisible } from "@/components/marketing/legal-status";
 import { NOUVEAUTES_HREF } from "@/components/marketing/nouveautes-copy";
+import { BLOG_HREF, GUIDE_SLUGS, guideHref } from "@/lib/guide-list";
 import { getSiteUrl } from "@/lib/supabase/env";
 
 /**
@@ -21,6 +22,8 @@ export default function sitemap(): MetadataRoute.Sitemap {
     "/",
     ABOUT_HREF,
     NOUVEAUTES_HREF,
+    BLOG_HREF,
+    ...GUIDE_SLUGS.map(guideHref),
     ...landingCopy.pages.map((page) => featureHref(page.id)),
     ...(legalPagesVisible() ? ["/privacy", "/terms", "/mentions-legales"] : []),
   ];
