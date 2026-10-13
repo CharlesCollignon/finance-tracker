@@ -22,6 +22,7 @@ export const blogCopyFr: BlogCopy = {
   next: "Guide suivant",
   disclaimer:
     "Ce guide explique comment les choses fonctionnent ; il ne dit pas quoi faire.",
+  photo: { by: "Photo :", on: "sur" },
   question: {
     heading: "Une question ?",
     body: "Si quelque chose n’est pas clair, ou pas juste, écrivez-nous : c’est comme ça que les guides s’améliorent.",

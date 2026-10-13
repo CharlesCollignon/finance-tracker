@@ -27,8 +27,6 @@ export interface GuideMeta {
   updated: string;
   /** Minutes to read, checked against the text by `guides.test.ts`. */
   minutes: number;
-  /** Which of the covers' lights (`GuideCover`). */
-  cover: number;
 }
 
 export const BLOG_HREF = "/blog";

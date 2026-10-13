@@ -36,7 +36,13 @@ export function GuideCard({
       )}
     >
       <GuideCover
-        seed={meta.cover}
+        slug={slug}
+        sizes={
+          wide
+            ? "(min-width: 1200px) 672px, (min-width: 768px) 58vw, 100vw"
+            : "(min-width: 1200px) 570px, (min-width: 768px) 50vw, 100vw"
+        }
+        first={wide}
         className={cn("aspect-[16/9]", wide && "md:aspect-auto md:min-h-80")}
       />
       <div className="flex flex-col gap-3 p-6 md:p-8">

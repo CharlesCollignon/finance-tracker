@@ -20,6 +20,8 @@ export interface BlogCopy {
   allGuides: string;
   next: string;
   disclaimer: string;
+  /** Under a guide's cover: « Photo : <name> sur <Unsplash> ». */
+  photo: { by: string; on: string };
   question: { heading: string; body: string; write: string };
   entraide: { title: string; body: string; soon: string };
 }
@@ -45,6 +47,7 @@ export const blogCopy: BlogCopy = {
   next: "Next guide",
   disclaimer:
     "This guide explains how things work; it does not tell you what to do.",
+  photo: { by: "Photo:", on: "on" },
   question: {
     heading: "A question?",
     body: "If something here is unclear, or wrong, write to us: guides get better that way.",

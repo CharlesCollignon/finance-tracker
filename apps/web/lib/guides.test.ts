@@ -29,7 +29,6 @@ describe("the guides", () => {
         "published",
         "updated",
         "minutes",
-        "cover",
       ]) {
         expect(source).toContain(`${field}:`);
       }
