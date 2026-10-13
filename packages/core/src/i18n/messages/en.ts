@@ -596,6 +596,7 @@ export const en = {
       other: "{count} alerts from {bank}",
     },
     mailYourBank: "your bank",
+    mailAlertsOf: "{bank} alerts",
     mailArrived: "Arrived on {day}",
     mailPick: "Choose the account",
     mailDismiss: "Set aside",

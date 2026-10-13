@@ -656,6 +656,7 @@ export function StatementImport({
                       }
                       outcome={outcomes[index] ?? null}
                       readByAi={statement.readByAi ?? false}
+                      alerts={statement.format === "email"}
                     />
                   ))
                 )}

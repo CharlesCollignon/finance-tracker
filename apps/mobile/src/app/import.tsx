@@ -572,6 +572,7 @@ export default function ImportScreen() {
                   onChoice={(choice) => setChoices((current) => current.map((old, at) => (at === index ? choice : old)))}
                   outcome={outcomes[index] ?? null}
                   readByAi={statement.readByAi ?? false}
+                  alerts={statement.format === "email"}
                 />
               ))
             )}

@@ -486,6 +486,7 @@ export const fr: Messages = {
       other: "{count} alertes de {bank}",
     },
     mailYourBank: "votre banque",
+    mailAlertsOf: "Alertes {bank}",
     mailArrived: "Arrivé le {day}",
     mailPick: "Choisir le compte",
     mailDismiss: "Écarter",

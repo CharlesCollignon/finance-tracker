@@ -197,10 +197,19 @@ export async function importMailItem(
     .from("statement_mail_items")
     .update({ status: "imported", decided_at: new Date().toISOString() })
     .eq("id", item.id);
-  if (item.kind === "alerts") {
+  const { data: inbox } = await db
+    .from("statement_inboxes")
+    .select("lines_brought")
+    .eq("user_id", userId)
+    .maybeSingle();
+  if (inbox) {
     await db
       .from("statement_inboxes")
-      .update({ alert_account: result.providerAccountId })
+      .update({
+        lines_brought: inbox.lines_brought + result.matched + result.filed + result.waiting,
+        // Their next alerts go where these went.
+        ...(item.kind === "alerts" ? { alert_account: result.providerAccountId } : {}),
+      })
       .eq("user_id", userId);
   }
   return result;

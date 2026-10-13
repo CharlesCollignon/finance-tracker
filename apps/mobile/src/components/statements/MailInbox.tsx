@@ -293,7 +293,7 @@ export function MailInbox({ view: initial, onView }: { view: InboxView; onView?:
             {inbox.lastMailAt
               ? [
                   t("statements.mailLast", { day: formatFullDate(inbox.lastMailAt.slice(0, 10), locale) }),
-                  t("statements.mailLines", { count: inbox.linesBrought }),
+                  inbox.linesBrought > 0 ? t("statements.mailLines", { count: inbox.linesBrought }) : null,
                   inbox.mailsIgnored > 0 ? t("statements.mailIgnored", { count: inbox.mailsIgnored }) : null,
                 ]
                   .filter(Boolean)

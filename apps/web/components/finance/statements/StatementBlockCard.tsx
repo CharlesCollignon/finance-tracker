@@ -200,6 +200,7 @@ export function StatementBlockCard({
   outcome,
   index,
   readByAi = false,
+  alerts = false,
 }: {
   block: StatementBlock;
   bank: BankId | null;
@@ -210,6 +211,8 @@ export function StatementBlockCard({
   index: number;
   /** Read by the person's AI account: said, and every line waits. */
   readByAi?: boolean;
+  /** A bank's alert e-mails rather than a statement. */
+  alerts?: boolean;
 }) {
   const t = useT();
   const locale = useLocale();
@@ -265,9 +268,13 @@ export function StatementBlockCard({
         </span>
         <div className="flex min-w-0 flex-col gap-1">
           <h2 className="font-head text-lg">
-            {bankName
-              ? t("statements.statementOf", { bank: bankName })
-              : t("statements.statement")}
+            {alerts
+              ? t("statements.mailAlertsOf", {
+                  bank: bankName ?? t("statements.mailYourBank"),
+                })
+              : bankName
+                ? t("statements.statementOf", { bank: bankName })
+                : t("statements.statement")}
           </h2>
           <p className="text-sm text-muted-foreground">
             {tail ? `${tail} · ` : ""}
