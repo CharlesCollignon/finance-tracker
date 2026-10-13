@@ -33,7 +33,8 @@ export interface ReadSourceConfig {
 /** What a read asks: the two messages, and the language they are in. */
 export interface ReadRequest {
   system: string;
-  user: string;
+  /** Words, or words with a picture or a file (OpenRouter's content parts). */
+  user: string | readonly unknown[];
   locale: Locale;
 }
 

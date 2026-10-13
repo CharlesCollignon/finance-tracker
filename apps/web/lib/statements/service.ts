@@ -4,7 +4,11 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { ActionResult } from "@finance/core/action-result";
 import { ownTransferIbans } from "@finance/core/bank-accounts";
 import { intradayIndexes } from "@finance/core/bank-balance";
-import { planFeed, type BankTransaction } from "@finance/core/bank-feed";
+import {
+  planFeed,
+  reviewEverything,
+  type BankTransaction,
+} from "@finance/core/bank-feed";
 import { DEFAULT_LOCALE } from "@finance/core/i18n/locale";
 import type { Database } from "@finance/core/types/database";
 import type {
@@ -185,7 +189,7 @@ export async function planStatement(
     ownerContext(db, who.ownerId),
     ownIbansOf(db, who),
   ]);
-  const plan = planFeed(lines, {
+  const planned = planFeed(lines, {
     locale: DEFAULT_LOCALE,
     merchants: context.merchants,
     bankMerchants: context.bankMerchants,
@@ -194,6 +198,8 @@ export async function planStatement(
     seenProviderIds: context.seenProviderIds,
     ownIbans,
   });
+  // Lines an AI read off a picture are each looked at once, filed by no one.
+  const plan = input.readByAi ? reviewEverything(planned) : planned;
 
   const likelyTyped = plan.review.filter(
     (row) =>

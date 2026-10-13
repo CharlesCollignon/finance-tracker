@@ -330,7 +330,8 @@ export const fr: Messages = {
     dropping: "Lâchez pour le lire",
     dropAnywhere: "Déposez le relevé pour l'importer",
     choose: "Choisir un fichier",
-    formats: "CSV, Excel, OFX, QIF, CAMT, MT940 ou CFONB",
+    formats:
+      "CSV, Excel, OFX, QIF, CAMT, MT940, CFONB, PDF — ou une capture d'écran",
     pasteHint:
       "Ou copiez le tableau des opérations sur le site de votre banque, et collez-le ici.",
     where: "Où trouver l'export de ma banque\u00A0?",
@@ -398,10 +399,39 @@ export const fr: Messages = {
     empty: "Ce fichier est vide.",
     unreadable:
       "Pluclair ne sait pas lire ce fichier. Est-ce bien l'export que donne votre banque\u00A0?",
-    pdf: "Les relevés PDF ne se lisent pas encore. Prenez plutôt l'export CSV, OFX ou Excel de votre banque.",
     xls: "Cet ancien format Excel ne se lit pas encore. Choisissez CSV, ou l'Excel récent (.xlsx).",
-    image:
-      "Les images ne se lisent pas encore. Prenez plutôt l'export CSV, OFX ou Excel de votre banque.",
+    pdfReading: "Lecture du PDF…",
+    pdfUnread: "Pluclair n'a pas reconnu les opérations de ce PDF.",
+    scanned: "C'est une image\u00A0: Pluclair n'en tire pas le texte tout seul.",
+    locked:
+      "Ce PDF est protégé par un mot de passe. Ouvrez-le et enregistrez-en une copie sans mot de passe (Imprimer, puis «\u00A0Enregistrer en PDF\u00A0»), ou prenez plutôt l'export CSV de votre banque.",
+    tooBigToSend:
+      "Ce fichier dépasse 3\u00A0Mo\u00A0: prenez une période plus courte, ou une capture plus légère.",
+    imageKind: "Cette image ne peut pas être lue\u00A0: envoyez-la en PNG ou en JPEG.",
+    scanTitle: "La faire lire par votre IA\u00A0?",
+    scanBody:
+      "Votre compte IA peut lire ce relevé avec Mistral, sur ses serveurs en Europe\u00A0: le fichier lui est envoyé une fois, pour cette lecture seulement, et Pluclair ne le garde pas. Chaque ligne lue vous attendra dans «\u00A0À vérifier\u00A0».",
+    scanCost: "Quelques centimes, payés par votre compte OpenRouter.",
+    scanGo: "Faire lire par Mistral",
+    scanning: "Mistral lit votre relevé…",
+    scanningHint: "Jusqu'à une minute pour un long relevé.",
+    scanNoAccountBody:
+      "Pour lire une image, Pluclair passe par votre propre compte IA, qui n'est pas encore connecté.",
+    scanNoAccount: "Connectez d'abord votre compte IA pour faire lire une image.",
+    scanBusy: "Le service d'IA est occupé\u00A0: réessayez dans un instant.",
+    scanRefused:
+      "Votre compte IA a refusé la demande\u00A0: vérifiez sa connexion dans Profil.",
+    scanNoCredit: "Votre compte OpenRouter n'a plus de crédit.",
+    scanFailed:
+      "La lecture n'a pas abouti. Réessayez, ou prenez l'export de votre banque.",
+    readByAi:
+      "Lu par Mistral\u00A0: chaque ligne vous attendra dans «\u00A0À vérifier\u00A0».",
+    checkOk: "Les soldes du relevé confirment la lecture.",
+    checkOff:
+      "Les soldes du relevé ne tombent pas juste (écart de {gap})\u00A0: une page manque peut-être. Regardez les opérations avant d'importer.",
+    showLines: "Voir les opérations lues",
+    hideLines: "Masquer les opérations",
+    moreLines: { one: "… et {count} autre", other: "… et {count} autres" },
     columns: "Quelle colonne est quoi\u00A0? Pluclair n'a pas su le dire seul.",
     skipped: {
       one: "{count} ligne illisible est laissée de côté.",

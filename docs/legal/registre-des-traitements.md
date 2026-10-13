@@ -60,12 +60,14 @@ auprès desquels l'utilisateur a lui-même ouvert un compte.
   clôtures de mois, étiquettes et notes.
 - **Base légale** : exécution du contrat (art. 6.1.b).
 - **Données** : ce que l'utilisateur saisit ou importe. Un relevé (CSV,
-  Excel, OFX, QIF, CAMT, MT940, CFONB) est lu sur l'appareil ; seules ses
-  opérations sont envoyées et conservées, avec le compte qu'elles concernent
-  (son nom, sa banque, son IBAN ou son numéro, pour reconnaître le relevé
-  suivant) et la trace de l'import (période, nombre de lignes), qui permet de
-  l'annuler pendant 30 jours. Le fichier lui-même n'est jamais envoyé ni
-  gardé (migration 074).
+  Excel, OFX, QIF, CAMT, MT940, CFONB) est lu sur l'appareil ; un PDF est
+  lu sur le serveur (Vercel), en mémoire, le temps de la lecture. Seules ses
+  opérations sont conservées, avec le compte qu'elles concernent (son nom,
+  sa banque, son IBAN ou son numéro, pour reconnaître le relevé suivant) et
+  la trace de l'import (période, nombre de lignes), qui permet de l'annuler
+  pendant 30 jours. Le fichier lui-même n'est jamais gardé (migration 074).
+  Une image ou un PDF scanné n'est lu qu'à la demande, par le compte IA de
+  l'utilisateur (traitement 5).
 - **Destinataires** : Supabase, Vercel.
 - **Durée** : tant que le compte existe. Une écriture supprimée est conservée
   30 jours pour permettre l'annulation, puis effacée par la tâche de chaque
@@ -124,7 +126,9 @@ application tierce. Ce qui suit vaut pour ce seul compte, et si elle rouvre.
 ## 5. Lectures et questions rédigées par un modèle d'IA
 
 - **Finalité** : rédiger les courtes lectures du mois, d'une catégorie ou d'un
-  portefeuille, et répondre aux questions posées dans « Questions ».
+  portefeuille, répondre aux questions posées dans « Questions », et lire un
+  relevé scanné ou une capture d'écran que l'utilisateur demande de faire
+  lire, fichier par fichier.
 - **Seulement avec un compte IA connecté** (migration 053) : Pluclair n'a pas
   de modèle à lui depuis le 9 octobre 2026. Les lectures et les réponses sont
   rédigées sur le compte OpenRouter de l'utilisateur, par le modèle qu'il a
@@ -137,7 +141,12 @@ application tierce. Ce qui suit vaut pour ce seul compte, et si elle rouvre.
   pour répondre — totaux par mois, catégorie ou commerce, opérations
   récurrentes, comptes d'épargne, placements, prêts et, quand la question
   porte sur elles, des opérations une à une (date, libellé, catégorie,
-  montant) ; jamais le nom, l'e-mail ni les identifiants bancaires.
+  montant) ; jamais le nom, l'e-mail ni les identifiants bancaires. Pour un
+  relevé à lire : le fichier lui-même (image ou PDF), envoyé une fois à
+  OpenRouter puis à Mistral seul, sur son point d'accès européen
+  (`mistral/eu`, sans repli), quel que soit le modèle choisi ; Pluclair ne
+  le garde pas, et chaque ligne lue attend la vérification de
+  l'utilisateur (`apps/web/lib/statements/scan.ts`).
 - **Base légale** : le consentement de l'utilisateur, recueilli avant la
   connexion (art. 6.1.a). La clé du compte est conservée chiffrée (AES-256-GCM,
   clé maître `AI_SECRETS_KEY`) et supprimée à la déconnexion.

@@ -32,7 +32,10 @@ import {
   type StatementBlock,
   type TableMapping,
 } from "@finance/core/statement";
-import type { StatementImportInput } from "@finance/core/validations/statements";
+import {
+  MAX_SENT_FILE_BYTES,
+  type StatementImportInput,
+} from "@finance/core/validations/statements";
 import type {
   FileAccount,
   StatementImport as PastImport,
@@ -44,6 +47,7 @@ import { PageHeader } from "@/components/layout/PageHeader";
 import { useToast } from "@/components/layout/ToastProvider";
 import { BankGuide } from "@/components/finance/statements/BankGuide";
 import { MappingCard } from "@/components/finance/statements/MappingCard";
+import { ScanOffer } from "@/components/finance/statements/ScanOffer";
 import {
   initialChoice,
   StatementBlockCard,
@@ -52,6 +56,8 @@ import {
 import {
   importStatement,
   previewStatement,
+  readStatementPdf,
+  scanStatementFile,
   undoStatementImport,
 } from "@/lib/actions/statements";
 import { ICON } from "@/lib/icon-scale";
@@ -73,7 +79,14 @@ type Source = StatementImportInput["source"];
 
 type Stage =
   | { kind: "start" }
-  | { kind: "read"; statement: Statement; fileName: string; source: Source }
+  | {
+      kind: "read";
+      statement: Statement;
+      fileName: string;
+      source: Source;
+      /** The file itself, kept on this page while an AI might read it. */
+      file: File | null;
+    }
   | { kind: "done"; added: number; waiting: number; importIds: string[] };
 
 /** What one block sends: its lines, turned if the person said so, on its account. */
@@ -85,12 +98,7 @@ function inputFor(
   source: Source,
 ): StatementImportInput | null {
   const format = statement.format;
-  if (
-    format === "pdf" ||
-    format === "xls" ||
-    format === "image" ||
-    format === "unknown"
-  ) {
+  if (format === "xls" || format === "unknown") {
     return null;
   }
   // The engine's lines, as the schema names them; the server checks each.
@@ -119,25 +127,30 @@ function inputFor(
     to: block.to,
     closing: block.closing,
     source,
+    readByAi: statement.readByAi ?? false,
   };
 }
 
 /**
  * Importing a bank statement, with no bank connection
- * (`docs/plans/STATEMENTS_PLAN.md`, Phase 1): the file the bank gives, as
- * it is, read in the browser (`@finance/core/statement`); one card per
- * account it covers, saying what was understood; the account it is, asked
- * only when the file does not say; what importing would do, from the
- * server, the figures rolling in; one button. After, the transactions are
- * where the bank's would be — the known ones filed, the rest « À vérifier »
- * — and the import can be undone, whole, for a month.
+ * (`docs/plans/STATEMENTS_PLAN.md`): the file the bank gives, as it is,
+ * read in the browser (`@finance/core/statement`) — a PDF on the server, and
+ * a picture or a scan by the person's own AI account when they say so; one
+ * card per account it covers, saying what was understood; the account it
+ * is, asked only when the file does not say; what importing would do, from
+ * the server, the figures rolling in; one button. After, the transactions
+ * are where the bank's would be — the known ones filed, the rest « À
+ * vérifier » — and the import can be undone, whole, for a month.
  */
 export function StatementImport({
   accounts,
   imports,
+  aiAccount,
 }: {
   accounts: FileAccount[];
   imports: PastImport[];
+  /** Whether an AI account is connected, to read a picture. */
+  aiAccount: boolean;
 }) {
   const t = useT();
   const { toast } = useToast();
@@ -147,7 +160,8 @@ export function StatementImport({
   const [outcomes, setOutcomes] = useState<(StatementOutcome | null)[]>([]);
   const [problem, setProblem] = useState<string | null>(null);
   const [dragging, setDragging] = useState(false);
-  const [busy, setBusy] = useState(false);
+  const [busy, setBusy] = useState<"file" | "pdf" | null>(null);
+  const [scanning, setScanning] = useState(false);
   const [pending, startTransition] = useTransition();
 
   async function readFile(file: File) {
@@ -156,14 +170,60 @@ export function StatementImport({
       setProblem(t("statements.tooBig"));
       return;
     }
-    setBusy(true);
+    setBusy("file");
     try {
       const statement = readStatementFile(
         new Uint8Array(await file.arrayBuffer()),
       );
-      open(statement, file.name);
+      if (statement.format === "image") {
+        // Nothing to take the text out of: the person's AI, if they wish.
+        open({ ...statement, problem: "scanned" }, file.name, "file", file);
+        return;
+      }
+      if (statement.format !== "pdf") {
+        open(statement, file.name);
+        return;
+      }
+      if (file.size > MAX_SENT_FILE_BYTES) {
+        setProblem(t("statements.tooBigToSend"));
+        return;
+      }
+      setBusy("pdf");
+      const form = new FormData();
+      form.set("file", file);
+      const result = await readStatementPdf(form);
+      if (!result.success) {
+        setProblem(resolveMessage(t, result.error));
+        return;
+      }
+      open(result.statement, file.name, "file", file);
     } finally {
-      setBusy(false);
+      setBusy(null);
+    }
+  }
+
+  /** The file read by the person's AI account, which they just asked for. */
+  async function scan() {
+    if (stage.kind !== "read" || !stage.file) {
+      return;
+    }
+    if (stage.file.size > MAX_SENT_FILE_BYTES) {
+      toast(t("statements.tooBigToSend"), "error");
+      return;
+    }
+    const { file, fileName, source } = stage;
+    setScanning(true);
+    try {
+      const form = new FormData();
+      form.set("file", file);
+      const result = await scanStatementFile(form);
+      if (!result.success) {
+        toast(resolveMessage(t, result.error), "error");
+        return;
+      }
+      open(result.statement, fileName, source, null);
+    } finally {
+      setScanning(false);
     }
   }
 
@@ -171,6 +231,7 @@ export function StatementImport({
     statement: Statement,
     fileName: string,
     source: Source = "file",
+    file: File | null = null,
   ) {
     setChoices(
       statement.blocks.map((block) =>
@@ -183,7 +244,7 @@ export function StatementImport({
       ),
     );
     setOutcomes(statement.blocks.map(() => null));
-    setStage({ kind: "read", statement, fileName, source });
+    setStage({ kind: "read", statement, fileName, source, file });
   }
 
   // A file dropped on another page, which opened this one with it.
@@ -321,14 +382,22 @@ export function StatementImport({
         outcome.kept &&
         outcome.known + outcome.left >= outcome.total,
     );
-  const notHere =
-    statement?.problem === "notHere"
-      ? statement.format === "pdf"
-        ? t("statements.pdf")
-        : statement.format === "xls"
-          ? t("statements.xls")
-          : t("statements.image")
+  // What a PDF or a picture needs: the AI's reading, offered — a scan, or a
+  // PDF whose text holds no lines Pluclair recognised.
+  const scanReason =
+    statement && reading?.file
+      ? statement.problem === "scanned"
+        ? t("statements.scanned")
+        : statement.problem === "unreadable" && statement.format === "pdf"
+          ? t("statements.pdfUnread")
+          : null
       : null;
+  const notHere =
+    statement?.problem === "locked"
+      ? t("statements.locked")
+      : statement?.problem === "notHere"
+        ? t("statements.xls")
+        : null;
 
   return (
     <LazyMotion features={domAnimation} strict>
@@ -415,9 +484,11 @@ export function StatementImport({
                       />
                     </m.span>
                     <p className="text-sm font-medium" aria-live="polite">
-                      {busy
-                        ? t("statements.reading")
-                        : dragging
+                      {busy === "pdf"
+                        ? t("statements.pdfReading")
+                        : busy
+                          ? t("statements.reading")
+                          : dragging
                           ? t("statements.dropping")
                           : t("statements.drop")}
                     </p>
@@ -494,6 +565,21 @@ export function StatementImport({
                       );
                     }}
                   />
+                ) : statement.blocks.length === 0 && scanReason ? (
+                  <Card.Bezel
+                    className="w-full"
+                    innerClassName="flex flex-col gap-5 p-6"
+                  >
+                    <ScanOffer
+                      reason={scanReason}
+                      aiAccount={aiAccount}
+                      scanning={scanning}
+                      onScan={() => void scan()}
+                    />
+                    {scanning ? null : (
+                      <BankGuide initialBank={statement.bank} />
+                    )}
+                  </Card.Bezel>
                 ) : statement.blocks.length === 0 ? (
                   <Card.Bezel
                     className="w-full"
@@ -529,6 +615,7 @@ export function StatementImport({
                         )
                       }
                       outcome={outcomes[index] ?? null}
+                      readByAi={statement.readByAi ?? false}
                     />
                   ))
                 )}
@@ -542,6 +629,7 @@ export function StatementImport({
                 <div className="flex flex-wrap items-center justify-end gap-2">
                   <Button
                     variant="ghost"
+                    disabled={scanning}
                     onClick={() => setStage({ kind: "start" })}
                   >
                     {t("statements.another")}

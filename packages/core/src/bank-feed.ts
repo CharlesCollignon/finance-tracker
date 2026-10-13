@@ -577,6 +577,44 @@ export function planFeed(
   return { automatic, matched, review, discarded, duplicates };
 }
 
+/**
+ * The same plan with nothing written unasked: every line « À vérifier »,
+ * what it would have been filed as kept as its starting point, and a row
+ * it would have been paired with offered as a possible duplicate. For
+ * lines an AI read off a picture (`statementFromScan`), which a person
+ * looks at once before anything reaches the Journal.
+ */
+export function reviewEverything(plan: FeedPlan): FeedPlan {
+  return {
+    ...plan,
+    automatic: [],
+    matched: [],
+    review: [
+      ...plan.automatic.map((row) => ({
+        candidate: row.candidate,
+        decision: {
+          kind: "review" as const,
+          suggestion:
+            row.decision.kind === "auto" ? row.decision.suggestion : null,
+          why: "needs-a-look" as const,
+        },
+      })),
+      ...plan.matched.map((row) => ({
+        candidate: row.candidate,
+        decision: {
+          kind: "review" as const,
+          suggestion: null,
+          why: "possible-duplicate" as const,
+          ...(row.decision.kind === "match"
+            ? { matchTransactionId: row.decision.transactionId }
+            : {}),
+        },
+      })),
+      ...plan.review,
+    ],
+  };
+}
+
 /** Category name index in the shape `decide` wants. */
 export function indexCategoriesByName(
   categories: readonly { id: string; name: string }[],

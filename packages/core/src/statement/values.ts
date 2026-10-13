@@ -108,7 +108,7 @@ const NAMED_DATE =
   /^\s*(?:[a-zé]+\.?,?\s+)?(\d{1,2})(?:er)?[\s-]+([a-zéû]+)\.?[\s-]+(\d{2,4})\s*$/i;
 const NAMED_DATE_US = /^\s*([a-z]+)\.?\s+(\d{1,2}),?\s+(\d{4})\s*$/i;
 
-function monthNumber(word: string): number | null {
+export function monthNumber(word: string): number | null {
   const key = word
     .normalize("NFD")
     .replace(/[̀-ͯ]/g, "")

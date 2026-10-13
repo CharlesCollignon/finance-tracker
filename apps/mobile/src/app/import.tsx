@@ -26,24 +26,29 @@ import {
   type Statement,
   type StatementBlock,
 } from "@finance/core/statement";
-import type {
-  StatementImportInput,
-  StatementOutcome,
+import {
+  MAX_SENT_FILE_BYTES,
+  type StatementImportInput,
+  type StatementOutcome,
 } from "@finance/core/validations/statements";
 
 import { BankGuide } from "@/components/statements/BankGuide";
 import { BlockCard, initialChoice, type BlockChoice } from "@/components/statements/BlockCard";
 import { MappingCard } from "@/components/statements/MappingCard";
+import { ScanOffer } from "@/components/statements/ScanOffer";
 import { Button } from "@/components/ui/Button";
 import { Screen } from "@/components/ui/Screen";
 import { Text } from "@/components/ui/Text";
 import { useRefreshable } from "@/hooks/useRefreshable";
+import { getWriterState } from "@/lib/ai-writer";
 import { hapticLight, hapticSuccess } from "@/lib/haptics";
 import {
   importStatement,
   previewStatement,
   readFileAccounts,
   readImports,
+  readPdfOnServer,
+  scanOnServer,
   undoStatementImport,
 } from "@/lib/statements";
 import { useAuth } from "@/providers/AuthProvider";
@@ -62,9 +67,17 @@ const UNDO_DAYS = 30;
 /** How the file came: picked here, shared from another app, or as text. */
 type Source = StatementImportInput["source"];
 
+/** A file read, ready to be shown: `uri` kept while an AI might read it. */
+interface Opened {
+  statement: Statement;
+  fileName: string;
+  source: Source;
+  uri: string | null;
+}
+
 type Stage =
   | { kind: "start" }
-  | { kind: "read"; statement: Statement; fileName: string; source: Source }
+  | ({ kind: "read" } & Opened)
   | { kind: "done"; added: number; waiting: number; importIds: string[] };
 
 /** What one block sends: its lines, turned if the person said so, on its account. */
@@ -76,7 +89,7 @@ function inputFor(
   source: Source,
 ): StatementImportInput | null {
   const format = statement.format;
-  if (format === "pdf" || format === "xls" || format === "image" || format === "unknown") {
+  if (format === "xls" || format === "unknown") {
     return null;
   }
   // The engine's lines, as the schema names them; the server checks each.
@@ -101,17 +114,20 @@ function inputFor(
     to: block.to,
     closing: block.closing,
     source,
+    readByAi: statement.readByAi ?? false,
   };
 }
 
 /**
  * Importing a bank statement on the phone, with no bank connection
- * (`docs/plans/STATEMENTS_PLAN.md`, Phase 1) — the web's import, in the
- * phone's own components: the file the bank gives, as it is, read here;
- * one card per account it covers; the account asked only when the file
- * does not say; what importing would do, from the server; one button. After,
- * the lines are where the bank's would be — the known ones filed, the rest
- * « À vérifier » — and the import can be undone, whole, for a month.
+ * (`docs/plans/STATEMENTS_PLAN.md`) — the web's import, in the phone's own
+ * components: the file the bank gives, as it is, read here — a PDF by the
+ * server, and a picture or a scan by the person's own AI account when they
+ * say so; one card per account it covers; the account asked only when the
+ * file does not say; what importing would do, from the server; one button.
+ * After, the lines are where the bank's would be — the known ones filed,
+ * the rest « À vérifier » — and the import can be undone, whole, for a
+ * month.
  */
 export default function ImportScreen() {
   const t = useT();
@@ -128,6 +144,7 @@ export default function ImportScreen() {
     async () => ({
       accounts: userId ? await readFileAccounts(userId) : [],
       imports: ownerId ? await readImports(ownerId) : [],
+      aiAccount: userId ? (await getWriterState(userId)).account : false,
       readAt: Date.now(),
     }),
     [userId, ownerId],
@@ -141,51 +158,108 @@ export default function ImportScreen() {
   const [outcomes, setOutcomes] = useState<(StatementOutcome | null)[]>([]);
   const [problem, setProblem] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
+  const [scanning, setScanning] = useState(false);
 
-  function open(statement: Statement, fileName: string, source: Source = "file") {
+  function open({ statement, fileName, source, uri }: Opened) {
     setChoices(
       statement.blocks.map((block) => initialChoice(block, statement.bank, accounts, t("statements.accountMine"))),
     );
     setOutcomes(statement.blocks.map(() => null));
-    setStage({ kind: "read", statement, fileName, source });
+    setStage({ kind: "read", statement, fileName, source, uri });
+  }
+
+  /**
+   * A file read: here, or by the server for a PDF; a picture kept aside
+   * for the person's AI, if they want it read.
+   */
+  async function readUri(uri: string, fileName: string, source: Source): Promise<Opened | { error: string }> {
+    const file = new File(uri);
+    const bytes = new Uint8Array(await file.arrayBuffer());
+    const statement = readStatementFile(bytes);
+    if (statement.format === "image") {
+      return { statement: { ...statement, problem: "scanned" }, fileName, source, uri };
+    }
+    if (statement.format !== "pdf") {
+      return { statement, fileName, source, uri: null };
+    }
+    if (bytes.length > MAX_SENT_FILE_BYTES) {
+      return { error: t("statements.tooBigToSend") };
+    }
+    const read = await readPdfOnServer(await file.base64());
+    return read.ok ? { statement: read.statement, fileName, source, uri } : { error: resolveMessage(t, read.error) };
+  }
+
+  /** The file read by the person's AI account, which they just asked for. */
+  async function scan() {
+    if (stage.kind !== "read" || !stage.uri) {
+      return;
+    }
+    const { uri, fileName, source } = stage;
+    setScanning(true);
+    try {
+      const file = new File(uri);
+      const base64 = await file.base64();
+      if (base64.length * 0.75 > MAX_SENT_FILE_BYTES) {
+        toast(t("statements.tooBigToSend"), "error");
+        return;
+      }
+      const result = await scanOnServer(base64);
+      if (!result.ok) {
+        toast(resolveMessage(t, result.error), "error");
+        return;
+      }
+      void hapticSuccess();
+      open({ statement: result.statement, fileName, source, uri: null });
+    } catch {
+      toast(t("statements.scanFailed"), "error");
+    } finally {
+      setScanning(false);
+    }
   }
 
   // Files shared to Pluclair from another app (« Partager vers Pluclair »,
   // `app/+native-intent.ts`): read as they come, the first opened, the
   // others waiting their turn.
   const { resolvedSharedPayloads, isResolving, clearSharedPayloads } = useIncomingShare();
-  const [queue, setQueue] = useState<{ statement: Statement; fileName: string; source: Source }[]>([]);
+  const [queue, setQueue] = useState<Opened[]>([]);
   useEffect(() => {
     if (isResolving || resolvedSharedPayloads.length === 0) {
       return;
     }
     let live = true;
     void (async () => {
-      const read: { statement: Statement; fileName: string; source: Source }[] = [];
+      const read: Opened[] = [];
+      let failed: string | null = null;
+      setPending(true);
       for (const payload of resolvedSharedPayloads) {
         try {
           if (payload.contentUri && payload.contentType !== "text" && payload.contentType !== "website") {
-            const bytes = new Uint8Array(await new File(payload.contentUri).arrayBuffer());
-            read.push({ statement: readStatementFile(bytes), fileName: payload.originalName ?? "", source: "share" });
+            const opened = await readUri(payload.contentUri, payload.originalName ?? "", "share");
+            if ("error" in opened) {
+              failed = opened.error;
+            } else {
+              read.push(opened);
+            }
           } else if (payload.shareType === "text" && payload.value) {
-            read.push({ statement: readStatementText(payload.value), fileName: "", source: "paste" });
+            read.push({ statement: readStatementText(payload.value), fileName: "", source: "paste", uri: null });
           }
         } catch {
           // Unreadable: said below, if nothing else could be read either.
         }
       }
+      setPending(false);
       clearSharedPayloads();
       if (!live) {
         return;
       }
       const [first, ...rest] = read;
       if (!first) {
-        setProblem(t("statements.unreadable"));
+        setProblem(failed ?? t("statements.unreadable"));
         return;
       }
       void hapticLight();
       setQueue(rest);
-      open(first.statement, first.fileName, first.source);
+      open(first);
     })();
     return () => {
       live = false;
@@ -199,7 +273,7 @@ export default function ImportScreen() {
     const [following, ...rest] = queue;
     setQueue(rest);
     if (following) {
-      open(following.statement, following.fileName, following.source);
+      open(following);
     } else {
       setStage({ kind: "start" });
     }
@@ -223,9 +297,13 @@ export default function ImportScreen() {
     }
     setPending(true);
     try {
-      const statement = readStatementFile(new Uint8Array(await new File(asset.uri).arrayBuffer()));
+      const opened = await readUri(asset.uri, asset.name ?? "", "file");
+      if ("error" in opened) {
+        setProblem(opened.error);
+        return;
+      }
       void hapticLight();
-      open(statement, asset.name ?? "");
+      open(opened);
     } catch {
       setProblem(t("statements.unreadable"));
     } finally {
@@ -313,14 +391,22 @@ export default function ImportScreen() {
   const nothingNew =
     outcomes.length > 0 &&
     outcomes.every((outcome) => outcome !== null && outcome.kept && outcome.known + outcome.left >= outcome.total);
-  const notHere =
-    statement?.problem === "notHere"
-      ? statement.format === "pdf"
-        ? t("statements.pdf")
-        : statement.format === "xls"
-          ? t("statements.xls")
-          : t("statements.image")
+  // What a PDF or a picture needs: the AI's reading, offered — a scan, or a
+  // PDF whose text holds no lines Pluclair recognised.
+  const scanReason =
+    statement && reading?.uri
+      ? statement.problem === "scanned"
+        ? t("statements.scanned")
+        : statement.problem === "unreadable" && statement.format === "pdf"
+          ? t("statements.pdfUnread")
+          : null
       : null;
+  const notHere =
+    statement?.problem === "locked"
+      ? t("statements.locked")
+      : statement?.problem === "notHere"
+        ? t("statements.xls")
+        : null;
   const now = known?.readAt ?? 0;
 
   return (
@@ -408,8 +494,8 @@ export default function ImportScreen() {
                 table={statement.table}
                 onRead={(mapping) => {
                   const read = readMappedTable(statement.table!, mapping);
-                  open(
-                    {
+                  open({
+                    statement: {
                       ...statement,
                       bank: read.bank,
                       blocks: read.blocks,
@@ -417,10 +503,22 @@ export default function ImportScreen() {
                       problem: read.problem,
                       table: read.problem === "columns" ? statement.table : null,
                     },
-                    reading.fileName,
-                  );
+                    fileName: reading.fileName,
+                    source: reading.source,
+                    uri: null,
+                  });
                 }}
               />
+            ) : statement.blocks.length === 0 && scanReason ? (
+              <View className="gap-5 rounded-card border border-border bg-card/70 p-card">
+                <ScanOffer
+                  reason={scanReason}
+                  aiAccount={known?.aiAccount ?? false}
+                  scanning={scanning}
+                  onScan={() => void scan()}
+                />
+                {scanning ? null : <BankGuide initialBank={statement.bank} />}
+              </View>
             ) : statement.blocks.length === 0 ? (
               <View className="gap-4 rounded-card border border-border bg-card/70 p-card">
                 <View className="flex-row items-start gap-2">
@@ -442,6 +540,7 @@ export default function ImportScreen() {
                   choice={choices[index]!}
                   onChoice={(choice) => setChoices((current) => current.map((old, at) => (at === index ? choice : old)))}
                   outcome={outcomes[index] ?? null}
+                  readByAi={statement.readByAi ?? false}
                 />
               ))
             )}
@@ -463,6 +562,7 @@ export default function ImportScreen() {
             <Button
               label={queue.length > 0 ? t("statements.nextFile", { count: queue.length }) : t("statements.another")}
               variant="ghost"
+              disabled={scanning}
               onPress={next}
             />
           </View>

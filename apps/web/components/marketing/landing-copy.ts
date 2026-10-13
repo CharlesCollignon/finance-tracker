@@ -73,7 +73,7 @@ export const landingCopy = {
       {
         id: "ledger",
         title: "A spend, in a few taps",
-        body: "The amount and the shop: Pluclair finds the category it went in last time. Or import your bank’s statement as it is: CSV, Excel, OFX, QIF…",
+        body: "The amount and the shop: Pluclair finds the category it went in last time. Or import your bank’s statement as it is: CSV, Excel, OFX, PDF…",
       },
       {
         id: "charges",
@@ -207,7 +207,7 @@ export const landingCopy = {
       {
         question: "Do I need to connect my bank?",
         answer:
-          "No: Pluclair connects to no bank. You note your transactions yourself, or import the statement your bank gives (CSV, Excel, OFX…), and once a month the balance you read on your account is all the close needs.",
+          "No: Pluclair connects to no bank. You note your transactions yourself, or import the statement your bank gives (CSV, Excel, OFX, PDF…), and once a month the balance you read on your account is all the close needs.",
       },
       {
         question: "What does the AI see?",
@@ -266,7 +266,7 @@ export const landingCopy = {
         },
         {
           title: "Or bring your statement",
-          body: "The file your bank gives, as it is: CSV, Excel, OFX, QIF… Pluclair recognises what it already knows, the rest waits in “Review”, and an import can be undone for a month.",
+          body: "The file your bank gives, as it is: CSV, Excel, OFX, PDF… Pluclair recognises what it already knows, the rest waits in “Review”, and an import can be undone for a month.",
         },
       ],
     },

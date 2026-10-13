@@ -1,5 +1,11 @@
 import { firstIssue } from "@finance/core/action-result";
-import { statementImportSchema } from "@finance/core/validations/statements";
+import { readStatementFile } from "@finance/core/statement";
+import {
+  MAX_SENT_FILE_BYTES,
+  statementImportSchema,
+} from "@finance/core/validations/statements";
+import { readPdfStatement } from "@/lib/statements/pdf";
+import { scanStatement } from "@/lib/statements/scan";
 import { planStatement, undoStatement } from "@/lib/statements/service";
 import { sessionFromBearer } from "@/lib/supabase/bearer";
 
@@ -7,7 +13,9 @@ import { sessionFromBearer } from "@/lib/supabase/bearer";
  * A statement brought on the phone: the same preview, import and undo the
  * web's actions run (`lib/actions/statements.ts`), as the bearer token's
  * person. The phone reads the file itself; the bank feed's planner, which
- * needs the server, decides its lines here.
+ * needs the server, decides its lines here. A PDF is read here
+ * (`readPdf`), and a picture or a scan by the person's AI account when they
+ * say so (`scan`) — the file sent as base64.
  *
  * `owner` is the space under « Commun », checked against the person's
  * membership before anything is read or written for it.
@@ -25,6 +33,28 @@ export async function POST(request: Request) {
     string,
     unknown
   >;
+
+  if (body.action === "readPdf" || body.action === "scan") {
+    const bytes = new Uint8Array(
+      Buffer.from(typeof body.file === "string" ? body.file : "", "base64"),
+    );
+    if (bytes.length > MAX_SENT_FILE_BYTES) {
+      return Response.json({ error: "statements.tooBigToSend" });
+    }
+    const format = readStatementFile(bytes).format;
+    if (body.action === "readPdf") {
+      return format === "pdf"
+        ? Response.json({ success: true, statement: await readPdfStatement(bytes) })
+        : Response.json({ error: "errors.invalidInput" });
+    }
+    if (format !== "pdf" && format !== "image") {
+      return Response.json({ error: "errors.invalidInput" });
+    }
+    const result = await scanStatement(session.userId, bytes, format);
+    return Response.json(
+      "error" in result ? result : { success: true, statement: result.statement },
+    );
+  }
 
   const ownerId = typeof body.owner === "string" ? body.owner : session.userId;
   if (ownerId !== session.userId) {

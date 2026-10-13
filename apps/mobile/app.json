@@ -94,6 +94,10 @@
               "application/vnd.ms-excel",
               "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
               "application/vnd.oasis.opendocument.spreadsheet",
+              "application/pdf",
+              "image/png",
+              "image/jpeg",
+              "image/webp",
               "application/octet-stream"
             ],
             "multipleShareMimeTypes": [
@@ -112,6 +116,10 @@
               "application/vnd.ms-excel",
               "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
               "application/vnd.oasis.opendocument.spreadsheet",
+              "application/pdf",
+              "image/png",
+              "image/jpeg",
+              "image/webp",
               "application/octet-stream"
             ]
           }

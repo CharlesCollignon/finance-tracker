@@ -442,7 +442,7 @@ export const en = {
     dropping: "Let go to read it",
     dropAnywhere: "Drop the statement to import it",
     choose: "Choose a file",
-    formats: "CSV, Excel, OFX, QIF, CAMT, MT940 or CFONB",
+    formats: "CSV, Excel, OFX, QIF, CAMT, MT940, CFONB, PDF — or a screenshot",
     pasteHint:
       "Or copy the table of transactions on your bank's website and paste it here.",
     where: "Where is my bank's export?",
@@ -510,10 +510,38 @@ export const en = {
     empty: "This file is empty.",
     unreadable:
       "Pluclair cannot read this file. Is it the export your bank gives?",
-    pdf: "PDF statements cannot be read yet. Take your bank's CSV, OFX or Excel export instead.",
     xls: "This old Excel format cannot be read yet. Choose CSV, or the newer Excel (.xlsx).",
-    image:
-      "Pictures cannot be read yet. Take your bank's CSV, OFX or Excel export instead.",
+    pdfReading: "Reading the PDF…",
+    pdfUnread: "Pluclair did not recognise the transactions in this PDF.",
+    scanned: "This is a picture: Pluclair cannot take the text out of it on its own.",
+    locked:
+      "This PDF is locked with a password. Open it and save a copy without one (Print, then « Save as PDF »), or take your bank's CSV export instead.",
+    tooBigToSend:
+      "This file is over 3 MB: take a shorter period, or a lighter screenshot.",
+    imageKind: "This picture cannot be read: send it as PNG or JPEG.",
+    scanTitle: "Have your AI read it?",
+    scanBody:
+      "Your AI account can read this statement with Mistral, on its servers in Europe: the file is sent to it once, for this reading only, and Pluclair does not keep it. Every line read waits for you in « Review ».",
+    scanCost: "A few cents, paid by your OpenRouter account.",
+    scanGo: "Have Mistral read it",
+    scanning: "Mistral is reading your statement…",
+    scanningHint: "Up to a minute for a long statement.",
+    scanNoAccountBody:
+      "To read a picture, Pluclair goes through your own AI account, which is not connected yet.",
+    scanNoAccount: "Connect your AI account first to have a picture read.",
+    scanBusy: "The AI service is busy: try again in a moment.",
+    scanRefused:
+      "Your AI account turned the request down: check its connection in Profile.",
+    scanNoCredit: "Your OpenRouter account is out of credit.",
+    scanFailed:
+      "The reading did not come through. Try again, or take your bank's export.",
+    readByAi: "Read by Mistral: every line waits for you in « Review ».",
+    checkOk: "The statement's balances confirm the reading.",
+    checkOff:
+      "The statement's balances do not add up (off by {gap}): a page may be missing. Look at the transactions before importing.",
+    showLines: "See the transactions read",
+    hideLines: "Hide the transactions",
+    moreLines: { one: "… and {count} more", other: "… and {count} more" },
     columns: "Which column is which? Pluclair could not tell on its own.",
     skipped: {
       one: "{count} line could not be read and is left out.",

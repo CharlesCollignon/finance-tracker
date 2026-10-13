@@ -368,10 +368,12 @@ PDF statements wait for the anonymised exports, as the plan asks.
 - [ ] ~~A « Déclaration de revenus » page on both apps~~ — built, then
       removed 2026-10-09: the boxes (7UF, 7UD, 7DB, 7GA–7GC, 6NS, 4BE, 5NI),
       their yearly table and the categories filed in them all went.
-- [ ] PDF statements read on the server without AI — waiting on the
-      anonymised exports of the five groups (Crédit Agricole, Crédit
-      Mutuel–CIC, BPCE, BNP Paribas, Société Générale): each layout is added
-      only once its export exists.
+- [x] PDF statements read on the server without AI — built 2026-10-13 in
+      `STATEMENTS_PLAN.md`, Phase 3: one reading by columns for every
+      layout, held to each statement's own balances, rather than one layout
+      per bank; the anonymised exports of the five groups (Crédit Agricole,
+      Crédit Mutuel–CIC, BPCE, BNP Paribas, Société Générale) remain the
+      fixtures to add.
 
 ## The owner's part
 
