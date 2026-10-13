@@ -18,8 +18,10 @@ import { landingCopyFr } from "@/components/marketing/landing-copy.fr";
  *   Never promise what the app does not do. What is not open to everyone yet
  *   — the mobile app until a store or the site's own APK has it —
  *   is said once, under "Coming soon", in the future tense, and nowhere in
- *   the present (the owner's call, October 2026). The bank connection left
- *   that list once it opened to everyone (October 2026).
+ *   the present (the owner's call, October 2026). The bank connection opened
+ *   to everyone in October 2026 and closed again on the 13th, when
+ *   open-banking.io said its customers may not hand their access to an app
+ *   like Pluclair: it is the owner's alone, and the site offers it nowhere.
  */
 
 export const landingCopy = {
@@ -190,12 +192,12 @@ export const landingCopy = {
       {
         question: "Does it cost anything?",
         answer:
-          "Pluclair is free, and no card is asked for. Two options are paid apart, directly to their own service and never to Pluclair. The bank connection goes through your own open-banking.io account: about €3 a month, and €1 for each extra account. Reads and questions, written by an AI, need your own OpenRouter account: you choose the model there — Mistral, ChatGPT or Claude — and pay a few cents each.",
+          "Pluclair is free, and no card is asked for. One option alone is paid apart, directly to its own service and never to Pluclair. Reads and questions, written by an AI, need your own OpenRouter account: you choose the model there — Mistral, ChatGPT or Claude — and pay a few cents each.",
       },
       {
         question: "Can Pluclair touch my money?",
         answer:
-          "No, never. It makes no transfer and no payment, and the bank connection can only read.",
+          "No, never. It makes no transfer and no payment, and connects to no bank.",
       },
       {
         question: "Where does my data go?",
@@ -205,7 +207,7 @@ export const landingCopy = {
       {
         question: "Do I need to connect my bank?",
         answer:
-          "No. You note your transactions yourself, or import a CSV statement from your bank. If you would rather they arrive on their own, a read-only connection brings them in, through your own open-banking.io account.",
+          "No: Pluclair connects to no bank. You note your transactions yourself, or import a CSV statement from your bank, and once a month the balance you read on your account is all the close needs.",
       },
       {
         question: "What does the AI see?",

@@ -17,8 +17,8 @@ const ROWS_FROM_S = 0.25;
 
 /**
  * « L'addition »: what Pluclair costs, as a bill. The rows print in one
- * after another as it comes into view — Pluclair itself, then the two
- * options, each marked optional and each paid to its own service — and the
+ * after another as it comes into view — Pluclair itself, then what is
+ * optional, marked so and paid to its own service — and the
  * total rolls down through the digits like a counter coming to rest, landing
  * on 0 in gold: the one figure on the page, and the reason it is gold.
  *
