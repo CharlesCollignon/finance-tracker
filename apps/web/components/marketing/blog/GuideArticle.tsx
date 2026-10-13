@@ -1,7 +1,12 @@
 /* Hallmark · genre: atmospheric · macrostructure: Long Document (a guide, with its contents held in the margin) · theme: design.md (Pluclair) · enrichment: a photo from Unsplash as the cover, settled into the room · nav: kept · footer: kept */
 
 import Link from "next/link";
-import { ArrowLeft, EnvelopeSimple } from "@phosphor-icons/react/dist/ssr";
+import {
+  ArrowLeft,
+  ChatCircle,
+  EnvelopeSimple,
+} from "@phosphor-icons/react/dist/ssr";
+import { ENTRAIDE_HREF } from "@finance/core/entraide";
 import { formatFullDate } from "@finance/core/constants";
 import { getLocale } from "@/lib/locale";
 import { feedbackEmail } from "@/lib/feedback-email";
@@ -21,6 +26,7 @@ import { marketingFocus } from "@/components/marketing/marketing-focus";
 import { GuideCard } from "@/components/marketing/blog/GuideCard";
 import { GuideCover } from "@/components/marketing/blog/GuideCover";
 import { GuideToc } from "@/components/marketing/blog/GuideToc";
+import { entraideRulesVisible } from "@/components/marketing/legal-status";
 import { cn } from "@/lib/utils";
 
 const BODY_ID = "guide-body";
@@ -39,6 +45,8 @@ export async function GuideArticle({ slug }: { slug: GuideSlug }) {
     GUIDE_SLUGS[(GUIDE_SLUGS.indexOf(slug) + 1) % GUIDE_SLUGS.length]!;
   const next = (await loadGuide(nextSlug)).meta;
   const email = feedbackEmail();
+  // Entraide opens with its rules (`ENTRAIDE_RULES_DRAFT`).
+  const entraideOpen = entraideRulesVisible();
   const photo = GUIDE_COVERS[slug];
   const site = getSiteUrl();
 
@@ -164,7 +172,7 @@ export async function GuideArticle({ slug }: { slug: GuideSlug }) {
             copy={copy}
             kicker={copy.next}
           />
-          {email ? (
+          {email || entraideOpen ? (
             <div className="flex flex-col justify-end gap-4">
               <h2 className="marketing-display text-display-sub">
                 {copy.question.heading}
@@ -172,12 +180,22 @@ export async function GuideArticle({ slug }: { slug: GuideSlug }) {
               <p className="max-w-md text-marketing-muted">
                 {copy.question.body}
               </p>
-              <ElsewhereLink
-                href={`mailto:${email}?subject=${encodeURIComponent(meta.title)}`}
-                title={copy.question.write}
-                detail={email}
-                icon={<EnvelopeSimple size={22} aria-hidden />}
-              />
+              {entraideOpen ? (
+                <ElsewhereLink
+                  href={`${ENTRAIDE_HREF}?guide=${slug}`}
+                  title={copy.question.ask}
+                  detail={copy.question.askDetail}
+                  icon={<ChatCircle size={22} aria-hidden />}
+                />
+              ) : null}
+              {email ? (
+                <ElsewhereLink
+                  href={`mailto:${email}?subject=${encodeURIComponent(meta.title)}`}
+                  title={copy.question.write}
+                  detail={email}
+                  icon={<EnvelopeSimple size={22} aria-hidden />}
+                />
+              ) : null}
             </div>
           ) : null}
         </div>
