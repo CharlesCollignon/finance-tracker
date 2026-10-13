@@ -49,12 +49,20 @@ export async function ThreadPage({ id, param }: { id: number; param: string }) {
   const guideSlug =
     post.guideSlug && isGuideSlug(post.guideSlug) ? post.guideSlug : null;
   const db = await createClient();
-  const [tallies, handle, guide] = await Promise.all([
-    readReactions(
-      db,
-      [postTarget(post.id), ...replies.map((reply) => replyTarget(reply.id))],
-      user?.id ?? null,
-    ).catch(() => new Map()),
+  const targets = [
+    postTarget(post.id),
+    ...replies.map((reply) => replyTarget(reply.id)),
+  ];
+  const myHidden = [
+    ...(post.author.isMine && post.status === "hidden"
+      ? [postTarget(post.id)]
+      : []),
+    ...replies
+      .filter((reply) => reply.author.isMine && reply.status === "hidden")
+      .map((reply) => replyTarget(reply.id)),
+  ];
+  const [tallies, handle, guide, reported, decisions] = await Promise.all([
+    readReactions(db, targets, user?.id ?? null).catch(() => new Map()),
     user
       ? entraide.readMyHandle(db, user.id).catch(() => null)
       : Promise.resolve(null),
@@ -64,6 +72,14 @@ export async function ThreadPage({ id, param }: { id: number; param: string }) {
           href: guideHref(guideSlug),
         }))
       : Promise.resolve(null),
+    user
+      ? entraide
+          .readMyReports(db, user.id, targets)
+          .catch(() => new Set<string>())
+      : Promise.resolve(new Set<string>()),
+    user && myHidden.length > 0
+      ? entraide.readMyDecisions(db, user.id, myHidden).catch(() => new Map())
+      : Promise.resolve(new Map()),
   ]);
   const now = new Date();
   const shown = replies.filter(
@@ -146,6 +162,8 @@ export async function ThreadPage({ id, param }: { id: number; param: string }) {
           })),
         }}
         tallies={Object.fromEntries(tallies)}
+        reported={[...reported]}
+        decisions={Object.fromEntries(decisions)}
         copy={copy}
         signedIn={Boolean(user)}
         handle={handle}

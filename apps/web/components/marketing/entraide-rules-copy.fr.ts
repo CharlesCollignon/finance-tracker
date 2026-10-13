@@ -68,7 +68,7 @@ export const entraideRulesCopyFr: EntraideRulesCopy = {
         id: "moderation",
         heading: "Comment fonctionne la modération",
         body: [
-          "Pluclair ne lit pas les messages avant qu'ils paraissent. Tout membre peut signaler une question ou une réponse qui enfreint ces règles ou la loi (« Signaler »), en disant pourquoi ; la personne signalée ne sait jamais qui l'a signalée. L'éditeur examine chaque signalement, et peut masquer un message, le rétablir, ou interdire à un pseudonyme de publier.",
+          "Pluclair ne lit pas les messages avant qu'ils paraissent. Tout membre peut signaler une question ou une réponse qui enfreint ces règles ou la loi (« Signaler »), en disant pourquoi ; la personne signalée ne sait jamais qui l'a signalée. L'éditeur examine chaque signalement, et peut masquer un message, le rétablir, ou interdire à un pseudonyme de publier{N}; qui a signalé apprend ce qui a été décidé.",
           "Quand trois membres différents signalent le même message, il est masqué automatiquement jusqu'à ce que l'éditeur l'ait examiné. Masquer est la mesure habituelle : un message masqué est conservé, pas effacé, pour que la décision puisse être réexaminée. Un pseudonyme qui enfreint les règles de façon répétée, ou qui publie quelque chose de manifestement illicite, peut être exclu d'Entraide ; le reste du compte n'est pas touché.",
         ],
       },
@@ -92,7 +92,7 @@ export const entraideRulesCopyFr: EntraideRulesCopy = {
         id: "reasons",
         heading: "Quand un message est masqué ou un pseudonyme exclu",
         body: [
-          "Nous en informons l'auteur, par e-mail, au plus tard au moment où la mesure prend effet :",
+          "Nous en informons l'auteur, sur le message lui-même dès que la mesure prend effet, et par e-mail :",
         ],
         points: [
           "ce qui a été fait — un message masqué, un pseudonyme exclu — et pour combien de temps ;",
@@ -106,7 +106,7 @@ export const entraideRulesCopyFr: EntraideRulesCopy = {
         id: "challenge",
         heading: "Contester une décision",
         body: [
-          "Vous pouvez contester toute décision concernant votre message ou votre pseudonyme, ou un signalement que vous avez fait, en répondant à l'e-mail qui vous l'a annoncée, dans un délai de six mois. Une personne — jamais une machine — la réexamine, et nous vous disons ce qui en ressort. Vous pouvez aussi saisir les tribunaux compétents.",
+          "Vous pouvez contester toute décision concernant votre message ou votre pseudonyme, ou un signalement que vous avez fait, en répondant à l'e-mail qui vous l'a annoncée, ou en écrivant à pluclair.app@gmail.com, dans un délai de six mois. Une personne — jamais une machine — la réexamine, et nous vous disons ce qui en ressort. Vous pouvez aussi saisir les tribunaux compétents.",
         ],
       },
       {

@@ -24,6 +24,11 @@ const FLAG_KEYS = [
    */
   "bank.connect",
   /**
+   * Moderating Entraide: the queue at /blog/entraide/moderation, and acting
+   * on what is reported (migration 072). The owner's account only.
+   */
+  "community.moderate",
+  /**
    * Properties, their loans and their value: the Immobilier tab
    * (migration 049, docs/plans/REAL_ESTATE_PLAN.md).
    */

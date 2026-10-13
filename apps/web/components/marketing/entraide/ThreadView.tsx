@@ -14,13 +14,13 @@ import {
   ArrowLeft,
   ArrowRight,
   BookOpenText,
-  EyeSlash,
   ShieldCheck,
 } from "@phosphor-icons/react";
 import {
   ENTRAIDE_HREF,
   ENTRAIDE_LIMITS,
   handleProblem,
+  type EntraideDecision,
   type PostKind,
 } from "@finance/core/entraide";
 import { maskPersonalData } from "@finance/core/entraide-mask";
@@ -45,8 +45,10 @@ import {
   type EntraideCopy,
 } from "@/components/marketing/entraide-copy";
 import { AuthorLine } from "@/components/marketing/entraide/AuthorLine";
+import { DecisionNotice } from "@/components/marketing/entraide/DecisionNotice";
 import { fieldClass } from "@/components/marketing/entraide/Composer";
 import { EntraideText } from "@/components/marketing/entraide/EntraideText";
+import { ReportButton } from "@/components/marketing/entraide/ReportButton";
 import { marketingFocus } from "@/components/marketing/marketing-focus";
 import { countLabel } from "@/components/marketing/nouveautes-copy";
 import { Reactions } from "@/components/marketing/nouveautes/Reactions";
@@ -101,6 +103,8 @@ export interface ThreadData {
 export function ThreadView({
   thread,
   tallies,
+  reported,
+  decisions,
   copy,
   signedIn,
   handle,
@@ -108,6 +112,10 @@ export function ThreadView({
 }: {
   thread: ThreadData;
   tallies: Record<string, ReactionTally>;
+  /** What the reader has reported here already. */
+  reported: readonly string[];
+  /** Why each of the reader's hidden messages here is hidden. */
+  decisions: Record<string, EntraideDecision>;
   copy: EntraideCopy;
   signedIn: boolean;
   handle: string | null;
@@ -139,6 +147,19 @@ export function ThreadView({
     }
     router.refresh();
   }
+
+  const noticeFor = (target: string, hidden: boolean) =>
+    hidden ? <DecisionNotice decision={decisions[target]} copy={copy} /> : null;
+  const reportFor = (target: string, mine: boolean, shown: boolean) =>
+    mine || !shown ? null : (
+      <ReportButton
+        target={target}
+        copy={copy}
+        signedIn={signedIn}
+        loginHref={loginHref}
+        reported={reported.includes(target)}
+      />
+    );
 
   const reactionsFor = (target: string) => (
     <Reactions
@@ -175,6 +196,12 @@ export function ThreadView({
             solved={solvedId !== null}
             copy={copy}
             reactions={reactionsFor(postTarget(thread.id))}
+            notice={noticeFor(postTarget(thread.id), thread.hidden)}
+            report={reportFor(
+              postTarget(thread.id),
+              thread.isMine,
+              !thread.hidden && !thread.gone,
+            )}
           />
 
           <p className="text-sm text-marketing-faint">{copy.thread.views}</p>
@@ -213,6 +240,12 @@ export function ThreadView({
                       canSolve={canSolve}
                       onSolve={() => void toggleSolved(solved.id)}
                       reactions={reactionsFor(replyTarget(solved.id))}
+                      notice={noticeFor(replyTarget(solved.id), solved.hidden)}
+                      report={reportFor(
+                        replyTarget(solved.id),
+                        solved.isMine,
+                        !solved.hidden && !solved.gone,
+                      )}
                     />
                   </m.div>
                 ) : null}
@@ -236,6 +269,12 @@ export function ThreadView({
                         canSolve={canSolve && !reply.gone && !reply.hidden}
                         onSolve={() => void toggleSolved(reply.id)}
                         reactions={reactionsFor(replyTarget(reply.id))}
+                        notice={noticeFor(replyTarget(reply.id), reply.hidden)}
+                        report={reportFor(
+                          replyTarget(reply.id),
+                          reply.isMine,
+                          !reply.hidden && !reply.gone,
+                        )}
                       />
                     </m.li>
                   ))}
@@ -265,11 +304,15 @@ function PostBlock({
   solved,
   copy,
   reactions,
+  notice,
+  report,
 }: {
   thread: ThreadData;
   solved: boolean;
   copy: EntraideCopy;
   reactions: ReactNode;
+  notice: ReactNode;
+  report: ReactNode;
 }) {
   const router = useRouter();
   const [editing, setEditing] = useState(false);
@@ -312,15 +355,7 @@ function PostBlock({
         </AnimatePresence>
       </p>
 
-      {thread.hidden ? (
-        <p
-          role="note"
-          className="flex items-start gap-2 rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 text-sm text-marketing-ink"
-        >
-          <EyeSlash size={18} aria-hidden className="mt-px shrink-0" />
-          {copy.thread.hidden}
-        </p>
-      ) : null}
+      {notice}
 
       {editing ? (
         <form
@@ -419,6 +454,7 @@ function PostBlock({
           ) : null}
         </div>
       )}
+      {editing ? null : report}
     </header>
   );
 }
@@ -430,6 +466,8 @@ function ReplyItem({
   canSolve,
   onSolve,
   reactions,
+  notice,
+  report,
 }: {
   reply: ThreadReplyData;
   copy: EntraideCopy;
@@ -437,6 +475,8 @@ function ReplyItem({
   canSolve: boolean;
   onSolve: () => void;
   reactions: ReactNode;
+  notice: ReactNode;
+  report: ReactNode;
 }) {
   const router = useRouter();
   const [editing, setEditing] = useState(false);
@@ -473,12 +513,7 @@ function ReplyItem({
         edited={reply.edited ? copy.list.edited : undefined}
         pluclairLabel={copy.list.pluclair}
       />
-      {reply.hidden ? (
-        <p className="flex items-start gap-2 text-sm text-marketing-ink">
-          <EyeSlash size={16} aria-hidden className="mt-0.5 shrink-0" />
-          {copy.thread.hidden}
-        </p>
-      ) : null}
+      {notice}
       {reply.gone ? (
         <p className="italic text-marketing-faint">{copy.list.gone}</p>
       ) : editing ? (
@@ -555,6 +590,7 @@ function ReplyItem({
           </div>
         </div>
       )}
+      {editing ? null : report}
     </m.div>
   );
 }

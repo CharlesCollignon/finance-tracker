@@ -1,4 +1,4 @@
-import type { EntraideError } from "@finance/core/entraide";
+import type { EntraideError, EntraideRule } from "@finance/core/entraide";
 import type { MaskKind } from "@finance/core/entraide-mask";
 import type { Locale } from "@finance/core/i18n/locale";
 import type { EntraideReaction } from "@finance/core/reactions";
@@ -81,8 +81,59 @@ export interface EntraideCopy {
     cancel: string;
     delete: string;
     confirmDelete: string;
-    hidden: string;
     aboutGuide: string;
+  };
+  report: {
+    button: string;
+    title: string;
+    note: string;
+    send: string;
+    sending: string;
+    sent: string;
+    signIn: string;
+  };
+  /** Each rule, as a report names it and a decision applies it. */
+  rules: Record<EntraideRule, string>;
+  decision: {
+    hidden: string;
+    automatic: string;
+    moderator: string;
+    afterReport: string;
+    ownInitiative: string;
+    facts: string;
+    challenge: string;
+  };
+  moderation: {
+    title: string;
+    intro: string;
+    empty: string;
+    reports: { one: string; many: string };
+    auto: string;
+    question: string;
+    answer: string;
+    in: string;
+    by: string;
+    barred: string;
+    keep: string;
+    hide: string;
+    bar: string;
+    unbar: string;
+    rule: string;
+    facts: string;
+    factsPlaceholder: string;
+    confirm: string;
+    cancel: string;
+    done: string;
+    mail: string;
+    mailSubject: string;
+    mailHidden: string;
+    mailBarred: string;
+    mailRule: string;
+    mailFacts: string;
+    mailHow: string;
+    mailReport: string;
+    mailOwn: string;
+    mailChallenge: string;
   };
   when: { now: string; minutes: string; hours: string; yesterday: string };
   reactions: ReactionsCopy<EntraideReaction>;
@@ -183,9 +234,73 @@ export const entraideCopy: EntraideCopy = {
     delete: "Delete",
     confirmDelete:
       "Delete this message? It will be replaced by « Message deleted ».",
-    hidden:
-      "This message is hidden by moderation: only you can see it. You have been told why by email.",
     aboutGuide: "About the guide",
+  },
+  report: {
+    button: "Report",
+    title: "What rule does it break?",
+    note: "A detail (optional)",
+    send: "Report",
+    sending: "Sending…",
+    sent: "Thank you, it is reported. Nobody but the publisher will know it was you.",
+    signIn:
+      "Sign in to report, or write to pluclair.app@gmail.com with the address of the message.",
+  },
+  rules: {
+    kind: "Insult, mockery or harassment",
+    personal: "Personal data",
+    promotion: "Advertising or referral",
+    money: "Asking for money, or a scam",
+    unlawful: "Unlawful content",
+    impersonation: "Pretends to be someone else",
+    offtopic: "Off subject",
+    other: "Something else",
+  },
+  decision: {
+    hidden: "This message is hidden: only you can see it.",
+    automatic:
+      "Hidden automatically: three members reported it ({rule}). The publisher will look at it.",
+    moderator: "Hidden by the publisher, for this rule: {rule}.",
+    afterReport: "After a report.",
+    ownInitiative: "On the publisher's own initiative.",
+    facts: "What it rests on: {facts}",
+    challenge:
+      "You can challenge it within six months by writing to pluclair.app@gmail.com: a person looks at it again.",
+  },
+  moderation: {
+    title: "Moderation",
+    intro:
+      "What members reported, the oldest first. Each decision is written down with its reason, which its author reads on the message; send them the same by email.",
+    empty: "Nothing to look at.",
+    reports: { one: "1 report", many: "{count} reports" },
+    auto: "Hidden by three reports",
+    question: "Question",
+    answer: "Answer",
+    in: "in",
+    by: "by",
+    barred: "barred",
+    keep: "Keep",
+    hide: "Hide",
+    bar: "Bar the pseudonym",
+    unbar: "Let the pseudonym back",
+    rule: "The rule it breaks",
+    facts: "The facts",
+    factsPlaceholder:
+      "What in it breaks the rule, in a sentence the author will read.",
+    confirm: "Confirm",
+    cancel: "Cancel",
+    done: "Decided.",
+    mail: "Send the reason by email",
+    mailSubject: "Entraide: your message",
+    mailHidden: "One of your messages in Entraide is hidden: {where}.",
+    mailBarred: "Your pseudonym can no longer post in Entraide.",
+    mailRule: "The rule it applies: {rule}.",
+    mailFacts: "The facts: {facts}",
+    mailHow: "The decision was taken {how}.",
+    mailReport: "after a report",
+    mailOwn: "on our own initiative",
+    mailChallenge:
+      "You can challenge this decision within six months by replying to this email: a person will look at it again. You can also take the matter to the competent courts.",
   },
   when: {
     now: "just now",
