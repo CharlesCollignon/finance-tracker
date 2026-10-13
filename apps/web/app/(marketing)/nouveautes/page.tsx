@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { NouveautesPage } from "@/components/marketing/NouveautesPage";
 import {
   NOUVEAUTES_HREF,
+  NOUVEAUTES_RSS_HREF,
   nouveautesCopyFor,
 } from "@/components/marketing/nouveautes-copy";
 import { getLocale } from "@/lib/locale";
@@ -14,6 +15,7 @@ export async function generateMetadata(): Promise<Metadata> {
     title: `${meta.title} — Pluclair`,
     description: meta.description,
     path: NOUVEAUTES_HREF,
+    feed: NOUVEAUTES_RSS_HREF,
     locale,
   });
 }
