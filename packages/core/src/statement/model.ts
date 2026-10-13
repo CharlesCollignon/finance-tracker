@@ -24,6 +24,8 @@ export type StatementFormat =
   | "html"
   | "xlsx"
   | "ods"
+  /** A bank's alert e-mails, read as lines (`mail.ts`). */
+  | "email"
   /** Read elsewhere: a PDF statement, an old binary Excel, an image. */
   | "pdf"
   | "xls"

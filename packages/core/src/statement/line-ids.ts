@@ -76,3 +76,12 @@ export function withLineIds(lines: readonly RawLine[]): BankTransaction[] {
     return { ...line, id: `l${fingerprint(signature)}-${rank}` };
   });
 }
+
+/**
+ * The id of a line an e-mail or a notification brought alone: its words
+ * and the message's own id. Two identical coffees are two e-mails, so two
+ * lines; the same e-mail delivered twice is one.
+ */
+export function messageLineId(line: RawLine, messageId: string): string {
+  return `l${fingerprint(`${lineSignature(line)}|${messageId}`)}-0`;
+}

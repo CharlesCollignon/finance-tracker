@@ -63,6 +63,8 @@ export const statementImportSchema = z.object({
     "ods",
     "pdf",
     "image",
+    // A bank's alert e-mails, read as lines (`alertOf`).
+    "email",
   ]),
   bank: z.string().max(40).nullable(),
   fileName: z.string().max(200).nullable(),
@@ -75,7 +77,7 @@ export const statementImportSchema = z.object({
       amount: z.string().regex(/^-?\d{1,10}(\.\d{1,2})?$/),
     })
     .nullable(),
-  source: z.enum(["file", "paste", "share"]),
+  source: z.enum(["file", "paste", "share", "email"]),
   /**
    * Read by the person's AI account off a picture or a scan: every line
    * then waits in « À vérifier », nothing filed unasked.
@@ -115,3 +117,6 @@ export interface StatementOutcome {
   /** For an Épargne or « Ne pas suivre » account, nothing goes in the Journal. */
   kept: boolean;
 }
+
+/** Where a person's bank e-mails go: `<token>@` this (migration 075). */
+export const STATEMENT_MAIL_DOMAIN = "releves.pluclair.com";

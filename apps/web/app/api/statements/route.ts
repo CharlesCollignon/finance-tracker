@@ -2,8 +2,17 @@ import { firstIssue } from "@finance/core/action-result";
 import { readStatementFile } from "@finance/core/statement";
 import {
   MAX_SENT_FILE_BYTES,
+  statementAccountSchema,
   statementImportSchema,
 } from "@finance/core/validations/statements";
+import {
+  dismissMailItem,
+  importMailItem,
+  inboxView,
+  renewInbox,
+  startInbox,
+  stopInbox,
+} from "@/lib/statements/inbox";
 import { readPdfStatement } from "@/lib/statements/pdf";
 import { scanStatement } from "@/lib/statements/scan";
 import { planStatement, undoStatement } from "@/lib/statements/service";
@@ -15,7 +24,10 @@ import { sessionFromBearer } from "@/lib/supabase/bearer";
  * person. The phone reads the file itself; the bank feed's planner, which
  * needs the server, decides its lines here. A PDF is read here
  * (`readPdf`), and a picture or a scan by the person's AI account when they
- * say so (`scan`) — the file sent as base64.
+ * say so (`scan`) — the file sent as base64. The e-mail way in is the
+ * person's own, never their space's: their address (`inbox`, `inboxStart`,
+ * `inboxStop`, `inboxRenew`) and what waits from it (`mailImport`,
+ * `mailDismiss`).
  *
  * `owner` is the space under « Commun », checked against the person's
  * membership before anything is read or written for it.
@@ -54,6 +66,37 @@ export async function POST(request: Request) {
     return Response.json(
       "error" in result ? result : { success: true, statement: result.statement },
     );
+  }
+
+  switch (body.action) {
+    case "inbox":
+      return Response.json({ success: true, ...(await inboxView(session.supabase, session.userId)) });
+    case "inboxStart":
+      return Response.json(await startInbox(session.userId));
+    case "inboxStop":
+      return Response.json(await stopInbox(session.userId));
+    case "inboxRenew":
+      return Response.json(await renewInbox(session.userId));
+    case "mailDismiss":
+    case "mailImport": {
+      const itemId = typeof body.itemId === "string" ? body.itemId : "";
+      if (!/^[0-9a-f-]{36}$/.test(itemId)) {
+        return Response.json({ error: "errors.invalidInput" });
+      }
+      if (body.action === "mailDismiss") {
+        return Response.json(await dismissMailItem(session.userId, itemId));
+      }
+      const account = statementAccountSchema.safeParse(body.account);
+      if (!account.success) {
+        return Response.json({ error: "errors.invalidInput" });
+      }
+      return Response.json(
+        await importMailItem(session.userId, itemId, {
+          account: account.data,
+          direction: body.direction === "in" ? "in" : "out",
+        }),
+      );
+    }
   }
 
   const ownerId = typeof body.owner === "string" ? body.owner : session.userId;

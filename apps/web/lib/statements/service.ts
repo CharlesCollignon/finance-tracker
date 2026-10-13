@@ -9,7 +9,13 @@ import {
   reviewEverything,
   type BankTransaction,
 } from "@finance/core/bank-feed";
+import { shiftIsoDate } from "@finance/core/constants";
 import { DEFAULT_LOCALE } from "@finance/core/i18n/locale";
+import {
+  confirmProvisional,
+  PROVISIONAL_WINDOW_DAYS,
+  type ProvisionalLine,
+} from "@finance/core/statement";
 import type { Database } from "@finance/core/types/database";
 import type {
   StatementImportInput,
@@ -132,16 +138,67 @@ async function ownIbansOf(db: Client, who: Who): Promise<Set<string>> {
 }
 
 /**
+ * The account's lines from `sources` around `lines`' days, as the
+ * provisional matcher takes them. A line that already confirmed another is
+ * said so, by the statement line's id (`confirmed_by` is `import|line`).
+ */
+async function linesAround(
+  db: Client,
+  ownerId: string,
+  providerAccountId: string,
+  sources: ("file" | "email" | "notification")[],
+  lines: readonly BankTransaction[],
+): Promise<ProvisionalLine[]> {
+  const days = lines
+    .map((line) => line.bookingDate ?? line.valueDate ?? line.transactionDate)
+    .filter((day): day is string => day !== null)
+    .sort();
+  if (days.length === 0) {
+    return [];
+  }
+  const { data, error } = await db
+    .from("bank_feed_items")
+    .select("provider_id, amount, direction, occurred_on, confirmed_by")
+    .eq("user_id", ownerId)
+    .eq("provider_account_id", providerAccountId)
+    .in("source", sources)
+    .gte("occurred_on", shiftIsoDate(days[0]!, -PROVISIONAL_WINDOW_DAYS))
+    .lte("occurred_on", shiftIsoDate(days[days.length - 1]!, PROVISIONAL_WINDOW_DAYS))
+    .limit(5000);
+  // Before migration 075 there is nothing provisional to meet.
+  if (error) {
+    return [];
+  }
+  return (data ?? []).map((row) => ({
+    id: row.provider_id,
+    amount: String(row.amount),
+    direction: row.direction === "in" ? "in" : "out",
+    day: row.occurred_on,
+    confirmedBy: row.confirmed_by ? (row.confirmed_by.split("|").pop() ?? null) : null,
+  }));
+}
+
+/**
  * Decide the statement's lines, and write them when `write` is set: what
  * the import's summary shows before « Importer », and what « Importer »
  * then does — the same decisions, from the same ledger.
+ *
+ * A statement's lines first meet what came before them provisionally — an
+ * alert e-mail's line, later a notification's — and each that is one of
+ * them confirms it rather than being added again. `provisional` lines (an
+ * alert's) meet the statement lines already there the other way round: an
+ * alert that comes after its statement adds nothing.
  */
 export async function planStatement(
   db: Client,
   who: Who,
   input: StatementImportInput,
-  { write }: { write: boolean },
-): Promise<ActionResult<StatementOutcome & { importId: string | null }>> {
+  { write, provisional = false }: { write: boolean; provisional?: boolean },
+): Promise<
+  ActionResult<
+    StatementOutcome & { importId: string | null; providerAccountId: string }
+  >
+> {
   const account = await accountFor(db, who, input, write);
   if ("error" in account) {
     return { error: account.error };
@@ -174,6 +231,7 @@ export async function planStatement(
     return {
       success: true,
       importId: null,
+      providerAccountId: account.providerAccountId,
       total: lines.length,
       known: 0,
       matched: 0,
@@ -185,11 +243,41 @@ export async function planStatement(
     };
   }
 
+  let fresh = lines;
+  let confirmations: { provisionalId: string; lineId: string }[] = [];
+  let confirmedBefore = 0;
+  if (provisional) {
+    // A statement line kept as a line is one no alert stood for (one that
+    // confirmed an alert was not kept): an alert arriving after it is old news.
+    const statementLines = await linesAround(
+      db,
+      who.ownerId,
+      account.providerAccountId,
+      ["file"],
+      lines,
+    );
+    const met = confirmProvisional(lines, statementLines);
+    fresh = met.fresh;
+    confirmedBefore = met.confirmed.length;
+  } else {
+    const early = await linesAround(
+      db,
+      who.ownerId,
+      account.providerAccountId,
+      ["email", "notification"],
+      lines,
+    );
+    const met = confirmProvisional(lines, early);
+    fresh = met.fresh;
+    confirmations = met.confirmed;
+    confirmedBefore = met.alreadyConfirmed;
+  }
+
   const [context, ownIbans] = await Promise.all([
     ownerContext(db, who.ownerId),
     ownIbansOf(db, who),
   ]);
-  const planned = planFeed(lines, {
+  const planned = planFeed(fresh, {
     locale: DEFAULT_LOCALE,
     merchants: context.merchants,
     bankMerchants: context.bankMerchants,
@@ -207,12 +295,15 @@ export async function planStatement(
       row.decision.why === "possible-duplicate",
   ).length;
 
+  const confirmed = confirmations.length + confirmedBefore;
+
   if (!write) {
     return {
       success: true,
       importId: null,
+      providerAccountId: account.providerAccountId,
       total: lines.length,
-      known: plan.duplicates,
+      known: plan.duplicates + confirmed,
       matched: plan.matched.length,
       filed: plan.automatic.length,
       waiting: plan.review.length,
@@ -260,12 +351,21 @@ export async function planStatement(
     account.providerAccountId,
     plan,
     positions,
-    { source: "file", importId: imported.id },
+    { source: provisional ? "email" : "file", importId: imported.id },
   );
+  // Each alert this statement confirms, named by the import and the line:
+  // undoing the import lets it go again.
+  for (const { provisionalId, lineId } of confirmations) {
+    await db
+      .from("bank_feed_items")
+      .update({ confirmed_by: `${imported.id}|${lineId}` })
+      .eq("user_id", who.ownerId)
+      .eq("provider_id", provisionalId);
+  }
 
   const outcome: StatementOutcome = {
     total: lines.length,
-    known: plan.duplicates,
+    known: plan.duplicates + confirmed,
     matched: written.matched,
     filed: written.imported,
     waiting: written.pending,
@@ -283,7 +383,12 @@ export async function planStatement(
     })
     .eq("id", imported.id);
 
-  return { success: true, importId: imported.id, ...outcome };
+  return {
+    success: true,
+    importId: imported.id,
+    providerAccountId: account.providerAccountId,
+    ...outcome,
+  };
 }
 
 /**
@@ -349,6 +454,12 @@ export async function undoStatement(
       .eq("user_id", ownerId)
       .in("id", ids.slice(start, start + 200));
   }
+  // The alerts it confirmed wait for a statement again.
+  await db
+    .from("bank_feed_items")
+    .update({ confirmed_by: null })
+    .eq("user_id", ownerId)
+    .like("confirmed_by", `${importId}|%`);
   await db
     .from("statement_imports")
     .update({ undone_at: new Date().toISOString() })

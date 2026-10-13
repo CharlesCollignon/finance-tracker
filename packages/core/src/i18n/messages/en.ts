@@ -542,6 +542,63 @@ export const en = {
     showLines: "See the transactions read",
     hideLines: "Hide the transactions",
     moreLines: { one: "… and {count} more", other: "… and {count} more" },
+    mailTitle: "Your statements by e-mail, on their own",
+    mailBody:
+      "An address of your own: have your bank's e-mails forwarded there — statements attached and payment alerts. Pluclair reads each one, keeps the transactions and throws the e-mail away.",
+    mailStart: "Create my address",
+    mailStarting: "Creating…",
+    mailAddress: "Your address",
+    mailCopy: "Copy",
+    mailCopied: "Copied",
+    mailShare: "Share",
+    mailHow: "To forward your bank's e-mails there",
+    mailOther: "Other",
+    mailGmail1:
+      "In Gmail on a computer: gear → « See all settings » → « Forwarding and POP/IMAP » → « Add a forwarding address », and paste your address.",
+    mailGmail2:
+      "Gmail sends a confirmation code to that address: it shows here as soon as it arrives, with a button to confirm.",
+    mailGmail3:
+      "Then « Filters and Blocked Addresses » → « Create a new filter »: in « From », your bank's address (for example @boursobank.com), then « Forward it to » your Pluclair address. Only those e-mails go.",
+    mailOutlook1:
+      "On outlook.com: gear → « Mail » → « Rules » → « Add new rule ».",
+    mailOutlook2:
+      "Condition « From »: your bank's address. Action « Forward to »: your Pluclair address.",
+    mailOutlook3: "Save: your bank's next e-mails arrive here.",
+    mailOther1:
+      "In your mail app, create a rule that forwards your bank's e-mails to your Pluclair address.",
+    mailOther2:
+      "Or forward by hand an e-mail with a statement attached: it imports the same way.",
+    mailAlertsTip:
+      "Turn on transaction alerts in your bank's online space too: each payment then arrives the same day, and the month's statement confirms it without adding anything twice.",
+    mailCodeTitle: "Gmail asks for a confirmation",
+    mailCodeBody:
+      "Tap « Confirm with Google », or type this code into Gmail's settings.",
+    mailCodeConfirm: "Confirm with Google",
+    mailListening: "Pluclair is waiting for the first e-mail…",
+    mailLast: "Last e-mail received on {day}",
+    mailLines: {
+      one: "{count} transaction brought",
+      other: "{count} transactions brought",
+    },
+    mailIgnored: {
+      one: "{count} e-mail not understood, left aside",
+      other: "{count} e-mails not understood, left aside",
+    },
+    mailRenew: "Change address",
+    mailRenewSure: "Confirm: the old one stops working",
+    mailStop: "Stop",
+    mailStopped: "E-mails are no longer read.",
+    mailRestart: "Resume",
+    mailUnavailable: "Receiving e-mails is not open yet.",
+    mailWaitingTitle: "Arrived by e-mail",
+    mailAlerts: {
+      one: "{count} alert from {bank}",
+      other: "{count} alerts from {bank}",
+    },
+    mailYourBank: "your bank",
+    mailArrived: "Arrived on {day}",
+    mailPick: "Choose the account",
+    mailDismiss: "Set aside",
     columns: "Which column is which? Pluclair could not tell on its own.",
     skipped: {
       one: "{count} line could not be read and is left out.",

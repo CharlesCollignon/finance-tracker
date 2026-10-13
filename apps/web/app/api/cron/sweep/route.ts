@@ -57,6 +57,11 @@ export async function GET(request: NextRequest) {
   const entraide = await supabase.rpc("sweep_entraide");
   const entraideSwept = entraide.error ? null : (entraide.data ?? 0);
 
+  // What came by e-mail and is done with, and stale forwarding codes
+  // (migration 075). Its own answer too.
+  const mail = await supabase.rpc("sweep_statement_mail");
+  const mailSwept = mail.error ? null : (mail.data ?? 0);
+
   if (error) {
     if (isMissingSchemaOrFunction(error)) {
       return Response.json({
@@ -64,6 +69,7 @@ export async function GET(request: NextRequest) {
         activitySwept,
         askSwept,
         entraideSwept,
+        mailSwept,
       });
     }
     return Response.json({ error: error.message }, { status: 500 });
@@ -76,5 +82,6 @@ export async function GET(request: NextRequest) {
     activitySwept,
     askSwept,
     entraideSwept,
+    mailSwept,
   });
 }

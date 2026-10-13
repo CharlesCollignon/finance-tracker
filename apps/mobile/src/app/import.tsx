@@ -34,6 +34,7 @@ import {
 
 import { BankGuide } from "@/components/statements/BankGuide";
 import { BlockCard, initialChoice, type BlockChoice } from "@/components/statements/BlockCard";
+import { MailInbox, MailWaiting } from "@/components/statements/MailInbox";
 import { MappingCard } from "@/components/statements/MappingCard";
 import { ScanOffer } from "@/components/statements/ScanOffer";
 import { Button } from "@/components/ui/Button";
@@ -43,10 +44,12 @@ import { useRefreshable } from "@/hooks/useRefreshable";
 import { getWriterState } from "@/lib/ai-writer";
 import { hapticLight, hapticSuccess } from "@/lib/haptics";
 import {
+  importMailItem,
   importStatement,
   previewStatement,
   readFileAccounts,
   readImports,
+  readInboxView,
   readPdfOnServer,
   scanOnServer,
   undoStatementImport,
@@ -73,6 +76,8 @@ interface Opened {
   fileName: string;
   source: Source;
   uri: string | null;
+  /** What came by e-mail, imported from what the server kept. */
+  mailItemId?: string | null;
 }
 
 type Stage =
@@ -145,6 +150,7 @@ export default function ImportScreen() {
       accounts: userId ? await readFileAccounts(userId) : [],
       imports: ownerId ? await readImports(ownerId) : [],
       aiAccount: userId ? (await getWriterState(userId)).account : false,
+      mail: await readInboxView(),
       readAt: Date.now(),
     }),
     [userId, ownerId],
@@ -160,13 +166,18 @@ export default function ImportScreen() {
   const [pending, setPending] = useState(false);
   const [scanning, setScanning] = useState(false);
 
-  function open({ statement, fileName, source, uri }: Opened) {
+  function open({ statement, fileName, source, uri, mailItemId = null }: Opened) {
     setChoices(
       statement.blocks.map((block) => initialChoice(block, statement.bank, accounts, t("statements.accountMine"))),
     );
     setOutcomes(statement.blocks.map(() => null));
-    setStage({ kind: "read", statement, fileName, source, uri });
+    setStage({ kind: "read", statement, fileName, source, uri, mailItemId });
   }
+
+  // What came by e-mail and waits, kept here so that one set aside or
+  // imported leaves the list at once.
+  const [dismissed, setDismissed] = useState<readonly string[]>([]);
+  const mailItems = (known?.mail?.items ?? []).filter((item) => !dismissed.includes(item.id));
 
   /**
    * A file read: here, or by the server for a PDF; a picture kept aside
@@ -349,7 +360,9 @@ export default function ImportScreen() {
       if (!input) {
         continue;
       }
-      const result = await importStatement(input, ownerId);
+      const result = reading.mailItemId
+        ? await importMailItem(reading.mailItemId, input.account, choices[index]!.direction)
+        : await importStatement(input, ownerId);
       if (!result.ok) {
         setPending(false);
         toast(resolveMessage(t, result.error), "error");
@@ -363,6 +376,9 @@ export default function ImportScreen() {
     }
     setPending(false);
     void hapticSuccess();
+    if (reading.mailItemId) {
+      setDismissed((current) => [...current, reading.mailItemId!]);
+    }
     setStage({ kind: "done", added, waiting, importIds });
     onRefresh();
   }
@@ -419,6 +435,19 @@ export default function ImportScreen() {
       <ScrollView contentContainerClassName="gap-4 px-4 pb-24 pt-4" keyboardShouldPersistTaps="handled">
         {stage.kind === "start" ? (
           <Animated.View entering={reduceMotion ? undefined : FadeIn.duration(DURATION.panel)} className="gap-4">
+            <MailWaiting
+              items={mailItems}
+              onOpen={(item) =>
+                open({
+                  statement: item.statement,
+                  fileName: item.fileName ?? "",
+                  source: "email",
+                  uri: null,
+                  mailItemId: item.id,
+                })
+              }
+              onDismissed={(itemId) => setDismissed((current) => [...current, itemId])}
+            />
             <View className="gap-4 rounded-card border border-border bg-card/70 p-card">
               <Text variant="title">{t("statements.heading")}</Text>
               <Text variant="muted" className="leading-5">
@@ -446,6 +475,8 @@ export default function ImportScreen() {
               ) : null}
               <BankGuide />
             </View>
+
+            {known?.mail ? <MailInbox view={known.mail} /> : null}
 
             {imports.length > 0 ? (
               <View className="gap-1 rounded-card border border-border bg-card/70 p-card">
