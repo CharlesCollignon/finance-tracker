@@ -7,6 +7,18 @@
 export { readStatementFile, readStatementText } from "./read";
 export { readPdfPages, type PdfPage, type PdfText } from "./pdf";
 export { SCAN_SCHEMA, statementFromScan } from "./scan";
+export {
+  alertOf,
+  forwardingConfirmation,
+  mailText,
+  type MailAlert,
+} from "./mail";
+export { messageLineId } from "./line-ids";
+export {
+  confirmProvisional,
+  PROVISIONAL_WINDOW_DAYS,
+  type ProvisionalLine,
+} from "./provisional";
 export { readMappedTable, type TableMapping } from "./table";
 export {
   accountTail,

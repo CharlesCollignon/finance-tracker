@@ -4,11 +4,21 @@ import { firstIssue, type ActionResult } from "@finance/core/action-result";
 import { readStatementFile, type Statement } from "@finance/core/statement";
 import {
   MAX_SENT_FILE_BYTES,
+  statementAccountSchema,
   statementImportSchema,
 } from "@finance/core/validations/statements";
 import { getOwner } from "@/lib/owner";
 import { revalidateApp } from "@/lib/revalidate-paths";
 import type { StatementOutcome } from "@finance/core/validations/statements";
+import {
+  dismissMailItem,
+  importMailItem,
+  inboxView,
+  renewInbox,
+  startInbox,
+  stopInbox,
+} from "@/lib/statements/inbox";
+import type { InboxView } from "@finance/data/statements";
 import { readPdfStatement } from "@/lib/statements/pdf";
 import { scanStatement } from "@/lib/statements/scan";
 import { planStatement, undoStatement } from "@/lib/statements/service";
@@ -128,4 +138,58 @@ export async function scanStatementFile(form: FormData): Promise<Read> {
   return "error" in result
     ? { error: result.error }
     : { success: true, statement: result.statement };
+}
+
+/* ------------------------------------------------- the e-mail way in */
+
+/** The person's address and what waits from it — theirs alone, never a space's. */
+export async function readStatementInbox(): Promise<InboxView | null> {
+  const owner = await getOwner();
+  return owner ? inboxView(await createClient(), owner.userId) : null;
+}
+
+async function asPerson<T>(run: (userId: string) => Promise<T>): Promise<T | { error: string }> {
+  const owner = await getOwner();
+  return owner ? run(owner.userId) : { error: "errors.notAuthenticated" };
+}
+
+export async function startStatementInbox(): Promise<ActionResult> {
+  return asPerson(startInbox);
+}
+
+export async function stopStatementInbox(): Promise<ActionResult> {
+  return asPerson(stopInbox);
+}
+
+export async function renewStatementInbox(): Promise<ActionResult> {
+  return asPerson(renewInbox);
+}
+
+/** What waited from an e-mail, imported to the account the person chose. */
+export async function importStatementMail(
+  itemId: string,
+  account: unknown,
+  direction: "out" | "in",
+): Promise<Outcome> {
+  const parsed = statementAccountSchema.safeParse(account);
+  if (!parsed.success || !/^[0-9a-f-]{36}$/.test(itemId)) {
+    return { error: "errors.invalidInput" };
+  }
+  const result = await asPerson((userId) =>
+    importMailItem(userId, itemId, {
+      account: parsed.data,
+      direction: direction === "in" ? "in" : "out",
+    }),
+  );
+  if ("success" in result && result.success) {
+    revalidateApp();
+  }
+  return result as Outcome;
+}
+
+export async function dismissStatementMail(itemId: string): Promise<ActionResult> {
+  if (!/^[0-9a-f-]{36}$/.test(itemId)) {
+    return { error: "errors.invalidInput" };
+  }
+  return asPerson((userId) => dismissMailItem(userId, itemId));
 }

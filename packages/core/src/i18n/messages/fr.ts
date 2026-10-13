@@ -432,6 +432,64 @@ export const fr: Messages = {
     showLines: "Voir les opérations lues",
     hideLines: "Masquer les opérations",
     moreLines: { one: "… et {count} autre", other: "… et {count} autres" },
+    mailTitle: "Vos relevés par e-mail, tout seuls",
+    mailBody:
+      "Une adresse rien qu'à vous\u00A0: faites-y suivre les e-mails de votre banque — relevés en pièce jointe et alertes de paiement. Pluclair lit chacun, garde les opérations et jette l'e-mail.",
+    mailStart: "Créer mon adresse",
+    mailStarting: "Création…",
+    mailAddress: "Votre adresse",
+    mailCopy: "Copier",
+    mailCopied: "Copiée",
+    mailShare: "Partager",
+    mailHow: "Pour y faire suivre les e-mails de votre banque",
+    mailOther: "Autre",
+    mailGmail1:
+      "Dans Gmail sur ordinateur\u00A0: roue dentée → «\u00A0Voir tous les paramètres\u00A0» → «\u00A0Transfert et POP/IMAP\u00A0» → «\u00A0Ajouter une adresse de transfert\u00A0», et collez votre adresse.",
+    mailGmail2:
+      "Gmail envoie un code de confirmation à cette adresse\u00A0: il s'affiche ici dès qu'il arrive, avec un bouton pour confirmer.",
+    mailGmail3:
+      "Puis «\u00A0Filtres et adresses bloquées\u00A0» → «\u00A0Créer un filtre\u00A0»\u00A0: dans «\u00A0De\u00A0», l'adresse de votre banque (par exemple @boursobank.com), puis «\u00A0Transférer à\u00A0» votre adresse Pluclair. Seuls ces e-mails partent.",
+    mailOutlook1:
+      "Sur outlook.com\u00A0: roue dentée → «\u00A0Courrier\u00A0» → «\u00A0Règles\u00A0» → «\u00A0Ajouter une nouvelle règle\u00A0».",
+    mailOutlook2:
+      "Condition «\u00A0De\u00A0»\u00A0: l'adresse de votre banque. Action «\u00A0Transférer à\u00A0»\u00A0: votre adresse Pluclair.",
+    mailOutlook3: "Enregistrez\u00A0: les prochains e-mails de votre banque arrivent ici.",
+    mailOther1:
+      "Dans votre messagerie, créez une règle qui transfère les e-mails de votre banque à votre adresse Pluclair.",
+    mailOther2:
+      "Ou transférez à la main un e-mail qui contient un relevé\u00A0: il s'importe de même.",
+    mailAlertsTip:
+      "Activez aussi les alertes opération dans l'espace client de votre banque\u00A0: chaque paiement arrive alors le jour même, et le relevé du mois le confirme sans rien ajouter deux fois.",
+    mailCodeTitle: "Gmail demande une confirmation",
+    mailCodeBody:
+      "Touchez «\u00A0Confirmer chez Google\u00A0», ou recopiez ce code dans les paramètres de Gmail.",
+    mailCodeConfirm: "Confirmer chez Google",
+    mailListening: "Pluclair attend le premier e-mail…",
+    mailLast: "Dernier e-mail reçu le {day}",
+    mailLines: {
+      one: "{count} opération apportée",
+      other: "{count} opérations apportées",
+    },
+    mailIgnored: {
+      one: "{count} e-mail non compris, laissé de côté",
+      other: "{count} e-mails non compris, laissés de côté",
+    },
+    mailRenew: "Changer d'adresse",
+    mailRenewSure: "Confirmer\u00A0: l'ancienne ne marchera plus",
+    mailStop: "Arrêter",
+    mailStopped: "Les e-mails ne sont plus lus.",
+    mailRestart: "Reprendre",
+    mailUnavailable: "La réception des e-mails n'est pas encore ouverte.",
+    mailWaitingTitle: "Arrivés par e-mail",
+    mailAlerts: {
+      one: "{count} alerte de {bank}",
+      other: "{count} alertes de {bank}",
+    },
+    mailYourBank: "votre banque",
+    mailAlertsOf: "Alertes {bank}",
+    mailArrived: "Arrivé le {day}",
+    mailPick: "Choisir le compte",
+    mailDismiss: "Écarter",
     columns: "Quelle colonne est quoi\u00A0? Pluclair n'a pas su le dire seul.",
     skipped: {
       one: "{count} ligne illisible est laissée de côté.",

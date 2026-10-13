@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, useTransition } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   AnimatePresence,
   domAnimation,
@@ -38,6 +39,7 @@ import {
 } from "@finance/core/validations/statements";
 import type {
   FileAccount,
+  MailItem,
   StatementImport as PastImport,
 } from "@finance/data/statements";
 import { Button } from "@/components/ui/Button";
@@ -46,6 +48,7 @@ import { PageContainer } from "@/components/layout/PageContainer";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { useToast } from "@/components/layout/ToastProvider";
 import { BankGuide } from "@/components/finance/statements/BankGuide";
+import { MailInbox, MailWaiting } from "@/components/finance/statements/MailInbox";
 import { MappingCard } from "@/components/finance/statements/MappingCard";
 import { ScanOffer } from "@/components/finance/statements/ScanOffer";
 import {
@@ -55,11 +58,13 @@ import {
 } from "@/components/finance/statements/StatementBlockCard";
 import {
   importStatement,
+  importStatementMail,
   previewStatement,
   readStatementPdf,
   scanStatementFile,
   undoStatementImport,
 } from "@/lib/actions/statements";
+import type { InboxView } from "@finance/data/statements";
 import { ICON } from "@/lib/icon-scale";
 import { takeStatementFile } from "@/lib/statements/pending";
 import { useLocale, useT } from "@/lib/locale-context";
@@ -86,6 +91,8 @@ type Stage =
       source: Source;
       /** The file itself, kept on this page while an AI might read it. */
       file: File | null;
+      /** What came by e-mail, imported from what the server kept. */
+      mailItemId: string | null;
     }
   | { kind: "done"; added: number; waiting: number; importIds: string[] };
 
@@ -146,13 +153,18 @@ export function StatementImport({
   accounts,
   imports,
   aiAccount,
+  mail,
 }: {
   accounts: FileAccount[];
   imports: PastImport[];
   /** Whether an AI account is connected, to read a picture. */
   aiAccount: boolean;
+  /** The e-mail way in: the person's address, and what waits from it. */
+  mail: InboxView;
 }) {
   const t = useT();
+  const router = useRouter();
+  const [mailItems, setMailItems] = useState<readonly MailItem[]>(mail.items);
   const { toast } = useToast();
   const fileRef = useRef<HTMLInputElement>(null);
   const [stage, setStage] = useState<Stage>({ kind: "start" });
@@ -232,6 +244,7 @@ export function StatementImport({
     fileName: string,
     source: Source = "file",
     file: File | null = null,
+    mailItemId: string | null = null,
   ) {
     setChoices(
       statement.blocks.map((block) =>
@@ -244,7 +257,7 @@ export function StatementImport({
       ),
     );
     setOutcomes(statement.blocks.map(() => null));
-    setStage({ kind: "read", statement, fileName, source, file });
+    setStage({ kind: "read", statement, fileName, source, file, mailItemId });
   }
 
   // A file dropped on another page, which opened this one with it.
@@ -343,7 +356,13 @@ export function StatementImport({
         if (!input) {
           continue;
         }
-        const result = await importStatement(input);
+        const result = reading.mailItemId
+          ? await importStatementMail(
+              reading.mailItemId,
+              input.account,
+              choices[index]!.direction,
+            )
+          : await importStatement(input);
         if (!result.success) {
           toast(resolveMessage(t, result.error), "error");
           return;
@@ -355,6 +374,11 @@ export function StatementImport({
         }
       }
       setStage({ kind: "done", added, waiting, importIds });
+      if (reading.mailItemId) {
+        const done = reading.mailItemId;
+        setMailItems((current) => current.filter((item) => item.id !== done));
+        router.refresh();
+      }
     });
   }
 
@@ -434,6 +458,17 @@ export function StatementImport({
                 transition={{ duration: DURATION.panel / 1000, ease: EASE }}
                 className="flex flex-col gap-4"
               >
+                <MailWaiting
+                  items={mailItems}
+                  onOpen={(item) =>
+                    open(item.statement, item.fileName ?? "", "email", null, item.id)
+                  }
+                  onDismissed={(itemId) =>
+                    setMailItems((current) =>
+                      current.filter((item) => item.id !== itemId),
+                    )
+                  }
+                />
                 <Card.Bezel
                   className="w-full"
                   innerClassName="flex flex-col gap-5 p-6"
@@ -526,6 +561,11 @@ export function StatementImport({
                   <BankGuide />
                 </Card.Bezel>
 
+                <MailInbox
+                  view={mail}
+                  onView={(next) => setMailItems(next.items)}
+                />
+
                 {imports.length > 0 ? (
                   <ImportHistory
                     imports={imports}
@@ -616,6 +656,7 @@ export function StatementImport({
                       }
                       outcome={outcomes[index] ?? null}
                       readByAi={statement.readByAi ?? false}
+                      alerts={statement.format === "email"}
                     />
                   ))
                 )}

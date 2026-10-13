@@ -1,3 +1,4 @@
+import type { Statement } from "@finance/core/statement";
 import type { Db } from "./client";
 
 /**
@@ -69,6 +70,8 @@ export async function readStatementImports(
       "id, provider_account_id, format, bank, file_name, period_from, period_to, lines_new, lines_known, lines_filed, lines_waiting, created_at, undone_at",
     )
     .eq("user_id", ownerId)
+    // A bank's alerts, one line each, are no import to list or undo.
+    .neq("format", "email")
     .order("created_at", { ascending: false })
     .limit(limit);
   if (error) {
@@ -102,4 +105,97 @@ export async function hasFeedLines(db: Db, userId: string): Promise<boolean> {
     .select("id", { count: "exact", head: true })
     .eq("user_id", userId);
   return (count ?? 0) > 0;
+}
+
+/**
+ * The person's address for their bank's e-mails (migration 075): whether it
+ * is on, what has come, and a mail service's forwarding confirmation while
+ * it is fresh — the code Gmail sends before it forwards anything.
+ */
+export interface StatementInbox {
+  token: string;
+  enabled: boolean;
+  /** The account alert e-mails go to, once the person has said. */
+  alertAccount: string | null;
+  lastMailAt: string | null;
+  mailsRead: number;
+  mailsIgnored: number;
+  linesBrought: number;
+  forwardCode: string | null;
+  forwardLink: string | null;
+  forwardCodeAt: string | null;
+}
+
+export async function readStatementInbox(
+  db: Db,
+  userId: string,
+): Promise<StatementInbox | null> {
+  const { data, error } = await db
+    .from("statement_inboxes")
+    .select(
+      "token, enabled, alert_account, last_mail_at, mails_read, mails_ignored, lines_brought, forward_code, forward_link, forward_code_at",
+    )
+    .eq("user_id", userId)
+    .maybeSingle();
+  if (error || !data) {
+    return null;
+  }
+  return {
+    token: data.token,
+    enabled: data.enabled,
+    alertAccount: data.alert_account,
+    lastMailAt: data.last_mail_at,
+    mailsRead: data.mails_read,
+    mailsIgnored: data.mails_ignored,
+    linesBrought: data.lines_brought,
+    forwardCode: data.forward_code,
+    forwardLink: data.forward_link,
+    forwardCodeAt: data.forward_code_at,
+  };
+}
+
+/**
+ * A statement or alerts that came by e-mail for an account not known yet:
+ * read, and waiting for the person to say which account.
+ */
+export interface MailItem {
+  id: string;
+  kind: "statement" | "alerts";
+  format: string;
+  bank: string | null;
+  fileName: string | null;
+  receivedAt: string;
+  statement: Statement;
+}
+
+/** What waits from e-mails, newest first. */
+export async function readMailItems(db: Db, userId: string): Promise<MailItem[]> {
+  const { data, error } = await db
+    .from("statement_mail_items")
+    .select("id, kind, format, bank, file_name, received_at, statement")
+    .eq("user_id", userId)
+    .eq("status", "waiting")
+    .order("received_at", { ascending: false })
+    .limit(20);
+  if (error) {
+    return [];
+  }
+  return (data ?? []).map((row) => ({
+    id: row.id,
+    kind: row.kind === "alerts" ? "alerts" : "statement",
+    format: row.format,
+    bank: row.bank,
+    fileName: row.file_name,
+    receivedAt: row.received_at,
+    statement: row.statement as unknown as Statement,
+  }));
+}
+
+/** What the import shows of the e-mail way in, as the server answers it. */
+export interface InboxView {
+  /** Whether an inbound-mail service is set up at all. */
+  available: boolean;
+  address: string | null;
+  inbox: StatementInbox | null;
+  items: MailItem[];
 }

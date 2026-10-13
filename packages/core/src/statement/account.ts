@@ -49,15 +49,20 @@ export type AccountChoice =
 
 /**
  * The account to start from: the one the file names, if it is known
- * already; for a file that names none, the person's only account, if they
- * have one; otherwise a new one, named from the file — its own name for
+ * already; for a file that names none, the person's only account, or their
+ * only account at the file's bank (a bank's alert e-mails name no
+ * account); otherwise a new one, named from the file — its own name for
  * the account, or its bank, or `mine` — and its last four digits, as a
  * current account.
  */
 export function initialAccountChoice(
   block: Pick<StatementBlock, "account">,
   bank: BankId | null,
-  accounts: readonly { providerAccountId: string; key: string | null }[],
+  accounts: readonly {
+    providerAccountId: string;
+    key: string | null;
+    bank?: string | null;
+  }[],
   mine: string,
 ): AccountChoice {
   const key = statementKey(block.account);
@@ -67,11 +72,10 @@ export function initialAccountChoice(
   if (known) {
     return { kind: "existing", providerAccountId: known.providerAccountId };
   }
-  if (!key && accounts.length === 1) {
-    return {
-      kind: "existing",
-      providerAccountId: accounts[0]!.providerAccountId,
-    };
+  const sameBank = bank ? accounts.filter((account) => account.bank === bank) : [];
+  const only = accounts.length === 1 ? accounts[0] : sameBank.length === 1 ? sameBank[0] : undefined;
+  if (!key && only) {
+    return { kind: "existing", providerAccountId: only.providerAccountId };
   }
   const name = block.account?.name ?? (bank ? BANK_NAMES[bank] : mine);
   return {

@@ -205,9 +205,17 @@ to stop it:
    account, at their word for each file, every line then « À vérifier ».
    Tested on synthetic layouts modelled on BoursoBank, Crédit Agricole, BNP
    Paribas and Revolut; real PDFs, anonymised, are the next fixtures.
-4. **By e-mail** (`statements-email`): the personal address, attachments,
-   alert e-mails per bank with a careful fallback, the Gmail and Outlook
-   guides, the confirmation code in the app.
+4. **By e-mail** (`statements-email`) — built 2026-10-13, hidden until the
+   inbound service is set up: the personal address
+   (`<token>@releves.pluclair.com`, migration 075), Brevo's inbound parsing
+   handing each e-mail to `/api/statements/inbound`, statements attached
+   imported to their known account (else waiting for one tap), a bank's
+   alert e-mails read conservatively (`alertOf`: a bank sender, one amount
+   that plainly went one way) as provisional lines that the month's
+   statement confirms rather than adds again (`confirmProvisional`), the
+   Gmail and Outlook steps, Gmail's confirmation code and link in the app.
+   Alert parsing is tested on synthetic e-mails modelled on French banks';
+   real ones are the next fixtures.
 5. **Bank notifications** (`statements-notifications`), Android: the
    native listener, per-bank-app parsing on the phone, the queue, the
    inbox. New APK.
@@ -239,6 +247,35 @@ stand as written unless they say otherwise.
    for a CSV nobody can read alone.
 6. **Undo for 30 days**, an import at a time.
 7. **The order** above — files first, then the automatic ways.
+
+## Opening the e-mail way in (the owner's part)
+
+Phase 4's code is merged dark: nothing shows until these are done.
+
+1. Run `supabase/migrations/075_statement_inbox.sql` on the hosted
+   database (SQL editor), then `supabase/tests/075_statement_inbox.test.sql`
+   if wanted (it rolls back).
+2. Open a free Brevo account (brevo.com), and in « Senders, domains &
+   dedicated IPs » → « Domains » add `pluclair.com`; add the records Brevo
+   lists at Namecheap until it says the domain is verified. Accept Brevo's
+   data processing agreement if the account asks.
+3. At Namecheap, Advanced DNS of `pluclair.com`: two MX records for the
+   host `releves` — `inbound1.sendinblue.com.` (priority 10) and
+   `inbound2.sendinblue.com.` (priority 20). Namecheap only allows MX
+   records with « Mail Settings » on « Custom MX »: switching from « Email
+   Forwarding » removes its own MX records for `@`, so add them back for
+   `@` — `eforward1.registrar-servers.com.` to `eforward3…` (priority 10),
+   `eforward4…` (15), `eforward5…` (20) — or the domain's forwarding stops.
+   The SPF TXT record stays as it is.
+4. In Brevo, « SMTP & API » → « API keys »: a key named « Pluclair
+   inbound ». Make a secret (`openssl rand -hex 24`).
+5. In Vercel, Production: `BREVO_API_KEY` and `STATEMENT_INBOUND_SECRET`;
+   redeploy.
+6. In your own terminal (never pasted into a chat):
+   `BREVO_API_KEY=… STATEMENT_INBOUND_SECRET=… node scripts/statement-inbox-setup.mjs`
+   — it makes Brevo's inbound webhook for `releves.pluclair.com`.
+7. On `/import`, « Créer mon adresse », then forward one bank e-mail to it.
+   The « Nouveautés » entry is added when this works.
 
 ## Risks
 

@@ -6,6 +6,7 @@ import {
 import { writerStateFor } from "@/lib/ai/writer";
 import { getAuthUser } from "@/lib/auth/get-user";
 import { getOwner } from "@/lib/owner";
+import { inboxView } from "@/lib/statements/inbox";
 import { createClient } from "@/lib/supabase/server";
 import { StatementImport } from "@/components/finance/statements/StatementImport";
 
@@ -19,8 +20,9 @@ export const maxDuration = 60;
 /**
  * Importing a bank statement (`StatementImport`): the accounts already known
  * from earlier files, so the next one goes to its own without a question,
- * the latest imports, each to be undone for a month, and whether an AI
- * account is there to read a picture.
+ * the latest imports, each to be undone for a month, whether an AI
+ * account is there to read a picture, and the person's address for their
+ * bank's e-mails with what waits from it.
  */
 export default async function ImportPage() {
   const user = await getAuthUser();
@@ -31,10 +33,11 @@ export default async function ImportPage() {
 
   const ownerId = (await getOwner())?.ownerId ?? user.id;
   const db = await createClient();
-  const [accounts, imports, writer] = await Promise.all([
+  const [accounts, imports, writer, mail] = await Promise.all([
     readFileAccounts(db, user.id),
     readStatementImports(db, ownerId),
     writerStateFor(user.id, db),
+    inboxView(db, user.id),
   ]);
 
   return (
@@ -42,6 +45,7 @@ export default async function ImportPage() {
       accounts={accounts}
       imports={imports}
       aiAccount={writer.account}
+      mail={mail}
     />
   );
 }

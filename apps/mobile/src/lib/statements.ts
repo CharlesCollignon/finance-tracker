@@ -1,4 +1,5 @@
 import type { Statement } from "@finance/core/statement";
+import type { InboxView } from "@finance/data/statements";
 import type {
   StatementImportInput,
   StatementOutcome,
@@ -85,4 +86,40 @@ export async function readPdfOnServer(base64: string): Promise<Read> {
 export async function scanOnServer(base64: string): Promise<Read> {
   const result = await ask<{ statement: Statement }>({ action: "scan", file: base64 });
   return result.ok ? { ok: true, statement: result.statement } : { ok: false, error: result.error };
+}
+
+/* ------------------------------------------------- the e-mail way in */
+
+/** The person's address for their bank's e-mails, and what waits from it. */
+export async function readInboxView(): Promise<InboxView | null> {
+  const result = await ask<InboxView>({ action: "inbox" });
+  return result.ok ? result : null;
+}
+
+async function inboxAction(action: "inboxStart" | "inboxStop" | "inboxRenew") {
+  const result = await ask<object>({ action });
+  return result.ok ? { ok: true as const } : { ok: false as const, error: result.error };
+}
+
+export const startInbox = () => inboxAction("inboxStart");
+export const stopInbox = () => inboxAction("inboxStop");
+export const renewInbox = () => inboxAction("inboxRenew");
+
+/** What waited from an e-mail, imported to the account the person chose. */
+export async function importMailItem(
+  itemId: string,
+  account: StatementImportInput["account"],
+  direction: "out" | "in",
+): Promise<{ ok: true; outcome: Outcome } | { ok: false; error: string }> {
+  const result = await ask<Outcome>({ action: "mailImport", itemId, account, direction });
+  if (!result.ok) {
+    return { ok: false, error: result.error };
+  }
+  notifyDataChanged("transactions", "bank");
+  return { ok: true, outcome: result };
+}
+
+export async function dismissMailItem(itemId: string): Promise<{ ok: boolean; error?: string }> {
+  const result = await ask<object>({ action: "mailDismiss", itemId });
+  return result.ok ? { ok: true } : { ok: false, error: result.error };
 }

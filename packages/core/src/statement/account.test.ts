@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { statementLineSchema } from "../validations/statements";
-import { accountTail, statementKey, withDirection } from "./account";
+import { accountTail, statementKey, withDirection, initialAccountChoice } from "./account";
 import { BANK_IDS } from "./banks";
 import { exportGuide } from "./guides";
 import { readStatementText } from "./read";
@@ -100,5 +100,38 @@ describe("what is sent to the server", () => {
     for (const line of statement.blocks[0]!.lines) {
       expect(statementLineSchema.safeParse(line).success).toBe(true);
     }
+  });
+});
+
+describe("initialAccountChoice", () => {
+  const accounts = [
+    { providerAccountId: "statement:A", key: "FR7630004000031234567890143", bank: "bnp-paribas" },
+    { providerAccountId: "statement:B", key: "FR7640618802000000000000123", bank: "boursobank" },
+  ];
+
+  it("takes the account the file names", () => {
+    expect(
+      initialAccountChoice(
+        { account: { iban: "FR7640618802000000000000123", number: null, name: null } },
+        null,
+        accounts,
+        "Mon compte",
+      ),
+    ).toEqual({ kind: "existing", providerAccountId: "statement:B" });
+  });
+
+  it("takes the only account at the bank of a file that names none", () => {
+    expect(initialAccountChoice({ account: null }, "boursobank", accounts, "Mon compte")).toEqual({
+      kind: "existing",
+      providerAccountId: "statement:B",
+    });
+  });
+
+  it("asks for a new one when nothing tells", () => {
+    expect(initialAccountChoice({ account: null }, "lcl", accounts, "Mon compte")).toEqual({
+      kind: "new",
+      label: "LCL",
+      role: "spending",
+    });
   });
 });

@@ -355,6 +355,7 @@ export type Database = {
         Row: {
           amount: number;
           balance_after: number | null;
+          confirmed_by: string | null;
           counterparty: string | null;
           created_at: string;
           currency: string;
@@ -376,6 +377,7 @@ export type Database = {
         Insert: {
           amount: number;
           balance_after?: number | null;
+          confirmed_by?: string | null;
           counterparty?: string | null;
           created_at?: string;
           currency: string;
@@ -397,6 +399,7 @@ export type Database = {
         Update: {
           amount?: number;
           balance_after?: number | null;
+          confirmed_by?: string | null;
           counterparty?: string | null;
           created_at?: string;
           currency?: string;
@@ -2233,6 +2236,90 @@ export type Database = {
         };
         Relationships: [];
       };
+      statement_inboxes: {
+        Row: {
+          alert_account: string | null;
+          created_at: string;
+          enabled: boolean;
+          forward_code: string | null;
+          forward_code_at: string | null;
+          forward_link: string | null;
+          last_mail_at: string | null;
+          lines_brought: number;
+          mails_ignored: number;
+          mails_read: number;
+          token: string;
+          user_id: string;
+        };
+        Insert: {
+          alert_account?: string | null;
+          created_at?: string;
+          enabled?: boolean;
+          forward_code?: string | null;
+          forward_code_at?: string | null;
+          forward_link?: string | null;
+          last_mail_at?: string | null;
+          lines_brought?: number;
+          mails_ignored?: number;
+          mails_read?: number;
+          token: string;
+          user_id: string;
+        };
+        Update: {
+          alert_account?: string | null;
+          created_at?: string;
+          enabled?: boolean;
+          forward_code?: string | null;
+          forward_code_at?: string | null;
+          forward_link?: string | null;
+          last_mail_at?: string | null;
+          lines_brought?: number;
+          mails_ignored?: number;
+          mails_read?: number;
+          token?: string;
+          user_id?: string;
+        };
+        Relationships: [];
+      };
+      statement_mail_items: {
+        Row: {
+          bank: string | null;
+          decided_at: string | null;
+          file_name: string | null;
+          format: string;
+          id: string;
+          kind: string;
+          received_at: string;
+          statement: NonNullable<Json>;
+          status: string;
+          user_id: string;
+        };
+        Insert: {
+          bank?: string | null;
+          decided_at?: string | null;
+          file_name?: string | null;
+          format: string;
+          id?: string;
+          kind: string;
+          received_at?: string;
+          statement: NonNullable<Json>;
+          status?: string;
+          user_id: string;
+        };
+        Update: {
+          bank?: string | null;
+          decided_at?: string | null;
+          file_name?: string | null;
+          format?: string;
+          id?: string;
+          kind?: string;
+          received_at?: string;
+          statement?: NonNullable<Json>;
+          status?: string;
+          user_id?: string;
+        };
+        Relationships: [];
+      };
       tags: {
         Row: {
           created_at: string;
@@ -3260,6 +3347,10 @@ export type Database = {
       sweep_ask: { Args: Record<PropertyKey, never>; Returns: number };
       sweep_deleted: { Args: { before: string }; Returns: number };
       sweep_entraide: { Args: Record<PropertyKey, never>; Returns: number };
+      sweep_statement_mail: {
+        Args: Record<PropertyKey, never>;
+        Returns: number;
+      };
     };
     Enums: {
       category_type: "income" | "expense" | "savings" | "investment";
