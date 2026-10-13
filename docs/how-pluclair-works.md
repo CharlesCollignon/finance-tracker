@@ -574,19 +574,44 @@ download, an account with no bank yet to connecting one.
 
 ## Import
 
-A bank's export, CSV or OFX, read on the device and nothing written until
-every row is reviewed (`/import`, the phone's `import`). The file is read as
-bytes (`decodeStatement`): UTF-8 when valid, Windows-1252 otherwise, which is
-what many French banks write. `readStatement` finds a CSV's header as the
-first row naming a date and an amount, dropping the account lines some banks
-put above it, under whichever delimiter finds one; an OFX's transactions come
-in as date, label and signed amount. There are no presets per bank yet: each
-waits for a real export, anonymised with `scripts/anonymise-statement.mjs`
-and kept in `packages/core/fixtures/statements/`.
+A bank's statement, brought by the person with no bank connection
+(`docs/plans/STATEMENTS_PLAN.md`): `/import` on the web, `import` on the
+phone, the same flow on both. The file is read on the device by the
+statement engine below; its lines go to the server (the web's actions in
+`lib/actions/statements.ts`, the phone through `/api/statements`), where
+`lib/statements/service.ts` runs the bank feed's own planner on them:
 
-**Statements, without a bank connection** (`docs/plans/STATEMENTS_PLAN.md`,
-being built in phases; the wizard above stays until the new import
-replaces it). `packages/core/src/statement/` reads whatever a person
+- one card per account the file covers — bank, last four digits, lines and
+  days; the account asked only when the file does not say (a known IBAN or
+  number goes to its own, `bank_accounts.statement_key`), with its role in
+  one tap; « dépenses ou rentrées » asked once when nothing in the file says
+  which way the money went (`withDirection`);
+- what importing would do, from the same planner with nothing written
+  (`planStatement`, `write: false`): new lines to review, the ones the
+  ledger seems to hold already (offered in « À vérifier » for pairing, never
+  merged unasked), transfers between the person's own accounts left out,
+  what an earlier import of the account already brought;
+- the import itself: the lines into `bank_feed_items` marked `source:
+  'file'` and tied to their `statement_imports` row, known merchants filed,
+  the rest waiting in « À vérifier »; an Épargne account gives its balance
+  only, a « Ne pas suivre » one nothing;
+- undo (`undoStatement`), whole, for thirty days: the import's lines go,
+  and the transactions it wrote — filed on their own or from the inbox
+  since — are marked deleted as the Journal deletes (migration 036); a row
+  it was only paired with stays;
+- « Où trouver l'export de ma banque ? » (`exportGuide`): a bank's own
+  steps where they are written down, the steps that hold for any bank
+  otherwise; a file whose columns cannot be told apart is mapped once
+  (`readMappedTable`); a PDF, an old Excel or an image says what to take
+  instead, until Phase 3.
+
+The Journal shows « À vérifier » for any lines, the bank's or a
+statement's (`hasFeedLines`), and offers the bank's whole statement only
+to someone with a bank. Real exports, anonymised with
+`scripts/anonymise-statement.mjs`, go to `packages/core/fixtures/statements/`
+and replace the synthetic samples the engine's tests use.
+
+**The statement engine.** `packages/core/src/statement/` reads whatever a person
 downloads from their bank as the very lines the bank connection sends
 (`BankTransaction`), decided by the file's content and never by its name:
 

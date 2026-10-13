@@ -59,8 +59,13 @@ auprès desquels l'utilisateur a lui-même ouvert un compte.
   charges récurrentes, plafonds, objectifs, portefeuilles et positions,
   clôtures de mois, étiquettes et notes.
 - **Base légale** : exécution du contrat (art. 6.1.b).
-- **Données** : ce que l'utilisateur saisit ou importe (relevés CSV : seules
-  les lignes conservées sont enregistrées, pas le fichier).
+- **Données** : ce que l'utilisateur saisit ou importe. Un relevé (CSV,
+  Excel, OFX, QIF, CAMT, MT940, CFONB) est lu sur l'appareil ; seules ses
+  opérations sont envoyées et conservées, avec le compte qu'elles concernent
+  (son nom, sa banque, son IBAN ou son numéro, pour reconnaître le relevé
+  suivant) et la trace de l'import (période, nombre de lignes), qui permet de
+  l'annuler pendant 30 jours. Le fichier lui-même n'est jamais envoyé ni
+  gardé (migration 074).
 - **Destinataires** : Supabase, Vercel.
 - **Durée** : tant que le compte existe. Une écriture supprimée est conservée
   30 jours pour permettre l'annulation, puis effacée par la tâche de chaque
