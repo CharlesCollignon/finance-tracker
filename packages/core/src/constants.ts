@@ -290,14 +290,25 @@ export function formatCurrency(
  * server (often UTC) and client agree on the calendar date. */
 export const APP_TIME_ZONE = "Europe/Paris";
 
-function nowInAppTimeZone(): { year: number; month: number; day: number } {
-  // en-CA formats as YYYY-MM-DD.
-  const iso = new Intl.DateTimeFormat("en-CA", {
+let appDayFormat: Intl.DateTimeFormat | null = null;
+
+/**
+ * The app timezone's calendar date as YYYY-MM-DD (en-CA writes it so).
+ * Built once: on the phone's engine a formatter with a time zone is slow to
+ * make, and a list asks for the day of every row it draws.
+ */
+function appDay(): Intl.DateTimeFormat {
+  appDayFormat ??= new Intl.DateTimeFormat("en-CA", {
     timeZone: APP_TIME_ZONE,
     year: "numeric",
     month: "2-digit",
     day: "2-digit",
-  }).format(new Date());
+  });
+  return appDayFormat;
+}
+
+function nowInAppTimeZone(): { year: number; month: number; day: number } {
+  const iso = appDay().format(new Date());
   const [year, month, day] = iso.split("-").map(Number);
   return { year, month, day };
 }
@@ -308,12 +319,7 @@ function nowInAppTimeZone(): { year: number; month: number; day: number } {
  * the 5th is the day the user did it.
  */
 export function isoDateInAppTimeZone(instant: string | Date): string {
-  return new Intl.DateTimeFormat("en-CA", {
-    timeZone: APP_TIME_ZONE,
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  }).format(new Date(instant));
+  return appDay().format(new Date(instant));
 }
 
 /** An ISO date moved by whole days, across month and year ends. */

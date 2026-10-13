@@ -36,9 +36,16 @@ export type DataArea =
   | "preferences"
   /** Month reads. */
   | "reads"
-  /** Entraide: its threads and their answers, and the reactions to them. */
-  | "community";
+  /** Entraide: its threads and their answers. */
+  | "community"
+  /** Reactions, on « Nouveautés » and in Entraide. */
+  | "reactions";
 
+/**
+ * The money: what a screen reads when it names nothing, and what a write
+ * nobody mapped counts as. Entraide and reactions are not in it — no figure
+ * depends on them, and a tap on « Utile » must not redraw every tab.
+ */
 export const ALL_AREAS: readonly DataArea[] = [
   "transactions",
   "templates",
@@ -50,7 +57,13 @@ export const ALL_AREAS: readonly DataArea[] = [
   "closes",
   "preferences",
   "reads",
+];
+
+/** Everything, for a change nobody here can name (`notifyDataChanged()`). */
+const EVERY_AREA: readonly DataArea[] = [
+  ...ALL_AREAS,
   "community",
+  "reactions",
 ];
 
 /**
@@ -95,9 +108,9 @@ const TABLE_AREAS: Record<string, readonly DataArea[]> = {
   // Ask Pluclair's conversations: the Questions screen reloads its own.
   ask_conversations: [],
   ask_messages: [],
-  // A reaction: the counts Entraide's list shows. « Nouveautés » draws its
-  // own at once.
-  reactions: ["community"],
+  // A reaction: the counts Entraide's list shows. The screen pressed has
+  // drawn it already.
+  reactions: ["reactions"],
 };
 
 /**
@@ -226,7 +239,9 @@ export const announcingFetch: typeof fetch = async (input, init) => {
   return response;
 };
 
-const versions = new Map<DataArea, number>(ALL_AREAS.map((area) => [area, 0]));
+const versions = new Map<DataArea, number>(
+  EVERY_AREA.map((area) => [area, 0]),
+);
 const listeners = new Set<() => void>();
 const pending = new Set<DataArea>();
 let flushTimer: ReturnType<typeof setTimeout> | null = null;
@@ -266,7 +281,7 @@ function subscribe(listener: () => void): () => void {
  * this only for a change those two cannot see.
  */
 export function notifyDataChanged(...areas: DataArea[]): void {
-  for (const area of areas.length > 0 ? areas : ALL_AREAS) {
+  for (const area of areas.length > 0 ? areas : EVERY_AREA) {
     pending.add(area);
   }
   if (flushTimer === null) {
