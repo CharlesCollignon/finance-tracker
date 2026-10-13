@@ -67,6 +67,10 @@ merge made by hand is held by the rule alone.
 
 ## Assumed — to confirm before the phase that needs it
 
+Confirmed by the owner on 2026-10-13, as written: 1 to 5, 7 and 8 (« all as
+proposed »), so Phase 5 can start. 6 was built that way in Phase 4. 9 is
+still open.
+
 1. **Entraide is read by anyone, written by an account.** Threads are public
    and indexed (that is most of the "life" and the search traffic); posting,
    answering, reacting and voting need to be signed in.
