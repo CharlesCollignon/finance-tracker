@@ -15,6 +15,8 @@ import {
   purchasesToConfirmNotification,
   transferReminderNotifications,
   usualChargeAmount,
+  entraideAnswerNotification,
+  entraideSolvedNotification,
 } from "./push-messages";
 import type { PurchaseToConfirm } from "./purchases-to-confirm";
 
@@ -521,5 +523,39 @@ describe("forSpace", () => {
     );
     expect(said.url).toBe("/transactions?review=1&owner=s1");
     expect(said.covers).toEqual(["space:s1:b"]);
+  });
+});
+
+describe("Entraide's pushes", () => {
+  const t = translator("fr");
+
+  it("says who answered, on which thread, once per answer", () => {
+    const push = entraideAnswerNotification({
+      replyId: 7,
+      handle: "Bob_Lyon",
+      title: "Faut-il un PEA à 25 ans ?",
+      url: "/blog/entraide/12-faut-il-un-pea-a-25-ans",
+      t,
+      locale: "fr",
+    });
+    expect(push).toMatchObject({
+      kind: "community",
+      key: "community:answer:7",
+      title: "Bob_Lyon vous a répondu",
+      url: "/blog/entraide/12-faut-il-un-pea-a-25-ans",
+    });
+    expect(push.body).toContain("Faut-il un PEA à 25 ans ?");
+  });
+
+  it("says an answer solved a question, once per answer", () => {
+    const push = entraideSolvedNotification({
+      replyId: 7,
+      title: "Faut-il un PEA à 25 ans ?",
+      url: "/blog/entraide/12-faut-il-un-pea-a-25-ans",
+      t,
+      locale: "fr",
+    });
+    expect(push.key).toBe("community:solved:7");
+    expect(push.title).toBe("Votre réponse a résolu la question");
   });
 });

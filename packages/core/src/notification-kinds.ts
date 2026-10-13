@@ -41,6 +41,8 @@ export const NOTIFICATION_KINDS = [
   "monthOpen",
   /** The bank connection needs a renewal or has stopped. */
   "bank",
+  /** Entraide: an answer to the reader's question, or theirs marked « Résolu ». */
+  "community",
 ] as const;
 
 export type NotificationKind = (typeof NOTIFICATION_KINDS)[number];
@@ -49,16 +51,20 @@ export type NotificationPrefs = Partial<Record<NotificationKind, boolean>>;
 
 /**
  * The switches an account is shown: every kind, but the property's only to
- * an account that has the Immobilier tab — the others would never hear it.
+ * an account that has the Immobilier tab, and Entraide's only once it is
+ * open — the others would never hear them.
  */
 export function shownNotificationKinds({
   property,
+  community,
 }: {
   property: boolean;
+  community: boolean;
 }): readonly NotificationKind[] {
-  return property
-    ? NOTIFICATION_KINDS
-    : NOTIFICATION_KINDS.filter((kind) => kind !== "property");
+  return NOTIFICATION_KINDS.filter(
+    (kind) =>
+      (kind !== "property" || property) && (kind !== "community" || community),
+  );
 }
 
 /**

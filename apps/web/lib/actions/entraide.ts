@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { after } from "next/server";
 import type { ActionResult } from "@finance/core/action-result";
 import {
   ENTRAIDE_HREF,
@@ -17,6 +18,7 @@ import type { Db } from "@finance/data/client";
 import * as entraide from "@finance/data/entraide";
 import { asUser } from "@/lib/actions/as-user";
 import { toCard, type EntraideCard } from "@/lib/entraide-cards";
+import { pushAnswer, pushSolved } from "@/lib/entraide-push";
 import { isGuideSlug } from "@/lib/guide-list";
 import { matchGuides } from "@/lib/guide-search";
 import { allGuides } from "@/lib/guides";
@@ -33,7 +35,9 @@ import { entraideRulesVisible } from "@/components/marketing/legal-status";
  * (`entraideError`), for the form to say in words.
  *
  * The pages read cookies, so they are drawn fresh on each visit; a write
- * still marks the list and the thread stale, for the router's cache.
+ * still marks the list and the thread stale, for the router's cache. An
+ * answer, and an answer marked « Résolu », are pushed to whoever they
+ * concern once the reply has gone back (`lib/entraide-push.ts`).
  */
 
 const CLOSED = { error: "errors.notAllowed" } as const;
@@ -267,6 +271,8 @@ export async function publishReply(
   );
   if (result.success) {
     redraw();
+    const replyId = result.id;
+    after(() => pushAnswer(replyId));
   }
   return result;
 }
@@ -315,6 +321,9 @@ export async function setSolved(
   );
   if (result.success) {
     redraw();
+    if (replyId !== null) {
+      after(() => pushSolved(postId));
+    }
   }
   return result;
 }

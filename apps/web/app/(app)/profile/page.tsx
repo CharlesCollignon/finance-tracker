@@ -14,6 +14,7 @@ import { getAiConnection } from "@finance/data/ai-connection";
 import { isFlagOn } from "@finance/core/flags";
 import { getFlags } from "@/lib/flags";
 import type { AiConnectOutcome } from "@/components/profile/AiAccountSection";
+import { entraideRulesVisible } from "@/components/marketing/legal-status";
 
 const AI_OUTCOMES: readonly AiConnectOutcome[] = [
   "connected",
@@ -105,6 +106,7 @@ export default async function ProfilePage({ searchParams }: ProfilePageProps) {
       measureAudience={measureAudience}
       showBank={offered || bankStatus !== "unconfigured"}
       showProperty={isFlagOn(flags, "property.track")}
+      showCommunity={entraideRulesVisible()}
       aiAccount={aiAccount}
       space={owner?.space ?? null}
       userId={user.id}

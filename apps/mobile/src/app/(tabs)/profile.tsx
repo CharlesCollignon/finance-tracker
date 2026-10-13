@@ -70,6 +70,7 @@ const KIND_ICONS: Record<
   property: "home-outline",
   monthOpen: "calendar-clear-outline",
   bank: "business-outline",
+  community: "chatbubbles-outline",
 };
 
 /** Which row has opened its editor. One at a time, so the list stays a list. */
@@ -461,7 +462,12 @@ export default function ProfileScreen() {
               />
             }
           />
-          {shownNotificationKinds({ property: tracksProperty }).map((kind) => (
+          {shownNotificationKinds({
+            property: tracksProperty,
+            // Entraide is on the web and not open yet: its switch comes to
+            // the phone with it (Phase 6 of the blog plan).
+            community: false,
+          }).map((kind) => (
             <ListRow
               key={kind}
               icon={KIND_ICONS[kind]}

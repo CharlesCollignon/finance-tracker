@@ -6,6 +6,7 @@ import {
   CalendarCheck,
   CalendarPlus,
   ChartLineUp,
+  ChatsCircle,
   Flag,
   HandCoins,
   House,
@@ -42,6 +43,7 @@ const ICONS: Record<NotificationKind, Icon> = {
   property: House,
   monthOpen: CalendarPlus,
   bank: Bank,
+  community: ChatsCircle,
 };
 
 /**
