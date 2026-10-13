@@ -2,7 +2,6 @@ import type { actionsEn } from "./actions.en";
 
 /** The French half of `actions.en.ts`, mounted by `fr.ts` as `actions`. */
 export const actionsFr: typeof actionsEn = {
-  invalidDateRange: "Période invalide",
   invalidStartingBalance: "Saisissez un solde de départ valide",
   shareCountPositive: "Le nombre de parts doit être positif",
   unsupportedLanguage: "Langue non prise en charge",

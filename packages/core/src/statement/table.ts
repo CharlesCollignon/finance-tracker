@@ -691,9 +691,33 @@ export function readTable(
     bankFromIban(scanned.account?.iban) ??
     bankFromText(preambleText);
 
-  const order = dateOrderOf(data.map((row) => cell(row, columns!.date)));
+  return blocksFrom(data, columns, {
+    bank,
+    scanned,
+    defaultCurrency,
+    table,
+  });
+}
+
+/** The lines of `data` under `columns`, grouped by account. */
+function blocksFrom(
+  data: readonly string[][],
+  columns: Columns,
+  {
+    bank,
+    scanned,
+    defaultCurrency,
+    table,
+  }: {
+    bank: BankId | null;
+    scanned: ReturnType<typeof scanPreamble>;
+    defaultCurrency: string;
+    table: string[][];
+  },
+): TableReading {
+  const order = dateOrderOf(data.map((row) => cell(row, columns.date)));
   const valueOrder = dateOrderOf(
-    data.map((row) => cell(row, columns!.valueDate)),
+    data.map((row) => cell(row, columns.valueDate)),
   );
   const lines = new Map<
     string,
@@ -810,4 +834,43 @@ export function readTable(
     };
   });
   return { bank, blocks, skipped, problem: null, table: null };
+}
+
+/** Which column is which, as the person said when the file could not. */
+export interface TableMapping {
+  /** Whether the first row names the columns rather than holding a line. */
+  header: boolean;
+  date: number;
+  label: number;
+  /** A signed amount, or else debit and credit apart. */
+  amount: number | null;
+  debit: number | null;
+  credit: number | null;
+}
+
+/** A table read under the columns the person named (`problem: "columns"`). */
+export function readMappedTable(
+  rows: readonly string[][],
+  mapping: TableMapping,
+  { defaultCurrency = "EUR" } = {},
+): TableReading {
+  const table = rows.filter((row) => !emptyRow(row)).map((row) => [...row]);
+  const data = mapping.header ? table.slice(1) : table;
+  return blocksFrom(
+    data,
+    {
+      ...NO_COLUMNS,
+      date: mapping.date,
+      label: mapping.label,
+      amount: mapping.amount,
+      debit: mapping.amount === null ? mapping.debit : null,
+      credit: mapping.amount === null ? mapping.credit : null,
+    },
+    {
+      bank: mapping.header ? bankFromHeader(table[0] ?? []) : null,
+      scanned: { account: null, balance: null },
+      defaultCurrency,
+      table,
+    },
+  );
 }

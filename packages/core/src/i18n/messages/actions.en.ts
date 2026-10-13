@@ -9,7 +9,6 @@
  */
 export const actionsEn = {
   /* Input that did not survive validation, beyond `errors.invalidInput`. */
-  invalidDateRange: "Invalid date range",
   invalidStartingBalance: "Enter a valid starting balance",
   shareCountPositive: "Share count must be a positive number",
   unsupportedLanguage: "Unsupported language",

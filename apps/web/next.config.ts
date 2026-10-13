@@ -34,6 +34,9 @@ const nextConfig: NextConfig = {
   transpilePackages: ["@finance/core", "@finance/data"],
   experimental: {
     optimizePackageImports: ["@phosphor-icons/react"],
+    // A statement's lines go to the server as JSON: a year of a busy
+    // account is a few thousand of them, past the 1 MB default.
+    serverActions: { bodySizeLimit: "4mb" },
   },
   async redirects() {
     return [

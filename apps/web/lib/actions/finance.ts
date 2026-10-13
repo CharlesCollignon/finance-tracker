@@ -2,7 +2,6 @@
 
 import { after } from "next/server";
 import { recordActivity } from "@finance/data/activity";
-import { z } from "zod";
 import { getLocale } from "@/lib/locale";
 
 import { revalidateApp } from "@/lib/revalidate-paths";
@@ -19,14 +18,12 @@ import { getAuthUser } from "@/lib/auth/get-user";
 import { createClient } from "@/lib/supabase/server";
 import { seedDefaultCategories } from "@/lib/queries/categories";
 import { getOwner } from "@/lib/owner";
-import { shiftIsoDate, todayIsoLocal } from "@finance/core/constants";
+import { todayIsoLocal } from "@finance/core/constants";
 import { saveRecurringTemplate } from "@finance/data/recurring-templates";
 import {
   authSchema,
   recurringTemplateSchema,
 } from "@finance/core/validations/finance";
-import { cashDateOf, movedBetween } from "@finance/core/cash-date";
-import { dbError } from "@finance/data/errors";
 
 /**
  * Whose money an action here writes: the owner on screen (`getOwner`) — the
@@ -153,81 +150,6 @@ export async function saveQuickTransaction(
     }
     return result;
   });
-}
-
-/**
- * Commit a reviewed CSV import.
- *
- * The rows arriving here have already been parsed, de-duplicated and
- * categorised in the review step — this only re-validates and writes, so a
- * tampered payload cannot bypass the schema.
- */
-export async function importTransactions(
-  rows: {
-    categoryId: string;
-    amount: number;
-    occurredOn: string;
-    note?: string;
-  }[],
-): Promise<ActionResult<{ imported: number }>> {
-  return asOwner((db, userId) => ledger.importTransactions(db, userId, rows));
-}
-
-/**
- * The ledger rows that overlap an import's date range.
- *
- * Only the three fields the duplicate check needs are returned, so importing a
- * long statement does not drag the user's whole history to the browser.
- */
-export async function getExistingKeysForRange(
-  from: string,
-  to: string,
-): Promise<{
-  error?: string;
-  keys?: { occurredOn: string; amount: number; note: string | null }[];
-}> {
-  const user = await getUser();
-  if (!user) {
-    return { error: "errors.notAuthenticated" };
-  }
-
-  const range = z
-    .object({
-      from: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
-      to: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
-    })
-    .safeParse({ from, to });
-
-  if (!range.success) {
-    return { error: "actions.invalidDateRange" };
-  }
-
-  // A statement dates each line by the day its money moved, so the check
-  // does too (`cashDateOf`). An income counted for next month sits up to a
-  // month after that day, hence the wider read before the filter below.
-  // `*` rather than naming `cash_on`, which does not exist before 045.
-  const supabase = await createClient();
-  const { data: rows, error } = await supabase
-    .from("transactions")
-    .select("*")
-    .eq("user_id", user.id)
-    .gte("occurred_on", range.data.from)
-    .lte("occurred_on", shiftIsoDate(range.data.to, 31));
-  const data = (rows ?? [])
-    .filter((row) => movedBetween(row, range.data.from, range.data.to))
-    .map((row) => ({ ...row, occurred_on: cashDateOf(row) }));
-
-  if (error) {
-    return { error: dbError(error) };
-  }
-
-  return {
-    keys: (data ?? []).map((row) => ({
-      occurredOn: row.occurred_on,
-      amount: Number(row.amount),
-      note: row.note,
-    })),
-  };
 }
 
 /**

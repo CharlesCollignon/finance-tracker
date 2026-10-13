@@ -429,6 +429,95 @@ export const en = {
   },
 
   /** Bringing a bank statement in from a file, step by step. */
+  /** Importing a bank statement, with no bank connection (Phase 1). */
+  statements: {
+    heading: "Import a statement",
+    intro:
+      "Drop the file your bank gives you, as it is. Pluclair reads it, recognises what it already knows, and keeps only the transactions, never the file.",
+    drop: "Drop your bank's file here",
+    dropping: "Let go to read it",
+    choose: "Choose a file",
+    formats: "CSV, Excel, OFX, QIF, CAMT, MT940 or CFONB",
+    where: "Where is my bank's export?",
+    wherePick: "Your bank",
+    otherBank: "Another bank",
+    openSite: "Open {bank}'s website",
+    reading: "Reading the file…",
+    lines: { one: "{count} transaction", other: "{count} transactions" },
+    period: "from {from} to {to}",
+    statementOf: "{bank} statement",
+    statement: "Statement",
+    accountKnown: "Already known",
+    accountPick: "Which account is it?",
+    accountNew: "A new account",
+    accountName: "Its name",
+    accountMine: "My account",
+    signQuestion: "These amounts are",
+    signOut: "Spending",
+    signIn: "Money in",
+    known: { one: "{count} already there", other: "{count} already there" },
+    matched: {
+      one: "{count} matched with what you entered",
+      other: "{count} matched with what you entered",
+    },
+    filed: {
+      one: "{count} filed on its own",
+      other: "{count} filed on their own",
+    },
+    waiting: { one: "{count} to check", other: "{count} to check" },
+    likelyTyped: {
+      one: "{count} probably entered already, to confirm",
+      other: "{count} probably entered already, to confirm",
+    },
+    left: {
+      one: "{count} left out, a transfer between your accounts",
+      other: "{count} left out, transfers between your accounts",
+    },
+    savingsKept:
+      "A savings account gives its balance: its transactions stay out of the Journal.",
+    ignoredKept: "Not followed: nothing from it goes in.",
+    import: "Import",
+    importing: "Importing…",
+    added: {
+      one: "{count} transaction added",
+      other: "{count} transactions added",
+    },
+    addedWaiting: {
+      one: "{count} waits in « To check »",
+      other: "{count} wait in « To check »",
+    },
+    nothingNew: "Nothing new: this statement was already here.",
+    review: "Check them",
+    undo: "Undo this import",
+    undone: "Import undone.",
+    undoTooLate: "An import can be undone for 30 days.",
+    another: "Import another file",
+    history: "Your imports",
+    undoneTag: "Undone",
+    tooBig: "This file is too big for a statement (over 10 MB).",
+    empty: "This file is empty.",
+    unreadable:
+      "Pluclair cannot read this file. Is it the export your bank gives?",
+    pdf: "PDF statements cannot be read yet. Take your bank's CSV, OFX or Excel export instead.",
+    xls: "This old Excel format cannot be read yet. Choose CSV, or the newer Excel (.xlsx).",
+    image:
+      "Pictures cannot be read yet. Take your bank's CSV, OFX or Excel export instead.",
+    columns: "Which column is which? Pluclair could not tell on its own.",
+    skipped: {
+      one: "{count} line could not be read and is left out.",
+      other: "{count} lines could not be read and are left out.",
+    },
+    mapHeader: "The first row names the columns",
+    mapDate: "Date",
+    mapLabel: "Wording",
+    mapAmount: "Amount",
+    mapSplit: "Debit and credit apart",
+    mapDebit: "Debit",
+    mapCredit: "Credit",
+    mapColumn: "Column {n}",
+    mapApply: "Read it like this",
+  },
+
   importer: {
     statusReady: "Ready",
     statusSkipped: "Skipped",
@@ -438,8 +527,6 @@ export const en = {
     columnDate: "Date",
     columnDescription: "Description",
     columnAmount: "Amount",
-    columnCategory: "Category",
-    columnStatus: "Status",
     debitColumn: "Money out (debit)",
     creditColumn: "Money in (credit)",
     notInThisFile: "Not in this file",
@@ -472,9 +559,6 @@ export const en = {
       other: "Imported {count} transactions",
     },
     /* Reading the file, before there is anything to map. */
-    intro:
-      "Export a CSV or an OFX from your bank and drop it here. The file is read in your browser — nothing is uploaded, and nothing is saved until you have reviewed every row.",
-    dropFile: "Drop a .csv or .ofx file here",
     fileTooLarge: "That file is larger than 5 MB — is it the right export?",
     fileNoRows: "That file has no rows in it.",
     fileUnreadable: "That file could not be opened.",
@@ -482,17 +566,10 @@ export const en = {
       "Export a CSV or an OFX from your bank and pick it here. The file is read on your phone — nothing is uploaded, and nothing is saved until you have reviewed every row.",
     firstRows: "First rows as read",
     categoryForRow: "Category for {description}",
-    noRowsRead: "No rows could be read from that file.",
-    /* Mapping. `columnNumber` stands in for a column the file did not name. */
-    columnNumber: "Column {number}",
+    /* Mapping. */
     rowCount: { one: "{count} row", other: "{count} rows" },
-    guesses: "These are the app’s guesses. Change any that are wrong.",
-    spendingIs: "In this file, spending is",
-    signNegative: "Negative (−12.50)",
-    signPositive: "Positive (12.50)",
     /* Reviewing. */
     categoryForLine: "Category for line {line}",
-    choose: "Choose…",
   },
 
   /** The Plan surface: spending caps, savings goals and tags. */
