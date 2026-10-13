@@ -95,16 +95,14 @@ flow" (a day's wait, then biometrics) — most people would stop there.
 
 ### Before the public download: the legal pages
 
-`LEGAL_DRAFT` is still `true` (`apps/web/components/marketing/legal-status.ts`),
-so the privacy policy, the terms and the mentions légales answer 404 in
-production. A public site must show its mentions légales (LCEN), and an app
-holding other people's bank data must show its privacy notice before signup
-(RGPD art. 13). The blanks were filled on 2026-10-12 (published as a
-private individual, under LCEN art. 1-1 II, with pluclair.app@gmail.com as
-the contact) but one: open-banking.io's role under the RGPD, from their
-answer to the owner's letter. Then have the text read, and flip the flag.
-The terms already say Pluclair is an open beta and that the APK comes from
-pluclair.com only.
+Done on 2026-10-13: `LEGAL_DRAFT` is `false`
+(`apps/web/components/marketing/legal-status.ts`), so the privacy policy,
+the terms and the mentions légales are served in production, with no blank
+left. The owner chose not to have them read by a lawyer and to take the
+most careful option wherever one was open (`docs/legal/`). The terms say
+Pluclair is an open beta and that the APK comes from pluclair.com only.
+What is left for the public download is publishing the release and
+setting `ANDROID_APK_URL` (above).
 
 That exception keeps the home address off the site only if the host has
 the publisher's identification details — name, home address and phone
