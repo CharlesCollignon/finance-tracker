@@ -1,7 +1,8 @@
 /**
- * Reactions to « Nouveautés » and votes for « Bientôt » (migration 070):
- * what can be said, about what, and how a tally changes when someone says
- * it — the same on both apps, and on the screen before the write returns.
+ * Reactions to « Nouveautés », votes for « Bientôt » (migration 070), and
+ * reactions in Entraide (migration 071): what can be said, about what, and
+ * how a tally changes when someone says it — the same on both apps, and on
+ * the screen before the write returns.
  */
 
 /** On a shipped change: « J'adore », « Utile », « Enfin ! ». */
@@ -12,7 +13,15 @@ export type ChangelogReaction = (typeof CHANGELOG_REACTIONS)[number];
 /** On an item of « Bientôt »: « J'attends ça ». */
 export const ROADMAP_VOTE = "want";
 
-export type ReactionKind = ChangelogReaction | typeof ROADMAP_VOTE;
+/** What « Nouveautés » shows: the three reactions and the vote. */
+export type NouveautesReaction = ChangelogReaction | typeof ROADMAP_VOTE;
+
+/** On a question or an answer in Entraide: « Utile », « Merci ». */
+export const ENTRAIDE_REACTIONS = ["useful", "thanks"] as const;
+
+export type EntraideReaction = (typeof ENTRAIDE_REACTIONS)[number];
+
+export type ReactionKind = NouveautesReaction | EntraideReaction;
 
 export function changelogTarget(entryId: string): string {
   return `changelog:${entryId}`;
@@ -20,6 +29,30 @@ export function changelogTarget(entryId: string): string {
 
 export function roadmapTarget(itemId: string): string {
   return `roadmap:${itemId}`;
+}
+
+export function postTarget(postId: number): string {
+  return `post:${postId}`;
+}
+
+export function replyTarget(replyId: number): string {
+  return `reply:${replyId}`;
+}
+
+/**
+ * Whether `kind` may be said about `target`: what the `reactions` table's
+ * check holds (migrations 070 and 071), asked before the write so a wrong
+ * pair never reaches it.
+ */
+export function reactionAllowed(target: string, kind: ReactionKind): boolean {
+  const kinds: readonly ReactionKind[] = target.startsWith("changelog:")
+    ? CHANGELOG_REACTIONS
+    : target.startsWith("roadmap:")
+      ? [ROADMAP_VOTE]
+      : target.startsWith("post:") || target.startsWith("reply:")
+        ? ENTRAIDE_REACTIONS
+        : [];
+  return kinds.includes(kind);
 }
 
 /** How many said each kind about one thing, and which of them the reader did. */

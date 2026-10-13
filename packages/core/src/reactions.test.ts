@@ -2,6 +2,9 @@ import { describe, expect, it } from "vitest";
 import {
   changelogTarget,
   NO_TALLY,
+  postTarget,
+  reactionAllowed,
+  replyTarget,
   roadmapTarget,
   toggledTally,
 } from "./reactions";
@@ -12,6 +15,19 @@ describe("targets", () => {
       "changelog:2026-10-12-nouveautes",
     );
     expect(roadmapTarget("entraide")).toBe("roadmap:entraide");
+    expect(postTarget(42)).toBe("post:42");
+    expect(replyTarget(7)).toBe("reply:7");
+  });
+
+  it("allow each thing only its own reactions", () => {
+    expect(reactionAllowed(changelogTarget("x"), "love")).toBe(true);
+    expect(reactionAllowed(changelogTarget("x"), "thanks")).toBe(false);
+    expect(reactionAllowed(roadmapTarget("x"), "want")).toBe(true);
+    expect(reactionAllowed(roadmapTarget("x"), "useful")).toBe(false);
+    expect(reactionAllowed(postTarget(1), "useful")).toBe(true);
+    expect(reactionAllowed(replyTarget(1), "thanks")).toBe(true);
+    expect(reactionAllowed(replyTarget(1), "love")).toBe(false);
+    expect(reactionAllowed("elsewhere:1", "useful")).toBe(false);
   });
 });
 

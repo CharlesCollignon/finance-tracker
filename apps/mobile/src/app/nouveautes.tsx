@@ -24,6 +24,7 @@ import {
   changelogTarget,
   ROADMAP_VOTE,
   roadmapTarget,
+  type NouveautesReaction,
   type ReactionKind,
   type ReactionTally,
 } from "@finance/core/reactions";
@@ -323,7 +324,7 @@ function EntryCard({
 }
 
 const REACTION_ICONS: Record<
-  ReactionKind,
+  NouveautesReaction,
   [filled: keyof typeof Ionicons.glyphMap, outline: keyof typeof Ionicons.glyphMap]
 > = {
   love: ["heart", "heart-outline"],
@@ -343,7 +344,7 @@ function ReactionRow({
   onReact,
   vote = false,
 }: {
-  kinds: readonly ReactionKind[];
+  kinds: readonly NouveautesReaction[];
   tally: ReactionTally;
   onReact: (kind: ReactionKind) => Promise<{ ok: boolean }>;
   vote?: boolean;
@@ -352,7 +353,7 @@ function ReactionRow({
   const colors = useThemeColors();
   const [pops, setPops] = useState<Partial<Record<ReactionKind, number>>>({});
   const [failed, setFailed] = useState(false);
-  const labels: Record<ReactionKind, string> = {
+  const labels: Record<NouveautesReaction, string> = {
     love: t("nouveautes.reactLove"),
     useful: t("nouveautes.reactUseful"),
     finally: t("nouveautes.reactFinally"),

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { AnimatePresence, m } from "motion/react";
 import {
   ArrowRight,
+  HandHeart,
   HandsClapping,
   Heart,
   Hourglass,
@@ -17,9 +18,8 @@ import {
   type ReactionTally,
 } from "@finance/core/reactions";
 import { DURATION, EASE_STANDARD } from "@finance/core/motion";
-import { setNouveautesReaction } from "@/lib/actions/nouveautes";
+import { setReaction } from "@/lib/actions/reactions";
 import { marketingFocus } from "@/components/marketing/marketing-focus";
-import type { NouveautesCopy } from "@/components/marketing/nouveautes-copy";
 import { cn } from "@/lib/utils";
 
 const EASE = [...EASE_STANDARD] as [number, number, number, number];
@@ -32,11 +32,24 @@ const ICONS: Record<ReactionKind, Icon> = {
   useful: ThumbsUp,
   finally: HandsClapping,
   want: Hourglass,
+  thanks: HandHeart,
+};
+
+/**
+ * The words around the buttons: each reaction's name, and what is said to
+ * a visitor who presses one, or when a write is refused.
+ */
+export type ReactionsCopy<K extends ReactionKind> = Record<K, string> & {
+  label: string;
+  signIn: string;
+  signInCta: string;
+  failed: string;
 };
 
 /**
  * What readers say about a change — « J'adore », « Utile », « Enfin ! » —
- * or, on an item of « Bientôt », « J'attends ça ».
+ * or, on an item of « Bientôt », « J'attends ça »; in Entraide, « Utile »
+ * and « Merci » on a question or an answer.
  *
  * Counts for everyone; saying needs an account, and a visitor's press opens
  * the way to sign in, back to this change after. A press shows at once: the
@@ -44,7 +57,7 @@ const ICONS: Record<ReactionKind, Icon> = {
  * refused, both go back and say so. Ink, not gold: a reaction is not a
  * figure or a moment (DESIGN.md, The Rare Accent Rule).
  */
-export function Reactions({
+export function Reactions<K extends ReactionKind>({
   target,
   kinds,
   initial,
@@ -54,9 +67,9 @@ export function Reactions({
   vote = false,
 }: {
   target: string;
-  kinds: readonly ReactionKind[];
+  kinds: readonly K[];
   initial: ReactionTally;
-  copy: NouveautesCopy["reactions"];
+  copy: ReactionsCopy<K>;
   signedIn: boolean;
   loginHref: string;
   /** One button with its words, for « Bientôt »'s vote. */
@@ -67,7 +80,7 @@ export function Reactions({
   const [ask, setAsk] = useState(false);
   const [failed, setFailed] = useState(false);
 
-  async function press(kind: ReactionKind) {
+  async function press(kind: K) {
     if (!signedIn) {
       setAsk((open) => !open);
       return;
@@ -79,7 +92,7 @@ export function Reactions({
     if (on) {
       setPops((current) => ({ ...current, [kind]: (current[kind] ?? 0) + 1 }));
     }
-    const result = await setNouveautesReaction(target, kind, on);
+    const result = await setReaction(target, kind, on);
     if (!result.success) {
       setTally(before);
       setFailed(true);
@@ -94,7 +107,7 @@ export function Reactions({
         className="flex flex-wrap items-center gap-1.5"
       >
         {kinds.map((kind) => {
-          const Mark = ICONS[kind];
+          const Mark: Icon = ICONS[kind];
           const mine = tally.mine.includes(kind);
           const count = tally.counts[kind] ?? 0;
           return (
