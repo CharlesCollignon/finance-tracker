@@ -4,7 +4,7 @@ import Link from "next/link";
 import { m } from "motion/react";
 import { ChatCircle, CheckCircle, ThumbsUp } from "@phosphor-icons/react";
 import { countLabel } from "@/components/marketing/nouveautes-copy";
-import type { EntraideCopy } from "@/components/marketing/entraide-copy";
+import type { EntraideCopy } from "@finance/core/entraide-copy";
 import { AuthorLine } from "@/components/marketing/entraide/AuthorLine";
 import { marketingFocus } from "@/components/marketing/marketing-focus";
 import type { EntraideCard } from "@/lib/entraide-cards";

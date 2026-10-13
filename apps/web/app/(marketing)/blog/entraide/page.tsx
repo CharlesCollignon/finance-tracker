@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { ENTRAIDE_HREF } from "@finance/core/entraide";
-import { entraideCopyFor } from "@/components/marketing/entraide-copy";
+import { entraideCopyFor } from "@finance/core/entraide-copy";
 import { EntraidePage } from "@/components/marketing/entraide/EntraidePage";
 import {
   filterFromParam,

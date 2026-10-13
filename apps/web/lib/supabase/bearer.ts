@@ -14,6 +14,8 @@ import { getSupabaseEnv } from "@/lib/supabase/env";
  */
 export interface BearerSession {
   userId: string;
+  /** The account's address, for what the law asks a host to keep. */
+  email: string | null;
   supabase: ReturnType<typeof createClient<Database>>;
 }
 
@@ -54,5 +56,7 @@ export async function sessionFromBearer(
     error,
   } = await supabase.auth.getUser(token);
 
-  return error || !user ? null : { userId: user.id, supabase };
+  return error || !user
+    ? null
+    : { userId: user.id, email: user.email ?? null, supabase };
 }

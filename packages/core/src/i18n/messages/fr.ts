@@ -84,6 +84,7 @@ export const fr: Messages = {
     waiting: "{count} en attente",
     nouveautes: "Nouveautés",
     nouveautesUnseen: "{count} à découvrir",
+    entraide: "Entraide",
   },
 
   pages: {

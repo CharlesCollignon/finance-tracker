@@ -1,6 +1,6 @@
 import { EyeSlash } from "@phosphor-icons/react/dist/ssr";
 import type { EntraideDecision } from "@finance/core/entraide";
-import type { EntraideCopy } from "@/components/marketing/entraide-copy";
+import type { EntraideCopy } from "@finance/core/entraide-copy";
 
 /**
  * Why a message of the reader's is hidden, as the rules promise to say it

@@ -16,6 +16,8 @@
  * the app turns the answer into whatever its own navigator wants.
  */
 
+import { ENTRAIDE_HREF, threadIdOf } from "./entraide";
+
 /** A route this app has, and the query it was asked for. */
 export interface MobileRoute {
   pathname: string;
@@ -34,10 +36,23 @@ const MOBILE_ROUTES = [
   "/bank",
   "/property",
   "/year",
+  "/entraide",
 ] as const;
 
 /** A property's own screen, the same address on both apps. */
 const PROPERTY_SCREEN = /^\/property\/[0-9a-f-]{36}$/;
+
+/**
+ * An Entraide thread: `/blog/entraide/42-its-title` on the web, whatever
+ * the title says now, and `/entraide/42` here. The moderation queue and the
+ * rules stay on the web.
+ */
+function entraideThread(path: string): string | null {
+  const id = path.startsWith(`${ENTRAIDE_HREF}/`)
+    ? threadIdOf(path.slice(ENTRAIDE_HREF.length + 1))
+    : null;
+  return id === null ? null : `/entraide/${id}`;
+}
 
 /** Web path → the phone's name for the same surface. */
 const RENAMED: Record<string, string> = {
@@ -45,6 +60,7 @@ const RENAMED: Record<string, string> = {
   "/plan": "/planning",
   // The Plan's old web address, for a notification sent before it moved.
   "/budgets": "/planning",
+  [ENTRAIDE_HREF]: "/entraide",
 };
 
 /**
@@ -65,9 +81,11 @@ export function mobileRouteForPushUrl(url: unknown): MobileRoute | null {
   }
 
   const [path = "/", query] = url.split("?");
-  const pathname = RENAMED[path] ?? path;
+  const thread = entraideThread(path);
+  const pathname = thread ?? RENAMED[path] ?? path;
 
   if (
+    thread === null &&
     !(MOBILE_ROUTES as readonly string[]).includes(pathname) &&
     !PROPERTY_SCREEN.test(pathname)
   ) {

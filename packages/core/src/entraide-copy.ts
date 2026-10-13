@@ -1,15 +1,19 @@
-import type { EntraideError, EntraideRule } from "@finance/core/entraide";
-import type { MaskKind } from "@finance/core/entraide-mask";
-import type { Locale } from "@finance/core/i18n/locale";
-import type { EntraideReaction } from "@finance/core/reactions";
-import { entraideCopyFr } from "@/components/marketing/entraide-copy.fr";
-import type { ReactionsCopy } from "@/components/marketing/nouveautes/Reactions";
+import { formatFullDate, isoDateInAppTimeZone } from "./constants";
+import type { EntraideError, EntraideRule } from "./entraide";
+import { entraideCopyFr } from "./entraide-copy.fr";
+import type { MaskKind } from "./entraide-mask";
+import type { Locale } from "./i18n/locale";
+import type { EntraideReaction } from "./reactions";
 
 /**
  * The words around Entraide: its list, a thread, the forms. What members
  * write is theirs, in whatever language they write it; the frame is French
  * first, English for an English reader. `{count}`, `{kinds}` and the like
  * are filled in where the words are used.
+ *
+ * Here rather than in either app so the website and the phone say the same
+ * thing — a rule named one way in a report and another in the decision
+ * would be two rules.
  */
 export interface EntraideCopy {
   meta: { title: string; description: string };
@@ -53,6 +57,8 @@ export interface EntraideCopy {
     signInCta: string;
   };
   list: {
+    /** The phone's way back from the list. */
+    back: string;
     empty: string;
     emptyFiltered: string;
     more: string;
@@ -82,6 +88,8 @@ export interface EntraideCopy {
     delete: string;
     confirmDelete: string;
     aboutGuide: string;
+    /** A thread that is no longer there, opened from an old link. */
+    missing: string;
   };
   report: {
     button: string;
@@ -91,6 +99,9 @@ export interface EntraideCopy {
     sending: string;
     sent: string;
     signIn: string;
+    /** Once reported, in place of « Signaler ». */
+    done: string;
+    close: string;
   };
   /** Each rule, as a report names it and a decision applies it. */
   rules: Record<EntraideRule, string>;
@@ -136,7 +147,12 @@ export interface EntraideCopy {
     mailChallenge: string;
   };
   when: { now: string; minutes: string; hours: string; yesterday: string };
-  reactions: ReactionsCopy<EntraideReaction>;
+  reactions: Record<EntraideReaction, string> & {
+    label: string;
+    signIn: string;
+    signInCta: string;
+    failed: string;
+  };
   errors: Record<EntraideError, string> & {
     generic: string;
     tooManyAttempts: string;
@@ -204,6 +220,7 @@ export const entraideCopy: EntraideCopy = {
     signInCta: "Sign in",
   },
   list: {
+    back: "Back",
     empty: "No question yet. Ask the first one.",
     emptyFiltered: "Nothing here for now.",
     more: "Show more",
@@ -235,6 +252,7 @@ export const entraideCopy: EntraideCopy = {
     confirmDelete:
       "Delete this message? It will be replaced by « Message deleted ».",
     aboutGuide: "About the guide",
+    missing: "This thread is no longer here.",
   },
   report: {
     button: "Report",
@@ -245,6 +263,8 @@ export const entraideCopy: EntraideCopy = {
     sent: "Thank you, it is reported. Nobody but the publisher will know it was you.",
     signIn:
       "Sign in to report, or write to pluclair.app@gmail.com with the address of the message.",
+    done: "Reported",
+    close: "Close",
   },
   rules: {
     kind: "Insult, mockery or harassment",
@@ -353,4 +373,35 @@ export function entraideErrorText(copy: EntraideCopy, key: string): string {
     default:
       return copy.errors.generic;
   }
+}
+
+/** « 1 réponse », « 3 réponses ». */
+export function countWords(
+  words: { one: string; many: string },
+  count: number,
+): string {
+  return count === 1 ? words.one : words.many.replace("{count}", String(count));
+}
+
+/** « à l'instant », « il y a 12 min », « hier », « 3 octobre ». */
+export function entraideWhen(iso: string, now: Date, locale: Locale): string {
+  const words = entraideCopyFor(locale).when;
+  const at = new Date(iso);
+  const minutes = Math.floor((now.getTime() - at.getTime()) / 60_000);
+  if (minutes < 1) {
+    return words.now;
+  }
+  if (minutes < 60) {
+    return words.minutes.replace("{count}", String(minutes));
+  }
+  if (minutes < 24 * 60) {
+    return words.hours.replace("{count}", String(Math.floor(minutes / 60)));
+  }
+  if (minutes < 48 * 60) {
+    return words.yesterday;
+  }
+  const day = isoDateInAppTimeZone(at);
+  return day.slice(0, 4) === isoDateInAppTimeZone(now).slice(0, 4)
+    ? formatFullDate(day, locale).replace(/ \d{4}$/, "")
+    : formatFullDate(day, locale);
 }

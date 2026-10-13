@@ -14,7 +14,7 @@ import { moderate } from "@/lib/actions/entraide-moderation";
 import {
   entraideErrorText,
   type EntraideCopy,
-} from "@/components/marketing/entraide-copy";
+} from "@finance/core/entraide-copy";
 import { fieldClass } from "@/components/marketing/entraide/Composer";
 import { EntraideText } from "@/components/marketing/entraide/EntraideText";
 import { marketingFocus } from "@/components/marketing/marketing-focus";

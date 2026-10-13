@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { isFlagOn } from "@finance/core/flags";
 import { readModerationQueue } from "@finance/data/entraide-moderation";
-import { entraideCopyFor } from "@/components/marketing/entraide-copy";
+import { entraideCopyFor } from "@finance/core/entraide-copy";
 import { ModerationQueue } from "@/components/marketing/entraide/ModerationQueue";
 import { getFlags } from "@/lib/flags";
 import { getLocale } from "@/lib/locale";

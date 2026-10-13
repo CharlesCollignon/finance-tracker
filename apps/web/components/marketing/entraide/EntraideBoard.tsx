@@ -11,7 +11,7 @@ import {
 import type { EntraideFilter, EntraideSort } from "@finance/core/entraide";
 import { loadMorePosts } from "@/lib/actions/entraide";
 import type { EntraideCard } from "@/lib/entraide-cards";
-import type { EntraideCopy } from "@/components/marketing/entraide-copy";
+import type { EntraideCopy } from "@finance/core/entraide-copy";
 import { Composer } from "@/components/marketing/entraide/Composer";
 import {
   ENTRAIDE_FILTER_PARAM,

@@ -128,6 +128,8 @@ export const en = {
     nouveautes: "What's new",
     /** How many changes this account has not seen yet. */
     nouveautesUnseen: "{count} new",
+    /** Entraide, the community, in the phone's account menu. */
+    entraide: "Entraide",
     /** The control that folds a surface's views away, and unfolds them. */
   },
 

@@ -7,13 +7,12 @@ import { postTarget, replyTarget } from "@finance/core/reactions";
 import * as entraide from "@finance/data/entraide";
 import { readReactions } from "@finance/data/reactions";
 import { getAuthUser } from "@/lib/auth/get-user";
-import { entraideWhen } from "@/lib/entraide-cards";
 import { guideHref, isGuideSlug } from "@/lib/guide-list";
 import { loadGuide } from "@/lib/guides";
 import { getLocale } from "@/lib/locale";
 import { getSiteUrl } from "@/lib/supabase/env";
 import { createClient } from "@/lib/supabase/server";
-import { entraideCopyFor } from "@/components/marketing/entraide-copy";
+import { entraideCopyFor, entraideWhen } from "@finance/core/entraide-copy";
 import { ThreadView } from "@/components/marketing/entraide/ThreadView";
 
 /** Read once per request, for the page and its metadata alike. */

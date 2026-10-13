@@ -10,7 +10,7 @@ import { reportTarget } from "@/lib/actions/entraide";
 import {
   entraideErrorText,
   type EntraideCopy,
-} from "@/components/marketing/entraide-copy";
+} from "@finance/core/entraide-copy";
 import { fieldClass } from "@/components/marketing/entraide/Composer";
 import { marketingFocus } from "@/components/marketing/marketing-focus";
 import { cn } from "@/lib/utils";

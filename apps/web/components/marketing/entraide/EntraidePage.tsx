@@ -14,7 +14,7 @@ import { BLOG_HREF } from "@/lib/guide-list";
 import { getLocale } from "@/lib/locale";
 import { createClient } from "@/lib/supabase/server";
 import { blogCopyFor } from "@/components/marketing/blog-copy";
-import { entraideCopyFor } from "@/components/marketing/entraide-copy";
+import { entraideCopyFor } from "@finance/core/entraide-copy";
 import { EntraideBoard } from "@/components/marketing/entraide/EntraideBoard";
 import { FadeUp, RiseLines } from "@/components/marketing/LandingReveal";
 import { marketingFocus } from "@/components/marketing/marketing-focus";
