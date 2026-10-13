@@ -63,7 +63,7 @@ export const landingCopyFr: LandingCopySections & {
       {
         id: "ledger",
         title: "Une dépense, en quelques touches",
-        body: "Le montant et le commerce : Pluclair retrouve la catégorie de la dernière fois. Ou importez le fichier CSV ou OFX de votre banque.",
+        body: "Le montant et le commerce : Pluclair retrouve la catégorie de la dernière fois. Ou importez le relevé de votre banque, tel quel : CSV, Excel, OFX, QIF…",
       },
       {
         id: "charges",
@@ -184,7 +184,7 @@ export const landingCopyFr: LandingCopySections & {
       {
         question: "Faut-il connecter sa banque ?",
         answer:
-          "Non : Pluclair ne se connecte à aucune banque. Vous notez vos opérations vous-même, ou vous importez un relevé CSV de votre banque, et une fois par mois, le solde que vous lisez sur votre compte suffit à faire le bilan.",
+          "Non : Pluclair ne se connecte à aucune banque. Vous notez vos opérations vous-même, ou vous importez le relevé que donne votre banque (CSV, Excel, OFX…), et une fois par mois, le solde que vous lisez sur votre compte suffit à faire le bilan.",
       },
       {
         question: "Que voit l’IA ?",
@@ -240,8 +240,8 @@ export const landingCopyFr: LandingCopySections & {
           body: "Rangez deux fois un commerçant dans la même catégorie, et Pluclair vous la propose la fois suivante. Vous validez, les propositions s’affinent — le classement reste le vôtre.",
         },
         {
-          title: "Ou apportez un CSV",
-          body: "Exportez un relevé depuis votre banque et réglez ses colonnes une fois. Rien n’est écrit avant que vous ayez relu la liste.",
+          title: "Ou apportez votre relevé",
+          body: "Le fichier que donne votre banque, tel quel : CSV, Excel, OFX, QIF… Pluclair reconnaît ce qu’il connaît déjà, le reste attend dans « À vérifier », et un import s’annule pendant un mois.",
         },
       ],
     },

@@ -188,7 +188,8 @@ to stop it:
    (`bank_feed_items.source`, `statement_imports`, file accounts on
    `bank_accounts`, `hasBankFeed` counting the bank alone); the feed's
    planner taking lines from any source. No screen changes.
-1. **The new import** (`statements-import`), web and phone together: the
+1. **The new import** (`statements-import`) — built 2026-10-13, web and
+   phone together: the
    friendly path, per-bank export guides, the one-card reading, the
    summary, the shared inbox, balances, undo; the old wizard goes. Server
    reading for Excel; the 1 MB server-action limit lifted for it.

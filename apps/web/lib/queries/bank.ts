@@ -5,6 +5,7 @@ import {
   walletCategoriesTheBankDebits,
 } from "@finance/data/bank-feed";
 import * as inbox from "@finance/data/bank-inbox";
+import { hasFeedLines as feedLines } from "@finance/data/statements";
 import type { BankMerchantIndex } from "@finance/core/bank-merchant";
 import type { RecurringProposal } from "@finance/core/recurring-detection";
 import type { Locale } from "@finance/core/i18n/locale";
@@ -64,6 +65,16 @@ export async function countSwallowedFeedItems(userId: string): Promise<number> {
  */
 export async function hasBankFeed(userId: string): Promise<boolean> {
   return bankFeeds(await createClient(), userId);
+}
+
+/**
+ * Whether any line, the bank's or a statement's, has come in: what decides
+ * whether the Journal shows its « À vérifier » inbox and which account each
+ * row came from. Not `hasBankFeed`, which asks whether the bank is the
+ * ledger's record (`@finance/data/statements`).
+ */
+export async function hasFeedLines(userId: string): Promise<boolean> {
+  return feedLines(await createClient(), userId);
 }
 
 /** Which bank account brought each of these rows in, by transaction id. */

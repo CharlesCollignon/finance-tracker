@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { guessColumnMapping, parseCsv } from "./csv-import";
+import { readStatementText } from "./statement/read";
 import { buildLedgerCsv, csvTextCell } from "./ledger-csv";
 import type { TransactionWithCategory } from "./types/database";
 
@@ -58,15 +58,33 @@ describe("buildLedgerCsv", () => {
     expect(csv.split("\r\n")[1]).toBe("2026-10-01,Groceries,Expense,12.5,");
   });
 
-  it("reads back through the app's own import", () => {
+  it("reads back through the app's own import, each way the money went", () => {
     for (const locale of ["fr", "en"] as const) {
-      const [headers] = parseCsv(
-        buildLedgerCsv([tx(9, "Café", "noir")], locale),
+      const statement = readStatementText(
+        buildLedgerCsv(
+          [
+            tx(9, "Café", "noir"),
+            {
+              ...tx(2500, "Salaire", "octobre"),
+              categories: {
+                ...tx(0, "Salaire", null).categories,
+                type: "income",
+              },
+            },
+          ],
+          locale,
+        ),
       );
-      const mapping = guessColumnMapping(headers!);
-      expect(mapping.date).toBe(0);
-      expect(mapping.amount).toBe(3);
-      expect(mapping.description).toBe(4);
+      const lines = statement.blocks[0]!.lines;
+      expect(lines.map((line) => line.bookingDate)).toEqual([
+        "2026-10-01",
+        "2026-10-01",
+      ]);
+      expect(
+        lines.map((line) => `${line.creditDebitIndicator} ${line.amount}`),
+      ).toEqual(["DBIT 9.00", "CRDT 2500.00"]);
+      expect(lines[0]!.remittanceInformation).toBe("noir");
+      expect(statement.blocks[0]!.signUnknown).toBe(false);
     }
   });
 });

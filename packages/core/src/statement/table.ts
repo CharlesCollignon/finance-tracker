@@ -172,7 +172,10 @@ const HINTS: Record<keyof Columns, string[]> = {
     "money in",
     "paid in",
   ],
-  direction: ["sens", "debit credit", "type de mouvement", "d c", "dc"],
+  // « Type » last: Pluclair's own export says Dépense or Revenu there; a
+  // bank's « Type » (« Carte », « CARD_PAYMENT ») says nothing of the sign,
+  // and is then not read as one.
+  direction: ["sens", "debit credit", "type de mouvement", "d c", "dc", "type"],
   // Not BoursoBank's « accountbalance »: the account's balance on the day
   // of the export, the same on every line, not the balance after each.
   balance: ["solde", "balance", "solde apres operation", "nouveau solde"],
@@ -490,14 +493,18 @@ function joinWords(label: string, detail: string): string {
 function directionOf(value: string): "in" | "out" | null {
   const word = normalize(value);
   if (
-    /^(d|db|dbit|debit|debiteur|sortie|out|-)$/.test(word) ||
-    value.trim() === "-"
+    value.trim() === "-" ||
+    /^(d|db|dbit|debit|debiteur|sortie|out|expense|depense|spending|savings|epargne|investment|investissement)$/.test(
+      word,
+    )
   ) {
     return "out";
   }
   if (
-    /^(c|cr|crdt|credit|crediteur|entree|in|\+)$/.test(word) ||
-    value.trim() === "+"
+    value.trim() === "+" ||
+    /^(c|cr|crdt|credit|crediteur|entree|in|income|revenu|revenus|recette)$/.test(
+      word,
+    )
   ) {
     return "in";
   }
@@ -691,18 +698,41 @@ export function readTable(
     bankFromIban(scanned.account?.iban) ??
     bankFromText(preambleText);
 
-  const order = dateOrderOf(data.map((row) => cell(row, columns!.date)));
+  return blocksFrom(data, columns, {
+    bank,
+    scanned,
+    defaultCurrency,
+    table,
+  });
+}
+
+/** The lines of `data` under `columns`, grouped by account. */
+function blocksFrom(
+  data: readonly string[][],
+  columns: Columns,
+  {
+    bank,
+    scanned,
+    defaultCurrency,
+    table,
+  }: {
+    bank: BankId | null;
+    scanned: ReturnType<typeof scanPreamble>;
+    defaultCurrency: string;
+    table: string[][];
+  },
+): TableReading {
+  const order = dateOrderOf(data.map((row) => cell(row, columns.date)));
   const valueOrder = dateOrderOf(
-    data.map((row) => cell(row, columns!.valueDate)),
+    data.map((row) => cell(row, columns.valueDate)),
   );
   const lines = new Map<
     string,
     { account: StatementAccount | null; currency: string; lines: RawLine[] }
   >();
-  const signed =
-    columns.debit !== null ||
-    columns.credit !== null ||
-    columns.direction !== null;
+  const split = columns.debit !== null || columns.credit !== null;
+  // A direction column counts once a line has said which way it went.
+  let directionSeen = false;
   let anyNegative = false;
   let skipped = 0;
 
@@ -729,6 +759,7 @@ export function readTable(
       amount = strictAmount(cell(row, columns.amount));
       const direction = directionOf(cell(row, columns.direction));
       if (amount !== null && direction) {
+        directionSeen = true;
         amount = direction === "out" ? -Math.abs(amount) : Math.abs(amount);
       }
     } else {
@@ -806,8 +837,47 @@ export function readTable(
       opening: null,
       closing: lines.size === 1 ? scanned.balance : null,
       lines: withLineIds(group.lines),
-      signUnknown: !signed && !anyNegative,
+      signUnknown: !split && !directionSeen && !anyNegative,
     };
   });
   return { bank, blocks, skipped, problem: null, table: null };
+}
+
+/** Which column is which, as the person said when the file could not. */
+export interface TableMapping {
+  /** Whether the first row names the columns rather than holding a line. */
+  header: boolean;
+  date: number;
+  label: number;
+  /** A signed amount, or else debit and credit apart. */
+  amount: number | null;
+  debit: number | null;
+  credit: number | null;
+}
+
+/** A table read under the columns the person named (`problem: "columns"`). */
+export function readMappedTable(
+  rows: readonly string[][],
+  mapping: TableMapping,
+  { defaultCurrency = "EUR" } = {},
+): TableReading {
+  const table = rows.filter((row) => !emptyRow(row)).map((row) => [...row]);
+  const data = mapping.header ? table.slice(1) : table;
+  return blocksFrom(
+    data,
+    {
+      ...NO_COLUMNS,
+      date: mapping.date,
+      label: mapping.label,
+      amount: mapping.amount,
+      debit: mapping.amount === null ? mapping.debit : null,
+      credit: mapping.amount === null ? mapping.credit : null,
+    },
+    {
+      bank: mapping.header ? bankFromHeader(table[0] ?? []) : null,
+      scanned: { account: null, balance: null },
+      defaultCurrency,
+      table,
+    },
+  );
 }

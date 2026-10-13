@@ -17,6 +17,24 @@ import type { ChangelogEntry, RoadmapItem } from "./changelog";
  */
 export const CHANGELOG: readonly ChangelogEntry[] = [
   {
+    id: "2026-10-13-statements-import",
+    date: "2026-10-13",
+    kind: "new",
+    platforms: ["web"],
+    fr: {
+      title: "Importez le relevé de votre banque, tel quel",
+      body: "Déposez le fichier que donne votre banque — CSV, Excel, OFX, QIF, CAMT, MT940 ou CFONB — sans rien régler : Pluclair reconnaît la banque et le compte, range ce qu’il connaît déjà, et le reste attend dans « À vérifier », comme avec une banque connectée.",
+      detail:
+        "Un relevé qui recoupe le précédent n’ajoute rien deux fois, un import s’annule pendant 30 jours, et « Où trouver l’export de ma banque ? » montre où le chercher.",
+    },
+    en: {
+      title: "Import your bank’s statement, as it is",
+      body: "Drop the file your bank gives — CSV, Excel, OFX, QIF, CAMT, MT940 or CFONB — with nothing to set: Pluclair recognises the bank and the account, files what it already knows, and the rest waits in “Review”, as with a connected bank.",
+      detail:
+        "A statement that overlaps the last one adds nothing twice, an import can be undone for 30 days, and “Where is my bank’s export?” shows where to find it.",
+    },
+  },
+  {
     id: "2026-10-13-entraide-phone",
     date: "2026-10-13",
     kind: "new",
@@ -1104,7 +1122,7 @@ export const CHANGELOG: readonly ChangelogEntry[] = [
  */
 export const CHANGELOG_STATS = {
   /** `git rev-list --count HEAD` on the branch that wrote the newest entry. */
-  commits: 1004,
+  commits: 1022,
   /** The repository's first commit. */
   since: "2026-06-15",
   asOf: "2026-10-13",

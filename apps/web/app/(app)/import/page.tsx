@@ -1,13 +1,22 @@
 import { redirect } from "next/navigation";
+import {
+  readFileAccounts,
+  readStatementImports,
+} from "@finance/data/statements";
 import { getAuthUser } from "@/lib/auth/get-user";
 import { getOwner } from "@/lib/owner";
-import { getQuickEntryContext } from "@/lib/queries/quick-entry";
-import { ImportView } from "@/components/finance/ImportView";
+import { createClient } from "@/lib/supabase/server";
+import { StatementImport } from "@/components/finance/statements/StatementImport";
 
 export const metadata = {
   title: "Import",
 };
 
+/**
+ * Importing a bank statement (`StatementImport`): the accounts already known
+ * from earlier files, so the next one goes to its own without a question,
+ * and the latest imports, each to be undone for a month.
+ */
 export default async function ImportPage() {
   const user = await getAuthUser();
 
@@ -15,10 +24,12 @@ export default async function ImportPage() {
     redirect("/login");
   }
 
-  // Same context the quick-add sheet uses: the categories to file rows under,
-  // and what the app has learned about where money goes.
   const ownerId = (await getOwner())?.ownerId ?? user.id;
-  const { categories, merchants } = await getQuickEntryContext(ownerId);
+  const db = await createClient();
+  const [accounts, imports] = await Promise.all([
+    readFileAccounts(db, user.id),
+    readStatementImports(db, ownerId),
+  ]);
 
-  return <ImportView categories={categories} merchants={merchants} />;
+  return <StatementImport accounts={accounts} imports={imports} />;
 }

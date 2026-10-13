@@ -29,6 +29,7 @@ import {
   getPendingFeedItems,
   getTransactionAccounts,
   hasBankFeed,
+  hasFeedLines,
 } from "@/lib/queries/bank";
 import { getBankAccounts } from "@/lib/queries/bank-balance";
 import { ledgerAccounts } from "@finance/core/bank-accounts";
@@ -73,6 +74,7 @@ export default async function TransactionsPage({
     confirmedTransactionIds,
     fulfilledKeys,
     bankFed,
+    feedShown,
     locale,
   ] = await Promise.all([
     getTransactions(ownerId, year, month),
@@ -87,6 +89,8 @@ export default async function TransactionsPage({
     // still true after a disconnect that kept the rows, whose decisions can
     // still be taken back.
     hasBankFeed(ownerId),
+    // Lines a statement brought wait in the same inbox as the bank's.
+    hasFeedLines(ownerId),
     getLocale(),
   ]);
 
@@ -109,7 +113,7 @@ export default async function TransactionsPage({
       now.year,
       now.month,
     ),
-    bankFed
+    feedShown
       ? Promise.all([
           getPendingFeedItems(ownerId, locale),
           countSwallowedFeedItems(ownerId),
@@ -126,7 +130,7 @@ export default async function TransactionsPage({
     getBankForecast(ownerId, recurringTemplates, bankFed, today),
   ]);
   // With several current accounts, which one each row came from.
-  const ledgerAccountsRead = bankFed
+  const ledgerAccountsRead = feedShown
     ? await Promise.all([
         getBankAccounts(ownerId),
         getTransactionAccounts(
@@ -200,7 +204,8 @@ export default async function TransactionsPage({
               decided={decided}
               categories={categories}
               // A statement worth of rows means the backfill has been done.
-              showBackfill={feedSize < 400}
+              // From the bank alone: a statement's history is its file.
+              showBackfill={bankFed && feedSize < 400}
               // Only when there is something in it. `?review=inbox` is a
               // link somebody followed, possibly hours after the count it
               // promised was true, and a sheet that opens onto "Nothing

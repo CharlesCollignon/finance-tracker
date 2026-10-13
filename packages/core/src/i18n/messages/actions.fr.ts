@@ -2,7 +2,6 @@ import type { actionsEn } from "./actions.en";
 
 /** The French half of `actions.en.ts`, mounted by `fr.ts` as `actions`. */
 export const actionsFr: typeof actionsEn = {
-  invalidDateRange: "Période invalide",
   invalidStartingBalance: "Saisissez un solde de départ valide",
   shareCountPositive: "Le nombre de parts doit être positif",
   unsupportedLanguage: "Langue non prise en charge",
@@ -10,7 +9,6 @@ export const actionsFr: typeof actionsEn = {
   transactionNotFound: "Cette opération n'existe plus",
   recurringNotFound: "Cette opération récurrente n'existe plus",
   categoryMissing: "Cette catégorie n'existe plus.",
-  oneCategoryMissing: "L'une des catégories n'existe plus.",
   categoryInUse:
     "Des opérations, ponctuelles ou récurrentes, utilisent cette catégorie. Archivez-la plutôt.",
   categoryExists: "Une catégorie de ce nom et de ce type existe déjà.",

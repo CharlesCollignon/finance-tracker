@@ -1,7 +1,6 @@
 import { firstIssue, type ActionResult } from "@finance/core/action-result";
 import {
   deleteTransactionsSchema,
-  importTransactionsSchema,
   moveTransactionsSchema,
   parseUuid,
   transactionSchema,
@@ -31,10 +30,6 @@ import { dbError } from "./errors";
 export type NewTransaction = z.input<typeof transactionSchema>;
 /** The same, for one already recorded. */
 export type TransactionChange = z.input<typeof updateTransactionSchema>;
-/** One row of a reviewed import. */
-export type ImportedRow = z.input<
-  typeof importTransactionsSchema
->["rows"][number];
 
 export async function createTransaction(
   db: Db,
@@ -225,54 +220,4 @@ export async function moveTransactions(
   return error
     ? { error: dbError(error) }
     : { success: true, moved: count ?? parsed.data.ids.length };
-}
-
-/**
- * Commit a reviewed CSV import.
- *
- * The rows arriving here have already been parsed, de-duplicated and
- * categorised in the review step — this only re-validates and writes, so a
- * tampered payload cannot bypass the schema. Every row must belong to one of
- * the user's own categories; row level security covers the insert, but
- * checking here turns a database error into a clear message.
- */
-export async function importTransactions(
-  db: Db,
-  userId: string,
-  rows: readonly ImportedRow[],
-): Promise<ActionResult<{ imported: number }>> {
-  const parsed = importTransactionsSchema.safeParse({ rows });
-  if (!parsed.success) {
-    return { error: firstIssue(parsed.error) };
-  }
-
-  const categoryIds = [
-    ...new Set(parsed.data.rows.map((row) => row.categoryId)),
-  ];
-  const { data: owned, error: categoryError } = await db
-    .from("categories")
-    .select("id")
-    .eq("user_id", userId)
-    .in("id", categoryIds);
-
-  if (categoryError) {
-    return { error: dbError(categoryError) };
-  }
-  if ((owned?.length ?? 0) !== categoryIds.length) {
-    return { error: "actions.oneCategoryMissing" };
-  }
-
-  const { error } = await db.from("transactions").insert(
-    parsed.data.rows.map((row) => ({
-      user_id: userId,
-      category_id: row.categoryId,
-      amount: row.amount,
-      occurred_on: row.occurredOn,
-      note: row.note?.trim() || null,
-    })),
-  );
-
-  return error
-    ? { error: dbError(error) }
-    : { success: true, imported: parsed.data.rows.length };
 }

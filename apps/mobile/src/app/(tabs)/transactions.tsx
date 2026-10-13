@@ -106,6 +106,7 @@ import {
   getTransactionAccounts,
   getBankAccounts,
   hasBankFeed,
+  hasFeedLines,
   type PendingFeedRow,
   type SkippedOccurrence,
 } from "@/lib/queries";
@@ -247,6 +248,7 @@ export default function TransactionsScreen() {
         fulfilled,
         swallowed,
         bankFed,
+        feedShown,
       ] = await Promise.all([
         getTransactions(ownerId, year, month),
         getCategories(ownerId),
@@ -269,6 +271,8 @@ export default function TransactionsScreen() {
         // With a bank, it is the bank bringing a charge that ends its
         // planned row, not its day.
         hasBankFeed(ownerId),
+        // A statement's lines mark their account as the bank's do.
+        hasFeedLines(ownerId),
       ]);
       // Asked after the batch, because it needs the templates and categories
       // the batch fetched. Only the proposals Le point asks about, whichever
@@ -285,7 +289,7 @@ export default function TransactionsScreen() {
         ),
         getBankForecast(ownerId, templates, bankFed, todayIsoLocal()),
         // With several current accounts, which one each row came from.
-        bankFed
+        feedShown
           ? Promise.all([
               getBankAccounts(ownerId),
               getTransactionAccounts(

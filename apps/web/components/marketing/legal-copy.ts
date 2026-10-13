@@ -101,7 +101,7 @@ export const legalCopy: LegalCopy = {
         body: [],
         points: [
           "Your account: your email address and, if you sign in with Google, the name and account identifier Google shares with us. If you add a passkey we keep its public key; the private half never leaves your device.",
-          "What you enter or import: transactions, categories, charges, caps, goals, wallets and their positions, month closes and the balances you record, tags and notes. When you import a bank export, the file is read to propose entries and only the entries you keep are stored; the file itself is not.",
+          "What you enter or import: transactions, categories, charges, caps, goals, wallets and their positions, month closes and the balances you record, tags and notes. When you import a bank statement, the file is read on your device; its transactions are stored — filed when Pluclair recognises them, waiting for you otherwise — with the account they belong to (its name, its bank, its IBAN or number, to recognise the next statement) and a record of the import, so it can be undone for 30 days. The file itself is neither sent nor kept.",
           "Your preferences: language, which invitations you have dismissed, and the latest change in “What's new” you have read.",
           "Your reactions to “What's new” and your votes on “Coming soon”: everyone sees how many there are, never who gave them.",
           "The audience measurement, unless you turn it off: the days the app is opened, and how many times that day you added a transaction, closed a month or asked “Can I afford it?”. Under an identifier worked out from your account with a secret key, which does not name you. No amount, no shop, no text.",
