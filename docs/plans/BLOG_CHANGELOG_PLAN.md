@@ -246,7 +246,9 @@ the site reads the version from the release's tag (`docs/store/README.md`).
 
 Built with these differences from below. No remark plugin was needed. With
 three guides, the index has no rubrique chips or search yet (they come when
-there are enough to look through), and every cover is CSS, WebGL for none.
+there are enough to look through). The covers were CSS at first; at the
+owner's word on 2026-10-13 they are photos from Unsplash, one per guide,
+chosen for its subject, free to use and credited.
 Reading progress is not in the nav pill, in gold: it is a line beside the
 contents on a desktop and a hairline across the top on a phone, in ink, as a
 guide read is not a figure or a moment. Headings do not rise and no sentence
