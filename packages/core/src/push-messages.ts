@@ -497,6 +497,84 @@ export function entraideSolvedNotification({
 }
 
 /**
+ * Entraide, to its moderators: a report has come in — or, the third, has
+ * hidden a post until they look. Once per report; it opens the queue.
+ */
+export function entraideReportNotification({
+  reportId,
+  title,
+  hidden,
+  t,
+}: Voice & {
+  reportId: number;
+  title: string;
+  hidden: boolean;
+}): PendingNotification {
+  return {
+    kind: "community",
+    key: `community:report:${reportId}`,
+    title: t(
+      hidden
+        ? "push.community.reportHiddenTitle"
+        : "push.community.reportTitle",
+    ),
+    body: t("push.community.reportBody", { title }),
+    url: "/blog/entraide/moderation",
+  };
+}
+
+/**
+ * Entraide, to an author: a post or an answer of theirs is hidden. Once
+ * per decision; the reason is on the message it opens.
+ */
+export function entraideHiddenNotification({
+  decisionId,
+  title,
+  url,
+  t,
+}: Voice & {
+  decisionId: number;
+  title: string;
+  url: string;
+}): PendingNotification {
+  return {
+    kind: "community",
+    key: `community:hidden:${decisionId}`,
+    title: t("push.community.hiddenTitle"),
+    body: t("push.community.hiddenBody", { title }),
+    url,
+  };
+}
+
+/**
+ * Entraide, to whoever reported: what was decided about it. Once per
+ * report.
+ */
+export function entraideReportSettledNotification({
+  reportId,
+  title,
+  hidden,
+  url,
+  t,
+}: Voice & {
+  reportId: number;
+  title: string;
+  hidden: boolean;
+  url: string;
+}): PendingNotification {
+  return {
+    kind: "community",
+    key: `community:settled:${reportId}`,
+    title: t("push.community.settledTitle"),
+    body: t(
+      hidden ? "push.community.settledHidden" : "push.community.settledKept",
+      { title },
+    ),
+    url,
+  };
+}
+
+/**
  * January: « Votre année » is ready. Once, keyed by the year; it opens the
  * review, on either app.
  */

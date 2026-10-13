@@ -728,6 +728,42 @@ export type Database = {
           },
         ];
       };
+      entraide_decisions: {
+        Row: {
+          action: string;
+          author_id: string;
+          automatic: boolean;
+          created_at: string;
+          facts: string;
+          from_report: boolean;
+          id: number;
+          rule: string;
+          target: string | null;
+        };
+        Insert: {
+          action: string;
+          author_id: string;
+          automatic?: boolean;
+          created_at?: string;
+          facts?: string;
+          from_report?: boolean;
+          id?: never;
+          rule: string;
+          target?: string | null;
+        };
+        Update: {
+          action?: string;
+          author_id?: string;
+          automatic?: boolean;
+          created_at?: string;
+          facts?: string;
+          from_report?: boolean;
+          id?: never;
+          rule?: string;
+          target?: string | null;
+        };
+        Relationships: [];
+      };
       entraide_posts: {
         Row: {
           author_id: string | null;
@@ -839,6 +875,39 @@ export type Database = {
             referencedColumns: ["id"];
           },
         ];
+      };
+      entraide_reports: {
+        Row: {
+          created_at: string;
+          id: number;
+          note: string;
+          outcome: string | null;
+          reason: string;
+          reporter_id: string | null;
+          resolved_at: string | null;
+          target: string;
+        };
+        Insert: {
+          created_at?: string;
+          id?: never;
+          note?: string;
+          outcome?: string | null;
+          reason: string;
+          reporter_id?: string | null;
+          resolved_at?: string | null;
+          target: string;
+        };
+        Update: {
+          created_at?: string;
+          id?: never;
+          note?: string;
+          outcome?: string | null;
+          reason?: string;
+          reporter_id?: string | null;
+          resolved_at?: string | null;
+          target?: string;
+        };
+        Relationships: [];
       };
       expo_push_tokens: {
         Row: {
@@ -2393,6 +2462,10 @@ export type Database = {
           title: string;
           useful_count: number;
         }[];
+      };
+      entraide_moderating: {
+        Args: Record<PropertyKey, never>;
+        Returns: boolean;
       };
       entraide_replies: {
         Args: { p_post_id: number };

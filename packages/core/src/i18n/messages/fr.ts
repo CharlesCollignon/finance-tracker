@@ -1699,6 +1699,16 @@ export const fr: Messages = {
       answerTitle: "{handle} vous a répondu",
       answerBody: "Dans Entraide, sur « {title} ».",
       solvedTitle: "Votre réponse a résolu la question",
+      reportTitle: "Un signalement dans Entraide",
+      reportHiddenTitle: "Masqué par trois signalements",
+      reportBody: "« {title} » : à examiner.",
+      hiddenTitle: "Un de vos messages est masqué",
+      hiddenBody:
+        "Dans Entraide, sur « {title} ». La raison est affichée sur le message.",
+      settledTitle: "Votre signalement a été examiné",
+      settledHidden: "« {title} » est masqué.",
+      settledKept:
+        "« {title} » reste visible : il ne nous a pas semblé enfreindre les règles.",
       solvedBody:
         "Dans Entraide, « {title} » est marquée « Résolu » grâce à votre réponse.",
     },

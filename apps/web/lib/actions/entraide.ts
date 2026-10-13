@@ -6,7 +6,9 @@ import type { ActionResult } from "@finance/core/action-result";
 import {
   ENTRAIDE_HREF,
   ENTRAIDE_LIMITS,
+  entraideTargetOf,
   handleProblem,
+  isEntraideRule,
   isEntraideFilter,
   isEntraideSort,
   threadHref,
@@ -18,7 +20,7 @@ import type { Db } from "@finance/data/client";
 import * as entraide from "@finance/data/entraide";
 import { asUser } from "@/lib/actions/as-user";
 import { toCard, type EntraideCard } from "@/lib/entraide-cards";
-import { pushAnswer, pushSolved } from "@/lib/entraide-push";
+import { pushAnswer, pushReport, pushSolved } from "@/lib/entraide-push";
 import { isGuideSlug } from "@/lib/guide-list";
 import { matchGuides } from "@/lib/guide-search";
 import { allGuides } from "@/lib/guides";
@@ -326,4 +328,33 @@ export async function setSolved(
     }
   }
   return result;
+}
+
+/**
+ * « Signaler »: a member reports a question or an answer, with the rule it
+ * breaks. The moderators hear of it; a third report hides it at once
+ * (migration 072), and its author hears too.
+ */
+export async function reportTarget(
+  target: string,
+  reason: string,
+  note: string,
+): Promise<ActionResult> {
+  const reported = entraideTargetOf(target);
+  if (!entraideRulesVisible()) {
+    return CLOSED;
+  }
+  if (!reported || !isEntraideRule(reason)) {
+    return { error: "errors.invalidInput" };
+  }
+  const result = await asUser(
+    (db, userId) => entraide.reportContent(db, userId, reported, reason, note),
+    { redraw: "never" },
+  );
+  if (result.success && result.id !== null) {
+    const reportId = result.id;
+    after(() => pushReport(reportId, reported));
+    redraw();
+  }
+  return result.success ? { success: true } : { error: result.error };
 }

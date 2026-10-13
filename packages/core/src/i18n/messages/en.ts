@@ -2295,6 +2295,15 @@ export const en = {
       answerTitle: "{handle} answered you",
       answerBody: "In Entraide, on « {title} ».",
       solvedTitle: "Your answer solved it",
+      reportTitle: "A report in Entraide",
+      reportHiddenTitle: "Hidden by three reports",
+      reportBody: "« {title} »: to look at.",
+      hiddenTitle: "One of your messages is hidden",
+      hiddenBody:
+        "In Entraide, on « {title} ». The reason is shown on the message.",
+      settledTitle: "Your report has been looked at",
+      settledHidden: "« {title} » is hidden.",
+      settledKept: "« {title} » stays: it did not seem to break the rules.",
       solvedBody:
         "In Entraide, « {title} » is marked « Solved » thanks to your answer.",
     },

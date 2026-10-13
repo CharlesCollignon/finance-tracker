@@ -92,7 +92,7 @@ export const entraideRulesCopy: EntraideRulesCopy = {
         id: "moderation",
         heading: "How moderation works",
         body: [
-          "Pluclair does not read posts before they appear. Any member can report a question or an answer that breaks these rules or the law (« Signaler »), saying why; the person reported is never told who reported them. The publisher reviews every report, and may hide a post, restore it, or bar a pseudonym from posting.",
+          "Pluclair does not read posts before they appear. Any member can report a question or an answer that breaks these rules or the law (« Signaler »), saying why; the person reported is never told who reported them. The publisher reviews every report, and may hide a post, restore it, or bar a pseudonym from posting; whoever reported is told what was decided.",
           "When three different members report the same post, it is hidden automatically until the publisher has looked at it. Hiding is the usual measure: a hidden post is kept, not erased, so the decision can be reviewed. A pseudonym that keeps breaking the rules, or posts something clearly unlawful, can be barred from Entraide; the rest of the account is not affected.",
         ],
       },
@@ -116,7 +116,7 @@ export const entraideRulesCopy: EntraideRulesCopy = {
         id: "reasons",
         heading: "When a post is hidden or a pseudonym barred",
         body: [
-          "We tell the author, by email, at the latest when the measure takes effect:",
+          "We tell the author on the message itself, from the moment the measure takes effect, and by email:",
         ],
         points: [
           "what was done — a post hidden, a pseudonym barred — and for how long;",
@@ -130,7 +130,7 @@ export const entraideRulesCopy: EntraideRulesCopy = {
         id: "challenge",
         heading: "Challenging a decision",
         body: [
-          "You can challenge any decision about your post or your pseudonym, or about a notice you sent, by replying to the email that told you of it, within six months. A person — never a machine — looks at it again, and we tell you the outcome. You can also take the matter to the competent courts.",
+          "You can challenge any decision about your post or your pseudonym, or about a notice you sent, by replying to the email that told you of it, or by writing to pluclair.app@gmail.com, within six months. A person — never a machine — looks at it again, and we tell you the outcome. You can also take the matter to the competent courts.",
         ],
       },
       {

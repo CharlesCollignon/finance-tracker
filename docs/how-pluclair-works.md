@@ -109,20 +109,20 @@ off (`user_preferences.notification_prefs`, every kind on unless set to
 logging it so the next run sends it, and logs each key in `notification_log`
 before sending, so nothing is said twice.
 
-| Kind        | What                                                                                                      | Sent by                           | Key                                                                                                                         |
-| ----------- | --------------------------------------------------------------------------------------------------------- | --------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
-| `recap`     | Monday: last week, the month so far, still to come                                                        | notify cron, Mondays              | `recap:<monday>`                                                                                                            |
-| `overdraft` | The balance dips below zero on a day ahead                                                                | notify cron                       | `overdraft:<month>`                                                                                                         |
-| `close`     | The reading day; a month a bank closed                                                                    | notify cron; refresh cron         | `close:` / `closed:`                                                                                                        |
-| `bigCharge` | Tomorrow, a charge over twice the usual, or yearly                                                        | notify cron                       | `big-charge:<tomorrow>`                                                                                                     |
-| `arrived`   | Movements that look like a planned charge arrived                                                         | notify cron                       | `arrived:<day>`                                                                                                             |
-| `review`    | New bank rows waiting for a category                                                                      | refresh cron                      | `bank-review:<day>`                                                                                                         |
-| `milestone` | A new milestone passed since the last one celebrated                                                      | notify cron                       | `milestone:<amount>`                                                                                                        |
-| `year`      | January: « Votre année » is ready, for a year with something to tell                                      | notify cron                       | `year:<year>`                                                                                                               |
-| `property`  | Half a loan repaid, its last payment, half a home the user's; a home's new estimate after a DVF half-year | notify cron; market cron          | `property:half:<loan>`, `property:last:<loan>`, `property:equity-half:<property>`, `property:market:<property>:<half-year>` |
-| `monthOpen` | A new month has opened                                                                                    | notify cron                       | `month-open:<month>`                                                                                                        |
-| `bank`      | The connection needs renewing or has stopped                                                              | notify cron                       | `bank-consent:`, `bank-expired:`, `bank-paused:`                                                                            |
-| `community` | Entraide: an answer to the reader's question; their answer marked « Résolu »                              | Entraide's actions, as it happens | `community:answer:<reply>`, `community:solved:<reply>`                                                                      |
+| Kind        | What                                                                                                                                                                        | Sent by                           | Key                                                                                                                                              |
+| ----------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `recap`     | Monday: last week, the month so far, still to come                                                                                                                          | notify cron, Mondays              | `recap:<monday>`                                                                                                                                 |
+| `overdraft` | The balance dips below zero on a day ahead                                                                                                                                  | notify cron                       | `overdraft:<month>`                                                                                                                              |
+| `close`     | The reading day; a month a bank closed                                                                                                                                      | notify cron; refresh cron         | `close:` / `closed:`                                                                                                                             |
+| `bigCharge` | Tomorrow, a charge over twice the usual, or yearly                                                                                                                          | notify cron                       | `big-charge:<tomorrow>`                                                                                                                          |
+| `arrived`   | Movements that look like a planned charge arrived                                                                                                                           | notify cron                       | `arrived:<day>`                                                                                                                                  |
+| `review`    | New bank rows waiting for a category                                                                                                                                        | refresh cron                      | `bank-review:<day>`                                                                                                                              |
+| `milestone` | A new milestone passed since the last one celebrated                                                                                                                        | notify cron                       | `milestone:<amount>`                                                                                                                             |
+| `year`      | January: « Votre année » is ready, for a year with something to tell                                                                                                        | notify cron                       | `year:<year>`                                                                                                                                    |
+| `property`  | Half a loan repaid, its last payment, half a home the user's; a home's new estimate after a DVF half-year                                                                   | notify cron; market cron          | `property:half:<loan>`, `property:last:<loan>`, `property:equity-half:<property>`, `property:market:<property>:<half-year>`                      |
+| `monthOpen` | A new month has opened                                                                                                                                                      | notify cron                       | `month-open:<month>`                                                                                                                             |
+| `bank`      | The connection needs renewing or has stopped                                                                                                                                | notify cron                       | `bank-consent:`, `bank-expired:`, `bank-paused:`                                                                                                 |
+| `community` | Entraide: an answer to the reader's question, their answer marked « Résolu »; a report, to the moderators; a hidden message, to its author; a decision, to whoever reported | Entraide's actions, as it happens | `community:answer:<reply>`, `community:solved:<reply>`, `community:report:<report>`, `community:hidden:<decision>`, `community:settled:<report>` |
 
 Entraide's two are not a cron's: they are sent as the answer or the mark
 happens (`apps/web/lib/entraide-push.ts`, after the reply has gone back), so
@@ -415,9 +415,20 @@ rules for both apps are in `packages/core/src/entraide.ts`; reads and
 writes in `packages/data/src/entraide.ts`; the web's actions in
 `apps/web/lib/actions/entraide.ts`.
 
-Moderation — « Signaler », the owner's queue, hiding with a reason sent —
-is the next phase (`docs/plans/BLOG_CHANGELOG_PLAN.md`, 5c); until then
-`hidden` and `banned_at` are set by hand with the service role.
+Moderation is migration 072. « Signaler » under every message that is not
+the reader's writes an `entraide_reports` row with the rule it breaks; the
+third different member's report hides the message at once and writes an
+`entraide_decisions` row saying so. Every measure that restricts someone —
+hidden or restored, a pseudonym barred or let back — is such a row, with
+its rule and facts, and its author reads it on the message
+(`DecisionNotice`). `/blog/entraide/moderation`, for `community.moderate`
+only and read with the service role, lists what is reported and not yet
+decided, with each author's email address: « Garder », « Masquer » (also to
+confirm what three reports hid), « Exclure le pseudonyme », « Réadmettre »
+(`packages/data/src/entraide-moderation.ts`). The app sends no email: once
+decided, the same reason opens as a prefilled email from the moderator's
+own address. Pushes tell the moderators of each report, an author of a
+hidden message, and whoever reported of the decision.
 
 ## Shared space
 
@@ -594,10 +605,11 @@ when the account changes and each time it comes back to the foreground
 database does not return, or a key this build
 does not list (`packages/core/src/flags.ts`), is off.
 
-| Flag             | Gates                                                                                                        | Default |
-| ---------------- | ------------------------------------------------------------------------------------------------------------ | ------- |
-| `bank.connect`   | Connecting a bank with an open-banking.io credentials file                                                   | off     |
-| `property.track` | The Immobilier tab: properties, their loans and their value; on the Plan, net worth and the homes' long view | off     |
+| Flag                 | Gates                                                                                                                              | Default |
+| -------------------- | ---------------------------------------------------------------------------------------------------------------------------------- | ------- |
+| `bank.connect`       | Connecting a bank with an open-banking.io credentials file                                                                         | off     |
+| `property.track`     | The Immobilier tab: properties, their loans and their value; on the Plan, net worth and the homes' long view                       | off     |
+| `community.moderate` | Moderating Entraide: the queue at `/blog/entraide/moderation`, and the service role behind its decisions; the owner's account only | off     |
 
 Switched with SQL (the dashboard's SQL editor, or the service role):
 

@@ -351,10 +351,14 @@ a question, two answers, « Résolu », both pushes logged), then cleaned.
 
 **Before Entraide opens**, in this order:
 
-1. 5c, moderation, built and merged.
-2. Migration 071 run on the hosted database, and the owner's pseudonym
-   marked: `insert into entraide_profiles (user_id, handle, is_pluclair)
+1. 5c, moderation, built and merged; migration 072 run on the hosted
+   database.
+2. Migration 071 run on the hosted database (done 2026-10-13), the owner's
+   pseudonym marked, and the owner made moderator:
+   `insert into entraide_profiles (user_id, handle, is_pluclair)
    values ('<owner id>', 'Pluclair', true);`
+   `insert into user_feature_flags (user_id, flag_key, enabled)
+   values ('<owner id>', 'community.moderate', true);`
 3. The lawyer's answers in `docs/legal/ENTRAIDE.md`, its two blanks filled
    in the rules, and the privacy policy and terms final (`LEGAL_DRAFT`).
 4. One commit that flips `ENTRAIDE_RULES_DRAFT` and, with it: a line in the
@@ -394,7 +398,18 @@ As first planned:
 - **Notifications**: a `community` kind (an answer to my post, my answer
   marked resolved), in the app and as a push, on by default.
 
-### 5c — Moderation (branch `entraide-moderation`)
+### 5c — Moderation (branch `entraide-moderation`) — built, waiting on the owner
+
+Built as below (migration 072, for the owner to run), with these
+differences. The app sends no email — there is no email service — so the
+reason is shown to the author on the message itself from the moment it
+takes effect, with a push, and the queue prepares the same reason as an
+email the owner sends from their own address; the rules say so. A post
+hidden by three reports is confirmed, with the owner's own rule and
+facts, by « Masquer ». Reporters hear what was decided, by push. Account
+deletion was done in 5b. Checked end to end locally.
+
+As first planned:
 
 - « Signaler » on every post and answer, with a reason.
 - The owner's queue, `/blog/entraide/moderation`, behind the flag: hide or

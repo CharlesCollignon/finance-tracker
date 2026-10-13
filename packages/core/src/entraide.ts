@@ -121,6 +121,51 @@ export function threadIdOf(param: string): number | null {
   return Number.isSafeInteger(id) && id > 0 ? id : null;
 }
 
+/**
+ * « Les règles d'Entraide », by key: what a report says is broken, and the
+ * rule a moderator's decision applies (migration 072's checks hold the same
+ * list).
+ */
+export const ENTRAIDE_RULES = [
+  "kind",
+  "personal",
+  "promotion",
+  "money",
+  "unlawful",
+  "impersonation",
+  "offtopic",
+  "other",
+] as const;
+export type EntraideRule = (typeof ENTRAIDE_RULES)[number];
+
+export function isEntraideRule(value: unknown): value is EntraideRule {
+  return (ENTRAIDE_RULES as readonly unknown[]).includes(value);
+}
+
+/** What a reported or decided thing is: a question or share, or an answer. */
+export type EntraideTarget = `post:${number}` | `reply:${number}`;
+
+export function entraideTargetOf(value: string): EntraideTarget | null {
+  return /^(post|reply):[1-9]\d{0,17}$/.test(value)
+    ? (value as EntraideTarget)
+    : null;
+}
+
+/**
+ * A measure that restricts someone, as its author reads it: what was done,
+ * the rule it applies, the facts, and how it came about (Digital Services
+ * Act, art. 17).
+ */
+export interface EntraideDecision {
+  target: EntraideTarget | null;
+  action: "hide" | "restore" | "bar" | "unbar";
+  rule: EntraideRule | "none";
+  facts: string;
+  automatic: boolean;
+  fromReport: boolean;
+  createdAt: string;
+}
+
 /** Who wrote a post or an answer, as anyone may see it. */
 export interface EntraideAuthor {
   /** Null once the account is gone. */

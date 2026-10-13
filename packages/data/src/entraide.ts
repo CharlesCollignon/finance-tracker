@@ -1,6 +1,9 @@
 import type { ActionResult } from "@finance/core/action-result";
 import type {
   EntraideAuthor,
+  EntraideDecision,
+  EntraideRule,
+  EntraideTarget,
   EntraideError,
   EntraideFilter,
   EntraideMatch,
@@ -324,4 +327,98 @@ export async function deleteReply(
     .eq("id", id)
     .eq("author_id", userId);
   return error ? { error: entraideError(error) } : { success: true };
+}
+
+/**
+ * « Signaler »: one report per person and thing. Reporting twice reads as
+ * done — the first report stands.
+ */
+export async function reportContent(
+  db: Db,
+  userId: string,
+  target: EntraideTarget,
+  reason: EntraideRule,
+  note: string,
+): Promise<ActionResult<{ id: number | null }>> {
+  const { data, error } = await db
+    .from("entraide_reports")
+    .insert({
+      target,
+      reporter_id: userId,
+      reason,
+      note: note.trim().slice(0, 500),
+    })
+    .select("id")
+    .single();
+  if (error?.code === "23505") {
+    return { success: true, id: null };
+  }
+  if (error || !data) {
+    return { error: error ? entraideError(error) : "errors.couldNotSave" };
+  }
+  return { success: true, id: data.id };
+}
+
+/** Which of `targets` the reader has reported already. */
+export async function readMyReports(
+  db: Db,
+  userId: string,
+  targets: readonly string[],
+): Promise<Set<string>> {
+  if (targets.length === 0) {
+    return new Set();
+  }
+  const { data, error } = await db
+    .from("entraide_reports")
+    .select("target")
+    .eq("reporter_id", userId)
+    .in("target", [...targets]);
+  if (error) {
+    if (isMissingSchemaOrFunction(error)) {
+      return new Set();
+    }
+    throw error;
+  }
+  return new Set((data ?? []).map((row) => row.target));
+}
+
+/**
+ * The latest decision about each of `targets` that concerns the reader —
+ * why a post of theirs is hidden, as they read it on the post.
+ */
+export async function readMyDecisions(
+  db: Db,
+  userId: string,
+  targets: readonly string[],
+): Promise<Map<string, EntraideDecision>> {
+  const decisions = new Map<string, EntraideDecision>();
+  if (targets.length === 0) {
+    return decisions;
+  }
+  const { data, error } = await db
+    .from("entraide_decisions")
+    .select("target, action, rule, facts, automatic, from_report, created_at")
+    .eq("author_id", userId)
+    .in("target", [...targets])
+    .order("created_at", { ascending: false });
+  if (error) {
+    if (isMissingSchemaOrFunction(error)) {
+      return decisions;
+    }
+    throw error;
+  }
+  for (const row of data ?? []) {
+    if (row.target && !decisions.has(row.target)) {
+      decisions.set(row.target, {
+        target: row.target as EntraideTarget,
+        action: row.action as EntraideDecision["action"],
+        rule: row.rule as EntraideDecision["rule"],
+        facts: row.facts,
+        automatic: row.automatic,
+        fromReport: row.from_report,
+        createdAt: row.created_at,
+      });
+    }
+  }
+  return decisions;
 }

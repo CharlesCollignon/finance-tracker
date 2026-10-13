@@ -1,10 +1,12 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  entraideTargetOf,
   excerptOf,
   handleProblem,
   hasLink,
   isEntraideFilter,
+  isEntraideRule,
   isEntraideSort,
   threadHref,
   threadIdOf,
@@ -103,5 +105,19 @@ describe("excerptOf", () => {
     expect(excerpt.length).toBeLessThanOrEqual(61);
     expect(excerpt.endsWith("…")).toBe(true);
     expect(excerpt).not.toMatch(/\s…$/);
+  });
+});
+
+describe("what is reported", () => {
+  it("names a post or an answer, and nothing else", () => {
+    expect(entraideTargetOf("post:12")).toBe("post:12");
+    expect(entraideTargetOf("reply:3")).toBe("reply:3");
+    expect(entraideTargetOf("post:0")).toBeNull();
+    expect(entraideTargetOf("changelog:x")).toBeNull();
+  });
+
+  it("knows the rules a report or a decision may name", () => {
+    expect(isEntraideRule("promotion")).toBe(true);
+    expect(isEntraideRule("none")).toBe(false);
   });
 });

@@ -16,6 +16,9 @@ import {
   transferReminderNotifications,
   usualChargeAmount,
   entraideAnswerNotification,
+  entraideHiddenNotification,
+  entraideReportNotification,
+  entraideReportSettledNotification,
   entraideSolvedNotification,
 } from "./push-messages";
 import type { PurchaseToConfirm } from "./purchases-to-confirm";
@@ -557,5 +560,55 @@ describe("Entraide's pushes", () => {
     });
     expect(push.key).toBe("community:solved:7");
     expect(push.title).toBe("Votre réponse a résolu la question");
+  });
+});
+
+describe("Entraide's moderation pushes", () => {
+  const t = translator("fr");
+
+  it("tells the moderators of a report, and of a hide", () => {
+    const report = entraideReportNotification({
+      reportId: 4,
+      title: "Un code de parrainage",
+      hidden: false,
+      t,
+      locale: "fr",
+    });
+    expect(report).toMatchObject({
+      key: "community:report:4",
+      title: "Un signalement dans Entraide",
+      url: "/blog/entraide/moderation",
+    });
+    expect(
+      entraideReportNotification({
+        reportId: 5,
+        title: "x",
+        hidden: true,
+        t,
+        locale: "fr",
+      }).title,
+    ).toBe("Masqué par trois signalements");
+  });
+
+  it("tells an author once per decision, and a reporter once per report", () => {
+    expect(
+      entraideHiddenNotification({
+        decisionId: 9,
+        title: "x",
+        url: "/blog/entraide/1-x",
+        t,
+        locale: "fr",
+      }).key,
+    ).toBe("community:hidden:9");
+    const kept = entraideReportSettledNotification({
+      reportId: 4,
+      title: "Un code",
+      hidden: false,
+      url: "/blog/entraide/1-x",
+      t,
+      locale: "fr",
+    });
+    expect(kept.key).toBe("community:settled:4");
+    expect(kept.body).toContain("reste visible");
   });
 });
