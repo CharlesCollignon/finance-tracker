@@ -17,6 +17,24 @@ import type { ChangelogEntry, RoadmapItem } from "./changelog";
  */
 export const CHANGELOG: readonly ChangelogEntry[] = [
   {
+    id: "2026-10-13-legal-pages",
+    date: "2026-10-13",
+    kind: "new",
+    platforms: ["web"],
+    fr: {
+      title: "Les pages légales, en ligne",
+      body: "La politique de confidentialité, les conditions d’utilisation et les mentions légales sont publiées, en français et en anglais, et liées en bas de chaque page du site.",
+      detail:
+        "Elles disent ce que Pluclair garde, pourquoi, combien de temps, qui l’aide à fonctionner, et comment tout reprendre.",
+    },
+    en: {
+      title: "The legal pages, online",
+      body: "The privacy policy, the terms of use and the legal notice are published, in French and in English, and linked from the foot of every page of the site.",
+      detail:
+        "They say what Pluclair keeps, why, for how long, who helps run it, and how to take it all back.",
+    },
+  },
+  {
     id: "2026-10-13-bank-closed",
     date: "2026-10-13",
     kind: "better",
@@ -1050,7 +1068,7 @@ export const CHANGELOG: readonly ChangelogEntry[] = [
  */
 export const CHANGELOG_STATS = {
   /** `git rev-list --count HEAD` on the branch that wrote the newest entry. */
-  commits: 983,
+  commits: 993,
   /** The repository's first commit. */
   since: "2026-06-15",
   asOf: "2026-10-13",
