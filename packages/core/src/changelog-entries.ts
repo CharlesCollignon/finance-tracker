@@ -17,6 +17,24 @@ import type { ChangelogEntry, RoadmapItem } from "./changelog";
  */
 export const CHANGELOG: readonly ChangelogEntry[] = [
   {
+    id: "2026-10-13-bank-closed",
+    date: "2026-10-13",
+    kind: "better",
+    platforms: ["web", "phone"],
+    fr: {
+      title: "La connexion bancaire, fermée",
+      body: "open-banking.io ne permet pas à ses clients de confier leur accès à une application comme Pluclair. La connexion bancaire n’est donc plus proposée : vous notez vos opérations, ou vous importez un relevé CSV de votre banque.",
+      detail:
+        "Rien ne change pour le bilan du mois, qui se fait contre le solde que vous lisez sur votre compte.",
+    },
+    en: {
+      title: "The bank connection, closed",
+      body: "open-banking.io does not let its customers give their access to an app like Pluclair, so the bank connection is no longer offered: you note your transactions, or import a CSV statement from your bank.",
+      detail:
+        "Nothing changes for the month's close, which is done against the balance you read on your account.",
+    },
+  },
+  {
     id: "2026-10-13-header-small-phones",
     date: "2026-10-13",
     kind: "fixed",
@@ -1032,7 +1050,7 @@ export const CHANGELOG: readonly ChangelogEntry[] = [
  */
 export const CHANGELOG_STATS = {
   /** `git rev-list --count HEAD` on the branch that wrote the newest entry. */
-  commits: 980,
+  commits: 983,
   /** The repository's first commit. */
   since: "2026-06-15",
   asOf: "2026-10-13",
