@@ -121,6 +121,8 @@ export async function recordHealthy(
         .from("bank_accounts")
         .select("bank_name")
         .eq("user_id", userId)
+        // The connection's accounts: one known from statements has no consent.
+        .eq("source", "bank")
         .in("role", ["spending", "savings", "joint"]),
     ]);
     consentValidUntil = consentToWatch(

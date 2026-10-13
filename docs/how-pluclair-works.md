@@ -584,6 +584,43 @@ in as date, label and signed amount. There are no presets per bank yet: each
 waits for a real export, anonymised with `scripts/anonymise-statement.mjs`
 and kept in `packages/core/fixtures/statements/`.
 
+**Statements, without a bank connection** (`docs/plans/STATEMENTS_PLAN.md`,
+being built in phases; the wizard above stays until the new import
+replaces it). `packages/core/src/statement/` reads whatever a person
+downloads from their bank as the very lines the bank connection sends
+(`BankTransaction`), decided by the file's content and never by its name:
+
+- **Tables** (`table.ts`): CSV in every French dialect (Windows-1252,
+  UTF-16, decimal comma, lines above the header), `.xlsx` and `.ods`
+  (`sheets.ts`, unzipped with `fflate`), a web page's table (a bank's
+  « Excel » is often one, and so is what is copied from its site). Columns
+  are found by their names in French or English, and checked against what
+  they hold; without a header, by what they hold alone — the dates, a signed
+  amount or debit and credit apart, a D/C column, a running balance that
+  follows the amount, the longest words. The lines above a header give the
+  account (IBAN or number) and the balance (« Solde au … »). A table whose
+  columns cannot be told apart comes back as its rows (`problem: "columns"`).
+- **Bank formats**: OFX/QFX with each account, its period and balance;
+  QIF day- or month-first (Quicken's `1/15'26`); CAMT.053/.052 booked
+  entries and their `OPBD`/`CLBD` balances; MT940 with its `:86:` words;
+  CFONB 120 with its signed last digit.
+- **The bank** (`banks.ts`) only where certain: a code in an IBAN or an OFX
+  that is one bank's alone, columns only one bank writes, one bank named.
+- **Line ids** (`line-ids.ts`): day, signed amount and words, plus a rank
+  among identical lines, so a second download or an overlapping export adds
+  nothing twice and two real coffees stay two. Prefixed by the account when
+  stored.
+
+PDFs, old binary Excel files and images are named and left for later
+phases. Such lines are kept beside the bank's in `bank_feed_items`, with a
+`source` (`file`, later `email` and `notification`) and the
+`statement_imports` row they came with (migration `074`); accounts known
+from their files are `bank_accounts` rows with `source = 'file'` and a
+`statement_key`. Only the bank's lines make a ledger bank-fed
+(`hasBankFeed`), so recurring charges keep being written on their day for
+someone who imports monthly. The sync's write path
+(`apps/web/lib/bank/feed-write.ts`) writes either kind, each line marked.
+
 ## Search
 
 The Journal's search filters the month on screen and, under it, lists the

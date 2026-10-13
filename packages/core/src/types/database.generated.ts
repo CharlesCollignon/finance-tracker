@@ -229,7 +229,9 @@ export type Database = {
           reported_balance: number | null;
           reported_on: string | null;
           role: string | null;
+          source: string;
           space_id: string | null;
+          statement_key: string | null;
           user_id: string;
         };
         Insert: {
@@ -249,7 +251,9 @@ export type Database = {
           reported_balance?: number | null;
           reported_on?: string | null;
           role?: string | null;
+          source?: string;
           space_id?: string | null;
+          statement_key?: string | null;
           user_id: string;
         };
         Update: {
@@ -269,7 +273,9 @@ export type Database = {
           reported_balance?: number | null;
           reported_on?: string | null;
           role?: string | null;
+          source?: string;
           space_id?: string | null;
+          statement_key?: string | null;
           user_id?: string;
         };
         Relationships: [
@@ -355,12 +361,14 @@ export type Database = {
           decided_by: string | null;
           direction: string;
           id: string;
+          import_id: string | null;
           intraday_index: number;
           merchant_category_code: string | null;
           note: string;
           occurred_on: string;
           provider_account_id: string;
           provider_id: string;
+          source: string;
           status: string;
           transaction_id: string | null;
           user_id: string;
@@ -374,12 +382,14 @@ export type Database = {
           decided_by?: string | null;
           direction: string;
           id?: string;
+          import_id?: string | null;
           intraday_index?: number;
           merchant_category_code?: string | null;
           note: string;
           occurred_on: string;
           provider_account_id: string;
           provider_id: string;
+          source?: string;
           status?: string;
           transaction_id?: string | null;
           user_id: string;
@@ -393,17 +403,26 @@ export type Database = {
           decided_by?: string | null;
           direction?: string;
           id?: string;
+          import_id?: string | null;
           intraday_index?: number;
           merchant_category_code?: string | null;
           note?: string;
           occurred_on?: string;
           provider_account_id?: string;
           provider_id?: string;
+          source?: string;
           status?: string;
           transaction_id?: string | null;
           user_id?: string;
         };
         Relationships: [
+          {
+            foreignKeyName: "bank_feed_items_import_id_fkey";
+            columns: ["import_id"];
+            isOneToOne: false;
+            referencedRelation: "statement_imports";
+            referencedColumns: ["id"];
+          },
           {
             foreignKeyName: "bank_feed_items_transaction_id_fkey";
             columns: ["transaction_id"];
@@ -2153,6 +2172,66 @@ export type Database = {
             referencedColumns: ["id"];
           },
         ];
+      };
+      statement_imports: {
+        Row: {
+          bank: string | null;
+          created_at: string;
+          created_by: string | null;
+          file_name: string | null;
+          format: string;
+          id: string;
+          lines_filed: number;
+          lines_known: number;
+          lines_new: number;
+          lines_total: number;
+          lines_waiting: number;
+          period_from: string | null;
+          period_to: string | null;
+          provider_account_id: string;
+          source: string;
+          undone_at: string | null;
+          user_id: string;
+        };
+        Insert: {
+          bank?: string | null;
+          created_at?: string;
+          created_by?: string | null;
+          file_name?: string | null;
+          format: string;
+          id?: string;
+          lines_filed?: number;
+          lines_known?: number;
+          lines_new?: number;
+          lines_total?: number;
+          lines_waiting?: number;
+          period_from?: string | null;
+          period_to?: string | null;
+          provider_account_id: string;
+          source: string;
+          undone_at?: string | null;
+          user_id: string;
+        };
+        Update: {
+          bank?: string | null;
+          created_at?: string;
+          created_by?: string | null;
+          file_name?: string | null;
+          format?: string;
+          id?: string;
+          lines_filed?: number;
+          lines_known?: number;
+          lines_new?: number;
+          lines_total?: number;
+          lines_waiting?: number;
+          period_from?: string | null;
+          period_to?: string | null;
+          provider_account_id?: string;
+          source?: string;
+          undone_at?: string | null;
+          user_id?: string;
+        };
+        Relationships: [];
       };
       tags: {
         Row: {
