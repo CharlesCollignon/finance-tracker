@@ -66,6 +66,7 @@ export default function EntraideScreen() {
 
   const { data, error, loading, refreshing, onRefresh } = useRefreshable(
     async () => ({
+      key: listKey,
       posts: await readList(filter, sort, 0),
       readAt: new Date(),
     }),
@@ -202,10 +203,9 @@ export default function EntraideScreen() {
         </View>
       ) : (
         <FlatList
-          // A new filter or order deals the cards again.
-          key={listKey}
           data={posts}
-          keyExtractor={(post) => String(post.id)}
+          // A new filter or order deals the cards again, once it has read.
+          keyExtractor={(post) => `${data?.key}-${post.id}`}
           ListHeaderComponent={header}
           contentContainerClassName="gap-3 px-4 pb-24 pt-4"
           renderItem={({ item, index }) => (

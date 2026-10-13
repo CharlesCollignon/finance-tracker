@@ -88,7 +88,9 @@ export default function EntraideThreadScreen() {
   const { user } = useAuth();
   const userId = user?.id ?? null;
 
-  const { data, error, loading, refreshing, onRefresh, reload } =
+  // Each write announces "community" (`lib/data-version.ts`): the thread,
+  // on screen, reads itself again after one, and the list once shown.
+  const { data, error, loading, refreshing, onRefresh } =
     useRefreshable(
       async () => ({
         thread: id === null ? null : await readThreadFor(id, userId),
@@ -201,9 +203,7 @@ export default function EntraideThreadScreen() {
     setDeleting(null);
     if (!result.ok) {
       setFailed(entraideErrorText(copy, result.error));
-      return;
     }
-    void reload();
   }
 
   let index = 0;
@@ -270,12 +270,7 @@ export default function EntraideThreadScreen() {
             <ReplyEditor
               reply={reply}
               copy={copy}
-              onDone={(saved) => {
-                setEditing(null);
-                if (saved) {
-                  void reload();
-                }
-              }}
+              onDone={() => setEditing(null)}
             />
           ) : null
         }
@@ -333,12 +328,7 @@ export default function EntraideThreadScreen() {
               <PostEditor
                 post={post}
                 copy={copy}
-                onDone={(saved) => {
-                  setEditing(null);
-                  if (saved) {
-                    void reload();
-                  }
-                }}
+                onDone={() => setEditing(null)}
               />
             ) : (
               <>
@@ -465,12 +455,7 @@ export default function EntraideThreadScreen() {
         </ScrollView>
 
         {postHidden || (post.gone && post.author.isMine) ? null : (
-          <ReplyComposer
-            postId={post.id}
-            handle={thread.handle}
-            copy={copy}
-            onSent={() => void reload()}
-          />
+          <ReplyComposer postId={post.id} handle={thread.handle} copy={copy} />
         )}
       </KeyboardAvoidingView>
 
@@ -643,7 +628,7 @@ function PostEditor({
 }: {
   post: EntraidePost;
   copy: EntraideCopy;
-  onDone: (saved: boolean) => void;
+  onDone: () => void;
 }) {
   const [title, setTitle] = useState(post.title);
   const [body, setBody] = useState(post.body);
@@ -668,7 +653,7 @@ function PostEditor({
       setError(entraideErrorText(copy, result.error));
       return;
     }
-    onDone(true);
+    onDone();
   }
 
   return (
@@ -698,7 +683,7 @@ function PostEditor({
         <Button
           label={copy.thread.cancel}
           variant="ghost"
-          onPress={() => onDone(false)}
+          onPress={onDone}
         />
         <Button
           label={copy.thread.save}
@@ -717,7 +702,7 @@ function ReplyEditor({
 }: {
   reply: EntraideReply;
   copy: EntraideCopy;
-  onDone: (saved: boolean) => void;
+  onDone: () => void;
 }) {
   const [text, setText] = useState(reply.body);
   const [pending, setPending] = useState(false);
@@ -737,7 +722,7 @@ function ReplyEditor({
       setError(entraideErrorText(copy, result.error));
       return;
     }
-    onDone(true);
+    onDone();
   }
 
   return (
@@ -761,7 +746,7 @@ function ReplyEditor({
         <Button
           label={copy.thread.cancel}
           variant="ghost"
-          onPress={() => onDone(false)}
+          onPress={onDone}
         />
         <Button
           label={copy.thread.save}
@@ -782,12 +767,10 @@ function ReplyComposer({
   postId,
   handle,
   copy,
-  onSent,
 }: {
   postId: number;
   handle: string | null;
   copy: EntraideCopy;
-  onSent: () => void;
 }) {
   const colors = useThemeColors();
   const [text, setText] = useState("");
@@ -818,7 +801,6 @@ function ReplyComposer({
     }
     void hapticSuccess();
     setText("");
-    onSent();
   }
 
   return (
