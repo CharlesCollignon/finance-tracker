@@ -1,10 +1,12 @@
 import Link from "next/link";
-import { Fragment } from "react";
+import { Fragment, type ReactNode } from "react";
+import type { Locale } from "@finance/core/i18n/locale";
 import { getLocale } from "@/lib/locale";
 import {
   LEGAL_DRAFT,
   LEGAL_PATHS,
   legalCopyFor,
+  type LegalDocument,
   type LegalDocumentId,
   type LegalSection,
 } from "@/components/marketing/legal-copy";
@@ -12,30 +14,72 @@ import { marketingFocus } from "@/components/marketing/marketing-focus";
 import { cn } from "@/lib/utils";
 
 /**
- * One legal document, set for reading rather than for skimming past.
+ * One of the three legal documents (`legal-copy.ts`), with the way across to
+ * the other of privacy and terms at its foot.
+ */
+export async function LegalPage({ doc }: { doc: LegalDocumentId }) {
+  const locale = await getLocale();
+  const copy = legalCopyFor(locale);
+  const other: LegalDocumentId = doc === "privacy" ? "terms" : "privacy";
+
+  return (
+    <LegalArticle
+      page={copy[doc]}
+      locale={locale}
+      updated={copy.updated}
+      draftNotice={LEGAL_DRAFT ? copy.draftNotice : null}
+    >
+      <Link
+        href={LEGAL_PATHS[other]}
+        className={cn(
+          "rounded-control underline decoration-white/30 underline-offset-4 transition-colors duration-hover hover:text-white",
+          marketingFocus,
+        )}
+      >
+        {copy.nav[other]}
+      </Link>
+    </LegalArticle>
+  );
+}
+
+/**
+ * A legal document, set for reading rather than for skimming past: the
+ * legal pages, and « Les règles d'Entraide ».
  *
  * A single column at a reading measure, the contents at the top as anchors,
  * and none of the landing page's motion: somebody on this page is checking
  * what they agreed to, and a paragraph that fades in is a paragraph that was
  * briefly not there to read.
  */
-export async function LegalPage({ doc }: { doc: LegalDocumentId }) {
-  const locale = await getLocale();
+export function LegalArticle({
+  page,
+  locale,
+  updated,
+  draftNotice,
+  children,
+}: {
+  page: LegalDocument;
+  locale: Locale;
+  /** ISO date the text last changed. */
+  updated: string;
+  /** Said above the title while the document is a draft. */
+  draftNotice: string | null;
+  /** What closes the document: the way to the documents beside it. */
+  children?: ReactNode;
+}) {
   const copy = legalCopyFor(locale);
-  const page = copy[doc];
-  const other: LegalDocumentId = doc === "privacy" ? "terms" : "privacy";
-  const updated = new Intl.DateTimeFormat(locale, { dateStyle: "long" }).format(
-    new Date(`${copy.updated}T12:00:00Z`),
-  );
+  const updatedOn = new Intl.DateTimeFormat(locale, {
+    dateStyle: "long",
+  }).format(new Date(`${updated}T12:00:00Z`));
 
   return (
     <article className="relative mx-auto w-full max-w-3xl px-6 pb-20 pt-32 md:pb-28 md:pt-40">
-      {LEGAL_DRAFT ? (
+      {draftNotice ? (
         <p
           role="note"
           className="mb-10 rounded-control border border-primary/40 bg-primary/10 px-4 py-3 text-sm text-marketing-ink"
         >
-          {copy.draftNotice}
+          {draftNotice}
         </p>
       ) : null}
 
@@ -45,7 +89,7 @@ export async function LegalPage({ doc }: { doc: LegalDocumentId }) {
           {page.summary}
         </p>
         <p className="mt-4 text-sm text-marketing-faint">
-          {copy.updatedLabel} <time dateTime={copy.updated}>{updated}</time>
+          {copy.updatedLabel} <time dateTime={updated}>{updatedOn}</time>
         </p>
       </header>
 
@@ -79,17 +123,11 @@ export async function LegalPage({ doc }: { doc: LegalDocumentId }) {
         ))}
       </div>
 
-      <p className="mt-16 border-t border-white/10 pt-6 text-sm text-marketing-muted">
-        <Link
-          href={LEGAL_PATHS[other]}
-          className={cn(
-            "rounded-control underline decoration-white/30 underline-offset-4 transition-colors duration-hover hover:text-white",
-            marketingFocus,
-          )}
-        >
-          {copy.nav[other]}
-        </Link>
-      </p>
+      {children ? (
+        <p className="mt-16 flex flex-wrap gap-x-6 gap-y-2 border-t border-white/10 pt-6 text-sm text-marketing-muted">
+          {children}
+        </p>
+      ) : null}
     </article>
   );
 }
