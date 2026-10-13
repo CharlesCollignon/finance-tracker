@@ -28,11 +28,24 @@ describe("readNotificationPrefs", () => {
 
 describe("shownNotificationKinds", () => {
   it("shows the property's switch only to an account with the Immobilier tab", () => {
-    expect(shownNotificationKinds({ property: true })).toContain("property");
-    expect(shownNotificationKinds({ property: false })).not.toContain(
-      "property",
-    );
-    expect(shownNotificationKinds({ property: false })).toContain("recap");
+    expect(
+      shownNotificationKinds({ property: true, community: true }),
+    ).toContain("property");
+    expect(
+      shownNotificationKinds({ property: false, community: true }),
+    ).not.toContain("property");
+    expect(
+      shownNotificationKinds({ property: false, community: true }),
+    ).toContain("recap");
+  });
+
+  it("shows Entraide's switch only once Entraide is open", () => {
+    expect(
+      shownNotificationKinds({ property: true, community: true }),
+    ).toContain("community");
+    expect(
+      shownNotificationKinds({ property: true, community: false }),
+    ).not.toContain("community");
   });
 });
 

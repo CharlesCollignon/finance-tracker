@@ -39,6 +39,7 @@
     "./preferences": "./src/preferences.ts",
     "./properties": "./src/properties.ts",
     "./purchases-to-confirm": "./src/purchases-to-confirm.ts",
+    "./entraide": "./src/entraide.ts",
     "./reactions": "./src/reactions.ts",
     "./quote-source": "./src/quote-source.ts",
     "./recurring-apply": "./src/recurring-apply.ts",

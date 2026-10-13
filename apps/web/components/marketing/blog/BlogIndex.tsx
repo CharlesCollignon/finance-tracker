@@ -1,5 +1,8 @@
-/* Hallmark · genre: atmospheric · macrostructure: Ecosystem Index (featured, then the rest, then what is coming) · theme: design.md (Pluclair) · enrichment: the room's own light as covers · nav: kept · footer: kept */
+/* Hallmark · genre: atmospheric · macrostructure: Ecosystem Index (featured, then the rest, then what is coming) · theme: design.md (Pluclair) · enrichment: a photo from Unsplash per guide · nav: kept · footer: kept */
 
+import Link from "next/link";
+import { ArrowRight } from "@phosphor-icons/react/dist/ssr";
+import { ENTRAIDE_HREF } from "@finance/core/entraide";
 import { NO_TALLY, ROADMAP_VOTE, roadmapTarget } from "@finance/core/reactions";
 import { readReactions } from "@finance/data/reactions";
 import { getAuthUser } from "@/lib/auth/get-user";
@@ -9,21 +12,28 @@ import { getLocale } from "@/lib/locale";
 import { createClient } from "@/lib/supabase/server";
 import { blogCopyFor } from "@/components/marketing/blog-copy";
 import { FadeUp, RiseLines } from "@/components/marketing/LandingReveal";
+import { entraideRulesVisible } from "@/components/marketing/legal-status";
+import { marketingFocus } from "@/components/marketing/marketing-focus";
 import { nouveautesCopyFor } from "@/components/marketing/nouveautes-copy";
 import { GuideCard } from "@/components/marketing/blog/GuideCard";
 import { openRoadmap } from "@/components/marketing/nouveautes/open-roadmap";
 import { Reactions } from "@/components/marketing/nouveautes/Reactions";
+import { cn } from "@/lib/utils";
 
 /**
  * « Le blog »: the guide « À la une » drawn wide, the others under it, and
- * the door to Entraide while it is still coming — with « J'attends ça »,
- * the same vote as on « Nouveautés », so its count is one.
+ * the door to Entraide — open once its rules are signed
+ * (`ENTRAIDE_RULES_DRAFT`), and until then with « J'attends ça », the same
+ * vote as on « Nouveautés », so its count is one.
  */
 export async function BlogIndex() {
   const locale = await getLocale();
   const copy = blogCopyFor(locale);
   const [featured, ...rest] = await allGuides();
-  const entraide = openRoadmap().find((item) => item.id === "entraide");
+  const entraideOpen = entraideRulesVisible();
+  const entraide = entraideOpen
+    ? undefined
+    : openRoadmap().find((item) => item.id === "entraide");
   const user = await getAuthUser();
   const tally = entraide
     ? await createClient()
@@ -80,7 +90,41 @@ export async function BlogIndex() {
             ))}
           </ul>
 
-          {entraide ? (
+          {entraideOpen ? (
+            <FadeUp>
+              <Link
+                href={ENTRAIDE_HREF}
+                className={cn(
+                  "glass-flat glass-flat-hover group mt-8 flex flex-col gap-5 rounded-[2rem] p-6 md:flex-row md:items-end md:justify-between md:p-8",
+                  marketingFocus,
+                )}
+              >
+                <div className="max-w-xl">
+                  <p className="flex items-center gap-2 text-[11px] font-medium uppercase tracking-[0.16em] text-marketing-faint">
+                    <span
+                      className="block size-2 rounded-full bg-success"
+                      aria-hidden
+                    />
+                    {copy.entraide.open}
+                  </p>
+                  <h2 className="mt-3 font-head text-2xl text-marketing-ink">
+                    {copy.entraide.title}
+                  </h2>
+                  <p className="mt-2 text-marketing-muted">
+                    {copy.entraide.body}
+                  </p>
+                </div>
+                <span className="inline-flex items-center gap-2 text-marketing-ink">
+                  {copy.entraide.enter}
+                  <ArrowRight
+                    size={16}
+                    aria-hidden
+                    className="transition-transform duration-hover group-hover:translate-x-1"
+                  />
+                </span>
+              </Link>
+            </FadeUp>
+          ) : entraide ? (
             <FadeUp>
               <div className="glass-flat mt-8 flex flex-col gap-5 rounded-[2rem] p-6 md:flex-row md:items-end md:justify-between md:p-8">
                 <div className="max-w-xl">

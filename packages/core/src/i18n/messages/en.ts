@@ -2183,6 +2183,10 @@ export const en = {
       label: "Bank connection",
       hint: "When it needs renewing, or has stopped.",
     },
+    community: {
+      label: "Entraide",
+      hint: "An answer to your question, or your answer marked « Solved ».",
+    },
   },
   dcaTransfer: {
     stripToSend: "to get ready",
@@ -2286,6 +2290,13 @@ export const en = {
     year: {
       title: "Your {year} is ready",
       body: "What the year kept, your month reviews, what moved most.",
+    },
+    community: {
+      answerTitle: "{handle} answered you",
+      answerBody: "In Entraide, on « {title} ».",
+      solvedTitle: "Your answer solved it",
+      solvedBody:
+        "In Entraide, « {title} » is marked « Solved » thanks to your answer.",
     },
     milestone: {
       title: "New milestone: {amount}",

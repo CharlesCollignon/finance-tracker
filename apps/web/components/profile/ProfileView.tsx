@@ -73,6 +73,8 @@ interface ProfileViewProps {
   showBank: boolean;
   /** Whether the account has the Immobilier tab, and so its notifications. */
   showProperty: boolean;
+  /** Whether Entraide is open, and so its notifications. */
+  showCommunity: boolean;
   /**
    * The AI account section, behind `ai.account`: null with the flag off;
    * otherwise the connected account's model (null with none) and what the
@@ -115,6 +117,7 @@ export function ProfileView({
   initialPasskeys,
   showBank,
   showProperty,
+  showCommunity,
   aiAccount,
   space,
   userId,
@@ -342,7 +345,10 @@ export function ProfileView({
           <NotificationsRow publicKey={pushPublicKey} />
           <NotificationKindRows
             prefs={notificationPrefs}
-            kinds={shownNotificationKinds({ property: showProperty })}
+            kinds={shownNotificationKinds({
+              property: showProperty,
+              community: showCommunity,
+            })}
           />
         </ListSection>
 

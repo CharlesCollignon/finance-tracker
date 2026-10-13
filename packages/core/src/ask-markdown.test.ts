@@ -130,3 +130,52 @@ describe("parseInline", () => {
     ]);
   });
 });
+
+describe("links, where they are asked for", () => {
+  const paragraph = (markdown: string, links: boolean) => {
+    const [block] = parseAskMarkdown(markdown, [], { links });
+    return block?.kind === "paragraph" ? block.inline : [];
+  };
+
+  it("shows a link as its words by default", () => {
+    expect(
+      paragraph("Voir [la fiche](https://service-public.gouv.fr).", false),
+    ).toEqual([
+      { kind: "text", text: "Voir " },
+      { kind: "text", text: "la fiche" },
+      { kind: "text", text: "." },
+    ]);
+  });
+
+  it("links a written link and a bare address to the web", () => {
+    expect(
+      paragraph("Voir [la fiche](https://service-public.gouv.fr/F2385).", true),
+    ).toEqual([
+      { kind: "text", text: "Voir " },
+      {
+        kind: "link",
+        href: "https://service-public.gouv.fr/F2385",
+        children: [{ kind: "text", text: "la fiche" }],
+      },
+      { kind: "text", text: "." },
+    ]);
+    expect(paragraph("Source : https://www.impots.gouv.fr/x.", true)).toEqual([
+      { kind: "text", text: "Source : " },
+      {
+        kind: "link",
+        href: "https://www.impots.gouv.fr/x",
+        children: [{ kind: "text", text: "https://www.impots.gouv.fr/x" }],
+      },
+      { kind: "text", text: "." },
+    ]);
+  });
+
+  it("never links anything but a web address", () => {
+    expect(paragraph("[clic](javascript:alert(1))", true)).not.toContainEqual(
+      expect.objectContaining({ kind: "link" }),
+    );
+    expect(paragraph("[mail](mailto:a@b.fr)", true)).toEqual([
+      { kind: "text", text: "mail" },
+    ]);
+  });
+});

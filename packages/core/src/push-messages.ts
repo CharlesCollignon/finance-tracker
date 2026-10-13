@@ -449,6 +449,54 @@ export function milestoneNotification({
 }
 
 /**
+ * Entraide: someone answered the reader's question or share. Once per
+ * answer; it opens the thread, on the web.
+ */
+export function entraideAnswerNotification({
+  replyId,
+  handle,
+  title,
+  url,
+  t,
+}: Voice & {
+  replyId: number;
+  handle: string;
+  title: string;
+  url: string;
+}): PendingNotification {
+  return {
+    kind: "community",
+    key: `community:answer:${replyId}`,
+    title: t("push.community.answerTitle", { handle }),
+    body: t("push.community.answerBody", { title }),
+    url,
+  };
+}
+
+/**
+ * Entraide: the asker marked the reader's answer « Résolu ». Once per
+ * answer, even if the mark is taken back and given again.
+ */
+export function entraideSolvedNotification({
+  replyId,
+  title,
+  url,
+  t,
+}: Voice & {
+  replyId: number;
+  title: string;
+  url: string;
+}): PendingNotification {
+  return {
+    kind: "community",
+    key: `community:solved:${replyId}`,
+    title: t("push.community.solvedTitle"),
+    body: t("push.community.solvedBody", { title }),
+    url,
+  };
+}
+
+/**
  * January: « Votre année » is ready. Once, keyed by the year; it opens the
  * review, on either app.
  */

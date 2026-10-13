@@ -1581,6 +1581,10 @@ export const fr: Messages = {
       label: "Connexion bancaire",
       hint: "Quand il faut la renouveler, ou si elle s'est arrêtée.",
     },
+    community: {
+      label: "Entraide",
+      hint: "Une réponse à votre question, ou votre réponse marquée « Résolu ».",
+    },
   },
   dcaTransfer: {
     stripToSend: "à préparer",
@@ -1690,6 +1694,13 @@ export const fr: Messages = {
     year: {
       title: "Votre année {year} est prête",
       body: "Ce que l'année a gardé, vos bilans, ce qui a le plus bougé.",
+    },
+    community: {
+      answerTitle: "{handle} vous a répondu",
+      answerBody: "Dans Entraide, sur « {title} ».",
+      solvedTitle: "Votre réponse a résolu la question",
+      solvedBody:
+        "Dans Entraide, « {title} » est marquée « Résolu » grâce à votre réponse.",
     },
     milestone: {
       title: "Nouveau palier\u00A0: {amount}",

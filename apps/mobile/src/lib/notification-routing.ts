@@ -1,10 +1,12 @@
 import { useEffect } from "react";
 import * as Notifications from "expo-notifications";
 import { useRouter, type Href } from "expo-router";
+import * as WebBrowser from "expo-web-browser";
 
 import { mobileRouteForPushUrl } from "@finance/core/push-routes";
 
 import { notifyDataChanged } from "@/lib/data-version";
+import { WEB_APP_URL } from "@/lib/env";
 import { stampReviewAsk } from "@/lib/review-ask";
 import { useOwner } from "@/providers/OwnerProvider";
 
@@ -60,6 +62,19 @@ export function useNotificationRouting(ready: boolean): void {
     if (route?.params.owner) {
       showSpace(route.params.owner);
       delete route.params.owner;
+    }
+
+    // Entraide lives on the web until it comes to the phone: its thread
+    // opens there, in the in-app browser, rather than nowhere in particular.
+    if (
+      route === null &&
+      typeof url === "string" &&
+      url.startsWith("/blog/") &&
+      WEB_APP_URL
+    ) {
+      void WebBrowser.openBrowserAsync(`${WEB_APP_URL}${url}`);
+      Notifications.clearLastNotificationResponse();
+      return;
     }
 
     // The Bearing when the path cannot be placed — a web-only surface such

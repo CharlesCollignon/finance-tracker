@@ -27,10 +27,14 @@ export const blogCopyFr: BlogCopy = {
     heading: "Une question ?",
     body: "Si quelque chose n’est pas clair, ou pas juste, écrivez-nous : c’est comme ça que les guides s’améliorent.",
     write: "Nous écrire",
+    ask: "Posez-la dans Entraide",
+    askDetail: "Les personnes qui utilisent Pluclair y répondent.",
   },
   entraide: {
     title: "Entraide",
     body: "Posez vos questions aux autres personnes qui utilisent Pluclair, et répondez aux leurs.",
     soon: "Bientôt",
+    open: "Ouvert",
+    enter: "Entrer dans Entraide",
   },
 };

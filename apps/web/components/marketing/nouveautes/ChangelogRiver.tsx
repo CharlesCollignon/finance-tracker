@@ -50,6 +50,7 @@ import {
   type RiverEntry,
 } from "@/components/marketing/nouveautes/river-entry";
 import { GOTO_WEEK_EVENT } from "@/components/marketing/nouveautes/river-events";
+import { SegmentedPills } from "@/components/marketing/SegmentedPills";
 import { cn } from "@/lib/utils";
 
 /** Motion's layout engine, fetched after the page — see `lib/motion-features`. */
@@ -269,8 +270,8 @@ export function ChangelogRiver({
               ) : null}
 
               <div className="flex flex-col gap-3 md:mt-10">
-                <Segmented
-                  id="kind"
+                <SegmentedPills
+                  id="nouveautes-kind"
                   label={copy.filters.label}
                   value={kind}
                   onChange={filterBy(setKind)}
@@ -283,8 +284,8 @@ export function ChangelogRiver({
                     })),
                   ]}
                 />
-                <Segmented
-                  id="platform"
+                <SegmentedPills
+                  id="nouveautes-platform"
                   label={copy.filters.platformsLabel}
                   value={platform}
                   onChange={filterBy(setPlatform)}
@@ -633,65 +634,6 @@ function MonthMarker({
       <p className="mt-3 text-sm text-marketing-muted">
         {month.year} · {countLabel(copy.river.monthCount, count)}
       </p>
-    </div>
-  );
-}
-
-function Segmented<T extends string>({
-  id,
-  label,
-  value,
-  onChange,
-  options,
-}: {
-  id: string;
-  label: string;
-  value: T;
-  onChange: (value: T) => void;
-  options: { value: T; label: string; dot?: string }[];
-}) {
-  return (
-    <div
-      role="group"
-      aria-label={label}
-      className="-mx-6 overflow-x-auto px-6 [scrollbar-width:none] md:mx-0 md:px-0"
-    >
-      <div className="inline-flex rounded-full border border-white/10 bg-white/[0.04] p-1">
-        {options.map((option) => {
-          const active = option.value === value;
-          return (
-            <button
-              key={option.value}
-              type="button"
-              aria-pressed={active}
-              onClick={() => onChange(option.value)}
-              className={cn(
-                "relative flex min-h-9 shrink-0 items-center gap-2 whitespace-nowrap rounded-full px-3.5 text-sm transition-colors duration-hover",
-                marketingFocus,
-                active
-                  ? "text-marketing-ink"
-                  : "text-marketing-muted hover:text-white",
-              )}
-            >
-              {active ? (
-                <m.span
-                  layoutId={`nouveautes-${id}-pill`}
-                  className="absolute inset-0 rounded-full bg-white/[0.12]"
-                  transition={PILL_SPRING}
-                  aria-hidden
-                />
-              ) : null}
-              {option.dot ? (
-                <span
-                  className={cn("relative size-1.5 rounded-full", option.dot)}
-                  aria-hidden
-                />
-              ) : null}
-              <span className="relative">{option.label}</span>
-            </button>
-          );
-        })}
-      </div>
     </div>
   );
 }

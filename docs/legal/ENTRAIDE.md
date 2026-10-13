@@ -37,6 +37,6 @@ Décidé avec l'éditeur le 13 octobre 2026 :
 
 ## À l'ouverture d'Entraide (phase 5b)
 
-- La politique de confidentialité et les conditions d'utilisation reçoivent chacune une ligne qui renvoie à ces règles, dans le même commit que le code qui stocke les messages.
+- La politique de confidentialité et les conditions d'utilisation reçoivent chacune une ligne qui renvoie à ces règles, dans le commit qui ouvre Entraide.
 - Le registre des traitements et l'AIPD reçoivent le traitement « Entraide ».
 - Les blancs `[[…]]` des règles sont remplis avec les réponses aux questions 1 et 4, et `ENTRAIDE_RULES_DRAFT` passe à `false` une fois le texte relu ; `entraide-rules-copy.test.ts` échoue si un blanc subsiste.

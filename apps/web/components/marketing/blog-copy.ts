@@ -22,8 +22,20 @@ export interface BlogCopy {
   disclaimer: string;
   /** Under a guide's cover: « Photo : <name> sur <Unsplash> ». */
   photo: { by: string; on: string };
-  question: { heading: string; body: string; write: string };
-  entraide: { title: string; body: string; soon: string };
+  question: {
+    heading: string;
+    body: string;
+    write: string;
+    ask: string;
+    askDetail: string;
+  };
+  entraide: {
+    title: string;
+    body: string;
+    soon: string;
+    open: string;
+    enter: string;
+  };
 }
 
 export const blogCopy: BlogCopy = {
@@ -52,11 +64,15 @@ export const blogCopy: BlogCopy = {
     heading: "A question?",
     body: "If something here is unclear, or wrong, write to us: guides get better that way.",
     write: "Write to us",
+    ask: "Ask it in Entraide",
+    askDetail: "People who use Pluclair answer there.",
   },
   entraide: {
     title: "Entraide",
     body: "Ask your questions to other people who use Pluclair, and answer theirs.",
     soon: "Coming soon",
+    open: "Open",
+    enter: "Go to Entraide",
   },
 };
 

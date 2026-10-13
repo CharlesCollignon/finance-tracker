@@ -332,7 +332,37 @@ As first planned:
   individual.
 - Entraide opens in production only once `LEGAL_DRAFT` is false.
 
-### 5b — Posting and answering (branch `entraide`)
+### 5b — Posting and answering (branch `entraide`) — built, waiting on the owner
+
+Built as below, with these differences. The tables are
+`entraide_profiles`, `entraide_posts` and `entraide_replies` (migration 071,
+for the owner to run), read only through definer functions that give a
+pseudonym and never a user id; `reports` comes with 5c. Limits: 5
+questions and 30 answers per account a day, no link before a day old,
+titles 8–140 characters, posts 5 000, answers 3 000. Account deletion is
+handled here, not in 5c: `on delete set null`, and a trigger empties the
+text. The « Pluclair » mark is a column set by hand on the owner's
+pseudonym, not a flag. Notifications are pushes only — there is no in-app
+inbox to put them in — sent as they happen (so one held by the quiet hours
+is not sent later); the phone opens an Entraide push on the web, and its
+switch shows on the phone only when Entraide comes there (Phase 6). No
+Turnstile yet. Checked end to end against the local stack (two accounts,
+a question, two answers, « Résolu », both pushes logged), then cleaned.
+
+**Before Entraide opens**, in this order:
+
+1. 5c, moderation, built and merged.
+2. Migration 071 run on the hosted database, and the owner's pseudonym
+   marked: `insert into entraide_profiles (user_id, handle, is_pluclair)
+   values ('<owner id>', 'Pluclair', true);`
+3. The lawyer's answers in `docs/legal/ENTRAIDE.md`, its two blanks filled
+   in the rules, and the privacy policy and terms final (`LEGAL_DRAFT`).
+4. One commit that flips `ENTRAIDE_RULES_DRAFT` and, with it: a line in the
+   privacy policy and one in the terms pointing to the rules; Entraide in
+   the register and the DPIA; `/blog/entraide` in the sitemap; Entraide
+   out of `ROADMAP` with its « Nouveautés » entry.
+
+As first planned:
 
 - **Data**: `community_profiles(user_id, handle unique, banned_at)`;
   `posts(id, author_id, kind 'question' | 'share', title, body, guide_slug,
