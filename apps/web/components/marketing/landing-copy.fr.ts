@@ -584,6 +584,7 @@ export const landingCopyFr: LandingCopySections & {
     privacy: "Vos questions",
     about: "À propos",
     nouveautes: "Nouveautés",
+    blog: "Le blog",
     previous: "Précédent",
     next: "Suivant",
     groupMonth: "Votre mois",

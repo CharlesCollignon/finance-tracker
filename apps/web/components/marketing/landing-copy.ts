@@ -615,6 +615,7 @@ export const landingCopy = {
     privacy: "Your questions",
     about: "About",
     nouveautes: "What's new",
+    blog: "Blog",
     previous: "Previous",
     next: "Next",
     /** The product menu's three groups of pages. */
