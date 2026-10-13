@@ -728,6 +728,118 @@ export type Database = {
           },
         ];
       };
+      entraide_posts: {
+        Row: {
+          author_id: string | null;
+          body: string;
+          created_at: string;
+          edited_at: string | null;
+          guide_slug: string | null;
+          id: number;
+          kind: string;
+          search: unknown;
+          solved_reply_id: number | null;
+          status: string;
+          title: string;
+        };
+        Insert: {
+          author_id?: string | null;
+          body?: string;
+          created_at?: string;
+          edited_at?: string | null;
+          guide_slug?: string | null;
+          id?: never;
+          kind?: string;
+          search?: never;
+          solved_reply_id?: number | null;
+          status?: string;
+          title: string;
+        };
+        Update: {
+          author_id?: string | null;
+          body?: string;
+          created_at?: string;
+          edited_at?: string | null;
+          guide_slug?: string | null;
+          id?: never;
+          kind?: string;
+          search?: never;
+          solved_reply_id?: number | null;
+          status?: string;
+          title?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "entraide_posts_solved";
+            columns: ["solved_reply_id"];
+            isOneToOne: false;
+            referencedRelation: "entraide_replies";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      entraide_profiles: {
+        Row: {
+          banned_at: string | null;
+          created_at: string;
+          handle: string;
+          is_pluclair: boolean;
+          user_id: string;
+        };
+        Insert: {
+          banned_at?: string | null;
+          created_at?: string;
+          handle: string;
+          is_pluclair?: boolean;
+          user_id: string;
+        };
+        Update: {
+          banned_at?: string | null;
+          created_at?: string;
+          handle?: string;
+          is_pluclair?: boolean;
+          user_id?: string;
+        };
+        Relationships: [];
+      };
+      entraide_replies: {
+        Row: {
+          author_id: string | null;
+          body: string;
+          created_at: string;
+          edited_at: string | null;
+          id: number;
+          post_id: number;
+          status: string;
+        };
+        Insert: {
+          author_id?: string | null;
+          body: string;
+          created_at?: string;
+          edited_at?: string | null;
+          id?: never;
+          post_id: number;
+          status?: string;
+        };
+        Update: {
+          author_id?: string | null;
+          body?: string;
+          created_at?: string;
+          edited_at?: string | null;
+          id?: never;
+          post_id?: number;
+          status?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "entraide_replies_post_id_fkey";
+            columns: ["post_id"];
+            isOneToOne: false;
+            referencedRelation: "entraide_posts";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       expo_push_tokens: {
         Row: {
           created_at: string;
@@ -2249,6 +2361,81 @@ export type Database = {
       bearing_pins_valid: { Args: { pins: Json }; Returns: boolean };
       create_space: { Args: { new_name?: string }; Returns: string };
       create_space_invite: { Args: { target_space: string }; Returns: string };
+      entraide_author_guard: {
+        Args: {
+          author: string;
+          limit_per_day: number;
+          recent: number;
+          written: string;
+        };
+        Returns: undefined;
+      };
+      entraide_handle_taken: { Args: { p_handle: string }; Returns: boolean };
+      entraide_list: {
+        Args: {
+          p_filter?: string;
+          p_limit?: number;
+          p_offset?: number;
+          p_sort?: string;
+        };
+        Returns: {
+          created_at: string;
+          excerpt: string;
+          gone: boolean;
+          handle: string;
+          id: number;
+          is_mine: boolean;
+          is_pluclair: boolean;
+          kind: string;
+          last_activity_at: string;
+          reply_count: number;
+          solved: boolean;
+          title: string;
+          useful_count: number;
+        }[];
+      };
+      entraide_replies: {
+        Args: { p_post_id: number };
+        Returns: {
+          body: string;
+          created_at: string;
+          edited_at: string;
+          gone: boolean;
+          handle: string;
+          id: number;
+          is_mine: boolean;
+          is_pluclair: boolean;
+          status: string;
+        }[];
+      };
+      entraide_search: {
+        Args: { p_limit?: number; p_query: string };
+        Returns: {
+          id: number;
+          kind: string;
+          reply_count: number;
+          solved: boolean;
+          title: string;
+        }[];
+      };
+      entraide_thread: {
+        Args: { p_id: number };
+        Returns: {
+          body: string;
+          created_at: string;
+          edited_at: string;
+          gone: boolean;
+          guide_slug: string;
+          handle: string;
+          id: number;
+          is_mine: boolean;
+          is_pluclair: boolean;
+          kind: string;
+          solved_reply_id: number;
+          status: string;
+          title: string;
+        }[];
+      };
       evaluated_feature_flags: {
         Args: Record<PropertyKey, never>;
         Returns: {
