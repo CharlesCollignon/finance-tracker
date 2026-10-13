@@ -518,60 +518,6 @@ export const en = {
     mapApply: "Read it like this",
   },
 
-  importer: {
-    statusReady: "Ready",
-    statusSkipped: "Skipped",
-    statusProblem: "Problem",
-    heading: "Import a bank statement",
-    checkColumns: "Check the columns",
-    columnDate: "Date",
-    columnDescription: "Description",
-    columnAmount: "Amount",
-    debitColumn: "Money out (debit)",
-    creditColumn: "Money in (credit)",
-    notInThisFile: "Not in this file",
-    reading: "Reading…",
-    continue: "Continue",
-    back: "Back",
-    importing: "Importing…",
-    importCount: "Import {count}",
-    rowsReady: "{ready} of {total} rows ready",
-    alreadyInLedger: {
-      one: "{count} already in your ledger. ",
-      other: "{count} already in your ledger. ",
-    },
-    couldNotRead: {
-      one: "{count} could not be read. ",
-      other: "{count} could not be read. ",
-    },
-    needCategory: {
-      one: "{count} still needs a category.",
-      other: "{count} still need a category.",
-    },
-    everyRowCategorised: "Every row has a category.",
-    chooseFile: "Choose a file",
-    chooseCategory: "Choose a category",
-    firstRowIsHeader: "The first row is column names",
-    setRemainingSpending: "Set all remaining spending to",
-    setRemainingIncome: "Set all remaining income to",
-    imported: {
-      one: "Imported {count} transaction",
-      other: "Imported {count} transactions",
-    },
-    /* Reading the file, before there is anything to map. */
-    fileTooLarge: "That file is larger than 5 MB — is it the right export?",
-    fileNoRows: "That file has no rows in it.",
-    fileUnreadable: "That file could not be opened.",
-    introPhone:
-      "Export a CSV or an OFX from your bank and pick it here. The file is read on your phone — nothing is uploaded, and nothing is saved until you have reviewed every row.",
-    firstRows: "First rows as read",
-    categoryForRow: "Category for {description}",
-    /* Mapping. */
-    rowCount: { one: "{count} row", other: "{count} rows" },
-    /* Reviewing. */
-    categoryForLine: "Category for line {line}",
-  },
-
   /** The Plan surface: spending caps, savings goals and tags. */
   plan: {
     capRemoved: "Budget removed",
@@ -2537,13 +2483,6 @@ export const en = {
     },
   },
 
-  /** Bringing a bank statement in from a file. */
-  csvImport: {
-    noDate: "No readable date",
-    noAmount: "No readable amount",
-    duplicate: "Already in your ledger",
-  },
-
   /** Odds and ends the app supplies where the user's own words are absent. */
   fallback: {
     /** An investment category that holds a position without counting in the summary. */
@@ -3612,8 +3551,6 @@ export const en = {
     notAnIsin: "That does not look like an ISIN, e.g. IE00B4L5Y983",
     notABalance: "That does not look like a balance",
     notACap: "That does not look like a budget",
-    nothingToImport: "Nothing to import",
-    tooManyRows: "Import at most 2000 rows at a time",
     undoGone: "This deletion can no longer be undone.",
     invalidInput: "Invalid input",
     notAuthenticated: "Not authenticated",

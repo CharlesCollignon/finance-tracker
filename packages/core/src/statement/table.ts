@@ -172,7 +172,10 @@ const HINTS: Record<keyof Columns, string[]> = {
     "money in",
     "paid in",
   ],
-  direction: ["sens", "debit credit", "type de mouvement", "d c", "dc"],
+  // « Type » last: Pluclair's own export says Dépense or Revenu there; a
+  // bank's « Type » (« Carte », « CARD_PAYMENT ») says nothing of the sign,
+  // and is then not read as one.
+  direction: ["sens", "debit credit", "type de mouvement", "d c", "dc", "type"],
   // Not BoursoBank's « accountbalance »: the account's balance on the day
   // of the export, the same on every line, not the balance after each.
   balance: ["solde", "balance", "solde apres operation", "nouveau solde"],
@@ -490,14 +493,18 @@ function joinWords(label: string, detail: string): string {
 function directionOf(value: string): "in" | "out" | null {
   const word = normalize(value);
   if (
-    /^(d|db|dbit|debit|debiteur|sortie|out|-)$/.test(word) ||
-    value.trim() === "-"
+    value.trim() === "-" ||
+    /^(d|db|dbit|debit|debiteur|sortie|out|expense|depense|spending|savings|epargne|investment|investissement)$/.test(
+      word,
+    )
   ) {
     return "out";
   }
   if (
-    /^(c|cr|crdt|credit|crediteur|entree|in|\+)$/.test(word) ||
-    value.trim() === "+"
+    value.trim() === "+" ||
+    /^(c|cr|crdt|credit|crediteur|entree|in|income|revenu|revenus|recette)$/.test(
+      word,
+    )
   ) {
     return "in";
   }
@@ -723,10 +730,9 @@ function blocksFrom(
     string,
     { account: StatementAccount | null; currency: string; lines: RawLine[] }
   >();
-  const signed =
-    columns.debit !== null ||
-    columns.credit !== null ||
-    columns.direction !== null;
+  const split = columns.debit !== null || columns.credit !== null;
+  // A direction column counts once a line has said which way it went.
+  let directionSeen = false;
   let anyNegative = false;
   let skipped = 0;
 
@@ -753,6 +759,7 @@ function blocksFrom(
       amount = strictAmount(cell(row, columns.amount));
       const direction = directionOf(cell(row, columns.direction));
       if (amount !== null && direction) {
+        directionSeen = true;
         amount = direction === "out" ? -Math.abs(amount) : Math.abs(amount);
       }
     } else {
@@ -830,7 +837,7 @@ function blocksFrom(
       opening: null,
       closing: lines.size === 1 ? scanned.balance : null,
       lines: withLineIds(group.lines),
-      signUnknown: !signed && !anyNegative,
+      signUnknown: !split && !directionSeen && !anyNegative,
     };
   });
   return { bank, blocks, skipped, problem: null, table: null };

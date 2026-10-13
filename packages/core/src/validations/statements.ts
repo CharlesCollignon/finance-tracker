@@ -77,3 +77,27 @@ export const statementImportSchema = z.object({
 });
 
 export type StatementImportInput = z.infer<typeof statementImportSchema>;
+
+/** What an import does, or would do: the server's answer to both apps. */
+export interface StatementOutcome {
+  /** Lines in the file. */
+  total: number;
+  /** Already brought by an earlier import of this account. */
+  known: number;
+  /** Paired with a row the ledger already holds. */
+  matched: number;
+  /** Filed on their own: a merchant answered for, a code that says. */
+  filed: number;
+  /** Waiting in « À vérifier ». */
+  waiting: number;
+  /**
+   * Of those, the ones the ledger seems to hold already — typed by hand, or
+   * written by a charge — offered there to pair rather than paired unasked:
+   * a wrong silent merge loses a real purchase.
+   */
+  likelyTyped: number;
+  /** Left out: a transfer between the person's own accounts, a zero. */
+  left: number;
+  /** For an Épargne or « Ne pas suivre » account, nothing goes in the Journal. */
+  kept: boolean;
+}

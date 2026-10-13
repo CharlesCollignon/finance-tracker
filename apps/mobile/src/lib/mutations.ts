@@ -374,19 +374,6 @@ export async function saveAccountTargets(
 }
 
 /**
- * Commits a reviewed CSV import.
- *
- * The rows arriving here were parsed, de-duplicated and categorised in the
- * review step; this re-validates and writes, so nothing reaches the ledger
- * that has not been through the schema.
- */
-export async function importTransactions(
-  rows: ledger.ImportedRow[],
-): Promise<ActionResult<{ imported: number }>> {
-  return asOwner((userId) => ledger.importTransactions(supabase, userId, rows));
-}
-
-/**
  * Deletes several transactions at once.
  *
  * The row-level policy already scopes deletes to the caller; the explicit

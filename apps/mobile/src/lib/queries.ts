@@ -9,6 +9,7 @@ import {
 } from "@finance/data/ledger-search";
 import { readYearReview } from "@finance/data/year-review";
 import * as fulfilment from "@finance/data/fulfilment";
+import * as statements from "@finance/data/statements";
 import * as closes from "@finance/data/month-close";
 import { isMissingSchema } from "@finance/data/schema";
 import * as categories from "@finance/data/categories";
@@ -24,7 +25,6 @@ import * as aiConnection from "@finance/data/ai-connection";
 import {
   getCurrentMonth,
   getMonthBounds,
-  shiftIsoDate,
   todayIsoLocal,
   type BudgetViewMode,
 } from "@finance/core/constants";
@@ -70,7 +70,6 @@ import type {
 } from "@finance/core/investment-positions";
 
 import { supabase } from "@/lib/supabase";
-import { cashDateOf, movedBetween } from "@finance/core/cash-date";
 
 export type { PendingFeedRow } from "@finance/data/bank-inbox";
 
@@ -287,38 +286,6 @@ export async function getQuickEntryContext(
  */
 export function getWalletPlans(userId: string): Promise<WalletPlan[]> {
   return positions.getWalletPlans(supabase, userId);
-}
-
-/**
- * The ledger rows overlapping an import's date range, for the duplicate check.
- * Only the three fields that identify a line are fetched.
- */
-export async function getExistingKeysForRange(
-  userId: string,
-  from: string,
-  to: string,
-): Promise<{ occurredOn: string; amount: number; note: string | null }[]> {
-  // By the day the money moved, as a statement dates it; a row counted for
-  // next month sits up to a month after that day, hence the wider read.
-  // `*` rather than naming `cash_on`, which does not exist before 045.
-  const { data, error } = await supabase
-    .from("transactions")
-    .select("*")
-    .eq("user_id", userId)
-    .gte("occurred_on", from)
-    .lte("occurred_on", shiftIsoDate(to, 31));
-
-  if (error) {
-    throw error;
-  }
-
-  return (data ?? [])
-    .filter((row) => movedBetween(row, from, to))
-    .map((row) => ({
-      occurredOn: cashDateOf(row),
-      amount: Number(row.amount),
-      note: (row.note as string | null) ?? null,
-    }));
 }
 
 /** Everything logged as savings, net of withdrawals — paged past the row cap. */
@@ -578,6 +545,15 @@ export function countPendingFeedItems(userId: string): Promise<number> {
  */
 export function hasBankFeed(userId: string): Promise<boolean> {
   return bankFeeds(supabase, userId);
+}
+
+/**
+ * Whether any line, the bank's or a statement's, has come in: what decides
+ * which account each Journal row is marked with. Not `hasBankFeed`, which
+ * asks whether the bank is the ledger's record.
+ */
+export function hasFeedLines(userId: string): Promise<boolean> {
+  return statements.hasFeedLines(supabase, userId);
 }
 
 /** Which bank account brought each of these rows in, by transaction id. */

@@ -5,7 +5,13 @@
  */
 export { readStatementFile } from "./read";
 export { readMappedTable, type TableMapping } from "./table";
-export { accountTail, statementKey, withDirection } from "./account";
+export {
+  accountTail,
+  initialAccountChoice,
+  statementKey,
+  withDirection,
+  type AccountChoice,
+} from "./account";
 export { exportGuide } from "./guides";
 export { BANK_IDS, BANK_NAMES, isBankId, type BankId } from "./banks";
 export type { Statement, StatementBlock } from "./model";

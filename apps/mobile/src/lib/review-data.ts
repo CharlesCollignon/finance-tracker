@@ -40,11 +40,14 @@ export async function wholeStatementWorthFetching(
   if (!webApiAvailable()) {
     return false;
   }
+  // The bank's lines alone: a statement's history is its file, and someone
+  // with no bank has none to fetch.
   const { count, error } = await supabase
     .from("bank_feed_items")
     .select("id", { count: "exact", head: true })
-    .eq("user_id", userId);
-  return !error && (count ?? 0) < 400;
+    .eq("user_id", userId)
+    .eq("source", "bank");
+  return !error && (count ?? 0) > 0 && (count ?? 0) < 400;
 }
 
 /**

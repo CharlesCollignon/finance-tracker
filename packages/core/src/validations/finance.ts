@@ -48,22 +48,6 @@ export const moveTransactionsSchema = z.object({
   categoryId: z.string().uuid("errors.pickCategory"),
 });
 
-/** One row of a reviewed CSV import, as the user confirmed it. */
-export const importedTransactionSchema = z.object({
-  categoryId: z.string().uuid(),
-  amount: z.coerce.number().positive("errors.amountPositive"),
-  occurredOn: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "errors.invalidDate"),
-  note: z.string().max(500).optional(),
-});
-
-/** Import batches are capped so one paste cannot lock up the request. */
-export const importTransactionsSchema = z.object({
-  rows: z
-    .array(importedTransactionSchema)
-    .min(1, "errors.nothingToImport")
-    .max(2000, "errors.tooManyRows"),
-});
-
 export const categorySchema = z.object({
   id: z.string().uuid().optional(),
   name: z

@@ -7,7 +7,10 @@ import { intradayIndexes } from "@finance/core/bank-balance";
 import { planFeed, type BankTransaction } from "@finance/core/bank-feed";
 import { DEFAULT_LOCALE } from "@finance/core/i18n/locale";
 import type { Database } from "@finance/core/types/database";
-import type { StatementImportInput } from "@finance/core/validations/statements";
+import type {
+  StatementImportInput,
+  StatementOutcome,
+} from "@finance/core/validations/statements";
 import { markTransactionsDeleted } from "@finance/data/deletions";
 import {
   ownerContext,
@@ -29,30 +32,6 @@ import {
  */
 
 type Client = SupabaseClient<Database>;
-
-/** What an import does, or would do. */
-export interface StatementOutcome {
-  /** Lines in the file. */
-  total: number;
-  /** Already brought by an earlier import of this account. */
-  known: number;
-  /** Paired with a row the ledger already holds: a charge, a coffee typed. */
-  matched: number;
-  /** Filed on their own: a merchant answered for, a code that says. */
-  filed: number;
-  /** Waiting in « À vérifier ». */
-  waiting: number;
-  /**
-   * Of those, the ones the ledger seems to hold already — typed by hand, or
-   * written by a charge — offered there to pair rather than paired unasked:
-   * a wrong silent merge loses a real purchase.
-   */
-  likelyTyped: number;
-  /** Left out: a transfer between the person's own accounts, a zero. */
-  left: number;
-  /** For an Épargne or « Ne pas suivre » account, nothing goes in the Journal. */
-  kept: boolean;
-}
 
 /** How long an import can be undone. */
 export const UNDO_DAYS = 30;

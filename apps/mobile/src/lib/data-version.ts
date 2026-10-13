@@ -159,6 +159,9 @@ const ROUTE_AREAS: Record<string, readonly DataArea[]> = {
   "/api/ask/stream": [],
   // Entraide's writes, which the web checks and keeps.
   "/api/entraide": ["community"],
+  // A statement: its preview writes nothing, and its import says what it
+  // changed itself (`lib/statements.ts`).
+  "/api/statements": [],
   "/api/category-read": ["reads"],
   "/api/category-rerank": ["reads"],
   "/api/instrument-reading": ["positions"],

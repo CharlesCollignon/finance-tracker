@@ -406,57 +406,6 @@ export const fr: Messages = {
     mapApply: "Lire ainsi",
   },
 
-  importer: {
-    statusReady: "Prêt",
-    statusSkipped: "Ignoré",
-    statusProblem: "Problème",
-    heading: "Importer un relevé bancaire",
-    checkColumns: "Vérifiez les colonnes",
-    columnDate: "Date",
-    columnDescription: "Libellé",
-    columnAmount: "Montant",
-    debitColumn: "Argent sorti (débit)",
-    creditColumn: "Argent entré (crédit)",
-    notInThisFile: "Absent de ce fichier",
-    reading: "Lecture…",
-    continue: "Continuer",
-    back: "Retour",
-    importing: "Import…",
-    importCount: "Importer {count}",
-    rowsReady: "{ready} lignes prêtes sur {total}",
-    alreadyInLedger: {
-      one: "{count} déjà dans votre journal. ",
-      other: "{count} déjà dans votre journal. ",
-    },
-    couldNotRead: {
-      one: "{count} illisible. ",
-      other: "{count} illisibles. ",
-    },
-    needCategory: {
-      one: "{count} attend encore une catégorie.",
-      other: "{count} attendent encore une catégorie.",
-    },
-    everyRowCategorised: "Toutes les lignes ont une catégorie.",
-    chooseFile: "Choisir un fichier",
-    chooseCategory: "Choisir une catégorie",
-    firstRowIsHeader: "La première ligne contient les noms de colonnes",
-    setRemainingSpending: "Mettre toutes les dépenses restantes dans",
-    setRemainingIncome: "Mettre tous les revenus restants dans",
-    imported: {
-      one: "{count} opération importée",
-      other: "{count} opérations importées",
-    },
-    fileTooLarge: "Ce fichier dépasse 5\u00A0Mo — est-ce le bon export\u00A0?",
-    fileNoRows: "Ce fichier ne contient aucune ligne.",
-    fileUnreadable: "Ce fichier n'a pas pu être ouvert.",
-    introPhone:
-      "Exportez un CSV ou un OFX depuis votre banque et choisissez-le ici. Le fichier est lu sur votre téléphone — rien n'est envoyé, et rien n'est enregistré tant que vous n'avez pas relu chaque ligne.",
-    firstRows: "Les premières lignes, telles que lues",
-    categoryForRow: "Catégorie pour {description}",
-    rowCount: { one: "{count} ligne", other: "{count} lignes" },
-    categoryForLine: "Catégorie pour la ligne {line}",
-  },
-
   plan: {
     capRemoved: "Budget supprimé",
   },
@@ -1922,12 +1871,6 @@ export const fr: Messages = {
     },
   },
 
-  csvImport: {
-    noDate: "Date illisible",
-    noAmount: "Montant illisible",
-    duplicate: "Déjà dans votre journal",
-  },
-
   fallback: {
     trackingSuffix: "{name} · suivi",
     chartStart: "Départ",
@@ -2765,8 +2708,6 @@ export const fr: Messages = {
     notAnIsin: "Cela ne ressemble pas à un ISIN, par exemple IE00B4L5Y983",
     notABalance: "Cela ne ressemble pas à un solde",
     notACap: "Cela ne ressemble pas à un budget",
-    nothingToImport: "Rien à importer",
-    tooManyRows: "Importez au plus 2000 lignes à la fois",
     undoGone: "Cette suppression ne peut plus être annulée.",
     invalidInput: "Saisie invalide",
     notAuthenticated: "Non authentifié",

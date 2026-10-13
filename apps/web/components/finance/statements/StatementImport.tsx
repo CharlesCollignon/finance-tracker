@@ -55,7 +55,7 @@ import {
 } from "@/lib/actions/statements";
 import { ICON } from "@/lib/icon-scale";
 import { useLocale, useT } from "@/lib/locale-context";
-import type { StatementOutcome } from "@/lib/statements/service";
+import type { StatementOutcome } from "@finance/core/validations/statements";
 import { cn } from "@/lib/utils";
 
 const EASE = [...EASE_STANDARD] as [number, number, number, number];

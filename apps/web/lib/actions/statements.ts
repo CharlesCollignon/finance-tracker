@@ -4,11 +4,8 @@ import { firstIssue, type ActionResult } from "@finance/core/action-result";
 import { statementImportSchema } from "@finance/core/validations/statements";
 import { getOwner } from "@/lib/owner";
 import { revalidateApp } from "@/lib/revalidate-paths";
-import {
-  planStatement,
-  undoStatement,
-  type StatementOutcome,
-} from "@/lib/statements/service";
+import type { StatementOutcome } from "@finance/core/validations/statements";
+import { planStatement, undoStatement } from "@/lib/statements/service";
 import { createClient } from "@/lib/supabase/server";
 
 /**

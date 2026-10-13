@@ -8,8 +8,10 @@ import { DURATION, EASE_STANDARD } from "@finance/core/motion";
 import {
   accountTail,
   BANK_NAMES,
+  initialAccountChoice,
   isBankId,
   statementKey,
+  type AccountChoice,
   type BankId,
   type StatementBlock,
 } from "@finance/core/statement";
@@ -17,13 +19,9 @@ import type { FileAccount } from "@finance/data/statements";
 import { ChoiceChips } from "@/components/ui/Picker";
 import { ICON } from "@/lib/icon-scale";
 import { useLocale, useT } from "@/lib/locale-context";
-import type { StatementOutcome } from "@/lib/statements/service";
+import type { StatementOutcome } from "@finance/core/validations/statements";
 
 const EASE = [...EASE_STANDARD] as [number, number, number, number];
-
-export type AccountChoice =
-  | { kind: "existing"; providerAccountId: string }
-  | { kind: "new"; label: string; role: "spending" | "savings" | "ignored" };
 
 export interface BlockChoice {
   account: AccountChoice;
@@ -31,41 +29,15 @@ export interface BlockChoice {
   direction: "out" | "in";
 }
 
-/** The choice to start from: the account the file names, if it is known. */
+/** The choice to start from (`initialAccountChoice`), as money out. */
 export function initialChoice(
   block: StatementBlock,
   bank: BankId | null,
   accounts: readonly FileAccount[],
   mine: string,
 ): BlockChoice {
-  const key = statementKey(block.account);
-  const known = key
-    ? accounts.find((account) => account.key === key)
-    : undefined;
-  if (known) {
-    return {
-      account: { kind: "existing", providerAccountId: known.providerAccountId },
-      direction: "out",
-    };
-  }
-  // A file that names no account, from someone with one account: that one.
-  if (!key && accounts.length === 1) {
-    return {
-      account: {
-        kind: "existing",
-        providerAccountId: accounts[0]!.providerAccountId,
-      },
-      direction: "out",
-    };
-  }
-  const tail = accountTail(key);
-  const name = block.account?.name ?? (bank ? BANK_NAMES[bank] : mine);
   return {
-    account: {
-      kind: "new",
-      label: [name, tail].filter(Boolean).join(" ").slice(0, 80),
-      role: "spending",
-    },
+    account: initialAccountChoice(block, bank, accounts, mine),
     direction: "out",
   };
 }
@@ -157,7 +129,7 @@ export function StatementBlockCard({
           ["statements.matched", outcome.matched],
           ["statements.filed", outcome.filed],
           ["statements.waiting", outcome.waiting],
-        ["statements.likelyTyped", outcome.likelyTyped],
+          ["statements.likelyTyped", outcome.likelyTyped],
           ["statements.known", outcome.known],
           ["statements.left", outcome.left],
         ] as const

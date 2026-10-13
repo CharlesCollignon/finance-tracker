@@ -1,3 +1,4 @@
+import { BANK_NAMES, type BankId } from "./banks";
 import { withLineIds } from "./line-ids";
 import type { RawLine, StatementAccount, StatementBlock } from "./model";
 
@@ -39,4 +40,43 @@ export function withDirection(
       direction === "in" ? (line.debtorName ?? line.creditorName) : null,
   }));
   return { ...block, lines: withLineIds(raw), signUnknown: false };
+}
+
+/** Which of the person's accounts a block of lines goes to. */
+export type AccountChoice =
+  | { kind: "existing"; providerAccountId: string }
+  | { kind: "new"; label: string; role: "spending" | "savings" | "ignored" };
+
+/**
+ * The account to start from: the one the file names, if it is known
+ * already; for a file that names none, the person's only account, if they
+ * have one; otherwise a new one, named from the file — its own name for
+ * the account, or its bank, or `mine` — and its last four digits, as a
+ * current account.
+ */
+export function initialAccountChoice(
+  block: Pick<StatementBlock, "account">,
+  bank: BankId | null,
+  accounts: readonly { providerAccountId: string; key: string | null }[],
+  mine: string,
+): AccountChoice {
+  const key = statementKey(block.account);
+  const known = key
+    ? accounts.find((account) => account.key === key)
+    : undefined;
+  if (known) {
+    return { kind: "existing", providerAccountId: known.providerAccountId };
+  }
+  if (!key && accounts.length === 1) {
+    return {
+      kind: "existing",
+      providerAccountId: accounts[0]!.providerAccountId,
+    };
+  }
+  const name = block.account?.name ?? (bank ? BANK_NAMES[bank] : mine);
+  return {
+    kind: "new",
+    label: [name, accountTail(key)].filter(Boolean).join(" ").slice(0, 80),
+    role: "spending",
+  };
 }

@@ -17,7 +17,6 @@ export const actionsEn = {
   transactionNotFound: "That entry no longer exists",
   recurringNotFound: "That recurring entry no longer exists",
   categoryMissing: "That category no longer exists.",
-  oneCategoryMissing: "One of the categories no longer exists.",
   categoryInUse:
     "This category is used by entries or recurring entries. Archive it instead.",
   categoryExists: "A category with this name and type already exists.",
