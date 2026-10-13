@@ -501,6 +501,13 @@ describe("CAMT.053", () => {
     ]);
     expect(block.lines[0]!.creditorName).toBe("MONOP");
     expect(block.lines[1]!.debtorIban).toBe("FR7612345000010000000000123");
+    expect(block.check).toEqual({ ok: true, gap: "0.00" });
+  });
+
+  it("says when its lines fall short of its balances", () => {
+    const short = camt.replace(/<Ntry><Amt Ccy="EUR">23\.45[\s\S]*?<\/Ntry>/, "");
+    const block = readStatementText(short).blocks[0]!;
+    expect(block.check).toEqual({ ok: false, gap: "-23.45" });
   });
 
   it("reads one written with prefixed names", () => {
@@ -541,6 +548,7 @@ describe("MT940", () => {
         label: "VIR SALAIRE ACME OCTOBRE",
       },
     ]);
+    expect(block.check?.ok).toBe(true);
   });
 });
 
@@ -600,6 +608,7 @@ describe("CFONB 120", () => {
       { date: "2026-10-02", amount: "-23.45", label: "CB MONOP PARIS 15" },
       { date: "2026-10-01", amount: "2500.00", label: "VIR SALAIRE" },
     ]);
+    expect(block.check?.ok).toBe(true);
   });
 });
 

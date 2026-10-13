@@ -522,9 +522,9 @@ const NOT_MOVED = new Set([
   "rejete",
 ]);
 
-const IBAN_IN_TEXT =
+export const IBAN_IN_TEXT =
   /\b([A-Z]{2}\d{2}(?:[ ]?[A-Z0-9]{4}){2,7}(?:[ ]?[A-Z0-9]{1,4})?)\b/;
-const ACCOUNT_NUMBER_IN_TEXT =
+export const ACCOUNT_NUMBER_IN_TEXT =
   /(?:(?:n[°o]\.?|num[ée]ro)\s*(?:de\s+)?compte|(?:compte|account)\b[^:;\n]{0,40}?(?:n[°o]\.?|number|no\.?))\s*[:;]?\s*(\d[\d ]{4,22}\d(?:[A-Z]\d{2,3})?)/i;
 const BALANCE_WORD = /\bsolde\b/i;
 const DATE_IN_TEXT = /\b(\d{1,2}[/.-]\d{1,2}[/.-]\d{2,4})\b/;

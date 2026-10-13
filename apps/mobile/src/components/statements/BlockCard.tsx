@@ -1,8 +1,9 @@
-import { View } from "react-native";
+import { useState } from "react";
+import { Pressable, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import Animated, { FadeInDown, useReducedMotion } from "react-native-reanimated";
+import Animated, { FadeIn, FadeInDown, FadeOut, LinearTransition, useReducedMotion, ZoomIn } from "react-native-reanimated";
 
-import { formatFullDate } from "@finance/core/constants";
+import { formatCurrency, formatDayMonth, formatFullDate, type CurrencyCode } from "@finance/core/constants";
 import { DURATION, STAGGER_STEP_MS } from "@finance/core/motion";
 import {
   accountTail,
@@ -21,6 +22,7 @@ import { useTweenedCount } from "@/components/review/useTweenedCount";
 import { Input } from "@/components/ui/Input";
 import { Text } from "@/components/ui/Text";
 import { useLocale, useT } from "@/providers/LocaleProvider";
+import { hapticSelection } from "@/lib/haptics";
 import { ICON } from "@/theme/tokens";
 import { useThemeColors } from "@/theme/useThemeColors";
 
@@ -63,12 +65,77 @@ function dayOf(iso: string, locale: "fr" | "en", withYear: boolean): string {
   return withYear ? full : full.replace(/ \d{4}$/, "");
 }
 
+/** The most lines listed under « Voir les opérations lues ». */
+const LISTED_LINES = 150;
+
+/**
+ * The lines as read — day, words, amount — for the person to see before
+ * importing: a PDF's or a picture's reading is best looked at once. Folded
+ * away until asked for.
+ */
+function ReadLines({ block, direction }: { block: StatementBlock; direction: "out" | "in" }) {
+  const t = useT();
+  const locale = useLocale();
+  const colors = useThemeColors();
+  const reduceMotion = useReducedMotion();
+  const [open, setOpen] = useState(false);
+  const shown = block.lines.slice(0, LISTED_LINES);
+  return (
+    <Animated.View layout={reduceMotion ? undefined : LinearTransition.duration(DURATION.panel)} className="gap-2">
+      <Pressable
+        accessibilityRole="button"
+        accessibilityState={{ expanded: open }}
+        onPress={() => {
+          void hapticSelection();
+          setOpen((current) => !current);
+        }}
+        className="min-h-11 flex-row items-center gap-1.5 self-start"
+      >
+        <Text variant="muted" className="font-medium">
+          {open ? t("statements.hideLines") : t("statements.showLines")}
+        </Text>
+        <Ionicons name={open ? "chevron-up" : "chevron-down"} size={ICON.sm} color={colors.mutedForeground} />
+      </Pressable>
+      {open ? (
+        <Animated.View
+          entering={reduceMotion ? undefined : FadeIn.duration(DURATION.panel)}
+          exiting={reduceMotion ? undefined : FadeOut.duration(DURATION.press)}
+          className="rounded-control border border-border"
+        >
+          {shown.map((line, at) => {
+            const out = block.signUnknown ? direction === "out" : line.creditDebitIndicator === "DBIT";
+            const amount = Number(line.amount);
+            return (
+              <View key={line.id} className={at === 0 ? "flex-row items-baseline gap-3 px-3 py-2" : "flex-row items-baseline gap-3 border-t border-border px-3 py-2"}>
+                <Text variant="micro" className="w-14">
+                  {line.bookingDate ? formatDayMonth(line.bookingDate, locale) : ""}
+                </Text>
+                <Text numberOfLines={1} className="flex-1 text-sm">
+                  {line.remittanceInformation ?? line.creditorName ?? line.debtorName ?? "—"}
+                </Text>
+                <Text className="text-sm" style={out ? undefined : { color: colors.success }}>
+                  {formatCurrency(out ? -amount : amount, block.currency as CurrencyCode, locale)}
+                </Text>
+              </View>
+            );
+          })}
+          {block.lines.length > shown.length ? (
+            <Text variant="micro" className="border-t border-border px-3 py-2">
+              {t("statements.moreLines", { count: block.lines.length - shown.length })}
+            </Text>
+          ) : null}
+        </Animated.View>
+      ) : null}
+    </Animated.View>
+  );
+}
+
 /**
  * One account's part of a file on the phone: whose statement, which
- * account, how many lines over which days — then which of the person's
- * accounts it is, and what importing it would do, figures tweening in as
- * the server answers. The web's `StatementBlockCard`, in the phone's own
- * components.
+ * account, how many lines over which days, whether its own balances confirm
+ * the reading — then which of the person's accounts it is, and what
+ * importing it would do, figures tweening in as the server answers. The
+ * web's `StatementBlockCard`, in the phone's own components.
  */
 export function BlockCard({
   block,
@@ -78,6 +145,7 @@ export function BlockCard({
   onChoice,
   outcome,
   index,
+  readByAi = false,
 }: {
   block: StatementBlock;
   bank: BankId | null;
@@ -86,6 +154,8 @@ export function BlockCard({
   onChoice: (choice: BlockChoice) => void;
   outcome: StatementOutcome | null;
   index: number;
+  /** Read by the person's AI account: said, and every line waits. */
+  readByAi?: boolean;
 }) {
   const t = useT();
   const locale = useLocale();
@@ -140,6 +210,31 @@ export function BlockCard({
           </Text>
         </View>
       </View>
+
+      {readByAi ? (
+        <View className="flex-row items-start gap-2">
+          <Ionicons name="sparkles" size={ICON.md} color={colors.primary} />
+          <Text className="flex-1 text-sm leading-5">{t("statements.readByAi")}</Text>
+        </View>
+      ) : null}
+      {block.check?.ok ? (
+        <Animated.View
+          entering={reduceMotion ? undefined : ZoomIn.springify().damping(14)}
+          className="flex-row items-start gap-2"
+        >
+          <Ionicons name="shield-checkmark" size={ICON.md} color={colors.success} />
+          <Text className="flex-1 text-sm leading-5">{t("statements.checkOk")}</Text>
+        </Animated.View>
+      ) : block.check ? (
+        <View className="flex-row items-start gap-2">
+          <Ionicons name="alert-circle" size={ICON.md} color={colors.warning} />
+          <Text className="flex-1 text-sm leading-5">
+            {t("statements.checkOff", {
+              gap: formatCurrency(Math.abs(Number(block.check.gap)), block.currency as CurrencyCode, locale),
+            })}
+          </Text>
+        </View>
+      ) : null}
 
       {known ? (
         <View className="flex-row items-center gap-2">
@@ -225,6 +320,8 @@ export function BlockCard({
           />
         </View>
       ) : null}
+
+      <ReadLines block={block} direction={choice.direction} />
 
       <View accessibilityLiveRegion="polite" className="min-h-6 gap-1">
         {outcome && !outcome.kept ? (

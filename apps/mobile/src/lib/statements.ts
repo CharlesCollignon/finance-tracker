@@ -1,3 +1,4 @@
+import type { Statement } from "@finance/core/statement";
 import type {
   StatementImportInput,
   StatementOutcome,
@@ -15,6 +16,10 @@ import { callWebApi } from "@/lib/web-api";
  * (`/api/statements`), exactly as the site's import does. What it reads —
  * the accounts known from earlier files, the latest imports — it reads
  * itself.
+ *
+ * A PDF is read on the server too, from its text (`readPdfOnServer`), and a
+ * picture or a scan by the person's AI account when they ask
+ * (`scanOnServer`): the file goes as base64, and comes back as lines.
  *
  * The route is not announced as a write (`ROUTE_AREAS`): a preview is
  * asked at every answer the person changes, and writes nothing. An import
@@ -66,4 +71,18 @@ export async function undoStatementImport(
   }
   notifyDataChanged("transactions", "bank");
   return { ok: true };
+}
+
+type Read = { ok: true; statement: Statement } | { ok: false; error: string };
+
+/** A PDF statement, read by the server from its text. */
+export async function readPdfOnServer(base64: string): Promise<Read> {
+  const result = await ask<{ statement: Statement }>({ action: "readPdf", file: base64 });
+  return result.ok ? { ok: true, statement: result.statement } : { ok: false, error: result.error };
+}
+
+/** A picture or a scanned PDF, read by the person's own AI account, at their word. */
+export async function scanOnServer(base64: string): Promise<Read> {
+  const result = await ask<{ statement: Statement }>({ action: "scan", file: base64 });
+  return result.ok ? { ok: true, statement: result.statement } : { ok: false, error: result.error };
 }

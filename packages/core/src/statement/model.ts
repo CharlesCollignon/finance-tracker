@@ -1,5 +1,6 @@
 import type { BankTransaction } from "../bank-feed";
 import type { BankId } from "./banks";
+import type { StatementCheck } from "./check";
 
 /**
  * What a bank's file says, once read: the lines of each account it covers,
@@ -66,14 +67,23 @@ export interface StatementBlock {
    * The import asks once rather than guessing a salary into a cost.
    */
   signUnknown: boolean;
+  /**
+   * Whether the lines add up to the statement's own balances or totals
+   * (`check.ts`); absent or null when it states none to hold them to.
+   */
+  check?: StatementCheck | null;
 }
 
 /** Why a file gave no lines. */
 export type StatementProblem =
   /** Nothing in it. */
   | "empty"
-  /** A PDF, an old Excel or an image: not read here (Phase 3 for PDFs). */
+  /** A PDF, an old Excel or an image: not read on the device. */
   | "notHere"
+  /** A PDF with no text in it — a scan — or an image: for the AI, if the person agrees. */
+  | "scanned"
+  /** A PDF locked by a password of its own. */
+  | "locked"
   /** A table whose columns could not be told apart: the user maps them. */
   | "columns"
   /** Neither a table nor any format known here. */
@@ -92,6 +102,11 @@ export interface Statement {
    * (`problem: "columns"`), for the import's fallback mapping.
    */
   table: string[][] | null;
+  /**
+   * Read by the person's AI account (`scan.ts`) rather than from the file's
+   * own text: every line then waits in « À vérifier ».
+   */
+  readByAi?: boolean;
 }
 
 /** A line before its id: what a reader produces. */

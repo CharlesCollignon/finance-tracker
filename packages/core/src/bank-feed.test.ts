@@ -6,6 +6,7 @@ import {
   findLedgerMatch,
   indexCategoriesByName,
   planFeed,
+  reviewEverything,
   toCandidate,
   type BankTransaction,
 } from "./bank-feed";
@@ -403,6 +404,45 @@ describe("planFeed", () => {
       categoryIdsByName: CATEGORIES,
     });
     expect(plan.automatic).toHaveLength(2);
+  });
+
+  it("can hold every line for a look, filed or paired as it would have been", () => {
+    const merchants = buildMerchantIndex([
+      tx("Carrefour Market", "cat-groceries", "Groceries", "expense", "2026-07-02"),
+      tx("Carrefour Market", "cat-groceries", "Groceries", "expense", "2026-08-02"),
+    ]);
+    const plan = planFeed(
+      [
+        bank({ id: "a" }),
+        bank({ id: "b", creditorName: "LE BISTROT", merchantCategoryCode: "5812" }),
+      ],
+      { locale: "en", merchants, categoryIdsByName: CATEGORIES },
+    );
+    const held = reviewEverything({
+      ...plan,
+      matched: [
+        {
+          candidate: plan.review[0]!.candidate,
+          decision: { kind: "match", transactionId: "tx-1" },
+        },
+      ],
+    });
+    expect(held.automatic).toEqual([]);
+    expect(held.matched).toEqual([]);
+    expect(held.review.map((row) => row.decision)).toEqual([
+      {
+        kind: "review",
+        suggestion: (plan.automatic[0]!.decision as { suggestion: unknown }).suggestion,
+        why: "needs-a-look",
+      },
+      {
+        kind: "review",
+        suggestion: null,
+        why: "possible-duplicate",
+        matchTransactionId: "tx-1",
+      },
+      plan.review[0]!.decision,
+    ]);
   });
 });
 

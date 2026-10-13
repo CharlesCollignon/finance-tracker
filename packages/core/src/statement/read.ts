@@ -2,6 +2,7 @@ import { detectDelimiter, parseCsv, type CsvDelimiter } from "../csv-import";
 import { decodeStatement } from "../statement-file";
 import type { BankId } from "./banks";
 import { isCamt, readCamt } from "./camt";
+import { checkBlock } from "./check";
 import { isCfonb, readCfonb } from "./cfonb";
 import type { Statement, StatementBlock, StatementFormat } from "./model";
 import { isMt940, readMt940 } from "./mt940";
@@ -123,7 +124,8 @@ function fromBlocks(
   return {
     format,
     bank: read.bank ?? null,
-    blocks: read.blocks,
+    // Held to its own balances, where the file states both.
+    blocks: read.blocks.map((block) => ({ ...block, check: checkBlock(block) })),
     skipped: read.skipped,
     problem:
       read.blocks.length === 0

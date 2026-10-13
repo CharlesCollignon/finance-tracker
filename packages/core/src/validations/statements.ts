@@ -61,6 +61,8 @@ export const statementImportSchema = z.object({
     "html",
     "xlsx",
     "ods",
+    "pdf",
+    "image",
   ]),
   bank: z.string().max(40).nullable(),
   fileName: z.string().max(200).nullable(),
@@ -74,9 +76,21 @@ export const statementImportSchema = z.object({
     })
     .nullable(),
   source: z.enum(["file", "paste", "share"]),
+  /**
+   * Read by the person's AI account off a picture or a scan: every line
+   * then waits in « À vérifier », nothing filed unasked.
+   */
+  readByAi: z.boolean().optional(),
 });
 
 export type StatementImportInput = z.infer<typeof statementImportSchema>;
+
+/**
+ * The most a statement sent to the server to be read — a PDF, a picture —
+ * may weigh: under the four and a half megabytes a request may carry, once
+ * written out for the phone's request (a third more).
+ */
+export const MAX_SENT_FILE_BYTES = 3_300_000;
 
 /** What an import does, or would do: the server's answer to both apps. */
 export interface StatementOutcome {

@@ -1,9 +1,12 @@
 /**
  * Bank statements, read with no bank connection: whatever file a person
- * downloads from their bank — CSV, Excel, OFX, QIF, CAMT, MT940, CFONB — as
- * the lines the bank feed takes. `docs/plans/STATEMENTS_PLAN.md`.
+ * downloads from their bank — CSV, Excel, OFX, QIF, CAMT, MT940, CFONB, a
+ * PDF — or a picture of it their AI account reads, as the lines the bank
+ * feed takes. `docs/plans/STATEMENTS_PLAN.md`.
  */
 export { readStatementFile, readStatementText } from "./read";
+export { readPdfPages, type PdfPage, type PdfText } from "./pdf";
+export { SCAN_SCHEMA, statementFromScan } from "./scan";
 export { readMappedTable, type TableMapping } from "./table";
 export {
   accountTail,

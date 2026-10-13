@@ -1,9 +1,21 @@
 "use client";
 
 import { useEffect, useId, useRef, useState } from "react";
-import { m, useReducedMotion } from "motion/react";
-import { Bank, CheckCircle } from "@phosphor-icons/react";
-import { formatFullDate } from "@finance/core/constants";
+import { AnimatePresence, m, useReducedMotion } from "motion/react";
+import {
+  Bank,
+  CaretDown,
+  CheckCircle,
+  SealCheck,
+  Sparkle,
+  WarningCircle,
+} from "@phosphor-icons/react";
+import {
+  formatCurrency,
+  formatDayMonth,
+  formatFullDate,
+  type CurrencyCode,
+} from "@finance/core/constants";
 import { DURATION, EASE_STANDARD } from "@finance/core/motion";
 import {
   accountTail,
@@ -76,11 +88,108 @@ function dayOf(iso: string, locale: "fr" | "en", withYear: boolean): string {
   return withYear ? full : full.replace(/ \d{4}$/, "");
 }
 
+/** The most lines listed under « Voir les opérations lues ». */
+const LISTED_LINES = 150;
+
+/**
+ * The lines as read — day, words, amount — for the person to see before
+ * importing: a PDF's or a picture's reading is best looked at once. Folded
+ * away until asked for.
+ */
+function ReadLines({
+  block,
+  direction,
+}: {
+  block: StatementBlock;
+  direction: "out" | "in";
+}) {
+  const t = useT();
+  const locale = useLocale();
+  const listId = useId();
+  const [open, setOpen] = useState(false);
+  const shown = block.lines.slice(0, LISTED_LINES);
+  return (
+    <div className="flex flex-col gap-2">
+      <button
+        type="button"
+        aria-expanded={open}
+        aria-controls={listId}
+        onClick={() => setOpen((current) => !current)}
+        className="flex min-h-11 items-center gap-1.5 self-start text-sm font-medium text-muted-foreground transition-colors duration-hover hover:text-foreground"
+      >
+        {open ? t("statements.hideLines") : t("statements.showLines")}
+        <m.span animate={{ rotate: open ? 180 : 0 }} className="inline-flex">
+          <CaretDown size={ICON.sm} aria-hidden />
+        </m.span>
+      </button>
+      <AnimatePresence initial={false}>
+        {open ? (
+          <m.div
+            id={listId}
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: DURATION.panel / 1000, ease: EASE }}
+            className="overflow-hidden"
+          >
+            <ul className="flex max-h-80 flex-col divide-y divide-border overflow-y-auto rounded-control border border-border text-sm">
+              {shown.map((line) => {
+                const out = block.signUnknown
+                  ? direction === "out"
+                  : line.creditDebitIndicator === "DBIT";
+                const amount = Number(line.amount);
+                return (
+                  <li
+                    key={line.id}
+                    className="flex items-baseline gap-3 px-3 py-2"
+                  >
+                    <span className="w-14 shrink-0 text-xs text-muted-foreground tabular-nums">
+                      {line.bookingDate
+                        ? formatDayMonth(line.bookingDate, locale)
+                        : ""}
+                    </span>
+                    <span className="min-w-0 flex-1 truncate">
+                      {line.remittanceInformation ??
+                        line.creditorName ??
+                        line.debtorName ??
+                        "—"}
+                    </span>
+                    <span
+                      className={
+                        out
+                          ? "shrink-0 tabular-nums"
+                          : "shrink-0 tabular-nums text-success"
+                      }
+                    >
+                      {formatCurrency(
+                        out ? -amount : amount,
+                        block.currency as CurrencyCode,
+                        locale,
+                      )}
+                    </span>
+                  </li>
+                );
+              })}
+              {block.lines.length > shown.length ? (
+                <li className="px-3 py-2 text-xs text-muted-foreground">
+                  {t("statements.moreLines", {
+                    count: block.lines.length - shown.length,
+                  })}
+                </li>
+              ) : null}
+            </ul>
+          </m.div>
+        ) : null}
+      </AnimatePresence>
+    </div>
+  );
+}
+
 /**
  * One account's part of a file, as it was understood: whose statement,
- * which account, how many lines over which days — then which account of
- * the person's it is, and what importing it would do, the figures rolling
- * in as the server answers.
+ * which account, how many lines over which days, whether its own balances
+ * confirm the reading — then which account of the person's it is, and what
+ * importing it would do, the figures rolling in as the server answers.
  */
 export function StatementBlockCard({
   block,
@@ -90,6 +199,7 @@ export function StatementBlockCard({
   onChoice,
   outcome,
   index,
+  readByAi = false,
 }: {
   block: StatementBlock;
   bank: BankId | null;
@@ -98,6 +208,8 @@ export function StatementBlockCard({
   onChoice: (choice: BlockChoice) => void;
   outcome: StatementOutcome | null;
   index: number;
+  /** Read by the person's AI account: said, and every line waits. */
+  readByAi?: boolean;
 }) {
   const t = useT();
   const locale = useLocale();
@@ -175,6 +287,56 @@ export function StatementBlockCard({
           </p>
         </div>
       </header>
+
+      {readByAi || block.check ? (
+        <div className="flex flex-col gap-2 text-sm">
+          {readByAi ? (
+            <p className="flex items-start gap-2">
+              <Sparkle
+                size={ICON.md}
+                weight="fill"
+                aria-hidden
+                className="mt-0.5 shrink-0 text-primary"
+              />
+              <span>{t("statements.readByAi")}</span>
+            </p>
+          ) : null}
+          {block.check?.ok ? (
+            <m.p
+              initial={{ opacity: 0, scale: 0.96 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ type: "spring", stiffness: 380, damping: 22 }}
+              className="flex items-start gap-2"
+            >
+              <SealCheck
+                size={ICON.md}
+                weight="fill"
+                aria-hidden
+                className="mt-0.5 shrink-0 text-success"
+              />
+              <span>{t("statements.checkOk")}</span>
+            </m.p>
+          ) : block.check ? (
+            <p className="flex items-start gap-2">
+              <WarningCircle
+                size={ICON.md}
+                weight="fill"
+                aria-hidden
+                className="mt-0.5 shrink-0 text-warning"
+              />
+              <span>
+                {t("statements.checkOff", {
+                  gap: formatCurrency(
+                    Math.abs(Number(block.check.gap)),
+                    block.currency as CurrencyCode,
+                    locale,
+                  ),
+                })}
+              </span>
+            </p>
+          ) : null}
+        </div>
+      ) : null}
 
       {known ? (
         <p className="flex items-center gap-2 text-sm">
@@ -275,6 +437,8 @@ export function StatementBlockCard({
           />
         </div>
       ) : null}
+
+      <ReadLines block={block} direction={choice.direction} />
 
       <div aria-live="polite" className="min-h-6">
         {outcome && !outcome.kept ? (
