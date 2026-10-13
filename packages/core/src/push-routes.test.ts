@@ -4,6 +4,7 @@ import { buildDueNotifications } from "./push-digest";
 import { mobileRouteForPushUrl } from "./push-routes";
 import { translator } from "./i18n/t";
 import { bankAttention, bankAttentionNotification } from "./bank-attention";
+import { threadHref } from "./entraide";
 
 describe("mobileRouteForPushUrl", () => {
   it("opens the review, not the Ledger it lives on", () => {
@@ -63,6 +64,24 @@ describe("mobileRouteForPushUrl", () => {
       params: {},
     });
     expect(mobileRouteForPushUrl("/property/not-an-id")).toBeNull();
+  });
+
+  it("opens Entraide, and a thread by its id whatever its title says", () => {
+    expect(mobileRouteForPushUrl("/blog/entraide")).toEqual({
+      pathname: "/entraide",
+      params: {},
+    });
+    expect(
+      mobileRouteForPushUrl(threadHref(42, "Comment choisir son jour ?")),
+    ).toEqual({ pathname: "/entraide/42", params: {} });
+    expect(mobileRouteForPushUrl("/blog/entraide/42")).toEqual({
+      pathname: "/entraide/42",
+      params: {},
+    });
+    // What only the web has: the phone hands these to the browser.
+    expect(mobileRouteForPushUrl("/blog/entraide/moderation")).toBeNull();
+    expect(mobileRouteForPushUrl("/blog/entraide/regles")).toBeNull();
+    expect(mobileRouteForPushUrl("/blog/epargne-de-precaution")).toBeNull();
   });
 
   it("declines a route this app has not got, rather than guessing", () => {
@@ -136,6 +155,11 @@ describe("mobileRouteForPushUrl", () => {
       }
     }
     expect(written.has("/bank")).toBe(true);
+
+    // Entraide's pushes are said as they happen, by the web: an answer, a
+    // « Résolu », a decision — the thread, or the list once it is hidden.
+    written.add(threadHref(7, "Faut-il un livret A ?"));
+    written.add("/blog/entraide");
 
     expect(written.size).toBeGreaterThan(0);
     for (const url of written) {

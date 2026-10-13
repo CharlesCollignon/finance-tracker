@@ -57,6 +57,8 @@ export interface EntraideCopy {
     signInCta: string;
   };
   list: {
+    /** The phone's way back from the list. */
+    back: string;
     empty: string;
     emptyFiltered: string;
     more: string;
@@ -86,6 +88,8 @@ export interface EntraideCopy {
     delete: string;
     confirmDelete: string;
     aboutGuide: string;
+    /** A thread that is no longer there, opened from an old link. */
+    missing: string;
   };
   report: {
     button: string;
@@ -95,6 +99,9 @@ export interface EntraideCopy {
     sending: string;
     sent: string;
     signIn: string;
+    /** Once reported, in place of « Signaler ». */
+    done: string;
+    close: string;
   };
   /** Each rule, as a report names it and a decision applies it. */
   rules: Record<EntraideRule, string>;
@@ -213,6 +220,7 @@ export const entraideCopy: EntraideCopy = {
     signInCta: "Sign in",
   },
   list: {
+    back: "Back",
     empty: "No question yet. Ask the first one.",
     emptyFiltered: "Nothing here for now.",
     more: "Show more",
@@ -244,6 +252,7 @@ export const entraideCopy: EntraideCopy = {
     confirmDelete:
       "Delete this message? It will be replaced by « Message deleted ».",
     aboutGuide: "About the guide",
+    missing: "This thread is no longer here.",
   },
   report: {
     button: "Report",
@@ -254,6 +263,8 @@ export const entraideCopy: EntraideCopy = {
     sent: "Thank you, it is reported. Nobody but the publisher will know it was you.",
     signIn:
       "Sign in to report, or write to pluclair.app@gmail.com with the address of the message.",
+    done: "Reported",
+    close: "Close",
   },
   rules: {
     kind: "Insult, mockery or harassment",

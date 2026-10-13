@@ -464,9 +464,9 @@ export default function ProfileScreen() {
           />
           {shownNotificationKinds({
             property: tracksProperty,
-            // Entraide is on the web and not open yet: its switch comes to
-            // the phone with it (Phase 6 of the blog plan).
-            community: false,
+            // Entraide is open, here as on the web: an answer to one's
+            // question, a « Résolu », a decision about one's message.
+            community: true,
           }).map((kind) => (
             <ListRow
               key={kind}

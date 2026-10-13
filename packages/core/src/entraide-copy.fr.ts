@@ -61,6 +61,7 @@ export const entraideCopyFr: EntraideCopy = {
     signInCta: "Se connecter",
   },
   list: {
+    back: "Retour",
     empty: "Pas encore de question. Posez la première.",
     emptyFiltered: "Rien ici pour l'instant.",
     more: "Voir plus",
@@ -92,6 +93,7 @@ export const entraideCopyFr: EntraideCopy = {
     confirmDelete:
       "Supprimer ce message ? Il sera remplacé par « Message supprimé ».",
     aboutGuide: "À propos du guide",
+    missing: "Cette discussion n'est plus là.",
   },
   report: {
     button: "Signaler",
@@ -102,6 +104,8 @@ export const entraideCopyFr: EntraideCopy = {
     sent: "Merci, c'est signalé. Personne d'autre que l'éditeur ne saura que c'est vous.",
     signIn:
       "Connectez-vous pour signaler, ou écrivez à pluclair.app@gmail.com avec l'adresse du message.",
+    done: "Signalé",
+    close: "Fermer",
   },
   rules: {
     kind: "Insulte, moquerie ou harcèlement",

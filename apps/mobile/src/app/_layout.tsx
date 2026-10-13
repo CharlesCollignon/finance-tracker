@@ -145,6 +145,9 @@ function RootNavigator({ fontsReady }: { fontsReady: boolean }) {
         <Stack.Screen name="onboarding" />
         <Stack.Screen name="year" />
         <Stack.Screen name="nouveautes" />
+        <Stack.Screen name="entraide/index" />
+        <Stack.Screen name="entraide/[thread]" />
+        <Stack.Screen name="entraide/new" />
         <Stack.Screen name="join/[token]" />
         <Stack.Screen name="ask" />
       </Stack>

@@ -35,7 +35,9 @@ export type DataArea =
   /** Profile, language, dismissed invitations. */
   | "preferences"
   /** Month reads. */
-  | "reads";
+  | "reads"
+  /** Entraide: its threads and their answers, and the reactions to them. */
+  | "community";
 
 export const ALL_AREAS: readonly DataArea[] = [
   "transactions",
@@ -48,6 +50,7 @@ export const ALL_AREAS: readonly DataArea[] = [
   "closes",
   "preferences",
   "reads",
+  "community",
 ];
 
 /**
@@ -92,6 +95,9 @@ const TABLE_AREAS: Record<string, readonly DataArea[]> = {
   // Ask Pluclair's conversations: the Questions screen reloads its own.
   ask_conversations: [],
   ask_messages: [],
+  // A reaction: the counts Entraide's list shows. « Nouveautés » draws its
+  // own at once.
+  reactions: ["community"],
 };
 
 /**
@@ -104,6 +110,13 @@ const READ_RPCS: ReadonlySet<string> = new Set([
   // The shared space: what a link says, and who is in it.
   "peek_space_invite",
   "space_people",
+  // Who reacted to what, on « Nouveautés » and in Entraide.
+  "reaction_counts",
+  // Entraide: its list, a thread and its answers, « Déjà demandé ? ».
+  "entraide_list",
+  "entraide_thread",
+  "entraide_replies",
+  "entraide_search",
 ]);
 
 /**
@@ -131,6 +144,8 @@ const ROUTE_AREAS: Record<string, readonly DataArea[]> = {
   // A question asked: nothing but the Questions screen draws it.
   "/api/ask": [],
   "/api/ask/stream": [],
+  // Entraide's writes, which the web checks and keeps.
+  "/api/entraide": ["community"],
   "/api/category-read": ["reads"],
   "/api/category-rerank": ["reads"],
   "/api/instrument-reading": ["positions"],

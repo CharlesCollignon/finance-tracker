@@ -1,5 +1,6 @@
 import { useMemo, type ReactNode } from "react";
 import { ScrollView, View } from "react-native";
+import * as WebBrowser from "expo-web-browser";
 
 import {
   parseAskMarkdown,
@@ -24,20 +25,26 @@ const ALIGN: Record<AskAlign, string> = {
  * `PrivateAmount`, so the privacy mode hides it, and one the app found
  * nowhere is underlined in dots. `trailing` — the caret while the answer
  * streams in — sits at the end of the last words, wherever they are.
+ *
+ * `community` draws what a member wrote for everyone in Entraide instead:
+ * its links open in the browser, and its figures are plain words — they
+ * are not the reader's money, so the privacy mode has nothing to hide.
  */
 export function AskMarkdown({
   markdown,
   untraced = [],
   trailing = null,
+  community = false,
 }: {
   markdown: string;
   untraced?: readonly string[];
   /** Text, to sit inside the last words' own. */
   trailing?: ReactNode;
+  community?: boolean;
 }) {
   const blocks = useMemo(
-    () => parseAskMarkdown(markdown, untraced),
-    [markdown, untraced],
+    () => parseAskMarkdown(markdown, untraced, { links: community }),
+    [markdown, untraced, community],
   );
   const lastBlock = blocks.length - 1;
   const lastKind = blocks[lastBlock]?.kind;
@@ -56,14 +63,14 @@ export function AskMarkdown({
                   block.level === 2 ? "text-base" : "text-sm",
                 )}
               >
-                <Inline nodes={block.inline} />
+                <Inline community={community} nodes={block.inline} />
                 {tail}
               </Text>
             );
           case "paragraph":
             return (
               <Text key={index} className="text-sm leading-5">
-                <Inline nodes={block.inline} />
+                <Inline community={community} nodes={block.inline} />
                 {tail}
               </Text>
             );
@@ -76,7 +83,7 @@ export function AskMarkdown({
                       {block.ordered ? `${block.start + at}.` : "•"}
                     </Text>
                     <Text className="flex-1 text-sm leading-5">
-                      <Inline nodes={item} />
+                      <Inline community={community} nodes={item} />
                       {at === block.items.length - 1 ? tail : null}
                     </Text>
                   </View>
@@ -109,7 +116,7 @@ export function AskMarkdown({
                             ALIGN[block.align[column] ?? "left"],
                           )}
                         >
-                          <Inline nodes={cell} />
+                          <Inline community={community} nodes={cell} />
                         </Text>
                       ))}
                     </View>
@@ -121,7 +128,7 @@ export function AskMarkdown({
             return (
               <View key={index} className="border-l-2 border-border pl-3">
                 <Text variant="muted" className="text-sm leading-5">
-                  <Inline nodes={block.inline} />
+                  <Inline community={community} nodes={block.inline} />
                   {tail}
                 </Text>
               </View>
@@ -138,7 +145,13 @@ export function AskMarkdown({
   );
 }
 
-function Inline({ nodes }: { nodes: readonly AskInline[] }) {
+function Inline({
+  nodes,
+  community,
+}: {
+  nodes: readonly AskInline[];
+  community: boolean;
+}) {
   return (
     <>
       {nodes.map((node, index) => {
@@ -148,18 +161,27 @@ function Inline({ nodes }: { nodes: readonly AskInline[] }) {
           case "strong":
             return (
               <Text key={index} className="text-sm font-semibold">
-                <Inline nodes={node.children} />
+                <Inline community={community} nodes={node.children} />
               </Text>
             );
           case "em":
             return (
               <Text key={index} className="text-sm italic">
-                <Inline nodes={node.children} />
+                <Inline community={community} nodes={node.children} />
               </Text>
             );
           case "link":
-            // Ask never asks for links: its words, should one come.
-            return <Inline key={index} nodes={node.children} />;
+            // Ask never asks for links: only Entraide's are parsed.
+            return (
+              <Text
+                key={index}
+                accessibilityRole="link"
+                className="text-sm underline"
+                onPress={() => void WebBrowser.openBrowserAsync(node.href)}
+              >
+                <Inline community={community} nodes={node.children} />
+              </Text>
+            );
           case "code":
             return (
               <Text key={index} className="bg-muted font-mono text-sm">
@@ -167,7 +189,15 @@ function Inline({ nodes }: { nodes: readonly AskInline[] }) {
               </Text>
             );
           case "figure":
-            return (
+            return community ? (
+              <Text
+                key={index}
+                className="text-sm font-medium"
+                style={{ fontVariant: ["tabular-nums"] }}
+              >
+                {node.text}
+              </Text>
+            ) : (
               <PrivateAmount
                 key={index}
                 className="text-sm font-medium"

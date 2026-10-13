@@ -64,8 +64,9 @@ export function useNotificationRouting(ready: boolean): void {
       delete route.params.owner;
     }
 
-    // Entraide lives on the web until it comes to the phone: its thread
+    // What of the blog only the web has — the moderation queue, an article —
     // opens there, in the in-app browser, rather than nowhere in particular.
+    // An Entraide thread is the phone's own (`mobileRouteForPushUrl`).
     if (
       route === null &&
       typeof url === "string" &&
