@@ -464,7 +464,7 @@ export const en = {
       one: "{count} filed on its own",
       other: "{count} filed on their own",
     },
-    waiting: { one: "{count} to check", other: "{count} to check" },
+    waiting: { one: "{count} to review", other: "{count} to review" },
     likelyTyped: {
       one: "{count} probably entered already, to confirm",
       other: "{count} probably entered already, to confirm",
@@ -483,8 +483,8 @@ export const en = {
       other: "{count} transactions added",
     },
     addedWaiting: {
-      one: "{count} waits in « To check »",
-      other: "{count} wait in « To check »",
+      one: "{count} waits in « Review »",
+      other: "{count} wait in « Review »",
     },
     nothingNew: "Nothing new: this statement was already here.",
     review: "Check them",
