@@ -16,11 +16,11 @@ import { writerFor, type Writer } from "@/lib/ai/writer";
  *
  * Pluclair holds no model key of its own (the owner's call, 2026-10-09), so
  * this is the person's OpenRouter account at work, as for their reads and
- * questions — but always with Mistral, on Mistral's own servers, whatever
- * model they chose for the rest: the file is a bank statement, and the
- * owner chose Mistral, in the EU, for it (question 2 of the plan). The file
- * is sent once, read, and kept by no one here; core checks what comes back
- * (`statementFromScan`).
+ * questions — but always with Mistral, on Mistral's EU servers (OpenRouter's
+ * `mistral/eu` endpoint), whatever model they chose for the rest: the file
+ * is a bank statement, and the owner chose Mistral, in the EU, for it
+ * (question 2 of the plan). The file is sent once, for this reading, and
+ * kept nowhere here; core checks what comes back (`statementFromScan`).
  */
 
 /** The model that reads the picture: Mistral's, which reads images and PDFs. */
@@ -87,10 +87,10 @@ function scanWriter(writer: Writer): Writer {
     reasoning: false,
     extra: {
       provider: {
-        // Mistral alone, its EU servers first; nothing logged for training.
-        only: ["mistral"],
-        order: ["mistral/eu", "mistral"],
-        data_collection: "deny",
+        // Mistral's EU endpoint and no other: busy there, the reading
+        // fails and says so rather than going elsewhere.
+        only: ["mistral/eu"],
+        allow_fallbacks: false,
         require_parameters: true,
       },
     },

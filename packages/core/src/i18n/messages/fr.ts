@@ -410,7 +410,7 @@ export const fr: Messages = {
     imageKind: "Cette image ne peut pas être lue\u00A0: envoyez-la en PNG ou en JPEG.",
     scanTitle: "La faire lire par votre IA\u00A0?",
     scanBody:
-      "Votre compte IA peut lire ce relevé avec Mistral, sur ses serveurs en Europe\u00A0: le fichier lui est envoyé une fois, lu, puis oublié. Pluclair ne le garde pas, et chaque ligne lue vous attendra dans «\u00A0À vérifier\u00A0».",
+      "Votre compte IA peut lire ce relevé avec Mistral, sur ses serveurs en Europe\u00A0: le fichier lui est envoyé une fois, pour cette lecture seulement, et Pluclair ne le garde pas. Chaque ligne lue vous attendra dans «\u00A0À vérifier\u00A0».",
     scanCost: "Quelques centimes, payés par votre compte OpenRouter.",
     scanGo: "Faire lire par Mistral",
     scanning: "Mistral lit votre relevé…",

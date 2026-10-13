@@ -59,8 +59,8 @@ describe("scanStatement", () => {
     expect(body.model).toBe(SCAN_MODEL);
     expect(body.temperature).toBe(0);
     expect(body.provider).toMatchObject({
-      only: ["mistral"],
-      data_collection: "deny",
+      only: ["mistral/eu"],
+      allow_fallbacks: false,
     });
     const user = (body.messages as { role: string; content: unknown }[])[1]!;
     expect(user.content).toEqual([

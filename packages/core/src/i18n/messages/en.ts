@@ -521,7 +521,7 @@ export const en = {
     imageKind: "This picture cannot be read: send it as PNG or JPEG.",
     scanTitle: "Have your AI read it?",
     scanBody:
-      "Your AI account can read this statement with Mistral, on its servers in Europe: the file is sent to it once, read, then forgotten. Pluclair does not keep it, and every line read waits for you in « Review ».",
+      "Your AI account can read this statement with Mistral, on its servers in Europe: the file is sent to it once, for this reading only, and Pluclair does not keep it. Every line read waits for you in « Review ».",
     scanCost: "A few cents, paid by your OpenRouter account.",
     scanGo: "Have Mistral read it",
     scanning: "Mistral is reading your statement…",
