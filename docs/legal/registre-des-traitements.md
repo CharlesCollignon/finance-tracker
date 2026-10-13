@@ -69,6 +69,10 @@ auprès desquels l'utilisateur a lui-même ouvert un compte.
 
 ## 3. Connexion bancaire
 
+Fermée à tous les comptes sauf celui de l'éditeur depuis le 13 octobre 2026 :
+open-banking.io ne permet pas à ses clients de confier leur accès à une
+application tierce. Ce qui suit vaut pour ce seul compte, et si elle rouvre.
+
 - **Finalité** : afficher dans le budget les comptes, soldes et opérations
   bancaires de l'utilisateur, et classer ces opérations.
 - **Base légale** : consentement (art. 6.1.a), recueilli à l'écran au dépôt du

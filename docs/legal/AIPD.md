@@ -38,8 +38,9 @@ section 11).
 
 - **Responsable** : Charles Collignon, éditeur à titre non professionnel
   (contact : pluclair.app@gmail.com).
-- **Personnes concernées** : utilisateurs de Pluclair ayant choisi de
-  connecter leur banque (fonction ouverte compte par compte).
+- **Personnes concernées** : l'éditeur seul depuis le 13 octobre 2026 (la
+  fonction est fermée aux autres comptes, section 3.4) ; l'analyse reste
+  valable si elle rouvre.
 - **Finalité** : afficher dans le budget les comptes, soldes et opérations
   bancaires, et classer ces opérations.
 
@@ -133,11 +134,17 @@ d'open-banking.io.
   sur un prestataire enregistré (Enable Banking), et confie à Pluclair un
   accès en lecture seule à ses propres données : c'est l'argument pour que
   Pluclair n'en fournisse pas un lui-même, mais il n'a été confirmé ni par
-  l'ACPR ni par open-banking.io. **Point ouvert**, le seul de cette analyse ;
-  question non posée à l'ACPR.
-- **Dépendance contractuelle** : open-banking.io pourrait suspendre les
-  comptes dont les identifiants sont confiés à un tiers ; accord écrit
-  demandé par e-mail le 12 octobre 2026 — sans réponse au 13 octobre.
+  l'ACPR ni par open-banking.io.
+- **Dépendance contractuelle** : accord écrit demandé à open-banking.io par
+  e-mail le 12 octobre 2026 ; réponse du même jour : l'accès pour le compte
+  des utilisateurs d'une application tierce « n'est pas possible pour le
+  moment ».
+- **Décision (13 octobre 2026)** : la connexion bancaire est fermée à tous les
+  comptes sauf celui de l'éditeur, qui lit ses propres données par son propre
+  compte open-banking.io (`bankOpenTo`, `apps/web/lib/bank/client.ts`) ; le
+  site ne la propose plus. Les deux risques ci-dessus tombent avec elle. Elle
+  ne rouvrira qu'avec l'accord écrit d'open-banking.io et une réponse sur la
+  qualification.
 
 ## 4. Plan d'action
 
@@ -151,8 +158,8 @@ d'open-banking.io.
 | Export complet des données (portabilité)                        | —                                              | Sur demande, sous un mois ; en un geste à construire |
 | Procédure de violation de données (notification CNIL sous 72 h) | 13 octobre 2026                                | Rédigée (section 6)                     |
 | Accords de sous-traitance vérifiés                              | 13 octobre 2026                                | Fait (intégrés aux conditions)          |
-| Accord écrit d'open-banking.io                                  | 12 octobre 2026                                | Demandé, sans réponse                   |
-| Qualification par l'ACPR                                        | —                                              | Non demandée — point ouvert (3.4)       |
+| Accord écrit d'open-banking.io                                  | 12 octobre 2026                                | Refusé le jour même                     |
+| Connexion bancaire fermée aux autres comptes                    | 13 octobre 2026                                | Fait (3.4)                              |
 | Biens immobiliers : adresse réduite à la commune et au point    | —                                              | Fait                                    |
 | Conditions de la Géoplateforme de l'IGN vérifiées               | 13 octobre 2026                                | Fait (service public ouvert)            |
 | Revue de cette AIPD                                             | Annuelle, et à chaque changement du traitement | —                                       |
@@ -163,9 +170,9 @@ d'open-banking.io.
   délégué n'étant obligatoire (registre).
 - **Avis des personnes concernées** : non recueilli formellement ; les retours
   passent par « Envoyer un retour » et Entraide.
-- **Décision du responsable du traitement** : mise en œuvre acceptée, la
-  connexion bancaire restant subordonnée au point ouvert de la section 3.4 —
-  le 13 octobre 2026, Charles Collignon.
+- **Décision du responsable du traitement** : mise en œuvre acceptée ; la
+  connexion bancaire fermée à tous les comptes sauf celui de l'éditeur
+  (section 3.4) — le 13 octobre 2026, Charles Collignon.
 
 ## 6. Procédure en cas de violation de données
 
