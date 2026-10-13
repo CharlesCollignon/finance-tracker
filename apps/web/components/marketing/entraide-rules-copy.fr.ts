@@ -126,8 +126,8 @@ export const entraideRulesCopyFr: EntraideRulesCopy = {
         ],
         points: [
           "Vos messages : jusqu'à ce que vous les supprimiez, ou votre compte. Supprimer votre compte remplace chacun de vos messages par « Message supprimé » et en efface le texte ; votre pseudonyme part avec lui.",
-          "Les signalements et les décisions de modération : [[combien de temps — par exemple un an après la décision]], pour répondre à une contestation ou à une autorité.",
-          "Ce que la loi impose à un hébergeur de conserver sur qui a publié quoi (LCEN et décret n° 2021-1362 du 20 octobre 2021) : [[quelles données, et combien de temps]].",
+          "Les signalements et les décisions de modération : un an après la décision, pour répondre à une contestation ou à une autorité — et une décision tant que le message qu'elle a masqué le reste, ou que le pseudonyme qu'elle a exclu l'est toujours.",
+          "Ce que la loi impose à un hébergeur de conserver sur qui a publié quoi (LCEN et décret n° 2021-1362 du 20 octobre 2021) : pour chaque question ou réponse écrite, modifiée ou supprimée, l'identifiant et l'adresse e-mail de votre compte, l'adresse IP de la connexion et le moment — un an, même si vous supprimez votre compte, lu par personne, et remis seulement aux autorités qui le demandent légalement.",
         ],
         after: [
           "Tout le reste de la politique de confidentialité s'applique à Entraide : vos droits, comment les exercer, et comment saisir la CNIL.",

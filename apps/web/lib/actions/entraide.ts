@@ -9,6 +9,7 @@ import {
   entraideTargetOf,
   handleProblem,
   isEntraideRule,
+  type EntraideTarget,
   isEntraideFilter,
   isEntraideSort,
   threadHref,
@@ -21,6 +22,8 @@ import * as entraide from "@finance/data/entraide";
 import { asUser } from "@/lib/actions/as-user";
 import { toCard, type EntraideCard } from "@/lib/entraide-cards";
 import { pushAnswer, pushReport, pushSolved } from "@/lib/entraide-push";
+import { recordAuthorship } from "@/lib/entraide-authorship";
+import { getAuthUser } from "@/lib/auth/get-user";
 import { isGuideSlug } from "@/lib/guide-list";
 import { matchGuides } from "@/lib/guide-search";
 import { allGuides } from "@/lib/guides";
@@ -47,6 +50,17 @@ const CLOSED = { error: "errors.notAllowed" } as const;
 function fits(text: string, min: number, max: number): boolean {
   const length = text.trim().length;
   return length >= min && length <= max;
+}
+
+/** Who did it, kept a year as the law asks of a host (migration 073). */
+async function written(
+  target: EntraideTarget,
+  operation: "create" | "edit" | "delete",
+) {
+  const user = await getAuthUser();
+  if (user) {
+    await recordAuthorship(target, operation, user);
+  }
 }
 
 function redraw(href?: string) {
@@ -182,6 +196,7 @@ export async function publishPost(input: {
         return { error: created.error };
       }
       redraw();
+      await written(`post:${created.id}`, "create");
       // Drawn from what was just written; the list's next read has the rest.
       const now = new Date();
       return {
@@ -230,6 +245,7 @@ export async function editPost(
   );
   if (result.success) {
     redraw(threadHref(id, title));
+    await written(`post:${id}`, "edit");
   }
   return result;
 }
@@ -244,6 +260,7 @@ export async function deletePost(id: number): Promise<ActionResult> {
   );
   if (result.success) {
     redraw();
+    await written(`post:${id}`, "delete");
   }
   return result;
 }
@@ -274,6 +291,7 @@ export async function publishReply(
   if (result.success) {
     redraw();
     const replyId = result.id;
+    await written(`reply:${replyId}`, "create");
     after(() => pushAnswer(replyId));
   }
   return result;
@@ -290,9 +308,14 @@ export async function editReply(
   if (!fits(body, ENTRAIDE_LIMITS.replyMin, ENTRAIDE_LIMITS.replyMax)) {
     return { error: "errors.invalidInput" };
   }
-  return asUser((db, userId) => entraide.editReply(db, userId, id, body), {
-    redraw: "never",
-  });
+  const result = await asUser(
+    (db, userId) => entraide.editReply(db, userId, id, body),
+    { redraw: "never" },
+  );
+  if (result.success) {
+    await written(`reply:${id}`, "edit");
+  }
+  return result;
 }
 
 export async function deleteReply(id: number): Promise<ActionResult> {
@@ -305,6 +328,7 @@ export async function deleteReply(id: number): Promise<ActionResult> {
   );
   if (result.success) {
     redraw();
+    await written(`reply:${id}`, "delete");
   }
   return result;
 }

@@ -52,12 +52,18 @@ export async function GET(request: NextRequest) {
   const ask = await supabase.rpc("sweep_ask");
   const askSwept = ask.error ? null : (ask.data ?? 0);
 
+  // Entraide's year: who wrote what, and the reports and decisions settled
+  // more than a year ago (migration 073). Its own answer as well.
+  const entraide = await supabase.rpc("sweep_entraide");
+  const entraideSwept = entraide.error ? null : (entraide.data ?? 0);
+
   if (error) {
     if (isMissingSchemaOrFunction(error)) {
       return Response.json({
         skipped: "Migration 036 has not run here.",
         activitySwept,
         askSwept,
+        entraideSwept,
       });
     }
     return Response.json({ error: error.message }, { status: 500 });
@@ -65,5 +71,10 @@ export async function GET(request: NextRequest) {
   if (activity.error && activitySwept !== null) {
     return Response.json({ error: activity.error.message }, { status: 500 });
   }
-  return Response.json({ swept: data ?? 0, activitySwept, askSwept });
+  return Response.json({
+    swept: data ?? 0,
+    activitySwept,
+    askSwept,
+    entraideSwept,
+  });
 }

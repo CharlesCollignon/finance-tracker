@@ -11,7 +11,7 @@
  * A module of its own so a client component can ask without shipping both
  * documents to the browser.
  */
-export const LEGAL_DRAFT = true;
+export const LEGAL_DRAFT = false;
 
 /**
  * Whether the documents may be served, and linked to, on this deployment.
