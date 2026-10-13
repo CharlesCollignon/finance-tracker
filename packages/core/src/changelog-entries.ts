@@ -17,6 +17,24 @@ import type { ChangelogEntry, RoadmapItem } from "./changelog";
  */
 export const CHANGELOG: readonly ChangelogEntry[] = [
   {
+    id: "2026-10-13-entraide-phone",
+    date: "2026-10-13",
+    kind: "new",
+    platforms: ["phone"],
+    fr: {
+      title: "Entraide, dans l’application",
+      body: "Entraide s’ouvre aussi sur le téléphone, depuis le menu du compte : lisez les questions, posez la vôtre, répondez, réagissez ou signalez, comme sur le site. Une notification de réponse ouvre la discussion.",
+      detail:
+        "Les règles sont les mêmes, et ce que vous écrivez passe par les mêmes vérifications : un IBAN, un numéro de carte ou une adresse e-mail est masqué avant d’être publié. Les notifications d’Entraide se règlent dans le Profil.",
+    },
+    en: {
+      title: "Entraide, in the app",
+      body: "Entraide opens on the phone too, from the account menu: read the questions, ask yours, answer, react or report, as on the site. A notification of an answer opens the thread.",
+      detail:
+        "The rules are the same, and what you write goes through the same checks: an IBAN, a card number or an email address is masked before it is published. Entraide's notifications are set in Profile.",
+    },
+  },
+  {
     id: "2026-10-13-entraide",
     date: "2026-10-13",
     kind: "new",
@@ -1086,7 +1104,7 @@ export const CHANGELOG: readonly ChangelogEntry[] = [
  */
 export const CHANGELOG_STATS = {
   /** `git rev-list --count HEAD` on the branch that wrote the newest entry. */
-  commits: 997,
+  commits: 1004,
   /** The repository's first commit. */
   since: "2026-06-15",
   asOf: "2026-10-13",
