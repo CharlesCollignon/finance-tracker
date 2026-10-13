@@ -1,10 +1,11 @@
-/* Hallmark · genre: atmospheric · macrostructure: Long Document (a guide, with its contents held in the margin) · theme: design.md (Pluclair) · enrichment: the room's own light as a cover · nav: kept · footer: kept */
+/* Hallmark · genre: atmospheric · macrostructure: Long Document (a guide, with its contents held in the margin) · theme: design.md (Pluclair) · enrichment: a photo from Unsplash as the cover, settled into the room · nav: kept · footer: kept */
 
 import Link from "next/link";
 import { ArrowLeft, EnvelopeSimple } from "@phosphor-icons/react/dist/ssr";
 import { formatFullDate } from "@finance/core/constants";
 import { getLocale } from "@/lib/locale";
 import { feedbackEmail } from "@/lib/feedback-email";
+import { GUIDE_COVERS } from "@/lib/guide-covers";
 import {
   BLOG_HREF,
   GUIDE_SLUGS,
@@ -38,6 +39,8 @@ export async function GuideArticle({ slug }: { slug: GuideSlug }) {
     GUIDE_SLUGS[(GUIDE_SLUGS.indexOf(slug) + 1) % GUIDE_SLUGS.length]!;
   const next = (await loadGuide(nextSlug)).meta;
   const email = feedbackEmail();
+  const photo = GUIDE_COVERS[slug];
+  const site = getSiteUrl();
 
   // For search engines: what the page is, who wrote it, and when.
   const jsonLd = {
@@ -48,7 +51,8 @@ export async function GuideArticle({ slug }: { slug: GuideSlug }) {
     datePublished: meta.published,
     dateModified: meta.updated,
     inLanguage: "fr-FR",
-    url: new URL(guideHref(slug), getSiteUrl()).toString(),
+    url: new URL(guideHref(slug), site).toString(),
+    image: new URL(photo.image.src, site).toString(),
     author: { "@type": "Person", name: "Charles Collignon" },
     publisher: { "@type": "Organization", name: "Pluclair" },
   };
@@ -108,9 +112,36 @@ export async function GuideArticle({ slug }: { slug: GuideSlug }) {
 
       <FadeUp trigger="mount" delay={0.7} className="px-6">
         <GuideCover
-          seed={meta.cover}
+          slug={slug}
+          sizes="(min-width: 1200px) 1152px, 100vw"
+          first
+          describe
+          drift
           className="mx-auto aspect-[16/9] max-w-6xl rounded-[2rem] md:aspect-[21/8]"
         />
+        {/* Free to use without a word, and credited all the same. */}
+        <p className="mx-auto mt-3 max-w-6xl px-2 text-right text-xs text-marketing-faint">
+          {copy.photo.by}{" "}
+          <a
+            href={`${photo.credit.profile}?utm_source=pluclair&utm_medium=referral`}
+            className={cn(
+              "rounded-control underline decoration-white/20 underline-offset-2 transition-colors duration-hover hover:text-white",
+              marketingFocus,
+            )}
+          >
+            {photo.credit.name}
+          </a>{" "}
+          {copy.photo.on}{" "}
+          <a
+            href={`${photo.credit.photo}?utm_source=pluclair&utm_medium=referral`}
+            className={cn(
+              "rounded-control underline decoration-white/20 underline-offset-2 transition-colors duration-hover hover:text-white",
+              marketingFocus,
+            )}
+          >
+            Unsplash
+          </a>
+        </p>
       </FadeUp>
 
       <div className="mx-auto grid max-w-6xl gap-14 px-6 py-16 md:grid-cols-[minmax(0,3fr)_minmax(0,8fr)] md:py-24">
