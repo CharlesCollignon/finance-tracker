@@ -608,5 +608,6 @@ export const landingCopyFr: LandingCopySections & {
     signIn: "Se connecter",
     openApp: "Ouvrir l’application",
     goToDashboard: "Voir où vous en êtes",
+    openShort: "Ouvrir",
   },
 };
