@@ -171,11 +171,29 @@ if (!buildUrl) {
 // ----------------------------------------------------------------- publish
 const folder = mkdtempSync(join(tmpdir(), "pluclair-apk-"));
 const apk = join(folder, "pluclair.apk");
-const response = await fetch(buildUrl);
-if (!response.ok) {
-  fail(`Could not download the APK (${response.status}) from ${buildUrl}`);
+// A few tries: a hundred-odd megabytes over WSL's network can be cut off
+// half way (ECONNRESET), and the build is done — only the copy is missing.
+let downloaded = false;
+for (let attempt = 1; attempt <= 5 && !downloaded; attempt++) {
+  try {
+    const response = await fetch(buildUrl);
+    if (!response.ok) {
+      throw new Error(String(response.status));
+    }
+    writeFileSync(apk, Buffer.from(await response.arrayBuffer()));
+    downloaded = true;
+  } catch (error) {
+    console.error(`Download try ${attempt} failed (${error.message}).`);
+    await new Promise((resolve) => setTimeout(resolve, attempt * 5000));
+  }
 }
-writeFileSync(apk, Buffer.from(await response.arrayBuffer()));
+if (!downloaded) {
+  fail(
+    `Could not download the APK from ${buildUrl}. The build is done and the\n` +
+      `version commit is local: download it by hand, then publish it with\n` +
+      `  gh release create ${tag} pluclair.apk --target ${releaseSha}${draft ? " --draft" : ""}`,
+  );
+}
 
 run("git", ["push", "-q", "origin", "main"]);
 const notesPath = join(folder, "notes.md");
