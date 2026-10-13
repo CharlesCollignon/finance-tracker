@@ -452,6 +452,7 @@ export const en = {
     reading: "Reading the file…",
     lines: { one: "{count} transaction", other: "{count} transactions" },
     period: "from {from} to {to}",
+    onDay: "on {day}",
     statementOf: "{bank} statement",
     statement: "Statement",
     accountKnown: "Already known",

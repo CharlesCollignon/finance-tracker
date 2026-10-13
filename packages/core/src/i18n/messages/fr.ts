@@ -340,6 +340,7 @@ export const fr: Messages = {
     reading: "Lecture du fichier…",
     lines: { one: "{count} opération", other: "{count} opérations" },
     period: "du {from} au {to}",
+    onDay: "le {day}",
     statementOf: "Relevé {bank}",
     statement: "Relevé",
     accountKnown: "Déjà connu",

@@ -205,8 +205,12 @@ export function StatementImport({
       return;
     }
     const onPaste = (event: ClipboardEvent) => {
-      const target = event.target as HTMLElement | null;
-      if (target?.closest("input, textarea, select, [contenteditable]")) {
+      // The document itself when nothing has the focus: not a field.
+      const target = event.target;
+      if (
+        target instanceof Element &&
+        target.closest("input, textarea, select, [contenteditable]")
+      ) {
         return;
       }
       const html = event.clipboardData?.getData("text/html") ?? "";
