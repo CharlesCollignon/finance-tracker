@@ -2,6 +2,7 @@
 
 import { EnvelopeSimple, GithubLogo } from "@phosphor-icons/react/dist/ssr";
 import type { Locale } from "@finance/core/i18n/locale";
+import { feedbackEmail } from "@/lib/feedback-email";
 import { getLocale } from "@/lib/locale";
 import { ANDROID_DOWNLOAD_PATH, storeLinks } from "@/lib/store-links";
 import { aboutCopyFor, SOURCE_URL } from "@/components/marketing/about-copy";
@@ -130,10 +131,4 @@ function AboutView({
       </section>
     </article>
   );
-}
-
-/** The address « Envoyer un retour » writes to, if the deployment has one. */
-function feedbackEmail(): string | null {
-  const value = process.env.FEEDBACK_EMAIL?.trim();
-  return value && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value) ? value : null;
 }
