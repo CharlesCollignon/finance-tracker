@@ -35,6 +35,8 @@ Décidé avec l'éditeur le 13 octobre 2026 :
 6. **Mineurs.** Un compte Pluclair est ouvert dès 15 ans. Un espace public demande-t-il des précautions particulières pour les 15–17 ans ?
 7. **Forme du document.** « Les règles d'Entraide » peut-il valoir conditions générales au sens de l'art. 14 du DSA en étant rattaché aux conditions d'utilisation par une ligne, ou faut-il l'intégrer aux conditions elles-mêmes ?
 
+8. **L'exposé des motifs.** Pluclair n'envoie aucun e-mail de lui-même. L'exposé des motifs (art. 17) est affiché à l'auteur sur le message masqué dès que la mesure prend effet, avec une notification ; l'éditeur envoie le même par e-mail depuis son adresse. Cela suffit-il, ou faut-il un envoi automatique par e-mail, et donc un service d'envoi ?
+
 ## À l'ouverture d'Entraide (phase 5b)
 
 - La politique de confidentialité et les conditions d'utilisation reçoivent chacune une ligne qui renvoie à ces règles, dans le commit qui ouvre Entraide.
