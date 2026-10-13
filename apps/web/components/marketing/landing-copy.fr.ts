@@ -169,12 +169,12 @@ export const landingCopyFr: LandingCopySections & {
       {
         question: "C’est payant ?",
         answer:
-          "Pluclair est gratuit, sans carte bancaire. Deux options se paient à part, directement à leur service et jamais à Pluclair. La connexion bancaire passe par votre propre compte open-banking.io : environ 3 € par mois, et 1 € par compte en plus. Les lectures et les questions, écrites par une IA, demandent votre propre compte OpenRouter : vous y choisissez le modèle — Mistral, ChatGPT ou Claude — et vous payez quelques centimes chacune.",
+          "Pluclair est gratuit, sans carte bancaire. Une seule option se paie à part, directement à son service et jamais à Pluclair. Les lectures et les questions, écrites par une IA, demandent votre propre compte OpenRouter : vous y choisissez le modèle — Mistral, ChatGPT ou Claude — et vous payez quelques centimes chacune.",
       },
       {
         question: "Pluclair peut-il toucher à mon argent ?",
         answer:
-          "Non, jamais. Il ne fait ni virement ni paiement, et la connexion bancaire ne peut que lire.",
+          "Non, jamais. Il ne fait ni virement ni paiement, et ne se connecte à aucune banque.",
       },
       {
         question: "Où vont mes données ?",
@@ -184,7 +184,7 @@ export const landingCopyFr: LandingCopySections & {
       {
         question: "Faut-il connecter sa banque ?",
         answer:
-          "Non. Vous notez vos opérations vous-même, ou vous importez un relevé CSV de votre banque. Si vous préférez qu’elles arrivent toutes seules, une connexion en lecture seule les apporte, par votre propre compte open-banking.io.",
+          "Non : Pluclair ne se connecte à aucune banque. Vous notez vos opérations vous-même, ou vous importez un relevé CSV de votre banque, et une fois par mois, le solde que vous lisez sur votre compte suffit à faire le bilan.",
       },
       {
         question: "Que voit l’IA ?",

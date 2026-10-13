@@ -40,7 +40,7 @@ export const legalCopyFr: LegalCopy = {
         points: [
           "Pluclair conserve ce que vous y mettez, et ce que votre banque envoie si vous choisissez de la connecter. Rien d'autre.",
           "Aucune publicité, aucun pistage d'un site à l'autre, et rien n'est vendu ni partagé à des fins commerciales. Une mesure d'audience, faite par nous seuls, compte les jours où l'application est ouverte sans vous nommer\u00A0; vous pouvez la couper dans Profil.",
-          "Connecter une banque est facultatif et en lecture seule : rien dans Pluclair ne peut déplacer d'argent.",
+          "Pluclair ne propose pas de connexion bancaire pour le moment, et rien dans Pluclair ne peut déplacer d'argent.",
           "Vous pouvez corriger ou supprimer n'importe quelle écriture, déconnecter votre banque ou supprimer votre compte depuis l'application, et supprimer le compte emporte tout avec lui.",
         ],
       },
@@ -62,6 +62,7 @@ export const legalCopyFr: LegalCopy = {
         id: "bank",
         heading: "Connecter une banque",
         body: [
+          "Pas proposée pour le moment\u00A0: open-banking.io ne permet pas à ses clients de confier leur accès à une application comme Pluclair, si bien que la connexion bancaire est fermée à tous les comptes, sauf celui de l'éditeur. Ce qui suit dit comment elle fonctionne, si elle rouvre.",
           "Connecter une banque est facultatif. Cela passe par votre propre compte open-banking.io\u00A0: vous vous y inscrivez et le payez directement (à ce jour, environ 3\u00A0€ par mois pour le premier compte et 1\u00A0€ par compte supplémentaire), et c'est votre banque qui recueille votre consentement, sur ses propres pages, par l'intermédiaire d'Enable Banking Oy, prestataire de services d'information sur les comptes agréé. Pluclair ne voit jamais vos identifiants bancaires, n'encaisse ni ne manipule jamais ce paiement, et n'est pas lui-même un prestataire de services de paiement agréé ou enregistré.",
           "open-banking.io, Enable Banking et votre banque traitent vos données selon leurs propres politiques de confidentialité, en tant que [[responsables de traitement distincts — à confirmer avec open-banking.io]].",
           "Pour que Pluclair puisse lire ce compte, vous lui confiez le fichier d'identifiants qu'open-banking.io vous permet de télécharger (credentials.json)\u00A0: une clé API qui lit votre compte open-banking.io, et la clé privée qui déchiffre ce qu'il renvoie. Ce que Pluclair reçoit alors\u00A0:",
@@ -208,6 +209,7 @@ export const legalCopyFr: LegalCopy = {
         id: "bank",
         heading: "Connecter une banque",
         body: [
+          "Pas proposée pour le moment\u00A0: open-banking.io ne permet pas à ses clients de confier leur accès à une application comme Pluclair, si bien que la connexion bancaire est fermée à tous les comptes, sauf celui de l'éditeur. Ce qui suit dit comment elle fonctionne, si elle rouvre.",
           "Connecter une banque est facultatif et passe par votre propre compte open-banking.io, un service distinct. Vous vous y inscrivez, acceptez ses conditions et le payez directement\u00A0; Pluclair n'est pas partie à ce contrat, n'encaisse ni ne manipule jamais ce paiement, et n'est pas un prestataire de services de paiement agréé ou enregistré — le service d'information sur les comptes est fourni par Enable Banking Oy. Vous le connectez en confiant à Pluclair le fichier d'identifiants de ce compte et en donnant votre consentement à l'écran\u00A0: gardez ce fichier pour vous, et supprimez sa clé API chez open-banking.io si vous pensez qu'il a été exposé.",
           "La connexion est en lecture seule : rien dans Pluclair ne peut déplacer d'argent. La synchronisation dépend d'open-banking.io, d'Enable Banking et de votre banque, et elle peut être en retard, incomplète, ou s'arrêter — quand le consentement donné à votre banque prend fin, quand votre portefeuille open-banking.io est vide, ou quand une banque est indisponible. Nous vous prévenons quand la synchronisation s'arrête, et vos écritures restent les vôtres quoi qu'il arrive à la connexion.",
         ],
@@ -305,7 +307,7 @@ export const legalCopyFr: LegalCopy = {
         id: "payments",
         heading: "Services de paiement",
         body: [
-          "Pluclair n'est pas un prestataire de services de paiement agréé ou enregistré. La connexion bancaire, facultative, passe par le compte open-banking.io de l'utilisateur (Tatic ApS, Danemark), et le service d'information sur les comptes est fourni par Enable Banking Oy, enregistrée auprès de l'autorité finlandaise de surveillance financière (FIN-FSA).",
+          "Pluclair n'est pas un prestataire de services de paiement agréé ou enregistré. La connexion bancaire, qui n'est pas proposée pour le moment, passe par le compte open-banking.io de l'utilisateur (Tatic ApS, Danemark), et le service d'information sur les comptes est fourni par Enable Banking Oy, enregistrée auprès de l'autorité finlandaise de surveillance financière (FIN-FSA).",
         ],
       },
       {

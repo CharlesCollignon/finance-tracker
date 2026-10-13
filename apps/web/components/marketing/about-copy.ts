@@ -178,7 +178,7 @@ export const aboutCopy: AboutCopy = {
   bill: {
     heading: "The bill",
     intro:
-      "Pluclair is free. Two options are paid apart, directly to their own service — never to me.",
+      "Pluclair is free. One option alone is paid apart, directly to its own service — never to me.",
     optional: "Optional",
     rows: [
       {
@@ -186,12 +186,6 @@ export const aboutCopy: AboutCopy = {
         detail: "The website, the app, every feature",
         amount: "€0",
         optional: false,
-      },
-      {
-        label: "Bank connection",
-        detail: "Your own open-banking.io account · €1 for each extra account",
-        amount: "about €3 / month",
-        optional: true,
       },
       {
         label: "The AI of your choice",

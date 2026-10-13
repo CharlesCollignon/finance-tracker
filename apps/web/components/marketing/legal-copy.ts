@@ -91,7 +91,7 @@ export const legalCopy: LegalCopy = {
         points: [
           "Pluclair holds what you put in it, and what your bank sends if you choose to connect one. Nothing else.",
           "No advertising, no tracking across sites, and nothing is sold or shared for marketing. An audience measurement, made by us alone, counts the days the app is opened without naming you; you can turn it off in Profile.",
-          "Connecting a bank is optional and read-only: nothing in Pluclair can move money.",
+          "Pluclair offers no bank connection at the moment, and nothing in it can move money.",
           "You can correct or delete any entry, disconnect your bank, or delete your account from the app, and deleting the account takes everything with it.",
         ],
       },
@@ -113,6 +113,7 @@ export const legalCopy: LegalCopy = {
         id: "bank",
         heading: "Connecting a bank",
         body: [
+          "Not offered at the moment: open-banking.io does not let its customers give their access to an app like Pluclair, so the bank connection is closed to every account but the publisher's own. What follows is how it works, should it reopen.",
           "Connecting a bank is optional. It works through your own open-banking.io account: you sign up there and pay them directly (at the time of writing, about €3 a month for the first account and €1 for each extra one), and your bank asks for your consent on its own pages, through Enable Banking Oy, a licensed account information service provider. Pluclair never sees your bank login, never collects or handles that payment, and is not itself a licensed or registered payment service provider.",
           "open-banking.io, Enable Banking and your bank process your data under their own privacy policies, as [[independent controllers — confirm with open-banking.io how they describe the roles]].",
           "To let Pluclair read that account, you give it the credentials file open-banking.io lets you download (credentials.json): an API key that reads your open-banking.io account, and the private key that decrypts what it returns. What Pluclair then receives:",
@@ -259,6 +260,7 @@ export const legalCopy: LegalCopy = {
         id: "bank",
         heading: "Connecting a bank",
         body: [
+          "Not offered at the moment: open-banking.io does not let its customers give their access to an app like Pluclair, so the bank connection is closed to every account but the publisher's own. What follows is how it works, should it reopen.",
           "Connecting a bank is optional and goes through your own open-banking.io account, a separate service. You sign up with them, accept their terms and pay them directly; Pluclair is not part of that contract, never takes or handles that payment, and is not a licensed or registered payment service provider — the account information service is provided by Enable Banking Oy. You connect it by giving Pluclair the credentials file of that account and consenting on screen: keep the file private, and delete its API key at open-banking.io if you think it has been exposed.",
           "The connection is read-only: nothing in Pluclair can move money. Syncing depends on open-banking.io, Enable Banking and your bank, and it can be late, incomplete, or stop — when your bank's consent ends, when your open-banking.io wallet runs out, or when a bank is unavailable. We tell you when syncing stops, and your records stay yours whatever happens to the connection.",
         ],
@@ -356,7 +358,7 @@ export const legalCopy: LegalCopy = {
         id: "payments",
         heading: "Payment services",
         body: [
-          "Pluclair is not a licensed or registered payment service provider. The optional bank connection goes through the user's own open-banking.io account (Tatic ApS, Denmark), and the account information service is provided by Enable Banking Oy, registered with the Finnish Financial Supervisory Authority (FIN-FSA).",
+          "Pluclair is not a licensed or registered payment service provider. The bank connection, not offered at the moment, goes through the user's own open-banking.io account (Tatic ApS, Denmark), and the account information service is provided by Enable Banking Oy, registered with the Finnish Financial Supervisory Authority (FIN-FSA).",
         ],
       },
       {
