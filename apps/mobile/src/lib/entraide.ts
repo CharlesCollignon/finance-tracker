@@ -54,7 +54,13 @@ export async function readThreadFor(
   id: number,
   userId: string | null,
 ): Promise<ThreadRead | null> {
-  const thread = await entraide.readThread(supabase, id);
+  // The pseudonym needs nothing from the thread: read alongside it.
+  const [thread, handle] = await Promise.all([
+    entraide.readThread(supabase, id),
+    userId
+      ? entraide.readMyHandle(supabase, userId).catch(() => null)
+      : Promise.resolve(null),
+  ]);
   if (!thread) {
     return null;
   }
@@ -71,9 +77,8 @@ export async function readThreadFor(
       .filter((reply) => reply.author.isMine && reply.status === "hidden")
       .map((reply) => replyTarget(reply.id)),
   ];
-  const [handle, reported, decisions] = userId
+  const [reported, decisions] = userId
     ? await Promise.all([
-        entraide.readMyHandle(supabase, userId).catch(() => null),
         entraide
           .readMyReports(supabase, userId, targets)
           .catch(() => new Set<string>()),
@@ -83,7 +88,7 @@ export async function readThreadFor(
               .catch(() => new Map<string, EntraideDecision>())
           : Promise.resolve(new Map<string, EntraideDecision>()),
       ])
-    : [null, new Set<string>(), new Map<string, EntraideDecision>()];
+    : [new Set<string>(), new Map<string, EntraideDecision>()];
   return { post, replies, handle, reported, decisions };
 }
 

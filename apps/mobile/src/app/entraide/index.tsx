@@ -71,7 +71,8 @@ export default function EntraideScreen() {
       readAt: new Date(),
     }),
     [filter, sort],
-    { reads: ["community"] },
+    // Its counts move with answers and with « Utile ».
+    { reads: ["community", "reactions"] },
   );
 
   // The pages past the first, for the filter and order they were read for.
