@@ -432,12 +432,19 @@ export const en = {
   /** Importing a bank statement, with no bank connection (Phase 1). */
   statements: {
     heading: "Import a statement",
+    inviteTitle: "Your transactions, without typing them",
+    inviteBody:
+      "Import the file your bank gives: Pluclair files what it knows, and you check the rest.",
+    inviteDismiss: "Not now",
     intro:
       "Drop the file your bank gives you, as it is. Pluclair reads it, recognises what it already knows, and keeps only the transactions, never the file.",
     drop: "Drop your bank's file here",
     dropping: "Let go to read it",
+    dropAnywhere: "Drop the statement to import it",
     choose: "Choose a file",
     formats: "CSV, Excel, OFX, QIF, CAMT, MT940 or CFONB",
+    pasteHint:
+      "Or copy the table of transactions on your bank's website and paste it here.",
     where: "Where is my bank's export?",
     wherePick: "Your bank",
     otherBank: "Another bank",
@@ -445,6 +452,7 @@ export const en = {
     reading: "Reading the file…",
     lines: { one: "{count} transaction", other: "{count} transactions" },
     period: "from {from} to {to}",
+    onDay: "on {day}",
     statementOf: "{bank} statement",
     statement: "Statement",
     accountKnown: "Already known",
@@ -492,6 +500,10 @@ export const en = {
     undone: "Import undone.",
     undoTooLate: "An import can be undone for 30 days.",
     another: "Import another file",
+    nextFile: {
+      one: "Next file ({count} more)",
+      other: "Next file ({count} more)",
+    },
     history: "Your imports",
     undoneTag: "Undone",
     tooBig: "This file is too big for a statement (over 10 MB).",
@@ -2208,6 +2220,10 @@ export const en = {
       label: "Bank connection",
       hint: "When it needs renewing, or has stopped.",
     },
+    statement: {
+      label: "Monthly statement",
+      hint: "On the 5th, if last month's statement is not imported yet.",
+    },
     community: {
       label: "Entraide",
       hint: "An answer to your question, or your answer marked « Solved ».",
@@ -2369,6 +2385,10 @@ export const en = {
         one: "It starts with {count} charge. See what's left.",
         other: "It starts with {count} charges. See what's left.",
       },
+    },
+    statement: {
+      title: "Is your {month} statement ready?",
+      body: "Share it to Pluclair, or drop it on the site: what Pluclair knows files itself.",
     },
     arrived: {
       title: {

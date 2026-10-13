@@ -7,6 +7,7 @@ import {
   CalendarPlus,
   ChartLineUp,
   ChatsCircle,
+  FileArrowUp,
   Flag,
   HandCoins,
   House,
@@ -43,6 +44,7 @@ const ICONS: Record<NotificationKind, Icon> = {
   property: House,
   monthOpen: CalendarPlus,
   bank: Bank,
+  statement: FileArrowUp,
   community: ChatsCircle,
 };
 

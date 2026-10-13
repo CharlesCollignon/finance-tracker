@@ -3,6 +3,7 @@ import { AccountLabelProvider } from "@/components/layout/AccountLabel";
 import { AppBackdrop } from "@/components/layout/AppBackdrop";
 import { TopNav } from "@/components/layout/TopNav";
 import { BottomNav } from "@/components/layout/BottomNav";
+import { StatementDropTarget } from "@/components/finance/statements/StatementDropTarget";
 import { PageEnter } from "@/components/motion/PageEnter";
 import {
   SpaceProvider,
@@ -83,6 +84,8 @@ export function AppShell({
             </main>
           </div>
           <BottomNav badges={badges} showProperty={showProperty} />
+          {/* A bank's file dropped anywhere opens the import with it. */}
+          <StatementDropTarget />
         </div>
       </AccountLabelProvider>
     </SpaceProvider>

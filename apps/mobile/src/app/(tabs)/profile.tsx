@@ -70,6 +70,7 @@ const KIND_ICONS: Record<
   property: "home-outline",
   monthOpen: "calendar-clear-outline",
   bank: "business-outline",
+  statement: "document-attach-outline",
   community: "chatbubbles-outline",
 };
 

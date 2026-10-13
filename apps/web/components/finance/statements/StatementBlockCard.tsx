@@ -161,10 +161,16 @@ export function StatementBlockCard({
             {tail ? `${tail} · ` : ""}
             {t("statements.lines", { count: block.lines.length })}
             {block.from && block.to
-              ? ` ${t("statements.period", {
-                  from: dayOf(block.from, locale, !sameYear),
-                  to: dayOf(block.to, locale, true),
-                })}`
+              ? ` ${
+                  block.from === block.to
+                    ? t("statements.onDay", {
+                        day: dayOf(block.from, locale, true),
+                      })
+                    : t("statements.period", {
+                        from: dayOf(block.from, locale, !sameYear),
+                        to: dayOf(block.to, locale, true),
+                      })
+                }`
               : ""}
           </p>
         </div>

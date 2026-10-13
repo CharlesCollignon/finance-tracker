@@ -72,7 +72,51 @@
       "expo-font",
       "expo-web-browser",
       "./plugins/with-quick-actions",
-      "expo-sharing",
+      [
+        "expo-sharing",
+        {
+          "ios": { "enabled": false },
+          "android": {
+            "enabled": true,
+            "singleShareMimeTypes": [
+              "text/csv",
+              "text/comma-separated-values",
+              "text/tab-separated-values",
+              "text/plain",
+              "text/xml",
+              "text/html",
+              "application/csv",
+              "application/xml",
+              "application/x-ofx",
+              "application/vnd.intu.qfx",
+              "application/x-qif",
+              "application/qif",
+              "application/vnd.ms-excel",
+              "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+              "application/vnd.oasis.opendocument.spreadsheet",
+              "application/octet-stream"
+            ],
+            "multipleShareMimeTypes": [
+              "text/csv",
+              "text/comma-separated-values",
+              "text/tab-separated-values",
+              "text/plain",
+              "text/xml",
+              "text/html",
+              "application/csv",
+              "application/xml",
+              "application/x-ofx",
+              "application/vnd.intu.qfx",
+              "application/x-qif",
+              "application/qif",
+              "application/vnd.ms-excel",
+              "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+              "application/vnd.oasis.opendocument.spreadsheet",
+              "application/octet-stream"
+            ]
+          }
+        }
+      ],
       [
         "react-native-android-widget",
         {

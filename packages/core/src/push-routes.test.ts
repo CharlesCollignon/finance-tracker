@@ -160,6 +160,8 @@ describe("mobileRouteForPushUrl", () => {
     // « Résolu », a decision — the thread, or the list once it is hidden.
     written.add(threadHref(7, "Faut-il un livret A ?"));
     written.add("/blog/entraide");
+    // The statement reminder, said on the 5th by the notify job.
+    written.add("/import");
 
     expect(written.size).toBeGreaterThan(0);
     for (const url of written) {

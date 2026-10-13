@@ -193,7 +193,8 @@ to stop it:
    friendly path, per-bank export guides, the one-card reading, the
    summary, the shared inbox, balances, undo; the old wizard goes. Server
    reading for Excel; the 1 MB server-action limit lifted for it.
-2. **Anywhere in one tap** (`statements-share`): Partager vers Pluclair on
+2. **Anywhere in one tap** (`statements-share`) — built 2026-10-13
+   (the reminder on the 5th, the day banks have published): Partager vers Pluclair on
    Android, drop anywhere and paste a table on the web, the entry points
    (Le point, onboarding, account menu), the monthly nudge. New APK.
 3. **PDF and screenshots** (`statements-pdf`): text PDFs per bank layout,

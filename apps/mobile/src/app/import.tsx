@@ -4,6 +4,7 @@ import { useRouter, type Href } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import * as DocumentPicker from "expo-document-picker";
 import { File } from "expo-file-system";
+import { useIncomingShare } from "expo-sharing";
 import Animated, {
   FadeIn,
   FadeInDown,
@@ -19,6 +20,7 @@ import {
   isBankId,
   readMappedTable,
   readStatementFile,
+  readStatementText,
   statementKey,
   withDirection,
   type Statement,
@@ -57,9 +59,12 @@ const MAX_FILE_BYTES = 10 * 1024 * 1024;
 /** How long an import can be undone, as the server holds it. */
 const UNDO_DAYS = 30;
 
+/** How the file came: picked here, shared from another app, or as text. */
+type Source = StatementImportInput["source"];
+
 type Stage =
   | { kind: "start" }
-  | { kind: "read"; statement: Statement; fileName: string }
+  | { kind: "read"; statement: Statement; fileName: string; source: Source }
   | { kind: "done"; added: number; waiting: number; importIds: string[] };
 
 /** What one block sends: its lines, turned if the person said so, on its account. */
@@ -68,6 +73,7 @@ function inputFor(
   block: StatementBlock,
   choice: BlockChoice,
   fileName: string,
+  source: Source,
 ): StatementImportInput | null {
   const format = statement.format;
   if (format === "pdf" || format === "xls" || format === "image" || format === "unknown") {
@@ -94,7 +100,7 @@ function inputFor(
     from: block.from,
     to: block.to,
     closing: block.closing,
-    source: "file",
+    source,
   };
 }
 
@@ -136,12 +142,67 @@ export default function ImportScreen() {
   const [problem, setProblem] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
 
-  function open(statement: Statement, fileName: string) {
+  function open(statement: Statement, fileName: string, source: Source = "file") {
     setChoices(
       statement.blocks.map((block) => initialChoice(block, statement.bank, accounts, t("statements.accountMine"))),
     );
     setOutcomes(statement.blocks.map(() => null));
-    setStage({ kind: "read", statement, fileName });
+    setStage({ kind: "read", statement, fileName, source });
+  }
+
+  // Files shared to Pluclair from another app (« Partager vers Pluclair »,
+  // `app/+native-intent.ts`): read as they come, the first opened, the
+  // others waiting their turn.
+  const { resolvedSharedPayloads, isResolving, clearSharedPayloads } = useIncomingShare();
+  const [queue, setQueue] = useState<{ statement: Statement; fileName: string; source: Source }[]>([]);
+  useEffect(() => {
+    if (isResolving || resolvedSharedPayloads.length === 0) {
+      return;
+    }
+    let live = true;
+    void (async () => {
+      const read: { statement: Statement; fileName: string; source: Source }[] = [];
+      for (const payload of resolvedSharedPayloads) {
+        try {
+          if (payload.contentUri && payload.contentType !== "text" && payload.contentType !== "website") {
+            const bytes = new Uint8Array(await new File(payload.contentUri).arrayBuffer());
+            read.push({ statement: readStatementFile(bytes), fileName: payload.originalName ?? "", source: "share" });
+          } else if (payload.shareType === "text" && payload.value) {
+            read.push({ statement: readStatementText(payload.value), fileName: "", source: "paste" });
+          }
+        } catch {
+          // Unreadable: said below, if nothing else could be read either.
+        }
+      }
+      clearSharedPayloads();
+      if (!live) {
+        return;
+      }
+      const [first, ...rest] = read;
+      if (!first) {
+        setProblem(t("statements.unreadable"));
+        return;
+      }
+      void hapticLight();
+      setQueue(rest);
+      open(first.statement, first.fileName, first.source);
+    })();
+    return () => {
+      live = false;
+    };
+    // `open` and `t` are this render's; the payloads are what changes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [resolvedSharedPayloads, isResolving]);
+
+  /** The next shared file, or the start again when there is none. */
+  function next() {
+    const [following, ...rest] = queue;
+    setQueue(rest);
+    if (following) {
+      open(following.statement, following.fileName, following.source);
+    } else {
+      setStage({ kind: "start" });
+    }
   }
 
   async function pickFile() {
@@ -182,7 +243,7 @@ export default function ImportScreen() {
     const timer = setTimeout(() => {
       void Promise.all(
         reading.statement.blocks.map((block, index) => {
-          const input = choices[index] ? inputFor(reading.statement, block, choices[index]!, reading.fileName) : null;
+          const input = choices[index] ? inputFor(reading.statement, block, choices[index]!, reading.fileName, reading.source) : null;
           return input ? previewStatement(input, ownerId) : Promise.resolve(null);
         }),
       ).then((results) => {
@@ -206,7 +267,7 @@ export default function ImportScreen() {
     let waiting = 0;
     const importIds: string[] = [];
     for (const [index, block] of reading.statement.blocks.entries()) {
-      const input = inputFor(reading.statement, block, choices[index]!, reading.fileName);
+      const input = inputFor(reading.statement, block, choices[index]!, reading.fileName, reading.source);
       if (!input) {
         continue;
       }
@@ -399,7 +460,11 @@ export default function ImportScreen() {
                 onPress={() => void runImport()}
               />
             ) : null}
-            <Button label={t("statements.another")} variant="ghost" onPress={() => setStage({ kind: "start" })} />
+            <Button
+              label={queue.length > 0 ? t("statements.nextFile", { count: queue.length }) : t("statements.another")}
+              variant="ghost"
+              onPress={next}
+            />
           </View>
         ) : null}
 
@@ -428,7 +493,11 @@ export default function ImportScreen() {
                 }
               />
             ) : null}
-            <Button label={t("statements.another")} variant="outline" onPress={() => setStage({ kind: "start" })} />
+            <Button
+              label={queue.length > 0 ? t("statements.nextFile", { count: queue.length }) : t("statements.another")}
+              variant="outline"
+              onPress={next}
+            />
             {stage.importIds.length > 0 ? (
               <Button
                 label={t("statements.undo")}
