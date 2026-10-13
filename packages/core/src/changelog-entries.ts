@@ -17,6 +17,24 @@ import type { ChangelogEntry, RoadmapItem } from "./changelog";
  */
 export const CHANGELOG: readonly ChangelogEntry[] = [
   {
+    id: "2026-10-13-blog-guides",
+    date: "2026-10-13",
+    kind: "new",
+    platforms: ["web"],
+    fr: {
+      title: "Le blog : des guides pratiques",
+      body: "Trois guides pour commencer : le jour de lecture, le bilan du mois, et le PEA, le CTO, l’assurance-vie et le PER côte à côte.",
+      detail:
+        "Sur pluclair.com/blog, en français. Les règles des placements renvoient à service-public.gouv.fr, avec le jour où elles ont été lues. Des explications, jamais de conseil.",
+    },
+    en: {
+      title: "The blog: practical guides",
+      body: "Three guides to start with: the reading day, the month's close, and the PEA, CTO, assurance-vie and PER side by side.",
+      detail:
+        "On pluclair.com/blog, in French. The rules of each investment account link to service-public.gouv.fr, with the day they were read. Explanations, never advice.",
+    },
+  },
+  {
     id: "2026-10-12-reactions",
     date: "2026-10-12",
     kind: "new",
@@ -1000,10 +1018,10 @@ export const CHANGELOG: readonly ChangelogEntry[] = [
  */
 export const CHANGELOG_STATS = {
   /** `git rev-list --count HEAD` on the branch that wrote the newest entry. */
-  commits: 945,
+  commits: 948,
   /** The repository's first commit. */
   since: "2026-06-15",
-  asOf: "2026-10-12",
+  asOf: "2026-10-13",
 } as const;
 
 /**
@@ -1011,17 +1029,6 @@ export const CHANGELOG_STATS = {
  * and nowhere else. An item leaves this list the day its entry is written.
  */
 export const ROADMAP: readonly RoadmapItem[] = [
-  {
-    id: "blog-guides",
-    fr: {
-      title: "Le blog : des guides pratiques",
-      body: "Le jour de lecture, la clôture du mois, le PEA, le CTO, l’assurance-vie et le PER, expliqués simplement.",
-    },
-    en: {
-      title: "The blog: practical guides",
-      body: "The reading day, closing the month, and the PEA, CTO, assurance-vie and PER, explained simply.",
-    },
-  },
   {
     id: "entraide",
     fr: {
