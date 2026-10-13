@@ -1061,6 +1061,24 @@ hairline, said once in the rail; green there means _arrived_, as on the live
 dot, and gold is not spent anywhere on the page. Under reduced motion
 nothing rolls, tilts or grows, and every section stands at its final state.
 
+« Le blog » (`BlogIndex.tsx`, `GuideArticle.tsx`, October 2026) is for
+reading, so almost nothing in it moves of its own accord. A guide's cover is
+a still: the room's two lights placed its own way, a few sparks, and the orb
+half risen out of a horizon low in the frame — the landing's sunrise, small,
+in CSS. The index shows the newest guide wide, cover beside words, and the
+rest as glass cards that lift under the pointer like every glass card on the
+site; Entraide's door carries its « J'attends ça » vote. In a guide, the
+contents sit in the margin on a desktop, held while the text scrolls, the
+section being read in the ink grey, and beside them a line that fills with
+the reading; on a phone the same progress is a hairline across the top of
+the screen. Both follow the scroll and nothing else, and both are ink: a
+guide read is not a figure or a moment. A worked sum (`Calc.tsx`) prints its
+lines in turn as it comes into view, signed, then its rule and its result in
+the figure face, the one place Fraunces appears. A word a reader may not know
+(`Term.tsx`) opens a small glass card above it on a press, a hover or a
+focus. Under reduced motion the sum is all there at once and the card simply
+appears.
+
 The marketing nav is one glass shape (`LandingHeader.tsx`): « Le produit »
 (the burger on a phone) grows the pill down into its own panel on a spring,
 the pages arriving in it as cards — Le point featured with its figure, the

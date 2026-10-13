@@ -1,5 +1,14 @@
 [
   {
+    "date": "2026-10-13",
+    "macrostructure": "Editorial (index: one wide, then a grid; guide: long read with a held margin)",
+    "theme": "design.md (Pluclair: dark ground, Lamplit Gold, Instrument Sans + Fraunces)",
+    "enrichment": "CSS covers: the room's lights and the orb half risen on a horizon",
+    "nav": "kept (« Le blog » in the sheet and the footer)",
+    "footer": "kept",
+    "brief": "Pluclair « Le blog »: three guides in MDX, a contents margin that fills with the reading, worked sums, terms in a glass card, Entraide's door"
+  },
+  {
     "date": "2026-10-12",
     "macrostructure": "Index-First (with a held rail)",
     "theme": "design.md (Pluclair: dark ground, Lamplit Gold, Instrument Sans + Fraunces)",
