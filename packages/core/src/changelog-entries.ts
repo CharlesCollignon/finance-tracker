@@ -17,6 +17,24 @@ import type { ChangelogEntry, RoadmapItem } from "./changelog";
  */
 export const CHANGELOG: readonly ChangelogEntry[] = [
   {
+    id: "2026-10-13-entraide",
+    date: "2026-10-13",
+    kind: "new",
+    platforms: ["web"],
+    fr: {
+      title: "Entraide ouvre",
+      body: "Dans « Le blog », posez vos questions sur l’argent au quotidien et répondez à celles des autres, sous pseudonyme. « Déjà demandé ? » montre ce qui a déjà été répondu, et la réponse qui règle une question se marque « Résolu ».",
+      detail:
+        "Chaque réponse est l’avis de son auteur, jamais un conseil de Pluclair. Les règles d’Entraide disent ce qui y est bienvenu, comment fonctionne la modération et ce que deviennent vos messages.",
+    },
+    en: {
+      title: "Entraide opens",
+      body: "In “Le blog”, ask your questions about money in everyday life and answer other people's, under a pseudonym. “Already asked?” shows what has been answered before, and the answer that settles a question is marked “Solved”.",
+      detail:
+        "Each answer is its author's view, never advice from Pluclair. Entraide's rules say what is welcome there, how moderation works and what becomes of your posts.",
+    },
+  },
+  {
     id: "2026-10-13-legal-pages",
     date: "2026-10-13",
     kind: "new",
@@ -1068,7 +1086,7 @@ export const CHANGELOG: readonly ChangelogEntry[] = [
  */
 export const CHANGELOG_STATS = {
   /** `git rev-list --count HEAD` on the branch that wrote the newest entry. */
-  commits: 993,
+  commits: 997,
   /** The repository's first commit. */
   since: "2026-06-15",
   asOf: "2026-10-13",
@@ -1079,17 +1097,6 @@ export const CHANGELOG_STATS = {
  * and nowhere else. An item leaves this list the day its entry is written.
  */
 export const ROADMAP: readonly RoadmapItem[] = [
-  {
-    id: "entraide",
-    fr: {
-      title: "Entraide",
-      body: "Posez vos questions aux autres personnes qui utilisent Pluclair, et répondez aux leurs.",
-    },
-    en: {
-      title: "Entraide",
-      body: "Ask your questions to other people who use Pluclair, and answer theirs.",
-    },
-  },
   {
     id: "stores",
     fr: {
