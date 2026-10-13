@@ -25,13 +25,13 @@ export const CHANGELOG: readonly ChangelogEntry[] = [
       title: "Le blog : des guides pratiques",
       body: "Trois guides pour commencer : le jour de lecture, le bilan du mois, et le PEA, le CTO, l’assurance-vie et le PER côte à côte.",
       detail:
-        "Sur pluclair.com/blog, en français. Les règles des placements renvoient à service-public.gouv.fr, avec le jour où elles ont été lues. Des explications, jamais de conseil.",
+        "Sur pluclair.com/blog, dans le menu du site, en français. Les règles des placements renvoient à service-public.gouv.fr, avec le jour où elles ont été lues. Des explications, jamais de conseil.",
     },
     en: {
       title: "The blog: practical guides",
       body: "Three guides to start with: the reading day, the month's close, and the PEA, CTO, assurance-vie and PER side by side.",
       detail:
-        "On pluclair.com/blog, in French. The rules of each investment account link to service-public.gouv.fr, with the day they were read. Explanations, never advice.",
+        "On pluclair.com/blog, in the site's menu, in French. The rules of each investment account link to service-public.gouv.fr, with the day they were read. Explanations, never advice.",
     },
   },
   {
