@@ -13,10 +13,9 @@ if (!key || !/^[\x21-\x7e]+$/.test(key)) {
 }
 const hours = Number(process.argv[2] ?? 24);
 const day = (date) => date.toISOString().slice(0, 10);
-const now = new Date();
-const start = new Date(now.getTime() - hours * 3_600_000);
-// Up to tomorrow: an end day Brevo might count as excluded leaves today in.
-const end = new Date(now.getTime() + 86_400_000);
+// Brevo counts both days in, and refuses an end after today.
+const end = new Date();
+const start = new Date(end.getTime() - hours * 3_600_000);
 const headers = { "api-key": key, accept: "application/json" };
 
 const response = await fetch(
