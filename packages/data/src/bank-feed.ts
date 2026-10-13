@@ -8,14 +8,27 @@ import type { Db } from "./client";
  * With a bank feeding the ledger, recurring templates only forecast — the
  * bank is the record — so the fill and the template save both ask this
  * before writing.
+ *
+ * The connection's lines alone (migration 074): someone who brings their
+ * statement once a month still has their charges written on their day, and
+ * the statement then confirms them rather than adding them twice.
  */
 export async function hasBankFeed(db: Db, userId: string): Promise<boolean> {
-  const { count } = await db
+  const { count, error } = await db
+    .from("bank_feed_items")
+    .select("id", { count: "exact", head: true })
+    .eq("user_id", userId)
+    .eq("source", "bank");
+  if (!error) {
+    return (count ?? 0) > 0;
+  }
+  // Before migration 074 every line is the bank's. Read as no feed, a
+  // bank-fed ledger would have its charges written twice.
+  const { count: before } = await db
     .from("bank_feed_items")
     .select("id", { count: "exact", head: true })
     .eq("user_id", userId);
-
-  return (count ?? 0) > 0;
+  return (before ?? 0) > 0;
 }
 
 /**

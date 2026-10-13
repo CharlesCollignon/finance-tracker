@@ -81,7 +81,8 @@ export async function connectUserBankFile(
  * category in the review — and never one it was merely matched against
  * (`match:`), which the user typed or a charge wrote before the bank saw it.
  * The bank's own rows and accounts go with them, so nothing is left behind to
- * keep the ledger bank-fed.
+ * keep the ledger bank-fed — the connection's alone: what the person brought
+ * from their statements (migration 074) is theirs, and stays.
  */
 export async function disconnectUserBank(
   userId: string,
@@ -105,6 +106,7 @@ export async function disconnectUserBank(
     .from("bank_feed_items")
     .select("transaction_id, decided_by")
     .eq("user_id", userId)
+    .eq("source", "bank")
     .not("transaction_id", "is", null);
 
   const written = (items ?? [])
@@ -124,8 +126,16 @@ export async function disconnectUserBank(
     removed += count ?? 0;
   }
 
-  await admin.from("bank_feed_items").delete().eq("user_id", userId);
-  await admin.from("bank_accounts").delete().eq("user_id", userId);
+  await admin
+    .from("bank_feed_items")
+    .delete()
+    .eq("user_id", userId)
+    .eq("source", "bank");
+  await admin
+    .from("bank_accounts")
+    .delete()
+    .eq("user_id", userId)
+    .eq("source", "bank");
 
   return { removed };
 }
