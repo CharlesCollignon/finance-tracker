@@ -123,9 +123,9 @@ export function BlockCard({
         <View className="flex-1 gap-1">
           <Text variant="head">
             {bank ? t("statements.statementOf", { bank: BANK_NAMES[bank] }) : t("statements.statement")}
-            {tail ? ` · ${tail}` : ""}
           </Text>
           <Text variant="muted">
+            {tail ? `${tail} · ` : ""}
             {t("statements.lines", { count: block.lines.length })}
             {block.from && block.to
               ? ` ${t("statements.period", {

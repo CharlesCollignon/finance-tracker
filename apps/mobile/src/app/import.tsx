@@ -248,6 +248,10 @@ export default function ImportScreen() {
   }
 
   const statement = reading?.statement ?? null;
+  // Every line already brought, or left out: nothing an import would add.
+  const nothingNew =
+    outcomes.length > 0 &&
+    outcomes.every((outcome) => outcome !== null && outcome.kept && outcome.known + outcome.left >= outcome.total);
   const notHere =
     statement?.problem === "notHere"
       ? statement.format === "pdf"
@@ -383,7 +387,11 @@ export default function ImportScreen() {
             {statement.skipped > 0 ? (
               <Text variant="muted">{t("statements.skipped", { count: statement.skipped })}</Text>
             ) : null}
-            {statement.blocks.length > 0 ? (
+            {nothingNew ? (
+              <Text variant="muted" className="text-center">
+                {t("statements.nothingNew")}
+              </Text>
+            ) : statement.blocks.length > 0 ? (
               <Button
                 label={pending ? t("statements.importing") : t("statements.import")}
                 size="lg"

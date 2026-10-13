@@ -156,11 +156,9 @@ export function StatementBlockCard({
             {bankName
               ? t("statements.statementOf", { bank: bankName })
               : t("statements.statement")}
-            {tail ? (
-              <span className="text-muted-foreground"> · {tail}</span>
-            ) : null}
           </h2>
           <p className="text-sm text-muted-foreground">
+            {tail ? `${tail} · ` : ""}
             {t("statements.lines", { count: block.lines.length })}
             {block.from && block.to
               ? ` ${t("statements.period", {

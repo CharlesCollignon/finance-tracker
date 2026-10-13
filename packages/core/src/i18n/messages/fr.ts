@@ -367,8 +367,8 @@ export const fr: Messages = {
     import: "Importer",
     importing: "Import…",
     added: {
-      one: "{count} opération ajoutée",
-      other: "{count} opérations ajoutées",
+      one: "{count} opération importée",
+      other: "{count} opérations importées",
     },
     addedWaiting: {
       one: "{count} attend dans «\u00A0À vérifier\u00A0»",

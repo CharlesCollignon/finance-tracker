@@ -258,6 +258,15 @@ export function StatementImport({
   }
 
   const statement = reading?.statement ?? null;
+  // Every line already brought, or left out: nothing an import would add.
+  const nothingNew =
+    outcomes.length > 0 &&
+    outcomes.every(
+      (outcome) =>
+        outcome !== null &&
+        outcome.kept &&
+        outcome.known + outcome.left >= outcome.total,
+    );
   const notHere =
     statement?.problem === "notHere"
       ? statement.format === "pdf"
@@ -276,8 +285,16 @@ export function StatementImport({
             size="sm"
             render={
               <Link href="/transactions">
-                <ArrowLeft size={ICON.md} className="mr-1 inline" />
-                {t("nav.ledger")}
+                <ArrowLeft
+                  size={ICON.md}
+                  className="inline sm:mr-1"
+                  aria-hidden
+                />
+                {/* The arrow alone on a narrow screen, where the page's
+                    title needs the room. */}
+                <span className="sr-only sm:not-sr-only">
+                  {t("nav.ledger")}
+                </span>
               </Link>
             }
           />
@@ -472,7 +489,11 @@ export function StatementImport({
                   >
                     {t("statements.another")}
                   </Button>
-                  {statement.blocks.length > 0 ? (
+                  {nothingNew ? (
+                    <p className="text-sm text-muted-foreground">
+                      {t("statements.nothingNew")}
+                    </p>
+                  ) : statement.blocks.length > 0 ? (
                     <Button onClick={runImport} disabled={pending}>
                       {pending
                         ? t("statements.importing")
@@ -617,10 +638,11 @@ function ImportHistory({
                   {name}
                 </span>
                 <span className="text-xs text-muted-foreground">
-                  {formatFullDate(item.createdAt.slice(0, 10), locale)} ·{" "}
-                  {item.undoneAt
-                    ? t("statements.undoneTag")
-                    : t("statements.added", { count: item.linesNew })}
+                  {`${formatFullDate(item.createdAt.slice(0, 10), locale)} · ${
+                    item.undoneAt
+                      ? t("statements.undoneTag")
+                      : t("statements.added", { count: item.linesNew })
+                  }`}
                 </span>
               </div>
               {undoable ? (

@@ -479,8 +479,8 @@ export const en = {
     import: "Import",
     importing: "Importing…",
     added: {
-      one: "{count} transaction added",
-      other: "{count} transactions added",
+      one: "{count} transaction imported",
+      other: "{count} transactions imported",
     },
     addedWaiting: {
       one: "{count} waits in « Review »",
