@@ -61,6 +61,21 @@ function ownerClient(): OpenBankingClient | null {
   }
 }
 
+/**
+ * Whether the bank connection is open to this account: the owner's alone.
+ *
+ * open-banking.io answered on 12 October 2026 that its customers may not
+ * give their access to an app that reads on their behalf ("not possible for
+ * now"). So Pluclair reads only the account of the person who runs it
+ * (`OPEN_BANKING_OWNER_USER_ID`) — their own data, through their own
+ * open-banking.io account — whatever a flag or a stored file says. Everyone
+ * else enters balances and transactions by hand, or imports a CSV.
+ */
+export function bankOpenTo(userId: string): boolean {
+  const owner = ownerUserId();
+  return owner !== null && owner === userId;
+}
+
 function ownerConnection(userId: string): BankConnection | null {
   const owner = ownerUserId();
   if (!owner || owner !== userId) {
@@ -89,6 +104,9 @@ async function readStatus(
 export async function getBankConnection(
   userId: string,
 ): Promise<BankConnection | null> {
+  if (!bankOpenTo(userId)) {
+    return null;
+  }
   const admin = createAdminClient();
   if (admin && secretsConfigured()) {
     const status = await readStatus(userId);
@@ -142,7 +160,7 @@ export async function syncableUserIds(): Promise<string[]> {
   if (owner && ownerClient()) {
     ids.add(owner);
   }
-  return [...ids];
+  return [...ids].filter(bankOpenTo);
 }
 
 /**
@@ -176,6 +194,9 @@ export type BankFeedStatus =
   | "unconfigured";
 
 export async function bankFeedStatus(userId: string): Promise<BankFeedStatus> {
+  if (!bankOpenTo(userId)) {
+    return "unconfigured";
+  }
   const status = await readStatus(userId);
   switch (status) {
     case "active":

@@ -2,19 +2,27 @@ import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { flagsFromRows, isFlagOn } from "@finance/core/flags";
 import type { Database } from "@finance/core/types/database";
-import { bankConnectAvailable } from "@/lib/bank/client";
+import { getAuthUser } from "@/lib/auth/get-user";
+import { bankConnectAvailable, bankOpenTo } from "@/lib/bank/client";
 import { getFlags } from "@/lib/flags";
 
 /**
  * Whether the signed-in user may set up a bank connection.
  *
- * Both halves: the deployment can store one (`bankConnectAvailable`), and the
- * `bank.connect` flag is on for this account. The flag is what lets the owner
- * open it to a few people before everyone — and it is checked again by the
- * action that accepts a file, not only by the pages that offer it.
+ * Three halves: the deployment can store one (`bankConnectAvailable`), the
+ * account is the owner's (`bankOpenTo` — open-banking.io does not let its
+ * customers hand their access to an app like Pluclair), and the
+ * `bank.connect` flag is on for it. Checked again by the route that accepts
+ * a file, not only by the pages that offer it.
  */
 export async function bankSetupOffered(): Promise<boolean> {
-  return bankConnectAvailable() && isFlagOn(await getFlags(), "bank.connect");
+  const user = await getAuthUser();
+  return (
+    bankConnectAvailable() &&
+    user !== null &&
+    bankOpenTo(user.id) &&
+    isFlagOn(await getFlags(), "bank.connect")
+  );
 }
 
 /**
@@ -25,6 +33,10 @@ export async function bankSetupOfferedThrough(
   supabase: SupabaseClient<Database>,
 ): Promise<boolean> {
   if (!bankConnectAvailable()) {
+    return false;
+  }
+  const { data: who } = await supabase.auth.getUser();
+  if (!who.user || !bankOpenTo(who.user.id)) {
     return false;
   }
   const { data, error } = await supabase.rpc("evaluated_feature_flags");
