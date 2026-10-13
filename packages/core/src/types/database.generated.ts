@@ -728,6 +728,36 @@ export type Database = {
           },
         ];
       };
+      entraide_authorship: {
+        Row: {
+          created_at: string;
+          email: string | null;
+          id: number;
+          ip: unknown;
+          operation: string;
+          target: string;
+          user_id: string;
+        };
+        Insert: {
+          created_at?: string;
+          email?: string | null;
+          id?: never;
+          ip?: unknown;
+          operation: string;
+          target: string;
+          user_id: string;
+        };
+        Update: {
+          created_at?: string;
+          email?: string | null;
+          id?: never;
+          ip?: unknown;
+          operation?: string;
+          target?: string;
+          user_id?: string;
+        };
+        Relationships: [];
+      };
       entraide_decisions: {
         Row: {
           action: string;
@@ -3150,6 +3180,7 @@ export type Database = {
       sweep_activity: { Args: Record<PropertyKey, never>; Returns: number };
       sweep_ask: { Args: Record<PropertyKey, never>; Returns: number };
       sweep_deleted: { Args: { before: string }; Returns: number };
+      sweep_entraide: { Args: Record<PropertyKey, never>; Returns: number };
     };
     Enums: {
       category_type: "income" | "expense" | "savings" | "investment";

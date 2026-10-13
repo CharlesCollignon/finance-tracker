@@ -150,8 +150,8 @@ export const entraideRulesCopy: EntraideRulesCopy = {
         ],
         points: [
           "Your posts: until you delete them, or your account. Deleting your account replaces each of your posts with « Message supprimé » and erases its text; your pseudonym goes with it.",
-          "Reports and moderation decisions: [[how long — for example one year after the decision]], to answer a challenge or an authority.",
-          "What the law requires a host to keep about who posted what (the LCEN and decree no. 2021-1362 of 20 October 2021): [[which data, and for how long]].",
+          "Reports and moderation decisions: one year after the decision, to answer a challenge or an authority — and a decision for as long as the message it hid stays hidden, or the pseudonym it barred stays barred.",
+          "What the law requires a host to keep about who posted what (the LCEN and decree no. 2021-1362 of 20 October 2021): for each question or answer written, edited or deleted, your account's identifier and email address, the connection's IP address and the moment — one year, even if you delete your account, read by no one, and handed only to the authorities that ask for it lawfully.",
         ],
         after: [
           "Everything else in the privacy policy applies to Entraide: your rights, how to exercise them, and how to complain to the CNIL.",
