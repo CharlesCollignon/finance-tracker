@@ -684,12 +684,13 @@ downloads from their bank as the very lines the bank connection sends
   says how to connect one.
 
 - **By e-mail** (`mail.ts`, `provisional.ts`; `apps/web/lib/statements/`
-  `inbox.ts`, `mail-in.ts`, `brevo.ts`): each person may have an address,
+  `inbox.ts`, `mail-in.ts`, `mailgun.ts`): each person may have an address,
   `<token>@releves.pluclair.com` (`statement_inboxes`, migration 075), for
-  their mail service to forward their bank's e-mails to. Brevo's inbound
-  parsing posts each one to `/api/statements/inbound`, which checks the
-  secret Brevo was given (`x-pluclair-inbound`) and reads the e-mail
-  without keeping it: Gmail's forwarding confirmation (code and link,
+  their mail service to forward their bank's e-mails to. Mailgun (EU
+  region) takes them on `releves.pluclair.com` and its one inbound route
+  forwards each to `/api/statements/inbound`, which checks Mailgun's
+  signature (`MAILGUN_WEBHOOK_SIGNING_KEY`) and reads the e-mail without
+  keeping it: Gmail's forwarding confirmation (code and link,
   shown on the import for a day); a statement attached, imported to its
   account when its key is known and otherwise kept read in
   `statement_mail_items` for the person to say which account; or a bank's
@@ -703,8 +704,11 @@ downloads from their bank as the very lines the bank connection sends
   import|line`, cleared if that import is undone) instead of adding it,
   and an alert arriving after its statement adds nothing. A picture
   attached is never read here: only the person's AI account reads one, at
-  their word. Off until `BREVO_API_KEY` and `STATEMENT_INBOUND_SECRET` are
-  set; `scripts/statement-inbox-setup.mjs` makes the webhook.
+  their word. Off until `MAILGUN_WEBHOOK_SIGNING_KEY` is set;
+  `scripts/statement-inbox-setup.mjs` makes the route, and
+  `scripts/statement-inbox-events.mjs` says what Mailgun saw. Brevo was
+  tried first (2026-10-13) and dropped: it accepts an inbound domain only
+  delegated to its own nameservers, whose MX is not its inbound parser.
 
 Old binary Excel files are named and left aside. Such lines are kept beside the bank's in `bank_feed_items`, with a
 `source` (`file`, later `email` and `notification`) and the

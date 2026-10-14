@@ -207,8 +207,8 @@ to stop it:
    Paribas and Revolut; real PDFs, anonymised, are the next fixtures.
 4. **By e-mail** (`statements-email`) — built 2026-10-13, hidden until the
    inbound service is set up: the personal address
-   (`<token>@releves.pluclair.com`, migration 075), Brevo's inbound parsing
-   handing each e-mail to `/api/statements/inbound`, statements attached
+   (`<token>@releves.pluclair.com`, migration 075), Mailgun's inbound route
+   (EU region) handing each e-mail to `/api/statements/inbound`, statements attached
    imported to their known account (else waiting for one tap), a bank's
    alert e-mails read conservatively (`alertOf`: a bank sender, one amount
    that plainly went one way) as provisional lines that the month's
@@ -255,25 +255,25 @@ Phase 4's code is merged dark: nothing shows until these are done.
 1. Run `supabase/migrations/075_statement_inbox.sql` on the hosted
    database (SQL editor), then `supabase/tests/075_statement_inbox.test.sql`
    if wanted (it rolls back).
-2. Open a free Brevo account (brevo.com), and in « Senders, domains &
-   dedicated IPs » → « Domains » add `pluclair.com`; add the records Brevo
-   lists at Namecheap until it says the domain is verified. Accept Brevo's
-   data processing agreement if the account asks.
-3. At Namecheap, Advanced DNS of `pluclair.com`: two MX records for the
-   host `releves` — `inbound1.sendinblue.com.` (priority 10) and
-   `inbound2.sendinblue.com.` (priority 20). Namecheap only allows MX
-   records with « Mail Settings » on « Custom MX »: switching from « Email
-   Forwarding » removes its own MX records for `@`, so add them back for
-   `@` — `eforward1.registrar-servers.com.` to `eforward3…` (priority 10),
-   `eforward4…` (15), `eforward5…` (20) — or the domain's forwarding stops.
-   The SPF TXT record stays as it is.
-4. In Brevo, « SMTP & API » → « API keys »: a key named « Pluclair
-   inbound ». Make a secret (`openssl rand -hex 24`).
-5. In Vercel, Production: `BREVO_API_KEY` and `STATEMENT_INBOUND_SECRET`;
-   redeploy.
+2. Open a free Mailgun account (mailgun.com), and add the domain
+   `releves.pluclair.com` in the **EU** region (Send → Domains → Add new
+   domain). Mailgun lists its records; Brevo, tried first, is no longer
+   used — its records under `releves` go.
+3. At Namecheap, Advanced DNS of `pluclair.com` (« Mail Settings » on
+   « Custom MX », the five `@` eforward MX records kept): for the host
+   `releves`, the two MX records Mailgun gives (`mxa.eu.mailgun.org.` and
+   `mxb.eu.mailgun.org.`, priority 10), its SPF TXT
+   (`v=spf1 include:mailgun.org ~all`) and its DKIM TXT
+   (`…._domainkey.releves`); the Brevo MX, TXT and CNAME records for
+   `releves` deleted. « Verify DNS settings » in Mailgun.
+4. In Mailgun, the « HTTP webhook signing key » (Send → Webhooks, or the
+   API security page) and an API key.
+5. In Vercel, Production: `MAILGUN_WEBHOOK_SIGNING_KEY`; redeploy.
+   `BREVO_API_KEY` and `STATEMENT_INBOUND_SECRET` can go.
 6. In your own terminal (never pasted into a chat):
-   `BREVO_API_KEY=… STATEMENT_INBOUND_SECRET=… node scripts/statement-inbox-setup.mjs`
-   — it makes Brevo's inbound webhook for `releves.pluclair.com`.
+   `MAILGUN_API_KEY=… node scripts/statement-inbox-setup.mjs` — it makes
+   the inbound route for `releves.pluclair.com`;
+   `node scripts/statement-inbox-events.mjs` then shows what Mailgun saw.
 7. On `/import`, « Créer mon adresse », then forward one bank e-mail to it.
    The « Nouveautés » entry is added when this works.
 
