@@ -27,9 +27,9 @@ import { planStatement } from "./service";
 
 type Client = SupabaseClient<Database>;
 
-/** Whether e-mails can be received here: the inbound service's key and the webhook's secret. */
+/** Whether e-mails can be received here: the inbound service's signing key is set. */
 export function mailInAvailable(): boolean {
-  return Boolean(process.env.BREVO_API_KEY && process.env.STATEMENT_INBOUND_SECRET);
+  return Boolean(process.env.MAILGUN_WEBHOOK_SIGNING_KEY);
 }
 
 export async function inboxView(db: Client, userId: string): Promise<InboxView> {

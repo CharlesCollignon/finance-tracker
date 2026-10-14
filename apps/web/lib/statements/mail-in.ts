@@ -43,7 +43,7 @@ export interface InboundAttachment {
   bytes: () => Promise<Uint8Array | null>;
 }
 
-/** An e-mail as the inbound service hands it over (`brevo.ts`). */
+/** An e-mail as the inbound service hands it over (`mailgun.ts`). */
 export interface InboundMail {
   /** The message's own id: the same e-mail delivered twice is one. */
   id: string;

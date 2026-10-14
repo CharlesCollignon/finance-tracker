@@ -1,51 +1,33 @@
 #!/usr/bin/env node
-// What Brevo's inbound parsing has received lately: date, sender and
-// recipient of each e-mail, never its content — to tell whether an e-mail
-// sent to …@releves.pluclair.com reached Brevo at all, and then whether the
-// webhook went to Pluclair.
+// What Mailgun (EU region) has seen for …@releves.pluclair.com lately: each
+// e-mail accepted, and how forwarding it to Pluclair went — date, event,
+// sender, recipient and status, never the content.
 //
-//   BREVO_API_KEY=… node scripts/statement-inbox-events.mjs [hours=24]
+//   MAILGUN_API_KEY=… node scripts/statement-inbox-events.mjs
 
-const key = process.env.BREVO_API_KEY;
+const DOMAIN = "releves.pluclair.com";
+const key = process.env.MAILGUN_API_KEY;
 if (!key || !/^[\x21-\x7e]+$/.test(key)) {
-  console.error("Set BREVO_API_KEY to the real key first.");
+  console.error("Set MAILGUN_API_KEY to the real key first (without « … »).");
   process.exit(1);
 }
-const hours = Number(process.argv[2] ?? 24);
-const day = (date) => date.toISOString().slice(0, 10);
-// Brevo counts both days in, and refuses an end after today.
-const end = new Date();
-const start = new Date(end.getTime() - hours * 3_600_000);
-const headers = { "api-key": key, accept: "application/json" };
-
-const response = await fetch(
-  `https://api.brevo.com/v3/inbound/events?startDate=${day(start)}&endDate=${day(end)}&limit=50&sort=desc`,
-  { headers },
-);
+const response = await fetch(`https://api.eu.mailgun.net/v3/${DOMAIN}/events?limit=30&ascending=no`, {
+  headers: { authorization: `Basic ${Buffer.from(`api:${key}`).toString("base64")}` },
+});
 const text = await response.text();
 if (!response.ok) {
-  console.error(`Brevo answered ${response.status}: ${text.slice(0, 300)}`);
+  console.error(`Mailgun answered ${response.status}: ${text.slice(0, 300)}`);
   process.exit(1);
 }
-const listed = JSON.parse(text);
-const events = listed?.events ?? [];
-if (events.length === 0) {
-  console.log(`Brevo received no inbound e-mail between ${day(start)} and ${day(end)}.`);
-  process.exit(0);
+const items = JSON.parse(text)?.items ?? [];
+if (items.length === 0) {
+  console.log(`Mailgun has seen nothing for ${DOMAIN} yet.`);
 }
-for (const event of events) {
-  console.log(`${event.date}  from ${event.sender}  to ${event.recipient}  (${event.uuid})`);
-}
-// The first one in detail: what Brevo did with it, the webhook's answer included.
-const first = events[0];
-const detail = await fetch(`https://api.brevo.com/v3/inbound/events/${first.uuid}`, { headers });
-if (detail.ok) {
-  const body = await detail.json();
-  console.log("\nLatest, step by step:");
-  for (const log of body.logs ?? []) {
-    console.log(`  ${log.date}  ${log.type}`);
-  }
-  if (body.attachments?.length) {
-    console.log(`  attachments: ${body.attachments.map((one) => one.name).join(", ")}`);
-  }
+for (const item of items) {
+  const when = new Date(item.timestamp * 1000).toISOString().replace("T", " ").slice(0, 19);
+  const status = item["delivery-status"];
+  const said = status ? ` — ${status.code ?? ""} ${status.message ?? status.description ?? ""}`.trimEnd() : "";
+  console.log(
+    `${when}  ${item.event}  from ${item.message?.headers?.from ?? item.envelope?.sender ?? "?"}  to ${item.recipient ?? "?"}${said}${item.reason ? ` (${item.reason})` : ""}`,
+  );
 }

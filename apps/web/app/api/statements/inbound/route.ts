@@ -1,55 +1,46 @@
-import { timingSafeEqual } from "node:crypto";
-import { brevoMails } from "@/lib/statements/brevo";
 import { mailInAvailable } from "@/lib/statements/inbox";
-import { receiveMail, type MailOutcome } from "@/lib/statements/mail-in";
+import { receiveMail } from "@/lib/statements/mail-in";
+import { mailgunMail, mailgunSigned } from "@/lib/statements/mailgun";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 /**
- * Where the inbound-mail service (Brevo) hands over each e-mail sent to a
- * `…@releves.pluclair.com` address (`docs/plans/STATEMENTS_PLAN.md`,
- * Phase 4). Brevo sends the secret it was given when the webhook was made
- * (`scripts/statement-inbox-setup.mjs`) in `x-pluclair-inbound`; nothing
- * else is read. Each e-mail is read and let go of (`lib/statements/mail-in.ts`);
- * the answer is a 200 whatever it held, so that nothing is sent twice for
- * a mail that simply was not a statement.
+ * Where the inbound-mail service (Mailgun, EU region) hands over each e-mail
+ * sent to a `…@releves.pluclair.com` address (`docs/plans/STATEMENTS_PLAN.md`,
+ * Phase 4), through the route `scripts/statement-inbox-setup.mjs` makes.
+ * Nothing is read before Mailgun's signature is checked; then the e-mail is
+ * read and let go of (`lib/statements/mail-in.ts`). The answer is a 200
+ * whatever it held — Mailgun tries again for eight hours after anything
+ * else — and a 406, which it does not retry, for a request that is no
+ * e-mail at all.
  */
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 
-function sameSecret(given: string | null, expected: string): boolean {
-  if (!given) {
-    return false;
-  }
-  const a = Buffer.from(given);
-  const b = Buffer.from(expected);
-  return a.length === b.length && timingSafeEqual(a, b);
-}
-
 export async function POST(request: Request) {
-  const secret = process.env.STATEMENT_INBOUND_SECRET;
-  if (!mailInAvailable() || !secret) {
+  const key = process.env.MAILGUN_WEBHOOK_SIGNING_KEY;
+  if (!mailInAvailable() || !key) {
     return new Response("Not set up", { status: 404 });
   }
-  if (!sameSecret(request.headers.get("x-pluclair-inbound"), secret)) {
+  const form = await request.formData().catch(() => null);
+  if (!form) {
+    return new Response("Not an e-mail", { status: 406 });
+  }
+  if (!mailgunSigned(form, key)) {
     return new Response("Unauthorized", { status: 401 });
   }
   const db = createAdminClient();
   if (!db) {
     return new Response("Not set up", { status: 503 });
   }
-  const mails = brevoMails(await request.json().catch(() => null));
-  const outcomes: MailOutcome[] = [];
-  for (const mail of mails) {
-    try {
-      outcomes.push(await receiveMail(db, mail));
-    } catch (error) {
-      // The outcome, never the mail: it is someone's bank's.
-      console.warn(
-        `[statement-inbound] an e-mail could not be read: ${error instanceof Error ? error.message : "unknown"}`,
-      );
-      outcomes.push("ignored");
-    }
+  try {
+    const outcome = await receiveMail(db, mailgunMail(form));
+    return Response.json({ outcome });
+  } catch (error) {
+    // The outcome, never the mail: it is someone's bank's.
+    console.warn(
+      `[statement-inbound] an e-mail could not be read: ${error instanceof Error ? error.message : "unknown"}`,
+    );
+    return Response.json({ outcome: "ignored" });
   }
-  return Response.json({ received: outcomes.length, outcomes });
 }
