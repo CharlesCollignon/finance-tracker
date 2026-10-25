@@ -296,13 +296,38 @@ The bank invitation stays at the foot of the page.
    - no screen changes; `Changelog: none`.
    The LEP, the fonds euros and bitcoin followed the same evening, which
    closes the phase.
-1. **The engine** (`plan-history-core`).
-   - `replayPlan`, `crashTest`, `lossOdds`, `sustainableWithdrawal` and
-     `historicalReturn`.
-   - Accounts mapped to series; the shift; milestones from the median
-     replay.
-   - Vitest throughout, with fixtures of hand-checkable series.
-   - Nothing wired to a screen yet; `Changelog: none`.
+1. **The engine** (`plan-history-core`). Built 2026-10-25 (59ca7d0,
+   4f091a7):
+   - `packages/core/src/history/replay.ts` holds `replayPlan`,
+     `crashTest`, `lossOdds`, `sustainableWithdrawal` and
+     `historicalReturn`;
+   - `mix.ts` holds `walletMixes` and `replayAccount` (accounts to series,
+     the shift, AV fees off the units only);
+   - vitest on hand-checkable series, plus guards on the real history.
+   Nothing is wired to a screen yet; `Changelog: none`.
+
+   **What the engine says**, on a PEA of 20 000 € plus 400 €/month and a
+   Livret A of 10 000 € plus 100 €/month:
+   - ten years: a median of 132 800 € in today's euros; 8 starts in 10
+     between 90 300 € and 180 500 €; the worst start March 1999
+     (66 800 €).
+   - speed: 553 starts in about 40 ms; thirty years of six accounts in
+     about 90 ms.
+
+   **For Phase 3:**
+   - `PlanWealth` must carry the positions (wallet, value, ISIN, symbol)
+     for `walletMixes`.
+   - Milestones read `nominalMedian`.
+   - The current account is an account with an empty mix (cash), its
+     first year from the year ahead's walk as `schedule`.
+   - Crypto's `historicalReturn` is 65 %/yr since 2014: never pre-fill
+     « Hypothèses » with it. Crypto holds still in today's euros, as the
+     replay does.
+   - From its 2000 peak, the PEA's worst month is February 2009, because
+     the two falls chain, so the copy says « jusqu'en 2009 ».
+   - World shares ended below prices over 1 year in 31 % of starts, over
+     10 years in 14 %, over 15 years never. Over thirty years, 3.99 % a
+     year has always lasted.
 2. **The close moves to Le point** (`plan-close-to-bearing`), web and phone
    together, because it is a move, not a design. Plan still shows the old
    page without the close. A « Nouveautés » entry.
