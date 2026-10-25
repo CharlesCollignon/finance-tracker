@@ -142,9 +142,11 @@ export function WelcomeFlow({
   const [bankJustConnected, setBankJustConnected] = useState(false);
   const [pending, startTransition] = useTransition();
 
+  const [incomeLabel, setIncomeLabel] = useState("");
   const [incomeAmount, setIncomeAmount] = useState("");
   const [incomeDay, setIncomeDay] = useState("1");
   const [expenseCategory, setExpenseCategory] = useState<string | null>(null);
+  const [expenseLabel, setExpenseLabel] = useState("");
   const [expenseAmount, setExpenseAmount] = useState("");
   const [expenseDay, setExpenseDay] = useState("1");
   const [added, setAdded] = useState(0);
@@ -242,9 +244,16 @@ export function WelcomeFlow({
     categoryId: string,
     amount: string,
     dayOfMonth: string,
+    label: string,
   ): Promise<boolean> {
     const form = new FormData();
     form.set("categoryId", categoryId);
+    // What tells this one apart from others in its category: « Loyer » and
+    // « Netflix » both under Logement or Abonnements read as the category
+    // name alone in Récurrents otherwise.
+    if (label.trim()) {
+      form.set("description", label.trim());
+    }
     form.set("amount", amount);
     form.set("recurrence", "monthly");
     form.set("dayOfMonth", dayOfMonth);
@@ -266,7 +275,14 @@ export function WelcomeFlow({
       return;
     }
     startTransition(async () => {
-      if (await saveMonthly(incomeCategory.id, incomeAmount, incomeDay)) {
+      if (
+        await saveMonthly(
+          incomeCategory.id,
+          incomeAmount,
+          incomeDay,
+          incomeLabel,
+        )
+      ) {
         toast(t("onboarding.incomeAdded"), "success");
         goTo("recurring");
       }
@@ -280,12 +296,17 @@ export function WelcomeFlow({
       return;
     }
     startTransition(async () => {
-      if (await saveMonthly(category.id, expenseAmount, expenseDay)) {
+      if (
+        await saveMonthly(category.id, expenseAmount, expenseDay, expenseLabel)
+      ) {
         setAdded((count) => count + 1);
+        setExpenseLabel("");
         setExpenseAmount("");
         setExpenseCategory(null);
         toast(
-          t("onboarding.templateAdded", { name: category.name }),
+          t("onboarding.templateAdded", {
+            name: expenseLabel.trim() || category.name,
+          }),
           "success",
         );
       }
@@ -303,10 +324,14 @@ export function WelcomeFlow({
       return;
     }
     startTransition(async () => {
-      if (await saveMonthly(category.id, expenseAmount, expenseDay)) {
+      if (
+        await saveMonthly(category.id, expenseAmount, expenseDay, expenseLabel)
+      ) {
         setAdded((count) => count + 1);
         toast(
-          t("onboarding.templateAdded", { name: category.name }),
+          t("onboarding.templateAdded", {
+            name: expenseLabel.trim() || category.name,
+          }),
           "success",
         );
         afterCharges();
@@ -418,6 +443,17 @@ export function WelcomeFlow({
           </div>
 
           <Card.Bezel innerClassName="flex flex-col gap-3 p-5">
+            <FormLabel htmlFor="income-label">
+              {t("recurring.descriptionOptional")}
+            </FormLabel>
+            <Input
+              id="income-label"
+              type="text"
+              maxLength={500}
+              placeholder={t("onboarding.incomeLabelPlaceholder")}
+              value={incomeLabel}
+              onChange={(event) => setIncomeLabel(event.target.value)}
+            />
             <FormLabel htmlFor="income-amount">
               {t("onboarding.monthlyAmount")}
             </FormLabel>
@@ -482,6 +518,17 @@ export function WelcomeFlow({
           </div>
 
           <Card.Bezel innerClassName="flex flex-col gap-3 p-5">
+            <FormLabel htmlFor="expense-label">
+              {t("recurring.descriptionOptional")}
+            </FormLabel>
+            <Input
+              id="expense-label"
+              type="text"
+              maxLength={500}
+              placeholder={t("onboarding.expenseLabelPlaceholder")}
+              value={expenseLabel}
+              onChange={(event) => setExpenseLabel(event.target.value)}
+            />
             <span className="text-sm font-medium">
               {t("onboarding.category")}
             </span>

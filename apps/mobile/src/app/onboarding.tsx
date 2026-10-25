@@ -84,9 +84,11 @@ export default function OnboardingScreen() {
     from === "income" || from === "recurring" ? from : "currency",
   ]);
   const step = history[history.length - 1]!;
+  const [incomeLabel, setIncomeLabel] = useState("");
   const [incomeAmount, setIncomeAmount] = useState("");
   const [incomeDay, setIncomeDay] = useState("1");
   const [expenseName, setExpenseName] = useState<string | null>(null);
+  const [expenseLabel, setExpenseLabel] = useState("");
   const [expenseAmount, setExpenseAmount] = useState("");
   const [expenseDay, setExpenseDay] = useState("1");
   const [pending, setPending] = useState(false);
@@ -181,7 +183,7 @@ export default function OnboardingScreen() {
       dayOfMonth,
       pricingType: "fixed",
       active: true,
-      ...(description ? { description } : {}),
+      ...(description?.trim() ? { description: description.trim() } : {}),
     });
     if (result.error) {
       toast(result.error, "error");
@@ -197,7 +199,12 @@ export default function OnboardingScreen() {
       return;
     }
     setPending(true);
-    const ok = await saveMonthly(incomeCategory.id, incomeAmount, incomeDay);
+    const ok = await saveMonthly(
+      incomeCategory.id,
+      incomeAmount,
+      incomeDay,
+      incomeLabel,
+    );
     setPending(false);
     if (ok) {
       toast(t("onboarding.incomeAdded"), "success");
@@ -212,13 +219,24 @@ export default function OnboardingScreen() {
       return;
     }
     setPending(true);
-    const ok = await saveMonthly(category.id, expenseAmount, expenseDay);
+    const ok = await saveMonthly(
+      category.id,
+      expenseAmount,
+      expenseDay,
+      expenseLabel,
+    );
     setPending(false);
     if (ok) {
       setAdded((count) => count + 1);
+      setExpenseLabel("");
       setExpenseAmount("");
       setExpenseName(null);
-      toast(t("onboarding.templateAdded", { name: category.name }), "success");
+      toast(
+        t("onboarding.templateAdded", {
+          name: expenseLabel.trim() || category.name,
+        }),
+        "success",
+      );
     }
   }
 
@@ -234,11 +252,21 @@ export default function OnboardingScreen() {
       return;
     }
     setPending(true);
-    const ok = await saveMonthly(category.id, expenseAmount, expenseDay);
+    const ok = await saveMonthly(
+      category.id,
+      expenseAmount,
+      expenseDay,
+      expenseLabel,
+    );
     setPending(false);
     if (ok) {
       setAdded((count) => count + 1);
-      toast(t("onboarding.templateAdded", { name: category.name }), "success");
+      toast(
+        t("onboarding.templateAdded", {
+          name: expenseLabel.trim() || category.name,
+        }),
+        "success",
+      );
       afterCharges();
     }
   }
@@ -373,6 +401,16 @@ export default function OnboardingScreen() {
 
             <Card bezel innerClassName="gap-3 p-5">
               <Text className="text-sm font-medium">
+                {t("recurring.descriptionOptional")}
+              </Text>
+              <Input
+                accessibilityLabel={t("recurring.descriptionOptional")}
+                value={incomeLabel}
+                onChangeText={setIncomeLabel}
+                maxLength={500}
+                placeholder={t("onboarding.incomeLabelPlaceholder")}
+              />
+              <Text className="mt-1 text-sm font-medium">
                 {t("onboarding.monthlyAmount")}
               </Text>
               <Input
@@ -430,6 +468,16 @@ export default function OnboardingScreen() {
 
             <Card bezel innerClassName="gap-3 p-5">
               <Text className="text-sm font-medium">
+                {t("recurring.descriptionOptional")}
+              </Text>
+              <Input
+                accessibilityLabel={t("recurring.descriptionOptional")}
+                value={expenseLabel}
+                onChangeText={setExpenseLabel}
+                maxLength={500}
+                placeholder={t("onboarding.expenseLabelPlaceholder")}
+              />
+              <Text className="mt-1 text-sm font-medium">
                 {t("onboarding.category")}
               </Text>
               <View className="flex-row flex-wrap gap-2">

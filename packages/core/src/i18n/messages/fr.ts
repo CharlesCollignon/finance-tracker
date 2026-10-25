@@ -748,6 +748,8 @@ export const fr: Messages = {
     expensesTitle: "Qu'est-ce qui sort\u00A0?",
     expensesBody:
       "Loyer, abonnements, factures — ce que vous savez déjà devoir payer. C'est ce qui rend la projection utile.",
+    incomeLabelPlaceholder: "ex. Salaire, pension",
+    expenseLabelPlaceholder: "ex. Loyer, Netflix, électricité",
     monthlyAmount: "Montant mensuel",
     dayOfMonth: "Jour du mois",
     category: "Catégorie",

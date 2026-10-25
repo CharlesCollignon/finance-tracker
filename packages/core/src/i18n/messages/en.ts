@@ -974,6 +974,8 @@ export const en = {
     expensesTitle: "What goes out?",
     expensesBody:
       "Rent, subscriptions, bills — the charges you already know are coming. These are what make the forecast useful.",
+    incomeLabelPlaceholder: "e.g. Salary, pension",
+    expenseLabelPlaceholder: "e.g. Rent, Netflix, electricity",
     monthlyAmount: "Monthly amount",
     dayOfMonth: "Day of the month",
     category: "Category",
