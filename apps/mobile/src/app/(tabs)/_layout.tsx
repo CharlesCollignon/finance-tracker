@@ -42,8 +42,9 @@ type TabConfig = {
 };
 
 /**
- * Five surfaces, mirroring APP_NAV_ITEMS on web, and a sixth — Immobilier —
- * for an account with `property.track` (see the `property` screen below).
+ * Four surfaces, mirroring APP_NAV_ITEMS on web, then Immobilier for an
+ * account with `property.track` (see the `property` screen below), then
+ * Plan (`PLAN_TAB`), last.
  *
  * There were six, and one of them was not a destination: Calendar is the
  * Ledger seen by date, and it is now a view inside it — see SurfaceTabs.
@@ -80,12 +81,6 @@ const TABS: TabConfig[] = [
     iconInactive: "repeat-outline",
   },
   {
-    name: "planning",
-    titleKey: "nav.plan",
-    icon: "flag",
-    iconInactive: "flag-outline",
-  },
-  {
     name: "investments",
     titleKey: "nav.wallets",
     icon: "analytics",
@@ -93,7 +88,17 @@ const TABS: TabConfig[] = [
   },
 ];
 
-/** The sixth surface, drawn only for an account that has the flag. */
+/**
+ * Plan, last in the bar at the owner's ask (October 2026) — after Immobilier
+ * when the account has it.
+ */
+const PLAN_TAB: TabConfig = {
+  name: "planning",
+  titleKey: "nav.plan",
+  icon: "flag",
+  iconInactive: "flag-outline",
+};
+
 /** The tabs that are a person's alone, hidden under « Commun ». */
 const PERSONAL_TABS: ReadonlySet<string> = new Set(["planning", "investments"]);
 
@@ -141,6 +146,53 @@ export default function TabsLayout() {
   useEffect(() => {
     recordAppOpened();
   }, []);
+
+  // One surface of the bar. A function rather than a map, because Plan is
+  // drawn after Immobilier, which is declared on its own below.
+  const renderTab = ({ name, titleKey, icon, iconInactive }: TabConfig) => {
+    const waiting =
+      name === "index"
+        ? badges.bearing
+        : name === "transactions"
+          ? badges.ledger
+          : 0;
+    return (
+      <Tabs.Screen
+        key={name}
+        name={name}
+        options={{
+          href:
+            joint && PERSONAL_TABS.has(name) ? null : undefined,
+          title: t(titleKey),
+          tabBarIcon: ({ focused, color, size }) => (
+            <Ionicons
+              name={focused ? icon : iconInactive}
+              size={size ?? 20}
+              color={color}
+            />
+          ),
+          // Each question where it is answered: charges the bank
+          // looks to have already paid on Le point, bank rows still
+          // waiting for a category on the Ledger. A dot rather than
+          // a count: the bar is five targets across a phone, and the
+          // numbers are on the screens themselves.
+          ...(waiting > 0
+            ? {
+                tabBarBadge: "",
+                tabBarBadgeStyle: {
+                  backgroundColor: colors.foreground,
+                  minWidth: 8,
+                  maxWidth: 8,
+                  height: 8,
+                  borderRadius: RADIUS.pill,
+                  transform: [{ translateX: -2 }, { translateY: 2 }],
+                },
+              }
+            : {}),
+        }}
+      />
+    );
+  };
 
   return (
     <ReminderProvider>
@@ -192,50 +244,7 @@ export default function TabsLayout() {
                 sceneStyle: { backgroundColor: "transparent" },
               }}
             >
-              {TABS.map(({ name, titleKey, icon, iconInactive }) => {
-                const waiting =
-                  name === "index"
-                    ? badges.bearing
-                    : name === "transactions"
-                      ? badges.ledger
-                      : 0;
-                return (
-                  <Tabs.Screen
-                    key={name}
-                    name={name}
-                    options={{
-                      href:
-                        joint && PERSONAL_TABS.has(name) ? null : undefined,
-                      title: t(titleKey),
-                      tabBarIcon: ({ focused, color, size }) => (
-                        <Ionicons
-                          name={focused ? icon : iconInactive}
-                          size={size ?? 20}
-                          color={color}
-                        />
-                      ),
-                      // Each question where it is answered: charges the bank
-                      // looks to have already paid on Le point, bank rows still
-                      // waiting for a category on the Ledger. A dot rather than
-                      // a count: the bar is five targets across a phone, and the
-                      // numbers are on the screens themselves.
-                      ...(waiting > 0
-                        ? {
-                            tabBarBadge: "",
-                            tabBarBadgeStyle: {
-                              backgroundColor: colors.foreground,
-                              minWidth: 8,
-                              maxWidth: 8,
-                              height: 8,
-                              borderRadius: RADIUS.pill,
-                              transform: [{ translateX: -2 }, { translateY: 2 }],
-                            },
-                          }
-                        : {}),
-                    }}
-                  />
-                );
-              })}
+              {TABS.map(renderTab)}
               <Tabs.Screen
                 name={PROPERTY_TAB.name}
                 options={{
@@ -252,6 +261,7 @@ export default function TabsLayout() {
                   ),
                 }}
               />
+              {renderTab(PLAN_TAB)}
               {/* Views of the Ledger, not destinations of their own. */}
               <Tabs.Screen name="calendar" options={{ href: null }} />
               <Tabs.Screen name="history" options={{ href: null }} />

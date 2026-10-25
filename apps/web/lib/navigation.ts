@@ -26,8 +26,8 @@ export interface NavChild {
  * The five surfaces.
  *
  * Organised by time rather than by table: Bearing is where you stand, Ledger
- * is the record, Charges is what repeats, Plan is what those add up to,
- * Wallets is what is being built. Seven destinations became five, which is
+ * is the record, Charges is what repeats, Wallets is what is being built,
+ * and Plan, last, is what all of those add up to. Seven destinations became five, which is
  * what let the phone bar hold all of them with a legible label under each,
  * and it is still five — that ceiling is why the Bearing took Month's place
  * rather than being added beside it.
@@ -81,12 +81,6 @@ export const APP_NAV_ITEMS = [
     children: [] as NavChild[],
   },
   {
-    href: "/plan",
-    labelKey: "nav.plan" satisfies Key,
-    icon: Target,
-    children: [] as NavChild[],
-  },
-  {
     href: "/investments",
     labelKey: "nav.wallets" satisfies Key,
     icon: ChartLine,
@@ -97,6 +91,13 @@ export const APP_NAV_ITEMS = [
         labelKey: "nav.walletsLookThrough",
       },
     ] as NavChild[],
+  },
+  // Last, at the owner's ask (October 2026): what the rest adds up to.
+  {
+    href: "/plan",
+    labelKey: "nav.plan" satisfies Key,
+    icon: Target,
+    children: [] as NavChild[],
   },
 ] as const;
 
@@ -112,10 +113,14 @@ export const PROPERTY_NAV_ITEM = {
   children: [] as NavChild[],
 } as const;
 
-/** The surfaces this account is shown, in the order the bars draw them. */
+/**
+ * The surfaces this account is shown, in the order the bars draw them: Plan
+ * always last, after Immobilier when the account has it.
+ */
 export function navItems(options: { property: boolean; joint?: boolean }) {
+  const plan = APP_NAV_ITEMS[APP_NAV_ITEMS.length - 1]!;
   const items = options.property
-    ? [...APP_NAV_ITEMS, PROPERTY_NAV_ITEM]
+    ? [...APP_NAV_ITEMS.slice(0, -1), PROPERTY_NAV_ITEM, plan]
     : [...APP_NAV_ITEMS];
   // Under « Commun », only what a shared space has: no plan, no wallets —
   // those stay a person's.
