@@ -1,6 +1,8 @@
 import type { MetadataRoute } from "next";
 import { ENTRAIDE_HREF } from "@finance/core/entraide";
 import { ABOUT_HREF } from "@/components/marketing/about-copy";
+import { DOWNLOAD_HREF } from "@/components/marketing/download-copy";
+import { storeLinks } from "@/lib/store-links";
 import { featureHref, landingCopy } from "@/components/marketing/landing-copy";
 import {
   entraideRulesVisible,
@@ -26,6 +28,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
   const paths = [
     "/",
     ABOUT_HREF,
+    ...(storeLinks().androidApk ? [DOWNLOAD_HREF] : []),
     NOUVEAUTES_HREF,
     BLOG_HREF,
     ...GUIDE_SLUGS.map(guideHref),
