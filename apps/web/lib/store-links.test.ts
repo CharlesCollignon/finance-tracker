@@ -2,8 +2,13 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("server-only", () => ({}));
 
-const { androidApkVersion, latestApkVersion, storeLinks, versionFromTag } =
-  await import("./store-links");
+const {
+  androidApkVersion,
+  latestApkRelease,
+  latestApkVersion,
+  storeLinks,
+  versionFromTag,
+} = await import("./store-links");
 
 beforeEach(() => {
   vi.stubEnv("APP_STORE_URL", "");
@@ -107,5 +112,60 @@ describe("latestApkVersion", () => {
       }),
     );
     expect(await latestApkVersion()).toBeNull();
+  });
+});
+
+describe("latestApkRelease", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  const release = {
+    tag_name: "android-1.3.0",
+    published_at: "2026-10-25T11:23:38Z",
+    assets: [
+      {
+        name: "pluclair.apk",
+        size: 114406716,
+        digest: `sha256:${"af".repeat(32)}`,
+      },
+    ],
+  };
+
+  it("reads the version, size, day and fingerprint of the release's APK", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => Response.json(release)),
+    );
+    expect(await latestApkRelease()).toEqual({
+      version: "1.3.0",
+      sizeBytes: 114406716,
+      publishedOn: "2026-10-25",
+      sha256: "af".repeat(32),
+    });
+  });
+
+  it("says only the version when another one is pinned", async () => {
+    vi.stubEnv("ANDROID_APK_VERSION", "1.2.0");
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => Response.json(release)),
+    );
+    expect(await latestApkRelease()).toEqual({
+      version: "1.2.0",
+      sizeBytes: null,
+      publishedOn: null,
+      sha256: null,
+    });
+  });
+
+  it("is null when GitHub does not answer", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => {
+        throw new Error("offline");
+      }),
+    );
+    expect(await latestApkRelease()).toBeNull();
   });
 });
