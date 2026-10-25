@@ -158,7 +158,6 @@ export const futurePlanEn = {
   },
   runRecord: { one: "Best: {count} month", other: "Best: {count} months" },
   runKeep: "Wrap up {month} to keep it going",
-  runStart: "Wrap up a month inside your allowance to start a run.",
   monthsTitle: "Your months",
   monthsBest: "Best month: {month}, {amount} saved",
   monthsEmpty: "Wrap up your first month to see your months here.",

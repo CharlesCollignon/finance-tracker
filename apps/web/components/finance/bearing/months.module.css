@@ -1,0 +1,26 @@
+/*
+ * « Vos mois »: the closed months' bars arrive with a fade, as everything in
+ * the app does, and the best month's spark pops on the moments' own pop
+ * (see "Moments" in DESIGN.md). Reduced motion lands on the final state.
+ */
+
+.pop {
+  composes: pop from "../../motion/moments.module.css";
+}
+
+@keyframes arrive {
+  from {
+    opacity: 0;
+  }
+}
+
+.bar {
+  animation: arrive var(--transition-duration-enter)
+    cubic-bezier(0.32, 0.72, 0, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bar {
+    animation: none;
+  }
+}

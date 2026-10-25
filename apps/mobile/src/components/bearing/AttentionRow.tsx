@@ -2,7 +2,7 @@ import { Pressable, View } from "react-native";
 import { useRouter, type Href } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 
-import type { AttentionItem } from "@finance/core/attention";
+import { CLOSE_HREF, type AttentionItem } from "@finance/core/attention";
 
 import { Text } from "@/components/ui/Text";
 import { cn } from "@/lib/cn";
@@ -78,15 +78,21 @@ export function AttentionRow({
  * Where an attention row's action leads, on the phone.
  *
  * `buildAttention`'s `href`s are web routes from a closed set of five
- * (`/transactions`, `/transactions?review=inbox`, `/plan` twice,
- * `/recurring`). `transactions.tsx` and `recurring.tsx` are real tabs and
- * answer three of them unchanged; the phone's Plan is `planning.tsx`, where
- * the close and the ready-to-close prompt live. The review is asked for with
- * a fresh stamp (`reviewAsk`), so it opens even after it was closed once.
+ * (`/transactions`, `/transactions?review=inbox`, Le point asked to close
+ * twice, `/recurring`). `transactions.tsx` and `recurring.tsx` are real tabs
+ * and answer three of them unchanged; Le point is `index.tsx` here, where the
+ * close lives on the momentum card. The review and the close are asked for
+ * with a fresh stamp, so each opens even after it was closed once.
  */
 function attentionHref(href: string): Href {
   if (href === "/transactions?review=inbox") {
     return { pathname: "/transactions", params: reviewAsk() } as Href;
   }
-  return (href === "/plan" ? "/planning" : href) as Href;
+  if (href === CLOSE_HREF) {
+    return {
+      pathname: "/",
+      params: { close: "1", at: String(Date.now()) },
+    } as Href;
+  }
+  return href as Href;
 }

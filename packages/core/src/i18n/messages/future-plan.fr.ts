@@ -151,7 +151,6 @@ export const futurePlanFr: typeof futurePlanEn = {
   },
   runRecord: { one: "Record : {count} mois", other: "Record : {count} mois" },
   runKeep: "Faites le bilan de {month} pour la garder en vie",
-  runStart: "Faites le bilan d'un mois dans votre marge pour lancer une série.",
   monthsTitle: "Vos mois",
   monthsBest: "Meilleur mois : {month}, {amount} économisés",
   monthsEmpty: "Faites votre premier bilan pour voir vos mois ici.",

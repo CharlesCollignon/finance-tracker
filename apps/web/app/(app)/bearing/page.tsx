@@ -18,7 +18,7 @@ import { MonthReadSlot } from "@/components/finance/bearing/MonthReadSlot";
 import { RecapSlot } from "@/components/finance/bearing/RecapSlot";
 
 interface BearingPageProps {
-  searchParams: Promise<{ y?: string; m?: string }>;
+  searchParams: Promise<{ y?: string; m?: string; close?: string }>;
 }
 
 /**
@@ -76,6 +76,8 @@ export default async function BearingPage({ searchParams }: BearingPageProps) {
           bankInvite={bankInvite}
           bankAttention={bankAttention}
           awaitingAccounts={awaitingAccounts}
+          // « Faire le bilan » from the attention row, here or anywhere.
+          askClose={params.close === "1"}
           // The week is this month's to recap, not a month browsed to.
           recapSlot={
             data.balance.period === "current" ? (

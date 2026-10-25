@@ -1,4 +1,5 @@
 import { RefreshControl, ScrollView, View } from "react-native";
+import { useLocalSearchParams } from "expo-router";
 
 import { awaitingRole } from "@finance/core/bank-accounts";
 import { getMonthBounds, todayIsoLocal } from "@finance/core/constants";
@@ -71,6 +72,9 @@ export default function HomeScreen() {
   const bottom = useTabBarClearance();
   // Shared with the Journal and its calendar, so changing tab keeps the month.
   const { year, month, setMonth } = useScreenMonth();
+  // « Faire le bilan » from the attention row, stamped so each ask opens it.
+  const params = useLocalSearchParams<{ close?: string; at?: string }>();
+  const closeAskedAt = params.close === "1" ? params.at : undefined;
 
   const { data, error, refreshing, onRefresh, onRefreshAll } = useRefreshable(
     async () =>
@@ -228,9 +232,12 @@ export default function HomeScreen() {
               </FadeIn>
             ) : null}
 
-            {current && (data.run !== null || data.invested !== null) ? (
+            {current &&
+            (data.run !== null ||
+              data.invested !== null ||
+              (data.close?.overview.next ?? null) !== null) ? (
               <FadeIn>
-                <MomentumCard data={data} />
+                <MomentumCard data={data} askedAt={closeAskedAt} />
               </FadeIn>
             ) : null}
 

@@ -47,6 +47,9 @@ import type { Key, Vars } from "./i18n/t";
 
 export type AttentionId = "swallowed" | "close" | "inbox" | "proposals";
 
+/** Le point, opening the month close's sheet. */
+export const CLOSE_HREF = "/bearing?close=1";
+
 export interface AttentionInput {
   /** Bank entries an earlier sync merged away rather than left for review. */
   swallowed: number;
@@ -106,13 +109,15 @@ export function buildAttention(input: AttentionInput): AttentionItem[] {
 
   if (input.readyToClose) {
     const { monthLabel, isBaseline } = input.readyToClose;
+    // Le point itself, asked to open the close: the close lives on the
+    // momentum card there since it left the Plan.
     items.push(
       isBaseline
         ? {
             id: "close",
             tone: "waiting",
             messageKey: "month.attentionBaseline",
-            href: "/plan",
+            href: CLOSE_HREF,
             actionKey: "month.actionStart",
           }
         : {
@@ -120,7 +125,7 @@ export function buildAttention(input: AttentionInput): AttentionItem[] {
             tone: "waiting",
             messageKey: "month.attentionReadyToClose",
             params: { month: monthLabel },
-            href: "/plan",
+            href: CLOSE_HREF,
             actionKey: "month.actionClose",
           },
     );

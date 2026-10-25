@@ -17,6 +17,24 @@ import type { ChangelogEntry, RoadmapItem } from "./changelog";
  */
 export const CHANGELOG: readonly ChangelogEntry[] = [
   {
+    id: "2026-10-25-close-on-bearing",
+    date: "2026-10-25",
+    kind: "better",
+    platforms: ["web"],
+    fr: {
+      title: "Le bilan du mois se fait sur Le point",
+      body: "Votre série, le bouton « Faire le bilan du mois » et « Vos mois » quittent Plan pour la carte « Sur la durée » de Le point : le mois se clôture là où il se lit.",
+      detail:
+        "« Vos mois » ouvre les barres de chaque mois, tous vos bilans, votre marge et votre jour de lecture. Quand un mois est prêt pour son bilan, le rappel en haut de Le point ouvre directement la feuille.",
+    },
+    en: {
+      title: "The month close moves to Le point",
+      body: "Your run, the “Close the month” button and “Your months” leave Plan for Le point’s “Over time” card: a month is closed where it is read.",
+      detail:
+        "“Your months” opens each month’s bar, every close, your allowance and your reading day. When a month is ready to close, the reminder at the top of Le point opens the sheet straight away.",
+    },
+  },
+  {
     id: "2026-10-25-simpler-screens",
     date: "2026-10-25",
     kind: "better",

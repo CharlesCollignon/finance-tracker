@@ -9,7 +9,7 @@ import {
   type ReactNode,
 } from "react";
 import { domAnimation, LazyMotion, m, MotionConfig } from "motion/react";
-import { CaretDown, GearSix, Sparkle } from "@phosphor-icons/react";
+import { Sparkle } from "@phosphor-icons/react";
 import {
   buildCushion,
   buildMilestones,
@@ -28,7 +28,6 @@ import {
   resolveExtraTarget,
   type YearAheadAccountId,
 } from "@finance/core/year-ahead";
-import { MonthCloseHistory } from "@/components/finance/MonthCloseHistory";
 import { FADE_IN } from "@/components/motion/fade";
 import { ConnectBankInvite } from "@/components/finance/bank/ConnectBankInvite";
 import { markMilestoneSeen } from "@/lib/actions/plan";
@@ -51,7 +50,6 @@ import {
   useYearAheadSettings,
   type LongViewDraft,
 } from "./plan-storage";
-import { MonthsCard, RunCard } from "./RunCard";
 import { YearAheadCard } from "./YearAheadCard";
 
 /** Where the long view opens, before the reader changes anything. */
@@ -68,22 +66,22 @@ interface PlanViewProps {
 }
 
 /**
- * Plan: where the money is heading, and what keeps it going.
+ * Plan: where the money is heading.
  *
- * Four things, in the order a returning reader wants them: a year from now
+ * Three things, in the order a returning reader wants them: a year from now
  * with a slider to play with; the milestones on the way and the cushion the
- * savings make; the long view, after French tax; and the run of month-ends
- * with what each one saved. With a property, net worth sits under the
- * cushion and the homes' own long view under the long view's — beside the
- * savings and investments, never counted in them. Budgets, goals and tags used to live here and are
- * gone; the month-close settings stay, folded away under the months.
+ * savings make; and the long view, after French tax. With a property, net
+ * worth sits under the cushion and the homes' own long view under the long
+ * view's — beside the savings and investments, never counted in them.
+ * Budgets, goals and tags used to live here and are gone; the run of
+ * month-ends and the close moved to Le point in October 2026.
  *
  * Each card rises into place as it first scrolls into view.
  *
- * Drawn in two loads, as the phone draws it. The year ahead, the cushion and
- * the run need only the ledger and are here at once; the milestones and the
- * long view need the market value of the investment accounts, so they stream
- * in behind their own placeholders.
+ * Drawn in two loads, as the phone draws it. The year ahead and the cushion
+ * need only the ledger and are here at once; the milestones and the long
+ * view need the market value of the investment accounts, so they stream in
+ * behind their own placeholders.
  */
 export function PlanView({ base, wealth, bankInvite }: PlanViewProps) {
   const draft = useLongViewDraft(base.userId);
@@ -191,24 +189,8 @@ export function PlanView({ base, wealth, bankInvite }: PlanViewProps) {
               </Suspense>
             </Reveal>
 
-            <Reveal>
-              <RunCard
-                closes={base.closes}
-                closeWait={base.closeWait}
-                monthlyCommitted={runway.monthlyCommitted}
-              />
-            </Reveal>
-
-            <Reveal>
-              <MonthsCard history={base.closes.history} />
-            </Reveal>
-
-            <Reveal className="md:col-span-2">
-              <CloseDetails base={base} />
-            </Reveal>
-
-            {/* Under the run, because a connected bank is what makes the month's
-            bilan do itself. */}
+            {/* Last, because a connected bank is what makes the projection's
+            figures its own. */}
             {bankInvite ? (
               <Reveal className="md:col-span-2">
                 <ConnectBankInvite surface="plan" />
@@ -224,7 +206,7 @@ export function PlanView({ base, wealth, bankInvite }: PlanViewProps) {
 /**
  * A card fading in the first time it scrolls into view. The page is long,
  * and an entrance played on load has finished before the reader ever
- * reaches the run; this one waits for them.
+ * reaches the long view; this one waits for them.
  */
 function Reveal({
   className,
@@ -528,54 +510,5 @@ function CardPlaceholder({ rows }: { rows: number }) {
         />
       ))}
     </div>
-  );
-}
-
-/* ------------------------------------------------- the close's settings */
-
-/**
- * The close's own settings — the allowance and the reading day — and the
- * month-by-month detail, folded away under the months: they are set once and
- * looked at rarely, and the page above is what it is for.
- */
-function CloseDetails({ base }: { base: PlanBase }) {
-  const t = useT();
-  return (
-    <details className={cn(GLASS_CARD, "group rounded-card")}>
-      <summary
-        className={cn(
-          "flex min-h-14 cursor-pointer list-none items-center justify-between gap-3 rounded-card px-card",
-          "text-sm font-medium text-muted-foreground transition-colors duration-hover hover:text-foreground",
-          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-          "[&::-webkit-details-marker]:hidden",
-        )}
-      >
-        <span className="flex items-center gap-2">
-          <span
-            aria-hidden
-            className="flex size-7 items-center justify-center rounded-full bg-muted text-foreground"
-          >
-            <GearSix size={ICON.sm} weight="fill" />
-          </span>
-          <span className="group-open:hidden">{t("planWeb.closeDetails")}</span>
-          <span className="hidden group-open:inline">
-            {t("planWeb.closeDetailsHide")}
-          </span>
-        </span>
-        <CaretDown
-          size={ICON.sm}
-          aria-hidden
-          className="transition-transform duration-hover group-open:rotate-180"
-        />
-      </summary>
-      <div className="px-1.5 pb-1.5">
-        <MonthCloseHistory
-          history={base.closes.history}
-          summary={base.closes.summary}
-          unrecordedCap={base.closes.settings.unrecordedCap}
-          closeDay={base.closes.settings.closeDay}
-        />
-      </div>
-    </details>
   );
 }

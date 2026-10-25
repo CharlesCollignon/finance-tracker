@@ -19,9 +19,8 @@ import { useLocale, useT } from "@/providers/LocaleProvider";
 import { ICON } from "@/theme/tokens";
 import { useThemeColors } from "@/theme/useThemeColors";
 
-import { usePlanMoney } from "./format";
-import { Glow } from "./Glow";
-import { PlanCard, PlanCardHeader } from "./PlanCard";
+import { HomeCard } from "@/components/bearing/card-parts";
+import { usePlanMoney } from "@/components/plan/format";
 
 const PLOT = 120;
 const MAX_BARS = 12;
@@ -34,11 +33,13 @@ interface Bar {
 }
 
 /**
- * What each closed month kept, as bars that fade in with the card, the
- * best of them lit. A touch or a drag reads a month out above them.
+ * « Vos mois », opened from the run on Le point: what each closed month
+ * kept, as bars that fade in with the card, the best of them in gold. A
+ * touch or a drag reads a month out above them.
  *
  * Below, the way into the closes' detail and settings — the reading day and
  * the allowance — which only mean anything next to the months they shape.
+ * It lived on the Plan until October 2026.
  */
 export function MonthsCard({
   history,
@@ -117,8 +118,7 @@ export function MonthsCard({
         : null;
 
   return (
-    <PlanCard>
-      <PlanCardHeader title={t("futurePlan.monthsTitle")} />
+    <HomeCard icon="bar-chart-outline" title={t("futurePlan.monthsTitle")}>
 
       {bars.length === 0 ? (
         <Text variant="muted" className="text-sm">
@@ -214,7 +214,7 @@ export function MonthsCard({
           color={colors.mutedForeground}
         />
       </Pressable>
-    </PlanCard>
+    </HomeCard>
   );
 }
 
@@ -250,14 +250,6 @@ function BarColumn({
 
   return (
     <View pointerEvents="none" className="relative flex-1">
-      {best ? (
-        <View
-          className="absolute left-0 right-0 items-center"
-          style={{ top: zero - height, height: 0 }}
-        >
-          <Glow size={90} />
-        </View>
-      ) : null}
       <Animated.View
         className="absolute left-0 right-0 rounded-full"
         style={[
