@@ -98,7 +98,7 @@ export function LeftToSpendLine({
 
       <Modal
         visible={asking}
-        animationType="slide"
+        animationType="fade"
         transparent
         statusBarTranslucent
         onRequestClose={() => setAsking(false)}

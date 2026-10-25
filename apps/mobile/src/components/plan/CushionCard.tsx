@@ -6,14 +6,13 @@ import Animated, {
   useAnimatedStyle,
   useReducedMotion,
   useSharedValue,
-  withDelay,
   withTiming,
 } from "react-native-reanimated";
 
 import { CUSHION_TARGETS, type Cushion } from "@finance/core/future-plan";
 import { INTL_LOCALES, type Locale } from "@finance/core/i18n/locale";
 import type { Translate } from "@finance/core/i18n/t";
-import { EASE_STANDARD } from "@finance/core/motion";
+import { DURATION, EASE_STANDARD } from "@finance/core/motion";
 
 import { Text } from "@/components/ui/Text";
 import { hapticLight } from "@/lib/haptics";
@@ -55,15 +54,14 @@ export function CushionCard({ cushion }: { cushion: Cushion }) {
   const colors = useThemeColors();
   const reduce = useReducedMotion();
   const [why, setWhy] = useState(false);
-  const fill = useSharedValue(reduce ? cushion.ratio : 0);
+  // At its share from the start, fading in with the card; a later change
+  // eases to the new one.
+  const fill = useSharedValue(cushion.ratio);
 
   useEffect(() => {
     fill.value = reduce
       ? cushion.ratio
-      : withDelay(
-          250,
-          withTiming(cushion.ratio, { duration: 900, easing: EASING }),
-        );
+      : withTiming(cushion.ratio, { duration: DURATION.enter, easing: EASING });
   }, [cushion.ratio, reduce, fill]);
 
   const fillStyle = useAnimatedStyle(() => ({

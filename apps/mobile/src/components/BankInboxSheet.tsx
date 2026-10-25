@@ -8,8 +8,6 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import Animated, {
-  FadeOutRight,
-  LinearTransition,
   useReducedMotion,
   ZoomIn,
 } from "react-native-reanimated";
@@ -52,6 +50,7 @@ import { useToast } from "@/providers/ToastProvider";
 import { useOwner } from "@/providers/OwnerProvider";
 import { ICON } from "@/theme/tokens";
 import { useThemeColors } from "@/theme/useThemeColors";
+import { FADE_OUT, LAYOUT } from "@/components/motion/fade";
 
 interface BankInboxSheetProps {
   open: boolean;
@@ -69,8 +68,6 @@ type Decided = DecidedFeedGroup<DecidedFeedRow>;
 type Choosing =
   | { kind: "pending"; key: string; title: string }
   | { kind: "decided"; group: Decided };
-
-const LEAVE_MS = 220;
 
 /** Drops the rows answered here, recomputing what each group still holds. */
 function withoutHidden(
@@ -483,12 +480,8 @@ export function BankInboxSheet({
           {visible.map((group) => (
             <Animated.View
               key={group.key}
-              exiting={
-                reduceMotion ? undefined : FadeOutRight.duration(LEAVE_MS)
-              }
-              layout={
-                reduceMotion ? undefined : LinearTransition.duration(LEAVE_MS)
-              }
+              exiting={reduceMotion ? undefined : FADE_OUT}
+              layout={reduceMotion ? undefined : LAYOUT}
             >
               <ReviewGroupCard
                 group={group}
@@ -536,7 +529,7 @@ export function BankInboxSheet({
     <Modal
       visible={open}
       transparent
-      animationType="slide"
+      animationType="fade"
       statusBarTranslucent
       onRequestClose={() => (choosing ? setChoosing(null) : close())}
     >

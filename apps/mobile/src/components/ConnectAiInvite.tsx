@@ -1,7 +1,7 @@
 import { Pressable, View } from "react-native";
 import { type Href, useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
-import Animated, { FadeInDown, FadeInLeft, ZoomIn } from "react-native-reanimated";
+import Animated from "react-native-reanimated";
 
 import { Button } from "@/components/ui/Button";
 import { Text } from "@/components/ui/Text";
@@ -10,6 +10,7 @@ import { hapticLight } from "@/lib/haptics";
 import { useT } from "@/providers/LocaleProvider";
 import { ICON } from "@/theme/tokens";
 import { useThemeColors } from "@/theme/useThemeColors";
+import { FADE_IN } from "@/components/motion/fade";
 
 /** Where the invitation leads: Profile, with the connect row open. */
 const CONNECT_HREF = "/profile?ai=connect";
@@ -22,7 +23,7 @@ const STEPS = [
 
 /**
  * The three steps to having an AI write in Pluclair — an OpenRouter account,
- * a few euros of credit there, a model — each arriving in turn. The web's
+ * a few euros of credit there, a model — fading in together. The web's
  * twin is `AiSetupSteps` in `components/finance/ConnectAiInvite.tsx`.
  */
 export function AiSetupSteps() {
@@ -32,7 +33,7 @@ export function AiSetupSteps() {
       {STEPS.map((step, index) => (
         <Animated.View
           key={step.title}
-          entering={FadeInLeft.delay(80 * index).duration(300)}
+          entering={FADE_IN}
           className="flex-row items-start gap-3"
         >
           <View className="h-6 w-6 items-center justify-center rounded-full bg-muted">
@@ -91,7 +92,7 @@ export function ConnectAiInvite({
 
   return (
     <Animated.View
-      entering={FadeInDown.springify().damping(18)}
+      entering={FADE_IN}
       className={cn(
         "gap-4",
         !bare && "rounded-card border border-border bg-card/70 p-card",
@@ -99,7 +100,7 @@ export function ConnectAiInvite({
     >
       <View className="flex-row items-start gap-3">
         <Animated.View
-          entering={ZoomIn.springify().damping(12)}
+          entering={FADE_IN}
           className="h-10 w-10 items-center justify-center rounded-full bg-muted"
         >
           <Ionicons name="sparkles" size={ICON.lg} color={colors.foreground} />

@@ -8,13 +8,14 @@ import {
   type ReactNode,
 } from "react";
 import { AccessibilityInfo, Platform, Pressable, View } from "react-native";
-import Animated, { FadeInUp, FadeOutUp } from "react-native-reanimated";
+import Animated from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { Text } from "@/components/ui/Text";
 import { cn } from "@/lib/cn";
 import { resolveMessage } from "@finance/core/i18n/t";
 import { useT } from "@/providers/LocaleProvider";
+import { FADE_IN, FADE_OUT } from "@/components/motion/fade";
 
 type ToastVariant = "default" | "success" | "error";
 
@@ -124,8 +125,8 @@ export function ToastProvider({ children }: { children: ReactNode }) {
             key={entry.id}
             accessibilityRole="alert"
             accessibilityLiveRegion="polite"
-            entering={FadeInUp.duration(220)}
-            exiting={FadeOutUp.duration(180)}
+            entering={FADE_IN}
+            exiting={FADE_OUT}
             pointerEvents={entry.action ? "box-none" : "none"}
             className={cn(
               "w-full max-w-sm flex-row items-center gap-3 rounded-card border border-border px-4 py-3",

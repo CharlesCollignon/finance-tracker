@@ -7,7 +7,6 @@ import Animated, {
   useReducedMotion,
   useSharedValue,
   withTiming,
-  ZoomIn,
 } from "react-native-reanimated";
 import { useLocalSearchParams, useRouter } from "expo-router";
 
@@ -32,7 +31,7 @@ import type {
   RecurringTemplateWithCategory,
 } from "@finance/core/types/database";
 
-import { StaggerItem } from "@/components/motion/Stagger";
+import { FadeIn } from "@/components/motion/FadeIn";
 import { cn } from "@/lib/cn";
 import {
   enableReminders,
@@ -76,6 +75,7 @@ import { useTabBarClearance } from "@/theme/chrome";
 import { useLocale, useT } from "@/providers/LocaleProvider";
 import { useOwner } from "@/providers/OwnerProvider";
 import type { Translate } from "@finance/core/i18n/t";
+import { FADE_IN } from "@/components/motion/fade";
 
 /** Income first, as on the web: it is what the other three are paid from. */
 const GROUP_ORDER: CategoryType[] = [
@@ -379,7 +379,7 @@ export default function RecurringScreen() {
 
           {templates.length > 0 ? (
             <>
-              <StaggerItem index={0}>
+              <FadeIn>
                 <WhereItGoes rollup={rollup} />
                 <Text variant="micro" className="mt-2 px-1">
                   {t("charges.perMonth")}
@@ -394,7 +394,7 @@ export default function RecurringScreen() {
                     </>
                   ) : null}
                 </Text>
-              </StaggerItem>
+              </FadeIn>
 
               {/* One kind at a time, as on the web's phone layout: four lists
                   stacked would be a screen and a half of scrolling to reach
@@ -407,7 +407,7 @@ export default function RecurringScreen() {
               />
 
               {activeGroup ? (
-                <StaggerItem index={1}>
+                <FadeIn>
                   <View className="gap-2">
                     <ColumnAdd
                       type={activeGroup.type}
@@ -438,7 +438,7 @@ export default function RecurringScreen() {
                       }
                     />
                   </View>
-                </StaggerItem>
+                </FadeIn>
               ) : null}
             </>
           ) : (
@@ -703,7 +703,7 @@ function GroupCard({
                   {/* Keyed by the answer, so each press lands with a pop. */}
                   <Animated.View
                     key={String(item.funded_by_transfer)}
-                    entering={ZoomIn.duration(DURATION.enter)}
+                    entering={FADE_IN}
                   >
                     <Ionicons
                       name={

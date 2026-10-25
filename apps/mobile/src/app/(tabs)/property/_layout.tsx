@@ -2,6 +2,7 @@ import { Stack } from "expo-router";
 
 import { OwnBackdrops } from "@/components/AppBackdrop";
 import { COLORS } from "@/theme/tokens";
+import { DURATION } from "@finance/core/motion";
 
 /**
  * Immobilier, as a stack inside its tab: the list, then a property's own
@@ -14,13 +15,17 @@ export const unstable_settings = { initialRouteName: "index" };
 
 export default function PropertyLayout() {
   // Each screen on its own ground, as before the tabs shared one: a
-  // property slides in over the list, which must not show through it.
+  // property fades in over the list, which must not show through it.
   return (
     <OwnBackdrops>
       <Stack
         screenOptions={{
           headerShown: false,
           contentStyle: { backgroundColor: COLORS.background },
+          // A screen arrives as everything does: a fade (its length is
+          // Android's own; iOS takes ours).
+          animation: "fade",
+          animationDuration: DURATION.enter,
         }}
       />
     </OwnBackdrops>

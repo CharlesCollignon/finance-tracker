@@ -10,7 +10,7 @@ import Animated, {
 import Svg, { Circle, Line, Path } from "react-native-svg";
 
 import type { EnvelopeYear } from "@finance/core/future-plan";
-import { EASE_STANDARD } from "@finance/core/motion";
+import { DURATION, EASE_STANDARD } from "@finance/core/motion";
 
 import { Text } from "@/components/ui/Text";
 import { hapticSelection } from "@/lib/haptics";
@@ -21,7 +21,6 @@ import { useThemeColors } from "@/theme/useThemeColors";
 const HEIGHT = 168;
 const PAD_TOP = 10;
 const PAD_X = 4;
-const GROW_MS = 900;
 const EASING = Easing.bezier(...EASE_STANDARD);
 
 /** Bottom to top: what is there, what goes in, what it earns after tax. */
@@ -124,16 +123,11 @@ export function YearsChart({
     }
     grow.value = reduce
       ? 1
-      : withTiming(1, { duration: GROW_MS, easing: EASING });
+      : withTiming(1, { duration: DURATION.enter, easing: EASING });
   }, [ready, reduce, grow]);
 
-  // Scaled from the baseline rather than the middle.
-  const growStyle = useAnimatedStyle(() => ({
-    transform: [
-      { translateY: ((1 - grow.value) * HEIGHT) / 2 },
-      { scaleY: Math.max(0.001, grow.value) },
-    ],
-  }));
+  // Faded in once it has a width, as everything arrives.
+  const growStyle = useAnimatedStyle(() => ({ opacity: grow.value }));
 
   function scrub(event: GestureResponderEvent) {
     const ratio = (event.nativeEvent.locationX - PAD_X) / (width - PAD_X * 2);

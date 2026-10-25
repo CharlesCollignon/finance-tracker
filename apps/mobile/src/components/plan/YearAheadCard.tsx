@@ -2,7 +2,6 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Pressable, View } from "react-native";
 import { useRouter } from "expo-router";
 import Animated, {
-  FadeIn,
   useAnimatedStyle,
   useReducedMotion,
   useSharedValue,
@@ -40,6 +39,7 @@ import { YearAheadAccounts } from "./YearAheadAccounts";
 import { YearAheadChart } from "./YearAheadChart";
 import { YearAheadWhatIf } from "./YearAheadWhatIf";
 import { YearAheadWhy } from "./YearAheadWhy";
+import { FADE_IN } from "@/components/motion/fade";
 
 /** When the next milestone comes, with and without the extra. */
 export interface MilestoneSooner {
@@ -397,7 +397,7 @@ function YearAhead({
         />
         <Animated.View
           key={panel}
-          entering={reduce ? undefined : FadeIn.duration(180)}
+          entering={reduce ? undefined : FADE_IN}
         >
           {panel === "why" ? (
             <YearAheadWhy

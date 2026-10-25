@@ -36,6 +36,7 @@ import { useQuickActionRouting } from "@/lib/quick-action-routing";
 import { useWidgetSync } from "@/widget/useWidgetSync";
 import { initTheme } from "@/lib/theme";
 import { COLORS } from "@/theme/tokens";
+import { DURATION } from "@finance/core/motion";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -134,6 +135,10 @@ function RootNavigator({ fontsReady }: { fontsReady: boolean }) {
         screenOptions={{
           headerShown: false,
           contentStyle: { backgroundColor: COLORS.background },
+          // A screen arrives as everything does: a fade (its length is
+          // Android's own; iOS takes ours).
+          animation: "fade",
+          animationDuration: DURATION.enter,
         }}
       >
         <Stack.Screen name="(tabs)" />

@@ -2,11 +2,10 @@ import { useEffect, useState } from "react";
 import { Pressable, Share, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import * as WebBrowser from "expo-web-browser";
-import Animated, { FadeIn, FadeInDown, FadeInLeft, FadeOut, LinearTransition, useReducedMotion, ZoomIn } from "react-native-reanimated";
+import Animated, { useReducedMotion } from "react-native-reanimated";
 
 import { formatFullDate } from "@finance/core/constants";
 import { resolveMessage } from "@finance/core/i18n/t";
-import { DURATION } from "@finance/core/motion";
 import { BANK_NAMES, isBankId } from "@finance/core/statement";
 import type { InboxView, MailItem } from "@finance/data/statements";
 
@@ -19,6 +18,7 @@ import { useLocale, useT } from "@/providers/LocaleProvider";
 import { useToast } from "@/providers/ToastProvider";
 import { ICON } from "@/theme/tokens";
 import { useThemeColors } from "@/theme/useThemeColors";
+import { FADE_IN, FADE_OUT, LAYOUT } from "@/components/motion/fade";
 
 /** How long a forwarding code is worth showing. */
 const CODE_FRESH_MS = 60 * 60 * 1000;
@@ -62,22 +62,22 @@ export function MailWaiting({
   }
   return (
     <Animated.View
-      entering={reduceMotion ? undefined : FadeInDown.duration(DURATION.panel)}
-      layout={reduceMotion ? undefined : LinearTransition.duration(DURATION.panel)}
+      entering={reduceMotion ? undefined : FADE_IN}
+      layout={reduceMotion ? undefined : LAYOUT}
       className="gap-2 rounded-card border border-border bg-card/70 p-card"
     >
       <View className="flex-row items-center gap-2 pb-1">
         <Ionicons name="mail-open-outline" size={ICON.md} color={colors.primary} />
         <Text variant="head">{t("statements.mailWaitingTitle")}</Text>
       </View>
-      {items.map((item, index) => {
+      {items.map((item) => {
         const bank = item.bank && isBankId(item.bank) ? BANK_NAMES[item.bank] : null;
         const lines = item.statement.blocks[0]?.lines.length ?? 0;
         return (
           <Animated.View
             key={item.id}
-            entering={reduceMotion ? undefined : FadeInLeft.delay(index * 60).duration(DURATION.panel)}
-            exiting={reduceMotion ? undefined : FadeOut.duration(DURATION.press)}
+            entering={reduceMotion ? undefined : FADE_IN}
+            exiting={reduceMotion ? undefined : FADE_OUT}
             className="gap-2 border-t border-border py-3"
           >
             <View className="gap-0.5">
@@ -188,12 +188,12 @@ export function MailInbox({ view: initial, onView }: { view: InboxView; onView?:
 
   return (
     <Animated.View
-      layout={reduceMotion ? undefined : LinearTransition.duration(DURATION.panel)}
+      layout={reduceMotion ? undefined : LAYOUT}
       className="gap-5 rounded-card border border-border bg-card/70 p-card"
     >
       <View className="flex-row items-start gap-3">
         <Animated.View
-          entering={reduceMotion ? undefined : ZoomIn.springify().damping(12)}
+          entering={reduceMotion ? undefined : FADE_IN}
           className="h-10 w-10 items-center justify-center rounded-full"
           style={{ backgroundColor: colors.primary }}
         >
@@ -242,7 +242,7 @@ export function MailInbox({ view: initial, onView }: { view: InboxView; onView?:
 
           {codeFresh ? (
             <Animated.View
-              entering={reduceMotion ? undefined : FadeInDown.springify().damping(16)}
+              entering={reduceMotion ? undefined : FADE_IN}
               accessibilityLiveRegion="polite"
               className="gap-2 rounded-control border border-primary/40 bg-accent p-4"
             >
@@ -274,7 +274,7 @@ export function MailInbox({ view: initial, onView }: { view: InboxView; onView?:
               value={service}
               onChange={setService}
             />
-            <Animated.View key={service} entering={reduceMotion ? undefined : FadeIn.duration(DURATION.panel)} className="gap-2.5">
+            <Animated.View key={service} entering={reduceMotion ? undefined : FADE_IN} className="gap-2.5">
               {STEPS[service].map((step, index) => (
                 <View key={step} className="flex-row gap-3">
                   <View className="h-6 w-6 items-center justify-center rounded-full bg-muted">

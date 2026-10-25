@@ -5,7 +5,7 @@ import { CategoryGrid } from "@/components/category/CategoryGrid";
 import { CategoryPanel } from "@/components/category/CategoryPanel";
 import { FindingBand } from "@/components/category/FindingBand";
 import { LEDGER_TABS, SurfaceTabs } from "@/components/layout/SurfaceTabs";
-import { StaggerItem } from "@/components/motion/Stagger";
+import { FadeIn } from "@/components/motion/FadeIn";
 import { ScreenError } from "@/components/ScreenError";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Screen } from "@/components/ui/Screen";
@@ -72,7 +72,7 @@ export default function HistoryScreen() {
             />
           ) : (
             <>
-              <StaggerItem index={0}>
+              <FadeIn>
                 <FindingBand
                   findings={screen.findings}
                   remarks={screen.remarks}
@@ -84,8 +84,8 @@ export default function HistoryScreen() {
                   openId={openId}
                   onOpen={toggle}
                 />
-              </StaggerItem>
-              <StaggerItem index={1}>
+              </FadeIn>
+              <FadeIn>
                 <CategoryGrid
                   cards={screen.cards}
                   openId={openId}
@@ -127,7 +127,7 @@ export default function HistoryScreen() {
                     ) : null
                   }
                 />
-              </StaggerItem>
+              </FadeIn>
             </>
           )}
         </ScrollView>

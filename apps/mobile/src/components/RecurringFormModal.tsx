@@ -69,7 +69,7 @@ export function RecurringFormModal({
   return (
     <Modal
       visible={open}
-      animationType="slide"
+      animationType="fade"
       transparent
       statusBarTranslucent
       onRequestClose={onClose}

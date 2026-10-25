@@ -5,14 +5,13 @@ import Animated, {
   useAnimatedStyle,
   useReducedMotion,
   useSharedValue,
-  withDelay,
   withTiming,
 } from "react-native-reanimated";
 
 import { formatPercentLabel } from "@finance/core/constants";
 import type { Locale } from "@finance/core/i18n/locale";
 import type { LoanPayment } from "@finance/core/loan-schedule";
-import { EASE_STANDARD } from "@finance/core/motion";
+import { DURATION, EASE_STANDARD } from "@finance/core/motion";
 import {
   PROGRESS_MARKS,
   type LoanProgress,
@@ -26,6 +25,7 @@ import { useLocale, useT } from "@/providers/LocaleProvider";
 import { useThemeColors } from "@/theme/useThemeColors";
 
 import { monthAndYear } from "./fields";
+import { FADE_IN } from "@/components/motion/fade";
 
 /**
  * A property's progress, drawn: how much of it is the user's, how far a
@@ -33,8 +33,7 @@ import { monthAndYear } from "./fields";
  * `ProgressBars`, natively.
  *
  * Neutral bars, as the Plan's milestones ahead are: gold means done, so
- * only a mark already passed takes it. Each bar grows from nothing as it
- * arrives, and reduced motion shows it at its length.
+ * only a mark already passed takes it. Each bar fades in at its length.
  */
 
 const EASING = Easing.bezier(...EASE_STANDARD);
@@ -55,17 +54,19 @@ function Fill({
 }) {
   const colors = useThemeColors();
   const reduce = useReducedMotion();
-  const grown = useSharedValue(reduce ? fraction : 0);
+  // At its length from the start; a later change eases to the new one.
+  const grown = useSharedValue(fraction);
 
   useEffect(() => {
     grown.value = reduce
       ? fraction
-      : withDelay(150, withTiming(fraction, { duration: 800, easing: EASING }));
+      : withTiming(fraction, { duration: DURATION.enter, easing: EASING });
   }, [fraction, reduce, grown]);
 
   const style = useAnimatedStyle(() => ({ width: `${grown.value * 100}%` }));
   return (
     <Animated.View
+      entering={reduce ? undefined : FADE_IN}
       style={[
         { height, borderRadius: height, backgroundColor: colors.foreground, opacity },
         style,

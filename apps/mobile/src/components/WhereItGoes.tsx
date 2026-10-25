@@ -3,10 +3,8 @@ import { View } from "react-native";
 import Animated, {
   Easing,
   useAnimatedProps,
-  useAnimatedStyle,
   useReducedMotion,
   useSharedValue,
-  withDelay,
   withTiming,
 } from "react-native-reanimated";
 import Svg, { Circle } from "react-native-svg";
@@ -29,12 +27,10 @@ import { useLocale, useT } from "@/providers/LocaleProvider";
 import { usePrivacy } from "@/providers/PrivacyProvider";
 import { CHART_COLORS, TYPE } from "@/theme/tokens";
 import { useThemeColors } from "@/theme/useThemeColors";
+import { FADE_IN } from "@/components/motion/fade";
 
 const AnimatedCircle = Animated.createAnimatedComponent(Circle);
 const EASING = Easing.bezier(...EASE_STANDARD);
-
-/** The bar starts filling once the figure has begun to count. */
-const BAR_DELAY_MS = 150;
 
 const RING = 56;
 const RING_STROKE = 5;
@@ -48,7 +44,7 @@ const RING_CIRCUMFERENCE = 2 * Math.PI * RING_RADIUS;
  * It replaces four tiles that took half the first screen: four 24px figures
  * in half-width cards, three of which the bar below now carries as a legend.
  * What is left leads, counting up as the screen opens; the ring beside it
- * fills to the share of income that stays; the bar grows in from the left,
+ * shows the share of income that stays; the bar fades in whole,
  * in the colours the groups below give the same amounts. Every term is still
  * on screen — a total whose subtrahends nobody can see is not believed.
  */
@@ -182,12 +178,13 @@ function KeptRing({
   const colors = useThemeColors();
   const reduce = useReducedMotion();
   const { hidden } = usePrivacy();
-  const progress = useSharedValue(reduce ? ratio : 0);
+  // At its share from the start; a later change eases to the new one.
+  const progress = useSharedValue(ratio);
 
   useEffect(() => {
     progress.value = reduce
       ? ratio
-      : withTiming(ratio, { duration: DURATION.count, easing: EASING });
+      : withTiming(ratio, { duration: DURATION.enter, easing: EASING });
   }, [ratio, reduce, progress]);
 
   const animatedProps = useAnimatedProps(() => ({
@@ -234,9 +231,7 @@ function KeptRing({
 }
 
 /**
- * The bar, growing in from the left. The segments keep their proportions
- * throughout — it is the bar that grows, not one part at the expense of
- * another — so a reader never sees a split that is not the real one.
+ * The bar, fading in whole, its segments in their real proportions.
  */
 function GrowingBar({
   segments,
@@ -244,18 +239,6 @@ function GrowingBar({
   segments: { key: string; share: number; color: string }[];
 }) {
   const reduce = useReducedMotion();
-  const width = useSharedValue(reduce ? 100 : 0);
-
-  useEffect(() => {
-    width.value = reduce
-      ? 100
-      : withDelay(
-          BAR_DELAY_MS,
-          withTiming(100, { duration: DURATION.panel, easing: EASING }),
-        );
-  }, [reduce, width]);
-
-  const style = useAnimatedStyle(() => ({ width: `${width.value}%` }));
 
   return (
     // Hidden from screen readers: the legend says the same in words.
@@ -265,7 +248,7 @@ function GrowingBar({
       className="h-2 w-full"
     >
       <Animated.View
-        style={style}
+        entering={reduce ? undefined : FADE_IN}
         className="h-full flex-row gap-0.5 overflow-hidden rounded-full"
       >
         {segments.map((segment) => (

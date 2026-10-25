@@ -1,8 +1,6 @@
 import { Pressable, View } from "react-native";
 import Animated, {
-  LinearTransition,
   useReducedMotion,
-  ZoomIn,
 } from "react-native-reanimated";
 import Svg, { Path } from "react-native-svg";
 
@@ -19,6 +17,7 @@ import { useT } from "@/providers/LocaleProvider";
 import { useThemeColors } from "@/theme/useThemeColors";
 
 import { useTwoColumns } from "./year-ahead-parts";
+import { FADE_IN, LAYOUT } from "@/components/motion/fade";
 
 const SPARK_SAMPLES = 25;
 const SPARK_WIDTH = 64;
@@ -77,8 +76,8 @@ export function YearAheadAccounts({
     return (
       <Animated.View
         key={band.id}
-        entering={reduce ? undefined : ZoomIn.springify().damping(16)}
-        layout={reduce ? undefined : LinearTransition.springify().damping(20)}
+        entering={reduce ? undefined : FADE_IN}
+        layout={reduce ? undefined : LAYOUT}
         style={wide ? { width: "48%" } : undefined}
       >
         <Pressable

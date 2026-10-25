@@ -12,9 +12,6 @@ import { useLocalSearchParams, useRouter, type Href } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import * as WebBrowser from "expo-web-browser";
 import Animated, {
-  FadeIn,
-  FadeInDown,
-  LinearTransition,
   useReducedMotion,
   ZoomIn,
 } from "react-native-reanimated";
@@ -33,7 +30,6 @@ import {
   type EntraideCopy,
 } from "@finance/core/entraide-copy";
 import { maskPersonalData } from "@finance/core/entraide-mask";
-import { DURATION, STAGGER_STEP_MS } from "@finance/core/motion";
 import {
   ENTRAIDE_REACTIONS,
   postTarget,
@@ -63,9 +59,7 @@ import { useAuth } from "@/providers/AuthProvider";
 import { useLocale } from "@/providers/LocaleProvider";
 import { ICON } from "@/theme/tokens";
 import { useThemeColors } from "@/theme/useThemeColors";
-
-/** Past this, an answer waits no longer to rise than the eighth did. */
-const STAGGER_CAP = 8;
+import { FADE_IN, LAYOUT } from "@/components/motion/fade";
 
 /** What is being edited: the question, or one answer. */
 type Editing = { kind: "post" } | { kind: "reply"; id: number } | null;
@@ -343,16 +337,8 @@ export default function EntraideThreadScreen() {
     return null;
   }
 
-  let index = 0;
-  const enter = () =>
-    reduceMotion
-      ? undefined
-      : FadeInDown.duration(DURATION.enter).delay(
-          Math.min(index++, STAGGER_CAP) * STAGGER_STEP_MS,
-        );
-  const layout = reduceMotion
-    ? undefined
-    : LinearTransition.duration(DURATION.panel);
+  const enter = () => (reduceMotion ? undefined : FADE_IN);
+  const layout = reduceMotion ? undefined : LAYOUT;
 
   const replyItem = (reply: ShownReply, isSolved: boolean) => {
     const target = replyTarget(reply.id);
@@ -591,7 +577,7 @@ export default function EntraideThreadScreen() {
           {solved ? (
             <Animated.View
               key={`solved-${solved.id}`}
-              entering={reduceMotion ? undefined : FadeIn.duration(DURATION.panel)}
+              entering={reduceMotion ? undefined : FADE_IN}
               layout={layout}
               className="rounded-card border border-primary/40 bg-primary/5 p-1"
             >
@@ -937,7 +923,7 @@ function ReplyEditor({
 /**
  * The answer field at the foot of the thread: the pseudonym asked first if
  * the reader has none yet, what will be masked said before it goes, and a
- * send that springs in once there is something to send.
+ * send that fades in once there is something to send.
  */
 function ReplyComposer({
   handle,
@@ -1004,7 +990,7 @@ function ReplyComposer({
         >
           <Animated.View
             key={ready ? "ready" : "idle"}
-            entering={ZoomIn.springify().damping(14)}
+            entering={FADE_IN}
           >
             <Ionicons
               name="arrow-up"

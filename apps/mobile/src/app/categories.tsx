@@ -11,7 +11,7 @@ import type { Key } from "@finance/core/i18n/t";
 import { CategoryFormSheet } from "@/components/CategoryFormSheet";
 import { CategoryIcon } from "@/components/CategoryIcon";
 import { Badge } from "@/components/ui/Badge";
-import { StaggerItem } from "@/components/motion/Stagger";
+import { FadeIn } from "@/components/motion/FadeIn";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { ConfirmSheet } from "@/components/ui/ConfirmSheet";
@@ -177,8 +177,8 @@ export default function CategoriesScreen() {
               />
             </EmptyState>
           ) : (
-            groups.map((group, groupIndex) => (
-              <StaggerItem key={group.type} index={groupIndex}>
+            groups.map((group) => (
+              <FadeIn key={group.type}>
                 <Text variant="label" className="mb-2 tracking-wide">
                   {categoryTypeLabels(locale)[group.type]}
                 </Text>
@@ -282,7 +282,7 @@ export default function CategoriesScreen() {
                     );
                   })}
                 </Card>
-              </StaggerItem>
+              </FadeIn>
             ))
           )}
         </ScrollView>

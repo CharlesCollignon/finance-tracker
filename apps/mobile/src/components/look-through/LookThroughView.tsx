@@ -28,7 +28,7 @@ import { walletReadsRemaining } from "@finance/core/wallet-read-budget";
 import type { Key } from "@finance/core/i18n/t";
 import { ConnectAiInvite } from "@/components/ConnectAiInvite";
 import { PrivateAmount } from "@/components/PrivateAmount";
-import { StaggerItem } from "@/components/motion/Stagger";
+import { FadeIn } from "@/components/motion/FadeIn";
 import { StatHero } from "@/components/StatHero";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
@@ -265,7 +265,7 @@ export function LookThroughView({ data }: { data: LookThroughData }) {
 
   return (
     <View className="gap-5">
-      <StaggerItem index={0}>
+      <FadeIn>
         <StatHero
           label={t("lookThrough.readCoverage", {
             share: share(lookThrough.classifiedShare, locale),
@@ -288,10 +288,10 @@ export function LookThroughView({ data }: { data: LookThroughData }) {
             ) : undefined
           }
         />
-      </StaggerItem>
+      </FadeIn>
 
       {unclassified?.kind === "unclassified" ? (
-        <StaggerItem index={1}>
+        <FadeIn>
           <Section
             icon="eye-outline"
             title={t("lookThrough.caveats.notCovered")}
@@ -371,10 +371,10 @@ export function LookThroughView({ data }: { data: LookThroughData }) {
               rows={lookThrough.unresolvablePositions}
             />
           </Section>
-        </StaggerItem>
+        </FadeIn>
       ) : null}
 
-      <StaggerItem index={2}>
+      <FadeIn>
         <Section icon="library-outline" title={t("lookThrough.title")}>
           {canReview ? (
             <Button
@@ -493,12 +493,12 @@ export function LookThroughView({ data }: { data: LookThroughData }) {
             ))}
           </View>
         </Section>
-      </StaggerItem>
+      </FadeIn>
 
       {/* What the money is in, over everything held: the one place crypto
           and gold stand beside the funds rather than outside them. */}
       {holdingsWorthShowing(lookThrough) ? (
-        <StaggerItem index={3}>
+        <FadeIn>
           <Section icon="layers-outline" title={t("lookThrough.holdings")}>
             <WeightBars
               rows={lookThrough.holdings.map((row) => ({
@@ -513,11 +513,11 @@ export function LookThroughView({ data }: { data: LookThroughData }) {
             />
             <Text variant="micro">{t("lookThrough.holdingsNote")}</Text>
           </Section>
-        </StaggerItem>
+        </FadeIn>
       ) : null}
 
       {lookThrough.countries.length > 0 ? (
-        <StaggerItem index={3}>
+        <FadeIn>
           <Section icon="globe-outline" title={t("lookThrough.geography")}>
             <WeightBars
               rows={lookThrough.countries.map((row) => ({
@@ -555,11 +555,11 @@ export function LookThroughView({ data }: { data: LookThroughData }) {
               rows={lookThrough.countries.length}
             />
           </Section>
-        </StaggerItem>
+        </FadeIn>
       ) : null}
 
       {lookThrough.sectors.length > 0 ? (
-        <StaggerItem index={4}>
+        <FadeIn>
           <Section icon="pie-chart-outline" title={t("lookThrough.sectors")}>
             <WeightBars
               rows={lookThrough.sectors.map((row) => ({
@@ -576,11 +576,11 @@ export function LookThroughView({ data }: { data: LookThroughData }) {
               rows={lookThrough.sectors.length}
             />
           </Section>
-        </StaggerItem>
+        </FadeIn>
       ) : null}
 
       {lookThrough.indexCollisions.length > 0 ? (
-        <StaggerItem index={5}>
+        <FadeIn>
           <Section
             icon="copy-outline"
             title={t("lookThrough.doublingUp")}
@@ -626,10 +626,10 @@ export function LookThroughView({ data }: { data: LookThroughData }) {
               </View>
             ) : null}
           </Section>
-        </StaggerItem>
+        </FadeIn>
       ) : null}
 
-      <StaggerItem index={6}>
+      <FadeIn>
         <Section icon="cash-outline" title={t("lookThrough.charges")}>
           <View className="gap-2">
             <Line
@@ -658,10 +658,10 @@ export function LookThroughView({ data }: { data: LookThroughData }) {
           </View>
           <Text variant="micro">{t("lookThrough.chargesNote")}</Text>
         </Section>
-      </StaggerItem>
+      </FadeIn>
 
       {lookThrough.eligibility.length > 0 ? (
-        <StaggerItem index={7}>
+        <FadeIn>
           <Section
             icon="alert-circle-outline"
             title={t("lookThrough.wrappers")}
@@ -685,11 +685,11 @@ export function LookThroughView({ data }: { data: LookThroughData }) {
               ))}
             </View>
           </Section>
-        </StaggerItem>
+        </FadeIn>
       ) : null}
 
       {target.rows.length > 0 ? (
-        <StaggerItem index={8}>
+        <FadeIn>
           <Section icon="locate-outline" title={t("lookThrough.target")}>
             <View className="gap-3">
               {target.rows.map((row) => {
@@ -736,7 +736,7 @@ export function LookThroughView({ data }: { data: LookThroughData }) {
             </View>
             <Text variant="micro">{t("lookThrough.rebalanceNote")}</Text>
           </Section>
-        </StaggerItem>
+        </FadeIn>
       ) : null}
     </View>
   );

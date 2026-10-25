@@ -1,19 +1,12 @@
-import { useEffect } from "react";
 import { View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import Animated, {
-  Easing,
-  useAnimatedStyle,
   useReducedMotion,
-  useSharedValue,
-  withDelay,
-  withTiming,
 } from "react-native-reanimated";
 
 import { formatSigned } from "@finance/core/amount-sign";
 import { formatSignedPercentOf } from "@finance/core/constants";
 import type { UpcomingInvestment } from "@finance/core/investment-upcoming";
-import { DURATION, EASE_STANDARD } from "@finance/core/motion";
 
 import { AnimatedAmount } from "@/components/AnimatedAmount";
 import { PrivateAmount } from "@/components/PrivateAmount";
@@ -24,8 +17,7 @@ import { useFormatCurrency } from "@/providers/CurrencyProvider";
 import { useLocale, useT } from "@/providers/LocaleProvider";
 import { ICON, TYPE } from "@/theme/tokens";
 import { useThemeColors } from "@/theme/useThemeColors";
-
-const GROW = Easing.bezier(...EASE_STANDARD);
+import { FADE_IN } from "@/components/motion/fade";
 
 /**
  * Every placement at once, at the top of the screen: what it is worth
@@ -68,18 +60,6 @@ export function PlacementsSummary({
   const formatEuro = useFormatCurrency();
   const colors = useThemeColors();
   const reduce = useReducedMotion();
-  const fill = useSharedValue(reduce ? 1 : 0);
-
-  useEffect(() => {
-    fill.set(
-      reduce
-        ? 1
-        : withDelay(
-            200,
-            withTiming(1, { duration: DURATION.count, easing: GROW }),
-          ),
-    );
-  }, [fill, reduce]);
 
   const showGain = hasMarketValue && gainLoss !== 0 && invested > 0;
   const up = gainLoss > 0;
@@ -90,12 +70,6 @@ export function PlacementsSummary({
   const base = Math.min(marketValue, invested) / whole;
   const extra = Math.abs(marketValue - invested) / whole;
 
-  const baseStyle = useAnimatedStyle(() => ({
-    width: `${base * 100 * fill.get()}%`,
-  }));
-  const extraStyle = useAnimatedStyle(() => ({
-    width: `${extra * 100 * fill.get()}%`,
-  }));
 
   return (
     <Card bezel innerClassName="gap-4 p-5">
@@ -150,11 +124,17 @@ export function PlacementsSummary({
       {invested > 0 ? (
         <View className="gap-2">
           <View className="h-2 flex-row overflow-hidden rounded-full bg-muted">
-            <Animated.View style={baseStyle}>
+            <Animated.View
+              entering={reduce ? undefined : FADE_IN}
+              style={{ width: `${base * 100}%` }}
+            >
               <View className="flex-1 bg-foreground/45" />
             </Animated.View>
             {showGain ? (
-              <Animated.View style={extraStyle}>
+              <Animated.View
+                entering={reduce ? undefined : FADE_IN}
+                style={{ width: `${extra * 100}%` }}
+              >
                 <View
                   className={cn(
                     "flex-1",

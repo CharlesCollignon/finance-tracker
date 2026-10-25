@@ -166,7 +166,7 @@ export function ConnectBankSheet({
     <Modal
       visible={open}
       transparent
-      animationType="slide"
+      animationType="fade"
       statusBarTranslucent
       onRequestClose={() => onOpenChange(false)}
     >

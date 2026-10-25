@@ -18,7 +18,7 @@ import { SpentCard } from "@/components/bearing/SpentCard";
 import { UpcomingCard } from "@/components/bearing/UpcomingCard";
 import { WhereItWentCard } from "@/components/bearing/WhereItWentCard";
 import { WeeklyRecapCard } from "@/components/bearing/WeeklyRecapCard";
-import { StaggerItem } from "@/components/motion/Stagger";
+import { FadeIn } from "@/components/motion/FadeIn";
 import { Screen } from "@/components/ui/Screen";
 import { ScreenSkeleton } from "@/components/ui/Skeleton";
 import { ScreenError } from "@/components/ScreenError";
@@ -131,9 +131,6 @@ export default function HomeScreen() {
     data !== null &&
     (data.spent.total > 0 || data.spent.trend.some((entry) => entry.total > 0));
 
-  let index = 0;
-  const next = () => index++;
-
   return (
     <Screen title={t("nav.bearing")} className="px-4 py-0" shared>
       <ScrollView
@@ -199,19 +196,19 @@ export default function HomeScreen() {
 
 
             {setupStep && data.setup ? (
-              <StaggerItem index={next()}>
+              <FadeIn>
                 <SetupCard
                   step={setupStep}
                   firstCloseOn={data.setup.firstCloseOn}
                   bank={bank}
                 />
-              </StaggerItem>
+              </FadeIn>
             ) : null}
 
             {!data.empty ? (
-              <StaggerItem index={next()}>
+              <FadeIn>
                 <BalanceCard data={data} />
-              </StaggerItem>
+              </FadeIn>
             ) : null}
 
             {/* The week is this month's to recap, not a month browsed to. */}
@@ -220,31 +217,31 @@ export default function HomeScreen() {
             ) : null}
 
             {hasSpentBefore && period !== "future" ? (
-              <StaggerItem index={next()}>
+              <FadeIn>
                 <SpentCard data={data} />
-              </StaggerItem>
+              </FadeIn>
             ) : null}
 
             {!past && data.upcoming && data.recurring ? (
-              <StaggerItem index={next()}>
+              <FadeIn>
                 <UpcomingCard data={data} />
-              </StaggerItem>
+              </FadeIn>
             ) : null}
 
             {current && (data.run !== null || data.invested !== null) ? (
-              <StaggerItem index={next()}>
+              <FadeIn>
                 <MomentumCard data={data} />
-              </StaggerItem>
+              </FadeIn>
             ) : null}
 
             {data.spending.total > 0 ? (
-              <StaggerItem index={next()}>
+              <FadeIn>
                 <WhereItWentCard data={data} />
-              </StaggerItem>
+              </FadeIn>
             ) : null}
 
             {read && read.year === year && read.month === month && !stale ? (
-              <StaggerItem index={next()}>
+              <FadeIn>
                 <View className="rounded-card border border-border bg-card/70 p-card">
                   <MonthRead
                     year={year}
@@ -265,7 +262,7 @@ export default function HomeScreen() {
                     }}
                   />
                 </View>
-              </StaggerItem>
+              </FadeIn>
             ) : null}
           </View>
         ) : error ? (

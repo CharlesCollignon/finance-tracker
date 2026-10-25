@@ -2,9 +2,6 @@ import { useEffect, useState } from "react";
 import { View } from "react-native";
 import { type Href, useLocalSearchParams, useRouter } from "expo-router";
 import Animated, {
-  FadeInDown,
-  FadeInLeft,
-  FadeInRight,
   useAnimatedStyle,
   useDerivedValue,
   withSpring,
@@ -29,6 +26,7 @@ import { useAuth } from "@/providers/AuthProvider";
 import { useT } from "@/providers/LocaleProvider";
 import { useOwner } from "@/providers/OwnerProvider";
 import { useThemeColors } from "@/theme/useThemeColors";
+import { FADE_IN } from "@/components/motion/fade";
 
 /** How long the two discs hold together before Le point opens. */
 const JOINED_HOLD_MS = 900;
@@ -169,7 +167,7 @@ export default function JoinScreen() {
 
 function Heading({ children }: { children: string }) {
   return (
-    <Animated.View entering={FadeInDown.delay(150).duration(400)}>
+    <Animated.View entering={FADE_IN}>
       <Text variant="head" className="text-center text-2xl">
         {children}
       </Text>
@@ -179,7 +177,7 @@ function Heading({ children }: { children: string }) {
 
 function Body({ children }: { children: string }) {
   return (
-    <Animated.View entering={FadeInDown.delay(250).duration(400)}>
+    <Animated.View entering={FADE_IN}>
       <Text variant="micro" className="text-center">
         {children}
       </Text>
@@ -223,7 +221,7 @@ function Pair({
 
   return (
     <View className="h-20 flex-row items-center" importantForAccessibility="no">
-      <Animated.View entering={FadeInLeft.springify().damping(14)}>
+      <Animated.View entering={FADE_IN}>
         <Animated.View
           style={[disc, { backgroundColor: colors.foreground, zIndex: 1 }, leftStyle]}
         >
@@ -232,7 +230,7 @@ function Pair({
           </Text>
         </Animated.View>
       </Animated.View>
-      <Animated.View entering={FadeInRight.springify().damping(14)}>
+      <Animated.View entering={FADE_IN}>
         <Animated.View style={[disc, { backgroundColor: colors.muted }, rightStyle]}>
           <Text className="font-sans text-2xl font-semibold text-foreground">
             {initial(right)}

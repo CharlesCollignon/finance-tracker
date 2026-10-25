@@ -5,7 +5,6 @@ import Animated, {
   useAnimatedProps,
   useReducedMotion,
   useSharedValue,
-  withDelay,
   withRepeat,
   withSequence,
   withTiming,
@@ -21,7 +20,7 @@ import Svg, {
 } from "react-native-svg";
 
 import { formatShortDate } from "@finance/core/constants";
-import { EASE_STANDARD } from "@finance/core/motion";
+import { DURATION, EASE_STANDARD } from "@finance/core/motion";
 import type { DayOutflows, MonthBalancePoint } from "@finance/core/month-balance";
 
 import { Text } from "@/components/ui/Text";
@@ -42,17 +41,10 @@ const PAD_Y = 14;
 const PAD_X = 6;
 
 /*
- * The web's timings (`.balance-curve-*` in `apps/web/app/globals.css`), so
- * the same month arrives the same way on either client: the line draws in,
- * the wash rises behind it, the forecast and the end dot fade in after, and
- * today's dot breathes once everything has landed.
+ * As on the web (`fade-in`, `.balance-curve-today`): the month fades in as
+ * one — line, wash, forecast and dots together — and today's dot breathes
+ * once it is there.
  */
-const DRAW_MS = 900;
-const WASH_DELAY_MS = 200;
-const FADE_DELAY_MS = 700;
-const FADE_MS = 500;
-const TODAY_DELAY_MS = 800;
-const TODAY_FADE_MS = 300;
 const BREATHE_HALF_MS = 1200;
 
 interface BalanceCurveProps {
@@ -132,24 +124,10 @@ export function BalanceCurve({
         )
         .join(" ");
 
-    // Straight segments only, so the length is exact — what the draw-in
-    // dashes the line by, and more dependable than an animated clip.
-    const lengthOf = (from: number, to: number) => {
-      let total = 0;
-      for (let index = from + 1; index <= to; index += 1) {
-        total += Math.hypot(
-          x(index) - x(index - 1),
-          y(points[index]!.value) - y(points[index - 1]!.value),
-        );
-      }
-      return total;
-    };
-
     return {
       x,
       y,
       solid: lastRecorded >= 0 ? path(0, lastRecorded) : "",
-      solidLength: lastRecorded > 0 ? lengthOf(0, lastRecorded) : 0,
       dashed:
         lastRecorded < points.length - 1
           ? path(Math.max(0, lastRecorded), points.length - 1)
@@ -180,12 +158,12 @@ export function BalanceCurve({
       pulse.value = 1;
       return;
     }
-    const timing = (duration: number) => ({ duration, easing: EASING });
-    draw.value = withTiming(1, timing(DRAW_MS));
-    wash.value = withDelay(WASH_DELAY_MS, withTiming(1, timing(DRAW_MS)));
-    fade.value = withDelay(FADE_DELAY_MS, withTiming(1, timing(FADE_MS)));
+    const arrive = { duration: DURATION.enter, easing: EASING };
+    draw.value = withTiming(1, arrive);
+    wash.value = withTiming(1, arrive);
+    fade.value = withTiming(1, arrive);
     pulse.value = withSequence(
-      withDelay(TODAY_DELAY_MS, withTiming(1, { duration: TODAY_FADE_MS })),
+      withTiming(1, arrive),
       withRepeat(
         withSequence(
           withTiming(0.55, {
@@ -202,10 +180,7 @@ export function BalanceCurve({
     );
   }, [ready, reduce, draw, wash, fade, pulse]);
 
-  const solidLength = geometry?.solidLength ?? 0;
-  const drawProps = useAnimatedProps(() => ({
-    strokeDashoffset: solidLength * (1 - draw.value),
-  }));
+  const drawProps = useAnimatedProps(() => ({ opacity: draw.value }));
   const washProps = useAnimatedProps(() => ({ opacity: wash.value }));
   const fadeProps = useAnimatedProps(() => ({ opacity: fade.value }));
   const todayProps = useAnimatedProps(() => ({ opacity: pulse.value }));
@@ -283,11 +258,6 @@ export function BalanceCurve({
                 strokeWidth={2}
                 strokeLinecap="round"
                 strokeLinejoin="round"
-                // A dash as long as the line, slid along it: the line draws
-                // itself from the first of the month to today.
-                strokeDasharray={
-                  solidLength > 0 ? [solidLength, solidLength] : undefined
-                }
                 animatedProps={drawProps}
               />
             ) : null}

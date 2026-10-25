@@ -10,10 +10,6 @@ import {
 import { type Href, useLocalSearchParams, useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import Animated, {
-  FadeIn,
-  FadeInDown,
-  FadeOut,
-  ZoomIn,
   useAnimatedStyle,
   useReducedMotion,
   useSharedValue,
@@ -61,6 +57,7 @@ import { useLocale, useT } from "@/providers/LocaleProvider";
 import { useToast } from "@/providers/ToastProvider";
 import { ICON } from "@/theme/tokens";
 import { useThemeColors } from "@/theme/useThemeColors";
+import { FADE_IN, FADE_OUT } from "@/components/motion/fade";
 
 const SUGGESTIONS = [
   "ask.suggest1",
@@ -346,7 +343,7 @@ export default function AskScreen() {
             </View>
           ) : empty ? (
             <Animated.View
-              entering={FadeIn.duration(300)}
+              entering={FADE_IN}
               className="items-center gap-4 py-8"
             >
               <Orb size="nav" />
@@ -354,10 +351,10 @@ export default function AskScreen() {
                 {t("ask.intro")}
               </Text>
               <View className="flex-row flex-wrap justify-center gap-2">
-                {SUGGESTIONS.map((key, index) => (
+                {SUGGESTIONS.map((key) => (
                   <Animated.View
                     key={key}
-                    entering={FadeInDown.delay(80 * index).springify()}
+                    entering={FADE_IN}
                   >
                     <Pressable
                       accessibilityRole="button"
@@ -379,11 +376,7 @@ export default function AskScreen() {
                   key={message.id}
                   // The exchange just answered live is already on screen: it
                   // takes the live one's place without arriving again.
-                  entering={
-                    settled && index >= (live?.before ?? 0)
-                      ? undefined
-                      : FadeInDown.springify().damping(18)
-                  }
+                  entering={settled && index >= (live?.before ?? 0) ? undefined : FADE_IN}
                 >
                   {message.role === "question" ? (
                     <Question text={message.body.text} />
@@ -394,10 +387,10 @@ export default function AskScreen() {
               ))}
               {liveShown ? (
                 <>
-                  <Animated.View entering={FadeInDown.springify().damping(18)}>
+                  <Animated.View entering={FADE_IN}>
                     <Question text={liveShown.question} />
                   </Animated.View>
-                  <Animated.View entering={FadeIn} exiting={FadeOut}>
+                  <Animated.View entering={FADE_IN} exiting={FADE_OUT}>
                     <LiveAnswer live={liveShown} />
                   </Animated.View>
                 </>
@@ -435,7 +428,7 @@ export default function AskScreen() {
               >
                 <Animated.View
                   key={asking ? "stop" : "send"}
-                  entering={ZoomIn.springify().damping(14)}
+                  entering={FADE_IN}
                 >
                   <Ionicons
                     name={asking ? "stop" : "arrow-up"}
@@ -504,7 +497,7 @@ function StepChip({ tool, working }: { tool: AskChatTool; working: boolean }) {
   const t = useT();
   const colors = useThemeColors();
   return (
-    <Animated.View entering={ZoomIn.springify().damping(16)}>
+    <Animated.View entering={FADE_IN}>
       <View
         className={cn(
           "flex-row items-center gap-1.5 rounded-full border border-border px-2.5 py-1",
@@ -719,7 +712,7 @@ function Segments({ segments }: { segments: ReadSegment[] }) {
 }
 
 /**
- * Pluclair at work: three dots rising in turn while the answer is on its
+ * Pluclair at work: three dots brightening in turn while the answer is on its
  * way, and only then; with reduced motion, the words alone. `bare` leaves
  * the orb out, for an answer that already has one.
  */
@@ -761,7 +754,6 @@ function Dot({ index }: { index: number }) {
   }, [index, lift]);
   const style = useAnimatedStyle(() => ({
     opacity: 0.4 + lift.get() * 0.6,
-    transform: [{ translateY: -3 * lift.get() }],
   }));
   return (
     <Animated.View

@@ -98,7 +98,7 @@ export function QuickAddSheet(props: QuickAddSheetProps) {
   return (
     <Modal
       visible={props.open}
-      animationType="slide"
+      animationType="fade"
       transparent
       statusBarTranslucent
       onRequestClose={props.onClose}

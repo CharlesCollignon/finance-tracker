@@ -113,7 +113,7 @@ export function InvestmentPositionSheet({
   return (
     <Modal
       visible
-      animationType="slide"
+      animationType="fade"
       transparent
       statusBarTranslucent
       onRequestClose={onClose}

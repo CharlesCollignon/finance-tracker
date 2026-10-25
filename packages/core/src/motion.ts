@@ -2,8 +2,9 @@
  * How things move, in both apps.
  *
  * These numbers already existed twice. `FadeIn.tsx` on the phone held the
- * curve, `Stagger.tsx` on each client held the same 40ms cadence with a
- * comment saying so, and `AnimatedAmount` was written twice at 650ms because
+ * curve, each client held the same 40ms stagger with a comment saying so
+ * (gone since everything fades in at once), and `AnimatedAmount` was written
+ * twice at 650ms because
  * — as its own doc puts it — "the two clients show the same figure and a
  * spring settles on a different curve, so the same amount would arrive
  * differently depending on which screen you were holding".
@@ -66,26 +67,6 @@ export const DURATION = {
   /** A surface answering a pointer arriving or leaving. */
   hover: 200,
 } as const;
-
-/** The gap between consecutive items in a staggered enter. */
-export const STAGGER_STEP_MS = 40;
-
-/**
- * Beyond this many steps the delay stops growing.
- *
- * A long list staggered without a cap leaves its last item arriving half a
- * second after its first, which reads as the screen being slow rather than as
- * a flourish. The cap was written for a twelve-tile grid that no longer
- * exists; what still reaches it is the phone's `Stagger`, which fades in
- * whatever list it is given and has no more idea how long that is than the
- * grid did.
- */
-export const STAGGER_MAX_STEPS = 8;
-
-/** How long the item at `index` waits before entering. */
-export function staggerDelay(index: number): number {
-  return Math.min(index, STAGGER_MAX_STEPS) * STAGGER_STEP_MS;
-}
 
 /** The curve as a CSS `cubic-bezier()` value. */
 export function cssEasing(points: readonly number[] = EASE_STANDARD): string {

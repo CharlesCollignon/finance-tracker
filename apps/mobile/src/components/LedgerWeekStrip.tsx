@@ -1,4 +1,4 @@
-import { Fragment, useEffect, useState } from "react";
+import { Fragment, useState } from "react";
 import { Pressable, View, type LayoutChangeEvent } from "react-native";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import Animated, {
@@ -7,15 +7,15 @@ import Animated, {
   useDerivedValue,
   useReducedMotion,
   useSharedValue,
-  withDelay,
   withSpring,
   withTiming,
 } from "react-native-reanimated";
 
 import { formatShortDate, todayIsoLocal } from "@finance/core/constants";
 import type { LedgerWeek } from "@finance/core/ledger-view";
-import { DURATION, EASE_STANDARD, STAGGER_STEP_MS } from "@finance/core/motion";
+import { DURATION, EASE_STANDARD } from "@finance/core/motion";
 
+import { FADE_IN } from "@/components/motion/fade";
 import { Text } from "@/components/ui/Text";
 import { cn } from "@/lib/cn";
 import { hapticSelection } from "@/lib/haptics";
@@ -218,7 +218,6 @@ export function LedgerWeekStrip({
                   bars={bars}
                   max={week ? dayMax : weekMax}
                   lit={lit}
-                  delay={index * STAGGER_STEP_MS}
                   reduce={reduce}
                 />
                 <Text
@@ -247,7 +246,7 @@ export function LedgerWeekStrip({
 }
 
 /**
- * A segment's bars, grown up from the baseline when the strip first draws.
+ * A segment's bars, faded in when the strip first draws.
  * Planned rows sit on top of the recorded ones, fainter, the way the list
  * draws them muted; a day with nothing on it keeps a stub, so the week still
  * reads as seven days.
@@ -256,47 +255,26 @@ function Bars({
   bars,
   max,
   lit,
-  delay,
   reduce,
 }: {
   bars: (Bar | null)[];
   max: number;
   lit: (index: number) => boolean;
-  delay: number;
   reduce: boolean;
 }) {
-  const grow = useSharedValue(reduce ? 1 : 0);
-  useEffect(() => {
-    if (!reduce) {
-      grow.set(
-        withDelay(
-          delay,
-          withTiming(1, { duration: DURATION.enter, easing: EASING }),
-        ),
-      );
-    }
-  }, [delay, grow, reduce]);
-  const style = useAnimatedStyle(() => ({
-    opacity: grow.get(),
-    transform: [{ scaleY: grow.get() }],
-  }));
-
   return (
     <Animated.View
       importantForAccessibility="no-hide-descendants"
       accessibilityElementsHidden
-      style={[
-        {
-          height: BARS_HEIGHT,
-          width: "100%",
-          flexDirection: "row",
-          alignItems: "flex-end",
-          justifyContent: "center",
-          gap: 2,
-          transformOrigin: "bottom",
-        },
-        style,
-      ]}
+      entering={reduce ? undefined : FADE_IN}
+      style={{
+        height: BARS_HEIGHT,
+        width: "100%",
+        flexDirection: "row",
+        alignItems: "flex-end",
+        justifyContent: "center",
+        gap: 2,
+      }}
     >
       {bars.map((bar, index) => (
         <View

@@ -28,7 +28,7 @@ import {
 import { ConnectBankInvite } from "@/components/bank/ConnectBankInvite";
 import { MonthCloseHistoryCard } from "@/components/MonthCloseHistoryCard";
 import { MonthCloseSheet } from "@/components/MonthCloseSheet";
-import { StaggerItem } from "@/components/motion/Stagger";
+import { FadeIn } from "@/components/motion/FadeIn";
 import { CushionCard } from "@/components/plan/CushionCard";
 import { LongViewCard, MAX_YEARS } from "@/components/plan/LongViewCard";
 import { MilestonesCard } from "@/components/plan/MilestonesCard";
@@ -335,7 +335,7 @@ export default function PlanningScreen() {
             {t("futurePlan.intro")}
           </Text>
 
-          <StaggerItem index={0}>
+          <FadeIn>
             <YearAheadCard
               projection={data.projection}
               hasTemplates={data.hasTemplates}
@@ -350,10 +350,10 @@ export default function PlanningScreen() {
               onExtraChange={setExtra}
               sooner={sooner}
             />
-          </StaggerItem>
+          </FadeIn>
 
           {wealthSettled && settingsReady ? (
-            <StaggerItem index={1}>
+            <FadeIn>
               <MilestonesCard
                 milestones={milestones}
                 current={current}
@@ -362,27 +362,27 @@ export default function PlanningScreen() {
                 month={data.month}
                 horizonYears={MAX_YEARS}
               />
-            </StaggerItem>
+            </FadeIn>
           ) : (
             <Skeleton className="h-48 rounded-card" />
           )}
 
-          <StaggerItem index={2}>
+          <FadeIn>
             <CushionCard cushion={cushion} />
-          </StaggerItem>
+          </FadeIn>
 
           {properties && wealthSettled ? (
-            <StaggerItem index={3}>
+            <FadeIn>
               <NetWorthCard
                 liquid={current}
                 properties={properties}
                 today={todayIsoLocal()}
               />
-            </StaggerItem>
+            </FadeIn>
           ) : null}
 
           {wealthSettled && settingsReady ? (
-            <StaggerItem index={3}>
+            <FadeIn>
               <LongViewCard
                 settings={settings}
                 envelopes={envelopes}
@@ -396,7 +396,7 @@ export default function PlanningScreen() {
                 }
                 onReset={() => changeSettings({ ...settings, envelopes: null })}
               />
-            </StaggerItem>
+            </FadeIn>
           ) : (
             <Skeleton className="h-96 rounded-card" />
           )}
@@ -404,7 +404,7 @@ export default function PlanningScreen() {
           {/* The homes follow the long view's horizon and inflation, so a
               step there moves both cards. */}
           {properties && wealthSettled && settingsReady ? (
-            <StaggerItem index={4}>
+            <FadeIn>
               <PropertyLongViewCard
                 properties={properties}
                 today={todayIsoLocal()}
@@ -412,11 +412,11 @@ export default function PlanningScreen() {
                 inflation={settings.inflation}
                 liquidNet={liquidNet}
               />
-            </StaggerItem>
+            </FadeIn>
           ) : null}
 
           {closes ? (
-            <StaggerItem index={4}>
+            <FadeIn>
               <RunCard
                 summary={closes.summary}
                 next={closes.next}
@@ -428,17 +428,17 @@ export default function PlanningScreen() {
                   }
                 }}
               />
-            </StaggerItem>
+            </FadeIn>
           ) : null}
 
           {closes ? (
-            <StaggerItem index={5}>
+            <FadeIn>
               <MonthsCard
                 history={closes.history}
                 detailsOpen={detailsOpen}
                 onToggleDetails={() => setDetailsOpen((open) => !open)}
               />
-            </StaggerItem>
+            </FadeIn>
           ) : null}
 
           {closes && detailsOpen ? (

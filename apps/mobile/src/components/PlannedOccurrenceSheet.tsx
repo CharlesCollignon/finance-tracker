@@ -153,7 +153,7 @@ export function PlannedOccurrenceSheet({
     <Modal
       visible
       transparent
-      animationType="slide"
+      animationType="fade"
       statusBarTranslucent
       onRequestClose={close}
     >

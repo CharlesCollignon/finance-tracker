@@ -1,11 +1,6 @@
-import { useEffect } from "react";
 import { View } from "react-native";
 import Animated, {
-  useAnimatedStyle,
   useReducedMotion,
-  useSharedValue,
-  withDelay,
-  withTiming,
 } from "react-native-reanimated";
 import {
   formatMonthLabel,
@@ -25,11 +20,9 @@ import { usePrivacy } from "@/providers/PrivacyProvider";
 import { TYPE } from "@/theme/tokens";
 import { useThemeColors } from "@/theme/useThemeColors";
 import {
-  EASING,
-  GROW_DELAY_MS,
-  GROW_MS,
   HomeCard,
 } from "@/components/bearing/card-parts";
+import { FADE_IN } from "@/components/motion/fade";
 
 /* ------------------------------------------------------------ the spending */
 
@@ -110,8 +103,7 @@ export function SpentCard({ data }: { data: HomeMonth }) {
 
 /**
  * Six months of spending, this one lit and the rest in the background: one
- * series, so emphasis rather than colour. Each bar grows from the floor on
- * arrival.
+ * series, so emphasis rather than colour. Each bar fades in at its height.
  */
 function SpendBars({ data }: { data: HomeMonth }) {
   const locale = useLocale();
@@ -154,34 +146,19 @@ function SpendBar({
 }) {
   const colors = useThemeColors();
   const reduce = useReducedMotion();
-  const progress = useSharedValue(reduce ? 1 : 0);
   const height = Math.max(0.05, Math.min(1, ratio));
-
-  useEffect(() => {
-    progress.value = reduce
-      ? 1
-      : withDelay(
-          GROW_DELAY_MS,
-          withTiming(1, { duration: GROW_MS, easing: EASING }),
-        );
-  }, [reduce, progress]);
-
-  const style = useAnimatedStyle(() => ({
-    height: `${height * 100 * progress.value}%`,
-  }));
 
   return (
     <View className="h-full flex-1 items-center justify-end gap-1">
       <View className="w-full max-w-6 flex-1 justify-end">
         <Animated.View
+          entering={reduce ? undefined : FADE_IN}
           className="w-full rounded-t-[4px]"
-          style={[
-            {
-              backgroundColor: shown ? colors.primary : colors.foreground,
-              opacity: shown ? 1 : 0.15,
-            },
-            style,
-          ]}
+          style={{
+            height: `${height * 100}%`,
+            backgroundColor: shown ? colors.primary : colors.foreground,
+            opacity: shown ? 1 : 0.15,
+          }}
         />
       </View>
       <Text

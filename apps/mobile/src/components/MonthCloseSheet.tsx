@@ -215,7 +215,7 @@ export function MonthCloseSheet({
     <Modal
       visible={open}
       transparent
-      animationType="slide"
+      animationType="fade"
       statusBarTranslucent
       onRequestClose={dismiss}
     >

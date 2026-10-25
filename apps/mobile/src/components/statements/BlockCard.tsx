@@ -1,10 +1,9 @@
 import { useState } from "react";
 import { Pressable, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import Animated, { FadeIn, FadeInDown, FadeOut, LinearTransition, useReducedMotion, ZoomIn } from "react-native-reanimated";
+import Animated, { useReducedMotion } from "react-native-reanimated";
 
 import { formatCurrency, formatDayMonth, formatFullDate, type CurrencyCode } from "@finance/core/constants";
-import { DURATION, STAGGER_STEP_MS } from "@finance/core/motion";
 import {
   accountTail,
   BANK_NAMES,
@@ -25,6 +24,7 @@ import { useLocale, useT } from "@/providers/LocaleProvider";
 import { hapticSelection } from "@/lib/haptics";
 import { ICON } from "@/theme/tokens";
 import { useThemeColors } from "@/theme/useThemeColors";
+import { FADE_IN, FADE_OUT, LAYOUT } from "@/components/motion/fade";
 
 export interface BlockChoice {
   account: AccountChoice;
@@ -81,7 +81,7 @@ function ReadLines({ block, direction }: { block: StatementBlock; direction: "ou
   const [open, setOpen] = useState(false);
   const shown = block.lines.slice(0, LISTED_LINES);
   return (
-    <Animated.View layout={reduceMotion ? undefined : LinearTransition.duration(DURATION.panel)} className="gap-2">
+    <Animated.View layout={reduceMotion ? undefined : LAYOUT} className="gap-2">
       <Pressable
         accessibilityRole="button"
         accessibilityState={{ expanded: open }}
@@ -98,8 +98,8 @@ function ReadLines({ block, direction }: { block: StatementBlock; direction: "ou
       </Pressable>
       {open ? (
         <Animated.View
-          entering={reduceMotion ? undefined : FadeIn.duration(DURATION.panel)}
-          exiting={reduceMotion ? undefined : FadeOut.duration(DURATION.press)}
+          entering={reduceMotion ? undefined : FADE_IN}
+          exiting={reduceMotion ? undefined : FADE_OUT}
           className="rounded-control border border-border"
         >
           {shown.map((line, at) => {
@@ -144,7 +144,6 @@ export function BlockCard({
   choice,
   onChoice,
   outcome,
-  index,
   readByAi = false,
   alerts = false,
 }: {
@@ -154,7 +153,6 @@ export function BlockCard({
   choice: BlockChoice;
   onChoice: (choice: BlockChoice) => void;
   outcome: StatementOutcome | null;
-  index: number;
   /** Read by the person's AI account: said, and every line waits. */
   readByAi?: boolean;
   /** A bank's alert e-mails rather than a statement. */
@@ -182,11 +180,7 @@ export function BlockCard({
 
   return (
     <Animated.View
-      entering={
-        reduceMotion
-          ? undefined
-          : FadeInDown.duration(DURATION.enter).delay(index * STAGGER_STEP_MS * 2)
-      }
+      entering={reduceMotion ? undefined : FADE_IN}
       className="gap-4 rounded-card border border-border bg-card/70 p-card"
     >
       <View className="flex-row items-start gap-3">
@@ -226,7 +220,7 @@ export function BlockCard({
       ) : null}
       {block.check?.ok ? (
         <Animated.View
-          entering={reduceMotion ? undefined : ZoomIn.springify().damping(14)}
+          entering={reduceMotion ? undefined : FADE_IN}
           className="flex-row items-start gap-2"
         >
           <Ionicons name="shield-checkmark" size={ICON.md} color={colors.success} />
@@ -338,10 +332,10 @@ export function BlockCard({
               : t("statements.savingsKept")}
           </Text>
         ) : (
-          figures.map(([label, count], at) => (
+          figures.map(([label, count]) => (
             <Animated.View
               key={label}
-              entering={reduceMotion ? undefined : FadeInDown.duration(DURATION.press).delay(at * STAGGER_STEP_MS)}
+              entering={reduceMotion ? undefined : FADE_IN}
             >
               <FigureLine label={label} count={count} strong={label === "statements.waiting"} />
             </Animated.View>
