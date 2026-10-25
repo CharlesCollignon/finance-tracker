@@ -194,8 +194,13 @@
       },
       {
         "name": "duration-enter",
-        "value": "500ms",
-        "purpose": "Arrival of a block. Page and stagger entrances run 550ms."
+        "value": "180ms",
+        "purpose": "Arrival of anything in the app: a fade, opacity alone (fade-in, FADE). Nothing rises, slides, zooms, grows or springs into place, and nothing waits its turn. The pair to duration-exit (120ms)."
+      },
+      {
+        "name": "duration-exit",
+        "value": "120ms",
+        "purpose": "Departure of anything in the app: the same fade, quicker than it came (fade-out, FADE.exit). Sheets, the account menu and the pickers stay on screen for it (useFadePresence)."
       },
       {
         "name": "reduced-motion",
@@ -358,7 +363,7 @@
       "Do build depth from the lit ground, the glass weights, the surface value steps and the hairlines already defined, in that order.",
       "Do reach for one of the three weights in lib/glass.ts when a surface sits over the lit ground, and for SOLID_PANEL when it opens out of another blurred surface — backdrop-filter composites against finished pixels and does not nest.",
       "Do give touch targets at least 44px, and list rows at least 56px.",
-      "Do use the three duration tokens and the single easing curve; a transition with no duration inherits the hover token and is already correct.",
+      "Do use the duration tokens (press 140, hover 200, enter 180, exit 120) and the single easing curve; a transition with no duration inherits the hover token. Anything that arrives or leaves is a fade on enter and exit.",
       "Do honour prefers-reduced-motion in any new animation, following the landing logo's example of switching off rather than merely shortening."
     ],
     "donts": [

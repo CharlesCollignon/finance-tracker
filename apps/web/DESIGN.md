@@ -210,6 +210,7 @@ the point: adding a fourth grey or a sixth type step undoes the work.
   hairlines, read against that lit ground
 - Serif numerals for money, sans for everything that is words
 - Controls that answer a press immediately and precisely, then stop
+- Everything that arrives or leaves fades, quickly — 180ms in, 120ms out
 
 ## Colors
 
@@ -862,8 +863,8 @@ their part of a home that is theirs; each loan's track, what is repaid with
 marks at 25, 50 and 75 % and what is left; the next payment as one bar, the
 principal first (« 656 € de plus sont à vous »). The bars are neutral, as a
 milestone ahead is; only a mark already passed is gold, because gold means
-done. Each grows from nothing as it arrives (`grow-in`), and the facts
-behind them are `packages/core/src/property-progress.ts`.
+done. Each fades in at its length, as everything in the app arrives, and the
+facts behind them are `packages/core/src/property-progress.ts`.
 
 **The inbox emptied.** When the last group is filed, « Tout est classé. »
 pops in with a gold tick, and under it how many shops were just filed under a
@@ -882,11 +883,11 @@ specific:
   `--primary` drawn as a radial light, never a shadow), lit cushion rungs, the
   live flame, and the savings bars, which are gold because they are savings.
   Everything still ahead is neutral.
-- **Motion arrives, then rests.** Curves draw in once (`balance-curve-draw`),
-  the long view's stack rises from its baseline once, bars grow in one after
-  another, badges pop past their size and settle — all on the one curve, in
-  `plan.module.css`, whose pop and flame are the shared moments'. The only loops are the flame's sway and the glow's
-  breath, both in place, and both switched off under reduced motion.
+- **Motion arrives, then rests.** Curves, the long view's stack and the bars
+  fade in, as everything in the app does (`plan.module.css`); only the moments
+  move more — badges pop past their size and settle, on the shared moments'
+  pop and flame. The only loops are the flame's sway and the glow's breath,
+  both in place, and both switched off under reduced motion.
 - **Play answers at once.** The slider, the horizon and every field of the
   long view redraw immediately; a calculator that animates between answers is
   one you wait for. The headline figures count to their new value.
@@ -930,9 +931,9 @@ specific:
   the crosshair's readout follow on one quick spring (`FOLLOW` in
   `year-ahead-parts.tsx`). Under reduced motion every one of them lands at
   once.
-- **The page meets the reader where they scroll.** Each card rises into place
-  the first time it comes into view (`Reveal` in `PlanView.tsx`), rather than
-  in one stagger on load that has finished before the run is reached. The
+- **The page meets the reader where they scroll.** Each card fades in the
+  first time it comes into view (`Reveal` in `PlanView.tsx`), rather than all
+  at once on load, finished before the run is reached. The
   cards carry no light under the pointer: one was tried and the owner had it
   taken off (October 2026).
 - **The long view is a calculator, and says so.** It opens on the user's own
@@ -988,16 +989,38 @@ its figures so this keeps working.
 ### Motion
 
 One easing curve across the system — `cubic-bezier(0.32, 0.72, 0, 1)` — on a
-three-step duration scale: **press** 140ms, **hover** 200ms, **enter** 500ms
-(550ms for the page and stagger entrances). Tailwind's default transition
-duration is pointed at the hover token, so a transition written without a
-duration is still on the scale. A global `prefers-reduced-motion` block reduces
+four-step duration scale: **press** 140ms, **hover** 200ms, **enter** 180ms
+and **exit** 120ms. Tailwind's default transition duration is pointed at the
+hover token, so a transition written without a duration is still on the
+scale. A global `prefers-reduced-motion` block reduces
 all animation and transition to 0.01ms, and the landing logo's float is
 switched off entirely. The hero's Earth (`components/marketing/LandingEarth.tsx`,
 WebGL) follows the same setting on its own: under reduced motion nothing
 twinkles, the stars stop drifting, and the aurora's curtains, the black hole's
 disk and the distant sun's glow hold still. Its light never follows the pointer
 on the landing; it rests in the distant sun.
+
+**Everything in the app arrives and leaves as a fade** (October 2026, the
+owner's call for "really smooth fade in or fade out, fast and smooth,
+minimalist"). Opacity alone, in on **enter** and out on **exit**: nothing
+rises, slides, zooms, grows, draws itself in or springs into place, and
+nothing waits its turn — a screen's blocks fade in together. CSS reaches for
+`fade-in` and `fade-out` (`app/globals.css`), Motion for `FADE`, `FADE_IN`,
+`FADE_OUT` and `FADE_HEIGHT` (`components/motion/fade.ts`); a screen's blocks
+sit in `FadeIn` (`components/motion/FadeIn.tsx`, once `Stagger`). Sheets,
+the account menu and the pickers stay on screen for their fade-out
+(`useFadePresence`) instead of vanishing. A block that opens or closes its
+height spends the same two numbers on it, and rows that make room for one
+move on **enter**, so nothing jumps. A bar or a chart stands at its value as
+it fades in; a later change to that value still eases to the new one.
+What moves beyond a fade is named, and is the whole list: what follows the
+finger or the pointer (a switch's knob, a tab's pill, a slider, a drag, a
+press giving a little), a figure counting to its value, the ambient light
+(the backdrop's veil, the orb's breath, today's dot on the balance curve),
+the loading marks (the thinking dots, the scan line), the moments, and
+« Votre année ». The public pages' scroll story — the landing, `/a-propos`,
+`/telecharger` — keeps its own choreography below, and `DURATION.panel`
+(420ms) stays theirs.
 
 The landing below its hero is the system's one scroll-driven surface (the
 owner's call, October 2026). Lenis smooths the marketing site's scroll
@@ -1036,16 +1059,14 @@ rests. « Revoir » plays it again. Under reduced motion the icon is there,
 with no sheet and no « Revoir ».
 
 The Journal's list moves when the reader asks it to (October 2026). The
-week strip above it (`LedgerWeekStrip.tsx`) grows its bars up from the
-baseline once, segment after segment, and its pill slides on the tabs'
-spring. Choosing a week slides the days that stay into their new places,
-fades the ones leaving and raises the ones arriving a beat apart, capped at
-eight so a long month is never left blank; the In and Out figures count to
-their new values. Turning the order over deals the list again from the top
-instead, because slid, every day would cross every other with no ground
-under the text (`AnimatedDays.tsx`). A row gives a little under a press.
-Nothing plays on arrival but the bars, and under reduced motion every state
-is its end state.
+week strip above it (`LedgerWeekStrip.tsx`) fades its bars in once, and its
+pill slides on the tabs' spring. Choosing a week moves the days that stay
+into their new places, fades out the ones leaving and fades in the ones
+arriving; the In and Out figures count to their new values. Turning the
+order over fades the list in again from the top instead, because moved,
+every day would cross every other with no ground under the text
+(`AnimatedDays.tsx`). A row gives a little under a press. Under reduced
+motion every state is its end state.
 
 « Nouveautés » (`NouveautesPage.tsx`, October 2026) is the site's index: an
 entry list rather than a story, so less of it moves. Its name rises out of a
@@ -1054,15 +1075,14 @@ commit, grows up from its baseline bar after bar (the Journal's week strip
 at the scale of the project), names a week under a pointer and takes the
 list to it on a press; this week's bar is in the status green while it holds
 something, the live dot's colour. Below, the list runs beside a rail held
-while it scrolls: the month being read rolls its name over to the next as
-the list crosses into it, up or down with the scroll. Choosing a filter
-re-deals the list with the Journal's choreography (stayers slide, leavers
-fade, arrivals rise a beat apart, capped at eight), and the list is brought
+while it scrolls: the month being read fades to the next as the list
+crosses into it. Choosing a filter re-deals the list as the Journal does
+(stayers move, leavers fade out, arrivals fade in), and the list is brought
 back to its top if it ends above the screen. Most entries are rows ruled off
 like a ledger's; a featured one is a glass card whose screen — the
 landing's mock — tilts up from its bottom edge as it is scrolled in, as the
-feature pages' do. « Plus » opens an entry in place, the rows below sliding
-down. Under each change, « J'adore », « Utile » and « Enfin ! » (and
+feature pages' do. « Plus » opens an entry in place, fading in as the rows
+below make room. Under each change, « J'adore », « Utile » and « Enfin ! » (and
 « J'attends ça » on « Bientôt »): a press pops the mark filled on a short
 spring and rolls its count, in ink rather than gold, before the write
 returns. What arrived since the reader's last visit carries a status-green
@@ -1094,17 +1114,15 @@ simply appears, and the covers hold still.
 Entraide (`EntraideBoard.tsx`, `ThreadView.tsx`, October 2026) is the blog's
 one place where people write, so its motion follows what they do.
 « Posez votre question… » is a glass pill that grows, in place, into the
-editor on the glass's spring — the same element, by `layoutId` — its fields
-arriving a beat after; published, the editor becomes the new card at the
-top of the list, as the nav's pill becomes its panel. As the title is
-typed, « Déjà demandé ? » slides open with the threads and guides it may
-already be, one after another. The kind of post and the list's four doors
-are the sliding pill of « Nouveautés » (`SegmentedPills`); a door changes
-the list with the Journal's choreography. In a thread, a new answer rises
-in on a spring; the one the asker marks « Résolu » moves up under the
-question (one `layoutId` again), its check drawing itself, and the mark is
-gold — a question solved is a moment, the only gold on the page; the
-« Pluclair » mark on the owner's answers is ink. Under reduced motion
+editor on **enter** — the same element, by `layoutId` — its fields fading in
+with it; published, the editor becomes the new card at the top of the list.
+As the title is typed, « Déjà demandé ? » fades open with the threads and
+guides it may already be. The kind of post and the list's four doors are
+the sliding pill of « Nouveautés » (`SegmentedPills`); a door changes the
+list as the Journal's does. In a thread, a new answer fades in; the one the
+asker marks « Résolu » moves up under the question (one `layoutId` again),
+its check drawing itself, and the mark is gold — a question solved is a
+moment, the only gold on the page; the « Pluclair » mark on the owner's answers is ink. Under reduced motion
 (`MotionConfig reducedMotion="user"`) everything stands where it ends.
 
 The marketing nav is one glass shape (`LandingHeader.tsx`): « Le produit »
@@ -1134,8 +1152,10 @@ away until the menu is opened again.
   blurred surface — `backdrop-filter` composites against finished pixels and
   does not nest.
 - **Do** give touch targets at least 44px, and list rows at least 56px.
-- **Do** use the three duration tokens and the single easing curve; a
-  transition with no duration inherits the hover token and is already correct.
+- **Do** use the duration tokens and the single easing curve; a transition
+  with no duration inherits the hover token and is already correct.
+- **Do** make anything that arrives or leaves a fade — `fade-in` / `fade-out`,
+  or `FADE` from `components/motion/fade.ts` — on **enter** and **exit**.
 - **Do** honour `prefers-reduced-motion` in any new animation, following the
   landing logo's example of switching off rather than merely shortening.
 
@@ -1172,3 +1192,6 @@ away until the menu is opened again.
   what this system was consolidated out of.
 - **Don't** use Fraunces for headings or prose, and don't let a figure set in it
   lose `tabular-nums`.
+- **Don't** bring back a rise, a slide, a zoom, a spring or a stagger for an
+  arrival in the app. Only what follows the finger, a count-up, the ambient
+  light and the moments move beyond a fade (see « Motion »).

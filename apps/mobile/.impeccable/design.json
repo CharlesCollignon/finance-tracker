@@ -136,7 +136,7 @@
       "Do ask for a font weight by its registered instance name.",
       "Do keep every touch target at 48dp or more, and list rows at 56px.",
       "Do lay out inside safe-area insets, and honour the system Back gesture on Android and the left-edge back gesture on iOS.",
-      "Do check reduced motion before animating, and degrade to a cut.",
+      "Do check reduced motion before animating, and degrade to a cut. Anything that arrives or leaves is FADE_IN / FADE_OUT (components/motion/fade.ts), 180ms in and 120ms out; no rise, slide, zoom or spring for an arrival.",
       "Do use the six icon sizes and the four radius roles; both scales are closed."
     ],
     "donts": [
