@@ -17,6 +17,70 @@ import type { ChangelogEntry, RoadmapItem } from "./changelog";
  */
 export const CHANGELOG: readonly ChangelogEntry[] = [
   {
+    id: "2026-10-25-several-loans",
+    date: "2026-10-25",
+    kind: "better",
+    platforms: ["web", "phone"],
+    fr: {
+      title: "Plusieurs prêts pour un même bien",
+      body: "En ajoutant un bien, chaque prêt qui l’a financé se saisit à part — un prêt à taux zéro à côté du prêt principal, par exemple —, avec son taux, sa durée et sa mensualité. Les chiffres du bien les additionnent.",
+      detail:
+        "Chaque mensualité rejoint vos opérations récurrentes. Pour un bien déjà ajouté, « Ajouter un prêt » est sur sa page.",
+    },
+    en: {
+      title: "Several loans for one property",
+      body: "When adding a property, each loan that paid for it is entered on its own — a 0 % loan beside the main one, for instance —, with its rate, length and monthly payment. The property’s figures add them up.",
+      detail:
+        "Each monthly payment joins your recurring entries. For a property already added, “Add a loan” is on its page.",
+    },
+  },
+  {
+    id: "2026-10-25-setup-labels",
+    date: "2026-10-25",
+    kind: "better",
+    platforms: ["web", "phone"],
+    fr: {
+      title: "Un libellé dès la prise en main",
+      body: "« Qu’est-ce qui entre ? » et « Qu’est-ce qui sort ? » demandent un libellé — Salaire, Loyer, Netflix… —, pour reconnaître chaque opération ensuite dans Récurrents.",
+    },
+    en: {
+      title: "A label from the first setup",
+      body: "“What comes in?” and “What goes out?” ask for a label — Salary, Rent, Netflix… —, so each entry is recognised later in Recurring.",
+    },
+  },
+  {
+    id: "2026-10-25-property-choice",
+    date: "2026-10-25",
+    kind: "better",
+    platforms: ["web", "phone"],
+    fr: {
+      title: "« Bien » seulement là où il compte",
+      body: "Dans une opération récurrente, le choix du bien ne s’affiche plus pour un placement ou une épargne, ni pour un revenu tant qu’aucun bien n’est loué.",
+    },
+    en: {
+      title: "“Property” only where it matters",
+      body: "On a recurring entry, the property choice no longer shows for an investment or savings, nor for an income while no property is let.",
+    },
+  },
+  {
+    id: "2026-10-25-small-fixes",
+    date: "2026-10-25",
+    kind: "fixed",
+    platforms: ["web", "phone"],
+    fr: {
+      title: "Le point et l’inscription, deux retouches",
+      body: "Sur Le point, « Enregistrer » et « Plus tard » sont alignés sur le champ du solde. Et quand une inscription échoue de notre côté, le message le dit et propose de continuer avec Google.",
+      detail:
+        "La politique de confidentialité nomme aussi Resend, qui envoie désormais les e-mails de votre compte.",
+    },
+    en: {
+      title: "Le point and signing up, two touches",
+      body: "On Le point, “Save” and “Later” line up with the balance field. And when a sign-up fails on our side, the message says so and offers to continue with Google.",
+      detail:
+        "The privacy policy also names Resend, which now sends your account’s e-mails.",
+    },
+  },
+  {
     id: "2026-10-25-signup-email",
     date: "2026-10-25",
     kind: "fixed",
