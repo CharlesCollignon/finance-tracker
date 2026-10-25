@@ -63,7 +63,7 @@ function Demo({ pageId }: { pageId: LandingPageId }) {
   const { demos } = landingCopyFor(useLocale());
   switch (pageId) {
     case "bearing":
-      return <BearingDemo />;
+      return <BearingDemo copy={demos.bearing} />;
     case "ledger":
       return <LedgerDemo copy={demos.ledger} />;
     case "charges":

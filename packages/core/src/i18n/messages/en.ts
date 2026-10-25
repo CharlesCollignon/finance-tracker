@@ -3393,16 +3393,6 @@ export const en = {
       other: "months, my longest run",
     },
   },
-  afford: {
-    amount: "Amount",
-    cadence: "How often",
-    once: "Once",
-    monthly: "Every month",
-    leftAfter: "You would have {amount} {until}",
-    missingAfter: "You would be short {amount} {until}",
-    eachMonthAfter: "Each month would leave {amount}",
-    nothingSaved: "Nothing is saved: it is only the arithmetic.",
-  },
   /** The Android home-screen widget: « Il vous reste » and two ways in. */
   widget: {
     add: "Add a spend",

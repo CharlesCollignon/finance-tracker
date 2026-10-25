@@ -220,8 +220,8 @@ application tierce. Ce qui suit vaut pour ce seul compte, et si elle rouvre.
   un droit d'opposition, aucun croisement avec d'autres traitements.
 - **Données** : un identifiant calculé (SHA-256 de l'identifiant du compte et
   d'un sel propre à la base, que nul client ne lit), le jour, et le nombre
-  d'opérations ajoutées, de mois clôturés et de questions « Puis-je me
-  permettre ? » ce jour-là. Aucun montant, commerce ni texte (migration 058).
+  d'opérations ajoutées et de mois clôturés ce jour-là. Aucun montant,
+  commerce ni texte (migration 058).
 - **Destinataires** : Supabase ; consulté par l'éditeur seul.
 - **Durée** : 13 mois, effacé par la tâche de nuit ; à la suppression du
   compte, effacé aussitôt.

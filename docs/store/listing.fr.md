@@ -32,7 +32,7 @@ aucun conseil : vos chiffres, justes.
 IL VOUS RESTE
 En ouvrant l'app, un chiffre : « Il vous reste 412 € jusqu'au 28, soit 21 €
 par jour ». Vos opérations récurrentes — loyer, abonnements, salaire — sont
-déjà dedans. « Puis-je me permettre ? » vous dit ce qu'une dépense changerait.
+déjà dedans.
 
 NOTER EN QUELQUES SECONDES
 Le « + » ouvre l'ajout : le montant, le commerce, et Pluclair retrouve la

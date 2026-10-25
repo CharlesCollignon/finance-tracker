@@ -29,8 +29,7 @@ figures, right.
 
 WHAT YOU HAVE LEFT
 One figure as the app opens: "You have €412 until the 28th, so €21 a day".
-Your recurring items — rent, subscriptions, salary — are already in it. "Can
-I afford it?" tells you what a spend would change.
+Your recurring items — rent, subscriptions, salary — are already in it.
 
 NOTE IT IN SECONDS
 The "+" opens the add sheet: the amount, the shop, and Pluclair finds the

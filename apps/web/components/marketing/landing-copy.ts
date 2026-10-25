@@ -42,14 +42,16 @@ export const landingCopy = {
   },
 
   /**
-   * « Il vous reste »: the figure the app opens on, put together on the page
-   * the way the app works it out — the accounts, less the charges due before
-   * the next pay, less a margin for what is never written down. The figures
-   * are the sample month's (`landing-sample.ts`, `leftToSpend`).
+   * « Il vous reste »: the figure the Android widget and Questions give, put
+   * together on the page the way the app works it out — the accounts, less
+   * the charges due before the next pay, less a margin for what is never
+   * written down. Le point stopped showing it in October 2026, so the copy
+   * says where it is. The figures are the sample month's
+   * (`landing-sample.ts`, `leftToSpend`).
    */
   figure: {
     heading: "One figure, every morning",
-    body: "What your accounts hold, less the charges due before your next pay, less a margin for what you never write down. Worked out again with every spend you note.",
+    body: "What your accounts hold, less the charges due before your next pay, less a margin for what you never write down. Worked out again with every spend you note, on your Android’s home screen and in Questions.",
     title: "You have",
     until: "until {date}",
     perDay: "so {amount} a day",
@@ -72,7 +74,7 @@ export const landingCopy = {
       {
         id: "bearing",
         title: "Where you stand, at a glance",
-        body: "The Overview opens on what is left until your next pay, and where the month will end once everything planned has gone out.",
+        body: "The Overview opens on what is in your account, what is still to go out of it this month, and where the month will end once everything planned has gone out.",
       },
       {
         id: "ledger",
@@ -245,7 +247,7 @@ export const landingCopy = {
         },
         {
           title: "See the month as a line",
-          body: "Your balance day by day, solid up to today and dotted after it, with its lowest point still to come. Above it, what is left until pay day, and how much that is a day.",
+          body: "Your balance day by day, solid up to today and dotted after it, with its lowest point still to come. Above it, under your balance, what is still to go out this month.",
         },
         {
           title: "Follow a card to where it comes from",
@@ -451,8 +453,10 @@ export const landingCopy = {
    */
   demos: {
     bearing: {
-      heading: "Can I afford it?",
-      hint: "Slide an amount: the figure answers at once. Nothing is saved.",
+      heading: "What is still to go out",
+      hint: "Slide through the days: your balance and what is still to go out follow, to the end of the month.",
+      dayLabel: "Day of the month",
+      day: "On {date}",
     },
     ledger: {
       heading: "It files itself",

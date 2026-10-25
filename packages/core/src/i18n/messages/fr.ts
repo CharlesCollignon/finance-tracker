@@ -2615,16 +2615,6 @@ export const fr: Messages = {
       other: "mois de série record",
     },
   },
-  afford: {
-    amount: "Montant",
-    cadence: "Fréquence",
-    once: "Une fois",
-    monthly: "Chaque mois",
-    leftAfter: "Il vous resterait {amount} {until}",
-    missingAfter: "Il vous manquerait {amount} {until}",
-    eachMonthAfter: "Chaque mois, il resterait {amount}",
-    nothingSaved: "Rien n'est enregistré\u00A0: c'est seulement le calcul.",
-  },
   /** Le widget Android de l'écran d'accueil : « Il vous reste » et deux accès. */
   widget: {
     add: "Ajouter une dépense",
