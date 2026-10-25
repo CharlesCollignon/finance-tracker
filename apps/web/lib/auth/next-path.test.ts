@@ -3,6 +3,7 @@ import {
   callbackFailureRedirect,
   confirmRedirect,
   sanitizeNextPath,
+  signUpConfirmRedirect,
 } from "./next-path";
 
 describe("sanitizeNextPath", () => {
@@ -41,6 +42,32 @@ describe("confirmRedirect", () => {
   it("falls back to the new-password page for an unsafe next path", () => {
     expect(confirmRedirect({ verified: true, next: "//evil.example" })).toBe(
       "/reset/new",
+    );
+  });
+});
+
+describe("signUpConfirmRedirect", () => {
+  it("sends a confirmed new account to its setup by default", () => {
+    expect(signUpConfirmRedirect({ verified: true, next: null })).toBe(
+      "/welcome",
+    );
+  });
+
+  it("honours a safe next path", () => {
+    expect(signUpConfirmRedirect({ verified: true, next: "/bearing" })).toBe(
+      "/bearing",
+    );
+  });
+
+  it("falls back to setup for an unsafe next path", () => {
+    expect(
+      signUpConfirmRedirect({ verified: true, next: "https://evil.example" }),
+    ).toBe("/welcome");
+  });
+
+  it("sends an expired or reused link to sign-in, saying so", () => {
+    expect(signUpConfirmRedirect({ verified: false, next: "/welcome" })).toBe(
+      "/login?error=confirm_expired",
     );
   });
 });

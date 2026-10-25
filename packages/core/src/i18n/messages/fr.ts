@@ -1158,10 +1158,25 @@ export const fr: Messages = {
     welcomeBack: "Content de vous revoir",
     signUpHeading: "Commencez à suivre vos revenus et vos dépenses",
     linkExpired: "Lien de connexion expiré ou invalide. Veuillez réessayer.",
+    confirmLinkExpired:
+      "Ce lien de confirmation a expiré ou a déjà servi. Si votre adresse est déjà confirmée, connectez-vous\u00A0; sinon, inscrivez-vous de nouveau avec la même adresse pour recevoir un nouveau lien.",
+    confirmPassword: "Confirmez le mot de passe",
+    checkInboxHeading: "Vérifiez vos e-mails",
+    checkInboxBody:
+      "Un lien de confirmation vient de partir à {email}. Ouvrez-le, sur n'importe quel appareil, pour activer votre compte.",
+    checkInboxSpam:
+      "Rien d'ici quelques minutes\u00A0? Regardez dans vos indésirables.",
+    checkInboxThenSignIn:
+      "Le lien s'ouvre dans votre navigateur. Une fois l'adresse confirmée, revenez ici et connectez-vous.",
+    resendConfirmation: "Renvoyer l'e-mail",
+    resendingConfirmation: "Envoi…",
+    resendIn: "Renvoyer dans {seconds}\u00A0s",
+    confirmationResent: "C'est reparti\u00A0: regardez votre boîte de réception.",
+    wrongAddress: "Pas la bonne adresse\u00A0?",
+    changeAddress: "La modifier",
+    alreadyConfirmed: "Adresse confirmée\u00A0?",
     redirecting: "Redirection…",
     finishingSignIn: "Connexion en cours…",
-    confirmEmail:
-      "Ouvrez l'e-mail que nous venons d'envoyer pour confirmer votre compte, puis connectez-vous.",
     googleStartFailed: "Impossible de lancer la connexion avec Google.",
     googleCancelled: "Connexion avec Google annulée.",
     googleFailed: "Impossible de terminer la connexion avec Google.",
@@ -2770,6 +2785,9 @@ export const fr: Messages = {
     accountExists: "Un compte existe déjà avec cette adresse. Connectez-vous.",
     signUpClosed: "Les inscriptions sont fermées pour l'instant.",
     signUpFailed: "L'inscription n'a pas fonctionné. Réessayez.",
+    resendTooSoon:
+      "Un e-mail vient de partir. Attendez une minute avant d'en demander un autre.",
+    resendFailed: "L'e-mail n'a pas pu repartir. Réessayez dans un instant.",
     alreadyThere: "C'est déjà enregistré.",
     stillInUse: "C'est encore utilisé ailleurs, donc rien n'a été supprimé.",
     notAllowed: "Vous n'avez pas accès à cet élément.",

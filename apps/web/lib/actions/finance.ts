@@ -23,6 +23,7 @@ import { saveRecurringTemplate } from "@finance/data/recurring-templates";
 import {
   authSchema,
   recurringTemplateSchema,
+  signUpSchema,
 } from "@finance/core/validations/finance";
 
 /**
@@ -34,13 +35,20 @@ async function getUser(): Promise<{ id: string } | null> {
   return owner ? { id: owner.ownerId } : null;
 }
 
+/**
+ * What a sign-up says beyond success: that the account waits for its address
+ * to be confirmed, so the form turns into « Vérifiez vos e-mails ».
+ */
+export type SignUpOutcome = { confirmEmail?: true };
+
 export async function signUp(
-  _prev: FormState,
+  _prev: FormState<SignUpOutcome>,
   formData: FormData,
-): Promise<ActionResult> {
-  const parsed = authSchema.safeParse({
+): Promise<ActionResult<SignUpOutcome>> {
+  const parsed = signUpSchema.safeParse({
     email: formData.get("email"),
     password: formData.get("password"),
+    confirm: formData.get("confirm"),
   });
 
   if (!parsed.success) {
@@ -53,6 +61,10 @@ export async function signUp(
     password: parsed.data.password,
     options: {
       emailRedirectTo: `${getSiteUrl()}/auth/callback`,
+      // Read by the e-mail templates (`.Data.locale`, supabase/templates), so
+      // the confirmation — and any reset later — comes in the language the
+      // account was made in.
+      data: { locale: await getLocale() },
     },
   });
 
@@ -60,11 +72,16 @@ export async function signUp(
     return { error: signUpErrorKey(error.code) };
   }
 
+  // An address that already has a confirmed account comes back as a user
+  // with no identity, and no e-mail goes: Supabase hides that it exists.
+  // Waiting for a mail that will never come is worse than being told to sign
+  // in, and the refusal above already says so when Supabase does tell.
+  if (data.user && data.user.identities?.length === 0) {
+    return { error: "errors.accountExists" };
+  }
+
   if (data.user && !data.session) {
-    return {
-      success: true,
-      message: "auth.confirmEmail",
-    };
+    return { success: true, confirmEmail: true };
   }
 
   if (data.user) {

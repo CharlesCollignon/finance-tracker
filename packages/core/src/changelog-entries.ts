@@ -17,6 +17,24 @@ import type { ChangelogEntry, RoadmapItem } from "./changelog";
  */
 export const CHANGELOG: readonly ChangelogEntry[] = [
   {
+    id: "2026-10-25-signup-email",
+    date: "2026-10-25",
+    kind: "fixed",
+    platforms: ["web", "phone"],
+    fr: {
+      title: "S’inscrire avec son e-mail, sans rester dans le doute",
+      body: "Le mot de passe se tape deux fois. Le compte créé, un écran dit à quelle adresse le lien de confirmation est parti, et permet de le renvoyer ou de corriger l’adresse ; si un compte existe déjà avec elle, il le dit.",
+      detail:
+        "Le lien de confirmation, comme celui pour changer de mot de passe, s’ouvre sur n’importe quel appareil, et les deux e-mails ont pris les couleurs de Pluclair, en français ou en anglais selon la langue du compte.",
+    },
+    en: {
+      title: "Signing up with your e-mail, without wondering",
+      body: "The password is typed twice. Once the account is made, a screen says which address the confirmation link went to, and lets you send it again or fix the address; if that address already has an account, it says so.",
+      detail:
+        "The confirmation link, like the one to change your password, opens on any device, and both e-mails now wear Pluclair’s colours, in French or English as the account was made.",
+    },
+  },
+  {
     id: "2026-10-13-statements-pdf",
     date: "2026-10-13",
     kind: "new",

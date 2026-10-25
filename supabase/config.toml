@@ -247,10 +247,17 @@ otp_expiry = 3600
 # subject = "You have been invited"
 # content_path = "./supabase/templates/invite.html"
 
-# The reset-password link lands on /auth/confirm, which verifies a one-time
-# token hash and works on any device — see apps/web/app/auth/confirm/route.ts.
+# Both links land on /auth/confirm, which verifies a one-time token hash and
+# works on any device — see apps/web/app/auth/confirm/route.ts. Each e-mail is
+# in English when the account was made in English (user metadata `locale`,
+# set at sign-up), French otherwise. The hosted project takes the same
+# subjects and files in the dashboard (Authentication → Emails).
+[auth.email.template.confirmation]
+subject = '{{ if eq (printf "%v" .Data.locale) "en" }}Confirm your address{{ else }}Confirmez votre adresse{{ end }} · Pluclair'
+content_path = "./supabase/templates/confirmation.html"
+
 [auth.email.template.recovery]
-subject = "Reset your Pluclair password"
+subject = '{{ if eq (printf "%v" .Data.locale) "en" }}Choose a new password{{ else }}Choisir un nouveau mot de passe{{ end }} · Pluclair'
 content_path = "./supabase/templates/recovery.html"
 
 # Uncomment to customize notification email template

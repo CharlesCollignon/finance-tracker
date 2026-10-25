@@ -14,6 +14,7 @@ import { signInWithPasskeyCeremony } from "@/lib/passkeys";
 import { categoryLocale, seedDefaultCategories } from "@/lib/seed-categories";
 import { supabase } from "@/lib/supabase";
 import {
+  resendErrorKey,
   resetRequestErrorKey,
   signInErrorKey,
   signUpErrorKey,
@@ -23,13 +24,26 @@ WebBrowser.maybeCompleteAuthSession();
 
 type AuthResult = { error?: string };
 
+/** A sign-up that worked may still wait for its address to be confirmed. */
+type SignUpResult = AuthResult & { confirmEmail?: boolean };
+
 interface AuthContextValue {
   session: Session | null;
   user: User | null;
   /** True until the initial session has been restored from storage. */
   initializing: boolean;
   signIn: (email: string, password: string) => Promise<AuthResult>;
-  signUp: (email: string, password: string) => Promise<AuthResult>;
+  /**
+   * `locale` goes into the account's metadata, where the e-mail templates
+   * read it, so the confirmation comes in the language of the screen.
+   */
+  signUp: (
+    email: string,
+    password: string,
+    locale: string,
+  ) => Promise<SignUpResult>;
+  /** Sends a sign-up's confirmation e-mail again. */
+  resendConfirmation: (email: string) => Promise<AuthResult>;
   signInWithGoogle: () => Promise<AuthResult>;
   signInWithPasskey: () => Promise<AuthResult>;
   /**
@@ -108,25 +122,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const { error } = await supabase.auth.resetPasswordForEmail(email);
         return error ? { error: resetRequestErrorKey(error.code) } : {};
       },
-      async signUp(email, password) {
+      async signUp(email, password, locale) {
         const { data, error } = await supabase.auth.signUp({
           email,
           password,
+          options: { data: { locale } },
         });
         if (error) {
           return { error: signUpErrorKey(error.code) };
         }
+        // An address with a confirmed account already comes back as a user
+        // with no identity, and no e-mail goes — say so rather than leave
+        // somebody waiting for one.
+        if (data.user && data.user.identities?.length === 0) {
+          return { error: "errors.accountExists" };
+        }
         // If email confirmation is on, there is no session yet.
         if (data.user && !data.session) {
-          return {
-            // A message key: the form resolves it to the reader's language.
-            error: "auth.confirmEmail",
-          };
+          return { confirmEmail: true };
         }
         if (data.user) {
           await seedCategoriesSafely(data.user.id);
         }
         return {};
+      },
+      async resendConfirmation(email) {
+        const { error } = await supabase.auth.resend({ type: "signup", email });
+        return error ? { error: resendErrorKey(error.code) } : {};
       },
       async signInWithGoogle() {
         const redirectTo = Linking.createURL("auth/callback");

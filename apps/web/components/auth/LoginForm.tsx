@@ -90,13 +90,21 @@ export function LoginForm() {
             {t("auth.forgotPassword")}
           </Link>
         </div>
-        {(state.error || authError) && (
+        {state.error ? (
           <Text className="text-center text-sm text-destructive">
-            {state.error
-              ? resolveMessage(t, state.error)
-              : t("auth.linkExpired")}
+            {resolveMessage(t, state.error)}
           </Text>
-        )}
+        ) : authError === "confirm_expired" ? (
+          // Not in red: the usual reason is a mail scanner that opened the
+          // link first, and the address is confirmed already.
+          <Text className="text-center text-sm text-muted-foreground">
+            {t("auth.confirmLinkExpired")}
+          </Text>
+        ) : authError ? (
+          <Text className="text-center text-sm text-destructive">
+            {t("auth.linkExpired")}
+          </Text>
+        ) : null}
         <Button
           type="submit"
           variant="pill"

@@ -9,6 +9,7 @@ import {
   View,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import Animated, { ZoomIn, ZoomOut } from "react-native-reanimated";
 
 import { Orb } from "@/components/Orb";
 import { Button } from "@/components/ui/Button";
@@ -18,7 +19,7 @@ import { Screen } from "@/components/ui/Screen";
 import { Text } from "@/components/ui/Text";
 import { ICON, RADIUS } from "@/theme/tokens";
 import { useThemeColors } from "@/theme/useThemeColors";
-import { validateAuthInput } from "@/lib/mutations";
+import { validateAuthInput, validateSignUpInput } from "@/lib/mutations";
 import { useAuth } from "@/providers/AuthProvider";
 import { useT } from "@/providers/LocaleProvider";
 import { resolveMessage } from "@finance/core/i18n/t";
@@ -33,9 +34,12 @@ export interface AuthFormProps {
   showPasskey?: boolean;
   /**
    * Signup rather than sign-in. Drives the password field's autofill contract:
-   * a manager should offer to generate here and to fill everywhere else.
+   * a manager should offer to generate here and to fill everywhere else — and
+   * asks for the password a second time.
    */
   newPassword?: boolean;
+  /** What the address field starts with: the one typed before, when coming back. */
+  initialEmail?: string;
   /** Where "Forgot password?" leads. Sign-in only. */
   forgotHref?: Href;
 }
@@ -50,30 +54,43 @@ export function AuthForm({
   showPasskey = false,
   newPassword = false,
   forgotHref,
+  initialEmail = "",
 }: AuthFormProps) {
   const t = useT();
   const { signInWithGoogle, signInWithPasskey } = useAuth();
   const colors = useThemeColors();
-  const [email, setEmail] = useState("");
+  const [email, setEmail] = useState(initialEmail);
   const [password, setPassword] = useState("");
+  const [confirm, setConfirm] = useState("");
   const [message, setMessage] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [reveal, setReveal] = useState(false);
   /** Which field the message belongs to, so the error shows at the field. */
-  const [badField, setBadField] = useState<"email" | "password" | null>(null);
+  const [badField, setBadField] = useState<
+    "email" | "password" | "confirm" | null
+  >(null);
   const passwordRef = useRef<TextInput>(null);
+  const confirmRef = useRef<TextInput>(null);
+  // The tick beside « Confirmez » only once the pair would be accepted.
+  const matching = password.length >= 6 && confirm === password;
 
   async function handleSubmit() {
     setMessage(null);
     setBadField(null);
-    const parsed = validateAuthInput(email.trim(), password);
+    const parsed = newPassword
+      ? validateSignUpInput(email.trim(), password, confirm)
+      : validateAuthInput(email.trim(), password);
     if (!parsed.success) {
       const issue = parsed.error.issues[0];
       setMessage(issue?.message ?? t("auth.invalidCredentials"));
       // The schema names the field it rejected; anything else is a credential
       // failure the server reports, which belongs to neither field alone.
       const field = issue?.path[0];
-      setBadField(field === "email" || field === "password" ? field : null);
+      setBadField(
+        field === "email" || field === "password" || field === "confirm"
+          ? field
+          : null,
+      );
       return;
     }
     setSubmitting(true);
@@ -164,8 +181,13 @@ export function AuthForm({
                       newPassword ? "new-password" : "current-password"
                     }
                     textContentType={newPassword ? "newPassword" : "password"}
-                    returnKeyType="go"
-                    onSubmitEditing={() => void handleSubmit()}
+                    returnKeyType={newPassword ? "next" : "go"}
+                    submitBehavior={newPassword ? "submit" : undefined}
+                    onSubmitEditing={() =>
+                      newPassword
+                        ? confirmRef.current?.focus()
+                        : void handleSubmit()
+                    }
                     invalid={badField === "password"}
                     value={password}
                     onChangeText={setPassword}
@@ -189,6 +211,40 @@ export function AuthForm({
                 </Pressable>
               </View>
             </View>
+
+            {newPassword ? (
+              <View className="gap-1.5">
+                <View className="flex-row items-center justify-between">
+                  <Text variant="label">{t("auth.confirmPassword")}</Text>
+                  {matching ? (
+                    <Animated.View
+                      entering={ZoomIn.springify().damping(12)}
+                      exiting={ZoomOut.duration(120)}
+                    >
+                      <Ionicons
+                        name="checkmark-circle"
+                        size={ICON.lg}
+                        color={colors.primary}
+                      />
+                    </Animated.View>
+                  ) : null}
+                </View>
+                <Input
+                  ref={confirmRef}
+                  accessibilityLabel={t("auth.confirmPassword")}
+                  placeholder={t("auth.passwordPlaceholder")}
+                  secureTextEntry={!reveal}
+                  autoCapitalize="none"
+                  autoComplete="new-password"
+                  textContentType="newPassword"
+                  returnKeyType="go"
+                  onSubmitEditing={() => void handleSubmit()}
+                  invalid={badField === "confirm"}
+                  value={confirm}
+                  onChangeText={setConfirm}
+                />
+              </View>
+            ) : null}
 
             {forgotHref ? (
               <Link href={forgotHref} asChild>
@@ -216,7 +272,9 @@ export function AuthForm({
 
             <Button
               label={submitting ? t("auth.pleaseWait") : submitLabel}
-              disabled={submitting || !email || !password}
+              disabled={
+                submitting || !email || !password || (newPassword && !confirm)
+              }
               onPress={handleSubmit}
             />
 

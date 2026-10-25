@@ -40,7 +40,7 @@ Vocabulary is fixed by `CONTEXT.md`; product commitments by
 | Import (CSV, OFX)      | `/import`                                | `import`                                                                 |
 | Welcome                | `/welcome`                               | `onboarding`                                                             |
 | Profile                | `/profile`                               | `(tabs)/profile`                                                         |
-| Sign in, sign up       | `/login`, `/signup`                      | `(auth)/login`, `(auth)/signup`                                          |
+| Sign in, sign up       | `/login`, `/signup`, `/auth/confirm`     | `(auth)/login`, `(auth)/signup`                                          |
 | Password reset         | `/reset`, `/auth/confirm`, `/reset/new`  | `(auth)/reset` (the new password is set on the web page the email opens) |
 
 ## Conventions for a write
@@ -778,9 +778,10 @@ assertion script:
 
 ## Known issues
 
-- Until the Supabase dashboard's "Reset password" email template links to
-  `/auth/confirm` with the token hash, a reset link only works in the browser
-  that asked for it, and never from the phone.
+- Until the Supabase dashboard's "Reset password" and "Confirm signup" email
+  templates link to `/auth/confirm` with the token hash
+  (`supabase/templates/`), a reset or confirmation link only works in the
+  browser that asked for it, and never from the phone.
 - Linting is gated at zero warnings on both apps; a React Compiler finding is
   fixed or suppressed inline with a reason, never wholesale.
 - On the phone's month-read route (`POST /api/month-read`, bearer token),
@@ -808,9 +809,11 @@ assertion script:
   2026; the `budgets`, `savings_goals`, `tags` and `transaction_tags` tables
   and the `tags.manage` flag row stay, unread. Stored month and category
   reads that cited a budget or goal figure show it as gone.
-- `/auth/confirm` verifies the recovery token on GET, so a mail provider's
-  link scanner can use it up before the reader clicks (Supabase's documented
-  pattern; a "Continue" interstitial is the known fix).
+- `/auth/confirm` verifies the recovery or sign-up token on GET, so a mail
+  provider's link scanner can use it up before the reader clicks (Supabase's
+  documented pattern; a "Continue" interstitial is the known fix). A used-up
+  sign-up link has confirmed the address all the same, which is why sign-in
+  then says so in grey rather than red.
 - `allRows` (`packages/core/src/paging.ts`) assumes the server's `max_rows`
   is at least 1,000 (the local config and the hosted default); a lower cap
   would truncate silently.

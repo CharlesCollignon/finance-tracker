@@ -39,6 +39,28 @@ export function confirmRedirect({
 }
 
 /**
+ * Where the confirm route sends a sign-up confirmation link.
+ *
+ * A verified link has just signed the new account in, so it goes on to the
+ * setup that new accounts start with. One that fails goes to sign-in with a
+ * sentence of its own rather than "link expired": a mail provider's scanner
+ * may have used the link before the reader did, and the address is then
+ * confirmed already — signing in is what is left to do.
+ */
+export function signUpConfirmRedirect({
+  verified,
+  next,
+}: {
+  verified: boolean;
+  next: string | null;
+}): string {
+  if (!verified) {
+    return "/login?error=confirm_expired";
+  }
+  return sanitizeNextPath(next, "/welcome");
+}
+
+/**
  * Where a failed `/auth/callback` code exchange sends the reader.
  *
  * That route is also where a reset link lands (see `confirmRedirect`'s

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  resendErrorKey,
   resetRequestErrorKey,
   signInErrorKey,
   signUpErrorKey,
@@ -22,6 +23,21 @@ describe("resetRequestErrorKey", () => {
   it("falls back to a generic sentence for anything else", () => {
     expect(resetRequestErrorKey("some_other_code")).toBe("errors.resetNotSent");
     expect(resetRequestErrorKey(undefined)).toBe("errors.resetNotSent");
+  });
+});
+
+describe("resendErrorKey", () => {
+  it("says to wait when Supabase's one-a-minute limit refuses", () => {
+    expect(resendErrorKey("over_email_send_rate_limit")).toBe(
+      "errors.resendTooSoon",
+    );
+    expect(resendErrorKey("over_request_rate_limit")).toBe(
+      "errors.resendTooSoon",
+    );
+  });
+
+  it("falls back to a generic sentence", () => {
+    expect(resendErrorKey(undefined)).toBe("errors.resendFailed");
   });
 });
 

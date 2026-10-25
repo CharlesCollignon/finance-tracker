@@ -29,6 +29,22 @@ export function resetRequestErrorKey(code: string | undefined): Key {
 }
 
 /**
+ * A sign-up's confirmation e-mail that could not be sent again — by code, as
+ * above. Supabase sends at most one a minute to an address, which is the
+ * refusal somebody pressing « Renvoyer » meets; anything else is a send that
+ * did not go.
+ */
+export function resendErrorKey(code: string | undefined): Key {
+  if (
+    code === "over_email_send_rate_limit" ||
+    code === "over_request_rate_limit"
+  ) {
+    return "errors.resendTooSoon";
+  }
+  return "errors.resendFailed";
+}
+
+/**
  * A sign-in that failed, in the reader's language — by code, as above.
  *
  * "Wrong address or password" covers both on purpose: saying which of the
