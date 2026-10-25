@@ -78,12 +78,30 @@ describe("replayPlan", () => {
       read: reader({}),
     });
     expect(paid.end.p50).toBeCloseTo(2200, 6);
+    // A full livret refuses the rest, which stays where it was: counted.
     const full = replayPlan({
       accounts: [account({ monthly: 100, ceiling: 1100 })],
       months: 12,
       read: reader({}),
     });
-    expect(full.end.p50).toBeCloseTo(1100, 6);
+    expect(full.accounts[0]!.median).toBeCloseTo(1100, 6);
+    expect(full.end.p50).toBeCloseTo(2200, 6);
+  });
+
+  it("sends what a full account refuses to the account named", () => {
+    const result = replayPlan({
+      accounts: [
+        account({ id: "current", value: 0, mix: {} }),
+        account({ id: "livret_a", monthly: 100, ceiling: 1100 }),
+      ],
+      months: 12,
+      overflowTo: "current",
+      read: reader({}),
+    });
+    expect(result.accounts).toEqual([
+      { id: "current", median: 1100 },
+      { id: "livret_a", median: 1100 },
+    ]);
   });
 
   it("follows the first months' schedule, then the monthly payment", () => {

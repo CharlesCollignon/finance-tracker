@@ -13,7 +13,7 @@
 
 import type { Envelope, EnvelopeId } from "../future-plan";
 import type { InvestmentWalletId } from "../investments";
-import type { YearAheadAccountId } from "../year-ahead";
+import type { YearAhead, YearAheadAccountId } from "../year-ahead";
 import { replayAccount, type WalletMix } from "./mix";
 import {
   historicalReturn,
@@ -60,6 +60,38 @@ export function historyReturnFor(
     return null;
   }
   return historicalReturn({ mix: account.mix }, read).nominal;
+}
+
+/**
+ * The current account and what is set aside with no account, as the year
+ * ahead walks them forward from the ledger, as things stand: what each holds
+ * today, what each month moves onto it for as long as the projection reads,
+ * and after that the last year's average.
+ */
+export function cashFromYearAhead(
+  ahead: Pick<YearAhead, "bands">,
+): CashAccount[] {
+  return ahead.bands.flatMap((band): CashAccount[] => {
+    if (band.id !== "current" && band.id !== "elsewhere") {
+      return [];
+    }
+    const values = band.baseline;
+    const schedule = values
+      .slice(1)
+      .map((value, index) => value - values[index]!);
+    const lastYear = schedule.slice(-12);
+    return [
+      {
+        id: band.id,
+        value: values[0] ?? 0,
+        schedule,
+        monthly:
+          lastYear.length > 0
+            ? lastYear.reduce((sum, value) => sum + value, 0) / lastYear.length
+            : 0,
+      },
+    ];
+  });
 }
 
 /** The accounts to replay, the cash first, in the envelopes' order after. */

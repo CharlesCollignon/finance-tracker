@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 import type { Envelope } from "../future-plan";
-import { historyReturnFor, planAccounts } from "./plan-accounts";
+import {
+  cashFromYearAhead,
+  historyReturnFor,
+  planAccounts,
+} from "./plan-accounts";
 import type { HistorySeries, HistorySeriesId } from "./series";
 import { replayPlan, type SeriesReader } from "./replay";
 
@@ -95,5 +99,32 @@ describe("planAccounts", () => {
       read,
     });
     expect(onCurrent[0]).toMatchObject({ monthly: 80, schedule: [60, 70] });
+  });
+});
+
+describe("cashFromYearAhead", () => {
+  it("reads the ledger's months off the bands, as things stand", () => {
+    const band = (id: string, baseline: number[]) => ({
+      id,
+      values: baseline.map((value) => value + 999),
+      baseline,
+      hidden: false,
+    });
+    const cash = cashFromYearAhead({
+      bands: [
+        band("current", [1000, 1300, 1200, 1500]),
+        band("livret_a", [5000, 5100, 5200, 5300]),
+        band("elsewhere", [0, 50, 100, 150]),
+      ] as Parameters<typeof cashFromYearAhead>[0]["bands"],
+    });
+    expect(cash).toEqual([
+      {
+        id: "current",
+        value: 1000,
+        schedule: [300, -100, 300],
+        monthly: 500 / 3,
+      },
+      { id: "elsewhere", value: 0, schedule: [50, 50, 50], monthly: 50 },
+    ]);
   });
 });

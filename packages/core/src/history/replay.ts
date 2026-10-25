@@ -247,6 +247,14 @@ export interface ReplayInput {
   accounts: readonly ReplayAccount[];
   /** How many months ahead. */
   months: number;
+  /**
+   * The account a payment refused by a full one goes to instead: the
+   * current account, as the bank refuses the transfer and the money stays
+   * where it was. Without one, it is held as cash beside the accounts and
+   * counted in the total; null leaves it out, for a total of the savings
+   * and investments alone.
+   */
+  overflowTo?: string | null;
   read?: SeriesReader;
 }
 
@@ -308,14 +316,21 @@ export function replayPlan(input: ReplayInput): ReplayResult {
   const accountEnds = input.accounts.map(() => [] as number[]);
   const standIns = new Map<MixKey, StandIn>();
 
+  const overflow = input.accounts.findIndex(
+    (account) => account.id === input.overflowTo,
+  );
+
   for (let s = 0; s < starts; s += 1) {
     const window = new Window(history, s, months);
     const values = input.accounts.map((account) => account.value);
+    // What full accounts refused, with nowhere named to go: still money.
+    let spilled = 0;
     let prices = 1;
     for (let k = 0; k < months; k += 1) {
       const inflation = history.inflation(s + k);
       prices *= 1 + inflation;
-      let total = 0;
+      spilled /= 1 + inflation;
+      let refused = 0;
       prepared.forEach((each, index) => {
         const ret = accountReturn(each, window, s + k, inflation);
         const grown = (values[index] * (1 + ret)) / (1 + inflation);
@@ -326,12 +341,21 @@ export function replayPlan(input: ReplayInput): ReplayResult {
             ? payment
             : Math.max(0, Math.min(payment, ceiling - grown));
         values[index] = grown + room;
-        total += values[index];
+        refused += payment - room;
       });
+      if (overflow >= 0) {
+        values[overflow] += refused;
+      } else if (input.overflowTo !== null) {
+        spilled += refused;
+      }
+      const total = values.reduce((sum, value) => sum + value, spilled);
       realByMonth[k].push(total);
       nominalByMonth[k].push(total * prices);
     }
-    ends.push({ start: s, value: values.reduce((sum, v) => sum + v, 0) });
+    ends.push({
+      start: s,
+      value: values.reduce((sum, value) => sum + value, spilled),
+    });
     values.forEach((value, index) => accountEnds[index].push(value));
     for (const [key, standIn] of window.standIns) {
       standIns.set(key, standIn);
