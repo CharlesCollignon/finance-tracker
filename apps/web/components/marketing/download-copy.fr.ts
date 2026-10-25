@@ -4,18 +4,18 @@ export const downloadCopyFr: DownloadCopy = {
   meta: {
     title: "Télécharger Pluclair pour Android et iPhone",
     description:
-      "Pluclair sur votre téléphone, gratuit : l’app Android à télécharger, l’iPhone depuis Safari, comment les installer, et ce qui est nouveau.",
+      "Pluclair sur votre téléphone, gratuit : l’app Android à télécharger, l’iPhone depuis Safari, comment les installer, et ce qui est nouveau.",
   },
   hero: {
     eyebrow: "Bêta ouverte · Android et iPhone",
     titleLines: ["Pluclair,", "dans votre poche."],
-    body: "Le même compte et les mêmes chiffres que sur le site. « Il vous reste » s’affiche sur l’écran d’accueil, avec un + pour noter une dépense.",
+    body: "Le même compte et les mêmes chiffres que sur le site. « Il vous reste » s’affiche sur l’écran d’accueil, avec un + pour noter une dépense.",
     download: "Télécharger l’APK",
     web: "Ou commencer sur le web",
     openApp: "Ouvrir Pluclair sur le web",
     version: "Version {version}",
     free: "Gratuit, sans store",
-    iphoneLink: "Sur iPhone ?",
+    iphoneLink: "Sur iPhone ?",
     iphone: {
       body: "Le même compte et les mêmes chiffres que sur le site, en plein écran depuis l’écran d’accueil de votre iPhone.",
       homeScreen: {
@@ -38,12 +38,12 @@ export const downloadCopyFr: DownloadCopy = {
   iphone: {
     heading: "Sur iPhone",
     homeScreenOnly:
-      "Pas encore d’app iPhone. En attendant, Pluclair se met sur l’écran d’accueil depuis Safari : il s’ouvre ensuite en plein écran, comme une app, avec votre compte — et ses rappels peuvent arriver en notifications.",
+      "Pas encore d’app iPhone. En attendant, Pluclair se met sur l’écran d’accueil depuis Safari : il s’ouvre ensuite en plein écran, comme une app, avec votre compte — et ses rappels peuvent arriver en notifications.",
     orHomeScreen:
-      "Ou sans rien installer : Pluclair se met aussi sur l’écran d’accueil depuis Safari, et s’ouvre en plein écran, comme une app.",
+      "Ou sans rien installer : Pluclair se met aussi sur l’écran d’accueil depuis Safari, et s’ouvre en plein écran, comme une app.",
     testFlight: {
       heading: "La bêta iPhone",
-      body: "L’app iPhone, avant l’App Store. Installez TestFlight, l’app d’Apple pour les bêtas, puis rejoignez celle de Pluclair : le bouton ouvre l’invitation.",
+      body: "L’app iPhone, avant l’App Store. Installez TestFlight, l’app d’Apple pour les bêtas, puis rejoignez celle de Pluclair : le bouton ouvre l’invitation.",
       join: "Rejoindre la bêta",
     },
     appStore: {
@@ -53,18 +53,18 @@ export const downloadCopyFr: DownloadCopy = {
     },
     steps: [
       "Sur votre iPhone, ouvrez Pluclair dans Safari et connectez-vous — ou créez votre compte.",
-      "Touchez Partager — le carré d’où sort une flèche, parfois sous « ⋯ » — puis « Sur l’écran d’accueil ».",
-      "Touchez « Ajouter ». Pluclair s’ouvre maintenant depuis son icône ; pour les rappels, activez les notifications dans Profil.",
+      "Touchez Partager — le carré d’où sort une flèche, parfois sous « ⋯ » — puis « Sur l’écran d’accueil ».",
+      "Touchez « Ajouter ». Pluclair s’ouvre maintenant depuis son icône ; pour les rappels, activez les notifications dans Profil.",
     ],
     open: "Ouvrir Pluclair",
     qr: {
-      heading: "Depuis un ordinateur ?",
-      body: "Scannez ce code avec l’appareil photo de l’iPhone : Pluclair s’ouvre dans Safari.",
+      heading: "Depuis un ordinateur ?",
+      body: "Scannez ce code avec l’appareil photo de l’iPhone : Pluclair s’ouvre dans Safari.",
       label: "QR code pour ouvrir Pluclair sur iPhone",
     },
     screen: {
       label:
-        "Un écran d’accueil d’iPhone : le menu Partager propose « Sur l’écran d’accueil », et l’icône de Pluclair vient s’y poser.",
+        "Un écran d’accueil d’iPhone : le menu Partager propose « Sur l’écran d’accueil », et l’icône de Pluclair vient s’y poser.",
       addToHomeScreen: "Sur l’écran d’accueil",
       appName: "Pluclair",
       replay: "Revoir",
