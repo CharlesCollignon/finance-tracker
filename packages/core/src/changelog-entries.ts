@@ -17,6 +17,24 @@ import type { ChangelogEntry, RoadmapItem } from "./changelog";
  */
 export const CHANGELOG: readonly ChangelogEntry[] = [
   {
+    id: "2026-10-25-download-page",
+    date: "2026-10-25",
+    kind: "better",
+    platforms: ["web"],
+    fr: {
+      title: "L’app Android, dès la première page",
+      body: "« Télécharger pour Android » est en haut de l’accueil, et mène à une page qui dit tout : la version et sa taille, les trois gestes pour l’installer, les dernières nouveautés du téléphone.",
+      detail:
+        "Depuis un ordinateur, un QR code envoie le téléchargement sur votre téléphone. L’empreinte SHA-256 du fichier permet de vérifier qu’il est bien celui publié.",
+    },
+    en: {
+      title: "The Android app, from the first page",
+      body: "“Download for Android” is at the top of the home page, and leads to a page that says it all: the version and its size, the three steps to install it, the phone’s latest changes.",
+      detail:
+        "On a computer, a QR code sends the download to your phone. The file’s SHA-256 fingerprint lets you check it is the one published.",
+    },
+  },
+  {
     id: "2026-10-25-statements-phone",
     date: "2026-10-25",
     kind: "new",
