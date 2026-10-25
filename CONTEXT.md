@@ -324,18 +324,19 @@ _Avoid_: breakdown, component, driver
 
 **What if**:
 _En français_ : Et si…
-An extra amount a month, chosen on a slider on the Plan, added to the
-_everything kept_ track and to the long view's monthly payments, so the user
-sees what it would change: a year from now, and how much sooner a milestone
-comes. Never saved anywhere; it is a question, not an instruction.
+An extra amount a month, chosen on a slider on the Plan, added to one
+account in the trajectory's replay, so the user sees what it would change by
+the horizon, and how much sooner a milestone comes. Never saved anywhere; it
+is a question, not an instruction.
 _Avoid_: scenario, simulation, goal
 
 **Milestone**:
 _En français_ : palier
 A round amount of savings and investments together (1 000 €, 5 000 €,
-10 000 € … 1 M€), celebrated when reached, with how many months the next
-ones are at today's pace. Judged on the user's real figures, never on what
-they typed into the long view, so a milestone cannot be reached by editing.
+10 000 € … 1 M€), celebrated when reached, with the month the next ones come
+on the middle start of the replay. Judged on the user's real figures, never
+on what they typed into « Hypothèses », so a milestone cannot be reached by
+editing.
 Distinct from a savings goal, which was retired: nobody sets a milestone.
 _Avoid_: goal, target, badge, level
 
@@ -345,8 +346,47 @@ How many months of fixed costs what is in the savings accounts would cover,
 with rungs at 1, 3 and 6 months.
 _Avoid_: emergency fund, runway, buffer
 
+**Trajectory**:
+_En français_ : votre trajectoire
+The user's own accounts — today's value, what goes in each month, fees, the
+current account walked forward by the ledger — replayed on market history
+from every _start_ since January 1970 to the horizon (1 to 30 years), in
+today's euros. Told as the middle start, the band eight starts in ten end in,
+and the worst start. An estimate, said as one: it is the past, not a
+promise. The Plan's figure since October 2026 (`@finance/core/history`).
+_Avoid_: forecast, prediction, simulation, Monte Carlo
+
+**Start**:
+_En français_ : départ
+One month of history the trajectory is replayed from. Starts overlap, so
+three hundred of them are not three hundred futures: the copy says « 8
+départs sur 10 », never « 8 chances sur 10 ».
+_Avoid_: scenario, path, chance
+
+**Fall replayed**:
+_En français_ : Face à l'histoire
+Today's investments put through one of the great falls — those of 2000,
+2008, 2020 and 2022 — from its peak, in the euros of the day: the worst
+month against what had gone in, and how long until the money was worth it
+again, with the payments and without.
+_Avoid_: stress test, crash simulation
+
+**Sustainable withdrawal**:
+_En français_ : revenu durable
+The yearly share of the money that could have been taken out for thirty
+years from every start since 1970 without running out.
+_Avoid_: 4 % rule, safe withdrawal rate
+
+**Shift**:
+_En français_ : rendement modifié
+A return the user types in « Hypothèses »: the account's whole history is
+scaled so it returns that over the years, its falls kept.
+_Avoid_: assumption, override
+
 **Long view**:
 _En français_ : votre patrimoine dans N ans
+_On the web, replaced by the trajectory in October 2026; still on the phone
+until its Plan is rebuilt._
 What the savings accounts and each wallet could be worth in 1 to 40 years,
 from today's value, the monthly payments the recurring templates make, a
 yearly return the user can change, and the 2026 French tax on gains for that

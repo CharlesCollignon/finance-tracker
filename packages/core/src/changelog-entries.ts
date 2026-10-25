@@ -17,6 +17,24 @@ import type { ChangelogEntry, RoadmapItem } from "./changelog";
  */
 export const CHANGELOG: readonly ChangelogEntry[] = [
   {
+    id: "2026-10-25-plan-history",
+    date: "2026-10-25",
+    kind: "new",
+    platforms: ["web"],
+    fr: {
+      title: "Plan rejoue vos comptes sur l’histoire des marchés",
+      body: "Plan montre où vos comptes peuvent aller en les rejouant sur ce que les marchés ont vraiment fait depuis 1970 : un chiffre au départ médian, la fourchette où finissent 8 départs sur 10 et le pire départ, en euros d’aujourd’hui.",
+      detail:
+        "« Face à l’histoire » fait traverser à vos placements les chutes de 2000, 2008, 2020 et 2022, avec le temps qu’il a fallu pour retrouver votre mise. « Progression » réunit vos paliers, votre matelas et votre série, et les dates des paliers suivent désormais le départ médian. « Hypothèses » garde chaque chiffre modifiable. Les événements et la vue « dans N ans » laissent place à cette page plus simple.",
+    },
+    en: {
+      title: "Plan replays your accounts on market history",
+      body: "Plan shows where your accounts could go by replaying them on what markets actually did since 1970: one figure from the middle start, the range 8 starts in 10 end in, and the worst start, in today’s euros.",
+      detail:
+        "“Facing history” puts your investments through the falls of 2000, 2008, 2020 and 2022, with how long it took to get your stake back. “Progress” brings your milestones, cushion and run together, and the milestones’ dates now follow the middle start. “Assumptions” keeps every figure yours to change. The events and the “in N years” view give way to this simpler page.",
+    },
+  },
+  {
     id: "2026-10-25-close-on-bearing",
     date: "2026-10-25",
     kind: "better",
