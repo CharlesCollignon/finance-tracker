@@ -17,6 +17,24 @@ import type { ChangelogEntry, RoadmapItem } from "./changelog";
  */
 export const CHANGELOG: readonly ChangelogEntry[] = [
   {
+    id: "2026-10-25-iphone-home-screen",
+    date: "2026-10-25",
+    kind: "new",
+    platforms: ["web"],
+    fr: {
+      title: "Pluclair sur l’écran d’accueil de l’iPhone",
+      body: "Pas encore d’app iPhone, mais la page de téléchargement montre comment mettre Pluclair sur l’écran d’accueil depuis Safari, en trois gestes : il s’ouvre ensuite en plein écran, comme une app.",
+      detail:
+        "Sur un iPhone, l’accueil propose « Installer sur iPhone » au lieu du fichier Android, et la page commence par ces gestes. Depuis un ordinateur, un QR code ouvre Pluclair sur l’iPhone.",
+    },
+    en: {
+      title: "Pluclair on the iPhone’s home screen",
+      body: "No iPhone app yet, but the download page shows how to put Pluclair on your home screen from Safari, in three steps: it then opens full screen, like an app.",
+      detail:
+        "On an iPhone, the home page offers “Install on iPhone” instead of the Android file, and the page starts with those steps. On a computer, a QR code opens Pluclair on the iPhone.",
+    },
+  },
+  {
     id: "2026-10-25-download-page",
     date: "2026-10-25",
     kind: "better",
@@ -1305,11 +1323,11 @@ export const ROADMAP: readonly RoadmapItem[] = [
     id: "stores",
     fr: {
       title: "Dans les stores",
-      body: "Pluclair sur Google Play et l’App Store. En attendant, l’application Android se télécharge sur ce site.",
+      body: "Pluclair sur Google Play et l’App Store. En attendant, l’application Android se télécharge sur ce site, et Pluclair se met sur l’écran d’accueil de l’iPhone.",
     },
     en: {
       title: "In the stores",
-      body: "Pluclair on Google Play and the App Store. Until then, the Android app downloads from this site.",
+      body: "Pluclair on Google Play and the App Store. Until then, the Android app downloads from this site, and Pluclair goes on the iPhone’s home screen.",
     },
   },
 ];
