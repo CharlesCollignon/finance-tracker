@@ -36,22 +36,6 @@ export const landingSample = {
    * count. `spendByCategory` sums to it.
    */
   expenses: 1453,
-  /** The Plan page: a year ahead, the milestones on the way, the cushion. */
-  plan: {
-    byLabel: "March 2027",
-    milestones: [
-      { amount: 5000, monthsAway: 0 },
-      { amount: 10000, monthsAway: 4 },
-      { amount: 25000, monthsAway: 26 },
-    ],
-    /** Months of fixed costs the savings cover, out of the six to aim for. */
-    cushionMonths: 3,
-    /**
-     * What the milestones are measured on today — the savings and what the
-     * DCA has put by, with their return — so the next one is four months off.
-     */
-    towards: 8600,
-  },
   transactions: [
     {
       name: "Acme Corp",
@@ -631,7 +615,6 @@ export function landingSampleFor(locale: Locale) {
   return {
     ...landingSample,
     monthLabel: fr.monthLabel,
-    plan: { ...landingSample.plan, byLabel: fr.planByLabel },
     transactions: landingSample.transactions.map((row, index) => ({
       ...row,
       ...fr.transactions[index],

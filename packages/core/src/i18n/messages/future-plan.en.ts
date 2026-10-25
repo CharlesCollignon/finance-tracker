@@ -4,34 +4,14 @@
  * set of words for the web and the phone; `en.ts` mounts it as `futurePlan`.
  */
 export const futurePlanEn = {
-  intro: "Where your money is heading, if things carry on as they are.",
-
-  /* A year from now */
-  yearTitle: "A year from now",
   scrubPoint: "{month}: {amount}",
-
-  /* The year ahead, account by account */
-  inMonthsTitle: "In {count} months",
   inYearsTitle: { one: "A year from now", other: "{count} years from now" },
-  horizonMonths: "{count} months",
-  yearAllGrounded: "across all your accounts, by {month}",
   accountCurrent: "Current account",
   accountElsewhere: "Other savings",
-
-  /* Why */
-  whyLeadIncome: "Each month, out of {amount} coming in",
-  rangeLine: "8 chances in 10: between {low} and {high}",
-  afterTaxLine: "or {amount} after tax if you sold everything",
-  realTerms: "In today's euros",
-  whyTitle: "Why",
-  flowCommitted: "Fixed costs",
-  flowEveryday: "Everyday spending",
-  flowCurrentStays: "Stays on the current account",
 
   /* What if, aimed */
   whatIfTo: "Into",
   whatIfToLabel: "Where the extra goes",
-  whatIfResultBy: "{amount} more by {month}",
 
   /* What if */
   whatIfTitle: "What if…",
@@ -43,24 +23,13 @@ export const futurePlanEn = {
     other: "{milestone} reached {count} months sooner",
   },
   whatIfNowReached: "{milestone} reached in {month}",
-
-  /* Milestones */
-  milestonesTitle: "Your milestones",
-  milestonesBasis: "Your savings and investments, growing at their return",
-  milestoneReached: "Reached",
-  milestoneIn: { one: "in {count} month", other: "in {count} months" },
   milestoneBeyond: "beyond {count} years",
   milestoneNew: "New milestone!",
-
-  /* Cushion */
-  cushionTitle: "Your safety cushion",
-  cushionBody: "{months} of fixed costs covered by your savings",
   cushionMonths: { one: "{count} month", other: "{count} months" },
   cushionNext: "Next step: {months}",
   cushionFull: "Six months covered: your cushion is complete.",
   cushionNoFixed:
     "Add your fixed costs in Recurring and your cushion will be measured here.",
-  horizon: "Horizon",
   years: { one: "{count} year", other: "{count} years" },
   today: "Today",
   accountsReset: "Back to my figures",

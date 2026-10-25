@@ -90,7 +90,7 @@ export const landingCopyFr: LandingCopySections & {
     body: "Le même compte sur votre ordinateur, avec de la place pour voir loin.",
     items: [
       { id: "wallets", caption: "Ce que contiennent vraiment vos fonds" },
-      { id: "plan", caption: "Votre matelas, et les caps à venir" },
+      { id: "plan", caption: "Votre trajectoire, face à l’histoire" },
       { id: "property", caption: "Votre logement, et la part qui est à vous" },
       { id: "month-read", caption: "Votre mois, mis en mots" },
     ],
@@ -269,21 +269,21 @@ export const landingCopyFr: LandingCopySections & {
     },
     plan: {
       title: "Plan",
-      body: "Votre matelas de sécurité, vos paliers, et la vue longue.",
+      body: "Votre trajectoire, les grandes chutes des marchés, et vos paliers.",
       utility:
-        "Ce que vos propres chiffres donnent si les choses continuent ainsi : l’année à venir, les paliers que votre épargne franchira et quand, un matelas de sécurité compté en mois de dépenses fixes, et ce que chaque compte pourrait valoir plus tard, après impôts. Rien ici ne déplace d’argent.",
+        "Vos propres comptes rejoués sur ce que les marchés ont vraiment fait depuis 1970 : où ils peuvent aller dans un à trente ans, en euros d’aujourd’hui, ce que les grandes chutes leur auraient fait, et les paliers que votre épargne franchira. Le passé ne dit pas l’avenir, et rien ici ne déplace d’argent.",
       steps: [
         {
-          title: "Voyez l’année à venir",
-          body: "Chaque compte mois par mois, d’après ce que vous avez déjà prévu, et pourquoi l’argent y arrive. Faites glisser pour mettre un peu plus de côté sur le compte de votre choix, et l’année finit plus haut.",
+          title: "Votre trajectoire",
+          body: "Chaque compte, rejoué depuis chaque mois de départ depuis 1970 : le chiffre du départ médian, et la fourchette où finissent 8 départs sur 10, avec le pire nommé. Faites glisser pour mettre un peu plus de côté sur le compte de votre choix.",
         },
         {
-          title: "Votre matelas de sécurité",
-          body: "Combien de mois de dépenses fixes votre épargne couvrirait si vos revenus s’arrêtaient.",
+          title: "Face à l’histoire",
+          body: "Ce que 2000, 2008, 2020 et 2022 auraient fait à ce que vous avez placé aujourd’hui, et en combien de mois votre mise serait revenue, en continuant vos versements.",
         },
         {
-          title: "La vue longue",
-          body: "Ce qu’un Livret A, un PEA, une assurance vie, un compte-titres, un PER ou de la crypto pourrait valoir dans dix ou vingt ans, après l’impôt que chacun paie en France. Une estimation, présentée comme telle.",
+          title: "Vos paliers et votre matelas",
+          body: "Les montants ronds que votre épargne franchira, et quand ; et combien de mois de dépenses fixes elle couvrirait si vos revenus s’arrêtaient.",
         },
       ],
     },
@@ -453,9 +453,9 @@ export const landingCopyFr: LandingCopySections & {
       from: "D’où",
     },
     plan: {
-      heading: "Votre argent, compte par compte",
-      hint: "Choisissez l’horizon, mettez un peu plus de côté, choisissez où : chaque compte bouge avec.",
-      note: "Rien n’est déplacé : c’est le calcul du Plan, sur un mois d’exemple.",
+      heading: "Votre argent, rejoué depuis 1970",
+      hint: "Choisissez l’horizon, mettez un peu plus de côté, choisissez où : la trajectoire bouge avec.",
+      note: "Rien n’est déplacé : c’est le calcul du Plan, sur les comptes d’une personne d’exemple. Le passé ne dit pas l’avenir.",
     },
     wallets: {
       heading: "Ce que contient vraiment un fonds",
@@ -505,7 +505,7 @@ export const landingCopyFr: LandingCopySections & {
             badge: "8 ans",
             badgeLabel: "avant l’avantage fiscal",
             inApp:
-              "Les supports cotés suivent leur cours tout seuls ; un fonds euros, vous notez sa valeur. La vue longue estime ce qu’il restera après l’impôt.",
+              "Les supports cotés suivent leur cours tout seuls ; un fonds euros, vous notez sa valeur. Le Plan estime ce qu’il restera après l’impôt.",
             tax: "Après huit ans, {allowance} de gains par an sans impôt sur le revenu ({couple} à deux), puis {rate}. Les prélèvements sociaux restent à {social}.",
             progress: "{count}e année sur huit",
             allowance:
@@ -532,7 +532,7 @@ export const landingCopyFr: LandingCopySections & {
             badge: "Déductible",
             badgeLabel: "du revenu imposable",
             inApp:
-              "Ce que vous y avez versé et ce que ça vaut aujourd’hui. La vue longue estime ce qu’il restera après l’impôt.",
+              "Ce que vous y avez versé et ce que ça vaut aujourd’hui. Le Plan estime ce qu’il restera après l’impôt.",
             tax: "Les versements se déduisent du revenu imposable, dans le plafond indiqué sur votre avis d’impôt. L’argent reste bloqué jusqu’à la retraite, sauf exceptions comme l’achat de la résidence principale.",
             paid: "Versé en {year}",
             total: "Sur l’année",

@@ -18,7 +18,6 @@
  */
 export const landingSampleFr = {
   monthLabel: "mars 2026",
-  planByLabel: "mars 2027",
 
   /** In the order `landingSample.transactions` holds them. */
   transactions: [

@@ -102,10 +102,10 @@ export const landingCopy = {
   /** The desktop screens, a gallery that runs sideways as the page scrolls. */
   gallery: {
     heading: "On a bigger screen",
-    body: "The same account on your computer, with room for the long view.",
+    body: "The same account on your computer, with room to look further ahead.",
     items: [
       { id: "wallets", caption: "What your funds are really made of" },
-      { id: "plan", caption: "Your cushion, and the milestones ahead" },
+      { id: "plan", caption: "Your trajectory, held up to history" },
       { id: "property", caption: "Your home, and how much of it is yours" },
       { id: "month-read", caption: "Your month, put into words" },
     ],
@@ -300,21 +300,21 @@ export const landingCopy = {
     {
       id: "plan",
       title: "Plan",
-      body: "Your safety cushion, your milestones, and the long view.",
+      body: "Your trajectory, the great market falls, and your milestones.",
       utility:
-        "What your own figures give if things carry on: the year ahead, the milestones your savings will pass and when, a safety cushion counted in months of fixed spending, and what each account could be worth later, after French tax. Nothing here moves any money.",
+        "Your own accounts replayed on what markets actually did since 1970: where they could be in one to thirty years, in today’s euros, what the great falls would have done to them, and the milestones your savings will pass. The past is not a promise, and nothing here moves any money.",
       steps: [
         {
-          title: "See the year ahead",
-          body: "Every account, month by month, from what you have already planned, and why the money ends up there. Slide to set a little more aside in the account you choose, and watch the year end higher.",
+          title: "Your trajectory",
+          body: "Every account, replayed from every starting month since 1970: the middle start’s figure, and the range 8 starts in 10 end in, with the worst one named. Slide to set a little more aside in the account you choose.",
         },
         {
-          title: "Your safety cushion",
-          body: "How many months of fixed spending your savings would cover if your income stopped.",
+          title: "Held up to history",
+          body: "What 2000, 2008, 2020 and 2022 would have done to what you have invested today, and how many months until it was worth what you had put in, payments carrying on.",
         },
         {
-          title: "The long view",
-          body: "What a savings account, a PEA, life insurance, a brokerage account, a PER or crypto could be worth in ten or twenty years, after the tax each pays in France. An estimate, and labelled as one.",
+          title: "Your milestones and your cushion",
+          body: "The round amounts your savings will pass, and when; and how many months of fixed spending they would cover if your income stopped.",
         },
       ],
     },
@@ -495,9 +495,9 @@ export const landingCopy = {
       from: "From",
     },
     plan: {
-      heading: "Your money, account by account",
-      hint: "Pick a window, set a little more aside, choose where: every account moves with it.",
-      note: "Nothing is moved: this is the Plan’s arithmetic on a sample month.",
+      heading: "Your money, replayed since 1970",
+      hint: "Pick a horizon, set a little more aside, choose where: the trajectory moves with it.",
+      note: "Nothing is moved: this is the Plan’s replay, on a sample person’s accounts. The past is not a promise.",
     },
     wallets: {
       heading: "What one fund really holds",
@@ -547,7 +547,7 @@ export const landingCopy = {
             badge: "8 years",
             badgeLabel: "to its tax break",
             inApp:
-              "Funds with a price follow it on their own; a euro fund, you note its value. The long view estimates what is left after tax.",
+              "Funds with a price follow it on their own; a euro fund, you note its value. The Plan estimates what is left after tax.",
             tax: "After eight years, {allowance} of gains a year free of income tax ({couple} for a couple), then {rate}. Social contributions stay at {social}.",
             progress: "Year {count} of eight",
             allowance: "of gains a year free of income tax, once it is eight",
@@ -569,7 +569,7 @@ export const landingCopy = {
             badge: "Deductible",
             badgeLabel: "from your taxable income",
             inApp:
-              "What you paid in and what it is worth today. The long view estimates what is left after tax.",
+              "What you paid in and what it is worth today. The Plan estimates what is left after tax.",
             tax: "Payments come off your taxable income, within the ceiling printed on your tax notice. The money stays in until retirement, bar a few exceptions such as buying your home.",
             paid: "Paid in, {year}",
             total: "Over the year",
