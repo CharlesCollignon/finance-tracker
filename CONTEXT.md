@@ -385,8 +385,7 @@ _Avoid_: assumption, override
 
 **Long view**:
 _En français_ : votre patrimoine dans N ans
-_On the web, replaced by the trajectory in October 2026; still on the phone
-until its Plan is rebuilt._
+_Replaced by the trajectory in October 2026, on the web and on the phone._
 What the savings accounts and each wallet could be worth in 1 to 40 years,
 from today's value, the monthly payments the recurring templates make, a
 yearly return the user can change, and the 2026 French tax on gains for that

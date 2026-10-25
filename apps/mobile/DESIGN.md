@@ -328,9 +328,7 @@ gold; the phone had 89 gold references against the web's 12.
 One exception: **a moment**, something the user did said back to them where
 it happened. On Plan, a milestone reached and the rungs of a cushion passed —
 and on Le point, a run still alive and the best month among the bars — may
-take the accent, with the orb's warm light behind them (`components/plan/Glow.tsx`: a
-radial wash of the orb's body colour breathing on its period — light, not a
-shadow). In the close sheet, a closed month's Kept counts up in gold and, when
+take the accent. In the close sheet, a closed month's Kept counts up in gold and, when
 the close extended the run, a pill with the flame says so; and an emptied
 review inbox says so with a gold tick and how many shops it just taught; and a loan half
 repaid or repaid, or half a home the user's, carries a gold pill, popping once per phone
@@ -414,32 +412,41 @@ launcher icons are a still render of the same palette
 
 ### Plan
 
-The one screen made to come back to: where the money is heading rather than
-where it went (`app/(tabs)/planning.tsx`, the twin of the web's Plan, every
-figure from `@finance/core/future-plan`). Top to bottom:
+Where the money could go, replayed on what markets actually did
+(`app/(tabs)/planning.tsx`, the twin of the web's Plan since October 2026,
+`docs/plans/PLAN_REDESIGN_PLAN.md`). Every figure comes from
+`@finance/core/history`: the user's own accounts put through every start
+since January 1970, in today's euros. The screen is drawn once the
+investments' value has come, because every card counts them. Top to bottom:
 
-- **A year from now** — the hero. What is kept in twelve months counts up
-  over a curve that fades in; a finger along it reads each month out
-  in the line above, with a selection tick per month. Under it, **What if…**:
-  a 0–500 € slider in 25 € steps (`ExtraSlider`, the whole 48pt row takes
-  the finger, adjustable for a screen reader) and three chips, drawing the
-  same year with that much more as a dashed line, and saying how much sooner
-  the next milestone comes — with a tick the moment sliding brings it closer.
-- **Milestones** — the last two passed as badges that spring in with the
-  glow behind them, the next three with when and how far along. One passed
-  since the last visit says "New milestone!", once, with a success haptic.
-- **Cushion** — months of fixed costs the savings at hand cover (every
-  savings account but a PEL, which a withdrawal closes), as a gauge whose 1,
-  3 and 6 month rungs light up.
-- **The long view** — the net value after French tax in N years, what that
-  is in today's euros and the income it could pay; under it, quietly, which
-  account each part is in — a thin bar split by account (2pt gaps, the chart
-  palette without its gold, four accounts then "Others") and one muted line
-  naming them, following the year under the finger. Then a stacked chart that
-  fades in and reads out per year, and the knobs: steppers for
-  the horizon, inflation and withdrawal rate, and one row per account
-  prefilled from the user's figures. Edits are remembered on the phone until
-  "Back to my figures".
+- **Votre trajectoire** — the hero, in a bezel. A segmented control for the
+  horizon (1, 5, 10, 20, 30 years); the middle start at that horizon counts
+  to its new value; under it in words the band eight starts in ten end in,
+  the value after tax, the worst start by its month. The chart is one gold
+  line inside a gold-washed band with round amounts as gridlines; a finger
+  along it reads a month out in the lines above, with a tick each year it
+  crosses. « Avec vos biens » adds the homes' net value as a plain line.
+  **Et si…**: the 0–500 € slider (`ExtraSlider`) and three chips, and the
+  account it goes to; the replay follows once the slider has rested 150 ms,
+  as two replays per step are too much for the phone, and one line says
+  what it adds by the horizon year. « D'où vient ce chiffre » unfolds each
+  account today → then, the history it follows, how often it ended below
+  prices, the withdrawal that has always lasted thirty years, and the caveat.
+- **Face à l'histoire** — today's investments from the peaks of 2000, 2008,
+  2020 and 2022: one sentence of what happened, the worst month against
+  what had gone in, how long until it was back, with and without the
+  payments, and a two-line chart. With nothing invested, how often the
+  Livret A paid less than prices rose, and the way to Placements.
+- **Progression** — reached milestones as gold pills, the next with its date
+  on the middle start and what « Et si… » does to it; the cushion's three
+  rungs; the run, and the way to Le point. A milestone crossed since the
+  last visit pops once (a zoom on the enter duration) with a success haptic.
+- **Hypothèses**, folded — each account's figures, the return pre-filled
+  from its history (a PEL's contract rate, nothing for bitcoin), fees and
+  tax; a changed return shifts the account's whole history. Each home's
+  yearly growth, saved for the account when the field is left. Then the
+  sources, each a link. Edits are kept on the phone (`plan-hypotheses:v1:`),
+  read with the web's rule.
 
 The run, the close and the months moved to Le point in October 2026
 (`components/bearing/MomentumCard.tsx`): the streak and its last six months,
@@ -448,7 +455,7 @@ fading in with the best one in gold, and behind a disclosure the close's
 history and its two settings. The attention row's « Faire le bilan » opens
 the close there, stamped so a second ask opens it again.
 
-Reduced motion turns every fade, spring and breath into a cut.
+Reduced motion turns every fade and pop into a cut.
 
 ### Placements
 
