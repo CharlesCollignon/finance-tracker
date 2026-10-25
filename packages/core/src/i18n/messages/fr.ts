@@ -1166,6 +1166,8 @@ export const fr: Messages = {
       "Un lien de confirmation vient de partir à {email}. Ouvrez-le, sur n'importe quel appareil, pour activer votre compte.",
     checkInboxSpam:
       "Rien d'ici quelques minutes\u00A0? Regardez dans vos indésirables.",
+    checkInboxThenSignIn:
+      "Le lien s'ouvre dans votre navigateur. Une fois l'adresse confirmée, revenez ici et connectez-vous.",
     resendConfirmation: "Renvoyer l'e-mail",
     resendingConfirmation: "Envoi…",
     resendIn: "Renvoyer dans {seconds}\u00A0s",
@@ -1175,8 +1177,6 @@ export const fr: Messages = {
     alreadyConfirmed: "Adresse confirmée\u00A0?",
     redirecting: "Redirection…",
     finishingSignIn: "Connexion en cours…",
-    confirmEmail:
-      "Ouvrez l'e-mail que nous venons d'envoyer pour confirmer votre compte, puis connectez-vous.",
     googleStartFailed: "Impossible de lancer la connexion avec Google.",
     googleCancelled: "Connexion avec Google annulée.",
     googleFailed: "Impossible de terminer la connexion avec Google.",

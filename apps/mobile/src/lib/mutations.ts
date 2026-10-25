@@ -1,6 +1,7 @@
 import {
   authSchema,
   recurringTemplateSchema,
+  signUpSchema,
 } from "@finance/core/validations/finance";
 import {
   profileSchema,
@@ -351,6 +352,15 @@ export async function deleteAllUserData(
 /** Validate credentials shape for forms that don't go through AuthProvider. */
 export function validateAuthInput(email: string, password: string) {
   return authSchema.safeParse({ email, password });
+}
+
+/** The same, for signing up: the password typed twice. */
+export function validateSignUpInput(
+  email: string,
+  password: string,
+  confirm: string,
+) {
+  return signUpSchema.safeParse({ email, password, confirm });
 }
 
 /**

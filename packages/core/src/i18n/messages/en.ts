@@ -1517,6 +1517,8 @@ export const en = {
     checkInboxBody:
       "A confirmation link is on its way to {email}. Open it on any device to activate your account.",
     checkInboxSpam: "Nothing within a few minutes? Look in your spam folder.",
+    checkInboxThenSignIn:
+      "The link opens in your browser. Once your address is confirmed, come back here and sign in.",
     resendConfirmation: "Send it again",
     resendingConfirmation: "Sending…",
     resendIn: "Send again in {seconds}s",
@@ -1526,7 +1528,6 @@ export const en = {
     alreadyConfirmed: "Confirmed already?",
     redirecting: "Redirecting…",
     finishingSignIn: "Finishing sign-in…",
-    confirmEmail: "Check your email to confirm your account, then sign in.",
     googleStartFailed: "Could not start Google sign-in.",
     googleCancelled: "Google sign-in was cancelled.",
     googleFailed: "Could not complete Google sign-in.",
