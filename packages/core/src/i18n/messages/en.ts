@@ -2184,25 +2184,6 @@ export const en = {
     saved: "Saved",
   },
 
-  /**
-   * The Plan card that walks the standing charges forward.
-   *
-   * Two tracks and the ingredients behind them. The card used to state one
-   * number and one caveat, and its whole failure mode was that somebody
-   * whose pay was not a charge had no way to see that from it — hence
-   * `madeOf` and `noIncomeCharge`, which are the point of the group rather
-   * than trimming round the edge of it.
-   *
-   * "Sur les comptes" / "Tout ce qui est gardé" are borrowed from
-   * `bearingFacts` on purpose. The same arithmetic must not go by two names
-   * on two surfaces.
-   */
-  projection: {
-    noIncomeCharge:
-      "No charge brings money in, so your pay is in none of this. Add it under Charges and every figure here changes.",
-    noIncomeCta: "Add a charge",
-  },
-
   /** How long the reserve covers the committed costs. */
   runway: {
     underAMonth: "Under a month of committed costs.",

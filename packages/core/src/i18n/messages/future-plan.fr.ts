@@ -3,67 +3,29 @@ import type { futurePlanEn } from "./future-plan.en";
 /** The French half of `future-plan.en.ts`, mounted by `fr.ts` as `futurePlan`. */
 export const futurePlanFr: typeof futurePlanEn = {
   intro: "Là où va votre argent, si les choses continuent comme aujourd'hui.",
-  estimate: "Une estimation à partir de vos propres chiffres, pas un conseil.",
 
   yearTitle: "Dans un an",
-  scrubHint: "Faites glisser sur la courbe pour voir chaque mois",
   scrubPoint: "{month} : {amount}",
 
   inMonthsTitle: "Dans {count} mois",
   inYearsTitle: { one: "Dans un an", other: "Dans {count} ans" },
   horizonMonths: "{count} mois",
   yearAllGrounded: "sur tous vos comptes, d'ici {month}",
-  yearAllAdded:
-    "sur votre épargne et vos placements d'ici {month}, plus ce que les mois laissent sur le compte courant",
-  yearShownOnly: "sur les comptes affichés, d'ici {month}",
   accountCurrent: "Compte courant",
   accountElsewhere: "Autre épargne",
-  accountsPending: "Placements…",
-  accountToggle: "Afficher ou masquer {name}",
-  currentNoBank:
-    "Sans banque connectée, le compte courant part de zéro\u00A0: il montre ce que les mois y ajoutent.",
-  elsewhereHint:
-    "Mis de côté depuis le compte courant sans qu'un de vos comptes le reçoive, comme la marge laissée chez un courtier au-delà des achats qu'elle paie.",
 
   whyLeadIncome: "Chaque mois, sur {amount} de revenus",
-  flowGrowthLine:
-    "S'y ajoutent {amount} d'intérêts et de rendement estimés d'ici {month}.",
-  eventAdd: "Un événement",
-  detailsLabel: "Le détail",
   rangeLine: "8 chances sur 10\u00a0: entre {low} et {high}",
   afterTaxLine: "soit {amount} après impôts si vous vendiez tout",
   realTerms: "En euros d'aujourd'hui",
-  scrubRange: "entre {low} et {high}",
-  flowGrowthFeesLine:
-    "S'y ajoutent {amount} d'intérêts et de rendement estimés d'ici {month}, après {fees} de frais.",
-  assumptions:
-    "Hypothèses\u00a0: les prix montent de 2\u00a0% par an, salaire et charges avec eux\u00a0; les actions varient d'environ 15\u00a0% par an et la crypto de 65\u00a0%, les livrets rapportent leur taux\u00a0; les frais connus sont déduits.",
   whyTitle: "Pourquoi",
   flowCommitted: "Charges fixes",
   flowEveryday: "Dépenses courantes",
-  flowEverydayUnmeasured:
-    "Les dépenses courantes ne sont pas encore mesurées. Faites le bilan de quelques mois et elles seront déduites ici.",
   flowCurrentStays: "Reste sur le compte courant",
-  flowCurrentFalls: "Sort du compte courant",
 
   whatIfTo: "Sur",
   whatIfToLabel: "Où va le supplément",
   whatIfResultBy: "{amount} de plus d'ici {month}",
-  whatIfClear: "Tout effacer",
-
-  eventsHint: "Faites glisser un repère sur la courbe pour changer son mois.",
-  eventRaise: "Une augmentation",
-  eventBonus: "Une prime",
-  eventExpense: "Une grosse dépense",
-  eventRaiseLine: "+{amount} par mois dès {month}",
-  eventBonusLine: "+{amount} en {month}",
-  eventExpenseLine: "−{amount} en {month}",
-  eventRaiseAmount: "En plus chaque mois",
-  eventAmount: "Montant",
-  eventMonth: "Mois",
-  eventRemove: "Retirer {name}",
-  eventBeyond: "après l'horizon",
-  eventMarker: "{name}, {line}. Les flèches gauche et droite changent le mois.",
 
   whatIfTitle: "Et si…",
   whatIfLabel: "Mettre de côté en plus chaque mois",
@@ -79,7 +41,6 @@ export const futurePlanFr: typeof futurePlanEn = {
   milestonesBasis: "Votre épargne et vos placements, avec leur rendement",
   milestoneReached: "Atteint",
   milestoneIn: { one: "dans {count} mois", other: "dans {count} mois" },
-  milestoneOn: "en {month}",
   milestoneBeyond: "au-delà de {count} ans",
   milestoneNew: "Nouveau palier !",
 
@@ -90,41 +51,10 @@ export const futurePlanFr: typeof futurePlanEn = {
   cushionFull: "Six mois couverts : votre matelas est complet.",
   cushionNoFixed:
     "Ajoutez vos dépenses fixes dans Récurrents et votre matelas sera mesuré ici.",
-  cushionWhy:
-    "Trois à six mois de dépenses fixes de côté, c'est le filet de sécurité habituel en cas de perte d'emploi ou de grosse réparation.",
-
-  longTitle: {
-    one: "Votre patrimoine dans {count} an",
-    other: "Votre patrimoine dans {count} ans",
-  },
-  longNet: "après impôts",
-  longReal: "soit {amount} en euros d'aujourd'hui",
-  longIncome: "un revenu d'environ {amount} par mois",
-  longIncomeHint:
-    "Ce que vous pourriez retirer chaque mois au taux de retrait, en euros d'aujourd'hui.",
-  legendInitial: "Déjà placé",
-  legendContributions: "Vos versements",
-  legendGains: "Gains après impôts",
-  statFuture: "Valeur future",
-  statGains: "Dont gains",
-  statTaxes: "Impôts estimés",
-  statNet: "Valeur nette",
   horizon: "Horizon",
   years: { one: "{count} an", other: "{count} ans" },
   today: "Aujourd'hui",
-  inYears: { one: "dans {count} an", other: "dans {count} ans" },
-  inflation: "Inflation",
-  inflationHint:
-    "La vitesse à laquelle les prix montent chaque année. 2 % est l'objectif européen.",
-  withdrawalRate: "Taux de retrait",
-  withdrawalHint:
-    "La part de votre patrimoine que vous retireriez chaque année pour en vivre. Le repère le plus répandu est 4\u00A0%.",
-  accountsTitle: "Vos comptes",
-  accountsFromData:
-    "Pré-rempli avec vos placements, vos versements récurrents et leurs frais.",
   accountsReset: "Revenir à mes chiffres",
-  accountAdd: "Ajouter un compte",
-  accountRemove: "Retirer {name}",
   fieldInitial: "Dessus aujourd'hui",
   fieldMonthly: "Chaque mois",
   fieldReturn: "Rendement par an",
@@ -142,7 +72,6 @@ export const futurePlanFr: typeof futurePlanEn = {
   taxCrypto:
     "Impôt forfaitaire de 31,4\u00A0%, sur les ventes au-delà de 305\u00A0€ par an.",
   taxLivret: "Aucun : le Livret A, le LDDS et le LEP sont défiscalisés.",
-  taxSource: "Taux 2026, simplifiés à un taux par compte.",
 
   runTitle: "Votre série",
   runCount: {

@@ -1,15 +1,12 @@
 import { useState } from "react";
-import { Pressable, TextInput, View } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
+import { TextInput, View } from "react-native";
 
 import { parseTypedAmount } from "@finance/core/amount-input";
 import { INTL_LOCALES } from "@finance/core/i18n/locale";
 
 import { Text } from "@/components/ui/Text";
-import { hapticSelection } from "@/lib/haptics";
 import { useCurrency } from "@/providers/CurrencyProvider";
-import { useLocale, useT } from "@/providers/LocaleProvider";
-import { ICON } from "@/theme/tokens";
+import { useLocale } from "@/providers/LocaleProvider";
 import { useThemeColors } from "@/theme/useThemeColors";
 
 import { percentDigits } from "./format";
@@ -106,98 +103,6 @@ export function NumberField({
           {kind === "percent" ? "%" : symbol}
         </Text>
       </View>
-    </View>
-  );
-}
-
-/**
- * A value moved in steps by a minus and a plus: the horizon, inflation, the
- * withdrawal rate. A screen reader adjusts it with the system's swipe, like
- * a native slider; the two buttons are there for everyone else.
- */
-export function Stepper({
-  label,
-  valueText,
-  hint,
-  canDecrease,
-  canIncrease,
-  onDecrease,
-  onIncrease,
-}: {
-  label: string;
-  valueText: string;
-  hint?: string;
-  canDecrease: boolean;
-  canIncrease: boolean;
-  onDecrease: () => void;
-  onIncrease: () => void;
-}) {
-  const t = useT();
-  const colors = useThemeColors();
-
-  const step = (go: () => void) => () => {
-    void hapticSelection();
-    go();
-  };
-
-  return (
-    <View className="gap-1">
-      <View className="flex-row items-center justify-between gap-3">
-        <View
-          accessible
-          accessibilityRole="adjustable"
-          accessibilityLabel={label}
-          accessibilityValue={{ text: valueText }}
-          accessibilityHint={hint}
-          accessibilityActions={[{ name: "increment" }, { name: "decrement" }]}
-          onAccessibilityAction={(event) => {
-            if (event.nativeEvent.actionName === "increment" && canIncrease) {
-              onIncrease();
-            }
-            if (event.nativeEvent.actionName === "decrement" && canDecrease) {
-              onDecrease();
-            }
-          }}
-          className="min-w-0 flex-1"
-        >
-          <Text className="text-sm font-medium">{label}</Text>
-        </View>
-        <View className="flex-row items-center gap-1">
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel={t("planPhone.stepDown")}
-            accessibilityHint={label}
-            disabled={!canDecrease}
-            onPress={step(onDecrease)}
-            className="h-12 w-12 items-center justify-center rounded-full border border-border"
-            style={{ opacity: canDecrease ? 1 : 0.4 }}
-          >
-            <Ionicons name="remove" size={ICON.lg} color={colors.foreground} />
-          </Pressable>
-          <Text
-            className="min-w-[68px] text-center text-base font-semibold tabular-nums"
-            numberOfLines={1}
-          >
-            {valueText}
-          </Text>
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel={t("planPhone.stepUp")}
-            accessibilityHint={label}
-            disabled={!canIncrease}
-            onPress={step(onIncrease)}
-            className="h-12 w-12 items-center justify-center rounded-full border border-border"
-            style={{ opacity: canIncrease ? 1 : 0.4 }}
-          >
-            <Ionicons name="add" size={ICON.lg} color={colors.foreground} />
-          </Pressable>
-        </View>
-      </View>
-      {hint ? (
-        <Text variant="muted" className="text-xs">
-          {hint}
-        </Text>
-      ) : null}
     </View>
   );
 }

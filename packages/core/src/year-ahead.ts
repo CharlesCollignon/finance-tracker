@@ -78,13 +78,6 @@ export interface YearAheadEvent {
   month: number;
 }
 
-/** What a new event starts at, before the reader changes it. */
-export const YEAR_AHEAD_EVENT_DEFAULTS: Record<YearAheadEventKind, number> = {
-  raise: 100,
-  bonus: 1000,
-  expense: 2000,
-};
-
 /** Past this many, the curve is a calendar rather than a picture. */
 export const YEAR_AHEAD_MAX_EVENTS = 6;
 

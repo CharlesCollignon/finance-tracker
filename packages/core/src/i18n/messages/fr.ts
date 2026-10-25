@@ -1623,12 +1623,6 @@ export const fr: Messages = {
     saved: "Enregistré",
   },
 
-  projection: {
-    noIncomeCharge:
-      "Aucune opération récurrente n'apporte de revenu\u00A0: votre salaire n'entre dans aucun de ces chiffres. Ajoutez-le dans Récurrents et tout change ici.",
-    noIncomeCta: "Ajouter un revenu récurrent",
-  },
-
   runway: {
     underAMonth: "Moins d'un mois de dépenses fixes.",
     months: "{count} mois de dépenses fixes.",

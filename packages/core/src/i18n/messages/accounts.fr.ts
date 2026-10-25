@@ -82,8 +82,6 @@ export const accountsFr: typeof accountsEn = {
   emptyBody:
     "Livret A, PEL, PEA… Ajoutez ceux que vous avez, et le Plan dira ce que devient chacun.",
 
-  breakdown: "Par compte",
-
   analysisIntro:
     "Ce que rapporte chaque compte, comment votre argent est réparti, et ce qu'il vous coûte.",
   returnSavings: "{rate} par an, net d'impôt",

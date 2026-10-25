@@ -2,12 +2,18 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 
 import { getCurrentMonth, todayIsoLocal } from "@finance/core/constants";
 import {
-  ENVELOPE_ORDER,
   envelopesFromData,
   monthlyContributions,
   type Envelope,
-  type EnvelopeId,
 } from "@finance/core/future-plan";
+import type { PositionForMix } from "@finance/core/history/mix";
+import {
+  parseHypothesesEdits,
+  parseTrajectorySettings,
+  TRAJECTORY_DEFAULT_SETTINGS,
+  type HypothesesEdits,
+  type TrajectorySettings,
+} from "@finance/core/history/plan-settings";
 import type { Locale } from "@finance/core/i18n/locale";
 import type { InvestmentWalletId } from "@finance/core/investments";
 import { planWealthFromPortfolio } from "@finance/core/investment-positions";
@@ -18,12 +24,7 @@ import {
   type ForwardProjection,
 } from "@finance/core/projection";
 import type { RecurringTemplateWithCategory } from "@finance/core/types/database";
-import {
-  parseYearAheadSettings,
-  YEAR_AHEAD_DEFAULT_SETTINGS,
-  YEAR_AHEAD_MAX_MONTHS,
-  type YearAheadSettings,
-} from "@finance/core/year-ahead";
+import { YEAR_AHEAD_MAX_MONTHS } from "@finance/core/year-ahead";
 import * as preferences from "@finance/data/preferences";
 
 import {
@@ -42,15 +43,17 @@ import {
 } from "@/lib/savings-accounts";
 
 /**
- * What the Plan screen reads, in two loads.
+ * What the Plan screen reads, in two loads, as the web's page does
+ * (`apps/web/lib/queries/plan.ts`).
  *
- * The year ahead, the cushion and the run come from the ledger alone — a few
- * indexed reads — and are on screen at once. The long view also needs what
- * each investment account is worth today, which asks the market for prices,
- * so it arrives on its own and never holds the rest of the screen back.
+ * The ledger's part — the recurring entries, the savings, the run — comes
+ * from a few indexed reads. What each investment account is worth asks the
+ * market for prices, so it arrives on its own; the screen waits for both,
+ * because every card counts the investments.
  */
 
 export interface PlanBase {
+  today: string;
   year: number;
   month: number;
   templates: RecurringTemplateWithCategory[];
@@ -60,6 +63,11 @@ export interface PlanBase {
   savingsReserve: number;
   /** The savings accounts the user declared, with today's balances. */
   savings: SavingsAccountView[];
+  /**
+   * The run of months closed inside the allowance, for « Progression »;
+   * null before a month has been measured. The close itself is on Le point.
+   */
+  run: { streak: number; best: number } | null;
   /**
    * The months ahead from the recurring templates, as far as the year
    * ahead's longest window: the card draws as many as the reader asks.
@@ -85,6 +93,7 @@ export async function gatherPlanBase(
   ]);
 
   return {
+    today,
     year,
     month,
     templates,
@@ -94,6 +103,10 @@ export async function gatherPlanBase(
     ),
     savingsReserve,
     savings: savings.accounts,
+    run:
+      closes.summary.sample > 0
+        ? { streak: closes.summary.streak, best: closes.summary.bestStreak }
+        : null,
     projection: buildForwardProjection({
       templates,
       year,
@@ -114,6 +127,11 @@ export interface PlanWealth {
   wallets: Partial<Record<InvestmentWalletId, number>>;
   /** The account each position-linked recurring purchase goes into. */
   templateWallets: Record<string, InvestmentWalletId>;
+  /**
+   * Every position, with what it is worth and what it is: the history each
+   * wallet follows is read from its funds (`walletMixes`).
+   */
+  positions: PositionForMix[];
   /**
    * What each account costs a year, funds and envelope together, as a
    * fraction — taken off its return in the year ahead. The web reads the
@@ -164,7 +182,7 @@ export function planEnvelopes(
         "savings",
       year: base.year,
       month: base.month,
-      today: todayIsoLocal(),
+      today: base.today,
     }),
   });
 }
@@ -172,130 +190,65 @@ export function planEnvelopes(
 /* ------------------------------------------------------- what is remembered */
 
 /**
- * The long view's knobs, kept on the phone. `envelopes` is null until the
- * user changes one, so the accounts follow their figures until then and go
- * back to following them on "Back to my figures".
+ * How the reader left the trajectory, and what they changed in
+ * « Hypothèses », kept on the phone and read with the web's rule
+ * (`@finance/core/history/plan-settings`). The keys before October 2026 —
+ * the long view's and the year ahead's — are no longer read: their returns
+ * were presets, not history.
  */
-export interface PlanSettings {
-  envelopes: Envelope[] | null;
-  years: number;
-  inflation: number;
-  withdrawalRate: number;
-}
+const TRAJECTORY_KEY = "plan-trajectory:v1:";
+const HYPOTHESES_KEY = "plan-hypotheses:v1:";
 
-export const DEFAULT_PLAN_SETTINGS: PlanSettings = {
-  envelopes: null,
-  years: 20,
-  inflation: 0.02,
-  withdrawalRate: 0.04,
-};
-
-// v2: the accounts gained the savings kinds, and the all-savings account
-// was renamed from "livret" (now "Autre livret") to "savings".
-const SETTINGS_KEY = "plan-future:v2:";
-
-function finite(value: unknown, fallback: number): number {
-  return typeof value === "number" && Number.isFinite(value) ? value : fallback;
-}
-
-/** Anything stored by an older build, or by hand, is read defensively. */
-function readEnvelopes(value: unknown): Envelope[] | null {
-  if (!Array.isArray(value)) {
+async function readStored(key: string): Promise<unknown> {
+  try {
+    const raw = await AsyncStorage.getItem(key);
+    return raw ? (JSON.parse(raw) as unknown) : null;
+  } catch {
     return null;
   }
-  const envelopes = value.flatMap((entry): Envelope[] => {
-    const id = (entry as { id?: unknown })?.id;
-    if (!ENVELOPE_ORDER.includes(id as EnvelopeId)) {
-      return [];
-    }
-    const row = entry as Record<string, unknown>;
-    return [
-      {
-        id: id as EnvelopeId,
-        initial: Math.max(0, finite(row.initial, 0)),
-        monthly: Math.max(0, finite(row.monthly, 0)),
-        annualReturn: finite(row.annualReturn, 0),
-        taxOnGains: Math.min(1, Math.max(0, finite(row.taxOnGains, 0))),
-        // Absent in settings saved before fees: the known ones fill it.
-        ...(typeof row.fees === "number" && Number.isFinite(row.fees)
-          ? { fees: Math.min(0.05, Math.max(0, row.fees)) }
-          : {}),
-      },
-    ];
-  });
-  return envelopes;
 }
 
-export async function loadPlanSettings(userId: string): Promise<PlanSettings> {
-  try {
-    const raw = await AsyncStorage.getItem(SETTINGS_KEY + userId);
-    if (!raw) {
-      return DEFAULT_PLAN_SETTINGS;
-    }
-    const stored = JSON.parse(raw) as Record<string, unknown>;
-    return {
-      envelopes: readEnvelopes(stored.envelopes),
-      years: Math.min(
-        40,
-        Math.max(
-          1,
-          Math.round(finite(stored.years, DEFAULT_PLAN_SETTINGS.years)),
-        ),
-      ),
-      inflation: finite(stored.inflation, DEFAULT_PLAN_SETTINGS.inflation),
-      withdrawalRate: finite(
-        stored.withdrawalRate,
-        DEFAULT_PLAN_SETTINGS.withdrawalRate,
-      ),
-    };
-  } catch {
-    return DEFAULT_PLAN_SETTINGS;
-  }
-}
-
-export async function savePlanSettings(
+export async function loadTrajectorySettings(
   userId: string,
-  settings: PlanSettings,
-): Promise<void> {
-  try {
-    await AsyncStorage.setItem(SETTINGS_KEY + userId, JSON.stringify(settings));
-  } catch {
-    // A plan that is not remembered is still a plan.
-  }
+): Promise<TrajectorySettings> {
+  const stored = await readStored(TRAJECTORY_KEY + userId);
+  return stored === null
+    ? TRAJECTORY_DEFAULT_SETTINGS
+    : parseTrajectorySettings(stored);
 }
 
-/**
- * How the reader last left the year ahead: its window, where « Et si… »
- * goes, the accounts taken out, the events added — read with the web's own
- * rule, so a setting means the same thing on both. The extra is not kept:
- * it is something to play with.
- */
-const YEAR_AHEAD_KEY = "plan-year-ahead:v1:";
-
-export async function loadYearAheadSettings(
+export async function saveTrajectorySettings(
   userId: string,
-): Promise<YearAheadSettings> {
-  try {
-    const raw = await AsyncStorage.getItem(YEAR_AHEAD_KEY + userId);
-    return raw
-      ? parseYearAheadSettings(JSON.parse(raw))
-      : YEAR_AHEAD_DEFAULT_SETTINGS;
-  } catch {
-    return YEAR_AHEAD_DEFAULT_SETTINGS;
-  }
-}
-
-export async function saveYearAheadSettings(
-  userId: string,
-  settings: YearAheadSettings,
+  settings: TrajectorySettings,
 ): Promise<void> {
   try {
     await AsyncStorage.setItem(
-      YEAR_AHEAD_KEY + userId,
+      TRAJECTORY_KEY + userId,
       JSON.stringify(settings),
     );
   } catch {
     // Settings that are not remembered still drew the card.
+  }
+}
+
+export async function loadHypothesesEdits(
+  userId: string,
+): Promise<HypothesesEdits> {
+  return parseHypothesesEdits(await readStored(HYPOTHESES_KEY + userId));
+}
+
+export async function saveHypothesesEdits(
+  userId: string,
+  edits: HypothesesEdits,
+): Promise<void> {
+  try {
+    if (Object.keys(edits).length === 0) {
+      await AsyncStorage.removeItem(HYPOTHESES_KEY + userId);
+    } else {
+      await AsyncStorage.setItem(HYPOTHESES_KEY + userId, JSON.stringify(edits));
+    }
+  } catch {
+    // A plan that is not remembered is still a plan.
   }
 }
 

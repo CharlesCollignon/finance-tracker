@@ -31,7 +31,7 @@ export function usePlanMoney() {
 }
 
 /** The month `ahead` months after this one. */
-export function monthAhead(
+function monthAhead(
   year: number,
   month: number,
   ahead: number,
