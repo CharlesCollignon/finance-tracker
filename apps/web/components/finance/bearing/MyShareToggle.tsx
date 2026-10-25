@@ -99,7 +99,7 @@ export function MyShareToggle({ className }: { className?: string }) {
               initial={false}
               animate={{ x: share.on ? 12 : 0 }}
               transition={KNOB_SPRING}
-              className="size-3 rounded-full bg-background shadow-sm"
+              className="size-3 rounded-full bg-background"
             />
           </span>
           <span className="sr-only sm:hidden">{t("space.myShare")}</span>

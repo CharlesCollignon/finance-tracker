@@ -96,8 +96,8 @@ export function SelectionBar({
     >
       <div
         className={cn(
-          "mx-auto flex max-w-lg flex-col gap-3 rounded-control border border-border",
-          "bg-background/95 p-3 shadow-lg backdrop-blur-xl md:max-w-2xl",
+          "mx-auto flex max-w-lg flex-col gap-3 rounded-control border border-hairline-strong",
+          "bg-background/95 p-3 backdrop-blur-xl md:max-w-2xl",
         )}
       >
         {confirming ? (

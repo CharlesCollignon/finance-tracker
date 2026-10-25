@@ -405,7 +405,7 @@ export function AskView({
             )}
           >
             <div className="mx-auto flex w-full max-w-3xl flex-col gap-1.5">
-              <div className="flex items-end gap-2 rounded-card border border-border bg-background/90 p-2 shadow-lg backdrop-blur">
+              <div className="flex items-end gap-2 rounded-card border border-border bg-background/90 p-2 backdrop-blur">
                 <textarea
                   value={draft}
                   onChange={(event) => setDraft(event.target.value)}

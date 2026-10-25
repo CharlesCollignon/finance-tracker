@@ -112,7 +112,7 @@ export function OwnerSwitch({ className }: { className?: string }) {
                     layoutId={`owner-thumb-${thumbId}`}
                     aria-hidden
                     transition={THUMB_SPRING}
-                    className="absolute inset-0 -z-10 rounded-full bg-background shadow-sm ring-1 ring-border"
+                    className="absolute inset-0 -z-10 rounded-full bg-background ring-1 ring-border"
                   />
                 ) : null}
                 {option.label}

@@ -415,7 +415,7 @@ function QuickAddFields({
           className="min-h-10 w-full rounded-control border border-border bg-background px-3 text-base"
         />
         {noteSuggestions.length > 0 ? (
-          <ul className="absolute inset-x-0 top-full z-10 overflow-hidden rounded-control border border-border bg-background shadow-lg">
+          <ul className="absolute inset-x-0 top-full z-10 overflow-hidden rounded-control border border-border bg-background">
             {noteSuggestions.map((rule) => (
               <li key={rule.key}>
                 <button

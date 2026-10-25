@@ -72,7 +72,7 @@ function Composer() {
   const t = useT();
   return (
     <div className="mt-auto flex flex-col gap-1.5">
-      <div className="flex items-end gap-2 rounded-card border border-border bg-background/90 p-2 shadow-lg">
+      <div className="flex items-end gap-2 rounded-card border border-border bg-background/90 p-2">
         <span className="min-h-10 flex-1 truncate px-2 py-2 text-base text-muted-foreground">
           {t("ask.placeholder")}
         </span>

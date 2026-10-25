@@ -816,7 +816,7 @@ function ShareSlide({
           alt={t("yearReview.imageTitle", { year })}
           width={1080}
           height={1350}
-          className="h-auto w-56 rounded-card border border-border shadow-2xl sm:w-64"
+          className="h-auto w-56 rounded-card border border-border sm:w-64"
         />
       </m.div>
       <Rise order={3}>

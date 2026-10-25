@@ -49,7 +49,7 @@ export function OutboxBanner() {
         // there; above the bezel and notch, so nothing covers it.
         "fixed inset-x-0 top-2 z-50 mx-auto w-fit max-w-[calc(100%-2rem)]",
         "md:top-[calc(var(--shell-edge)+var(--shell-notch-height)+0.5rem)]",
-        "flex items-center gap-3 rounded-full border px-4 py-2 shadow-lg",
+        "flex items-center gap-3 rounded-full border px-4 py-2",
         "bg-background/95 backdrop-blur-xl",
         failing ? "border-destructive/50" : "border-border",
       )}

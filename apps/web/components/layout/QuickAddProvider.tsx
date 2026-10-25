@@ -179,7 +179,7 @@ function QuickAddFab() {
         "fixed right-4 z-40 md:hidden",
         "bottom-[calc(var(--shell-bottom-nav-height)+var(--shell-bottom-nav-inset)+env(safe-area-inset-bottom,0px)+1rem)]",
         "flex h-14 w-14 items-center justify-center rounded-full",
-        "bg-primary text-primary-foreground shadow-lg",
+        "bg-primary text-primary-foreground",
         "transition-transform duration-hover active:scale-95",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
       )}

@@ -310,7 +310,7 @@ export function SwipeToast({
           className={cn(
             "pointer-events-auto relative mt-2 flex touch-none items-center gap-3",
             "overflow-hidden rounded-control border px-4 py-3",
-            "text-sm font-medium shadow-lg outline-none select-none",
+            "text-sm font-medium outline-none select-none",
             "focus-visible:ring-2 focus-visible:ring-ring",
             dragging ? "cursor-grabbing" : "cursor-grab",
             SURFACE[variant],
