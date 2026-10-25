@@ -71,7 +71,7 @@ export function NewPositionSheet({
   return (
     <Modal
       visible
-      animationType="slide"
+      animationType="fade"
       transparent
       statusBarTranslucent
       onRequestClose={close}

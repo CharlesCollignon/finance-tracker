@@ -1,11 +1,6 @@
 import { useState } from "react";
 import { Pressable, View } from "react-native";
-import Animated, {
-  FadeIn,
-  FadeInLeft,
-  FadeInRight,
-  FadeOut,
-} from "react-native-reanimated";
+import Animated from "react-native-reanimated";
 
 import { resolveMessage } from "@finance/core/i18n/t";
 
@@ -15,6 +10,7 @@ import { setPropertyShare } from "@/lib/properties";
 import { useT } from "@/providers/LocaleProvider";
 import { useToast } from "@/providers/ToastProvider";
 import { useThemeColors } from "@/theme/useThemeColors";
+import { FADE_IN, FADE_OUT } from "@/components/motion/fade";
 
 /** What the screen knows of a home owned through the space. */
 export interface JointDeedView {
@@ -83,9 +79,7 @@ export function JointDeed({
           return (
             <Animated.View
               key={`${index}-${person.name}`}
-              entering={(index === 0 ? FadeInLeft : FadeInRight)
-                .springify()
-                .damping(16)}
+              entering={FADE_IN}
               className="flex-row items-center gap-2"
             >
               <View
@@ -123,7 +117,7 @@ export function JointDeed({
         })}
       </View>
       {open ? (
-        <Animated.View entering={FadeIn.duration(200)} exiting={FadeOut}>
+        <Animated.View entering={FADE_IN} exiting={FADE_OUT}>
           <SplitEditor
             initial={deed.mine}
             partnerName={deed.partnerName}

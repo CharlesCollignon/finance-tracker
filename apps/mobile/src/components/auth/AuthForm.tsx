@@ -9,7 +9,7 @@ import {
   View,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import Animated, { ZoomIn, ZoomOut } from "react-native-reanimated";
+import Animated from "react-native-reanimated";
 
 import { Orb } from "@/components/Orb";
 import { Button } from "@/components/ui/Button";
@@ -23,6 +23,7 @@ import { validateAuthInput, validateSignUpInput } from "@/lib/mutations";
 import { useAuth } from "@/providers/AuthProvider";
 import { useT } from "@/providers/LocaleProvider";
 import { resolveMessage } from "@finance/core/i18n/t";
+import { FADE_IN, FADE_OUT } from "@/components/motion/fade";
 
 export interface AuthFormProps {
   title: string;
@@ -218,8 +219,8 @@ export function AuthForm({
                   <Text variant="label">{t("auth.confirmPassword")}</Text>
                   {matching ? (
                     <Animated.View
-                      entering={ZoomIn.springify().damping(12)}
-                      exiting={ZoomOut.duration(120)}
+                      entering={FADE_IN}
+                      exiting={FADE_OUT}
                     >
                       <Ionicons
                         name="checkmark-circle"

@@ -3,6 +3,7 @@
 import { m } from "motion/react";
 import { FileText, Sparkle, Warning } from "@phosphor-icons/react";
 import { ConnectAiInvite } from "@/components/finance/ConnectAiInvite";
+import { FADE } from "@/components/motion/fade";
 import { Button } from "@/components/ui/Button";
 import { ICON } from "@/lib/icon-scale";
 import { useT } from "@/lib/locale-context";
@@ -64,20 +65,11 @@ export function ScanOffer({
       </p>
       {aiAccount ? (
         <m.div
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ type: "spring", stiffness: 300, damping: 26 }}
+          {...FADE}
           className="flex flex-col gap-3 rounded-control border border-primary/30 bg-accent p-4"
         >
           <p className="flex items-center gap-2 font-head text-base">
-            <m.span
-              initial={{ rotate: -25, scale: 0.6 }}
-              animate={{ rotate: 0, scale: 1 }}
-              transition={{ type: "spring", stiffness: 280, damping: 12 }}
-              className="inline-flex"
-            >
-              <Sparkle size={ICON.md} weight="fill" aria-hidden className="text-primary" />
-            </m.span>
+            <Sparkle size={ICON.md} weight="fill" aria-hidden className="text-primary" />
             {t("statements.scanTitle")}
           </p>
           <p className="text-sm">{t("statements.scanBody")}</p>

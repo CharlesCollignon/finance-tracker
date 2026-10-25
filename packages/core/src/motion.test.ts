@@ -1,28 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import {
-  cssEasing,
-  DURATION,
-  EASE_STANDARD,
-  easeOutCubic,
-  staggerDelay,
-  STAGGER_MAX_STEPS,
-  STAGGER_STEP_MS,
-} from "./motion";
-
-describe("staggerDelay", () => {
-  it("steps by the cadence both clients already use", () => {
-    expect(staggerDelay(0)).toBe(0);
-    expect(staggerDelay(1)).toBe(STAGGER_STEP_MS);
-    expect(staggerDelay(3)).toBe(3 * STAGGER_STEP_MS);
-  });
-
-  it("caps, so a long list does not leave later rows visibly late", () => {
-    const capped = STAGGER_MAX_STEPS * STAGGER_STEP_MS;
-    expect(staggerDelay(STAGGER_MAX_STEPS)).toBe(capped);
-    expect(staggerDelay(STAGGER_MAX_STEPS + 40)).toBe(capped);
-  });
-});
+import { cssEasing, DURATION, EASE_STANDARD, easeOutCubic } from "./motion";
 
 describe("cssEasing", () => {
   it("writes the shared curve as a CSS value", () => {
@@ -48,5 +26,11 @@ describe("the vocabulary itself", () => {
 
   it("keeps the count-up duration AnimatedAmount fixed on both clients", () => {
     expect(DURATION.count).toBe(650);
+  });
+
+  it("fades in fast and out faster", () => {
+    expect(DURATION.enter).toBe(180);
+    expect(DURATION.exit).toBe(120);
+    expect(DURATION.exit).toBeLessThan(DURATION.enter);
   });
 });

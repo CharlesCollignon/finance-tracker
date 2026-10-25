@@ -20,8 +20,8 @@ import { cn } from "@/lib/utils";
  * screen readers, so the strip stays out of their path.
  *
  * Colours are the grid's own — what left in the expense red, what came in
- * in the income green — so the two read as one. Each bar grows from the
- * baseline on arrival, left to right, and the net counts up to its value.
+ * in the income green — so the two read as one. The strip fades in, and
+ * the net counts up to its value.
  */
 export function CalendarPulse({
   label,
@@ -97,7 +97,7 @@ export function CalendarPulse({
         className="flex h-16 items-end gap-[3px]"
         onMouseLeave={() => onHover(null)}
       >
-        {days.map((day, index) => {
+        {days.map((day) => {
           const planned = day.outflow === 0 ? day.plannedOutflow : 0;
           const value = day.outflow || planned;
           const lit = day.date === selectedDate || day.date === hoverDate;
@@ -113,18 +113,17 @@ export function CalendarPulse({
               {day.income > 0 || day.plannedIncome > 0 ? (
                 <span
                   className={cn(
-                    "pulse-dot mb-1 size-1.5 shrink-0 rounded-full transition-transform duration-hover",
+                    "fade-in mb-1 size-1.5 shrink-0 rounded-full transition-transform duration-hover",
                     day.income > 0
                       ? "bg-success"
                       : "border border-success/70 bg-transparent",
                     lit && "scale-150",
                   )}
-                  style={{ animationDelay: `${300 + index * 14}ms` }}
                 />
               ) : null}
               <span
                 className={cn(
-                  "pulse-bar w-full rounded-t-[3px] transition-colors duration-hover",
+                  "fade-in w-full rounded-t-[3px] transition-colors duration-hover",
                   value === 0
                     ? cn(
                         "h-0.5 rounded-[1px]",
@@ -141,12 +140,11 @@ export function CalendarPulse({
                             : "border-muted-foreground/45",
                         ),
                 )}
-                style={{
-                  ...(value > 0
+                style={
+                  value > 0
                     ? { height: `${Math.max(8, (value / scale) * 80)}%` }
-                    : {}),
-                  animationDelay: `${index * 14}ms`,
-                }}
+                    : undefined
+                }
               />
               {day.isToday ? (
                 <span className="absolute -bottom-2.5 size-1 rounded-full bg-foreground" />

@@ -10,7 +10,6 @@ import { useRouter, type Href } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import * as WebBrowser from "expo-web-browser";
 import Animated, {
-  FadeInDown,
   useReducedMotion,
 } from "react-native-reanimated";
 
@@ -22,7 +21,6 @@ import {
   type EntraideSort,
 } from "@finance/core/entraide";
 import { entraideCopyFor, entraideWhen } from "@finance/core/entraide-copy";
-import { DURATION, STAGGER_STEP_MS } from "@finance/core/motion";
 
 import { PostCard } from "@/components/entraide/PostCard";
 import { ScreenError } from "@/components/ScreenError";
@@ -38,9 +36,7 @@ import { hapticLight } from "@/lib/haptics";
 import { useLocale } from "@/providers/LocaleProvider";
 import { ICON } from "@/theme/tokens";
 import { useThemeColors } from "@/theme/useThemeColors";
-
-/** Past this, a card waits no longer to rise than the eighth did. */
-const STAGGER_CAP = 8;
+import { FADE_IN } from "@/components/motion/fade";
 
 interface MorePages {
   key: string;
@@ -209,15 +205,9 @@ export default function EntraideScreen() {
           keyExtractor={(post) => `${data?.key}-${post.id}`}
           ListHeaderComponent={header}
           contentContainerClassName="gap-3 px-4 pb-24 pt-4"
-          renderItem={({ item, index }) => (
+          renderItem={({ item }) => (
             <Animated.View
-              entering={
-                reduceMotion
-                  ? undefined
-                  : FadeInDown.duration(DURATION.enter).delay(
-                      Math.min(index % PAGE, STAGGER_CAP) * STAGGER_STEP_MS,
-                    )
-              }
+              entering={reduceMotion ? undefined : FADE_IN}
             >
               <PostCard
                 post={item}

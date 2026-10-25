@@ -1,35 +1,27 @@
 import type { ReactNode } from "react";
-import Animated, {
-  Easing,
-  FadeInDown,
-  useReducedMotion,
-} from "react-native-reanimated";
+import Animated, { useReducedMotion } from "react-native-reanimated";
 
-import { DURATION, EASE_STANDARD } from "@finance/core/motion";
+import { FADE_IN } from "@/components/motion/fade";
 
 import { cn } from "@/lib/cn";
 
 interface FadeInProps {
   children: ReactNode;
-  delayMs?: number;
   className?: string;
 }
 
-const NOCTURNE_EASING = Easing.bezier(...EASE_STANDARD);
-
-/** Soft enter: opacity + slight rise, 500ms ledger-style ease. */
-export function FadeIn({ children, delayMs = 0, className }: FadeInProps) {
+/**
+ * A block arriving: a fade, opacity alone. It was a rise and, through
+ * `StaggerItem`, a cascade 40ms a step; since October 2026 everything in the
+ * app arrives this way and nothing waits its turn, as on the web. Reanimated
+ * plays it on mount only, so a re-render does not replay it.
+ */
+export function FadeIn({ children, className }: FadeInProps) {
   const reduce = useReducedMotion();
-
-  if (reduce) {
-    return <Animated.View className={cn(className)}>{children}</Animated.View>;
-  }
 
   return (
     <Animated.View
-      entering={FadeInDown.duration(DURATION.enter)
-        .easing(NOCTURNE_EASING)
-        .delay(delayMs)}
+      entering={reduce ? undefined : FADE_IN}
       className={cn(className)}
     >
       {children}

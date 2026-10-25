@@ -21,7 +21,7 @@ import {
 } from "@/components/finance/accounts/account-format";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { useToast } from "@/components/layout/ToastProvider";
-import { Stagger, StaggerItem } from "@/components/motion/Stagger";
+import { FadeIn, FadeInItem } from "@/components/motion/FadeIn";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { saveWalletPlan } from "@/lib/actions/investments";
@@ -87,22 +87,22 @@ export function AnalysisView({
   );
 
   return (
-    <Stagger className="flex w-full flex-col gap-4" stagger={0.05}>
-      <StaggerItem>
+    <FadeIn className="flex w-full flex-col gap-4">
+      <FadeInItem>
         <p className="max-w-prose text-sm text-muted-foreground">
           {t("accounts.analysisIntro")}
         </p>
-      </StaggerItem>
+      </FadeInItem>
 
-      <StaggerItem>
+      <FadeInItem>
         <ReturnCard
           returns={returns}
           hasWallets={keptWallets.length > 0}
           savingsAccounts={savingsAccounts}
         />
-      </StaggerItem>
+      </FadeInItem>
 
-      <StaggerItem>
+      <FadeInItem>
         <AllocationCard
           accounts={accounts}
           values={values}
@@ -110,9 +110,9 @@ export function AnalysisView({
           targets={targets}
           monthlyContribution={monthlyContribution}
         />
-      </StaggerItem>
+      </FadeInItem>
 
-      <StaggerItem>
+      <FadeInItem>
         <section className="flex flex-col gap-4">
           <h2 className="font-head text-base">
             {t("placementsWeb.feesTitle")}
@@ -139,8 +139,8 @@ export function AnalysisView({
             <SavingsFeesLine accounts={savingsAccounts} />
           ) : null}
         </section>
-      </StaggerItem>
-    </Stagger>
+      </FadeInItem>
+    </FadeIn>
   );
 }
 

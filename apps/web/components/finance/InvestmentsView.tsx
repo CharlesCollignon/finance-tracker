@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { InvestmentPositionSheet } from "@/components/finance/InvestmentPositionSheet";
 import { StatHero } from "@/components/finance/StatHero";
-import { Stagger, StaggerItem } from "@/components/motion/Stagger";
+import { FadeIn, FadeInItem } from "@/components/motion/FadeIn";
 import { AddAccountSheet } from "@/components/finance/accounts/AddAccountSheet";
 import { SavingsAccountPanel } from "@/components/finance/accounts/SavingsAccountPanel";
 import { PeaCard } from "@/components/finance/PeaCard";
@@ -162,11 +162,8 @@ export function InvestmentsView({
   // so they stay put while the views load.
   return (
     <>
-      <Stagger
-        className="flex w-full min-w-0 flex-col items-center gap-8 md:gap-10"
-        stagger={0.05}
-      >
-        <StaggerItem className="w-full min-w-0">
+      <FadeIn className="flex w-full min-w-0 flex-col items-center gap-8 md:gap-10">
+        <FadeInItem className="w-full min-w-0">
           <StatHero
             label={t("accounts.total")}
             amount={formatEuro(total)}
@@ -204,10 +201,10 @@ export function InvestmentsView({
               </p>
             }
           />
-        </StaggerItem>
+        </FadeInItem>
 
         {visibleFunding.length > 0 ? (
-          <StaggerItem className="w-full">
+          <FadeInItem className="w-full">
             {/* One row of tags rather than one sentence per wallet: three
                   lines of "Send to X €Y / month" is three lines of height for
                   three numbers, and the wallet name is label enough. */}
@@ -228,11 +225,11 @@ export function InvestmentsView({
                 </li>
               ))}
             </ul>
-          </StaggerItem>
+          </FadeInItem>
         ) : null}
 
         {accounts.length === 0 ? (
-          <StaggerItem className="w-full">
+          <FadeInItem className="w-full">
             <EmptyState
               title={t("accounts.emptyTitle")}
               description={t("accounts.emptyBody")}
@@ -242,17 +239,17 @@ export function InvestmentsView({
                 {t("accounts.add")}
               </Button>
             </EmptyState>
-          </StaggerItem>
+          </FadeInItem>
         ) : !hasData && savings.accounts.length === 0 ? (
-          <StaggerItem className="w-full">
+          <FadeInItem className="w-full">
             <EmptyState
               title={t("wallets.emptyTitle")}
               description={t("wallets.emptyBody")}
             />
-          </StaggerItem>
+          </FadeInItem>
         ) : null}
 
-        <StaggerItem className="w-full min-w-0">
+        <FadeInItem className="w-full min-w-0">
           {/* A group of toggles, not tabs. `role="tablist"` over
                 `role="tab"` was a promise the markup did not keep: the panel
                 below is not a `tabpanel`, nothing carries `aria-controls`,
@@ -304,19 +301,19 @@ export function InvestmentsView({
               ) : null}
             </div>
           ) : null}
-        </StaggerItem>
+        </FadeInItem>
 
         {selectedSavings ? (
-          <StaggerItem className="w-full min-w-0">
+          <FadeInItem className="w-full min-w-0">
             <SavingsAccountPanel
               key={selectedSavings.id}
               account={selectedSavings}
               monthly={savingsMonthly[selectedSavings.kind] ?? 0}
               linkable={savings.linkable}
             />
-          </StaggerItem>
+          </FadeInItem>
         ) : selected !== null ? (
-          <StaggerItem className="w-full min-w-0">
+          <FadeInItem className="w-full min-w-0">
             <WalletPanel
               key={activeWallet}
               column={activeColumn}
@@ -329,20 +326,20 @@ export function InvestmentsView({
               })}
               onRemove={() => removeWallet(activeWallet)}
             />
-          </StaggerItem>
+          </FadeInItem>
         ) : null}
 
         {/* The PEA's ceiling and five-year clock are about the PEA alone,
               so they sit with it. */}
         {selected === "pea" ? (
-          <StaggerItem className="w-full min-w-0">
+          <FadeInItem className="w-full min-w-0">
             <PeaCard
               column={activeColumn}
               plan={plans.find((plan) => plan.wallet === "pea")}
             />
-          </StaggerItem>
+          </FadeInItem>
         ) : null}
-      </Stagger>
+      </FadeIn>
 
       <AddAccountSheet
         open={addOpen}

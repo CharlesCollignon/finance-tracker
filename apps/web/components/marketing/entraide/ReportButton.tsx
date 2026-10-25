@@ -5,7 +5,6 @@ import Link from "next/link";
 import { AnimatePresence, m } from "motion/react";
 import { Flag } from "@phosphor-icons/react";
 import { ENTRAIDE_RULES, type EntraideRule } from "@finance/core/entraide";
-import { DURATION, EASE_STANDARD } from "@finance/core/motion";
 import { reportTarget } from "@/lib/actions/entraide";
 import {
   entraideErrorText,
@@ -13,9 +12,8 @@ import {
 } from "@finance/core/entraide-copy";
 import { fieldClass } from "@/components/marketing/entraide/Composer";
 import { marketingFocus } from "@/components/marketing/marketing-focus";
+import { FADE_HEIGHT } from "@/components/motion/fade";
 import { cn } from "@/lib/utils";
-
-const EASE = [...EASE_STANDARD] as [number, number, number, number];
 
 /**
  * « Signaler », under a question or an answer that is not the reader's: it
@@ -85,10 +83,7 @@ export function ReportButton({
           <m.div
             key="report"
             className="w-full overflow-hidden"
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: "auto", opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: DURATION.panel / 1000, ease: EASE }}
+            {...FADE_HEIGHT}
           >
             {signedIn ? (
               <form

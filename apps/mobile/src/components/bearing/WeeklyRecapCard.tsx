@@ -2,13 +2,10 @@ import { useState } from "react";
 import { Pressable, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import Animated, {
-  FadeInDown,
-  FadeOut,
   useReducedMotion,
 } from "react-native-reanimated";
 
 import { monthLong } from "@finance/core/i18n/calendar-names";
-import { DURATION } from "@finance/core/motion";
 import { weeklyRecapLines, type WeeklyRecap } from "@finance/core/weekly-recap";
 
 import { Text } from "@/components/ui/Text";
@@ -19,6 +16,7 @@ import { useLocale, useT } from "@/providers/LocaleProvider";
 import { usePrivacy } from "@/providers/PrivacyProvider";
 import { ICON } from "@/theme/tokens";
 import { useThemeColors } from "@/theme/useThemeColors";
+import { FADE_IN, FADE_OUT } from "@/components/motion/fade";
 
 /** The mask `PrivateAmount` shows, here inside a sentence. */
 const MASK = "••••••";
@@ -55,8 +53,8 @@ export function WeeklyRecapCard({ recap }: { recap: WeeklyRecap }) {
 
   return (
     <Animated.View
-      entering={reduceMotion ? undefined : FadeInDown.duration(DURATION.enter)}
-      exiting={reduceMotion ? undefined : FadeOut.duration(200)}
+      entering={reduceMotion ? undefined : FADE_IN}
+      exiting={reduceMotion ? undefined : FADE_OUT}
       className="gap-3 rounded-card border border-border bg-card/70 p-card"
     >
       <View className="flex-row items-center justify-between gap-3">

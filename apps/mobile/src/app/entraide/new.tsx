@@ -10,8 +10,6 @@ import { useRouter, type Href } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import * as WebBrowser from "expo-web-browser";
 import Animated, {
-  FadeInDown,
-  FadeOut,
   useReducedMotion,
 } from "react-native-reanimated";
 
@@ -26,7 +24,6 @@ import {
   entraideCopyFor,
   entraideErrorText,
 } from "@finance/core/entraide-copy";
-import { DURATION, STAGGER_STEP_MS } from "@finance/core/motion";
 
 import { HandleField, handleReady } from "@/components/entraide/HandleField";
 import { MaskNotice } from "@/components/entraide/Notices";
@@ -42,6 +39,7 @@ import { useAuth } from "@/providers/AuthProvider";
 import { useLocale } from "@/providers/LocaleProvider";
 import { ICON } from "@/theme/tokens";
 import { useThemeColors } from "@/theme/useThemeColors";
+import { FADE_IN, FADE_OUT } from "@/components/motion/fade";
 
 /** How long the title rests before « Déjà demandé ? » looks. */
 const SEARCH_AFTER_MS = 450;
@@ -49,7 +47,7 @@ const SEARCH_AFTER_MS = 450;
 /**
  * A new question or share: what kind, the title, the details if any, and
  * the pseudonym the first time. While a question's title is typed, the
- * threads that already ask it slide in under it (« Déjà demandé ? »); what
+ * threads that already ask it fade in under it (« Déjà demandé ? »); what
  * will be masked is said before anything goes. Published, it opens as its
  * own thread.
  */
@@ -187,25 +185,17 @@ export default function NewEntraidePostScreen() {
 
           {shownMatches.length > 0 ? (
             <Animated.View
-              entering={
-                reduceMotion ? undefined : FadeInDown.duration(DURATION.panel)
-              }
-              exiting={reduceMotion ? undefined : FadeOut.duration(DURATION.press)}
+              entering={reduceMotion ? undefined : FADE_IN}
+              exiting={reduceMotion ? undefined : FADE_OUT}
               className="gap-1.5 rounded-card border border-border bg-card/70 p-3"
             >
               <Text variant="label" className="px-1 pb-1">
                 {words.already}
               </Text>
-              {shownMatches.map((match, index) => (
+              {shownMatches.map((match) => (
                 <Animated.View
                   key={match.id}
-                  entering={
-                    reduceMotion
-                      ? undefined
-                      : FadeInDown.duration(DURATION.panel).delay(
-                          index * STAGGER_STEP_MS,
-                        )
-                  }
+                  entering={reduceMotion ? undefined : FADE_IN}
                 >
                   <Pressable
                     accessibilityRole="link"

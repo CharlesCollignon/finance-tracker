@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, useTransition, type CSSProperties } from "react";
+import { useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import {
   aMonthAfter,
@@ -79,8 +79,6 @@ function AddPropertyForm({ onDone }: { onDone: () => void }) {
   const { toast } = useToast();
   const [pending, startTransition] = useTransition();
   const [step, setStep] = useState<Step>(1);
-  // Which way the last move went, so the next step arrives from that side.
-  const [direction, setDirection] = useState<1 | -1>(1);
   const formRef = useRef<HTMLFormElement>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const property = usePropertyDraft(null);
@@ -96,7 +94,6 @@ function AddPropertyForm({ onDone }: { onDone: () => void }) {
 
   /** A new step starts at the top of the sheet, under its title. */
   function moveTo(next: Step) {
-    setDirection(next > step ? 1 : -1);
     setStep(next);
     formRef.current?.closest('[role="dialog"]')?.scrollTo({ top: 0 });
   }
@@ -210,11 +207,7 @@ function AddPropertyForm({ onDone }: { onDone: () => void }) {
         </p>
       </div>
 
-      <div
-        key={step}
-        className="step-in flex flex-col gap-5"
-        style={{ "--step-from": `${direction * 8}px` } as CSSProperties}
-      >
+      <div key={step} className="fade-in flex flex-col gap-5">
         {step === 1 ? <HomeFields draft={property} error={error} /> : null}
         {step === 2 ? <PurchaseFields draft={property} error={error} /> : null}
         {step === 3 ? (
@@ -241,9 +234,8 @@ function AddPropertyForm({ onDone }: { onDone: () => void }) {
                     aria-label={draft.label || t("property.loanLabelDefault")}
                     className={cn(
                       "flex flex-col gap-5",
-                      index > 0 && "step-in border-t border-border pt-5",
+                      index > 0 && "fade-in border-t border-border pt-5",
                     )}
-                    style={{ "--step-from": "8px" } as CSSProperties}
                   >
                     {loanCount > 1 ? (
                       <div className="flex items-center justify-between gap-2">

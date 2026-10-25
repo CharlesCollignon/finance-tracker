@@ -12,6 +12,7 @@ import {
 } from "react";
 import { createPortal } from "react-dom";
 import { CaretDown, Check, MagnifyingGlass } from "@phosphor-icons/react";
+import { useFadePresence } from "@/components/motion/use-fade-presence";
 import { cn } from "@/lib/utils";
 import { SOLID_PANEL } from "@/lib/glass";
 import { ICON } from "@/lib/icon-scale";
@@ -102,6 +103,7 @@ export function PickerShell({
   const triggerRef = useRef<HTMLButtonElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
   const requestClose = useEffectEvent(() => onOpenChange(false));
+  const presence = useFadePresence(open);
 
   // Drawn in a portal at a fixed position, so no scrolling parent clips it:
   // the sheets scroll, and the import table sits in a horizontal scroller.
@@ -238,7 +240,7 @@ export function PickerShell({
           )}
         />
       </button>
-      {open
+      {presence.mounted
         ? createPortal(
             <div
               ref={panelRef}
@@ -252,7 +254,7 @@ export function PickerShell({
                 "fixed z-[70] flex max-w-[calc(100vw-1rem)] flex-col gap-2 rounded-card p-2",
                 "min-w-[min(18rem,calc(100vw-2rem))]",
                 SOLID_PANEL,
-                "account-menu-panel",
+                presence.leaving ? "fade-out pointer-events-none" : "fade-in",
                 panelClassName,
               )}
             >

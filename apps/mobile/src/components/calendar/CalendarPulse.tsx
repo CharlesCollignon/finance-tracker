@@ -1,16 +1,10 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { View, type GestureResponderEvent } from "react-native";
 import Animated, {
-  Easing,
-  useAnimatedStyle,
   useReducedMotion,
-  useSharedValue,
-  withDelay,
-  withTiming,
 } from "react-native-reanimated";
 
 import { formatCalendarDate, type PulseDay } from "@finance/core/calendar";
-import { DURATION, EASE_STANDARD } from "@finance/core/motion";
 
 import { AnimatedAmount } from "@/components/AnimatedAmount";
 import { PrivateAmount } from "@/components/PrivateAmount";
@@ -20,13 +14,8 @@ import { hapticLight, hapticSelection } from "@/lib/haptics";
 import { useFormatCurrency } from "@/providers/CurrencyProvider";
 import { useLocale, useT } from "@/providers/LocaleProvider";
 import { TYPE } from "@/theme/tokens";
+import { FADE_IN } from "@/components/motion/fade";
 
-/** Each bar starts this long after the one before it, left to right. */
-const STEP_MS = 14;
-/** The income dots arrive once the bars are well on their way. */
-const DOT_DELAY_MS = 300;
-const DOT_MS = 400;
-const GROW = Easing.bezier(...EASE_STANDARD);
 
 /**
  * The month above its calendar, flat: its net and what came in and went
@@ -40,8 +29,8 @@ const GROW = Easing.bezier(...EASE_STANDARD);
  * for screen readers, so the strip keeps out of their path.
  *
  * Colours are the grid's own — what left in the expense red, what came in
- * in the income green — so the two read as one. Each bar grows from the
- * baseline on arrival, left to right, and the net counts up to its value.
+ * in the income green — so the two read as one. The strip fades in, and
+ * the net counts up to its value.
  */
 export function CalendarPulse({
   label,
@@ -154,18 +143,20 @@ export function CalendarPulse({
         }}
         onResponderTerminate={() => onFocus(null)}
       >
-        <View pointerEvents="none" className="h-full flex-row items-end gap-[3px]">
-          {days.map((day, index) => (
+        <Animated.View
+          pointerEvents="none"
+          entering={reduce ? undefined : FADE_IN}
+          className="h-full flex-row items-end gap-[3px]"
+        >
+          {days.map((day) => (
             <PulseBar
               key={day.date}
               day={day}
-              index={index}
               scale={scale}
               lit={day.date === selectedDate || day.date === focusDate}
-              reduce={reduce}
             />
           ))}
-        </View>
+        </Animated.View>
       </View>
     </View>
   );
@@ -196,54 +187,18 @@ export function CalendarPulse({
 }
 
 /**
- * One day of the strip: its bar grown from the baseline, its income dot,
- * and today's mark under it. Colours sit on plain views inside the animated
- * ones, which carry only the motion.
+ * One day of the strip: its bar, its income dot, and today's mark under it.
+ * The strip fades in as one.
  */
 function PulseBar({
   day,
-  index,
   scale,
   lit,
-  reduce,
 }: {
   day: PulseDay;
-  index: number;
   scale: number;
   lit: boolean;
-  reduce: boolean;
 }) {
-  const grow = useSharedValue(reduce ? 1 : 0);
-  const pop = useSharedValue(reduce ? 1 : 0);
-
-  useEffect(() => {
-    if (reduce) {
-      grow.set(1);
-      pop.set(1);
-      return;
-    }
-    grow.set(
-      withDelay(
-        index * STEP_MS,
-        withTiming(1, { duration: DURATION.count, easing: GROW }),
-      ),
-    );
-    pop.set(
-      withDelay(
-        DOT_DELAY_MS + index * STEP_MS,
-        withTiming(1, { duration: DOT_MS, easing: Easing.out(Easing.ease) }),
-      ),
-    );
-  }, [reduce, index, grow, pop]);
-
-  const barStyle = useAnimatedStyle(() => ({
-    transform: [{ scaleY: grow.get() }],
-  }));
-  const dotStyle = useAnimatedStyle(() => ({
-    opacity: pop.get(),
-    transform: [{ scale: 0.6 + 0.4 * pop.get() }],
-  }));
-
   const planned = day.outflow === 0 ? day.plannedOutflow : 0;
   const value = day.outflow || planned;
   const hasIncome = day.income > 0 || day.plannedIncome > 0;
@@ -251,7 +206,7 @@ function PulseBar({
   return (
     <View className="h-full min-w-0 flex-1 items-center justify-end">
       {hasIncome ? (
-        <Animated.View style={[{ marginBottom: 4 }, dotStyle]}>
+        <View style={{ marginBottom: 4 }}>
           <View
             className={cn(
               "size-1.5 rounded-full",
@@ -259,18 +214,13 @@ function PulseBar({
             )}
             style={lit ? { transform: [{ scale: 1.5 }] } : undefined}
           />
-        </Animated.View>
+        </View>
       ) : null}
-      <Animated.View
-        style={[
-          {
-            width: "100%",
-            transformOrigin: "bottom",
-            height:
-              value > 0 ? `${Math.max(8, (value / scale) * 80)}%` : 2,
-          },
-          barStyle,
-        ]}
+      <View
+        style={{
+          width: "100%",
+          height: value > 0 ? `${Math.max(8, (value / scale) * 80)}%` : 2,
+        }}
       >
         <View
           className={cn(
@@ -285,7 +235,7 @@ function PulseBar({
                   ),
           )}
         />
-      </Animated.View>
+      </View>
       {day.isToday ? (
         <View className="absolute -bottom-2.5 size-1 rounded-full bg-foreground" />
       ) : null}

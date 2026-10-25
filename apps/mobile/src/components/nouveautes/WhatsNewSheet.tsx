@@ -2,12 +2,10 @@ import { useEffect, useState } from "react";
 import { Modal, Pressable, View } from "react-native";
 import { useRouter, type Href } from "expo-router";
 import Animated, {
-  FadeInDown,
   useReducedMotion,
 } from "react-native-reanimated";
 
 import { changeText } from "@finance/core/changelog";
-import { DURATION, STAGGER_STEP_MS } from "@finance/core/motion";
 
 import { SheetGrabber } from "@/components/ui/SheetGrabber";
 import { Text } from "@/components/ui/Text";
@@ -19,17 +17,15 @@ import {
 } from "@/lib/nouveautes";
 import { useAuth } from "@/providers/AuthProvider";
 import { useLocale, useT } from "@/providers/LocaleProvider";
+import { FADE_IN } from "@/components/motion/fade";
 
 /** How many changes the sheet lists before « Tout voir » takes over. */
 const SHOWN = 4;
 
-/** Each card a little after the one above it, the sheet's own beat. */
-const CARD_STEP_MS = STAGGER_STEP_MS * 2;
-
 /**
  * « Quoi de neuf », once, on the first launch after the APK was updated: the
- * changes this account has not seen yet, rising in one after another with a
- * light haptic, and « Tout voir » for the rest. Either button marks them
+ * changes this account has not seen yet, fading in with a light haptic,
+ * and « Tout voir » for the rest. Either button marks them
  * read, which clears the account menu's dot here and on the web. Nothing on
  * a first install, nothing when everything was already seen.
  */
@@ -73,7 +69,7 @@ export function WhatsNewSheet() {
     <Modal
       visible={visible}
       transparent
-      animationType="slide"
+      animationType="fade"
       statusBarTranslucent
       onRequestClose={() => close(false)}
     >
@@ -90,18 +86,12 @@ export function WhatsNewSheet() {
           <SheetGrabber />
           <Text variant="title">{t("nouveautes.whatsNewTitle")}</Text>
           <Text variant="muted">{t("nouveautes.whatsNewIntro")}</Text>
-          {unseen.slice(0, SHOWN).map((entry, index) => {
+          {unseen.slice(0, SHOWN).map((entry) => {
             const text = changeText(entry, locale);
             return (
               <Animated.View
                 key={entry.id}
-                entering={
-                  reduceMotion
-                    ? undefined
-                    : FadeInDown.duration(DURATION.enter).delay(
-                        200 + index * CARD_STEP_MS,
-                      )
-                }
+                entering={reduceMotion ? undefined : FADE_IN}
                 className="flex-row gap-3 rounded-card border border-border bg-background/40 p-3"
               >
                 <View className="mt-1.5 h-2 w-2 rounded-full bg-success" />

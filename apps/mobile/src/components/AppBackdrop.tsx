@@ -126,7 +126,7 @@ const Shared = createContext(false);
  * once, under scenes left transparent, the ground never changes and only
  * the content comes and goes.
  *
- * Not for a stack: a screen pushed over another slides in, and with no
+ * Not for a stack: a screen pushed over another fades in, and with no
  * ground of its own the one beneath would show through it. See
  * `OwnBackdrops`.
  */

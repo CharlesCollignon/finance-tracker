@@ -16,7 +16,7 @@ import type { Property } from "@finance/core/types/database";
 import { PROPERTY_KIND_KEYS, PROPERTY_USAGE_KEYS } from "@/components/property/fields";
 import { OwnershipBar } from "@/components/property/ProgressBars";
 import { AddPropertySheet } from "@/components/property/PropertySheets";
-import { StaggerItem } from "@/components/motion/Stagger";
+import { FadeIn } from "@/components/motion/FadeIn";
 import { PrivateAmount } from "@/components/PrivateAmount";
 import { ScreenError } from "@/components/ScreenError";
 import { StatHero } from "@/components/StatHero";
@@ -126,8 +126,8 @@ export default function PropertyScreen() {
                   </PrivateAmount>
                 }
               />
-              {items.map((item, index) => (
-                <StaggerItem key={item.property.id} index={index + 1}>
+              {items.map((item) => (
+                <FadeIn key={item.property.id}>
                   <PropertyCard
                     property={item.property}
                     position={item.position}
@@ -137,7 +137,7 @@ export default function PropertyScreen() {
                       router.push(`/property/${item.property.id}`);
                     }}
                   />
-                </StaggerItem>
+                </FadeIn>
               ))}
               <Button
                 label={t("property.add")}

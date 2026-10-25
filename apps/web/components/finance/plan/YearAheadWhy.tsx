@@ -126,16 +126,14 @@ export function YearAheadWhy({
         aria-hidden
         className="flex h-3 w-full gap-0.5 overflow-hidden rounded-full bg-muted/40"
       >
-        {segments.map((segment, index) => {
+        {segments.map((segment) => {
           const width = (widthOf(segment) / scale) * 100;
           return (
             <m.span
               key={segment.key}
-              initial={{ width: "0%" }}
+              initial={false}
               animate={{ width: `${width.toFixed(2)}%` }}
-              transition={
-                reduce ? { duration: 0 } : { ...MORPH, delay: index * 0.05 }
-              }
+              transition={reduce ? { duration: 0 } : MORPH}
               className="h-full shrink-0 first:rounded-l-full last:rounded-r-full"
               style={{ background: segment.color }}
             />

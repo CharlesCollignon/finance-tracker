@@ -62,7 +62,7 @@ const FLICK_VELOCITY = 0.35;
 const DEAD_ZONE = 4;
 
 /** How long the card takes to leave, and the row beneath it to close up. */
-const EXIT_MS = Math.round(DURATION.panel * 0.6);
+const EXIT_MS = DURATION.exit;
 
 /**
  * The three cards.
@@ -308,7 +308,7 @@ export function SwipeToast({
           tabIndex={0}
           data-leaving={leaving ? "" : undefined}
           className={cn(
-            "pointer-events-auto relative mt-2 flex touch-none items-center gap-3",
+            "fade-in pointer-events-auto relative mt-2 flex touch-none items-center gap-3",
             "overflow-hidden rounded-control border px-4 py-3",
             "text-sm font-medium outline-none select-none",
             "focus-visible:ring-2 focus-visible:ring-ring",

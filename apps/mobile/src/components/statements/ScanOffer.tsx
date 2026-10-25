@@ -4,16 +4,12 @@ import { Ionicons } from "@expo/vector-icons";
 import Animated, {
   cancelAnimation,
   Easing,
-  FadeInDown,
   useAnimatedStyle,
   useReducedMotion,
   useSharedValue,
   withRepeat,
   withTiming,
-  ZoomIn,
 } from "react-native-reanimated";
-
-import { DURATION } from "@finance/core/motion";
 
 import { ConnectAiInvite } from "@/components/ConnectAiInvite";
 import { Button } from "@/components/ui/Button";
@@ -21,6 +17,7 @@ import { Text } from "@/components/ui/Text";
 import { useT } from "@/providers/LocaleProvider";
 import { ICON } from "@/theme/tokens";
 import { useThemeColors } from "@/theme/useThemeColors";
+import { FADE_IN } from "@/components/motion/fade";
 
 /** The page's height the reading line travels, in points. */
 const PAGE = 64;
@@ -94,11 +91,11 @@ export function ScanOffer({
       </View>
       {aiAccount ? (
         <Animated.View
-          entering={reduceMotion ? undefined : FadeInDown.duration(DURATION.panel)}
+          entering={reduceMotion ? undefined : FADE_IN}
           className="gap-3 rounded-control border border-primary/30 bg-accent p-4"
         >
           <View className="flex-row items-center gap-2">
-            <Animated.View entering={reduceMotion ? undefined : ZoomIn.springify().damping(12)}>
+            <Animated.View entering={reduceMotion ? undefined : FADE_IN}>
               <Ionicons name="sparkles" size={ICON.md} color={colors.primary} />
             </Animated.View>
             <Text variant="head" className="flex-1">

@@ -2,12 +2,7 @@ import { Link } from "expo-router";
 import { useEffect, useState } from "react";
 import { AccessibilityInfo, Pressable, StyleSheet, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import Animated, {
-  FadeIn,
-  FadeInDown,
-  FadeOutUp,
-  ZoomIn,
-} from "react-native-reanimated";
+import Animated from "react-native-reanimated";
 
 import { Orb } from "@/components/Orb";
 import { Blur } from "@/components/ui/Blur";
@@ -20,6 +15,7 @@ import { useT } from "@/providers/LocaleProvider";
 import { ICON, RADIUS } from "@/theme/tokens";
 import { useThemeColors } from "@/theme/useThemeColors";
 import { resolveMessage } from "@finance/core/i18n/t";
+import { FADE_IN, FADE_OUT } from "@/components/motion/fade";
 
 /**
  * Seconds before « Renvoyer » can be pressed: Supabase sends at most one
@@ -96,7 +92,7 @@ export function CheckInbox({
           }}
         >
           <Animated.View
-            entering={FadeInDown.springify().damping(18)}
+            entering={FADE_IN}
             className="items-center gap-4 p-5"
           >
             <View className="h-20 w-20 items-center justify-center rounded-full border border-primary/30 bg-accent">
@@ -104,8 +100,8 @@ export function CheckInbox({
                   envelope off and lands a new one. */}
               <Animated.View
                 key={sends}
-                entering={ZoomIn.springify().damping(11)}
-                exiting={FadeOutUp.duration(220)}
+                entering={FADE_IN}
+                exiting={FADE_OUT}
                 className="absolute"
               >
                 <Ionicons
@@ -157,7 +153,7 @@ export function CheckInbox({
             ) : sends > 0 ? (
               <Animated.View
                 key={`sent-${sends}`}
-                entering={FadeIn.duration(200)}
+                entering={FADE_IN}
                 className="flex-row items-center justify-center gap-1.5"
               >
                 <Ionicons

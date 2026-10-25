@@ -2,8 +2,9 @@
  * How things move, in both apps.
  *
  * These numbers already existed twice. `FadeIn.tsx` on the phone held the
- * curve, `Stagger.tsx` on each client held the same 40ms cadence with a
- * comment saying so, and `AnimatedAmount` was written twice at 650ms because
+ * curve, each client held the same 40ms stagger with a comment saying so
+ * (gone since everything fades in at once), and `AnimatedAmount` was written
+ * twice at 650ms because
  * — as its own doc puts it — "the two clients show the same figure and a
  * spring settles on a different curve, so the same amount would arrive
  * differently depending on which screen you were holding".
@@ -42,39 +43,30 @@ export const EASE_STANDARD = [0.32, 0.72, 0, 1] as const;
  * Deliberately not a token: the phone's 850ms skeleton shimmer. That is a
  * loop, not an answer to anything, and a category with one member is worth
  * less than the literal and its comment.
+ *
+ * `enter` and `exit` are fades, and since October 2026 the only way anything
+ * arrives in or leaves the app: opacity alone — nothing rises, slides, zooms,
+ * grows or springs into place — fast enough to read as instant, slow enough
+ * to read as smooth, and leaving quicker than it came. A block that changes
+ * height on the way in or out spends the same two numbers on its height.
  */
 export const DURATION = {
-  /** A block arriving on screen. */
-  enter: 500,
+  /** A block arriving on screen: a fade, opacity only. */
+  enter: 180,
+  /** A block leaving the screen: a fade, quicker than it came. */
+  exit: 120,
   /** A figure counting to a new value. */
   count: 650,
-  /** A panel opening or closing. */
+  /**
+   * A panel opening on the public site. The app's panels fade in and out on
+   * `enter` and `exit` like everything else.
+   */
   panel: 420,
   /** A surface answering a press. */
   press: 140,
   /** A surface answering a pointer arriving or leaving. */
   hover: 200,
 } as const;
-
-/** The gap between consecutive items in a staggered enter. */
-export const STAGGER_STEP_MS = 40;
-
-/**
- * Beyond this many steps the delay stops growing.
- *
- * A long list staggered without a cap leaves its last item arriving half a
- * second after its first, which reads as the screen being slow rather than as
- * a flourish. The cap was written for a twelve-tile grid that no longer
- * exists; what still reaches it is the phone's `Stagger`, which fades in
- * whatever list it is given and has no more idea how long that is than the
- * grid did.
- */
-export const STAGGER_MAX_STEPS = 8;
-
-/** How long the item at `index` waits before entering. */
-export function staggerDelay(index: number): number {
-  return Math.min(index, STAGGER_MAX_STEPS) * STAGGER_STEP_MS;
-}
 
 /** The curve as a CSS `cubic-bezier()` value. */
 export function cssEasing(points: readonly number[] = EASE_STANDARD): string {

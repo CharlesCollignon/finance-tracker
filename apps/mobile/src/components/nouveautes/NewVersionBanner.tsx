@@ -1,9 +1,7 @@
 import { useEffect, useState } from "react";
 import { Linking, Platform, Pressable, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import Animated, { FadeInDown, FadeOut } from "react-native-reanimated";
-
-import { DURATION } from "@finance/core/motion";
+import Animated from "react-native-reanimated";
 
 import { Text } from "@/components/ui/Text";
 import { hapticLight } from "@/lib/haptics";
@@ -17,6 +15,7 @@ import { useAuth } from "@/providers/AuthProvider";
 import { useT } from "@/providers/LocaleProvider";
 import { ICON } from "@/theme/tokens";
 import { useThemeColors } from "@/theme/useThemeColors";
+import { FADE_IN, FADE_OUT } from "@/components/motion/fade";
 
 /**
  * On Le point, when the site hands out an APK newer than this one: the APK
@@ -51,8 +50,8 @@ export function NewVersionBanner() {
 
   return (
     <Animated.View
-      entering={FadeInDown.duration(DURATION.enter)}
-      exiting={FadeOut.duration(DURATION.press)}
+      entering={FADE_IN}
+      exiting={FADE_OUT}
       className="gap-3 rounded-card border border-success/30 bg-success/10 p-card"
     >
       <View className="flex-row items-center gap-2">

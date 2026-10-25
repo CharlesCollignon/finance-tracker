@@ -3,18 +3,16 @@
 import { useId, useState } from "react";
 import { AnimatePresence, m } from "motion/react";
 import { ArrowSquareOut, CaretDown, Question } from "@phosphor-icons/react";
-import { DURATION, EASE_STANDARD } from "@finance/core/motion";
 import {
   BANK_IDS,
   BANK_NAMES,
   exportGuide,
   type BankId,
 } from "@finance/core/statement";
+import { FADE, FADE_HEIGHT } from "@/components/motion/fade";
 import { ICON } from "@/lib/icon-scale";
 import { useLocale, useT } from "@/lib/locale-context";
 import { cn } from "@/lib/utils";
-
-const EASE = [...EASE_STANDARD] as [number, number, number, number];
 
 /** The first letters a bank is known by, for its chip. */
 function initials(bank: BankId): string {
@@ -72,10 +70,7 @@ export function BankGuide({
           <m.div
             id={panelId}
             key="guide"
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: "auto", opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: DURATION.panel / 1000, ease: EASE }}
+            {...FADE_HEIGHT}
             className="overflow-hidden"
           >
             <p className="pt-3 text-xs font-medium uppercase tracking-wide text-muted-foreground">
@@ -116,10 +111,7 @@ export function BankGuide({
               {guide ? (
                 <m.div
                   key={bank}
-                  initial={{ opacity: 0, y: 8 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -4 }}
-                  transition={{ duration: DURATION.press / 1000, ease: EASE }}
+                  {...FADE}
                   className="mt-4 flex flex-col gap-3"
                 >
                   <ol className="flex flex-col gap-2">

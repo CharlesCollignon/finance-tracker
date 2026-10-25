@@ -67,7 +67,7 @@ export function DisconnectSheet({
     <Modal
       visible={open}
       transparent
-      animationType="slide"
+      animationType="fade"
       statusBarTranslucent
       onRequestClose={close}
     >

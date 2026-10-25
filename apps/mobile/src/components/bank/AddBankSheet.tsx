@@ -104,7 +104,7 @@ export function AddBankSheet({
     <Modal
       visible={open}
       transparent
-      animationType="slide"
+      animationType="fade"
       statusBarTranslucent
       onRequestClose={close}
     >

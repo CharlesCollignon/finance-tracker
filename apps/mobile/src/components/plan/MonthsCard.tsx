@@ -6,12 +6,11 @@ import Animated, {
   useAnimatedStyle,
   useReducedMotion,
   useSharedValue,
-  withDelay,
   withTiming,
 } from "react-native-reanimated";
 
 import { monthShort } from "@finance/core/i18n/calendar-names";
-import { EASE_STANDARD } from "@finance/core/motion";
+import { DURATION, EASE_STANDARD } from "@finance/core/motion";
 
 import { Text } from "@/components/ui/Text";
 import { hapticLight, hapticSelection } from "@/lib/haptics";
@@ -35,7 +34,7 @@ interface Bar {
 }
 
 /**
- * What each closed month kept, as bars that grow in one after another, the
+ * What each closed month kept, as bars that fade in with the card, the
  * best of them lit. A touch or a drag reads a month out above them.
  *
  * Below, the way into the closes' detail and settings — the reading day and
@@ -162,7 +161,6 @@ export function MonthsCard({
                 height={(Math.abs(bar.kept) / span) * PLOT}
                 below={bar.kept < 0}
                 zero={zero}
-                index={index}
                 best={index === best}
                 active={index === active}
               />
@@ -224,29 +222,26 @@ function BarColumn({
   height,
   below,
   zero,
-  index,
   best,
   active,
 }: {
   height: number;
   below: boolean;
   zero: number;
-  index: number;
   best: boolean;
   active: boolean;
 }) {
   const colors = useThemeColors();
   const reduce = useReducedMotion();
-  const grow = useSharedValue(reduce ? height : 0);
+  // At its height from the start, fading in with the card; a later change
+  // eases to the new one.
+  const grow = useSharedValue(height);
 
   useEffect(() => {
     grow.value = reduce
       ? height
-      : withDelay(
-          150 + index * 70,
-          withTiming(height, { duration: 600, easing: EASING }),
-        );
-  }, [height, index, reduce, grow]);
+      : withTiming(height, { duration: DURATION.enter, easing: EASING });
+  }, [height, reduce, grow]);
 
   const style = useAnimatedStyle(() => ({
     height: Math.max(2, grow.value),

@@ -35,6 +35,7 @@ import {
 import { PAGE_ICON } from "@/components/marketing/page-icons";
 import { Reactions } from "@/components/marketing/nouveautes/Reactions";
 import type { RiverEntry } from "@/components/marketing/nouveautes/river-entry";
+import { FADE, FADE_HEIGHT } from "@/components/motion/fade";
 import { cn } from "@/lib/utils";
 
 const EASE = [...EASE_STANDARD] as [number, number, number, number];
@@ -130,14 +131,7 @@ export function EntryCard({
           </p>
           <AnimatePresence initial={false}>
             {open && entry.detail ? (
-              <m.div
-                key="detail"
-                className="overflow-hidden"
-                initial={{ height: 0, opacity: 0 }}
-                animate={{ height: "auto", opacity: 1 }}
-                exit={{ height: 0, opacity: 0 }}
-                transition={{ duration: DURATION.panel / 1000, ease: EASE }}
-              >
+              <m.div key="detail" className="overflow-hidden" {...FADE_HEIGHT}>
                 <p className="pt-3 text-[0.95rem] leading-relaxed text-marketing-ink">
                   {entry.detail}
                 </p>
@@ -320,10 +314,7 @@ function CopyLink({
         <m.span
           key={copied ? "copied" : "link"}
           className={cn("flex", copied && "text-success")}
-          initial={{ opacity: 0, scale: 0.6 }}
-          animate={{ opacity: 1, scale: 1 }}
-          exit={{ opacity: 0, scale: 0.6 }}
-          transition={{ duration: DURATION.press / 1000, ease: EASE }}
+          {...FADE}
         >
           {copied ? (
             <Check size={16} weight="bold" aria-hidden />

@@ -7,10 +7,11 @@ import {
   type YearAheadBand,
 } from "@finance/core/year-ahead";
 import { AnimatedAmount } from "@/components/finance/AnimatedAmount";
+import { FADE, FADE_IN } from "@/components/motion/fade";
 import { useT } from "@/lib/locale-context";
 import { MICRO } from "@/lib/type-scale";
 import { cn } from "@/lib/utils";
-import { FOLLOW, MORPH } from "./year-ahead-parts";
+import { MORPH } from "./year-ahead-parts";
 
 /** A sparkline's points, the same count whatever the window, so it morphs. */
 const SPARK_SAMPLES = 25;
@@ -74,10 +75,8 @@ export function YearAheadAccounts({
               <m.li
                 key={band.id}
                 layout
-                initial={{ opacity: 0, y: 6 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0 }}
-                transition={reduce ? { duration: 0 } : FOLLOW}
+                {...FADE}
+                transition={reduce ? { duration: 0 } : FADE_IN}
               >
                 <button
                   type="button"

@@ -18,7 +18,6 @@ import {
   type PostKind,
 } from "@finance/core/entraide";
 import { maskPersonalData } from "@finance/core/entraide-mask";
-import { DURATION, EASE_STANDARD } from "@finance/core/motion";
 import { publishPost, searchAlreadyAsked } from "@/lib/actions/entraide";
 import type { EntraideCard } from "@/lib/entraide-cards";
 import {
@@ -28,17 +27,11 @@ import {
 import { EntraideText } from "@/components/marketing/entraide/EntraideText";
 import { marketingFocus } from "@/components/marketing/marketing-focus";
 import { SegmentedPills } from "@/components/marketing/SegmentedPills";
+import { FADE, FADE_HEIGHT, FADE_IN } from "@/components/motion/fade";
 import { cn } from "@/lib/utils";
 
-const EASE = [...EASE_STANDARD] as [number, number, number, number];
-
-/** The glass's spring, as the nav's: quick to answer, no wobble. */
-const MORPH = {
-  type: "spring",
-  stiffness: 340,
-  damping: 34,
-  mass: 0.9,
-} as const;
+/** The pill growing into the editor, and the editor into the card: quick. */
+const MORPH = FADE_IN;
 
 /** How long the title rests before « Déjà demandé ? » looks. */
 const SEARCH_AFTER_MS = 450;
@@ -231,7 +224,7 @@ export function Composer({
       className="glass-panel flex flex-col gap-5 p-5 md:p-7"
       aria-labelledby={`${ids}-title-label`}
     >
-      <Appear delay={0.05}>
+      <Appear>
         <SegmentedPills
           id="entraide-kind"
           label={words.kindLabel}
@@ -245,7 +238,7 @@ export function Composer({
       </Appear>
 
       {handle ? null : (
-        <Appear delay={0.08}>
+        <Appear>
           <Field
             id={`${ids}-handle`}
             label={words.handleLabel}
@@ -268,7 +261,7 @@ export function Composer({
         </Appear>
       )}
 
-      <Appear delay={0.11}>
+      <Appear>
         <Field
           id={`${ids}-title`}
           labelId={`${ids}-title-label`}
@@ -288,7 +281,7 @@ export function Composer({
 
       <AlreadyAsked matches={shownMatches} copy={copy} />
 
-      <Appear delay={0.14}>
+      <Appear>
         <Field
           id={`${ids}-body`}
           label={words.bodyLabel}
@@ -356,7 +349,7 @@ export function Composer({
         ) : null}
       </AnimatePresence>
 
-      <Appear delay={0.17}>
+      <Appear>
         <div className="flex flex-col-reverse gap-3 md:flex-row md:items-center md:justify-between">
           <p className="text-xs text-marketing-faint">{words.agree}</p>
           <div className="flex items-center gap-2">
@@ -465,17 +458,8 @@ function AlreadyAsked({
               {copy.composer.already}
             </p>
             <ul className="flex flex-col">
-              {items.map((item, index) => (
-                <m.li
-                  key={item.key}
-                  initial={{ opacity: 0, x: -8 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{
-                    duration: DURATION.panel / 1000,
-                    ease: EASE,
-                    delay: index * 0.04,
-                  }}
-                >
+              {items.map((item) => (
+                <m.li key={item.key} {...FADE}>
                   <a
                     href={item.href}
                     target="_blank"
@@ -506,28 +490,14 @@ function AlreadyAsked({
   );
 }
 
-/** The editor's parts arrive a beat after the glass has grown. */
-function Appear({ delay, children }: { delay: number; children: ReactNode }) {
-  return (
-    <m.div
-      initial={{ opacity: 0, y: 8 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: DURATION.panel / 1000, ease: EASE, delay }}
-    >
-      {children}
-    </m.div>
-  );
+/** The editor's parts, fading in as the glass grows. */
+function Appear({ children }: { children: ReactNode }) {
+  return <m.div {...FADE}>{children}</m.div>;
 }
 
 function Reveal({ children }: { children: ReactNode }) {
   return (
-    <m.div
-      className="overflow-hidden"
-      initial={{ height: 0, opacity: 0 }}
-      animate={{ height: "auto", opacity: 1 }}
-      exit={{ height: 0, opacity: 0 }}
-      transition={{ duration: DURATION.panel / 1000, ease: EASE }}
-    >
+    <m.div className="overflow-hidden" {...FADE_HEIGHT}>
       {children}
     </m.div>
   );

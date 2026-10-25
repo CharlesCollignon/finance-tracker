@@ -4,8 +4,6 @@ import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import * as WebBrowser from "expo-web-browser";
 import Animated, {
-  FadeInDown,
-  LinearTransition,
   useReducedMotion,
 } from "react-native-reanimated";
 
@@ -17,7 +15,6 @@ import {
 } from "@finance/core/changelog";
 import { formatDayMonth } from "@finance/core/constants";
 import { monthLong } from "@finance/core/i18n/calendar-names";
-import { DURATION, STAGGER_STEP_MS } from "@finance/core/motion";
 import {
   CHANGELOG_REACTIONS,
   changelogTarget,
@@ -44,11 +41,9 @@ import { useAuth } from "@/providers/AuthProvider";
 import { useLocale, useT } from "@/providers/LocaleProvider";
 import { ICON } from "@/theme/tokens";
 import { useThemeColors } from "@/theme/useThemeColors";
+import { FADE_IN, LAYOUT } from "@/components/motion/fade";
 
 type KindFilter = "all" | ChangeKind;
-
-/** Past the first screenful a cascade is only waited for, not seen. */
-const STAGGER_CAP = 8;
 
 /** Each kind's dot, as on the site: green for what arrived, greys after. */
 const KIND_DOT: Record<ChangeKind, string> = {
@@ -64,8 +59,8 @@ const KIND_DOT: Record<ChangeKind, string> = {
  * What is new for the account is marked in the status green when the screen
  * opens — frozen then, so it stays marked while it is read — and the
  * account's marker moves to the newest entry, which clears the dot on the
- * account menu here and on the web. The cards rise in a beat apart, « Plus »
- * opens one where it stands and the ones below slide down, and the filter
+ * account menu here and on the web. The cards fade in, « Plus » opens one
+ * where it stands and the ones below move down, and the filter
  * re-deals the list. Under reduced motion everything is in place.
  */
 export default function NouveautesScreen() {
@@ -110,16 +105,8 @@ export default function NouveautesScreen() {
     [feed.entries, kind],
   );
 
-  let index = 0;
-  const enter = () =>
-    reduceMotion
-      ? undefined
-      : FadeInDown.duration(DURATION.enter).delay(
-          Math.min(index++, STAGGER_CAP) * STAGGER_STEP_MS,
-        );
-  const layout = reduceMotion
-    ? undefined
-    : LinearTransition.duration(DURATION.panel);
+  const enter = () => (reduceMotion ? undefined : FADE_IN);
+  const layout = reduceMotion ? undefined : LAYOUT;
 
   return (
     <Screen
@@ -300,7 +287,7 @@ function EntryCard({
         {text.body}
       </Text>
       {open && text.detail ? (
-        <Animated.View entering={FadeInDown.duration(DURATION.panel)}>
+        <Animated.View entering={FADE_IN}>
           <Text className="pt-3">{text.detail}</Text>
         </Animated.View>
       ) : null}

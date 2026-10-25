@@ -29,7 +29,6 @@ import {
 } from "@finance/core/changelog";
 import { monthLong } from "@finance/core/i18n/calendar-names";
 import type { Locale } from "@finance/core/i18n/locale";
-import { DURATION, EASE_STANDARD, STAGGER_STEP_MS } from "@finance/core/motion";
 import {
   changelogTarget,
   NO_TALLY,
@@ -51,19 +50,15 @@ import {
 } from "@/components/marketing/nouveautes/river-entry";
 import { GOTO_WEEK_EVENT } from "@/components/marketing/nouveautes/river-events";
 import { SegmentedPills } from "@/components/marketing/SegmentedPills";
+import { FADE } from "@/components/motion/fade";
 import { cn } from "@/lib/utils";
 
 /** Motion's layout engine, fetched after the page — see `lib/motion-features`. */
 const loadMotionFeatures = () =>
   import("@/lib/motion-features").then((mod) => mod.default);
 
-const EASE = [...EASE_STANDARD] as [number, number, number, number];
-
 /** The tabs' spring (`SurfaceTabs`): quick, a little springy. */
 const PILL_SPRING = { type: "spring", stiffness: 400, damping: 30 } as const;
-
-/** Past the first screenful a cascade is not seen, only waited for. */
-const STAGGER_CAP = 8;
 
 /** Where on the screen the month marker reads the list: a third down. */
 const READ_AT = 0.35;
@@ -159,11 +154,8 @@ export function ChangelogRiver({
     [months, kind, unfolded],
   );
 
-  // The month being read, and which way the list went to reach it.
-  const [reading, setReading] = useState<{ key: string; dir: 1 | -1 }>({
-    key: months[0]?.key ?? "",
-    dir: 1,
-  });
+  // The month being read.
+  const [reading, setReading] = useState(months[0]?.key ?? "");
   const { scrollY } = useScroll();
   useMotionValueEvent(scrollY, "change", () => {
     const marks =
@@ -178,12 +170,10 @@ export function ChangelogRiver({
         key = mark.dataset.month!;
       }
     }
-    setReading((current) =>
-      current.key === key ? current : { key, dir: key < current.key ? 1 : -1 },
-    );
+    setReading(key);
   });
   const readingMonth =
-    months.find((month) => month.key === reading.key) ?? months[0] ?? null;
+    months.find((month) => month.key === reading) ?? months[0] ?? null;
 
   const showAll = useCallback(() => {
     setKind("all");
@@ -261,12 +251,7 @@ export function ChangelogRiver({
           <div className="mx-auto grid max-w-6xl gap-10 md:grid-cols-[minmax(0,4fr)_minmax(0,8fr)] md:gap-14">
             <aside className="min-w-0 md:sticky md:top-28 md:self-start">
               {readingMonth ? (
-                <MonthMarker
-                  month={readingMonth}
-                  dir={reading.dir}
-                  locale={locale}
-                  copy={copy}
-                />
+                <MonthMarker month={readingMonth} locale={locale} copy={copy} />
               ) : null}
 
               <div className="flex flex-col gap-3 md:mt-10">
@@ -305,10 +290,7 @@ export function ChangelogRiver({
                       "mt-4 inline-flex min-h-11 items-center gap-2.5 rounded-full border border-success/30 bg-success/10 px-4 text-left text-sm text-marketing-ink transition-colors duration-hover hover:bg-success/15",
                       marketingFocus,
                     )}
-                    initial={{ opacity: 0, y: 8 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0 }}
-                    transition={{ duration: DURATION.enter / 1000, ease: EASE }}
+                    {...FADE}
                     onClick={() => {
                       showAll();
                       scrollTo(`#entry-${firstFresh.id}`);
@@ -326,22 +308,11 @@ export function ChangelogRiver({
 
             <div ref={listRef} className="relative flex min-w-0 flex-col">
               <AnimatePresence initial={false} mode="popLayout">
-                {rows.map((row, index) => (
+                {rows.map((row) => (
                   <m.div
                     key={row.key}
                     layout="position"
-                    initial={{ opacity: 0, y: 12 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{
-                      opacity: 0,
-                      transition: { duration: DURATION.press / 1000 },
-                    }}
-                    transition={{
-                      duration: DURATION.enter / 1000,
-                      ease: EASE,
-                      delay:
-                        (Math.min(index, STAGGER_CAP) * STAGGER_STEP_MS) / 1000,
-                    }}
+                    {...FADE}
                     className={rowSpacing(row)}
                   >
                     <RowView
@@ -593,18 +564,15 @@ function RowView({
 }
 
 /**
- * The month being read, on a desktop: its name rolling over to the next as
- * the list crosses into it — up when the list goes on, down when it goes
- * back — with the year and its count under it.
+ * The month being read, on a desktop: its name fading to the next as the
+ * list crosses into it, with the year and its count under it.
  */
 function MonthMarker({
   month,
-  dir,
   locale,
   copy,
 }: {
   month: ChangelogMonth<RiverEntry>;
-  dir: 1 | -1;
   locale: Locale;
   copy: NouveautesCopy;
 }) {
@@ -612,21 +580,8 @@ function MonthMarker({
   return (
     <div className="hidden md:block" aria-hidden>
       <div className="relative h-[1.15em] overflow-hidden marketing-display text-display-sub">
-        <AnimatePresence initial={false} custom={dir}>
-          <m.span
-            key={month.key}
-            custom={dir}
-            className="absolute inset-0 block"
-            variants={{
-              enter: (d: 1 | -1) => ({ y: d > 0 ? "105%" : "-105%" }),
-              rest: { y: "0%" },
-              leave: (d: 1 | -1) => ({ y: d > 0 ? "-105%" : "105%" }),
-            }}
-            initial="enter"
-            animate="rest"
-            exit="leave"
-            transition={{ duration: 0.6, ease: EASE }}
-          >
+        <AnimatePresence initial={false}>
+          <m.span key={month.key} className="absolute inset-0 block" {...FADE}>
             {capitalised(monthLong(month.month, locale))}
           </m.span>
         </AnimatePresence>

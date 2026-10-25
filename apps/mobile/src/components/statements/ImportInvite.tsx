@@ -3,9 +3,7 @@ import { Pressable, View } from "react-native";
 import { useRouter, type Href } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import Animated, { FadeIn, useReducedMotion } from "react-native-reanimated";
-
-import { DURATION } from "@finance/core/motion";
+import Animated, { useReducedMotion } from "react-native-reanimated";
 
 import { Button } from "@/components/ui/Button";
 import { Text } from "@/components/ui/Text";
@@ -14,6 +12,7 @@ import { hapticLight } from "@/lib/haptics";
 import { useT } from "@/providers/LocaleProvider";
 import { ICON } from "@/theme/tokens";
 import { useThemeColors } from "@/theme/useThemeColors";
+import { FADE_IN } from "@/components/motion/fade";
 
 /** Where a dismissal is remembered: on this phone, as a convenience. */
 const DISMISSED_KEY = "pluclair.importInvite.dismissed";
@@ -51,7 +50,7 @@ export function ImportInvite({ className }: { className?: string }) {
 
   return (
     <Animated.View
-      entering={reduceMotion ? undefined : FadeIn.duration(DURATION.panel)}
+      entering={reduceMotion ? undefined : FADE_IN}
       className={cn("flex-row items-center gap-3 rounded-control border bg-primary/5 px-3 py-3", className)}
       style={{ borderColor: colors.primaryRim }}
     >

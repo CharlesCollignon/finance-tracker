@@ -22,7 +22,6 @@ import {
   wealthToday,
   withKnownFees,
 } from "@finance/core/future-plan";
-import { EASE_STANDARD } from "@finance/core/motion";
 import { buildRunway } from "@finance/core/projection";
 import { isSavingsKind } from "@finance/core/savings-accounts";
 import {
@@ -30,6 +29,7 @@ import {
   type YearAheadAccountId,
 } from "@finance/core/year-ahead";
 import { MonthCloseHistory } from "@/components/finance/MonthCloseHistory";
+import { FADE_IN } from "@/components/motion/fade";
 import { ConnectBankInvite } from "@/components/finance/bank/ConnectBankInvite";
 import { markMilestoneSeen } from "@/lib/actions/plan";
 import { GLASS_CARD } from "@/lib/glass";
@@ -221,17 +221,10 @@ export function PlanView({ base, wealth, bankInvite }: PlanViewProps) {
   );
 }
 
-/** How a card rises into place: the page entrance's duration, on the one curve. */
-const REVEAL = {
-  duration: 0.55,
-  ease: [...EASE_STANDARD] as [number, number, number, number],
-};
-
 /**
- * A card rising into place the first time it scrolls into view. The page is
- * long, and an entrance played on load has finished before the reader ever
- * reaches the run; this one waits for them. Under reduced motion it only
- * fades.
+ * A card fading in the first time it scrolls into view. The page is long,
+ * and an entrance played on load has finished before the reader ever
+ * reaches the run; this one waits for them.
  */
 function Reveal({
   className,
@@ -243,10 +236,10 @@ function Reveal({
   return (
     <m.div
       className={className}
-      initial={{ opacity: 0, y: 28, scale: 0.98 }}
-      whileInView={{ opacity: 1, y: 0, scale: 1 }}
+      initial={{ opacity: 0 }}
+      whileInView={{ opacity: 1 }}
       viewport={{ once: true, amount: 0.12 }}
-      transition={REVEAL}
+      transition={FADE_IN}
     >
       {children}
     </m.div>

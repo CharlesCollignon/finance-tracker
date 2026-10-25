@@ -2,11 +2,7 @@ import { useState } from "react";
 import { Pressable, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import Animated, {
-  FadeInDown,
-  FadeOut,
-  LinearTransition,
   useReducedMotion,
-  ZoomIn,
 } from "react-native-reanimated";
 
 import {
@@ -32,6 +28,7 @@ import {
   eventTone,
   useTwoColumns,
 } from "./year-ahead-parts";
+import { FADE_IN, FADE_OUT, LAYOUT } from "@/components/motion/fade";
 
 const EXTRA_MAX = 500;
 const EXTRA_STEP = 25;
@@ -237,9 +234,9 @@ export function YearAheadWhatIf({
         {events.map((event) => (
           <Animated.View
             key={event.id}
-            entering={reduce ? undefined : FadeInDown.springify().damping(18)}
-            exiting={reduce ? undefined : FadeOut.duration(200)}
-            layout={reduce ? undefined : LinearTransition.springify().damping(20)}
+            entering={reduce ? undefined : FADE_IN}
+            exiting={reduce ? undefined : FADE_OUT}
+            layout={reduce ? undefined : LAYOUT}
           >
             <EventCard
               event={event}
@@ -259,12 +256,10 @@ export function YearAheadWhatIf({
 
         <View className="flex-row flex-wrap items-center gap-2">
           {adding ? (
-            YEAR_AHEAD_EVENT_KINDS.map((kind, index) => (
+            YEAR_AHEAD_EVENT_KINDS.map((kind) => (
               <Animated.View
                 key={kind}
-                entering={
-                  reduce ? undefined : ZoomIn.delay(index * 40).springify().damping(16)
-                }
+                entering={reduce ? undefined : FADE_IN}
               >
                 <Pressable
                   accessibilityRole="button"

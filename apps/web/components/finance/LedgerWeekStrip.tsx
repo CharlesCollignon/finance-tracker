@@ -8,7 +8,6 @@ import {
   type PointerEvent as ReactPointerEvent,
 } from "react";
 import { LazyMotion, m, MotionConfig } from "motion/react";
-import { EASE_STANDARD, DURATION, STAGGER_STEP_MS } from "@finance/core/motion";
 import { formatShortDate, todayIsoLocal } from "@finance/core/constants";
 import type { LedgerWeek } from "@finance/core/ledger-view";
 import { cn } from "@/lib/utils";
@@ -21,7 +20,6 @@ const loadMotionFeatures = () =>
 
 /** The tabs' pill spring, so the two pills on the page move alike. */
 const PILL_SPRING = { type: "spring", stiffness: 400, damping: 30 } as const;
-const EASE = [...EASE_STANDARD] as [number, number, number, number];
 
 /**
  * How far a press has to travel sideways before it is a scrub rather than a
@@ -237,12 +235,7 @@ export function LedgerWeekStrip({
                       transition={PILL_SPRING}
                     />
                   ) : null}
-                  <Bars
-                    bars={bars}
-                    max={week ? dayMax : weekMax}
-                    lit={lit}
-                    delay={index * STAGGER_STEP_MS}
-                  />
+                  <Bars bars={bars} max={week ? dayMax : weekMax} lit={lit} />
                   <span
                     className={cn(
                       "relative tabular-nums transition-colors duration-hover",
@@ -269,8 +262,8 @@ export function LedgerWeekStrip({
 }
 
 /**
- * A segment's bars, grown up from the baseline when the strip first draws
- * and easing to their new heights whenever a filter changes them.
+ * A segment's bars, faded in when the strip first draws and easing to their
+ * new heights whenever a filter changes them.
  *
  * Planned rows sit on top of the recorded ones, fainter, the way the list
  * draws them muted under the rows that have happened. A day with nothing on
@@ -280,26 +273,16 @@ function Bars({
   bars,
   max,
   lit,
-  delay,
 }: {
   bars: (Bar | null)[];
   max: number;
   lit: (index: number) => boolean;
-  delay: number;
 }) {
   return (
-    <m.span
+    <span
       aria-hidden
-      initial={{ scaleY: 0, opacity: 0 }}
-      animate={{ scaleY: 1, opacity: 1 }}
-      transition={{
-        duration: DURATION.enter / 1000,
-        ease: EASE,
-        delay: delay / 1000,
-      }}
-      style={{ originY: 1 }}
       // Taller and wider bars where a week has a desktop's width to fill.
-      className="relative flex h-6 w-full items-end justify-center gap-[2px] md:h-8 md:gap-[3px]"
+      className="fade-in relative flex h-6 w-full items-end justify-center gap-[2px] md:h-8 md:gap-[3px]"
     >
       {bars.map((bar, index) => {
         if (!bar) {
@@ -349,6 +332,6 @@ function Bars({
           </span>
         );
       })}
-    </m.span>
+    </span>
   );
 }

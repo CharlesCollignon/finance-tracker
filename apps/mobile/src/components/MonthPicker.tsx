@@ -182,7 +182,7 @@ function MonthGrid({
     <Modal
       visible={open}
       transparent
-      animationType="slide"
+      animationType="fade"
       statusBarTranslucent
       onShow={() => setShownYear(year)}
       onRequestClose={onClose}

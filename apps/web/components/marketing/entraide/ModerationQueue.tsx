@@ -8,7 +8,6 @@ import {
   threadHref,
   type EntraideRule,
 } from "@finance/core/entraide";
-import { DURATION, EASE_STANDARD } from "@finance/core/motion";
 import type { ModerationItem } from "@finance/data/entraide-moderation";
 import { moderate } from "@/lib/actions/entraide-moderation";
 import {
@@ -19,13 +18,12 @@ import { fieldClass } from "@/components/marketing/entraide/Composer";
 import { EntraideText } from "@/components/marketing/entraide/EntraideText";
 import { marketingFocus } from "@/components/marketing/marketing-focus";
 import { countLabel } from "@/components/marketing/nouveautes-copy";
+import { FADE_HEIGHT } from "@/components/motion/fade";
 import { cn } from "@/lib/utils";
 
 /** Motion's layout engine, fetched after the page — see `lib/motion-features`. */
 const loadMotionFeatures = () =>
   import("@/lib/motion-features").then((mod) => mod.default);
-
-const EASE = [...EASE_STANDARD] as [number, number, number, number];
 
 type Measure = "hide" | "bar";
 
@@ -293,10 +291,7 @@ function Item({
               <m.form
                 key={measure}
                 className="flex flex-col gap-3 overflow-hidden"
-                initial={{ height: 0, opacity: 0 }}
-                animate={{ height: "auto", opacity: 1 }}
-                exit={{ height: 0, opacity: 0 }}
-                transition={{ duration: DURATION.panel / 1000, ease: EASE }}
+                {...FADE_HEIGHT}
                 onSubmit={(event) => {
                   event.preventDefault();
                   void act(

@@ -3,14 +3,9 @@ import { Pressable, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import * as WebBrowser from "expo-web-browser";
 import Animated, {
-  FadeIn,
-  FadeInDown,
-  FadeOut,
-  LinearTransition,
   useReducedMotion,
 } from "react-native-reanimated";
 
-import { DURATION } from "@finance/core/motion";
 import {
   BANK_IDS,
   BANK_NAMES,
@@ -24,6 +19,7 @@ import { hapticSelection } from "@/lib/haptics";
 import { useLocale, useT } from "@/providers/LocaleProvider";
 import { ICON } from "@/theme/tokens";
 import { useThemeColors } from "@/theme/useThemeColors";
+import { FADE_IN, FADE_OUT, LAYOUT } from "@/components/motion/fade";
 
 /** The first letters a bank is known by, for its chip. */
 function initials(bank: BankId): string {
@@ -53,7 +49,7 @@ export function BankGuide({ initialBank = null }: { initialBank?: BankId | null 
   const guide = bank === null ? null : exportGuide(bank === "other" ? null : bank, locale);
 
   return (
-    <Animated.View layout={reduceMotion ? undefined : LinearTransition.duration(DURATION.panel)} className="gap-3">
+    <Animated.View layout={reduceMotion ? undefined : LAYOUT} className="gap-3">
       <Pressable
         accessibilityRole="button"
         accessibilityState={{ expanded: open }}
@@ -73,8 +69,8 @@ export function BankGuide({ initialBank = null }: { initialBank?: BankId | null 
       </Pressable>
       {open ? (
         <Animated.View
-          entering={reduceMotion ? undefined : FadeIn.duration(DURATION.panel)}
-          exiting={reduceMotion ? undefined : FadeOut.duration(DURATION.press)}
+          entering={reduceMotion ? undefined : FADE_IN}
+          exiting={reduceMotion ? undefined : FADE_OUT}
           className="gap-3"
         >
           <Text variant="label">{t("statements.wherePick")}</Text>
@@ -110,7 +106,7 @@ export function BankGuide({ initialBank = null }: { initialBank?: BankId | null 
           {guide ? (
             <Animated.View
               key={String(bank)}
-              entering={reduceMotion ? undefined : FadeInDown.duration(DURATION.panel)}
+              entering={reduceMotion ? undefined : FADE_IN}
               className="gap-2.5 pt-1"
             >
               {guide.steps.map((step, index) => (

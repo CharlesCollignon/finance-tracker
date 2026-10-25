@@ -175,13 +175,8 @@ export function EntraideBoard({
                     layoutId={item.layoutId}
                   />
                 ))}
-                {listed.map((card, index) => (
-                  <PostCard
-                    key={card.id}
-                    card={card}
-                    copy={copy}
-                    index={index}
-                  />
+                {listed.map((card) => (
+                  <PostCard key={card.id} card={card} copy={copy} />
                 ))}
               </AnimatePresence>
             </ul>

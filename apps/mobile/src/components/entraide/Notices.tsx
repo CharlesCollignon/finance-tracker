@@ -1,19 +1,17 @@
 import { View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import Animated, {
-  FadeIn,
-  FadeOut,
   useReducedMotion,
 } from "react-native-reanimated";
 
 import type { EntraideDecision } from "@finance/core/entraide";
 import type { EntraideCopy } from "@finance/core/entraide-copy";
 import { maskPersonalData } from "@finance/core/entraide-mask";
-import { DURATION } from "@finance/core/motion";
 
 import { Text } from "@/components/ui/Text";
 import { ICON } from "@/theme/tokens";
 import { useThemeColors } from "@/theme/useThemeColors";
+import { FADE_IN, FADE_OUT } from "@/components/motion/fade";
 
 /**
  * Why a message of the reader's is hidden, as the rules promise to say it
@@ -84,8 +82,8 @@ export function MaskNotice({
   }
   return (
     <Animated.View
-      entering={reduceMotion ? undefined : FadeIn.duration(DURATION.panel)}
-      exiting={reduceMotion ? undefined : FadeOut.duration(DURATION.press)}
+      entering={reduceMotion ? undefined : FADE_IN}
+      exiting={reduceMotion ? undefined : FADE_OUT}
       accessibilityLiveRegion="polite"
       className="flex-row items-start gap-2"
     >

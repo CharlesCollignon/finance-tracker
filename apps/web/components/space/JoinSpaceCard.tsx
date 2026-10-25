@@ -12,6 +12,7 @@ import {
 } from "motion/react";
 import { ArrowRight } from "@phosphor-icons/react";
 import { EASE_STANDARD } from "@finance/core/motion";
+import { FADE, FADE_IN } from "@/components/motion/fade";
 import { Button, ButtonNub } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { initialOf } from "@/components/layout/SpaceContext";
@@ -186,12 +187,7 @@ function JoinBody({ state, token }: { state: JoinState; token: string }) {
 
 function Heading({ children }: { children: string }) {
   return (
-    <m.h1
-      initial={{ opacity: 0, y: 8 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.4, ease: EASE, delay: 0.15 }}
-      className="font-head text-2xl leading-tight"
-    >
+    <m.h1 {...FADE} className="font-head text-2xl leading-tight">
       {children}
     </m.h1>
   );
@@ -199,20 +195,16 @@ function Heading({ children }: { children: string }) {
 
 function Body({ children }: { children: string }) {
   return (
-    <m.p
-      initial={{ opacity: 0, y: 8 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.4, ease: EASE, delay: 0.25 }}
-      className="max-w-sm text-sm text-muted-foreground"
-    >
+    <m.p {...FADE} className="max-w-sm text-sm text-muted-foreground">
       {children}
     </m.p>
   );
 }
 
 /**
- * The inviter on the left, the reader on the right. They glide in from the
- * edges and stop short of each other; joining closes the gap.
+ * The inviter on the left, the reader on the right. They fade in a little
+ * short of each other; joining closes the gap — the moment, so it is the one
+ * thing here that moves.
  */
 function Pair({
   left,
@@ -238,22 +230,26 @@ function Pair({
         />
       ) : null}
       <m.span
-        initial={{ x: -40, opacity: 0 }}
+        initial={{ x: -4, opacity: 0 }}
         animate={{ x: together ? 10 : -4, opacity: 1 }}
-        transition={spring}
+        transition={{ ...spring, opacity: FADE_IN }}
         className={cn(disc, "z-10 bg-foreground text-background")}
       >
         {left}
       </m.span>
       <m.span
-        initial={{ x: 40, opacity: 0 }}
+        initial={{ x: 4, opacity: 0 }}
         animate={{
           x: together ? -10 : 4,
           opacity: 1,
           scale: together ? [1, 1.08, 1] : 1,
         }}
         // A spring takes two keyframes; the bump takes three.
-        transition={{ ...spring, scale: { duration: 0.4, ease: EASE } }}
+        transition={{
+          ...spring,
+          opacity: FADE_IN,
+          scale: { duration: 0.4, ease: EASE },
+        }}
         className={cn(disc, "bg-muted text-foreground")}
       >
         {right}

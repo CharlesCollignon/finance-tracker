@@ -18,8 +18,8 @@ import {
   ShareNetwork,
   SignOut,
 } from "@phosphor-icons/react";
-import { EASE_STANDARD } from "@finance/core/motion";
 import type { Space } from "@finance/data/spaces";
+import { FADE, FADE_IN, FADE_OUT } from "@/components/motion/fade";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { ListRow, ListSection } from "@/components/ui/ListRow";
@@ -38,11 +38,6 @@ import { ICON } from "@/lib/icon-scale";
 import { useT } from "@/lib/locale-context";
 import { MICRO } from "@/lib/type-scale";
 import { cn } from "@/lib/utils";
-
-const EASE = [...EASE_STANDARD] as [number, number, number, number];
-
-/** The discs' spring: they meet, settle, and stay. */
-const MEET_SPRING = { type: "spring", stiffness: 260, damping: 20 } as const;
 
 /** How long « Copié » stays before the button reads « Copier » again. */
 const COPIED_MS = 1600;
@@ -197,10 +192,7 @@ export function SpaceSection({
             <AnimatePresence mode="wait" initial={false}>
               <m.div
                 key={stage}
-                initial={{ opacity: 0, y: 6 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -6 }}
-                transition={{ duration: 0.24, ease: EASE }}
+                {...FADE}
                 className="flex flex-col items-center gap-1.5"
               >
                 <p className="font-head text-lg">
@@ -234,10 +226,7 @@ export function SpaceSection({
               {stage === "waiting" && inviteUrl ? (
                 <m.div
                   key="link"
-                  initial={{ opacity: 0, scale: 0.96, y: -4 }}
-                  animate={{ opacity: 1, scale: 1, y: 0 }}
-                  exit={{ opacity: 0, scale: 0.96 }}
-                  transition={{ type: "spring", stiffness: 380, damping: 28 }}
+                  {...FADE}
                   className="flex w-full max-w-sm flex-col gap-2"
                 >
                   <div className="flex items-center gap-2 rounded-full border bg-muted/40 py-1 pl-4 pr-1">
@@ -253,10 +242,7 @@ export function SpaceSection({
                       <AnimatePresence mode="wait" initial={false}>
                         <m.span
                           key={copied ? "copied" : "copy"}
-                          initial={{ opacity: 0, scale: 0.6 }}
-                          animate={{ opacity: 1, scale: 1 }}
-                          exit={{ opacity: 0, scale: 0.6 }}
-                          transition={{ duration: 0.16, ease: EASE }}
+                          {...FADE}
                           className="flex items-center gap-1"
                         >
                           {copied ? (
@@ -383,7 +369,7 @@ export function SpaceSection({
 
 /**
  * You, and beside you your partner or the seat they will take. The discs
- * slide in from either side; once there are two, they overlap a little.
+ * fade in where they sit; once there are two, they overlap a little.
  */
 function Pair({
   self,
@@ -399,9 +385,9 @@ function Pair({
   return (
     <div aria-hidden className="flex h-12 items-center">
       <m.span
-        initial={{ x: -18, opacity: 0 }}
+        initial={{ opacity: 0 }}
         animate={{ x: stage === "together" ? 6 : 0, opacity: 1 }}
-        transition={MEET_SPRING}
+        transition={FADE_IN}
         className={cn(disc, "z-10 bg-foreground text-background")}
       >
         {initialOf(self)}
@@ -410,9 +396,9 @@ function Pair({
         {partner ? (
           <m.span
             key="partner"
-            initial={{ x: 24, opacity: 0, scale: 0.8 }}
-            animate={{ x: -6, opacity: 1, scale: 1 }}
-            transition={MEET_SPRING}
+            initial={{ x: -6, opacity: 0 }}
+            animate={{ x: -6, opacity: 1 }}
+            transition={FADE_IN}
             className={cn(disc, "bg-muted text-foreground")}
           >
             {initialOf(partner)}
@@ -420,13 +406,13 @@ function Pair({
         ) : (
           <m.span
             key="seat"
-            initial={{ x: 18, opacity: 0 }}
+            initial={{ x: 4, opacity: 0 }}
             animate={{
               x: 4,
               opacity: stage === "empty" ? 0.5 : 1,
             }}
-            exit={{ opacity: 0, scale: 0.8 }}
-            transition={MEET_SPRING}
+            exit={{ opacity: 0, transition: FADE_OUT }}
+            transition={FADE_IN}
             className={cn(
               disc,
               "border-dashed border-muted-foreground/50 bg-transparent text-muted-foreground",

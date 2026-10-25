@@ -158,6 +158,7 @@ either client that did.
   face with even-width digits, as on the web
 - Amounts coloured by what kind of money they are, not by sign
 - One shared palette with the web, stated in both and drifting in neither
+- Everything that arrives or leaves fades, quickly — 180ms in, 120ms out
 
 ## Colors
 
@@ -416,7 +417,7 @@ where it went (`app/(tabs)/planning.tsx`, the twin of the web's Plan, every
 figure from `@finance/core/future-plan`). Top to bottom:
 
 - **A year from now** — the hero. What is kept in twelve months counts up
-  over a curve that draws itself in; a finger along it reads each month out
+  over a curve that fades in; a finger along it reads each month out
   in the line above, with a selection tick per month. Under it, **What if…**:
   a 0–500 € slider in 25 € steps (`ExtraSlider`, the whole 48pt row takes
   the finger, adjustable for a screen reader) and three chips, drawing the
@@ -433,16 +434,16 @@ figure from `@finance/core/future-plan`). Top to bottom:
   account each part is in — a thin bar split by account (2pt gaps, the chart
   palette without its gold, four accounts then "Others") and one muted line
   naming them, following the year under the finger. Then a stacked chart that
-  grows up from its baseline and reads out per year, and the knobs: steppers for
+  fades in and reads out per year, and the knobs: steppers for
   the horizon, inflation and withdrawal rate, and one row per account
   prefilled from the user's figures. Edits are remembered on the phone until
   "Back to my figures".
 - **The run** — the month-end streak as a flickering flame, the record, and
-  the close one press away; then **the months**, bars growing in one after
-  another with the best one lit, and behind a disclosure the close's history
+  the close one press away; then **the months**, bars fading in with the
+  best one lit, and behind a disclosure the close's history
   and its two settings.
 
-Reduced motion turns every draw, grow, spring, flicker and breath into a cut.
+Reduced motion turns every fade, spring, flicker and breath into a cut.
 
 ### Placements
 
@@ -474,7 +475,8 @@ savings account reads "No fees". An account is named by its short name
 ### Sheets and Modals
 
 Bottom sheets carry a grabber and are the default for a focused sub-task;
-confirmation uses a dedicated sheet rather than a system alert. Honour
+confirmation uses a dedicated sheet rather than a system alert. They open and
+close with `Modal`'s fade, not a slide up, as everything arrives. Honour
 swipe-to-dismiss unless dismissing would lose data.
 
 ### Nouveautés
@@ -482,11 +484,10 @@ swipe-to-dismiss unless dismissing would lose data.
 The account menu's monogram carries a dot in the status green while the
 account has changes it has not seen, and the « Nouveautés » row their count
 — green means _arrived_, as on the site, and no gold is spent. The
-`nouveautes` screen deals its cards in, a beat apart and capped at eight,
-re-deals them when the filter changes, and opens one in place with the rest
-sliding down (`LinearTransition`); what was new on arrival keeps a green
-hairline for the visit. After an update, « Quoi de neuf » slides up as a
-sheet whose cards rise one after another. Under each change, « J'adore »,
+`nouveautes` screen fades its cards in, again when the filter changes, and
+opens one in place with the rest moving down (`LAYOUT`); what was new on
+arrival keeps a green hairline for the visit. After an update, « Quoi de
+neuf » fades in as a sheet with its cards. Under each change, « J'adore »,
 « Utile » and « Enfin ! » (and « J'attends ça » on « Bientôt »): the mark
 zooms in filled on a spring with a light haptic, in ink rather than gold.
 Under reduced motion every card and mark is simply there.
@@ -499,10 +500,23 @@ showing money must route its figures through it.
 
 ### Motion and Feedback
 
+Everything that arrives or leaves fades, as on the web (October 2026, the
+owner's call for fades "fast and smooth, minimalist"): `FADE_IN` and
+`FADE_OUT` from `components/motion/fade.ts`, opacity alone on `DURATION.enter`
+(180ms) and `DURATION.exit` (120ms), and `LAYOUT` for the rows that make room.
+Nothing rises, slides, zooms, grows or springs into place, and nothing waits
+its turn — `FadeIn` is one fade for a block, where `StaggerItem` used to
+deal a screen in. A bar, a ring or a chart stands at its value as it fades
+in; a later change still eases to the new one. Screens push with the native
+stack's fade (`animationDuration` is iOS's; Android keeps its own length).
+What moves beyond a fade is the web's list: what follows the finger (a knob,
+a pill, a slider, a press giving a little), a figure counting up, the orb and
+the backdrop, the loading marks, the moments, and « Votre année ».
+
 Haptics confirm a committed action rather than decorating a tap. Reduced motion
 is consulted throughout — the codebase reads the accessibility setting in
-seventeen places — and animations degrade to a cut or a crossfade rather than
-merely shortening.
+seventeen places — and animations degrade to a cut rather than merely
+shortening.
 
 ## Do's and Don'ts
 
@@ -520,6 +534,8 @@ merely shortening.
 - **Do** lay out inside safe-area insets, and honour the system Back gesture on
   Android and the left-edge back gesture on iOS.
 - **Do** check reduced motion before animating, and degrade to a cut.
+- **Do** make anything that arrives or leaves `FADE_IN` / `FADE_OUT`; a
+  rise, a slide, a zoom or a spring for an arrival is the thing removed.
 - **Do** use the six icon sizes and the four radius roles; both scales are
   closed.
 

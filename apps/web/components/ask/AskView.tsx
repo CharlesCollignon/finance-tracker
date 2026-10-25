@@ -63,6 +63,7 @@ import { Orb } from "@/components/brand/Orb";
 import { ConnectAiInvite } from "@/components/finance/ConnectAiInvite";
 import { PrivateAmount } from "@/components/layout/PrivateAmount";
 import { useToast } from "@/components/layout/ToastProvider";
+import { FADE, FADE_HEIGHT, FADE_IN, FADE_OUT } from "@/components/motion/fade";
 import { deleteConversationAction } from "@/lib/actions/ask";
 import { ICON } from "@/lib/icon-scale";
 import { useLocale, useT } from "@/lib/locale-context";
@@ -72,13 +73,6 @@ import { cn } from "@/lib/utils";
 import { AskMarkdown } from "./AskMarkdown";
 
 const EASE = [...EASE_STANDARD] as [number, number, number, number];
-
-/** A message's arrival: up a little, settled by a spring. */
-const ARRIVE = {
-  initial: { opacity: 0, y: 10 },
-  animate: { opacity: 1, y: 0 },
-  transition: { type: "spring", stiffness: 380, damping: 30 },
-} as const;
 
 const SUGGESTIONS = [
   "ask.suggest1",
@@ -327,7 +321,7 @@ export function AskView({
               </div>
             ) : empty ? (
               <m.div
-                {...ARRIVE}
+                {...FADE}
                 className="my-auto flex flex-col items-center gap-4 py-10 text-center"
               >
                 <Orb size="56px" />
@@ -335,17 +329,11 @@ export function AskView({
                   {t("ask.intro")}
                 </p>
                 <div className="flex max-w-xl flex-wrap justify-center gap-2">
-                  {SUGGESTIONS.map((key, index) => (
+                  {SUGGESTIONS.map((key) => (
                     <m.button
                       key={key}
                       type="button"
-                      initial={{ opacity: 0, y: 8 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{
-                        duration: 0.3,
-                        ease: EASE,
-                        delay: 0.08 * index,
-                      }}
+                      {...FADE}
                       whileTap={{ scale: 0.97 }}
                       disabled={!canAsk}
                       onClick={() => void ask(t(key))}
@@ -361,13 +349,13 @@ export function AskView({
                 {messages.map((message, index) => (
                   <m.li
                     key={message.id}
-                    {...ARRIVE}
+                    {...FADE}
                     // The exchange just answered live is already on screen:
                     // it takes the live one's place without arriving again.
                     initial={
                       settled && index >= (live?.before ?? 0)
                         ? false
-                        : ARRIVE.initial
+                        : FADE.initial
                     }
                   >
                     {message.role === "question" ? (
@@ -379,10 +367,10 @@ export function AskView({
                 ))}
                 {shown ? (
                   <>
-                    <m.li key="asking" {...ARRIVE}>
+                    <m.li key="asking" {...FADE}>
                       <Question text={shown.question} />
                     </m.li>
-                    <m.li key="answering" {...ARRIVE}>
+                    <m.li key="answering" {...FADE}>
                       <LiveAnswer live={shown} />
                     </m.li>
                   </>
@@ -432,14 +420,7 @@ export function AskView({
                   <AnimatePresence mode="popLayout" initial={false}>
                     <m.span
                       key={asking ? "stop" : "send"}
-                      initial={{ scale: 0.4, opacity: 0 }}
-                      animate={{ scale: 1, opacity: 1 }}
-                      exit={{ scale: 0.4, opacity: 0 }}
-                      transition={{
-                        type: "spring",
-                        stiffness: 500,
-                        damping: 30,
-                      }}
+                      {...FADE}
                       className="flex"
                     >
                       {asking ? (
@@ -464,7 +445,7 @@ export function AskView({
           </form>
         ) : null}
 
-        {/* The last thirty days, sliding in from the side. */}
+        {/* The last thirty days, fading in at the side. */}
         <AnimatePresence>
           {history ? (
             <>
@@ -473,17 +454,12 @@ export function AskView({
                 type="button"
                 aria-label={t("common.close")}
                 onClick={() => setHistory(false)}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
+                {...FADE}
                 className="fixed inset-0 z-40 bg-black/40"
               />
               <m.aside
                 key="panel"
-                initial={{ x: "-100%" }}
-                animate={{ x: 0 }}
-                exit={{ x: "-100%" }}
-                transition={{ type: "spring", stiffness: 380, damping: 36 }}
+                {...FADE}
                 className="fixed inset-y-0 left-0 z-50 flex w-80 max-w-[85vw] flex-col gap-2 border-r border-border bg-background p-4 pt-safe"
               >
                 <div className="flex items-center justify-between">
@@ -515,10 +491,10 @@ export function AskView({
                       {conversations.map((conversation) => (
                         <m.li
                           key={conversation.id}
-                          initial={{ opacity: 0, x: -8 }}
-                          animate={{ opacity: 1, x: 0 }}
-                          exit={{ opacity: 0, height: 0 }}
-                          transition={{ duration: 0.2, ease: EASE }}
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          exit={{ opacity: 0, height: 0, transition: FADE_OUT }}
+                          transition={FADE_IN}
                           className={cn(
                             "group flex items-center gap-1 rounded-control",
                             conversation.id === currentId
@@ -624,9 +600,7 @@ function StepChip({ tool, working }: { tool: AskChatTool; working: boolean }) {
   return (
     <m.li
       layout
-      initial={{ opacity: 0, scale: 0.6, y: 6 }}
-      animate={{ opacity: 1, scale: 1, y: 0 }}
-      transition={{ type: "spring", stiffness: 520, damping: 28 }}
+      {...FADE}
       className={cn(
         "flex items-center gap-1.5 rounded-full border border-border px-2.5 py-1 text-xs text-muted-foreground",
         working && "bg-muted/60",
@@ -635,12 +609,7 @@ function StepChip({ tool, working }: { tool: AskChatTool; working: boolean }) {
       <Mark size={ICON.sm} />
       {t(`ask.step.${tool}`)}
       {working ? null : (
-        <m.span
-          initial={{ scale: 0 }}
-          animate={{ scale: 1 }}
-          transition={{ type: "spring", stiffness: 600, damping: 22 }}
-          className="flex"
-        >
+        <m.span {...FADE} className="flex">
           <Check size={ICON.xs} weight="bold" className="text-success" />
         </m.span>
       )}
@@ -724,10 +693,7 @@ function ChatAnswer({ body }: { body: AskChatBody }) {
             {open ? (
               <m.ul
                 key="steps"
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: "auto" }}
-                exit={{ opacity: 0, height: 0 }}
-                transition={{ duration: 0.2, ease: EASE }}
+                {...FADE_HEIGHT}
                 className="flex flex-wrap gap-1.5 overflow-hidden"
               >
                 {steps.map((step, index) => (
@@ -865,7 +831,7 @@ function Thinking({ label }: { label: string }) {
             <m.span
               key={dot}
               className="size-1.5 rounded-full bg-muted-foreground"
-              animate={{ y: [0, -3, 0], opacity: [0.4, 1, 0.4] }}
+              animate={{ opacity: [0.4, 1, 0.4] }}
               transition={{
                 duration: 0.9,
                 repeat: Infinity,

@@ -44,7 +44,6 @@ import {
 } from "@/components/property/fields";
 import { AnimatedAmount } from "@/components/AnimatedAmount";
 import { FadeIn } from "@/components/motion/FadeIn";
-import { StaggerItem } from "@/components/motion/Stagger";
 import { LoanTrack, OwnershipBar, PaymentBar } from "@/components/property/ProgressBars";
 import { JointDeed, type JointDeedView } from "@/components/property/JointDeed";
 import { EditPropertySheet, LoanSheet } from "@/components/property/PropertySheets";
@@ -204,7 +203,7 @@ export default function PropertyDetailScreen() {
         // Under the tab bar now, as every tab's screen is.
         contentContainerStyle={{ paddingBottom: tabBarClearance }}
       >
-        <StaggerItem index={0}>
+        <FadeIn>
         <Card bezel innerClassName="gap-5">
           <View className="items-center gap-1">
             <Text variant="muted" className="text-center text-xs">
@@ -333,15 +332,15 @@ export default function PropertyDetailScreen() {
             />
           </View>
         </Card>
-        </StaggerItem>
+        </FadeIn>
 
         {isLet(property.usage) ? (
-          <StaggerItem index={1}>
+          <FadeIn>
             <RentalSection detail={detail} position={position} today={today} />
-          </StaggerItem>
+          </FadeIn>
         ) : null}
 
-        <StaggerItem index={2}>
+        <FadeIn>
         <View className="gap-3">
           <Text className="font-semibold" style={{ fontSize: 17 }}>
             {t("property.loansTitle")}
@@ -372,9 +371,9 @@ export default function PropertyDetailScreen() {
             onPress={() => setLoanSheet({ loan: null })}
           />
         </View>
-        </StaggerItem>
+        </FadeIn>
 
-        <StaggerItem index={3}>
+        <FadeIn>
         <View className="gap-3">
           <Text className="font-semibold" style={{ fontSize: 17 }}>
             {t("property.templatesTitle")}
@@ -396,7 +395,7 @@ export default function PropertyDetailScreen() {
             <Text variant="muted">{t("property.templatesManage")}</Text>
           </Pressable>
         </View>
-        </StaggerItem>
+        </FadeIn>
 
         <Button
           label={t("property.removeProperty")}

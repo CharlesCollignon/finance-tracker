@@ -8,15 +8,8 @@ import type { EntraideCopy } from "@finance/core/entraide-copy";
 import { AuthorLine } from "@/components/marketing/entraide/AuthorLine";
 import { marketingFocus } from "@/components/marketing/marketing-focus";
 import type { EntraideCard } from "@/lib/entraide-cards";
+import { FADE, FADE_IN } from "@/components/motion/fade";
 import { cn } from "@/lib/utils";
-
-/** The glass's spring, as the nav's: quick to answer, no wobble. */
-const MORPH = {
-  type: "spring",
-  stiffness: 340,
-  damping: 34,
-  mass: 0.9,
-} as const;
 
 /**
  * A question or a share in the list: what kind, whether it is solved, its
@@ -28,24 +21,19 @@ export function PostCard({
   card,
   copy,
   layoutId,
-  index = 0,
 }: {
   card: EntraideCard;
   copy: EntraideCopy;
   layoutId?: string;
-  index?: number;
 }) {
   return (
     <m.li
       layout
       layoutId={layoutId}
-      initial={layoutId ? false : { opacity: 0, y: 14 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, scale: 0.98 }}
-      transition={{
-        ...MORPH,
-        delay: layoutId ? 0 : Math.min(index, 8) * 0.035,
-      }}
+      initial={layoutId ? false : FADE.initial}
+      animate={FADE.animate}
+      exit={FADE.exit}
+      transition={FADE_IN}
       className="min-w-0"
     >
       <Link

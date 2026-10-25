@@ -4,15 +4,13 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { AnimatePresence, m } from "motion/react";
 import { CheckCircle, EnvelopeSimple } from "@phosphor-icons/react";
-import { EASE_STANDARD } from "@finance/core/motion";
 import { resendErrorKey } from "@finance/core/auth-errors";
 import { resolveMessage } from "@finance/core/i18n/t";
+import { FADE } from "@/components/motion/fade";
 import { Button } from "@/components/ui/Button";
 import { createClient } from "@/lib/supabase/client";
 import { ICON } from "@/lib/icon-scale";
 import { useT } from "@/lib/locale-context";
-
-const EASE = [...EASE_STANDARD] as [number, number, number, number];
 
 /**
  * Seconds before « Renvoyer » can be pressed: Supabase sends at most one
@@ -79,45 +77,23 @@ export function CheckInbox({
     <div className="flex flex-col items-center text-center">
       <div className="relative grid size-20 place-items-center rounded-full border border-primary/30 bg-accent">
         <AnimatePresence mode="popLayout">
-          <m.span
-            key={sends}
-            className="text-primary"
-            initial={{ opacity: 0, scale: 0.5, rotate: -14, y: 6 }}
-            animate={{ opacity: 1, scale: 1, rotate: 0, y: 0 }}
-            exit={{ opacity: 0, x: 36, y: -28, rotate: 18, scale: 0.8 }}
-            transition={{ type: "spring", stiffness: 380, damping: 18 }}
-          >
+          <m.span key={sends} className="text-primary" {...FADE}>
             <EnvelopeSimple size={36} weight="duotone" aria-hidden />
           </m.span>
         </AnimatePresence>
       </div>
 
-      <m.h1
-        initial={{ opacity: 0, y: 8 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4, ease: EASE, delay: 0.1 }}
-        className="mt-5 font-head text-2xl md:text-3xl"
-      >
+      <m.h1 {...FADE} className="mt-5 font-head text-2xl md:text-3xl">
         {t("auth.checkInboxHeading")}
       </m.h1>
-      <m.p
-        initial={{ opacity: 0, y: 8 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4, ease: EASE, delay: 0.16 }}
-        className="mt-2 text-sm text-muted-foreground"
-      >
+      <m.p {...FADE} className="mt-2 text-sm text-muted-foreground">
         {before}
         <strong className="font-medium break-words text-foreground">
           {email}
         </strong>
         {after}
       </m.p>
-      <m.p
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.4, ease: EASE, delay: 0.24 }}
-        className="mt-3 text-sm text-muted-foreground"
-      >
+      <m.p {...FADE} className="mt-3 text-sm text-muted-foreground">
         {t("auth.checkInboxSpam")}
       </m.p>
 

@@ -70,7 +70,7 @@ export function WeeklyRecapCard({
       aria-label={t("recap.title")}
       className={cn(
         GLASS_CARD,
-        "page-enter flex flex-col gap-3 rounded-card p-card",
+        "fade-in flex flex-col gap-3 rounded-card p-card",
         "transition-[opacity,transform] duration-200",
         leaving && "scale-[0.98] opacity-0",
       )}

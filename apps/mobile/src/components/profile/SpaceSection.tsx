@@ -1,11 +1,6 @@
 import { useState, type ReactNode } from "react";
 import { View } from "react-native";
-import Animated, {
-  FadeIn,
-  FadeInLeft,
-  FadeInRight,
-  ZoomOut,
-} from "react-native-reanimated";
+import Animated from "react-native-reanimated";
 import { Ionicons } from "@expo/vector-icons";
 
 import { resolveMessage } from "@finance/core/i18n/t";
@@ -30,6 +25,7 @@ import { useOwner } from "@/providers/OwnerProvider";
 import { useToast } from "@/providers/ToastProvider";
 import { ICON } from "@/theme/tokens";
 import { useThemeColors } from "@/theme/useThemeColors";
+import { FADE_IN, FADE_OUT } from "@/components/motion/fade";
 
 type OpenRow = "spaceName" | "share" | "leave" | null;
 
@@ -38,7 +34,7 @@ type OpenRow = "spaceName" | "share" | "leave" | null;
  * that brings the partner in, name it, and leave it with its rows in hand.
  *
  * The two discs at the top are the space — you alone with an empty seat
- * while nobody has joined, then the two of you overlapping. They slide in
+ * while nobody has joined, then the two of you overlapping. They fade in
  * once and rest.
  */
 export function SpaceSection({ selfName }: { selfName: string }) {
@@ -160,7 +156,7 @@ export function SpaceSection({ selfName }: { selfName: string }) {
         <Pair self={selfName} partner={partner?.name ?? null} />
         <Animated.View
           key={stage}
-          entering={FadeIn.duration(240)}
+          entering={FADE_IN}
           className="items-center gap-1.5"
         >
           <Text variant="head" className="text-center">
@@ -305,7 +301,7 @@ function Pair({ self, partner }: { self: string; partner: string | null }) {
   return (
     <View className="h-12 flex-row items-center" importantForAccessibility="no">
       <Animated.View
-        entering={FadeInLeft.springify().damping(14)}
+        entering={FADE_IN}
         style={[disc, { backgroundColor: colors.foreground, zIndex: 1 }]}
       >
         <Text
@@ -318,7 +314,7 @@ function Pair({ self, partner }: { self: string; partner: string | null }) {
       {partner ? (
         <Animated.View
           key="partner"
-          entering={FadeInRight.springify().damping(14)}
+          entering={FADE_IN}
           style={[disc, { backgroundColor: colors.muted, marginLeft: -12 }]}
         >
           <Text className="font-sans text-lg font-semibold text-foreground">
@@ -328,8 +324,8 @@ function Pair({ self, partner }: { self: string; partner: string | null }) {
       ) : (
         <Animated.View
           key="seat"
-          entering={FadeInRight.springify().damping(14)}
-          exiting={ZoomOut}
+          entering={FADE_IN}
+          exiting={FADE_OUT}
           style={[
             disc,
             {

@@ -13,7 +13,7 @@ import Animated, {
 } from "react-native-reanimated";
 import Svg, { Circle, G, Line, Path } from "react-native-svg";
 
-import { EASE_STANDARD } from "@finance/core/motion";
+import { DURATION, EASE_STANDARD } from "@finance/core/motion";
 import {
   niceTicks,
   resampleSeries,
@@ -186,13 +186,24 @@ export function YearAheadChart({
     xs: [],
   });
   const progress = useSharedValue(1);
+  const arrived = useSharedValue(reduce ? 1 : 0);
+  const arrivedStyle = useAnimatedStyle(() => ({ opacity: arrived.get() }));
 
-  // Each new shape starts from wherever the last morph had got to.
+  // Each new shape starts from wherever the last morph had got to — except
+  // the first, which stands where it is and fades in, as everything arrives.
   useEffect(() => {
     if (!target) {
       return;
     }
     const was = geom.get();
+    if (was.to.total.length === 0) {
+      geom.set({ from: target.shape, to: target.shape, xs: target.xs });
+      progress.set(1);
+      arrived.set(
+        reduce ? 1 : withTiming(1, { duration: DURATION.enter, easing: EASING }),
+      );
+      return;
+    }
     const now = mixShape(was.from, was.to, progress.get());
     geom.set({ from: now, to: target.shape, xs: target.xs });
     if (reduce) {
@@ -201,7 +212,7 @@ export function YearAheadChart({
     }
     progress.set(0);
     progress.set(withTiming(1, { duration: MORPH_MS, easing: EASING }));
-  }, [target, reduce, geom, progress]);
+  }, [target, reduce, geom, progress, arrived]);
 
   function stepAt(pageX: number, from = 0): number {
     if (width === 0 || months === 0) {
@@ -261,7 +272,7 @@ export function YearAheadChart({
           : t("futurePlan.scrubHint")}
       </Text>
 
-      <View
+      <Animated.View
         ref={frame}
         accessible
         accessibilityRole="image"
@@ -282,7 +293,7 @@ export function YearAheadChart({
         onResponderMove={scrub}
         onResponderRelease={() => show(null)}
         onResponderTerminate={() => show(null)}
-        style={{ height: HEIGHT }}
+        style={[{ height: HEIGHT }, arrivedStyle]}
       >
         {target ? (
           <Svg width={width} height={HEIGHT} pointerEvents="none">
@@ -394,7 +405,7 @@ export function YearAheadChart({
                 />
               ))
           : null}
-      </View>
+      </Animated.View>
 
       <View style={{ height: 16 }}>
         <Text variant="micro" style={{ position: "absolute", left: 0 }}>

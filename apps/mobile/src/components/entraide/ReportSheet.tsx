@@ -82,7 +82,7 @@ export function ReportSheet({
   return (
     <Modal
       visible={target !== null}
-      animationType="slide"
+      animationType="fade"
       transparent
       statusBarTranslucent
       onRequestClose={close}

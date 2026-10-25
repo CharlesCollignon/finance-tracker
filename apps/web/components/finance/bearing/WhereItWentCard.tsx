@@ -44,7 +44,7 @@ export function WhereItWentCard({ data }: { data: BearingMonth }) {
                 </div>
                 <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-foreground/10">
                   <div
-                    className="grow-in h-full rounded-full bg-foreground/40"
+                    className="fade-in h-full rounded-full bg-foreground/40"
                     style={{
                       width: `${Math.min(100, ratio * 100)}%`,
                       transition: "width 500ms cubic-bezier(0.32, 0.72, 0, 1)",

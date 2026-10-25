@@ -8,15 +8,13 @@ import {
   m,
   MotionConfig,
 } from "motion/react";
-import { EASE_STANDARD } from "@finance/core/motion";
 import { initialOf } from "@/components/layout/SpaceContext";
 import { useToast } from "@/components/layout/ToastProvider";
+import { FADE, FADE_HEIGHT } from "@/components/motion/fade";
 import { percent, SplitEditor } from "@/components/space/SplitEditor";
 import { setPropertyShareAction } from "@/lib/actions/property";
 import { useT } from "@/lib/locale-context";
 import { cn } from "@/lib/utils";
-
-const EASE = [...EASE_STANDARD] as [number, number, number, number];
 
 /** What the page knows of a home owned through the space. */
 export interface JointDeedView {
@@ -80,9 +78,7 @@ export function JointDeed({
             {people.map((person, index) => (
               <m.div
                 key={person.name + index}
-                initial={{ opacity: 0, x: index === 0 ? -12 : 12 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ type: "spring", stiffness: 260, damping: 20 }}
+                {...FADE}
                 className="flex items-center gap-2"
               >
                 <m.span
@@ -109,14 +105,7 @@ export function JointDeed({
           </div>
           <AnimatePresence initial={false}>
             {open ? (
-              <m.div
-                key="editor"
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: "auto" }}
-                exit={{ opacity: 0, height: 0 }}
-                transition={{ duration: 0.24, ease: EASE }}
-                className="overflow-hidden"
-              >
+              <m.div key="editor" {...FADE_HEIGHT} className="overflow-hidden">
                 <SplitEditor
                   initial={deed.mine}
                   partnerName={deed.partnerName}

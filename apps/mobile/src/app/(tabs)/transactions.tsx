@@ -50,7 +50,7 @@ import type {
 
 import { MonthPicker } from "@/components/MonthPicker";
 import { LedgerWeekStrip } from "@/components/LedgerWeekStrip";
-import { StaggerItem } from "@/components/motion/Stagger";
+import { FadeIn } from "@/components/motion/FadeIn";
 import { AuthorBadge } from "@/components/AuthorBadge";
 import { CategoryIcon } from "@/components/CategoryIcon";
 import { PrivateAmount } from "@/components/PrivateAmount";
@@ -967,7 +967,7 @@ export default function TransactionsScreen() {
       <SectionList
         sections={loading && !data ? [] : days}
         // The order is in the key so that turning it over deals the rows
-        // again: each mounts anew and rises in, as on the web, rather than
+        // again: each mounts anew and fades in, as on the web, rather than
         // the list jumping to its new order under the thumb.
         keyExtractor={(item) =>
           `${order}:${item.kind === "tx" ? item.tx.id : `planned:${item.occurrence.key}`}`
@@ -1048,7 +1048,7 @@ export default function TransactionsScreen() {
         }
         ItemSeparatorComponent={() => <View className="h-px bg-border" />}
         SectionSeparatorComponent={null}
-        renderItem={({ item: row, index }) => {
+        renderItem={({ item: row }) => {
           if (row.kind === "planned") {
             const occurrence = row.occurrence;
             // One whose day has come is not coming up: the bank has not
@@ -1057,7 +1057,7 @@ export default function TransactionsScreen() {
               occurrence.awaited ? "ledger.awaited" : "ledger.planned",
             );
             return (
-              <StaggerItem index={index}>
+              <FadeIn>
                 {/* Muted, and the word says why: the dimming alone does not
                     tell a reader which of the row's meanings it carries. Not
                     selectable — there is nothing stored to delete or move. */}
@@ -1093,7 +1093,7 @@ export default function TransactionsScreen() {
                     {`${amountSign(occurrence.categoryType)}${formatEuro(occurrence.amount)}`}
                   </PrivateAmount>
                 </Pressable>
-              </StaggerItem>
+              </FadeIn>
             );
           }
 
@@ -1122,7 +1122,7 @@ export default function TransactionsScreen() {
             .join(" · ");
           const rowName = { name: item.categories.name };
           return (
-            <StaggerItem index={index}>
+            <FadeIn>
               {/* Whole row opens the edit sheet; delete lives inside it, as
                   on web. */}
               <Pressable
@@ -1208,7 +1208,7 @@ export default function TransactionsScreen() {
                   {`${amountSign(item.categories.type)}${formatEuro(Number(item.amount))}`}
                 </PrivateAmount>
               </Pressable>
-            </StaggerItem>
+            </FadeIn>
           );
         }}
       />

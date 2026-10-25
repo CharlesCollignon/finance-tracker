@@ -106,7 +106,7 @@ export function CategoryFormSheet({
   return (
     <Modal
       visible={open}
-      animationType="slide"
+      animationType="fade"
       transparent
       statusBarTranslucent
       onRequestClose={onClose}

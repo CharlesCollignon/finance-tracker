@@ -6,7 +6,6 @@ import Animated, {
   useAnimatedStyle,
   useReducedMotion,
   useSharedValue,
-  withDelay,
   withTiming,
 } from "react-native-reanimated";
 
@@ -45,8 +44,8 @@ interface Segment {
 /**
  * Why the money ends up where the chart puts it — the web's « Pourquoi »: a
  * month's income as one bar, cut into the charges, everyday spending, each
- * account in its colour and what stays on the current account, the pieces
- * growing in one after another; then one sentence for interest and returns. A tap on an account's row lights its band
+ * account in its colour and what stays on the current account; then one
+ * sentence for interest and returns. A tap on an account's row lights its band
  * on the chart; another tap lets it go.
  */
 export function YearAheadWhy({
@@ -216,12 +215,11 @@ export function YearAheadWhy({
           backgroundColor: colors.muted,
         }}
       >
-        {segments.map((segment, index) => (
+        {segments.map((segment) => (
           <Piece
             key={segment.key}
             share={widthOf(segment) / scale}
             color={segment.color}
-            index={index}
           />
         ))}
       </View>
@@ -264,29 +262,16 @@ export function YearAheadWhy({
   );
 }
 
-/** One piece of the bar, growing to its share — in turn on the first draw. */
-function Piece({
-  share,
-  color,
-  index,
-}: {
-  share: number;
-  color: string;
-  index: number;
-}) {
+/** One piece of the bar, at its share; a later change morphs to the new one. */
+function Piece({ share, color }: { share: number; color: string }) {
   const reduce = useReducedMotion();
-  const width = useSharedValue(reduce ? share : 0);
-  const first = useSharedValue(true);
+  const width = useSharedValue(share);
 
   useEffect(() => {
-    if (reduce) {
-      width.set(share);
-      return;
-    }
-    const grow = withTiming(share, { duration: MORPH_MS, easing: EASING });
-    width.set(first.get() ? withDelay(index * 50, grow) : grow);
-    first.set(false);
-  }, [share, index, reduce, width, first]);
+    width.set(
+      reduce ? share : withTiming(share, { duration: MORPH_MS, easing: EASING }),
+    );
+  }, [share, reduce, width]);
 
   // The colour on the animated view itself: an inline style, which the web
   // build keeps (a class on an Animated.View is dropped there).

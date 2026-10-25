@@ -6,15 +6,11 @@ import * as DocumentPicker from "expo-document-picker";
 import { File } from "expo-file-system";
 import { useIncomingShare } from "expo-sharing";
 import Animated, {
-  FadeIn,
-  FadeInDown,
   useReducedMotion,
-  ZoomIn,
 } from "react-native-reanimated";
 
 import { formatFullDate } from "@finance/core/constants";
 import { resolveMessage } from "@finance/core/i18n/t";
-import { DURATION } from "@finance/core/motion";
 import {
   BANK_NAMES,
   isBankId,
@@ -60,6 +56,7 @@ import { useOwner } from "@/providers/OwnerProvider";
 import { useToast } from "@/providers/ToastProvider";
 import { ICON } from "@/theme/tokens";
 import { useThemeColors } from "@/theme/useThemeColors";
+import { FADE_IN } from "@/components/motion/fade";
 
 /** A statement bigger than this is not one. */
 const MAX_FILE_BYTES = 10 * 1024 * 1024;
@@ -434,7 +431,7 @@ export default function ImportScreen() {
     >
       <ScrollView contentContainerClassName="gap-4 px-4 pb-24 pt-4" keyboardShouldPersistTaps="handled">
         {stage.kind === "start" ? (
-          <Animated.View entering={reduceMotion ? undefined : FadeIn.duration(DURATION.panel)} className="gap-4">
+          <Animated.View entering={reduceMotion ? undefined : FADE_IN} className="gap-4">
             <MailWaiting
               items={mailItems}
               onOpen={(item) =>
@@ -564,7 +561,6 @@ export default function ImportScreen() {
               statement.blocks.map((block, index) => (
                 <BlockCard
                   key={index}
-                  index={index}
                   block={block}
                   bank={statement.bank}
                   accounts={accounts}
@@ -602,10 +598,10 @@ export default function ImportScreen() {
 
         {stage.kind === "done" ? (
           <Animated.View
-            entering={reduceMotion ? undefined : FadeInDown.springify().damping(18)}
+            entering={reduceMotion ? undefined : FADE_IN}
             className="items-start gap-4 rounded-card border border-border bg-card/70 p-card"
           >
-            <Animated.View entering={reduceMotion ? undefined : ZoomIn.springify().damping(12).delay(120)}>
+            <Animated.View entering={reduceMotion ? undefined : FADE_IN}>
               <Ionicons name="checkmark-circle" size={44} color={colors.success} />
             </Animated.View>
             <View className="gap-1">

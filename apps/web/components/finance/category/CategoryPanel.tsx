@@ -10,9 +10,7 @@ import { BarSeries } from "@/components/finance/charts";
 import { PrivateAmount } from "@/components/layout/PrivateAmount";
 import { useFormatCurrency } from "@/lib/use-currency";
 import { useT } from "@/lib/locale-context";
-import { usePrefersReducedMotion } from "@/lib/use-reduced-motion";
 import { ICON } from "@/lib/icon-scale";
-import { cn } from "@/lib/utils";
 import { TONE, type CategoryCard } from "./CategoryTile";
 import { CategoryRead } from "./CategoryRead";
 
@@ -68,7 +66,6 @@ export function CategoryPanel({
 }: CategoryPanelProps) {
   const t = useT();
   const formatMoney = useFormatCurrency();
-  const reducedMotion = usePrefersReducedMotion();
   const { history, normal, drawn, findings } = card;
   const [ledgerYear, ledgerMonth] = behindMonthKey
     .split("-")
@@ -77,10 +74,7 @@ export function CategoryPanel({
   return (
     <section
       id={id}
-      className={cn(
-        "mt-2 flex flex-col gap-4 rounded-card p-card border border-hairline-strong",
-        !reducedMotion && "motion-safe:animate-in motion-safe:fade-in",
-      )}
+      className="fade-in mt-2 flex flex-col gap-4 rounded-card p-card border border-hairline-strong"
     >
       <header className="flex items-start justify-between gap-3">
         <div className="flex flex-col gap-0.5">

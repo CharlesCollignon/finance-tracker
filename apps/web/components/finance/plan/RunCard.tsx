@@ -363,7 +363,6 @@ export function MonthsCard({ history }: { history: ClosedMonthRow[] }) {
                     bottom: row.kept >= 0 ? `${100 - zero}%` : undefined,
                     top: row.kept >= 0 ? undefined : `${zero}%`,
                     height: `${Math.max(height, 1.5)}%`,
-                    "--delay": `${index * 60}ms`,
                   } as CSSProperties
                 }
               />

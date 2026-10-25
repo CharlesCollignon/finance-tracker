@@ -1,16 +1,8 @@
-import { useEffect, type ComponentProps, type ReactNode } from "react";
+import { type ComponentProps, type ReactNode } from "react";
 import { Pressable, View } from "react-native";
 import { useRouter, type Href } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
-import Animated, {
-  Easing,
-  useAnimatedStyle,
-  useReducedMotion,
-  useSharedValue,
-  withDelay,
-  withTiming,
-} from "react-native-reanimated";
-import { EASE_STANDARD } from "@finance/core/motion";
+import Animated, { useReducedMotion } from "react-native-reanimated";
 import { PrivateAmount } from "@/components/PrivateAmount";
 import { Text } from "@/components/ui/Text";
 import { cn } from "@/lib/cn";
@@ -18,22 +10,16 @@ import { hapticLight } from "@/lib/haptics";
 import { useFormatCurrency } from "@/providers/CurrencyProvider";
 import { ICON } from "@/theme/tokens";
 import { useThemeColors } from "@/theme/useThemeColors";
+import { FADE_IN } from "@/components/motion/fade";
 
 /**
  * What Le point's cards are made of on the phone: the card itself, the
- * change against last month, a pill, a bar that grows in. Each card is a
+ * change against last month, a pill, a bar that fades in. Each card is a
  * file beside this one (`BalanceCard.tsx`, `SpentCard.tsx`…), the web's
  * twins in `components/finance/bearing/`.
  */
 
 type IconName = ComponentProps<typeof Ionicons>["name"];
-
-export const EASING = Easing.bezier(...EASE_STANDARD);
-
-/** The web's `.grow-in`: 800ms on the standard curve, after a 150ms beat. */
-export const GROW_MS = 800;
-
-export const GROW_DELAY_MS = 150;
 
 /* ------------------------------------------------------------ the shells */
 
@@ -167,32 +153,18 @@ export function Pill({
 }
 
 /**
- * A thin meter that grows from its start to its value on arrival, as the
- * web's `.grow-in` does, and simply is its value under reduced motion.
+ * A thin meter at its value, fading in on arrival as the web's bars do.
  */
 export function GrowBar({ ratio, color }: { ratio: number; color: string }) {
   const reduce = useReducedMotion();
-  const progress = useSharedValue(reduce ? 1 : 0);
   const clamped = Math.max(0, Math.min(1, ratio));
-
-  useEffect(() => {
-    progress.value = reduce
-      ? 1
-      : withDelay(
-          GROW_DELAY_MS,
-          withTiming(1, { duration: GROW_MS, easing: EASING }),
-        );
-  }, [reduce, progress]);
-
-  const style = useAnimatedStyle(() => ({
-    width: `${clamped * 100 * progress.value}%`,
-  }));
 
   return (
     <View className="h-1.5 overflow-hidden rounded-full bg-foreground/10">
       <Animated.View
+        entering={reduce ? undefined : FADE_IN}
         className="h-full rounded-full"
-        style={[{ backgroundColor: color }, style]}
+        style={{ width: `${clamped * 100}%`, backgroundColor: color }}
       />
     </View>
   );
