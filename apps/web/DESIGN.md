@@ -1026,6 +1026,15 @@ little slower than the page. One loop is new, the « Bêta ouverte » dot's ring
 (`.about-live`), in the status green rather than gold. Under reduced motion
 nothing leans, rolls or drifts, and every section stands at its final state.
 
+The download page (`DownloadPage.tsx`) has two phones. The hero's rises and
+turns in once, then only leans toward the pointer (`DownloadPhone.tsx`). The
+iPhone section's shows the gesture it describes (`IphoneHomeScreen.tsx`):
+in view, the Share sheet slides up on the one curve, « Sur l'écran
+d'accueil » is pressed, the sheet goes, and Pluclair's icon springs into
+the next free place with a single gold ring widening as it fades — then it
+rests. « Revoir » plays it again. Under reduced motion the icon is there,
+with no sheet and no « Revoir ».
+
 The Journal's list moves when the reader asks it to (October 2026). The
 week strip above it (`LedgerWeekStrip.tsx`) grows its bars up from the
 baseline once, segment after segment, and its pill slides on the tabs'

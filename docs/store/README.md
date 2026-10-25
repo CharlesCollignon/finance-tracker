@@ -109,6 +109,50 @@ the publisher's identification details — name, home address and phone
 (LCEN art. 1-1, II and I). Check that Vercel's account holds them (the
 billing details, on a paid plan), or publish the address instead.
 
+## On iPhone: the home screen, then TestFlight
+
+An iPhone installs nothing Apple has not signed, so there is no file to
+hand out. Apple's EU Web Distribution (iOS 17.5 and later) lets an app be
+downloaded from its developer's own site, but even under the terms of
+1 October 2026 it asks for one of: a Dun & Bradstreet risk score, a stock
+listing, venture funding, an audited company, a 1 M$ stand-by letter of
+credit, or a million installs a year. A private individual publishing a
+free app has none of them (developer.apple.com/support/web-distribution-eu,
+read on 2026-10-25). So, in order:
+
+1. **Now: the web app on the home screen.** `/telecharger#iphone` shows the
+   three gestures — Safari, Partager, « Sur l'écran d'accueil » — and an
+   iPhone sees them first; the landing's hero and the about page send an
+   iPhone there. What opens is the web app (`app/manifest.ts`,
+   `appleWebApp` in `app/layout.tsx`), with its notifications once it is on
+   the home screen (iOS 16.4 and later). No Face ID, quick actions or
+   widget: those are the phone app's.
+2. **With an Apple Developer account (99 € a year): the beta on
+   TestFlight**, the iPhone's counterpart of the APK.
+   1. On expo.dev, the **production** environment's variables (« 2. Before
+      the first build » below).
+   2. `cd apps/mobile && eas build --platform ios --profile production`.
+      EAS builds and signs in the cloud, so no Mac is needed; let it create
+      the certificate and the provisioning profile. Then
+      `eas submit --platform ios --latest`. This first build is also the
+      first time the Swift in `modules/quick-actions` is compiled.
+   3. App Store Connect → the app → TestFlight → a group of external
+      testers → add the build. The first build of each version goes
+      through Beta App Review, where Sign in with Apple (« 5. Before review »
+      below) may already come up. Then turn the group's public link on.
+   4. On Vercel, `IOS_TESTFLIGHT_URL` = that link
+      (`https://testflight.apple.com/join/…`; anything else is ignored,
+      `lib/store-links.ts`), then a redeploy. `/ios` sends to it,
+      `/telecharger` adds « La bêta iPhone » above the home-screen steps,
+      and an iPhone's hero button becomes « Rejoindre la bêta iPhone ».
+   5. A build stops opening 90 days after it is uploaded: a new one at
+      least every quarter. Up to 10 000 testers.
+
+   The phone's « Une nouvelle version est disponible » is Android's only
+   (`NewVersionBanner.tsx`): TestFlight tells its testers itself.
+3. **Then the App Store**, below. Once `APP_STORE_URL` is set, `/ios` sends
+   there instead.
+
 ## Later: the stores
 
 Phase 3 of `docs/plans/EVERYDAY_PLAN.md`: the phone app on the App Store
