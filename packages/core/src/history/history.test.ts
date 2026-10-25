@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 import { addMonths, monthsBetween } from "./month";
-import { livretAMonthlyReturns, livretARateOn } from "./regulated-rates";
+import {
+  LEP_RATES,
+  LIVRET_A_RATES,
+  rateOn,
+  regulatedMonthlyReturns,
+} from "./regulated-rates";
 import {
   HISTORY_END,
   HISTORY_SERIES_IDS,
@@ -110,31 +115,81 @@ describe("shares", () => {
   });
 });
 
-describe("the Livret A", () => {
+describe("the regulated accounts", () => {
   it("reads the rate in force on a day", () => {
-    expect(livretARateOn("1981-10-15")).toBe(0.075);
-    expect(livretARateOn("1981-10-16")).toBe(0.085);
-    expect(livretARateOn("2021-06-01")).toBe(0.005);
-    expect(livretARateOn("2026-09-01")).toBe(0.017);
+    expect(rateOn(LIVRET_A_RATES, "1981-10-15")).toBe(0.075);
+    expect(rateOn(LIVRET_A_RATES, "1981-10-16")).toBe(0.085);
+    expect(rateOn(LIVRET_A_RATES, "2021-06-01")).toBe(0.005);
+    expect(rateOn(LIVRET_A_RATES, "2026-09-01")).toBe(0.017);
+    expect(rateOn(LEP_RATES, "2023-03-01")).toBe(0.061);
+    expect(rateOn(LEP_RATES, "2026-03-01")).toBe(0.025);
+  });
+
+  // The rule since 2008 at the latest: the LEP pays the Livret A plus half
+  // a point, unless inflation or the minister says more.
+  it("pays at least half a point over the Livret A from 2008", () => {
+    for (const [day] of [...LIVRET_A_RATES, ...LEP_RATES]) {
+      if (day >= "2008-02-01") {
+        expect(rateOn(LEP_RATES, day)).toBeGreaterThanOrEqual(
+          rateOn(LIVRET_A_RATES, day) + 0.005 - 1e-12,
+        );
+      }
+    }
   });
 
   it("returns a year's rate over a year at one rate", () => {
-    const year = livretAMonthlyReturns("1982-01", "1982-12");
+    const year = regulatedMonthlyReturns(LIVRET_A_RATES, "1982-01", "1982-12");
     const compounded = year.reduce((level, value) => level * (1 + value), 1);
     expect(compounded - 1).toBeCloseTo(0.085, 10);
   });
 
   it("splits a month changed on the 16th", () => {
-    const [october] = livretAMonthlyReturns("1981-10", "1981-10");
+    const [october] = regulatedMonthlyReturns(
+      LIVRET_A_RATES,
+      "1981-10",
+      "1981-10",
+    );
     const low = 1.075 ** (1 / 12) - 1;
     const high = 1.085 ** (1 / 12) - 1;
     expect(october).toBeGreaterThan(low);
     expect(october).toBeLessThan(high);
   });
 
-  it("is the series the replay reads", () => {
-    const series = historySeries("livret-a");
-    expect(series.start).toBe(HISTORY_START);
-    expect(returnIn(series, "2021-06")).toBeCloseTo(1.005 ** (1 / 12) - 1, 12);
+  it("are the series the replay reads", () => {
+    const livretA = historySeries("livret-a");
+    expect(livretA.start).toBe(HISTORY_START);
+    expect(returnIn(livretA, "2021-06")).toBeCloseTo(1.005 ** (1 / 12) - 1, 12);
+    const lep = historySeries("lep");
+    expect(lep.start).toBe("1982-06");
+    expect(returnIn(lep, "1982-05")).toBeNull();
+  });
+});
+
+describe("the fonds euros", () => {
+  // The ACPR's yearly averages, net of management fees.
+  it.each([
+    [2019, 0.0146],
+    [2022, 0.0191],
+    [2025, 0.0263],
+  ])("returned what the ACPR says in %i", (year, published) => {
+    // Months are kept to the hundred-thousandth: a year lands within 0.01
+    // point of the published two-decimal figure.
+    expect(
+      Math.abs(calendarYear("fonds-euros", year) - published),
+    ).toBeLessThan(1e-4);
+  });
+
+  it("is the French ten-year yield before 2000", () => {
+    expect(historySeries("fonds-euros").reconstructedUntil).toBe("1999-12");
+  });
+});
+
+describe("bitcoin", () => {
+  it("starts in November 2014, from October's close", () => {
+    expect(historySeries("bitcoin").start).toBe("2014-11");
+  });
+
+  it("lost more than half in 2022", () => {
+    expect(calendarYear("bitcoin", 2022)).toBeLessThan(-0.5);
   });
 });

@@ -20,7 +20,8 @@ export interface HistorySource {
    * `open`: reuse is allowed, commercial use included, with the source named.
    * `non-commercial`: reuse is allowed while Pluclair earns nothing — the day
    * it does, this source has to be replaced.
-   * `public`: a public decision, not a database.
+   * `public`: public decisions or published figures, named with their
+   * source; or, for bitcoin, the quotes the app already shows.
    */
   standing: "open" | "non-commercial" | "public";
   series: readonly HistorySeriesId[];
@@ -75,10 +76,28 @@ export const HISTORY_SOURCES: readonly HistorySource[] = [
   },
   {
     publisher: "Banque de France",
-    title: "Taux du Livret A (Webstat, MIR1) et arrêtés au Journal officiel",
+    title:
+      "Taux du Livret A et du LEP (Webstat, MIR1) et arrêtés au Journal officiel",
     url: "https://webstat.banque-france.fr/",
     terms: "Décisions publiques ; Webstat cité comme source",
     standing: "public",
-    series: ["livret-a"],
+    series: ["livret-a", "lep"],
+  },
+  {
+    publisher: "ACPR et France Assureurs",
+    title:
+      "Taux moyen de revalorisation des fonds euros : ACPR depuis 2009, France Assureurs de 2000 à 2008",
+    url: "https://acpr.banque-france.fr/",
+    terms: "Chiffres publiés, cités avec leur source",
+    standing: "public",
+    series: ["fonds-euros"],
+  },
+  {
+    publisher: "Yahoo Finance",
+    title: "Cours mensuels BTC-EUR, ceux que l'app lit déjà pour Placements",
+    url: "https://finance.yahoo.com/quote/BTC-EUR/",
+    terms: "Conditions de Yahoo, déjà acceptées pour les cours de l'app",
+    standing: "public",
+    series: ["bitcoin"],
   },
 ];

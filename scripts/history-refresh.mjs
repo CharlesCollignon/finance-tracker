@@ -36,6 +36,17 @@
  *
  * MSCI is not used anywhere: its index data and factsheets may not be used
  * commercially without its written permission.
+ *
+ * The rest:
+ *
+ * - Prices from INSEE; a ten-year French government bond from the OECD's
+ *   long rate.
+ * - The fonds euros from the averages the ACPR and France Assureurs
+ *   publish, a table below to extend each year; before 2000, the ten-year
+ *   French yield.
+ * - Bitcoin from the BTC-EUR closes the app reads for quotes, from late 2014.
+ * - The Livret A and the LEP are not here: their rates are written by hand
+ *   in packages/core/src/history/regulated-rates.ts.
  */
 import { execFileSync } from "node:child_process";
 import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
@@ -600,6 +611,95 @@ function bondSeries() {
   });
 }
 
+/**
+ * The average fonds euros return each year, in percent, net of management
+ * fees and before social levies: the ACPR's own figure (individual
+ * contracts, open group contracts included) from 2009, France Assureurs'
+ * (ex-FFA) before. The ACPR publishes a year's figure the following June;
+ * until then, France Assureurs' January estimate stands in.
+ */
+const FONDS_EUROS = {
+  2000: 5.3,
+  2001: 5.3,
+  2002: 4.8,
+  2003: 4.5,
+  2004: 4.4,
+  2005: 4.2,
+  2006: 4.1,
+  2007: 4.1,
+  2008: 4.0,
+  2009: 3.64,
+  2010: 3.38,
+  2011: 3.02,
+  2012: 2.91,
+  2013: 2.8,
+  2014: 2.54,
+  2015: 2.27,
+  2016: 1.93,
+  2017: 1.83,
+  2018: 1.83,
+  2019: 1.46,
+  2020: 1.28,
+  2021: 1.28,
+  2022: 1.91,
+  2023: 2.6,
+  2024: 2.63,
+  2025: 2.63,
+};
+const FONDS_EUROS_FROM = Math.min(...Object.keys(FONDS_EUROS).map(Number));
+
+/**
+ * The fonds euros: each year's published average spread over its months.
+ * Before 2000, when nothing comparable is published, the year's average
+ * ten-year French government yield stands in.
+ */
+function fondsEurosSeries() {
+  const yields = longRates.get("FRA");
+  return MONTHS.map((month) => {
+    const year = Number(month.slice(0, 4));
+    let rate = FONDS_EUROS[year];
+    if (rate === undefined) {
+      if (year >= FONDS_EUROS_FROM) {
+        fail(
+          `no fonds euros figure for ${year}: add France Assureurs' estimate, or the ACPR's figure once out.`,
+        );
+      }
+      const months = monthRange(`${year}-01`, `${year}-12`);
+      rate = months.reduce((sum, m) => sum + yields.get(m), 0) / months.length;
+    }
+    return (1 + rate / 100) ** (1 / 12) - 1;
+  });
+}
+
+/**
+ * Bitcoin in euros, from the month-end closes the app already reads for
+ * quotes (Yahoo's BTC-EUR, from October 2014).
+ */
+async function bitcoinCloses() {
+  const json = JSON.parse(
+    await fetchText(
+      "https://query1.finance.yahoo.com/v8/finance/chart/BTC-EUR?interval=1mo&range=max",
+    ),
+  );
+  const result = json.chart?.result?.[0];
+  const closes = new Map();
+  result?.timestamp?.forEach((seconds, index) => {
+    const day = new Date(seconds * 1000);
+    const close = result.indicators.quote[0].close[index];
+    // A month is stamped on its 1st; a later stamp is today's partial one.
+    if (day.getUTCDate() === 1 && Number.isFinite(close)) {
+      closes.set(day.toISOString().slice(0, 7), close);
+    }
+  });
+  if (closes.size === 0) {
+    fail("Yahoo gave no BTC-EUR closes.");
+  }
+  return closes;
+}
+
+const btcCloses = await bitcoinCloses();
+const bitcoinStart = addMonths([...btcCloses.keys()].sort()[0], 1);
+
 const rebuiltUntil = addMonths(COUNTRIES_START, -1);
 const built = {
   "cpi-fr": { start: START, reconstructedUntil: null, returns: cpi },
@@ -629,6 +729,23 @@ const built = {
     ),
   },
   "bonds-fr": { start: START, reconstructedUntil: null, returns: bondSeries() },
+  "fonds-euros": {
+    start: START,
+    reconstructedUntil: `${FONDS_EUROS_FROM - 1}-12`,
+    returns: fondsEurosSeries(),
+  },
+  bitcoin: {
+    start: bitcoinStart,
+    reconstructedUntil: null,
+    returns: monthRange(bitcoinStart, END).map((month) => {
+      const before = btcCloses.get(addMonths(month, -1));
+      const now = btcCloses.get(month);
+      if (!before || !now) {
+        fail(`no BTC-EUR close around ${month}.`);
+      }
+      return now / before - 1;
+    }),
+  },
 };
 
 // ---------------------------------------------------------------- checks
@@ -640,6 +757,8 @@ const BOUNDS = {
   us: [-0.4, 0.4],
   europe: [-0.4, 0.4],
   "bonds-fr": [-0.2, 0.2],
+  "fonds-euros": [0, 0.02],
+  bitcoin: [-0.7, 2],
 };
 
 for (const [id, series] of Object.entries(built)) {
@@ -676,9 +795,10 @@ function worstFall(series) {
   return worst;
 }
 
+/** A calendar year's return, or null for a year before the series. */
 function calendarYear(series, year) {
   const from = monthsBetween(series.start, `${year}-01`);
-  return compound(series.returns.slice(from, from + 12)) - 1;
+  return from < 0 ? null : compound(series.returns.slice(from, from + 12)) - 1;
 }
 
 /** The United States' share of the rebuild at a month. */
@@ -692,7 +812,8 @@ function usShare(month) {
   return weightOf(["USA"]) / weightOf(rebuildIds);
 }
 
-const percent = (value) => `${(value * 100).toFixed(1)} %`;
+const percent = (value) =>
+  value === null ? "—" : `${(value * 100).toFixed(1)} %`;
 console.log(`\nInflation ${START}–${END}: prices ×${compound(cpi).toFixed(2)}.`);
 console.log(
   `Dividends added before ${COUNTRIES_START}: outside the US ${percent(dividends.exUs)}, Europe ${percent(dividends.europe)}.`,

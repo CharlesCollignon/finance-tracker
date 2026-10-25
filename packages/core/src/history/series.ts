@@ -1,14 +1,14 @@
 /**
- * What markets, prices and the Livret A actually did, month by month since
- * January 1970: the history the Plan replays a reader's own accounts on
- * (docs/plans/PLAN_REDESIGN_PLAN.md).
+ * What markets, prices and savings accounts actually did, month by month
+ * since January 1970: the history the Plan replays a reader's own accounts
+ * on (docs/plans/PLAN_REDESIGN_PLAN.md).
  *
  * Kept in git, as `etf-shortlist.ts` is, rather than fetched at runtime:
  * a figure here shows up in a diff with a person's name on it, nothing can
  * poison it, and it costs nothing to read on either app. The numbers come
- * from `scripts/history-refresh.mjs`, run once a year; the Livret A's rates
- * are written by hand in `./regulated-rates`, because they are a short list
- * of public decisions rather than a series.
+ * from `scripts/history-refresh.mjs`, run once a year; the regulated
+ * accounts' rates are written by hand in `./regulated-rates`, because they
+ * are a short list of public decisions rather than a series.
  *
  * Every series is a run of monthly returns in euros — francs before 1999,
  * at the 6,55957 they were converted at — so that a month of shares, a month
@@ -18,7 +18,11 @@
 
 import { GENERATED } from "./data.generated";
 import { monthsBetween, type HistoryMonth } from "./month";
-import { livretAMonthlyReturns } from "./regulated-rates";
+import {
+  LEP_RATES,
+  LIVRET_A_RATES,
+  regulatedMonthlyReturns,
+} from "./regulated-rates";
 
 export type HistorySeriesId =
   /** French consumer prices (INSEE), the deflator for everything else. */
@@ -31,8 +35,16 @@ export type HistorySeriesId =
   | "europe"
   /** A ten-year French government bond held at constant maturity. */
   | "bonds-fr"
-  /** The Livret A, at the rate in force each month. */
-  | "livret-a";
+  /** The average fonds euros, net of management fees, before social levies. */
+  | "fonds-euros"
+  /** Bitcoin in euros, from November 2014. */
+  | "bitcoin"
+  /** The Livret A — and the LDDS, which has the same rate. */
+  | "livret-a"
+  /** The LEP, from June 1982. */
+  | "lep";
+
+type HandWritten = "livret-a" | "lep";
 
 export const HISTORY_SERIES_IDS: readonly HistorySeriesId[] = [
   "cpi-fr",
@@ -40,7 +52,10 @@ export const HISTORY_SERIES_IDS: readonly HistorySeriesId[] = [
   "us",
   "europe",
   "bonds-fr",
+  "fonds-euros",
+  "bitcoin",
   "livret-a",
+  "lep",
 ];
 
 /** The first month any series can start at. */
@@ -78,7 +93,7 @@ export interface GeneratedHistory {
    */
   dividends: { exUs: number; europe: number };
   series: Record<
-    Exclude<HistorySeriesId, "livret-a">,
+    Exclude<HistorySeriesId, HandWritten>,
     {
       start: HistoryMonth;
       reconstructedUntil: HistoryMonth | null;
@@ -87,6 +102,15 @@ export interface GeneratedHistory {
     }
   >;
 }
+
+/** The regulated accounts, and the month each opened. */
+const HAND_WRITTEN: Record<
+  HandWritten,
+  { rates: typeof LIVRET_A_RATES; start: HistoryMonth }
+> = {
+  "livret-a": { rates: LIVRET_A_RATES, start: HISTORY_START },
+  lep: { rates: LEP_RATES, start: "1982-06" },
+};
 
 const cache = new Map<HistorySeriesId, HistorySeries>();
 
@@ -97,12 +121,16 @@ export function historySeries(id: HistorySeriesId): HistorySeries {
     return known;
   }
   const series: HistorySeries =
-    id === "livret-a"
+    id === "livret-a" || id === "lep"
       ? {
           id,
-          start: HISTORY_START,
+          start: HAND_WRITTEN[id].start,
           end: HISTORY_END,
-          returns: livretAMonthlyReturns(HISTORY_START, HISTORY_END),
+          returns: regulatedMonthlyReturns(
+            HAND_WRITTEN[id].rates,
+            HAND_WRITTEN[id].start,
+            HISTORY_END,
+          ),
           reconstructedUntil: null,
         }
       : {

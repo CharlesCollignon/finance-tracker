@@ -161,9 +161,9 @@ carries core as source, so size matters).
 | `bonds-fr` | French 10-year government bonds, for bond and mixed funds | 1970 | built |
 | `cpi-fr` | French consumer prices | 1970 | built |
 | `livret-a` | the Livret A's rate, by quinzaine | 1970 | built |
-| `ldds`, `lep` | their regulated rates | 1970 / 1982 | to source |
-| `fonds-euros` | AV fonds euros, a yearly rate applied monthly | — | to source |
-| `bitcoin` | BTC in euros | ~2013 | to source |
+| `lep` | the LEP's rate, by quinzaine; the LDDS reads `livret-a` | 1982-06 | built |
+| `fonds-euros` | AV fonds euros, a yearly average applied monthly, net of management fees | 1970 | built |
+| `bitcoin` | BTC in euros | 2014-11 | built |
 
 ### Functions
 
@@ -294,8 +294,8 @@ The bank invitation stays at the foot of the page.
      INSEE's yearly inflation, the Livret A's rates, the rebuild's dates;
    - `scripts/history-refresh.mjs` rebuilds them;
    - no screen changes; `Changelog: none`.
-   Still to do: the LDDS, the LEP, the fonds euros and bitcoin (see
-   « Sources »).
+   The LEP, the fonds euros and bitcoin followed the same evening, which
+   closes the phase.
 1. **The engine** (`plan-history-core`).
    - `replayPlan`, `crashTest`, `lossOdds`, `sustainableWithdrawal` and
      `historicalReturn`.
@@ -337,6 +337,16 @@ Phases 0 and 1 hold everything else up; 2 can be taken at any time.
 | `bonds-fr` | OECD, France's long-term rate (IRLT), as a 10-year bond at constant maturity | OECD terms: reuse with the source named |
 | dollar rates | Federal Reserve H.10 via FRED; in 1970, the OECD's rates and the Bretton Woods parities | US public domain |
 | `livret-a` | the arrêtés, as Banque de France's MIR1 series gives them, checked against a second compilation | public decisions |
+| `lep` | the same, two compilations of MIR1, recent rates checked against the Banque de France's 2026 annex | public decisions |
+| `fonds-euros` | the ACPR's yearly average (individual contracts) from 2009; France Assureurs' for 2000–2008; before 2000, the year's average French 10-year yield, flagged | published figures, cited |
+| `bitcoin` | Yahoo's BTC-EUR month-end closes, the quotes the app already shows | Yahoo's terms, as for quotes |
+
+**The LDDS** has no series: its rate has been the Livret A's since 2003
+(Banque de France), and the Codevi's, before, was the Livret A's at every
+date found (7,5 % at its opening in October 1983, 4,5 % from 1986 to 1996).
+
+**The fonds euros' figure is net of management fees.** Phase 1 must not
+take the AV's fees off its fonds euros part a second time.
 
 **Non-commercial.** Global Factor Data is CC BY-NC 4.0, and the owner
 confirmed on 2026-10-25 that Pluclair stays free. If Pluclair ever earns
@@ -404,18 +414,13 @@ series lags by a few points (2024: +15.3 % against +19.2 % in dollars).
   8.6 %/yr over 2010–2025, against 9.6 % for market size and 11.3 % for
   the index; the owner switched.
 
-**Still to source:**
-- **LDDS and LEP.** Webstat holds both (MIR1), but its API needs an
-  account. Either the owner opens a free one, or the rates are written from
-  the arrêtés as the Livret A's were. Until then the LDDS reads as the
-  Livret A, identical since August 2003, and the LEP too, flagged.
-- **Fonds euros.** The ACPR publishes yearly averages from 2009, and France
-  Assureurs before that; their terms are still to read. Before the first
-  published year, a proposal: the French 10-year yield as the coupon,
-  flagged.
-- **Bitcoin.** A proposal: the BTC-EUR closes the app already reads for
-  quotes (`market/yahoo.ts`), the same terms the owner already accepted for
-  prices.
+**Each January**, `node scripts/history-refresh.mjs` takes the series to
+the last full year. Before it runs:
+- add the year's fonds euros figure to `FONDS_EUROS`: France Assureurs'
+  estimate in January, replaced by the ACPR's figure when it comes out in
+  June;
+- add any regulated-rate change to `regulated-rates.ts`;
+- from January 2027, add INSEE's base-2025 series to `CPI_SEGMENTS`.
 
 ## Risks
 
