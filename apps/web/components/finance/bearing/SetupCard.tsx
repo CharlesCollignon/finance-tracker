@@ -197,10 +197,16 @@ function BalanceStep({ laterButton }: { laterButton: ReactNode }) {
             </span>
           ) : null}
         </div>
-        <Button type="submit" size="sm" disabled={pending || amount === null}>
-          {t("setup.balance.save")}
-        </Button>
-        {laterButton}
+        {/* As tall as the field and centred on it: on a wide screen the
+            buttons drop their touch height and sat at the field's top edge.
+            Their own row rather than `items-center` on the form, so the
+            field's error line below does not pull them down with it. */}
+        <div className="flex min-h-11 items-center gap-2">
+          <Button type="submit" size="sm" disabled={pending || amount === null}>
+            {t("setup.balance.save")}
+          </Button>
+          {laterButton}
+        </div>
       </form>
     </section>
   );
