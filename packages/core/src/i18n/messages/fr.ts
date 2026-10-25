@@ -2784,7 +2784,8 @@ export const fr: Messages = {
     signInFailed: "La connexion n'a pas fonctionné. Réessayez.",
     accountExists: "Un compte existe déjà avec cette adresse. Connectez-vous.",
     signUpClosed: "Les inscriptions sont fermées pour l'instant.",
-    signUpFailed: "L'inscription n'a pas fonctionné. Réessayez.",
+    signUpFailed:
+      "L'inscription n'a pas abouti de notre côté. Réessayez dans quelques minutes, ou continuez avec Google.",
     resendTooSoon:
       "Un e-mail vient de partir. Attendez une minute avant d'en demander un autre.",
     resendFailed: "L'e-mail n'a pas pu repartir. Réessayez dans un instant.",

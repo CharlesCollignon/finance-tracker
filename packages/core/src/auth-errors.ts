@@ -64,7 +64,14 @@ export function signInErrorKey(code: string | undefined): Key {
   }
 }
 
-/** A sign-up that failed, in the reader's language — by code, as above. */
+/**
+ * A sign-up that failed, in the reader's language — by code, as above.
+ *
+ * What falls through to `errors.signUpFailed` is mostly Supabase failing on
+ * its side — the confirmation e-mail that could not leave, as on 2026-10-25
+ * while the sending domain was unverified — so that sentence says it is not
+ * the reader's doing and offers Google, which needs no e-mail.
+ */
 export function signUpErrorKey(code: string | undefined): Key {
   switch (code) {
     case "user_already_exists":

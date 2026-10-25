@@ -3621,7 +3621,8 @@ export const en = {
     signInFailed: "Signing in did not work. Try again.",
     accountExists: "There is already an account with this address. Sign in.",
     signUpClosed: "Sign-ups are closed for now.",
-    signUpFailed: "Signing up did not work. Try again.",
+    signUpFailed:
+      "Signing up did not go through on our side. Try again in a few minutes, or continue with Google.",
     resendTooSoon: "One was just sent. Wait a minute before asking for another.",
     resendFailed: "It could not be sent again. Try again in a moment.",
     alreadyThere: "That is already saved.",
