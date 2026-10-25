@@ -2,10 +2,10 @@ import "server-only";
 
 /**
  * Where the phone app can be had: its pages in the App Store and Google
- * Play, once it is published there (`docs/store/README.md`), and the Android
- * APK the site hands out itself in the meantime. Each is set in the
- * environment and null until then; the landing keeps the app under
- * « Bientôt » while all three are.
+ * Play, once it is published there (`docs/store/README.md`), and in the
+ * meantime the Android APK the site hands out itself and the iPhone beta on
+ * TestFlight. Each is set in the environment and null until then; the
+ * landing keeps the app under « Bientôt » while the stores and the APK are.
  *
  * Only a store's own address is taken, so a mistyped value never sends a
  * visitor somewhere else. The APK can live anywhere — a GitHub release, the
@@ -17,10 +17,15 @@ export interface StoreLinks {
   googlePlay: string | null;
   /** The APK file itself; visitors reach it through `/android`. */
   androidApk: string | null;
+  /** The iPhone beta's TestFlight public link; reached through `/ios`. */
+  iosBeta: string | null;
 }
 
 /** Where the site sends a visitor for the APK, whatever hosts it now. */
 export const ANDROID_DOWNLOAD_PATH = "/android";
+
+/** Where the site sends a visitor for the iPhone app, wherever it is had. */
+export const IOS_DOWNLOAD_PATH = "/ios";
 
 function storeUrl(value: string | undefined, host: string): string | null {
   if (!value) {
@@ -34,6 +39,14 @@ function storeUrl(value: string | undefined, host: string): string | null {
   } catch {
     return null;
   }
+}
+
+/** A TestFlight public link, `https://testflight.apple.com/join/<code>`. */
+function testFlightUrl(value: string | undefined): string | null {
+  const url = storeUrl(value, "testflight.apple.com");
+  return url && /^\/join\/[A-Za-z0-9]+\/?$/.test(new URL(url).pathname)
+    ? url
+    : null;
 }
 
 function apkUrl(value: string | undefined): string | null {
@@ -56,7 +69,34 @@ export function storeLinks(): StoreLinks {
     appStore: storeUrl(process.env.APP_STORE_URL, "apps.apple.com"),
     googlePlay: storeUrl(process.env.PLAY_STORE_URL, "play.google.com"),
     androidApk: apkUrl(process.env.ANDROID_APK_URL),
+    iosBeta: testFlightUrl(process.env.IOS_TESTFLIGHT_URL),
   };
+}
+
+/** The iPhone app, where `/ios` sends a visitor for it. */
+export interface IosApp {
+  kind: "appStore" | "testFlight";
+  url: string;
+}
+
+/**
+ * Where the iPhone app is had: the App Store once it is there, its beta on
+ * TestFlight before — and null while neither, when an iPhone has the web app
+ * on its home screen instead (`DownloadPage.tsx`).
+ */
+export function iosApp(links: StoreLinks = storeLinks()): IosApp | null {
+  if (links.appStore) {
+    return { kind: "appStore", url: links.appStore };
+  }
+  return links.iosBeta ? { kind: "testFlight", url: links.iosBeta } : null;
+}
+
+/**
+ * Whether a request comes from an iPhone, from its User-Agent. Not an iPad:
+ * the phone app is iPhone-only, and an iPad's Safari says it is a Mac.
+ */
+export function isIphone(userAgent: string | null): boolean {
+  return userAgent ? /\b(iPhone|iPod)\b/.test(userAgent) : false;
 }
 
 /**

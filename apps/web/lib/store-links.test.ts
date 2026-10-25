@@ -4,6 +4,8 @@ vi.mock("server-only", () => ({}));
 
 const {
   androidApkVersion,
+  iosApp,
+  isIphone,
   latestApkRelease,
   latestApkVersion,
   storeLinks,
@@ -15,6 +17,7 @@ beforeEach(() => {
   vi.stubEnv("PLAY_STORE_URL", "");
   vi.stubEnv("ANDROID_APK_URL", "");
   vi.stubEnv("ANDROID_APK_VERSION", "");
+  vi.stubEnv("IOS_TESTFLIGHT_URL", "");
 });
 
 afterEach(() => {
@@ -27,6 +30,7 @@ describe("storeLinks", () => {
       appStore: null,
       googlePlay: null,
       androidApk: null,
+      iosBeta: null,
     });
   });
 
@@ -66,6 +70,61 @@ describe("storeLinks", () => {
     expect(storeLinks().androidApk).toBeNull();
     vi.stubEnv("ANDROID_APK_URL", "not a url");
     expect(storeLinks().androidApk).toBeNull();
+  });
+});
+
+describe("iosApp", () => {
+  it("is the TestFlight beta, from its public link", () => {
+    vi.stubEnv(
+      "IOS_TESTFLIGHT_URL",
+      " https://testflight.apple.com/join/AbC123xY ",
+    );
+    expect(iosApp()).toEqual({
+      kind: "testFlight",
+      url: "https://testflight.apple.com/join/AbC123xY",
+    });
+  });
+
+  it("refuses a link that is not a TestFlight invitation", () => {
+    vi.stubEnv("IOS_TESTFLIGHT_URL", "https://testflight.apple.com/");
+    expect(iosApp()).toBeNull();
+    vi.stubEnv("IOS_TESTFLIGHT_URL", "http://testflight.apple.com/join/AbC123");
+    expect(iosApp()).toBeNull();
+    vi.stubEnv("IOS_TESTFLIGHT_URL", "https://example.com/join/AbC123");
+    expect(iosApp()).toBeNull();
+  });
+
+  it("is the App Store once the app is there, beta or not", () => {
+    vi.stubEnv(
+      "IOS_TESTFLIGHT_URL",
+      "https://testflight.apple.com/join/AbC123",
+    );
+    vi.stubEnv("APP_STORE_URL", "https://apps.apple.com/fr/app/pluclair/id1");
+    expect(iosApp()).toEqual({
+      kind: "appStore",
+      url: "https://apps.apple.com/fr/app/pluclair/id1",
+    });
+  });
+});
+
+describe("isIphone", () => {
+  it("knows an iPhone, and not an iPad, a Mac or Android", () => {
+    expect(
+      isIphone(
+        "Mozilla/5.0 (iPhone; CPU iPhone OS 18_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.5 Mobile/15E148 Safari/604.1",
+      ),
+    ).toBe(true);
+    expect(
+      isIphone(
+        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.5 Safari/605.1.15",
+      ),
+    ).toBe(false);
+    expect(
+      isIphone(
+        "Mozilla/5.0 (Linux; Android 15; Pixel 9) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0 Mobile Safari/537.36",
+      ),
+    ).toBe(false);
+    expect(isIphone(null)).toBe(false);
   });
 });
 
