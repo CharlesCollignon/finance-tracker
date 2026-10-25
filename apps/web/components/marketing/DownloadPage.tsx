@@ -1,7 +1,10 @@
+import type { ReactNode } from "react";
 import Link from "next/link";
+import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 import {
   AndroidLogo,
+  AppleLogo,
   ArrowRight,
   ShieldCheck,
 } from "@phosphor-icons/react/dist/ssr";
@@ -16,7 +19,12 @@ import {
   CTA_SOLID,
 } from "@/components/marketing/cta-classes";
 import { DownloadPhone } from "@/components/marketing/download/DownloadPhone";
-import { downloadCopyFor } from "@/components/marketing/download-copy";
+import { IphoneHomeScreen } from "@/components/marketing/download/IphoneHomeScreen";
+import {
+  IPHONE_SECTION_ID,
+  downloadCopyFor,
+  type DownloadCopy,
+} from "@/components/marketing/download-copy";
 import {
   FadeUp,
   Questions,
@@ -32,9 +40,13 @@ import {
 import { getLocale } from "@/lib/locale";
 import {
   ANDROID_DOWNLOAD_PATH,
+  IOS_DOWNLOAD_PATH,
+  iosApp,
+  isIphone,
   latestApkRelease,
   storeLinks,
   type ApkRelease,
+  type IosApp,
 } from "@/lib/store-links";
 import { getSiteUrl } from "@/lib/supabase/env";
 import { cn } from "@/lib/utils";
@@ -42,22 +54,33 @@ import { cn } from "@/lib/utils";
 /** How many of the phone's latest changes the page lists. */
 const LATEST = 4;
 
+/** Where the iPhone's first step opens Pluclair: Le point, or the login. */
+const IPHONE_OPEN_PATH = "/bearing";
+
 /**
  * Where the Android app is had: the file, a QR code to fetch it from a
  * computer, the three steps a file from outside a store needs, what is new
- * on the phone, and how to check the file is the one published.
+ * on the phone, and how to check the file is the one published. And the
+ * iPhone, which has no file to download: Pluclair on its home screen from
+ * Safari, and the iPhone app through `/ios` once it is on TestFlight or the
+ * App Store (`iosApp`).
  *
  * Everything about the file — version, size, day, fingerprint — is read from
  * its GitHub release (`latestApkRelease`), so a new APK changes the page by
  * itself. The download goes through `/android`, which follows the file
  * wherever it is hosted. Without an APK there is nothing to download: the
  * page is not found, and nothing on the site links to it.
+ *
+ * On an iPhone, told by its User-Agent, the hero offers the iPhone's way in
+ * place of an APK it cannot open, and the iPhone's steps come first.
  */
 export async function DownloadPage({ isLoggedIn }: { isLoggedIn: boolean }) {
   if (!storeLinks().androidApk) {
     notFound();
   }
-  const locale = await getLocale();
+  const [locale, request] = await Promise.all([getLocale(), headers()]);
+  const iphone = isIphone(request.get("user-agent"));
+  const ios = iosApp();
   const copy = downloadCopyFor(locale);
   const steps = aboutCopyFor(locale).beta.steps;
   const release = await latestApkRelease();
@@ -75,6 +98,51 @@ export async function DownloadPage({ isLoggedIn }: { isLoggedIn: boolean }) {
   const web = isLoggedIn
     ? { href: "/bearing", label: copy.hero.openApp }
     : { href: "/signup", label: copy.hero.web };
+  const iphoneWay = copy.hero.iphone[ios?.kind ?? "homeScreen"];
+  const primary = iphone
+    ? {
+        href: ios ? IOS_DOWNLOAD_PATH : `#${IPHONE_SECTION_ID}`,
+        label: iphoneWay.cta,
+        Icon: AppleLogo,
+      }
+    : {
+        href: ANDROID_DOWNLOAD_PATH,
+        label: copy.hero.download,
+        Icon: AndroidLogo,
+      };
+
+  const androidSteps = (
+    <section key="android" className="relative px-6 pb-24 md:pb-32">
+      <div className="mx-auto max-w-6xl">
+        <RiseWords
+          text={copy.stepsHeading}
+          className="marketing-display text-display-sub"
+        />
+        <ol className="mt-10 grid gap-4 md:grid-cols-3">
+          {steps.map((step, index) => (
+            <li key={step}>
+              <FadeUp delay={0.1 + index * 0.08} className="h-full">
+                <div className="glass-flat flex h-full flex-col gap-4 rounded-[1.5rem] p-6">
+                  <StepNumber>{index + 1}</StepNumber>
+                  <p className="text-sm leading-relaxed text-marketing-muted">
+                    {step}
+                  </p>
+                </div>
+              </FadeUp>
+            </li>
+          ))}
+        </ol>
+      </div>
+    </section>
+  );
+  const iphoneSteps = (
+    <IphoneSection
+      key="iphone"
+      copy={copy.iphone}
+      ios={ios}
+      onIphone={iphone}
+    />
+  );
 
   return (
     <article className="relative isolate overflow-x-clip">
@@ -98,13 +166,13 @@ export async function DownloadPage({ isLoggedIn }: { isLoggedIn: boolean }) {
             />
             <FadeUp trigger="mount" delay={0.8}>
               <p className="mt-6 max-w-xl text-[0.975rem] leading-relaxed text-marketing-muted sm:text-lg">
-                {copy.hero.body}
+                {iphone ? copy.hero.iphone.body : copy.hero.body}
               </p>
             </FadeUp>
             <FadeUp trigger="mount" delay={1}>
               <div className="mt-8 flex flex-wrap items-center gap-3">
                 <a
-                  href={ANDROID_DOWNLOAD_PATH}
+                  href={primary.href}
                   className={cn(
                     CTA_BASE,
                     CTA_SIZES.lg,
@@ -112,8 +180,8 @@ export async function DownloadPage({ isLoggedIn }: { isLoggedIn: boolean }) {
                     "marketing-cta-shine gap-2.5",
                   )}
                 >
-                  <AndroidLogo size={20} weight="fill" aria-hidden />
-                  {copy.hero.download}
+                  <primary.Icon size={20} weight="fill" aria-hidden />
+                  {primary.label}
                 </a>
                 <Link
                   href={web.href}
@@ -133,7 +201,23 @@ export async function DownloadPage({ isLoggedIn }: { isLoggedIn: boolean }) {
                 </Link>
               </div>
               <p className="mt-4 text-sm text-marketing-faint">
-                {fileFacts(release, locale, copy.hero)}
+                {iphone ? (
+                  iphoneWay.facts
+                ) : (
+                  <>
+                    {fileFacts(release, locale, copy.hero)}
+                    <span aria-hidden> · </span>
+                    <a
+                      href={`#${IPHONE_SECTION_ID}`}
+                      className={cn(
+                        "rounded-control text-marketing-muted underline underline-offset-4 transition-colors duration-hover hover:text-white",
+                        marketingFocus,
+                      )}
+                    >
+                      {copy.hero.iphoneLink}
+                    </a>
+                  </>
+                )}
               </p>
             </FadeUp>
 
@@ -163,34 +247,8 @@ export async function DownloadPage({ isLoggedIn }: { isLoggedIn: boolean }) {
         </div>
       </section>
 
-      {/* ----------------------------------------------------------- steps */}
-      <section className="relative px-6 pb-24 md:pb-32">
-        <div className="mx-auto max-w-6xl">
-          <RiseWords
-            text={copy.stepsHeading}
-            className="marketing-display text-display-sub"
-          />
-          <ol className="mt-10 grid gap-4 md:grid-cols-3">
-            {steps.map((step, index) => (
-              <li key={step}>
-                <FadeUp delay={0.1 + index * 0.08} className="h-full">
-                  <div className="glass-flat flex h-full flex-col gap-4 rounded-[1.5rem] p-6">
-                    <span
-                      aria-hidden
-                      className="grid size-9 place-items-center rounded-full border border-primary/40 font-head text-sm text-primary tabular-nums"
-                    >
-                      {index + 1}
-                    </span>
-                    <p className="text-sm leading-relaxed text-marketing-muted">
-                      {step}
-                    </p>
-                  </div>
-                </FadeUp>
-              </li>
-            ))}
-          </ol>
-        </div>
-      </section>
+      {/* ---------------------------------------------- steps, each phone */}
+      {iphone ? [iphoneSteps, androidSteps] : [androidSteps, iphoneSteps]}
 
       {/* ---------------------------------------------------------- latest */}
       {latest.length > 0 ? (
@@ -295,6 +353,149 @@ export async function DownloadPage({ isLoggedIn }: { isLoggedIn: boolean }) {
         </div>
       </section>
     </article>
+  );
+}
+
+/** A step's number, in a ring. */
+function StepNumber({ children }: { children: ReactNode }) {
+  return (
+    <span
+      aria-hidden
+      className="grid size-9 shrink-0 place-items-center rounded-full border border-primary/40 font-head text-sm text-primary tabular-nums"
+    >
+      {children}
+    </span>
+  );
+}
+
+/**
+ * The iPhone: its app through `/ios` when there is one, and the three
+ * gestures that put Pluclair on its home screen from Safari — beside a
+ * phone that shows them. Read on the iPhone itself, the first gesture is a
+ * button; on a computer, a QR code opens Pluclair on the iPhone instead.
+ */
+function IphoneSection({
+  copy,
+  ios,
+  onIphone,
+}: {
+  copy: DownloadCopy["iphone"];
+  ios: IosApp | null;
+  onIphone: boolean;
+}) {
+  const app = ios ? copy[ios.kind] : null;
+  const qr = onIphone
+    ? null
+    : renderSVG(`${getSiteUrl()}${IPHONE_OPEN_PATH}`, {
+        border: 4,
+        blackColor: "#0a0a10",
+        whiteColor: "#f4f1ea",
+      });
+  return (
+    <section
+      id={IPHONE_SECTION_ID}
+      className="relative scroll-mt-24 px-6 pb-24 md:pb-32"
+    >
+      <div className="mx-auto grid max-w-6xl items-center gap-14 md:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] md:gap-16">
+        <FadeUp className="order-last md:order-first">
+          <IphoneHomeScreen copy={copy.screen} />
+        </FadeUp>
+        <div className="min-w-0">
+          <RiseWords
+            text={copy.heading}
+            className="marketing-display text-display-sub"
+          />
+          {ios && app ? (
+            <FadeUp delay={0.1}>
+              <div className="glass-flat mt-8 max-w-xl rounded-[1.5rem] p-6">
+                <p className="flex items-center gap-2 font-head text-base text-marketing-ink">
+                  <AppleLogo
+                    size={18}
+                    weight="fill"
+                    aria-hidden
+                    className="text-primary"
+                  />
+                  {app.heading}
+                </p>
+                <p className="mt-2 text-sm leading-relaxed text-marketing-muted">
+                  {app.body}
+                </p>
+                <a
+                  href={IOS_DOWNLOAD_PATH}
+                  className={cn(
+                    CTA_BASE,
+                    CTA_SIZES.md,
+                    CTA_SOLID,
+                    "mt-5 gap-2",
+                  )}
+                >
+                  <AppleLogo size={18} weight="fill" aria-hidden />
+                  {"join" in app ? app.join : app.download}
+                </a>
+              </div>
+            </FadeUp>
+          ) : null}
+          <FadeUp delay={0.15}>
+            <p className="mt-6 max-w-xl text-[0.975rem] leading-relaxed text-marketing-muted">
+              {ios ? copy.orHomeScreen : copy.homeScreenOnly}
+            </p>
+          </FadeUp>
+          <ol className="mt-8 flex max-w-xl flex-col gap-5">
+            {copy.steps.map((step, index) => (
+              <li key={step}>
+                <FadeUp delay={0.2 + index * 0.08} className="flex gap-4">
+                  <StepNumber>{index + 1}</StepNumber>
+                  <p className="pt-1.5 text-sm leading-relaxed text-marketing-muted">
+                    {step}
+                  </p>
+                </FadeUp>
+              </li>
+            ))}
+          </ol>
+          {qr ? (
+            // From a computer, a QR code takes Pluclair to the iPhone. Not
+            // drawn on a phone, where it could not be scanned.
+            <FadeUp delay={0.45} className="hidden md:block">
+              <div className="glass-flat mt-10 flex max-w-md items-center gap-5 rounded-[1.5rem] p-4">
+                <div
+                  role="img"
+                  aria-label={copy.qr.label}
+                  className="size-28 shrink-0 overflow-hidden rounded-xl [&>svg]:size-full"
+                  dangerouslySetInnerHTML={{ __html: qr }}
+                />
+                <div>
+                  <p className="font-head text-base text-marketing-ink">
+                    {copy.qr.heading}
+                  </p>
+                  <p className="mt-1 text-sm leading-relaxed text-marketing-muted">
+                    {copy.qr.body}
+                  </p>
+                </div>
+              </div>
+            </FadeUp>
+          ) : (
+            <FadeUp delay={0.45}>
+              <Link
+                href={IPHONE_OPEN_PATH}
+                className={cn(
+                  CTA_BASE,
+                  CTA_SIZES.md,
+                  CTA_QUIET,
+                  "group mt-8 gap-2",
+                )}
+              >
+                {copy.open}
+                <ArrowRight
+                  size={16}
+                  aria-hidden
+                  className="transition-transform duration-hover group-hover:translate-x-0.5"
+                />
+              </Link>
+            </FadeUp>
+          )}
+        </div>
+      </div>
+    </section>
   );
 }
 
