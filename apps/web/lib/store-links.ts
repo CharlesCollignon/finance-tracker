@@ -76,6 +76,88 @@ export function versionFromTag(tag: string): string | null {
   return /^android-(\d+(?:\.\d+){0,3})(?:$|-)/.exec(tag)?.[1] ?? null;
 }
 
+/** The APK the site hands out, as its release on GitHub describes it. */
+export interface ApkRelease {
+  version: string;
+  /** The file's size in bytes, or null when the release does not say. */
+  sizeBytes: number | null;
+  /** The day it was published, ISO, or null. */
+  publishedOn: string | null;
+  /** The file's SHA-256 as GitHub computed it, in hex, or null. */
+  sha256: string | null;
+}
+
+/**
+ * The repository's latest release, as GitHub tells it, asked at most every
+ * ten minutes; null when GitHub does not answer in three seconds.
+ */
+async function latestRelease(): Promise<Record<string, unknown> | null> {
+  try {
+    const response = await fetch(
+      `https://api.github.com/repos/${GITHUB_REPO}/releases/latest`,
+      {
+        headers: { Accept: "application/vnd.github+json" },
+        next: { revalidate: 600 },
+        signal: AbortSignal.timeout(3000),
+      },
+    );
+    return response.ok
+      ? ((await response.json()) as Record<string, unknown>)
+      : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * What the download page says of the APK: its version, size, day and
+ * fingerprint, from the latest release — which `scripts/release-android.mjs`
+ * publishes with the file, so a new APK updates the page by itself.
+ *
+ * With `ANDROID_APK_VERSION` pinned to another version, only that version is
+ * said: the release's size and fingerprint would belong to a different file.
+ */
+export async function latestApkRelease(): Promise<ApkRelease | null> {
+  const pinned = androidApkVersion();
+  const release = await latestRelease();
+  const tagged =
+    typeof release?.tag_name === "string"
+      ? versionFromTag(release.tag_name)
+      : null;
+  if (pinned && pinned !== tagged) {
+    return {
+      version: pinned,
+      sizeBytes: null,
+      publishedOn: null,
+      sha256: null,
+    };
+  }
+  if (!release || !tagged) {
+    return null;
+  }
+  const assets = Array.isArray(release.assets)
+    ? (release.assets as Record<string, unknown>[])
+    : [];
+  const apk = assets.find(
+    (asset) =>
+      typeof asset.name === "string" &&
+      asset.name.toLowerCase().endsWith(".apk"),
+  );
+  const digest =
+    typeof apk?.digest === "string"
+      ? /^sha256:([0-9a-f]{64})$/.exec(apk.digest)?.[1]
+      : undefined;
+  return {
+    version: tagged,
+    sizeBytes: typeof apk?.size === "number" ? apk.size : null,
+    publishedOn:
+      typeof release.published_at === "string"
+        ? release.published_at.slice(0, 10)
+        : null,
+    sha256: digest ?? null,
+  };
+}
+
 /**
  * The version of the APK the site hands out, for the phone to compare its
  * own against (`/nouveautes/feed.json`): `ANDROID_APK_VERSION` where set,
@@ -89,23 +171,8 @@ export async function latestApkVersion(): Promise<string | null> {
   if (pinned) {
     return pinned;
   }
-  try {
-    const response = await fetch(
-      `https://api.github.com/repos/${GITHUB_REPO}/releases/latest`,
-      {
-        headers: { Accept: "application/vnd.github+json" },
-        next: { revalidate: 600 },
-        signal: AbortSignal.timeout(3000),
-      },
-    );
-    if (!response.ok) {
-      return null;
-    }
-    const release = (await response.json()) as { tag_name?: unknown };
-    return typeof release.tag_name === "string"
-      ? versionFromTag(release.tag_name)
-      : null;
-  } catch {
-    return null;
-  }
+  const release = await latestRelease();
+  return typeof release?.tag_name === "string"
+    ? versionFromTag(release.tag_name)
+    : null;
 }

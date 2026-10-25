@@ -12,6 +12,8 @@ import {
 } from "@/components/marketing/legal-copy";
 import { marketingFocus } from "@/components/marketing/marketing-focus";
 import { NOUVEAUTES_HREF } from "@/components/marketing/nouveautes-copy";
+import { DOWNLOAD_HREF } from "@/components/marketing/download-copy";
+import { storeLinks } from "@/lib/store-links";
 import { BLOG_HREF } from "@/lib/guide-list";
 import { cn } from "@/lib/utils";
 import { getLocale, getT } from "@/lib/locale";
@@ -44,6 +46,9 @@ export async function LandingFooter({ isLoggedIn }: { isLoggedIn: boolean }) {
   const locale = await getLocale();
   const copy = landingCopyFor(locale);
   const legal = legalPagesVisible() ? legalCopyFor(locale).nav : null;
+  // As on the landing: the download page while the site hands out the APK.
+  const stores = storeLinks();
+  const apk = Boolean(stores.androidApk && !stores.googlePlay);
   return (
     <footer className="relative z-10 border-t border-white/10 px-6 py-14 md:py-16">
       <div className="mx-auto flex max-w-6xl flex-col gap-12">
@@ -115,6 +120,13 @@ export async function LandingFooter({ isLoggedIn }: { isLoggedIn: boolean }) {
                   </li>
                 </>
               )}
+              {apk ? (
+                <li>
+                  <Link href={DOWNLOAD_HREF} className={footerLink}>
+                    {copy.hero.android}
+                  </Link>
+                </li>
+              ) : null}
               <li>
                 <Link href="/#privacy" className={footerLink}>
                   {copy.nav.privacy}
