@@ -7,28 +7,30 @@ import {
   type EnvelopeId,
 } from "@finance/core/future-plan";
 import {
-  parseYearAheadSettings,
-  YEAR_AHEAD_DEFAULT_SETTINGS,
-  type YearAheadSettings,
-} from "@finance/core/year-ahead";
+  TRAJECTORY_DEFAULT_YEARS,
+  TRAJECTORY_YEARS,
+  type TrajectoryYears,
+} from "@finance/core/history/plan-accounts";
+import type { YearAheadAccountId } from "@finance/core/year-ahead";
 
 /**
- * What the Plan page remembers in this browser: the reader's own version of
- * the long view, and how they left the year ahead. The milestone already celebrated is the account's, not the
- * browser's (`user_preferences.milestone_seen`), so every device agrees.
+ * What the Plan page remembers in this browser: how the reader left the
+ * trajectory, and what they changed in « Hypothèses ». The milestone already
+ * celebrated is the account's, not the browser's
+ * (`user_preferences.milestone_seen`), so every device agrees.
  *
- * This browser's only, and a convenience rather than a record. The long view
- * is a calculator — nothing the app reports elsewhere rests on what someone
- * typed into it — so an edit survives a reload here and is simply absent on
- * the phone, which starts again from the user's figures. Every read and write
- * is guarded: a private window or blocked storage leaves the page on the
- * figures it was given, never broken.
+ * This browser's only, and a convenience rather than a record: nothing the
+ * app reports elsewhere rests on what someone typed into « Hypothèses », so
+ * an edit survives a reload here and is simply absent on the phone. Every
+ * read and write is guarded: a private window or blocked storage leaves the
+ * page on the figures it was given, never broken.
+ *
+ * The keys before October 2026 — the long view's draft and the year ahead's
+ * settings — are no longer read: their returns were presets, not history.
  */
 
-// v2 since migration 046: the accounts' ids changed ("livret" became
-// "savings", and each declared savings account has its own), so an older
-// draft would put the reader's savings under the wrong account.
-const DRAFT_KEY = "pluclair.plan.long-view:v2:";
+const TRAJECTORY_KEY = "pluclair.plan.trajectory:v1:";
+const HYPOTHESES_KEY = "pluclair.plan.hypotheses:v1:";
 const CHANGE_EVENT = "pluclair-plan-storage";
 
 function read(key: string): string | null {
@@ -61,112 +63,167 @@ function subscribe(onChange: () => void): () => void {
   };
 }
 
-/* ------------------------------------------------------------ long view */
-
-export interface LongViewDraft {
-  years: number;
-  inflation: number;
-  withdrawalRate: number;
-  envelopes: Envelope[];
-}
-
-function finite(value: unknown, fallback: number): number {
-  return typeof value === "number" && Number.isFinite(value) ? value : fallback;
-}
-
-/**
- * Anything stored by an older build, or by hand, is read defensively — with
- * the phone's bounds (`readEnvelopes` in `apps/mobile/src/lib/plan-future-data.ts`).
- */
-function parseDraft(raw: string | null): LongViewDraft | null {
-  if (!raw) {
-    return null;
-  }
-  try {
-    const stored = JSON.parse(raw) as Record<string, unknown>;
-    if (!Array.isArray(stored.envelopes)) {
-      return null;
-    }
-    const envelopes = stored.envelopes.flatMap((entry): Envelope[] => {
-      const id = (entry as { id?: unknown } | null)?.id;
-      if (!ENVELOPE_ORDER.includes(id as EnvelopeId)) {
-        return [];
-      }
-      const row = entry as Record<string, unknown>;
-      return [
-        {
-          id: id as EnvelopeId,
-          initial: Math.max(0, finite(row.initial, 0)),
-          monthly: Math.max(0, finite(row.monthly, 0)),
-          annualReturn: finite(row.annualReturn, 0),
-          taxOnGains: Math.min(1, Math.max(0, finite(row.taxOnGains, 0))),
-          // Absent in a draft saved before fees: the known ones fill it.
-          ...(typeof row.fees === "number" && Number.isFinite(row.fees)
-            ? { fees: Math.min(0.05, Math.max(0, row.fees)) }
-            : {}),
-        },
-      ];
-    });
-    return {
-      years: Math.min(40, Math.max(1, Math.round(finite(stored.years, 20)))),
-      inflation: finite(stored.inflation, 0.02),
-      withdrawalRate: finite(stored.withdrawalRate, 0.04),
-      envelopes,
-    };
-  } catch {
-    return null;
-  }
-}
-
-/** The reader's edited long view, or null while they have not touched it. */
-export function useLongViewDraft(userId: string): LongViewDraft | null {
-  const raw = useSyncExternalStore(
+function useStored(key: string): string | null {
+  return useSyncExternalStore(
     subscribe,
-    () => read(DRAFT_KEY + userId),
+    () => read(key),
     () => null,
   );
-  return useMemo(() => parseDraft(raw), [raw]);
 }
 
-export function saveLongViewDraft(userId: string, draft: LongViewDraft): void {
-  write(DRAFT_KEY + userId, JSON.stringify(draft));
+function finite(value: unknown): number | undefined {
+  return typeof value === "number" && Number.isFinite(value)
+    ? value
+    : undefined;
 }
 
-export function clearLongViewDraft(userId: string): void {
-  write(DRAFT_KEY + userId, null);
+/* ------------------------------------------------------------ trajectory */
+
+export interface TrajectorySettings {
+  years: TrajectoryYears;
+  /** Where « Et si… » goes; null for the default. */
+  to: YearAheadAccountId | null;
+  /** Whether the homes' net value joins the line. */
+  withProperty: boolean;
 }
 
-/* ------------------------------------------------------------ year ahead */
-
-const YEAR_AHEAD_KEY = "pluclair.plan.year-ahead:v1:";
+const DEFAULT_TRAJECTORY: TrajectorySettings = {
+  years: TRAJECTORY_DEFAULT_YEARS,
+  to: null,
+  withProperty: false,
+};
 
 /**
- * How the reader last left the year ahead: its window, where « Et si… »
- * goes, the accounts taken out, the events added. The extra itself is not
- * kept: it is something to play with, and a figure that opens inflated by
- * last week's play would be one nobody trusts.
+ * How the reader last left the trajectory. The extra itself is not kept:
+ * it is something to play with, and a figure that opens inflated by last
+ * week's play would be one nobody trusts.
  */
-export function useYearAheadSettings(userId: string): YearAheadSettings {
-  const raw = useSyncExternalStore(
-    subscribe,
-    () => read(YEAR_AHEAD_KEY + userId),
-    () => null,
-  );
+export function useTrajectorySettings(userId: string): TrajectorySettings {
+  const raw = useStored(TRAJECTORY_KEY + userId);
   return useMemo(() => {
     if (!raw) {
-      return YEAR_AHEAD_DEFAULT_SETTINGS;
+      return DEFAULT_TRAJECTORY;
     }
     try {
-      return parseYearAheadSettings(JSON.parse(raw));
+      const stored = JSON.parse(raw) as Record<string, unknown>;
+      const years = TRAJECTORY_YEARS.find((each) => each === stored.years);
+      return {
+        years: years ?? TRAJECTORY_DEFAULT_YEARS,
+        to:
+          typeof stored.to === "string"
+            ? (stored.to as YearAheadAccountId)
+            : null,
+        withProperty: stored.withProperty === true,
+      };
     } catch {
-      return YEAR_AHEAD_DEFAULT_SETTINGS;
+      return DEFAULT_TRAJECTORY;
     }
   }, [raw]);
 }
 
-export function saveYearAheadSettings(
+export function saveTrajectorySettings(
   userId: string,
-  settings: YearAheadSettings,
+  settings: TrajectorySettings,
 ): void {
-  write(YEAR_AHEAD_KEY + userId, JSON.stringify(settings));
+  write(TRAJECTORY_KEY + userId, JSON.stringify(settings));
+}
+
+/* ------------------------------------------------------------ hypotheses */
+
+/** What the reader changed on one account; anything absent is their figure. */
+export type EnvelopeEdit = Partial<
+  Pick<Envelope, "initial" | "monthly" | "fees" | "taxOnGains" | "annualReturn">
+>;
+
+export type HypothesesEdits = Partial<Record<EnvelopeId, EnvelopeEdit>>;
+
+/**
+ * Anything stored by an older build, or by hand, is read defensively, with
+ * the long view's old bounds.
+ */
+function parseEdits(raw: string | null): HypothesesEdits {
+  if (!raw) {
+    return {};
+  }
+  try {
+    const stored = JSON.parse(raw) as Record<string, unknown>;
+    const edits: HypothesesEdits = {};
+    for (const id of ENVELOPE_ORDER) {
+      const row = stored[id] as Record<string, unknown> | undefined;
+      if (!row || typeof row !== "object") {
+        continue;
+      }
+      const edit: EnvelopeEdit = {};
+      const initial = finite(row.initial);
+      const monthly = finite(row.monthly);
+      const fees = finite(row.fees);
+      const tax = finite(row.taxOnGains);
+      const annualReturn = finite(row.annualReturn);
+      if (initial !== undefined) edit.initial = Math.max(0, initial);
+      if (monthly !== undefined) edit.monthly = Math.max(0, monthly);
+      if (fees !== undefined) edit.fees = Math.min(0.05, Math.max(0, fees));
+      if (tax !== undefined) edit.taxOnGains = Math.min(1, Math.max(0, tax));
+      if (annualReturn !== undefined) {
+        edit.annualReturn = Math.min(0.3, Math.max(-0.2, annualReturn));
+      }
+      if (Object.keys(edit).length > 0) {
+        edits[id] = edit;
+      }
+    }
+    return edits;
+  } catch {
+    return {};
+  }
+}
+
+export function useHypothesesEdits(userId: string): HypothesesEdits {
+  const raw = useStored(HYPOTHESES_KEY + userId);
+  return useMemo(() => parseEdits(raw), [raw]);
+}
+
+export function saveHypothesesEdits(
+  userId: string,
+  edits: HypothesesEdits,
+): void {
+  write(
+    HYPOTHESES_KEY + userId,
+    Object.keys(edits).length > 0 ? JSON.stringify(edits) : null,
+  );
+}
+
+/** The reader's figures with their edits laid over, return aside. */
+export function withEdits(
+  envelopes: readonly Envelope[],
+  edits: HypothesesEdits,
+): Envelope[] {
+  return envelopes.map((envelope) => {
+    const edit = edits[envelope.id];
+    if (!edit) {
+      return envelope;
+    }
+    // The return is not a figure to lay over: it shifts history instead.
+    return {
+      ...envelope,
+      initial: edit.initial ?? envelope.initial,
+      monthly: edit.monthly ?? envelope.monthly,
+      taxOnGains: edit.taxOnGains ?? envelope.taxOnGains,
+      ...(edit.fees !== undefined ? { fees: edit.fees } : {}),
+    };
+  });
+}
+
+/** The returns the reader typed, account by account. */
+export function typedReturns(
+  edits: HypothesesEdits,
+): Partial<Record<EnvelopeId, number>> {
+  const returns: Partial<Record<EnvelopeId, number>> = {};
+  for (const [id, edit] of Object.entries(edits) as [
+    EnvelopeId,
+    EnvelopeEdit,
+  ][]) {
+    if (edit.annualReturn !== undefined) {
+      returns[id] = edit.annualReturn;
+    }
+  }
+  return returns;
 }

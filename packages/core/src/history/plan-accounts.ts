@@ -22,6 +22,15 @@ import {
 } from "./replay";
 import { historySeries } from "./series";
 
+/**
+ * The horizons the trajectory offers, in years. Thirty is the ceiling: from
+ * January 1970 a thirty-year window leaves about three hundred starts, which
+ * overlap heavily already, and forty would be fiction dressed as history.
+ */
+export const TRAJECTORY_YEARS = [1, 5, 10, 20, 30] as const;
+export type TrajectoryYears = (typeof TRAJECTORY_YEARS)[number];
+export const TRAJECTORY_DEFAULT_YEARS: TrajectoryYears = 10;
+
 /** Money the ledger leaves somewhere that earns nothing. */
 export interface CashAccount {
   /** The current account, or what is set aside with no account to take it. */

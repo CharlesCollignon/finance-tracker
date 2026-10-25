@@ -1,38 +1,18 @@
 "use client";
 
-import type { ReactNode } from "react";
-import { Gift, ShoppingBagOpen, TrendUp } from "@phosphor-icons/react";
 import {
   breakdownAccounts,
   ENVELOPE_SHORT_KEYS,
   type Envelope,
   type EnvelopeId,
 } from "@finance/core/future-plan";
-import type {
-  YearAheadAccountId,
-  YearAheadEventKind,
-} from "@finance/core/year-ahead";
+import type { YearAheadAccountId } from "@finance/core/year-ahead";
 import type { Key } from "@finance/core/i18n/t";
-import { EASE_STANDARD } from "@finance/core/motion";
 
 /**
- * What the year ahead's pieces share: each account's colour and name, the
- * events' icons and words, and the two ways things move on the card.
+ * Each account's colour and name, as the site's Plan mock and demo draw them
+ * until they are redrawn from the replay (Phase 5 of the Plan's redesign).
  */
-
-/** Paths and bars morphing to their next shape: the system's one curve. */
-export const MORPH = {
-  duration: 0.55,
-  ease: [...EASE_STANDARD] as [number, number, number, number],
-};
-
-/** Something following the pointer or the finger: quick, and settled. */
-export const FOLLOW = {
-  type: "spring",
-  stiffness: 520,
-  damping: 42,
-  mass: 0.6,
-} as const;
 
 /**
  * The accounts' colours: the long view's chart tokens, in the long view's
@@ -81,33 +61,4 @@ export function accountNameKey(id: YearAheadAccountId): Key {
     return "futurePlan.accountElsewhere";
   }
   return ENVELOPE_SHORT_KEYS[id];
-}
-
-export const EVENT_NAME_KEYS: Record<YearAheadEventKind, Key> = {
-  raise: "futurePlan.eventRaise",
-  bonus: "futurePlan.eventBonus",
-  expense: "futurePlan.eventExpense",
-};
-
-export const EVENT_LINE_KEYS: Record<YearAheadEventKind, Key> = {
-  raise: "futurePlan.eventRaiseLine",
-  bonus: "futurePlan.eventBonusLine",
-  expense: "futurePlan.eventExpenseLine",
-};
-
-export function EventIcon({
-  kind,
-  size,
-}: {
-  kind: YearAheadEventKind;
-  size: number;
-}): ReactNode {
-  switch (kind) {
-    case "raise":
-      return <TrendUp size={size} weight="bold" aria-hidden />;
-    case "bonus":
-      return <Gift size={size} weight="fill" aria-hidden />;
-    case "expense":
-      return <ShoppingBagOpen size={size} weight="fill" aria-hidden />;
-  }
 }

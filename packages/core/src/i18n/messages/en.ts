@@ -3,6 +3,7 @@ import { removalEn } from "./removal.en";
 import { planPhoneEn } from "./plan-phone.en";
 import { planWebEn } from "./plan-web.en";
 import { futurePlanEn } from "./future-plan.en";
+import { trajectoryEn } from "./trajectory.en";
 import { accountsEn } from "./accounts.en";
 import { placementsWebEn } from "./placements-web.en";
 import { placementsPhoneEn } from "./placements-phone.en";
@@ -3664,6 +3665,7 @@ export const en = {
   planPhone: planPhoneEn,
   planWeb: planWebEn,
   futurePlan: futurePlanEn,
+  trajectory: trajectoryEn,
   accounts: accountsEn,
   placementsWeb: placementsWebEn,
   placementsPhone: placementsPhoneEn,

@@ -1,4 +1,5 @@
 import { getCurrentMonth, todayIsoLocal } from "@finance/core/constants";
+import type { PositionForMix } from "@finance/core/history/mix";
 import type { InvestmentWalletId } from "@finance/core/investments";
 import { planWealthFromPortfolio } from "@finance/core/investment-positions";
 import {
@@ -65,6 +66,11 @@ export interface PlanBase {
    */
   savingsAccounts: PlanSavingsAccount[];
   /**
+   * The run of months closed inside the allowance, for « Progression »;
+   * null before a month has been measured. The close itself is on Le point.
+   */
+  run: { streak: number; best: number } | null;
+  /**
    * The months ahead from the recurring templates, as far as the year
    * ahead's longest window: the card draws as many of them as the reader asks.
    */
@@ -122,6 +128,10 @@ export async function gatherPlanBase(userId: string): Promise<PlanBase> {
         template.active && (!template.ends_on || template.ends_on >= today),
     ),
     milestoneSeen: settings?.milestoneSeen ?? null,
+    run:
+      closes.summary.sample > 0
+        ? { streak: closes.summary.streak, best: closes.summary.bestStreak }
+        : null,
     savingsReserve,
     savingsAccounts: savings.accounts.map((account) => ({
       kind: account.kind,
@@ -149,6 +159,11 @@ export async function gatherPlanBase(userId: string): Promise<PlanBase> {
 export interface PlanWealth {
   /** What each investment account is worth today. */
   wallets: Partial<Record<InvestmentWalletId, number>>;
+  /**
+   * Every position, with what it is worth and what it is: the history each
+   * wallet follows is read from its funds (`walletMixes`).
+   */
+  positions: PositionForMix[];
   /** The account each position-linked recurring purchase goes into. */
   templateWallets: Record<string, InvestmentWalletId>;
   /**
@@ -177,6 +192,14 @@ export async function gatherPlanWealth(
     ]);
     return {
       ...planWealthFromPortfolio(portfolio),
+      positions: portfolio.columns.flatMap((column) =>
+        column.items.map((item) => ({
+          walletId: column.walletId,
+          marketValue: item.marketValue,
+          isin: item.isin,
+          instrumentSymbol: item.instrumentSymbol,
+        })),
+      ),
       fees: walletFeeRates(
         portfolio.columns.flatMap((column) => column.items),
         wrapperFeesFromPlans(plans),
