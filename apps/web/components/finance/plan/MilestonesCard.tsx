@@ -145,7 +145,7 @@ export function MilestonesCard({
                 className="mt-2 h-1.5 overflow-hidden rounded-full bg-foreground/10"
               >
                 <div
-                  className="grow-in h-full rounded-full bg-foreground/60"
+                  className="fade-in h-full rounded-full bg-foreground/60"
                   style={{ width: `${progress}%` }}
                 />
               </div>
@@ -217,7 +217,7 @@ export function CushionCard({ cushion }: { cushion: Cushion }) {
               className="relative h-2 rounded-full bg-foreground/10"
             >
               <div
-                className="grow-in h-full rounded-full bg-foreground/60"
+                className="fade-in h-full rounded-full bg-foreground/60"
                 style={{ width: `${cushion.ratio * 100}%` }}
               />
               {CUSHION_TARGETS.map((target, index) => {

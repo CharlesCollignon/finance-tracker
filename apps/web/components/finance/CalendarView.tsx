@@ -22,7 +22,7 @@ import {
   toggleSelected,
 } from "@finance/core/selection";
 import { CalendarPulse } from "@/components/finance/CalendarPulse";
-import { Stagger, StaggerItem } from "@/components/motion/Stagger";
+import { FadeIn, FadeInItem } from "@/components/motion/FadeIn";
 import {
   CURRENCY_SYMBOLS,
   formatMonthLabel,
@@ -260,11 +260,8 @@ export function CalendarView({
   // (`LedgerToolbar`), so they stay put while the views load.
   return (
     <>
-      <Stagger
-        className="flex w-full min-w-0 flex-col items-center gap-8 md:gap-10"
-        stagger={0.05}
-      >
-        <StaggerItem className="w-full min-w-0">
+      <FadeIn className="flex w-full min-w-0 flex-col items-center gap-8 md:gap-10">
+        <FadeInItem className="w-full min-w-0">
           <CalendarPulse
             key={monthKey}
             label={monthLabel}
@@ -279,9 +276,9 @@ export function CalendarView({
             onHover={setHoverDate}
             onSelect={setSelectedDate}
           />
-        </StaggerItem>
+        </FadeInItem>
 
-        <StaggerItem className="w-full min-w-0">
+        <FadeInItem className="w-full min-w-0">
           {/* Full-bleed on mobile so the 7-day grid uses the screen width. */}
           <section
             className="-mx-4 w-[calc(100%+2rem)] min-w-0 sm:mx-0 sm:w-full"
@@ -428,9 +425,9 @@ export function CalendarView({
               ))}
             </div>
           </section>
-        </StaggerItem>
+        </FadeInItem>
 
-        <StaggerItem className="w-full min-w-0">
+        <FadeInItem className="w-full min-w-0">
           <section
             className="flex min-w-0 flex-col gap-3"
             aria-label={t("calendarView.selectedDay")}
@@ -630,8 +627,8 @@ export function CalendarView({
               </Card.Bezel>
             )}
           </section>
-        </StaggerItem>
-      </Stagger>
+        </FadeInItem>
+      </FadeIn>
 
       <PlannedOccurrenceSheet
         occurrence={openPlanned}

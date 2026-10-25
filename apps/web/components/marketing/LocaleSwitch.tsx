@@ -91,7 +91,7 @@ export function LocaleMenu({ pathname }: { pathname: string }) {
       {open ? (
         <div
           role="menu"
-          className="account-menu-panel glass-menu absolute right-0 top-full z-50 mt-3 w-48 rounded-card p-1.5"
+          className="fade-in glass-menu absolute right-0 top-full z-50 mt-3 w-48 rounded-card p-1.5"
         >
           {LOCALES.map((option) => (
             <button

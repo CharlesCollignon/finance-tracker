@@ -49,4 +49,10 @@ describe("the vocabulary itself", () => {
   it("keeps the count-up duration AnimatedAmount fixed on both clients", () => {
     expect(DURATION.count).toBe(650);
   });
+
+  it("fades in fast and out faster", () => {
+    expect(DURATION.enter).toBe(180);
+    expect(DURATION.exit).toBe(120);
+    expect(DURATION.exit).toBeLessThan(DURATION.enter);
+  });
 });

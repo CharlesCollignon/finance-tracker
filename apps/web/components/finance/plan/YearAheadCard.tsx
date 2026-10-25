@@ -25,6 +25,7 @@ import {
   type YearAheadSettings,
 } from "@finance/core/year-ahead";
 import { AnimatedAmount } from "@/components/finance/AnimatedAmount";
+import { FADE } from "@/components/motion/fade";
 import { Button, ButtonNub } from "@/components/ui/Button";
 import { GLASS_HERO } from "@/lib/glass";
 import { ICON } from "@/lib/icon-scale";
@@ -374,13 +375,7 @@ function YearAhead({
           className="self-start"
         />
         <AnimatePresence mode="wait" initial={false}>
-          <m.div
-            key={panel}
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -8 }}
-            transition={{ duration: 0.18 }}
-          >
+          <m.div key={panel} {...FADE}>
             {panel === "why" ? (
               <YearAheadWhy
                 flow={ahead.flow}

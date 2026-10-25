@@ -20,13 +20,11 @@ import { signUp, type SignUpOutcome } from "@/lib/actions/finance";
 import { GoogleSignInButton } from "@/components/auth/GoogleSignInButton";
 import { AuthDivider } from "@/components/auth/AuthDivider";
 import { CheckInbox } from "@/components/auth/CheckInbox";
+import { FADE } from "@/components/motion/fade";
 import { ICON } from "@/lib/icon-scale";
 import { useT } from "@/lib/locale-context";
 import { resolveMessage } from "@finance/core/i18n/t";
 import type { FormState } from "@finance/core/action-result";
-import { EASE_STANDARD } from "@finance/core/motion";
-
-const EASE = [...EASE_STANDARD] as [number, number, number, number];
 
 /**
  * The acceptance line, with its two document names as links.
@@ -113,26 +111,14 @@ export function SignupForm({
         >
           <AnimatePresence mode="wait" initial={false}>
             {waiting ? (
-              <m.div
-                key="inbox"
-                initial={{ opacity: 0, scale: 0.97 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.97 }}
-                transition={{ duration: 0.25, ease: EASE }}
-              >
+              <m.div key="inbox" {...FADE}>
                 <CheckInbox
                   email={email}
                   onChangeAddress={() => setEditing(true)}
                 />
               </m.div>
             ) : (
-              <m.div
-                key="form"
-                initial={{ opacity: 0, scale: 0.97 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.97 }}
-                transition={{ duration: 0.25, ease: EASE }}
-              >
+              <m.div key="form" {...FADE}>
                 <h1 className="text-center font-serif text-2xl italic md:text-3xl">
                   {t("auth.createAccount")}
                 </h1>
@@ -182,14 +168,7 @@ export function SignupForm({
                         {matching ? (
                           <m.span
                             key="match"
-                            initial={{ opacity: 0, scale: 0.4 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            exit={{ opacity: 0, scale: 0.4 }}
-                            transition={{
-                              type: "spring",
-                              stiffness: 500,
-                              damping: 22,
-                            }}
+                            {...FADE}
                             className="text-primary"
                           >
                             <CheckCircle

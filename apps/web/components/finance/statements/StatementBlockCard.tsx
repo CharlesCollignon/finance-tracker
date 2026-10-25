@@ -16,7 +16,7 @@ import {
   formatFullDate,
   type CurrencyCode,
 } from "@finance/core/constants";
-import { DURATION, EASE_STANDARD } from "@finance/core/motion";
+import { DURATION } from "@finance/core/motion";
 import {
   accountTail,
   BANK_NAMES,
@@ -28,12 +28,11 @@ import {
   type StatementBlock,
 } from "@finance/core/statement";
 import type { FileAccount } from "@finance/data/statements";
+import { FADE, FADE_HEIGHT } from "@/components/motion/fade";
 import { ChoiceChips } from "@/components/ui/Picker";
 import { ICON } from "@/lib/icon-scale";
 import { useLocale, useT } from "@/lib/locale-context";
 import type { StatementOutcome } from "@finance/core/validations/statements";
-
-const EASE = [...EASE_STANDARD] as [number, number, number, number];
 
 export interface BlockChoice {
   account: AccountChoice;
@@ -68,7 +67,7 @@ function Rolling({ value }: { value: number }) {
     const origin = from.current;
     let frame = 0;
     const step = (now: number) => {
-      const progress = Math.min(1, (now - start) / DURATION.panel);
+      const progress = Math.min(1, (now - start) / DURATION.count);
       const eased = 1 - (1 - progress) ** 3;
       setShown(Math.round(origin + (value - origin) * eased));
       if (progress < 1) {
@@ -124,14 +123,7 @@ function ReadLines({
       </button>
       <AnimatePresence initial={false}>
         {open ? (
-          <m.div
-            id={listId}
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: "auto", opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: DURATION.panel / 1000, ease: EASE }}
-            className="overflow-hidden"
-          >
+          <m.div id={listId} {...FADE_HEIGHT} className="overflow-hidden">
             <ul className="flex max-h-80 flex-col divide-y divide-border overflow-y-auto rounded-control border border-border text-sm">
               {shown.map((line) => {
                 const out = block.signUnknown
@@ -198,7 +190,6 @@ export function StatementBlockCard({
   choice,
   onChoice,
   outcome,
-  index,
   readByAi = false,
   alerts = false,
 }: {
@@ -208,7 +199,6 @@ export function StatementBlockCard({
   choice: BlockChoice;
   onChoice: (choice: BlockChoice) => void;
   outcome: StatementOutcome | null;
-  index: number;
   /** Read by the person's AI account: said, and every line waits. */
   readByAi?: boolean;
   /** A bank's alert e-mails rather than a statement. */
@@ -253,13 +243,7 @@ export function StatementBlockCard({
 
   return (
     <m.section
-      initial={{ opacity: 0, y: 16 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{
-        duration: DURATION.enter / 1000,
-        ease: EASE,
-        delay: index * 0.08,
-      }}
+      {...FADE}
       className="flex flex-col gap-5 rounded-card border border-border bg-card p-6"
     >
       <header className="flex items-start gap-3">
@@ -309,12 +293,7 @@ export function StatementBlockCard({
             </p>
           ) : null}
           {block.check?.ok ? (
-            <m.p
-              initial={{ opacity: 0, scale: 0.96 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ type: "spring", stiffness: 380, damping: 22 }}
-              className="flex items-start gap-2"
-            >
+            <m.p {...FADE} className="flex items-start gap-2">
               <SealCheck
                 size={ICON.md}
                 weight="fill"
@@ -456,16 +435,9 @@ export function StatementBlockCard({
           </p>
         ) : (
           <ul className="flex flex-wrap gap-x-5 gap-y-2 text-sm">
-            {figures.map(([label, count], at) => (
-              <m.li
+            {figures.map(([label, count]) => (
+              <li
                 key={label}
-                initial={{ opacity: 0, y: 6 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{
-                  duration: DURATION.press / 1000,
-                  ease: EASE,
-                  delay: at * 0.05,
-                }}
                 className={
                   label === "statements.waiting"
                     ? "font-medium text-foreground"
@@ -483,7 +455,7 @@ export function StatementBlockCard({
                       ) : null}
                     </span>
                   ))}
-              </m.li>
+              </li>
             ))}
           </ul>
         )}

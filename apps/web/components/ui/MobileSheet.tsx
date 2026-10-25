@@ -2,6 +2,7 @@
 
 import { useEffect, useEffectEvent, useRef, type ReactNode } from "react";
 import { X } from "@phosphor-icons/react";
+import { useFadePresence } from "@/components/motion/use-fade-presence";
 import { cn } from "@/lib/utils";
 import { ICON } from "@/lib/icon-scale";
 import { useT } from "@/lib/locale-context";
@@ -33,6 +34,7 @@ export function MobileSheet({
 }: MobileSheetProps) {
   const t = useT();
   const dialogRef = useRef<HTMLDivElement>(null);
+  const { mounted, leaving } = useFadePresence(open);
 
   // Callers pass `onOpenChange` inline, a new function on every render. The
   // effect below used to depend on it, so any render of the page behind the
@@ -101,7 +103,7 @@ export function MobileSheet({
     };
   }, [open]);
 
-  if (!open) {
+  if (!mounted) {
     return null;
   }
 
@@ -113,6 +115,8 @@ export function MobileSheet({
         // the bottom of every sheet on a phone. Toasts stay above both.
         "fixed inset-0 z-[60] flex justify-center",
         "items-end md:items-center md:p-4",
+        // In and out the way everything arrives and leaves: a fade.
+        leaving ? "fade-out pointer-events-none" : "fade-in",
       )}
     >
       <button

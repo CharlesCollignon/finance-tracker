@@ -4,7 +4,6 @@ import { useState } from "react";
 import Link from "next/link";
 import { ChartLineUp, Plus, Scales, Stack } from "@phosphor-icons/react";
 import type { Key } from "@finance/core/i18n/t";
-import { STAGGER_STEP_MS } from "@finance/core/motion";
 import { formatPercentLabel } from "@finance/core/constants";
 import { valueSourceLine } from "@finance/core/property";
 import { ownership } from "@finance/core/property-progress";
@@ -75,12 +74,8 @@ export function PropertyList({ view }: { view: PropertiesView }) {
             })}
           />
           <ul className="grid gap-4 md:grid-cols-2">
-            {view.properties.map((property, index) => (
-              <li
-                key={property.id}
-                className="stagger-item"
-                style={{ animationDelay: `${index * STAGGER_STEP_MS}ms` }}
-              >
+            {view.properties.map((property) => (
+              <li key={property.id} className="fade-in">
                 <Link
                   href={`/property/${property.id}`}
                   className="block rounded-shell transition-transform duration-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring active:scale-[0.99]"

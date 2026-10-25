@@ -18,8 +18,7 @@ import { monthAndYear } from "./property-labels";
  *
  * Neutral bars, as the Plan's milestones ahead are: gold means done
  * (DESIGN.md « Moments »), so only a mark already passed takes it. Each bar
- * grows from nothing as it arrives (`grow-in`), and reduced motion shows it
- * at its length.
+ * fades in at its length, as everything in the app arrives.
  */
 
 function percent(
@@ -60,7 +59,7 @@ export function OwnershipBar({
         className="relative h-2 overflow-hidden rounded-full bg-foreground/10"
       >
         <div
-          className="grow-in h-full rounded-full bg-foreground/70"
+          className="fade-in h-full rounded-full bg-foreground/70"
           style={{ width: `${ownership.share * 100}%` }}
         />
         {PROGRESS_MARKS.map((mark) => (
@@ -136,7 +135,7 @@ export function LoanTrack({
         className="relative h-1.5 rounded-full bg-foreground/10"
       >
         <div
-          className="grow-in h-full rounded-full bg-foreground/60"
+          className="fade-in h-full rounded-full bg-foreground/60"
           style={{ width: `${progress.repaid * 100}%` }}
         />
         {/* The marks: gold once passed, because passed means done. */}
@@ -180,7 +179,7 @@ export function PaymentBar({
     <div className="flex flex-col gap-1.5">
       <div
         aria-hidden
-        className="grow-in flex h-1.5 gap-0.5 overflow-hidden rounded-full"
+        className="fade-in flex h-1.5 gap-0.5 overflow-hidden rounded-full"
       >
         <span
           className="rounded-full bg-foreground/70"

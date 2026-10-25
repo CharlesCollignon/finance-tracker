@@ -22,6 +22,7 @@ import { UserInitial } from "@/components/layout/UserInitial";
 import { signOut } from "@/lib/actions/finance";
 import { PROFILE_NAV_ITEM } from "@/lib/navigation";
 import { NOUVEAUTES_HREF } from "@/components/marketing/nouveautes-copy";
+import { useFadePresence } from "@/components/motion/use-fade-presence";
 import { cn } from "@/lib/utils";
 import { GLASS_PANEL } from "@/lib/glass";
 import { ICON } from "@/lib/icon-scale";
@@ -90,6 +91,10 @@ export function AccountMenu({
     setOpenAt(pathname);
   }
   const titleId = useId();
+  const presence = useFadePresence(open);
+  // On each layer rather than a wrapper: an `opacity` on a wrapper would
+  // give both a stacking context, and the menu would fade in under the bar.
+  const fade = presence.leaving ? "fade-out pointer-events-none" : "fade-in";
   const profileActive = pathname.startsWith(PROFILE_NAV_ITEM.href);
   const active = profileActive || open;
 
@@ -129,23 +134,29 @@ export function AccountMenu({
     "font-medium text-foreground transition-colors hover:bg-foreground/5";
 
   const panel =
-    open && mounted
+    presence.mounted && mounted
       ? createPortal(
           <>
             <button
               type="button"
               aria-label={t("common.closeAccountMenu")}
-              className="fixed inset-0 z-[60] bg-black/25 md:bg-black/15"
+              className={cn(
+                "fixed inset-0 z-[60] bg-black/25 md:bg-black/15",
+                fade,
+              )}
               onClick={() => setOpenAt(null)}
             />
-            <div className="fixed z-[70] flex justify-end" style={panelStyle}>
+            <div
+              className={cn("fixed z-[70] flex justify-end", fade)}
+              style={panelStyle}
+            >
               <div
                 ref={panelRef}
                 role="dialog"
                 aria-modal="true"
                 aria-labelledby={titleId}
                 className={cn(
-                  "account-menu-panel flex w-full max-w-[18rem] flex-col gap-1 p-2",
+                  "flex w-full max-w-[18rem] flex-col gap-1 p-2",
                   "rounded-card",
                   GLASS_PANEL,
                 )}

@@ -20,6 +20,7 @@ import {
 import { DURATION, EASE_STANDARD } from "@finance/core/motion";
 import { setReaction } from "@/lib/actions/reactions";
 import { marketingFocus } from "@/components/marketing/marketing-focus";
+import { FADE_HEIGHT } from "@/components/motion/fade";
 import { cn } from "@/lib/utils";
 
 const EASE = [...EASE_STANDARD] as [number, number, number, number];
@@ -203,13 +204,7 @@ function Count({ value }: { value: number }) {
 
 function Reveal({ children }: { children: ReactNode }) {
   return (
-    <m.div
-      className="overflow-hidden"
-      initial={{ height: 0, opacity: 0 }}
-      animate={{ height: "auto", opacity: 1 }}
-      exit={{ height: 0, opacity: 0 }}
-      transition={{ duration: DURATION.panel / 1000, ease: EASE }}
-    >
+    <m.div className="overflow-hidden" {...FADE_HEIGHT}>
       {children}
     </m.div>
   );

@@ -826,12 +826,8 @@ export function TransactionsView({
               </EmptyState>
             ) : (
               <AnimatedDays deal={deals} className="flex flex-col gap-5">
-                {days.map((day, index) => (
-                  <AnimatedDay
-                    key={day.date}
-                    index={index}
-                    className="flex flex-col gap-1"
-                  >
+                {days.map((day) => (
+                  <AnimatedDay key={day.date} className="flex flex-col gap-1">
                     <div
                       className={cn(
                         "flex items-baseline justify-between gap-3",

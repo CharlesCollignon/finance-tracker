@@ -242,7 +242,7 @@ function MonthGrid({
         "absolute left-1/2 top-full z-50 mt-1 w-[min(17rem,calc(100vw-2rem))] -translate-x-1/2",
         "rounded-card p-row",
         SOLID_PANEL,
-        "account-menu-panel",
+        "fade-in",
       )}
     >
       <div className="flex items-center justify-between">

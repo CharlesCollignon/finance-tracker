@@ -10,6 +10,7 @@ import {
   type YearAheadEvent,
   type YearAheadEventKind,
 } from "@finance/core/year-ahead";
+import { FADE, FADE_IN } from "@/components/motion/fade";
 import { ICON } from "@/lib/icon-scale";
 import { useT } from "@/lib/locale-context";
 import { MICRO } from "@/lib/type-scale";
@@ -212,10 +213,8 @@ export function YearAheadWhatIf({
               <m.li
                 key={event.id}
                 layout
-                initial={{ opacity: 0, y: -8 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.96 }}
-                transition={reduce ? { duration: 0 } : FOLLOW}
+                {...FADE}
+                transition={reduce ? { duration: 0 } : FADE_IN}
                 // Two lines — the event and its cross, then its amount and
                 // month — which fit a phone and the half-card column alike.
                 className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2"
@@ -283,18 +282,11 @@ export function YearAheadWhatIf({
         <div className="flex flex-wrap items-center gap-2">
           <AnimatePresence initial={false} mode="popLayout">
             {adding ? (
-              YEAR_AHEAD_EVENT_KINDS.map((kind, index) => (
+              YEAR_AHEAD_EVENT_KINDS.map((kind) => (
                 <m.button
                   key={kind}
                   type="button"
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.9 }}
-                  transition={
-                    reduce
-                      ? { duration: 0 }
-                      : { ...FOLLOW, delay: index * 0.04 }
-                  }
+                  {...FADE}
                   onClick={() => {
                     onAddEvent(kind);
                     setAdding(false);
@@ -313,9 +305,7 @@ export function YearAheadWhatIf({
                 key="add"
                 type="button"
                 disabled={full}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
+                {...FADE}
                 onClick={() => setAdding(true)}
                 className={cn(
                   CHIP,

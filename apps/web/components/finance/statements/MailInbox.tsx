@@ -15,6 +15,7 @@ import { resolveMessage } from "@finance/core/i18n/t";
 import { BANK_NAMES, isBankId } from "@finance/core/statement";
 import type { MailItem } from "@finance/data/statements";
 import { useToast } from "@/components/layout/ToastProvider";
+import { FADE, FADE_IN, FADE_OUT } from "@/components/motion/fade";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { ChoiceChips } from "@/components/ui/Picker";
@@ -76,17 +77,17 @@ export function MailWaiting({
       </h2>
       <ul className="flex flex-col divide-y divide-border">
         <AnimatePresence initial={false}>
-          {items.map((item, index) => {
+          {items.map((item) => {
             const bank = item.bank && isBankId(item.bank) ? BANK_NAMES[item.bank] : null;
             const lines = item.statement.blocks[0]?.lines.length ?? 0;
             return (
               <m.li
                 key={item.id}
                 layout
-                initial={{ opacity: 0, x: -10 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, height: 0 }}
-                transition={{ type: "spring", stiffness: 320, damping: 28, delay: index * 0.04 }}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0, height: 0, transition: FADE_OUT }}
+                transition={FADE_IN}
                 className="flex flex-wrap items-center justify-between gap-2 py-3"
               >
                 <div className="flex min-w-0 flex-col">
@@ -219,14 +220,9 @@ export function MailInbox({
   return (
     <Card.Bezel className="w-full" innerClassName="flex flex-col gap-5 p-6">
       <header className="flex items-start gap-3">
-        <m.span
-          initial={{ rotate: -14, scale: 0.7 }}
-          animate={{ rotate: 0, scale: 1 }}
-          transition={{ type: "spring", stiffness: 300, damping: 12 }}
-          className="flex size-10 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground"
-        >
+        <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground">
           <EnvelopeSimple size={ICON.lg} weight="bold" aria-hidden />
-        </m.span>
+        </span>
         <div className="flex min-w-0 flex-col gap-1">
           <h2 className="font-head text-lg">{t("statements.mailTitle")}</h2>
           <p className="max-w-prose text-sm text-muted-foreground">
@@ -277,10 +273,7 @@ export function MailInbox({
                 <AnimatePresence mode="wait" initial={false}>
                   <m.span
                     key={copied ? "done" : "copy"}
-                    initial={{ scale: 0.4, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 1 }}
-                    exit={{ scale: 0.4, opacity: 0 }}
-                    transition={{ type: "spring", stiffness: 500, damping: 22 }}
+                    {...FADE}
                     className="mr-1.5 inline-flex"
                   >
                     {copied ? (
@@ -298,10 +291,7 @@ export function MailInbox({
           <AnimatePresence>
             {codeFresh ? (
               <m.div
-                initial={{ opacity: 0, y: 10, scale: 0.98 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ type: "spring", stiffness: 320, damping: 24 }}
+                {...FADE}
                 className="flex flex-col gap-2 rounded-control border border-primary/40 bg-accent p-4"
                 role="status"
               >
@@ -343,10 +333,7 @@ export function MailInbox({
             <AnimatePresence mode="wait" initial={false}>
               <m.ol
                 key={service}
-                initial={{ opacity: 0, x: 10 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -10 }}
-                transition={{ duration: 0.18 }}
+                {...FADE}
                 className="flex flex-col gap-2.5"
               >
                 {STEPS[service].map((step, index) => (

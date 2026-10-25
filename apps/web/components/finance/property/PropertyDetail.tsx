@@ -36,7 +36,7 @@ import type { PropertyLoan } from "@finance/core/types/database";
 import type { AttachedTemplate, PropertyRead } from "@finance/data/properties";
 import { RemoveAccount } from "@/components/finance/accounts/RemoveAccount";
 import { AnimatedAmount } from "@/components/finance/AnimatedAmount";
-import { Stagger } from "@/components/motion/Stagger";
+import { FadeIn } from "@/components/motion/FadeIn";
 import { useToast } from "@/components/layout/ToastProvider";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
@@ -116,7 +116,7 @@ export function PropertyDetail({
 
   return (
     <>
-      <Stagger className="flex flex-col gap-8">
+      <FadeIn className="flex flex-col gap-8">
         <Link
           href="/property"
           className="inline-flex items-center gap-1.5 self-start text-sm text-muted-foreground hover:text-foreground"
@@ -204,7 +204,7 @@ export function PropertyDetail({
               ) : (
                 <p
                   key={valueSourceLine(source, locale)}
-                  className="swap-in text-xs text-muted-foreground"
+                  className="fade-in text-xs text-muted-foreground"
                 >
                   {valueSourceLine(source, locale)}
                 </p>
@@ -362,7 +362,7 @@ export function PropertyDetail({
             }}
           />
         </div>
-      </Stagger>
+      </FadeIn>
 
       <EditPropertySheet
         property={property}

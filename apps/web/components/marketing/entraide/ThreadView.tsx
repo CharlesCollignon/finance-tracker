@@ -24,7 +24,7 @@ import {
   type PostKind,
 } from "@finance/core/entraide";
 import { maskPersonalData } from "@finance/core/entraide-mask";
-import { DURATION, EASE_STANDARD } from "@finance/core/motion";
+import { EASE_STANDARD } from "@finance/core/motion";
 import {
   ENTRAIDE_REACTIONS,
   NO_TALLY,
@@ -52,6 +52,7 @@ import { ReportButton } from "@/components/marketing/entraide/ReportButton";
 import { marketingFocus } from "@/components/marketing/marketing-focus";
 import { countLabel } from "@/components/marketing/nouveautes-copy";
 import { Reactions } from "@/components/marketing/nouveautes/Reactions";
+import { FADE, FADE_HEIGHT, FADE_IN } from "@/components/motion/fade";
 import { cn } from "@/lib/utils";
 
 /** Motion's layout engine, fetched after the page — see `lib/motion-features`. */
@@ -60,8 +61,8 @@ const loadMotionFeatures = () =>
 
 const EASE = [...EASE_STANDARD] as [number, number, number, number];
 
-/** An answer arriving, or moving to sit under the question. */
-const SETTLE = { type: "spring", stiffness: 260, damping: 28 } as const;
+/** An answer moving to sit under the question: quick, as a fade is. */
+const SETTLE = FADE_IN;
 
 export interface ThreadReplyData {
   id: number;
@@ -97,7 +98,7 @@ export interface ThreadData {
  * the author's own « Modifier », « Supprimer »; then the answers, oldest
  * first — the one the asker marked « Résolu » lifted up under the question,
  * its check drawing itself and the mark in gold, a moment rather than a
- * figure. New answers arrive on a spring. Every change shows at once and
+ * figure. New answers fade in. Every change shows at once and
  * is sent after; a refusal puts it back and says why.
  */
 export function ThreadView({
@@ -224,9 +225,7 @@ export function ThreadView({
                 {solved ? (
                   <m.div
                     key="solved"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
+                    {...FADE}
                     className="rounded-[1.75rem] border border-primary/40 bg-primary/[0.06] p-1"
                   >
                     <p className="flex items-center gap-2 px-4 pb-1 pt-3 text-[11px] font-medium uppercase tracking-[0.16em] text-primary">
@@ -254,14 +253,7 @@ export function ThreadView({
               <ul className="flex flex-col gap-3">
                 <AnimatePresence initial={false}>
                   {others.map((reply) => (
-                    <m.li
-                      key={reply.id}
-                      layout
-                      initial={{ opacity: 0, y: 24 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0 }}
-                      transition={SETTLE}
-                    >
+                    <m.li key={reply.id} layout {...FADE}>
                       <ReplyItem
                         reply={reply}
                         copy={copy}
@@ -796,10 +788,7 @@ function MaskNotice({ text, copy }: { text: string; copy: EntraideCopy }) {
         <m.p
           key="masked"
           role="status"
-          initial={{ height: 0, opacity: 0 }}
-          animate={{ height: "auto", opacity: 1 }}
-          exit={{ height: 0, opacity: 0 }}
-          transition={{ duration: DURATION.panel / 1000, ease: EASE }}
+          {...FADE_HEIGHT}
           className="flex items-start gap-2 overflow-hidden text-sm text-marketing-ink"
         >
           <ShieldCheck size={18} aria-hidden className="mt-px shrink-0" />

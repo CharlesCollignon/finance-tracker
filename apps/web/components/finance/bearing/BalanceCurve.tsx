@@ -221,7 +221,7 @@ export function BalanceCurve({
               <path
                 d={geometry.area}
                 fill={`url(#${titleId}-wash)`}
-                className="balance-curve-wash"
+                className="fade-in"
               />
               {geometry.solid ? (
                 <path
@@ -232,7 +232,7 @@ export function BalanceCurve({
                   strokeLinecap="round"
                   strokeLinejoin="round"
                   vectorEffect="non-scaling-stroke"
-                  className="balance-curve-draw"
+                  className="fade-in"
                 />
               ) : null}
               {geometry.dashed ? (
@@ -245,7 +245,7 @@ export function BalanceCurve({
                   strokeDasharray="4 5"
                   strokeLinecap="round"
                   vectorEffect="non-scaling-stroke"
-                  className="balance-curve-fade"
+                  className="fade-in"
                 />
               ) : null}
             </svg>
@@ -260,7 +260,7 @@ export function BalanceCurve({
                   left={percent(geometry.x(index))}
                   top={geometry.y(point.value)}
                   className={cn(
-                    "balance-curve-fade size-1.5",
+                    "fade-in size-1.5",
                     point.planned
                       ? "border border-primary/80 bg-card"
                       : "bg-primary",
@@ -284,7 +284,7 @@ export function BalanceCurve({
                 left={percent(geometry.x(lastIndex))}
                 top={geometry.y(endPoint.value)}
                 className={cn(
-                  "balance-curve-fade size-2.5 border-2 border-primary",
+                  "fade-in size-2.5 border-2 border-primary",
                   endPoint.planned ? "bg-card" : "bg-primary",
                 )}
               />

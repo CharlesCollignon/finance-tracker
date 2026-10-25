@@ -41,7 +41,7 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { PrivateAmount } from "@/components/layout/PrivateAmount";
 import { StatHero } from "@/components/finance/StatHero";
 import { WeightBars } from "@/components/finance/WeightBars";
-import { Stagger, StaggerItem } from "@/components/motion/Stagger";
+import { FadeIn, FadeInItem } from "@/components/motion/FadeIn";
 import { readNextInstrument, reviewWallets } from "@/lib/actions/wallet-read";
 import { useFormatCurrency } from "@/lib/use-currency";
 import { useLocale, useT } from "@/lib/locale-context";
@@ -292,8 +292,8 @@ export function LookThroughView({
   }
 
   return (
-    <Stagger className="flex w-full min-w-0 flex-col items-center gap-5">
-      <StaggerItem className="w-full min-w-0">
+    <FadeIn className="flex w-full min-w-0 flex-col items-center gap-5">
+      <FadeInItem className="w-full min-w-0">
         <StatHero
           label={t("lookThrough.readCoverage", {
             share: `${Math.round(lookThrough.classifiedShare * 100)}%`,
@@ -326,7 +326,7 @@ export function LookThroughView({
             ) : undefined
           }
         />
-      </StaggerItem>
+      </FadeInItem>
 
       {/* What the app cannot see, before anything it can — and split by
               what would actually fix it, because the four cases have four
@@ -334,7 +334,7 @@ export function LookThroughView({
               them left no action, and listing them twice over left Bitcoin on
               the card three times. */}
       {unclassified?.kind === "unclassified" ? (
-        <StaggerItem className="w-full min-w-0">
+        <FadeInItem className="w-full min-w-0">
           <Section
             icon={<Eye size={ICON.md} weight="light" />}
             title={t("lookThrough.caveats.notCovered")}
@@ -435,11 +435,11 @@ export function LookThroughView({
               formatEuro={formatEuro}
             />
           </Section>
-        </StaggerItem>
+        </FadeInItem>
       ) : null}
 
       {/* The read, when there is one. */}
-      <StaggerItem className="w-full min-w-0">
+      <FadeInItem className="w-full min-w-0">
         <Section
           icon={<Books size={ICON.md} weight="light" />}
           title={t("lookThrough.title")}
@@ -566,13 +566,13 @@ export function LookThroughView({
             ))}
           </div>
         </Section>
-      </StaggerItem>
+      </FadeInItem>
 
       {/* What the money is in, over everything held: the one place
               crypto and gold stand beside the funds rather than outside
               them. */}
       {holdingsWorthShowing(lookThrough) ? (
-        <StaggerItem className="w-full min-w-0">
+        <FadeInItem className="w-full min-w-0">
           <Section
             icon={<Stack size={ICON.md} weight="light" />}
             title={t("lookThrough.holdings")}
@@ -588,12 +588,12 @@ export function LookThroughView({
               {t("lookThrough.holdingsNote")}
             </p>
           </Section>
-        </StaggerItem>
+        </FadeInItem>
       ) : null}
 
       {/* Geography. */}
       {lookThrough.countries.length > 0 ? (
-        <StaggerItem className="w-full min-w-0">
+        <FadeInItem className="w-full min-w-0">
           <Section
             icon={<Globe size={ICON.md} weight="light" />}
             title={t("lookThrough.geography")}
@@ -639,12 +639,12 @@ export function LookThroughView({
               rows={lookThrough.countries.length}
             />
           </Section>
-        </StaggerItem>
+        </FadeInItem>
       ) : null}
 
       {/* Sectors. */}
       {lookThrough.sectors.length > 0 ? (
-        <StaggerItem className="w-full min-w-0">
+        <FadeInItem className="w-full min-w-0">
           <Section
             icon={<Target size={ICON.md} weight="light" />}
             title={t("lookThrough.sectors")}
@@ -664,12 +664,12 @@ export function LookThroughView({
               rows={lookThrough.sectors.length}
             />
           </Section>
-        </StaggerItem>
+        </FadeInItem>
       ) : null}
 
       {/* Doubling up. */}
       {lookThrough.indexCollisions.length > 0 ? (
-        <StaggerItem className="w-full min-w-0">
+        <FadeInItem className="w-full min-w-0">
           <Section
             icon={<Warning size={ICON.md} weight="light" />}
             title={t("lookThrough.doublingUp")}
@@ -721,11 +721,11 @@ export function LookThroughView({
               </>
             ) : null}
           </Section>
-        </StaggerItem>
+        </FadeInItem>
       ) : null}
 
       {/* Charges. */}
-      <StaggerItem className="w-full min-w-0">
+      <FadeInItem className="w-full min-w-0">
         <Section
           icon={<Coins size={ICON.md} weight="light" />}
           title={t("lookThrough.charges")}
@@ -762,11 +762,11 @@ export function LookThroughView({
             {t("lookThrough.chargesNote")}
           </p>
         </Section>
-      </StaggerItem>
+      </FadeInItem>
 
       {/* Eligibility. */}
       {lookThrough.eligibility.length > 0 ? (
-        <StaggerItem className="w-full min-w-0">
+        <FadeInItem className="w-full min-w-0">
           <Section
             icon={<Warning size={ICON.md} weight="light" />}
             title={t("lookThrough.wrappers")}
@@ -791,12 +791,12 @@ export function LookThroughView({
               ))}
             </ul>
           </Section>
-        </StaggerItem>
+        </FadeInItem>
       ) : null}
 
       {/* The target. */}
       {target.rows.length > 0 ? (
-        <StaggerItem className="w-full min-w-0">
+        <FadeInItem className="w-full min-w-0">
           <Section
             icon={<Target size={ICON.md} weight="light" />}
             title={t("lookThrough.target")}
@@ -849,8 +849,8 @@ export function LookThroughView({
               {t("lookThrough.rebalanceNote")}
             </p>
           </Section>
-        </StaggerItem>
+        </FadeInItem>
       ) : null}
-    </Stagger>
+    </FadeIn>
   );
 }

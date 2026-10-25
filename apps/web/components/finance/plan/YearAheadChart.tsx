@@ -16,6 +16,7 @@ import {
   type YearAheadAccountId,
   type YearAheadEvent,
 } from "@finance/core/year-ahead";
+import { FADE_IN, FADE_OUT } from "@/components/motion/fade";
 import { ICON } from "@/lib/icon-scale";
 import { useT } from "@/lib/locale-context";
 import { MICRO } from "@/lib/type-scale";
@@ -65,7 +66,7 @@ interface YearAheadChartProps {
  *
  * Built the way the Bearing's balance curve is — relative units stretched to
  * the card, strokes held at their width, dots in HTML so they stay round —
- * and wiped in from the left as the card arrives. After that every change
+ * and faded in as the card arrives. After that every change
  * morphs: a longer window stretches the line and its range instead of
  * redrawing them. The crosshair follows the pointer, a finger or the arrow
  * keys to the nearest month and reads the total, its range and every
@@ -241,7 +242,7 @@ export function YearAheadChart({
         <svg
           viewBox={`0 0 ${SPAN} ${HEIGHT}`}
           preserveAspectRatio="none"
-          className="balance-curve-draw absolute inset-0 h-full w-full overflow-visible"
+          className="fade-in absolute inset-0 h-full w-full overflow-visible"
           aria-hidden
         >
           {geometry.zeroY !== null ? (
@@ -279,8 +280,8 @@ export function YearAheadChart({
                 key="baseline"
                 initial={{ opacity: 0, d: geometry.baseline }}
                 animate={{ opacity: 0.85, d: geometry.baseline }}
-                exit={{ opacity: 0 }}
-                transition={morph}
+                exit={{ opacity: 0, transition: reduce ? morph : FADE_OUT }}
+                transition={reduce ? morph : { ...morph, opacity: FADE_IN }}
                 fill="none"
                 stroke="var(--foreground)"
                 strokeWidth={1.5}
@@ -308,13 +309,13 @@ export function YearAheadChart({
         <Dot
           left={percent(0)}
           top={geometry.y(ahead.total[0] ?? 0)}
-          className="balance-curve-fade size-2 bg-foreground/70"
+          className="fade-in size-2 bg-foreground/70"
           transition={morph}
         />
         <Dot
           left={percent(months)}
           top={geometry.y(ahead.total[months] ?? 0)}
-          className="balance-curve-fade size-2.5 bg-primary"
+          className="fade-in size-2.5 bg-primary"
           transition={morph}
         />
 
@@ -522,11 +523,11 @@ function EventMarker({
     <m.button
       type="button"
       aria-label={label}
-      initial={{ opacity: 0, scale: 0.4, left, top }}
+      initial={{ opacity: 0, left, top }}
       animate={{ opacity: 1, scale: held ? 1.15 : 1, left, top }}
-      exit={{ opacity: 0, scale: 0.4 }}
+      exit={{ opacity: 0, transition: reduce ? { duration: 0 } : FADE_OUT }}
       whileHover={reduce ? undefined : { scale: 1.1 }}
-      transition={reduce ? { duration: 0 } : FOLLOW}
+      transition={reduce ? { duration: 0 } : { ...FOLLOW, opacity: FADE_IN }}
       onPointerDown={(pointer) => {
         pointer.stopPropagation();
         pointer.currentTarget.setPointerCapture(pointer.pointerId);

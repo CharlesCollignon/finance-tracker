@@ -10,12 +10,10 @@ import {
   MotionConfig,
 } from "motion/react";
 import { FileArrowDown } from "@phosphor-icons/react";
-import { DURATION, EASE_STANDARD } from "@finance/core/motion";
+import { FADE } from "@/components/motion/fade";
 import { ICON } from "@/lib/icon-scale";
 import { useT } from "@/lib/locale-context";
 import { holdStatementFile } from "@/lib/statements/pending";
-
-const EASE = [...EASE_STANDARD] as [number, number, number, number];
 
 /** Whether a drag carries files, rather than text or a link from the page. */
 function carriesFiles(event: DragEvent): boolean {
@@ -93,40 +91,22 @@ export function StatementDropTarget() {
           {over && active ? (
             <m.div
               key="drop"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: DURATION.press / 1000, ease: EASE }}
+              {...FADE}
               className="pointer-events-none fixed inset-0 z-[60] flex items-center justify-center bg-background/70 p-6 backdrop-blur-sm"
             >
-              <m.div
-                initial={{ scale: 0.94, y: 12 }}
-                animate={{ scale: 1, y: 0 }}
-                exit={{ scale: 0.96 }}
-                transition={{ type: "spring", stiffness: 360, damping: 24 }}
-                className="flex flex-col items-center gap-3 rounded-card border-2 border-dashed border-primary bg-card px-10 py-12 text-center"
-              >
-                <m.span
-                  animate={{ y: [0, -6, 0] }}
-                  transition={{
-                    duration: 1.2,
-                    repeat: Infinity,
-                    ease: "easeInOut",
-                  }}
-                >
-                  <FileArrowDown
-                    size={ICON.hero}
-                    aria-hidden
-                    className="text-primary"
-                  />
-                </m.span>
+              <div className="flex flex-col items-center gap-3 rounded-card border-2 border-dashed border-primary bg-card px-10 py-12 text-center">
+                <FileArrowDown
+                  size={ICON.hero}
+                  aria-hidden
+                  className="text-primary"
+                />
                 <p className="font-head text-lg">
                   {t("statements.dropAnywhere")}
                 </p>
                 <p className="text-sm text-muted-foreground">
                   {t("statements.formats")}
                 </p>
-              </m.div>
+              </div>
             </m.div>
           ) : null}
         </AnimatePresence>

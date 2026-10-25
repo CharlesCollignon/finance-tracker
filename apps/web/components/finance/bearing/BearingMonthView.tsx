@@ -13,7 +13,7 @@ import { NewAccountsLine } from "@/components/finance/bank/NewAccountsLine";
 import { SetupCard } from "@/components/finance/bearing/SetupCard";
 import { YearReadyCard } from "@/components/finance/bearing/YearReadyCard";
 import { MonthPicker } from "@/components/layout/MonthPicker";
-import { Stagger, StaggerItem } from "@/components/motion/Stagger";
+import { FadeIn, FadeInItem } from "@/components/motion/FadeIn";
 import { GLASS_CARD } from "@/lib/glass";
 import { cn } from "@/lib/utils";
 import { BalanceCard } from "@/components/finance/bearing/BalanceCard";
@@ -113,56 +113,55 @@ export function BearingMonthView({
           </section>
         ) : null}
 
-        <Stagger
+        <FadeIn
           // Replayed per month: a new month is a new set of figures arriving.
           key={`${data.year}-${data.month}`}
           // One column that may shrink below its content on a phone: a grid
           // with no columns sizes its one track to the widest thing in it.
           className="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-5 xl:grid-cols-3"
-          stagger={0.06}
         >
           {setupStep && data.setup ? (
-            <StaggerItem className="md:col-span-2 xl:col-span-3">
+            <FadeInItem className="md:col-span-2 xl:col-span-3">
               <SetupCard
                 step={setupStep}
                 firstCloseOn={data.setup.firstCloseOn}
               />
-            </StaggerItem>
+            </FadeInItem>
           ) : null}
 
           {!data.empty ? (
-            <StaggerItem className="md:col-span-2 xl:col-span-3">
+            <FadeInItem className="md:col-span-2 xl:col-span-3">
               <BalanceCard data={data} />
-            </StaggerItem>
+            </FadeInItem>
           ) : null}
 
           {recapSlot ? (
             // Hidden while empty, so a week with no card leaves no gap.
-            <StaggerItem className="empty:hidden md:col-span-2 xl:col-span-3">
+            <FadeInItem className="empty:hidden md:col-span-2 xl:col-span-3">
               {recapSlot}
-            </StaggerItem>
+            </FadeInItem>
           ) : null}
 
           {hasSpentBefore && data.balance.period !== "future" ? (
-            <StaggerItem>
+            <FadeInItem>
               <SpentCard data={data} />
-            </StaggerItem>
+            </FadeInItem>
           ) : null}
 
           {!past && data.upcoming && data.recurring ? (
-            <StaggerItem>
+            <FadeInItem>
               <UpcomingCard data={data} />
-            </StaggerItem>
+            </FadeInItem>
           ) : null}
 
           {hasMomentum ? (
-            <StaggerItem>
+            <FadeInItem>
               <MomentumCard data={data} />
-            </StaggerItem>
+            </FadeInItem>
           ) : null}
 
           {hasSpending ? (
-            <StaggerItem
+            <FadeInItem
               className={cn(
                 "md:col-span-2",
                 // Beside the spent card when nothing else shares the row.
@@ -170,15 +169,15 @@ export function BearingMonthView({
               )}
             >
               <WhereItWentCard data={data} />
-            </StaggerItem>
+            </FadeInItem>
           ) : null}
 
           {readSlot ? (
-            <StaggerItem className="md:col-span-2 xl:col-span-3">
+            <FadeInItem className="md:col-span-2 xl:col-span-3">
               {readSlot}
-            </StaggerItem>
+            </FadeInItem>
           ) : null}
-        </Stagger>
+        </FadeIn>
       </div>
     </MyShareProvider>
   );

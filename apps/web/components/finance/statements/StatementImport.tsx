@@ -20,7 +20,6 @@ import {
 } from "@phosphor-icons/react";
 import { formatFullDate } from "@finance/core/constants";
 import { resolveMessage } from "@finance/core/i18n/t";
-import { DURATION, EASE_STANDARD } from "@finance/core/motion";
 import {
   BANK_NAMES,
   isBankId,
@@ -42,6 +41,7 @@ import type {
   MailItem,
   StatementImport as PastImport,
 } from "@finance/data/statements";
+import { FADE } from "@/components/motion/fade";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { PageContainer } from "@/components/layout/PageContainer";
@@ -71,7 +71,6 @@ import { useLocale, useT } from "@/lib/locale-context";
 import type { StatementOutcome } from "@finance/core/validations/statements";
 import { cn } from "@/lib/utils";
 
-const EASE = [...EASE_STANDARD] as [number, number, number, number];
 
 /** A statement bigger than this is not one. */
 const MAX_FILE_BYTES = 10 * 1024 * 1024;
@@ -452,10 +451,7 @@ export function StatementImport({
             {stage.kind === "start" ? (
               <m.div
                 key="start"
-                initial={{ opacity: 0, y: 12 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -8 }}
-                transition={{ duration: DURATION.panel / 1000, ease: EASE }}
+                {...FADE}
                 className="flex flex-col gap-4"
               >
                 <MailWaiting
@@ -580,10 +576,7 @@ export function StatementImport({
             {reading && statement ? (
               <m.div
                 key={`read-${reading.fileName}`}
-                initial={{ opacity: 0, y: 12 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -8 }}
-                transition={{ duration: DURATION.panel / 1000, ease: EASE }}
+                {...FADE}
                 className="flex flex-col gap-4"
               >
                 {statement.problem === "columns" && statement.table ? (
@@ -642,7 +635,6 @@ export function StatementImport({
                   statement.blocks.map((block, index) => (
                     <StatementBlockCard
                       key={index}
-                      index={index}
                       block={block}
                       bank={statement.bank}
                       accounts={accounts}
@@ -693,31 +685,18 @@ export function StatementImport({
             {stage.kind === "done" ? (
               <m.div
                 key="done"
-                initial={{ opacity: 0, scale: 0.98 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ type: "spring", stiffness: 320, damping: 26 }}
+                {...FADE}
               >
                 <Card.Bezel
                   className="w-full"
                   innerClassName="flex flex-col items-start gap-4 p-6"
                 >
-                  <m.span
-                    initial={{ scale: 0, rotate: -20 }}
-                    animate={{ scale: 1, rotate: 0 }}
-                    transition={{
-                      type: "spring",
-                      stiffness: 380,
-                      damping: 14,
-                      delay: 0.1,
-                    }}
-                  >
-                    <CheckCircle
-                      size={ICON.hero}
-                      weight="fill"
-                      aria-hidden
-                      className="text-success"
-                    />
-                  </m.span>
+                  <CheckCircle
+                    size={ICON.hero}
+                    weight="fill"
+                    aria-hidden
+                    className="text-success"
+                  />
                   <div className="flex flex-col gap-1">
                     <h2 className="font-head text-lg">
                       {stage.added > 0

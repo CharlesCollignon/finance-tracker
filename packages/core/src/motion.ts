@@ -42,13 +42,24 @@ export const EASE_STANDARD = [0.32, 0.72, 0, 1] as const;
  * Deliberately not a token: the phone's 850ms skeleton shimmer. That is a
  * loop, not an answer to anything, and a category with one member is worth
  * less than the literal and its comment.
+ *
+ * `enter` and `exit` are fades, and since October 2026 the only way anything
+ * arrives in or leaves the app: opacity alone — nothing rises, slides, zooms,
+ * grows or springs into place — fast enough to read as instant, slow enough
+ * to read as smooth, and leaving quicker than it came. A block that changes
+ * height on the way in or out spends the same two numbers on its height.
  */
 export const DURATION = {
-  /** A block arriving on screen. */
-  enter: 500,
+  /** A block arriving on screen: a fade, opacity only. */
+  enter: 180,
+  /** A block leaving the screen: a fade, quicker than it came. */
+  exit: 120,
   /** A figure counting to a new value. */
   count: 650,
-  /** A panel opening or closing. */
+  /**
+   * A panel opening on the public site. The app's panels fade in and out on
+   * `enter` and `exit` like everything else.
+   */
   panel: 420,
   /** A surface answering a press. */
   press: 140,
