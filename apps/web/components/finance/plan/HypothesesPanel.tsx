@@ -11,6 +11,10 @@ import {
 } from "@finance/core/future-plan";
 import type { WalletMix } from "@finance/core/history/mix";
 import { historyReturnFor } from "@finance/core/history/plan-accounts";
+import type {
+  EnvelopeEdit,
+  HypothesesEdits,
+} from "@finance/core/history/plan-settings";
 import { HISTORY_END, HISTORY_START } from "@finance/core/history/series";
 import { HISTORY_SOURCES } from "@finance/core/history/sources";
 import type { InvestmentWalletId } from "@finance/core/investments";
@@ -24,7 +28,6 @@ import { ICON } from "@/lib/icon-scale";
 import { useLocale, useT } from "@/lib/locale-context";
 import { cn } from "@/lib/utils";
 import { NumberField } from "./plan-controls";
-import type { EnvelopeEdit, HypothesesEdits } from "./plan-storage";
 
 function round2(value: number): number {
   return Math.round(value * 100) / 100;

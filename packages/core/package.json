@@ -58,6 +58,8 @@
     "./year-ahead": "./src/year-ahead.ts",
     "./history/mix": "./src/history/mix.ts",
     "./history/plan-accounts": "./src/history/plan-accounts.ts",
+    "./history/plan-figures": "./src/history/plan-figures.ts",
+    "./history/plan-settings": "./src/history/plan-settings.ts",
     "./history/replay": "./src/history/replay.ts",
     "./history/series": "./src/history/series.ts",
     "./history/sources": "./src/history/sources.ts",

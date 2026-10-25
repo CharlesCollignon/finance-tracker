@@ -3,15 +3,17 @@
 import { useState } from "react";
 import { CaretDown, ChartLineUp } from "@phosphor-icons/react";
 import { formatPercentLabel } from "@finance/core/constants";
-import {
-  ENVELOPE_SHORT_KEYS,
-  type EnvelopeId,
-} from "@finance/core/future-plan";
 import type { WalletMix } from "@finance/core/history/mix";
 import {
   TRAJECTORY_YEARS,
   type TrajectoryYears,
 } from "@finance/core/history/plan-accounts";
+import {
+  historyMonthLabel,
+  mixKeys,
+  taxAtHorizon,
+  trajectoryAccountKey,
+} from "@finance/core/history/plan-figures";
 import type { MixKey, ReplayAccount } from "@finance/core/history/replay";
 import type { InvestmentWalletId } from "@finance/core/investments";
 import type { Key } from "@finance/core/i18n/t";
@@ -25,22 +27,10 @@ import { useFormatCurrency } from "@/lib/use-currency";
 import { cn } from "@/lib/utils";
 import { PlanCard, Slider } from "./plan-controls";
 import { TrajectoryChart } from "./TrajectoryChart";
-import { historyMonthLabel, mixKeys } from "./trajectory-data";
 import type { PlanReplay } from "./use-plan-replay";
 
 const EXTRA_MAX = 500;
 const EXTRA_STEP = 25;
-
-/** The name of an account in the trajectory: an envelope, or the cash. */
-export function accountNameKey(id: string): Key {
-  if (id === "current") {
-    return "futurePlan.accountCurrent";
-  }
-  if (id === "elsewhere") {
-    return "futurePlan.accountElsewhere";
-  }
-  return ENVELOPE_SHORT_KEYS[id as EnvelopeId];
-}
 
 /**
  * « Votre trajectoire »: the accounts replayed on every start since 1970.
@@ -100,20 +90,16 @@ export function TrajectoryCard({
       ? replay.withExtra.end.p50 - replay.result.end.p50
       : 0;
 
-  // What selling everything at the horizon would leave: the figure, less
-  // each account's gains over what went in taxed at its own rate, its gains
-  // read on its own middle start.
-  const tax = shown.accounts.reduce((sum, end) => {
-    const envelope = replay.envelopes.find((each) => each.id === end.id);
-    const account = replay.accounts.find((each) => each.id === end.id);
-    if (!envelope || !account) {
-      return sum;
-    }
-    const monthly = account.monthly + (end.id === target ? extra : 0);
-    const gains = end.median - account.value - monthly * replay.months;
-    return sum + Math.max(0, gains) * envelope.taxOnGains;
-  }, 0);
-  const afterTax = shown.end.p50 + homes - tax;
+  // What selling everything at the horizon would leave.
+  const afterTax =
+    shown.end.p50 +
+    homes -
+    taxAtHorizon({
+      result: shown,
+      accounts: replay.accounts,
+      envelopes: replay.envelopes,
+      extra: replay.withExtra ? { monthly: extra, to: target } : null,
+    });
 
   const scrubWhen = (index: number) =>
     index % 12 === 0
@@ -243,7 +229,7 @@ export function TrajectoryCard({
             >
               {targets.map((id) => (
                 <option key={id} value={id}>
-                  {t(accountNameKey(id))}
+                  {t(trajectoryAccountKey(id))}
                 </option>
               ))}
             </select>
@@ -430,7 +416,9 @@ function AccountRow({
   return (
     <li className="rounded-control border border-border p-3">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <p className="text-sm font-medium">{t(accountNameKey(account.id))}</p>
+        <p className="text-sm font-medium">
+          {t(trajectoryAccountKey(account.id))}
+        </p>
         <p className="privacy-sensitive text-sm tabular-nums">
           {t("trajectory.accountLine", {
             today: money(account.value),

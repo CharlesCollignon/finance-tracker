@@ -5,6 +5,10 @@ import Link from "next/link";
 import { ClockCounterClockwise } from "@phosphor-icons/react";
 import { formatPercentLabel } from "@finance/core/constants";
 import {
+  historyMonthLabel,
+  trajectoryAccountKey,
+} from "@finance/core/history/plan-figures";
+import {
   CRASH_EPISODES,
   lossOdds,
   type CrashEpisodeId,
@@ -18,8 +22,6 @@ import { useFormatCurrency } from "@/lib/use-currency";
 import { cn } from "@/lib/utils";
 import { PlanCard } from "./plan-controls";
 import styles from "./plan.module.css";
-import { accountNameKey } from "./TrajectoryCard";
-import { historyMonthLabel } from "./trajectory-data";
 
 const EPISODES = Object.keys(CRASH_EPISODES) as CrashEpisodeId[];
 const FACT_KEYS: Record<CrashEpisodeId, Key> = {
@@ -160,7 +162,9 @@ export function HistoryCard({
       {test.absent.length > 0 ? (
         <p className="text-xs text-muted-foreground">
           {t("trajectory.absent", {
-            names: test.absent.map((id) => t(accountNameKey(id))).join(", "),
+            names: test.absent
+              .map((id) => t(trajectoryAccountKey(id)))
+              .join(", "),
           })}
         </p>
       ) : null}
