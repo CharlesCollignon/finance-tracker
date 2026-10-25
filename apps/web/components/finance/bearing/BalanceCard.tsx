@@ -1,12 +1,10 @@
 "use client";
 
 import { formatMonthLabel, formatShortDate } from "@finance/core/constants";
-import { balanceExplanation } from "@finance/core/month-balance";
 import type { BearingMonth } from "@/lib/bearing/month";
 import { AnimatedAmount } from "@/components/finance/AnimatedAmount";
 import { DcaStrip } from "@/components/finance/DcaStrip";
 import { BalanceCurve } from "@/components/finance/bearing/BalanceCurve";
-import { LeftToSpendLine } from "@/components/finance/bearing/LeftToSpendLine";
 import { PrivateAmount } from "@/components/layout/PrivateAmount";
 import { GLASS_CARD, GLASS_HERO } from "@/lib/glass";
 import { FIGURE, FIGURE_HERO } from "@/lib/type-scale";
@@ -112,6 +110,20 @@ export function BalanceCard({ data }: { data: BearingMonth }) {
               overdrawn(figures.left.value) && "text-destructive",
             )}
           />
+          {/* What the month still takes out, right under what is there. */}
+          {upcoming && upcoming.leaving > 0 ? (
+            <span className="mt-2 inline-flex items-center gap-1.5 rounded-full border border-border px-3 py-1.5 text-xs text-muted-foreground">
+              <span
+                aria-hidden
+                className="size-1.5 rounded-full bg-destructive"
+              />
+              <PrivateAmount>
+                {t("bearingMonth.toGoOut", {
+                  amount: format(upcoming.leaving),
+                })}
+              </PrivateAmount>
+            </span>
+          ) : null}
           <p className="mt-2 text-xs text-muted-foreground">{caption}</p>
           {/* With several current accounts, the figure read from the bank
               taken apart: the day it was read, which is today or the
@@ -143,16 +155,6 @@ export function BalanceCard({ data }: { data: BearingMonth }) {
               </ul>
             </details>
           ) : null}
-          {/* Native disclosure: keyboard, screen reader and the open state
-              are the browser's. */}
-          <details className="mt-1.5 text-xs text-muted-foreground">
-            <summary className="cursor-pointer list-none underline decoration-dotted underline-offset-4 transition-colors duration-hover hover:text-foreground [&::-webkit-details-marker]:hidden">
-              {t("bearingMonth.how.title")}
-            </summary>
-            <p className="mt-2 max-w-prose leading-relaxed">
-              {t(`bearingMonth.how.${balanceExplanation(balance, source)}`)}
-            </p>
-          </details>
         </div>
 
         {figures.right ? (
@@ -181,16 +183,6 @@ export function BalanceCard({ data }: { data: BearingMonth }) {
         ) : null}
       </div>
 
-      {/* The question the screen is opened for at the till, in one line
-          between the figures and the line they sit on. */}
-      {data.left ? (
-        <LeftToSpendLine
-          left={data.left}
-          lowest={balance.lowest}
-          eachMonth={data.eachMonth}
-        />
-      ) : null}
-
       <BalanceCurve
         key={`${data.year}-${data.month}`}
         points={balance.points}
@@ -205,8 +197,7 @@ export function BalanceCard({ data }: { data: BearingMonth }) {
         )}
       />
 
-      {showLowest ||
-      (upcoming && (upcoming.arriving > 0 || upcoming.leaving > 0)) ? (
+      {showLowest || (upcoming && upcoming.arriving > 0) ? (
         <div className="flex flex-wrap gap-2 text-xs">
           {showLowest && lowest ? (
             <span
@@ -236,19 +227,6 @@ export function BalanceCard({ data }: { data: BearingMonth }) {
               <PrivateAmount>
                 {t("bearingMonth.toComeIn", {
                   amount: format(upcoming.arriving),
-                })}
-              </PrivateAmount>
-            </span>
-          ) : null}
-          {upcoming && upcoming.leaving > 0 ? (
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-border px-3 py-1.5 text-muted-foreground">
-              <span
-                aria-hidden
-                className="size-1.5 rounded-full bg-destructive"
-              />
-              <PrivateAmount>
-                {t("bearingMonth.toGoOut", {
-                  amount: format(upcoming.leaving),
                 })}
               </PrivateAmount>
             </span>

@@ -6,7 +6,6 @@
   "exports": {
     "./action-result": "./src/action-result.ts",
     "./ai-brands": "./src/ai-brands.ts",
-    "./afford": "./src/afford.ts",
     "./ai-models": "./src/ai-models.ts",
     "./ask": "./src/ask.ts",
     "./ask-chat": "./src/ask-chat.ts",

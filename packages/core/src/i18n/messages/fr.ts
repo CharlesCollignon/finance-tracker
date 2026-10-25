@@ -2618,14 +2618,12 @@ export const fr: Messages = {
     },
   },
   afford: {
-    title: "Puis-je me permettre\u00A0?",
     amount: "Montant",
     cadence: "Fréquence",
     once: "Une fois",
     monthly: "Chaque mois",
     leftAfter: "Il vous resterait {amount} {until}",
     missingAfter: "Il vous manquerait {amount} {until}",
-    lowestAfter: "Point le plus bas à venir\u00A0: {amount} le {date}",
     eachMonthAfter: "Chaque mois, il resterait {amount}",
     nothingSaved: "Rien n'est enregistré\u00A0: c'est seulement le calcul.",
   },
@@ -2641,18 +2639,6 @@ export const fr: Messages = {
     byPayDay: "d'ici le {date}",
     byMonthEnd: "d'ici la fin du mois",
     perDay: "soit {amount} par jour",
-    how: {
-      title: "Comment c'est calculé\u00A0?",
-      body: "Ce que vos comptes contiennent aujourd'hui, moins ce que vos opérations récurrentes feront sortir d'ici là, pris au point le plus bas. C'est ce qui reste pour les dépenses du quotidien.",
-      payDay:
-        "Il court jusqu'à la veille de votre prochain revenu, le plus gros de vos revenus récurrents.",
-      monthEnd: "Sans revenu récurrent, il court jusqu'à la fin du mois.",
-      marge: {
-        one: "Votre marge pour les dépenses non notées en retire {amount} pour ce jour.",
-        other:
-          "Votre marge pour les dépenses non notées en retire {amount} pour ces {count} jours.",
-      },
-    },
   },
   bearingMonth: {
     onAccount: "Sur votre compte",
@@ -2663,17 +2649,6 @@ export const fr: Messages = {
     netSoFar: "Ce mois-ci à ce jour",
     netByEnd: "D'ici la fin du mois",
     netMonth: "Ce mois-ci",
-    how: {
-      title: "Comment c'est calculé\u00A0?",
-      net: "Sans solde de départ, le mois est compté à partir de zéro\u00A0: ce qui est entré moins ce qui est sorti. Faites le bilan d'un mois pour voir un vrai solde.",
-      planned:
-        "Un mois à venir ne compte que vos opérations récurrentes, à partir du solde prévu au début du mois. Les dépenses du quotidien n'y sont pas.",
-      bank: "Le solde vient de votre banque. Pour le reste du mois, l'application y ajoute ce que vos opérations récurrentes doivent encore faire entrer ou sortir. Les dépenses du quotidien pas encore faites n'y sont pas.",
-      close:
-        "Le départ est le solde que vous avez noté au dernier bilan de mois. L'application y ajoute les opérations enregistrées depuis, puis ce que vos opérations récurrentes doivent encore faire entrer ou sortir.",
-      reading:
-        "Le départ est le solde que vous avez saisi sur Le point. L'application y ajoute les opérations enregistrées depuis, puis ce que vos opérations récurrentes doivent encore faire entrer ou sortir. Votre premier bilan de mois prendra le relais.",
-    },
     netCaption: "Ce qui est entré, moins ce qui est sorti.",
     byAccount: "Par compte",
     byAccountEnd: "Par compte, à la fin du mois",

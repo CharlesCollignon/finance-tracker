@@ -5,7 +5,6 @@ import {
   ArrowDownRight,
   ArrowRight,
   CalendarDots,
-  CaretRight,
   ChartPieSlice,
   Receipt,
 } from "@phosphor-icons/react";
@@ -30,8 +29,8 @@ import {
 
 /**
  * Le point, as a landing mock (`./frame.tsx`): the month picker, the
- * balance card — today's balance and the month's end, « Il vous reste »,
- * the month's curve and its chips — and the cards under it, as
+ * balance card — today's balance with what is still to go out, the
+ * month's end, the month's curve and its chips — and the cards under it, as
  * `components/finance/bearing/BearingMonthView.tsx` lays them out.
  *
  * The pieces are exported for the two pages that show Le point too: the
@@ -71,30 +70,6 @@ export function BearingCardFrame({
       </header>
       {children}
     </section>
-  );
-}
-
-/** « Il vous reste … jusqu'au … · soit … par jour », as `LeftToSpendLine`. */
-function LeftToSpendLine() {
-  const t = useT();
-  const locale = useLocale();
-  const euro = useEuro();
-  const { leftToSpend } = landingSampleFor(locale);
-  return (
-    <div className="flex w-full items-center justify-between gap-3 rounded-control border border-border px-3 py-2.5 text-sm">
-      <span className="min-w-0 text-muted-foreground">
-        {t("leftToSpend.title")}{" "}
-        <span className="font-semibold text-foreground tabular-nums">
-          {euro(leftToSpend.amount)}
-        </span>{" "}
-        {t("leftToSpend.untilPayDay", {
-          date: formatDayMonth(leftToSpend.through, locale),
-        })}
-        {" · "}
-        {t("leftToSpend.perDay", { amount: euro(leftToSpend.perDay) })}
-      </span>
-      <CaretRight size={14} className="shrink-0 text-muted-foreground" />
-    </div>
   );
 }
 
@@ -248,16 +223,16 @@ export function BalanceCardMock({ compact = false }: { compact?: boolean }) {
           >
             {euro(bearing.onHand)}
           </p>
+          <span className="mt-2 inline-flex items-center gap-1.5 rounded-full border border-border px-3 py-1.5 text-xs text-muted-foreground">
+            <span className="size-1.5 rounded-full bg-destructive" />
+            {t("bearingMonth.toGoOut", { amount: euro(month.leaving) })}
+          </span>
           <p className="mt-2 text-xs text-muted-foreground">
             {t("bearingMonth.fromClose")}
-          </p>
-          <p className="mt-1.5 text-xs text-muted-foreground underline decoration-dotted underline-offset-4">
-            {t("bearingMonth.how.title")}
           </p>
         </div>
         {right}
       </div>
-      <LeftToSpendLine />
       <Curve height={compact ? 110 : 140} />
       <div className="flex flex-wrap gap-2 text-xs">
         <span className="rounded-full border border-border px-3 py-1.5 text-muted-foreground">
@@ -269,10 +244,6 @@ export function BalanceCardMock({ compact = false }: { compact?: boolean }) {
         <span className="inline-flex items-center gap-1.5 rounded-full border border-border px-3 py-1.5 text-muted-foreground">
           <span className="size-1.5 rounded-full bg-success" />
           {t("bearingMonth.toComeIn", { amount: euro(month.arriving) })}
-        </span>
-        <span className="inline-flex items-center gap-1.5 rounded-full border border-border px-3 py-1.5 text-muted-foreground">
-          <span className="size-1.5 rounded-full bg-destructive" />
-          {t("bearingMonth.toGoOut", { amount: euro(month.leaving) })}
         </span>
       </div>
     </section>

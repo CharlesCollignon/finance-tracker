@@ -1,12 +1,10 @@
 import { useState } from "react";
 import { Pressable, View } from "react-native";
 import { formatMonthLabel, formatShortDate } from "@finance/core/constants";
-import { balanceExplanation } from "@finance/core/month-balance";
 import { AnimatedAmount } from "@/components/AnimatedAmount";
 import { PrivateAmount } from "@/components/PrivateAmount";
 import { BalanceCurve } from "@/components/bearing/BalanceCurve";
 import { DcaStrip } from "@/components/bearing/DcaStrip";
-import { LeftToSpendLine } from "@/components/bearing/LeftToSpendLine";
 import { Text } from "@/components/ui/Text";
 import type { HomeMonth } from "@/lib/home-data";
 import { useFormatCurrency } from "@/providers/CurrencyProvider";
@@ -25,7 +23,6 @@ export function BalanceCard({ data }: { data: HomeMonth }) {
   const { balance, source, upcoming } = data;
   const net = balance.basis === "net";
   const monthLabel = formatMonthLabel(data.year, data.month, locale);
-  const [howOpen, setHowOpen] = useState(false);
   const [accountsOpen, setAccountsOpen] = useState(false);
 
   // The two figures, named by what they can claim.
@@ -113,25 +110,17 @@ export function BalanceCard({ data }: { data: HomeMonth }) {
             overdrawn(figures.left.value) ? "text-destructive" : undefined
           }
         />
+        {/* What the month still takes out, right under what is there. */}
+        {upcoming && upcoming.leaving > 0 ? (
+          <View className="flex-row">
+            <Pill dot={colors.destructive}>
+              {t("bearingMonth.toGoOut", { amount: format(upcoming.leaving) })}
+            </Pill>
+          </View>
+        ) : null}
         <Text variant="muted" className="text-xs">
           {caption}
         </Text>
-        <Pressable
-          accessibilityRole="button"
-          accessibilityState={{ expanded: howOpen }}
-          hitSlop={8}
-          onPress={() => setHowOpen((open) => !open)}
-          className="self-start"
-        >
-          <Text variant="muted" className="text-xs underline">
-            {t("bearingMonth.how.title")}
-          </Text>
-        </Pressable>
-        {howOpen ? (
-          <Text variant="muted" className="text-xs leading-relaxed">
-            {t(`bearingMonth.how.${balanceExplanation(balance, source)}`)}
-          </Text>
-        ) : null}
         {/* With several current accounts, the figure read from the bank
             taken apart: the day it was read, which is today or the
             month's last. */}
@@ -209,16 +198,6 @@ export function BalanceCard({ data }: { data: HomeMonth }) {
         </View>
       ) : null}
 
-      {/* The question the screen is opened for at the till, in one line
-          between the figures and the line they sit on. */}
-      {data.left ? (
-        <LeftToSpendLine
-          left={data.left}
-          lowest={balance.lowest}
-          eachMonth={data.eachMonth}
-        />
-      ) : null}
-
       <BalanceCurve
         points={balance.points}
         outflows={data.outflows}
@@ -230,8 +209,7 @@ export function BalanceCard({ data }: { data: HomeMonth }) {
         )}
       />
 
-      {showLowest ||
-      (upcoming && (upcoming.arriving > 0 || upcoming.leaving > 0)) ? (
+      {showLowest || (upcoming && upcoming.arriving > 0) ? (
         <View className="flex-row flex-wrap gap-2">
           {showLowest && lowest ? (
             <Pill tone={lowest.value < 0 ? "danger" : "default"}>
@@ -251,11 +229,6 @@ export function BalanceCard({ data }: { data: HomeMonth }) {
               {t("bearingMonth.toComeIn", {
                 amount: format(upcoming.arriving),
               })}
-            </Pill>
-          ) : null}
-          {upcoming && upcoming.leaving > 0 ? (
-            <Pill dot={colors.destructive}>
-              {t("bearingMonth.toGoOut", { amount: format(upcoming.leaving) })}
             </Pill>
           ) : null}
         </View>

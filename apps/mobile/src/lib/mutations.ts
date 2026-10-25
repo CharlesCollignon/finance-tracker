@@ -642,11 +642,6 @@ export function recordAppOpened(): void {
   void recordActivity(supabase);
 }
 
-/** « Puis-je me permettre ? » opened, for the audience figures. */
-export function recordAffordAsked(): void {
-  void recordActivity(supabase, "afford");
-}
-
 /** « Vu »: put « Votre année » away on Le point, on every device. */
 export function dismissYearReview(
   year: number,
