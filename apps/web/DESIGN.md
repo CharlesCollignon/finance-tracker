@@ -811,8 +811,8 @@ all; changing one alone breaks the frame.
 ### Moments
 
 A moment is something the user did, said back to them where it happened: a
-milestone reached, a cushion rung lit and the run kept alive on Plan, a month
-closed in the close sheet, the review inbox emptied, a loan half repaid or
+milestone reached and a cushion rung lit on Plan, the run kept alive and a
+month closed in the close sheet on Le point, the review inbox emptied, a loan half repaid or
 repaid on its card, and half a home the user's. It replaced, in October 2026, the rule that
 only Plan celebrates. The allowance is specific:
 
@@ -878,19 +878,21 @@ next sync learns from. Counted, not guessed: the groups filed in that sitting.
 
 Plan (`components/finance/plan/`) is where the money is heading: the months
 ahead account by account with « Pourquoi » and « Et si… », the milestones and
-the cushion, the long view after French tax, and the run of month-ends with
-what each one saved. Most of the app's moments live here, and the allowance is
-specific:
+the cushion, and the long view after French tax. The run of month-ends, the
+close and « Vos mois » moved to Le point's momentum card in October 2026
+(`components/finance/bearing/MomentumCard.tsx`, with `MonthsSheet` for the
+months, every close and the two settings): a month is closed where the month
+is read. Many of the app's moments live here, and the allowance is specific:
 
 - **Gold means done.** Reached milestones (the orb, `tone="mark"`, in a glow of
   `--primary` drawn as a radial light, never a shadow), lit cushion rungs, the
-  live flame, and the savings bars, which are gold because they are savings.
-  Everything still ahead is neutral.
+  and the savings bars, which are gold because they are savings. Everything
+  still ahead is neutral.
 - **Motion arrives, then rests.** Curves, the long view's stack and the bars
   fade in, as everything in the app does (`plan.module.css`); only the moments
   move more — badges pop past their size and settle, on the shared moments'
-  pop and flame. The only loops are the flame's sway and the glow's breath,
-  both in place, and both switched off under reduced motion.
+  pop. The only loop is the glow's breath, in place, and switched off under
+  reduced motion.
 - **Play answers at once.** The slider, the horizon and every field of the
   long view redraw immediately; a calculator that animates between answers is
   one you wait for. The headline figures count to their new value.

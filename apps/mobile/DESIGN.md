@@ -326,9 +326,9 @@ chip, an active tab, a success toast and a list icon are the foreground, not
 gold; the phone had 89 gold references against the web's 12.
 
 One exception: **a moment**, something the user did said back to them where
-it happened. On Plan, a milestone reached, the flame of a run still alive, the
-best month among the bars and the rungs of a cushion passed may take the
-accent, with the orb's warm light behind them (`components/plan/Glow.tsx`: a
+it happened. On Plan, a milestone reached and the rungs of a cushion passed —
+and on Le point, a run still alive and the best month among the bars — may
+take the accent, with the orb's warm light behind them (`components/plan/Glow.tsx`: a
 radial wash of the orb's body colour breathing on its period — light, not a
 shadow). In the close sheet, a closed month's Kept counts up in gold and, when
 the close extended the run, a pill with the flame says so; and an emptied
@@ -440,12 +440,15 @@ figure from `@finance/core/future-plan`). Top to bottom:
   the horizon, inflation and withdrawal rate, and one row per account
   prefilled from the user's figures. Edits are remembered on the phone until
   "Back to my figures".
-- **The run** — the month-end streak as a flickering flame, the record, and
-  the close one press away; then **the months**, bars fading in with the
-  best one lit, and behind a disclosure the close's history
-  and its two settings.
 
-Reduced motion turns every fade, spring, flicker and breath into a cut.
+The run, the close and the months moved to Le point in October 2026
+(`components/bearing/MomentumCard.tsx`): the streak and its last six months,
+the close one press away, and « Vos mois » opening under the card — bars
+fading in with the best one in gold, and behind a disclosure the close's
+history and its two settings. The attention row's « Faire le bilan » opens
+the close there, stamped so a second ask opens it again.
+
+Reduced motion turns every fade, spring and breath into a cut.
 
 ### Placements
 
