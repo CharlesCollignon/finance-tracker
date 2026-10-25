@@ -16,6 +16,12 @@ export interface CalendarDay {
 export interface DayTotals {
   income: number;
   outflow: number;
+  /**
+   * The part of `outflow` that went to an investment — the transfer to the
+   * broker above all — which the calendar draws in the investment blue
+   * apart from the rest.
+   */
+  invested: number;
   net: number;
   count: number;
 }
@@ -156,6 +162,7 @@ export function computeDayTotals(
 ): DayTotals {
   let income = 0;
   let outflow = 0;
+  let invested = 0;
 
   for (const tx of transactions) {
     const amount = Number(tx.amount);
@@ -166,12 +173,16 @@ export function computeDayTotals(
       income += amount;
     } else {
       outflow += amount;
+      if (tx.categories.type === "investment") {
+        invested += amount;
+      }
     }
   }
 
   return {
     income,
     outflow,
+    invested,
     net: income - outflow,
     count: transactions.length,
   };
@@ -184,12 +195,13 @@ export function computeDayTotals(
 export function plannedTotals(
   occurrences: readonly PlannedOccurrence[],
   debited: ReadonlySet<string> = new Set(),
-): { income: number; outflow: number } | null {
+): { income: number; outflow: number; invested: number } | null {
   if (occurrences.length === 0) {
     return null;
   }
   let income = 0;
   let outflow = 0;
+  let invested = 0;
   for (const occurrence of occurrences) {
     if (
       boughtAtTheBroker(
@@ -207,9 +219,12 @@ export function plannedTotals(
       income += occurrence.amount;
     } else {
       outflow += occurrence.amount;
+      if (occurrence.categoryType === "investment") {
+        invested += occurrence.amount;
+      }
     }
   }
-  return { income, outflow };
+  return { income, outflow, invested };
 }
 
 /** One day of the month, as the strip above the calendar draws it. */
