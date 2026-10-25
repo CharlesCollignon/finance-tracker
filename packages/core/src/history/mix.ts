@@ -21,20 +21,19 @@ import type { MixKey, ReplayAccount, SeriesMix } from "./replay";
  * The series each index family follows. `standIn`: the series is broader or
  * narrower than the index — honest about the shape of a fall, not exact.
  */
-const FAMILY_SERIES: Record<IndexFamily, { key: MixKey; standIn: boolean }> =
-  {
-    "world-developed": { key: "world", standIn: false },
-    // An all-world index is about a tenth emerging markets, which have no
-    // series of their own.
-    "world-all-cap": { key: "world", standIn: true },
-    "us-large": { key: "us", standIn: false },
-    "us-tech": { key: "us", standIn: true },
-    "us-small": { key: "us", standIn: true },
-    europe: { key: "europe", standIn: false },
-    emerging: { key: "world", standIn: true },
-    // Euro government bonds, on France's ten-year bond.
-    "bond-euro": { key: "bonds-fr", standIn: true },
-  };
+const FAMILY_SERIES: Record<IndexFamily, { key: MixKey; standIn: boolean }> = {
+  "world-developed": { key: "world", standIn: false },
+  // An all-world index is about a tenth emerging markets, which have no
+  // series of their own.
+  "world-all-cap": { key: "world", standIn: true },
+  "us-large": { key: "us", standIn: false },
+  "us-tech": { key: "us", standIn: true },
+  "us-small": { key: "us", standIn: true },
+  europe: { key: "europe", standIn: false },
+  emerging: { key: "world", standIn: true },
+  // Euro government bonds, on France's ten-year bond.
+  "bond-euro": { key: "bonds-fr", standIn: true },
+};
 
 /** What a wallet's unrecognised holdings follow. */
 const WALLET_DEFAULT: Record<InvestmentWalletId, MixKey> = {
@@ -69,7 +68,12 @@ export function walletMixes(
 ): Partial<Record<InvestmentWalletId, WalletMix>> {
   const sums = new Map<
     InvestmentWalletId,
-    { total: number; byKey: Map<MixKey, number>; standIn: number; unknown: number }
+    {
+      total: number;
+      byKey: Map<MixKey, number>;
+      standIn: number;
+      unknown: number;
+    }
   >();
   for (const position of positions) {
     if (position.marketValue <= 0) {
@@ -154,8 +158,7 @@ export function replayAccount(
       };
       // The fonds euros' published figure is already net of the contract's
       // management fees: those come off the rest of the account only.
-      const fees =
-        (envelope.fees ?? 0) * (1 - (mix["fonds-euros"] ?? 0));
+      const fees = (envelope.fees ?? 0) * (1 - (mix["fonds-euros"] ?? 0));
       return { ...base, mix, fees };
     }
   }

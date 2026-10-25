@@ -177,10 +177,7 @@ describe("replayPlan", () => {
     expect(result.standIns).toEqual([{ key: "bitcoin", as: "flat" }]);
     // Every start but the last runs through 2001: held at its value.
     expect(result.worst.value).toBeCloseTo(1000, 6);
-    expect(result.best.value).toBeCloseTo(
-      (1000 * 1.1 ** 12) / 1.01 ** 12,
-      4,
-    );
+    expect(result.best.value).toBeCloseTo((1000 * 1.1 ** 12) / 1.01 ** 12, 4);
   });
 });
 

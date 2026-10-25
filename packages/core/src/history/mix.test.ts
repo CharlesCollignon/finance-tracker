@@ -118,10 +118,7 @@ describe("replayAccount", () => {
       "livret-a": 2 / 3,
       cash: 1 / 3,
     });
-    const pel = replayAccount(
-      envelope({ id: "pel", annualReturn: 0.02 }),
-      {},
-    );
+    const pel = replayAccount(envelope({ id: "pel", annualReturn: 0.02 }), {});
     expect(pel.fixedRate).toBe(0.02);
     expect(replayAccount(envelope({ id: "livret_a" }), {}).ceiling).toBe(22950);
   });

@@ -67,9 +67,9 @@ describe("every series", () => {
 
   it("is named by a source", () => {
     for (const id of HISTORY_SERIES_IDS) {
-      expect(
-        HISTORY_SOURCES.some((source) => source.series.includes(id)),
-      ).toBe(true);
+      expect(HISTORY_SOURCES.some((source) => source.series.includes(id))).toBe(
+        true,
+      );
     }
   });
 

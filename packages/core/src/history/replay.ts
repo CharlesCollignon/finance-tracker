@@ -338,7 +338,11 @@ export function replayPlan(input: ReplayInput): ReplayResult {
     }
   }
 
-  const band = { p10: [] as number[], p50: [] as number[], p90: [] as number[] };
+  const band = {
+    p10: [] as number[],
+    p50: [] as number[],
+    p90: [] as number[],
+  };
   const nominalMedian: number[] = [];
   for (let k = 0; k < months; k += 1) {
     const sorted = realByMonth[k].sort(ascending);
@@ -385,13 +389,12 @@ export type CrashEpisodeId = "2000" | "2008" | "2020" | "2022";
  * closed — measured on the `world` series: 2000 fell 52 % to March 2003,
  * 2008 49 % to February 2009, 2020 22 % to March, 2022 16 % to June.
  */
-export const CRASH_EPISODES: Record<CrashEpisodeId, { peak: HistoryMonth }> =
-  {
-    "2000": { peak: "2000-08" },
-    "2008": { peak: "2007-05" },
-    "2020": { peak: "2019-12" },
-    "2022": { peak: "2021-12" },
-  };
+export const CRASH_EPISODES: Record<CrashEpisodeId, { peak: HistoryMonth }> = {
+  "2000": { peak: "2000-08" },
+  "2008": { peak: "2007-05" },
+  "2020": { peak: "2019-12" },
+  "2022": { peak: "2021-12" },
+};
 
 export interface CrashPoint {
   month: HistoryMonth;

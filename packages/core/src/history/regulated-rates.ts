@@ -135,8 +135,6 @@ export function regulatedMonthlyReturns(
     const month = addMonths(from, index);
     const first = rateOn(rates, `${month}-01`);
     const second = rateOn(rates, `${month}-16`);
-    return (
-      Math.sqrt((1 + first) ** (1 / 12) * (1 + second) ** (1 / 12)) - 1
-    );
+    return Math.sqrt((1 + first) ** (1 / 12) * (1 + second) ** (1 / 12)) - 1;
   });
 }

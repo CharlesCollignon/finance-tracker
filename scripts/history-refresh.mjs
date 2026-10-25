@@ -814,7 +814,9 @@ function usShare(month) {
 
 const percent = (value) =>
   value === null ? "—" : `${(value * 100).toFixed(1)} %`;
-console.log(`\nInflation ${START}–${END}: prices ×${compound(cpi).toFixed(2)}.`);
+console.log(
+  `\nInflation ${START}–${END}: prices ×${compound(cpi).toFixed(2)}.`,
+);
 console.log(
   `Dividends added before ${COUNTRIES_START}: outside the US ${percent(dividends.exUs)}, Europe ${percent(dividends.europe)}.`,
 );
