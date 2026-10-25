@@ -83,14 +83,19 @@ const current = appJson.expo.version;
 const version = next(current, bump);
 const tag = `android-${version}`;
 
-// The release before, for the notes: its day, or none for the first.
+// The release before, for the notes: its day, or none for the first — and
+// what its notes already said, since an entry written the day of a release
+// may have gone out with it.
 let since = null;
+let saidBefore = "";
 try {
-  since = JSON.parse(
-    run("gh", ["release", "view", "--json", "tagName,publishedAt"], {
+  const before = JSON.parse(
+    run("gh", ["release", "view", "--json", "tagName,publishedAt,body"], {
       stdio: ["ignore", "pipe", "ignore"],
     }),
-  ).publishedAt.slice(0, 10);
+  );
+  since = before.publishedAt.slice(0, 10);
+  saidBefore = before.body ?? "";
 } catch {
   // No release yet: the notes list the latest changes instead.
 }
@@ -100,7 +105,10 @@ const { CHANGELOG } = await import(
 );
 const forPhone = CHANGELOG.filter((entry) => entry.platforms.includes("phone"));
 const shipped = since
-  ? forPhone.filter((entry) => entry.date >= since)
+  ? forPhone.filter(
+      (entry) =>
+        entry.date >= since && !saidBefore.includes(`- ${entry.fr.title} — `),
+    )
   : forPhone.slice(0, 10);
 const notes = [
   `Pluclair ${version} pour Android.`,
