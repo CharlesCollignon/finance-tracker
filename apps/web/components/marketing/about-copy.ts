@@ -70,6 +70,8 @@ export interface AboutCopy {
     stepsHeading: string;
     steps: string[];
     iphone: string;
+    /** After it, to the download page's iPhone section. */
+    iphoneHow: string;
   };
   elsewhere: {
     heading: string;
@@ -215,7 +217,8 @@ export const aboutCopy: AboutCopy = {
       "If a warning mentions an unknown app, choose “Install anyway”. Updates install over it, and your data stays.",
     ],
     iphone:
-      "On iPhone there is no app yet: Pluclair works in Safari, with the same account.",
+      "On iPhone there is no app yet: Pluclair goes on the home screen from Safari, with the same account.",
+    iphoneHow: "How",
   },
 
   elsewhere: {

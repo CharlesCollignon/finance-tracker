@@ -1,6 +1,7 @@
 /* Hallmark · genre: atmospheric · macrostructure: Split Studio · theme: design.md (Pluclair) · enrichment: kept (WebGL Earth hero) · nav: kept · footer: kept */
 
 import Link from "next/link";
+import { headers } from "next/headers";
 import {
   AndroidLogo,
   AppleLogo,
@@ -26,13 +27,16 @@ import {
   nouveautesEntryHref,
 } from "@/components/marketing/nouveautes-copy";
 import { openRoadmap } from "@/components/marketing/nouveautes/open-roadmap";
-import { DOWNLOAD_HREF } from "@/components/marketing/download-copy";
+import {
+  DOWNLOAD_HREF,
+  IPHONE_HREF,
+} from "@/components/marketing/download-copy";
 import {
   CTA_BASE,
   CTA_QUIET,
   CTA_SIZES,
 } from "@/components/marketing/cta-classes";
-import { storeLinks } from "@/lib/store-links";
+import { isIphone, storeLinks } from "@/lib/store-links";
 import { FeatureBento } from "@/components/marketing/landing/FeatureBento";
 import { FigureSection } from "@/components/marketing/landing/FigureSection";
 import { OrbFinale } from "@/components/marketing/landing/OrbFinale";
@@ -67,7 +71,8 @@ const SPLIT = "md:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]";
  * under "Coming soon", in the future tense.
  */
 export async function LandingPage({ isLoggedIn }: LandingPageProps) {
-  const locale = await getLocale();
+  const [locale, request] = await Promise.all([getLocale(), headers()]);
+  const iphone = isIphone(request.get("user-agent"));
   const {
     hero,
     promise,
@@ -145,17 +150,22 @@ export async function LandingPage({ isLoggedIn }: LandingPageProps) {
             </p>
           </FadeUp>
           <FadeUp trigger="mount" delay={1.2}>
-            {/* The Android app among the first things seen, not after six
-                sections of scrolling: most visitors on a phone want it. */}
+            {/* The phone among the first things seen, not after six
+                sections of scrolling: most visitors on a phone want it. An
+                iPhone cannot open the APK, so it is offered its own way. */}
             <div className="mt-8 flex flex-wrap items-center gap-3">
               <LandingCtas isLoggedIn={isLoggedIn} size="lg" shine />
               {apk ? (
                 <Link
-                  href={apk}
+                  href={iphone ? IPHONE_HREF : apk}
                   className={cn(CTA_BASE, CTA_SIZES.lg, CTA_QUIET, "gap-2.5")}
                 >
-                  <AndroidLogo size={20} weight="fill" aria-hidden />
-                  {hero.android}
+                  {iphone ? (
+                    <AppleLogo size={20} weight="fill" aria-hidden />
+                  ) : (
+                    <AndroidLogo size={20} weight="fill" aria-hidden />
+                  )}
+                  {iphone ? hero.iphone : hero.android}
                 </Link>
               ) : null}
             </div>
