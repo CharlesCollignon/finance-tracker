@@ -28,6 +28,43 @@ export function isLet(usage: PropertyUsage): boolean {
   return usage === "rental_bare" || usage === "rental_furnished";
 }
 
+/** A property as the « Bien » choice of a recurring entry sees it. */
+export interface PropertyChoice {
+  id: string;
+  name: string;
+  usage: PropertyUsage;
+}
+
+/**
+ * Whether a recurring entry may be offered « Bien », the property it belongs
+ * to.
+ *
+ * An expense may always be one — the taxe foncière, the copropriété, the
+ * insurance. An income only where a property is let, for its rent: a salary
+ * belongs to no home. A savings or investment entry never — a DCA asked
+ * « Aucun / Maison » for nothing. One already attached keeps the choice
+ * whatever its category, so it can be taken off.
+ */
+export function offersPropertyLink(
+  categoryType: CategoryType | undefined,
+  properties: readonly PropertyChoice[],
+  attachedTo: string | null | undefined,
+): boolean {
+  if (properties.length === 0) {
+    return false;
+  }
+  if (attachedTo) {
+    return true;
+  }
+  if (categoryType === "expense") {
+    return true;
+  }
+  if (categoryType === "income") {
+    return properties.some((property) => isLet(property.usage));
+  }
+  return false;
+}
+
 /** A template's amount as a month's worth: a year's divided by twelve. */
 export function monthlyEquivalent(
   amount: number,
@@ -129,7 +166,10 @@ export function rentalFigures(
 }
 
 /** The rent a month over the living area, when there is one. */
-export function rentPerM2(rent: number, livingArea: number | null): number | null {
+export function rentPerM2(
+  rent: number,
+  livingArea: number | null,
+): number | null {
   return livingArea && livingArea > 0 && rent > 0
     ? cents(rent / livingArea)
     : null;

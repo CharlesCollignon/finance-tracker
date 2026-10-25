@@ -386,12 +386,18 @@ export function PurchaseFields({
 /** Stands in for the property a loan will belong to, until it exists. */
 const PREVIEW_PROPERTY_ID = "00000000-0000-4000-8000-000000000000";
 
-export function useLoanDraft(initial: PropertyLoan | null) {
+export function useLoanDraft(
+  initial: PropertyLoan | null,
+  /** A new loan's name: « Prêt principal » unless it is a second one. */
+  defaultLabel?: string,
+) {
   const t = useT();
   const locale = useLocale();
   const amount = (value: number) => (value ? fieldText(value, locale) : "");
 
-  const [label, setLabel] = useState(initial?.label ?? t("property.loanLabelDefault"));
+  const [label, setLabel] = useState(
+    initial?.label ?? defaultLabel ?? t("property.loanLabelDefault"),
+  );
   const [principal, setPrincipal] = useState(initial ? amount(initial.principal) : "");
   const [rate, setRate] = useState(
     initial ? fieldText(initial.annual_rate * 100, locale, 3) : "",

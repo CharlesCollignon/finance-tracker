@@ -21,6 +21,7 @@ import {
   type MarketContext,
 } from "@finance/core/property";
 import type { RentReference } from "@finance/core/rent-reference";
+import type { PropertyChoice } from "@finance/core/rental";
 import type {
   CategoryType,
   Property,
@@ -465,15 +466,16 @@ export async function getProperties(
 
 /**
  * Each property's name, for a picker: what a recurring template can be
- * attached to. Empty before migration 049.
+ * attached to. Empty before migration 049. Its use too, which decides
+ * whether an income is offered the picker (`offersPropertyLink`).
  */
 export async function getPropertyNames(
   db: Db,
   userId: string,
-): Promise<{ id: string; name: string }[]> {
+): Promise<PropertyChoice[]> {
   const { data, error } = await db
     .from("properties")
-    .select("id, name")
+    .select("id, name, usage")
     .eq("user_id", userId)
     .order("purchased_on");
   if (error) {
@@ -826,69 +828,130 @@ export async function saveLoan(
     : { error: added.error };
 }
 
+/** One of the loans a new property is added with, and whether to write its payment. */
+export interface NewLoan {
+  loan: Omit<LoanChange, "propertyId">;
+  addPayment: boolean;
+}
+
 /**
- * Add a property, and the loan that paid for it when there was one, with
- * its payment among the recurring entries when asked — what both apps' add
- * sheets save. A loan that cannot be saved takes the property back with it,
- * so trying again does not leave the same home twice.
+ * Add a property, and the loans that paid for it — none, one, or several:
+ * a main loan and a 0 % one beside it, each with its own rate and length —
+ * with each one's payment among the recurring entries when asked. What both
+ * apps' add sheets save.
+ *
+ * All or nothing: every loan is checked before anything is written, and a
+ * loan that still cannot be saved takes the property back with it, and the
+ * payments already written for the others, so trying again does not leave
+ * the same home twice.
  */
-export async function addPropertyWithLoan(
+export async function addPropertyWithLoans(
   db: Db,
   userId: string,
   input: {
     property: PropertyChange;
-    loan: Omit<LoanChange, "propertyId"> | null;
+    loans: readonly NewLoan[];
     /**
-     * The category the payment is filed under, and the word for its
+     * The category the payments are filed under, and the word for an
      * insurance debited apart, in the reader's words.
      */
-    payment: { categoryName: string; insuranceLabel?: string } | null;
+    payment: { categoryName: string; insuranceLabel?: string };
   },
-): Promise<ActionResult<{ propertyId: string; paymentAmount: number | null }>> {
+): Promise<
+  ActionResult<{
+    propertyId: string;
+    /** What the payments written add up to a month; null when none was. */
+    paymentAmount: number | null;
+    paymentCount: number;
+  }>
+> {
+  for (const { loan } of input.loans) {
+    const checked = loanSchema.safeParse({ ...loan, propertyId: NO_ID_YET });
+    if (!checked.success) {
+      return { error: firstIssue(checked.error) };
+    }
+  }
+
   const saved = await saveProperty(db, userId, input.property);
   if (!saved.success) {
     return { error: saved.error };
   }
   const { propertyId } = saved;
-  if (!input.loan) {
-    return { success: true, propertyId, paymentAmount: null };
+  const name = String(input.property.name).trim();
+
+  const templateIds: string[] = [];
+  for (const { loan, addPayment } of input.loans) {
+    const written = await saveLoan(
+      db,
+      userId,
+      { ...loan, propertyId },
+      addPayment
+        ? {
+            addPayment: {
+              categoryName: input.payment.categoryName,
+              insuranceLabel: input.payment.insuranceLabel,
+              description: `${String(loan.label).trim()} · ${name}`,
+            },
+          }
+        : {},
+    );
+    if (!written.success) {
+      await takeBackProperty(db, userId, propertyId);
+      return { error: written.error };
+    }
+    if (written.templateId) {
+      templateIds.push(written.templateId);
+    }
   }
 
-  const description = `${String(input.loan.label).trim()} · ${String(
-    input.property.name,
-  ).trim()}`;
-  const loan = await saveLoan(
-    db,
-    userId,
-    { ...input.loan, propertyId },
-    input.payment
-      ? {
-          addPayment: {
-            categoryName: input.payment.categoryName,
-            insuranceLabel: input.payment.insuranceLabel,
-            description,
-          },
-        }
-      : {},
-  );
-  if (!loan.success) {
-    await deleteProperty(db, userId, propertyId);
-    return { error: loan.error };
+  if (templateIds.length === 0) {
+    return { success: true, propertyId, paymentAmount: null, paymentCount: 0 };
   }
-  if (!loan.templateId) {
-    return { success: true, propertyId, paymentAmount: null };
-  }
-  const { data: template } = await db
+  const { data: templates } = await db
     .from("recurring_templates")
     .select("amount")
-    .eq("id", loan.templateId)
-    .eq("user_id", userId)
-    .maybeSingle();
+    .in("id", templateIds)
+    .eq("user_id", userId);
   return {
     success: true,
     propertyId,
-    paymentAmount: template ? Number(template.amount) : null,
+    paymentAmount: (templates ?? []).reduce(
+      (sum, template) => sum + Number(template.amount),
+      0,
+    ),
+    paymentCount: templateIds.length,
   };
+}
+
+/** Stands in for the property a loan is checked against before it exists. */
+const NO_ID_YET = "00000000-0000-0000-0000-000000000000";
+
+/**
+ * Undo a property just added: the payments written for its loans — which a
+ * property's deletion otherwise leaves among the recurring entries, on
+ * purpose — then the property, its loans going with it.
+ */
+async function takeBackProperty(
+  db: Db,
+  userId: string,
+  propertyId: string,
+): Promise<void> {
+  const { data: loans } = await db
+    .from("property_loans")
+    .select("recurring_template_id, insurance_template_id")
+    .eq("property_id", propertyId)
+    .eq("user_id", userId);
+  const written = (loans ?? [])
+    .flatMap((loan) => [loan.recurring_template_id, loan.insurance_template_id])
+    .filter((id): id is string => id !== null);
+  if (written.length > 0) {
+    await db
+      .from("recurring_templates")
+      .delete()
+      .in("id", written)
+      .eq("user_id", userId);
+  }
+  await deleteProperty(db, userId, propertyId);
 }
 
 /** Whether a loan lacks a template for one of its debits. */

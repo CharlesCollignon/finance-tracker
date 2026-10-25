@@ -1,3 +1,4 @@
+import type { PropertyChoice } from "@finance/core/rental";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { Pressable, RefreshControl, ScrollView, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
@@ -127,7 +128,7 @@ export default function RecurringScreen() {
           templates: [] as RecurringTemplateWithCategory[],
           categories: [] as Category[],
           recorded: new Map<string, string[]>(),
-          properties: [] as { id: string; name: string }[],
+          properties: [] as PropertyChoice[],
           proposals: [] as RecurringProposal[],
           debited: new Set<string>(),
         };

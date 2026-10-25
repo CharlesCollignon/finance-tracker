@@ -1,3 +1,4 @@
+import type { PropertyChoice } from "@finance/core/rental";
 import { cache } from "react";
 import { todayIsoLocal } from "@finance/core/constants";
 import {
@@ -88,6 +89,6 @@ export const getPropertyDetail = cache(
 
 /** Each property's name, for attaching a recurring template to one. */
 export const getPropertyNames = cache(
-  async (userId: string): Promise<{ id: string; name: string }[]> =>
+  async (userId: string): Promise<PropertyChoice[]> =>
     properties.getPropertyNames(await createClient(), userId),
 );

@@ -1,5 +1,6 @@
 "use client";
 
+import type { PropertyChoice } from "@finance/core/rental";
 import { createContext, useContext, type ReactNode } from "react";
 import { FIGURE } from "@/lib/type-scale";
 import {
@@ -93,10 +94,7 @@ interface RecurringViewProps {
   /** A charge to arrive with open for editing. */
   initialEditId?: string;
   /** The user's properties, which a charge can belong to (migration 049). */
-  properties?: {
-    id: string;
-    name: string;
-  }[];
+  properties?: PropertyChoice[];
   /**
    * The categories of the wallets the bank debits from the account
    * (`walletCategoriesTheBankDebits`): their buys leave it, where a DCA

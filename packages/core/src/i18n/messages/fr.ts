@@ -748,6 +748,8 @@ export const fr: Messages = {
     expensesTitle: "Qu'est-ce qui sort\u00A0?",
     expensesBody:
       "Loyer, abonnements, factures — ce que vous savez déjà devoir payer. C'est ce qui rend la projection utile.",
+    incomeLabelPlaceholder: "ex. Salaire, pension",
+    expenseLabelPlaceholder: "ex. Loyer, Netflix, électricité",
     monthlyAmount: "Montant mensuel",
     dayOfMonth: "Jour du mois",
     category: "Catégorie",
@@ -2784,7 +2786,8 @@ export const fr: Messages = {
     signInFailed: "La connexion n'a pas fonctionné. Réessayez.",
     accountExists: "Un compte existe déjà avec cette adresse. Connectez-vous.",
     signUpClosed: "Les inscriptions sont fermées pour l'instant.",
-    signUpFailed: "L'inscription n'a pas fonctionné. Réessayez.",
+    signUpFailed:
+      "L'inscription n'a pas abouti de notre côté. Réessayez dans quelques minutes, ou continuez avec Google.",
     resendTooSoon:
       "Un e-mail vient de partir. Attendez une minute avant d'en demander un autre.",
     resendFailed: "L'e-mail n'a pas pu repartir. Réessayez dans un instant.",

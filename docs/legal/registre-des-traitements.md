@@ -1,6 +1,6 @@
 # Registre des activités de traitement — Pluclair
 
-> **Tenu à jour au 13 octobre 2026.** Tenu au titre de l'article 30 du RGPD :
+> **Tenu à jour au 25 octobre 2026.** Tenu au titre de l'article 30 du RGPD :
 > l'exemption des structures de moins de 250 personnes ne s'applique pas,
 > parce que les traitements ci-dessous ne sont pas occasionnels et portent sur
 > des données bancaires. Rédigé d'après ce que l'application fait réellement ;
@@ -27,6 +27,7 @@
 | --------------------------------------- | ----------------------------------------------------------------------- | --------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
 | Supabase                                | Base de données, authentification                                       | Union européenne — Francfort (`eu-central-1`)       | Accord de sous-traitance (DPA v1, 1ᵉʳ août 2026) ; clauses contractuelles types pour tout accès hors UE |
 | Vercel Inc.                             | Hébergement du site et des fonctions serveur                            | Fonctions à Paris (`cdg1`) ; société aux États-Unis | Certification au cadre UE–États-Unis (Data Privacy Framework) ; DPA                                     |
+| Resend (Plus Five Five, Inc.)           | Envoi des e-mails du compte (confirmation de l'adresse, lien de réinitialisation du mot de passe) : adresse e-mail et contenu de ces e-mails | Envois depuis l'Irlande (`eu-west-1`) ; traitement principalement aux États-Unis | Certification au cadre UE–États-Unis (Data Privacy Framework) ; clauses contractuelles types ; DPA intégré aux conditions de service |
 | OpenRouter, Inc.                        | Si l'utilisateur connecte son propre compte IA — seule voie vers les lectures et les questions : transmission au modèle qu'il a choisi | États-Unis, puis selon le fournisseur du modèle | Sur le compte de l'utilisateur, à sa demande, après consentement ; OpenRouter agit selon les conditions que l'utilisateur a acceptées en ouvrant ce compte, auxquelles Pluclair n'est pas partie |
 | Brevo (Sendinblue SAS, France)          | Si l'utilisateur crée son adresse de relevés : réception des e-mails que sa messagerie y fait suivre, remis à Pluclair par webhook (pièces jointes téléchargées une fois) | Union européenne                                    | Accord de sous-traitance de Brevo, accepté à l'ouverture du compte                                      |
 | Expo, Apple, Google, Mozilla, Microsoft | Acheminement des notifications                                          | Selon le service                                    | Notifications web chiffrées de bout en bout ; Expo ne reçoit que le jeton de l'appareil, le titre et le texte du rappel, pour l'acheminer |
@@ -47,7 +48,8 @@ auprès desquels l'utilisateur a lui-même ouvert un compte.
 - **Données** : adresse e-mail ; nom et identifiant fournis par Google en cas de
   connexion Google ; clés publiques des clés d'accès (passkeys) ; sessions ;
   préférences (langue, devise, invitations écartées).
-- **Destinataires** : Supabase, Vercel ; Google si l'utilisateur l'a choisi.
+- **Destinataires** : Supabase, Vercel ; Resend, pour les e-mails du compte ;
+  Google si l'utilisateur l'a choisi.
 - **Durée** : tant que le compte existe ; suppression immédiate à la
   suppression du compte (Profil → Supprimer le compte). L'offre Supabase utilisée ne comprend
   aucune sauvegarde : ce qui est supprimé ne peut pas être restauré.

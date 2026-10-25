@@ -1,6 +1,6 @@
 # Analyse d'impact relative à la protection des données (AIPD) — Pluclair
 
-> **Tenue à jour au 13 octobre 2026**, selon la méthode de la CNIL
+> **Tenue à jour au 25 octobre 2026**, selon la méthode de la CNIL
 > (contexte, principes fondamentaux, risques, plan d'action). Une AIPD est
 > attendue ici : le CEPD estime qu'elle sera « très probablement » requise pour
 > les données de comptes de paiement (lignes directrices 06/2020), et la CNIL
@@ -81,8 +81,8 @@ d'open-banking.io.
 | Durées              | Fichier : jusqu'à la déconnexion ou la suppression du compte ; opérations : durée du compte ; écritures supprimées : 30 jours, puis effacées par la tâche de chaque nuit.                           |
 | Information         | Politique de confidentialité (français et anglais), rappels à l'écran avant le dépôt du fichier.                                                                                                           |
 | Droits              | Correction et suppression de chaque écriture ; export d'un mois au format CSV ; déconnexion ; suppression du compte ; export complet sur simple demande à pluclair.app@gmail.com, sous un mois (portabilité, art. 20).            |
-| Sous-traitance      | Supabase, Vercel : accords de sous-traitance intégrés à leurs conditions de service, acceptés à l'ouverture des comptes. OpenRouter n'intervient que sur le compte IA que l'utilisateur connecte lui-même. Brevo (France), seulement pour qui crée son adresse de relevés : il reçoit les e-mails que la messagerie y fait suivre, sous son accord de sous-traitance. |
-| Transferts          | Données stockées dans l'UE ; Vercel Inc. certifiée au cadre UE–États-Unis (validé par le Tribunal de l'UE le 3 septembre 2025, pourvoi pendant) ; clauses contractuelles types chez Supabase. Avec un compte IA connecté, les chiffres d'une lecture partent vers OpenRouter et le fournisseur du modèle, le plus souvent aux États-Unis, à la demande de l'utilisateur et après information.              |
+| Sous-traitance      | Supabase, Vercel, Resend (envoi des e-mails du compte) : accords de sous-traitance intégrés à leurs conditions de service, acceptés à l'ouverture des comptes. OpenRouter n'intervient que sur le compte IA que l'utilisateur connecte lui-même. Brevo (France), seulement pour qui crée son adresse de relevés : il reçoit les e-mails que la messagerie y fait suivre, sous son accord de sous-traitance. |
+| Transferts          | Données stockées dans l'UE ; Vercel Inc. certifiée au cadre UE–États-Unis (validé par le Tribunal de l'UE le 3 septembre 2025, pourvoi pendant) ; clauses contractuelles types chez Supabase ; Resend, qui envoie les e-mails du compte et traite l'adresse et leur contenu principalement aux États-Unis, est certifiée au même cadre et liée par les clauses contractuelles types. Avec un compte IA connecté, les chiffres d'une lecture partent vers OpenRouter et le fournisseur du modèle, le plus souvent aux États-Unis, à la demande de l'utilisateur et après information.              |
 
 ## 3. Risques
 
