@@ -49,7 +49,7 @@ import type {
 } from "@finance/core/types/database";
 
 import { MonthPicker } from "@/components/MonthPicker";
-import { LedgerWeekStrip } from "@/components/LedgerWeekStrip";
+import { SegmentedControl } from "@/components/ui/SegmentedControl";
 import { FadeIn } from "@/components/motion/FadeIn";
 import { AuthorBadge } from "@/components/AuthorBadge";
 import { CategoryIcon } from "@/components/CategoryIcon";
@@ -128,9 +128,11 @@ import {
   filterLedger,
   filterPlanned,
   ledgerDays,
+  ledgerPlannedTotals,
+  ledgerShowing,
   ledgerTotals,
-  ledgerWeeks,
   type LedgerOrder,
+  type LedgerTime,
   type LedgerTypeFilter,
 } from "@finance/core/ledger-view";
 
@@ -172,10 +174,9 @@ export default function TransactionsScreen() {
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [accountFilter, setAccountFilter] = useState<string>("all");
   const [optionsOpen, setOptionsOpen] = useState(false);
-  // The week the list is narrowed to, by its first day. Kept by date rather
-  // than by position, so another month — which has no such week — simply
-  // shows all of itself, with nothing to reset.
-  const [weekFrom, setWeekFrom] = useState<string | null>(null);
+  // What has happened, or what the charges still call for. A month with
+  // nothing in the half asked for shows the other (`ledgerShowing`).
+  const [chosenTime, setChosenTime] = useState<LedgerTime>("past");
   const [order, setOrder] = useState<LedgerOrder>("newest");
   const [editing, setEditing] = useState<TransactionWithCategory | null>(null);
   const [duplicating, setDuplicating] =
@@ -218,7 +219,6 @@ export default function TransactionsScreen() {
     setAskedAt(params.at);
     setInboxChoice(null);
   }
-  const [selectMode, setSelectMode] = useState(false);
   const [storedSelection, setSelected] =
     useState<ReadonlySet<string>>(EMPTY_SELECTION);
   const [deletePending, setDeletePending] = useState(false);
@@ -434,54 +434,56 @@ export default function TransactionsScreen() {
     }),
     [filter, categoryFilter, search, accountFilter, bankAccounts],
   );
-  // The strip counts what every filter but the week's keeps, so it shows
-  // where in the month the rows are — and where a search found something.
-  const weeks = useMemo(
-    () =>
-      ledgerWeeks(
-        year,
-        month,
-        filterLedger(transactions, ledgerFilter, accountOf),
-        filterPlanned(planned, ledgerFilter),
-      ),
-    [year, month, transactions, planned, ledgerFilter, accountOf],
-  );
-  const week = weeks.find((each) => each.from === weekFrom) ?? null;
+  const showing = ledgerShowing(chosenTime, {
+    past: transactions.length,
+    upcoming: planned.length,
+  });
   // Category name and note, each on its own, as on the web.
   const filtered = useMemo(
-    () =>
-      filterLedger(transactions, { ...ledgerFilter, range: week }, accountOf),
-    [transactions, ledgerFilter, week, accountOf],
+    () => filterLedger(transactions, ledgerFilter, accountOf),
+    [transactions, ledgerFilter, accountOf],
   );
   // The same filters over the planned rows, so choosing "Expense" or a
   // category narrows what is to come as well as what has happened.
   const filteredPlanned = useMemo(
-    () => filterPlanned(planned, { ...ledgerFilter, range: week }),
-    [planned, ledgerFilter, week],
+    () => filterPlanned(planned, ledgerFilter),
+    [planned, ledgerFilter],
   );
   // The figures describe what is on screen, which is the whole reason they
   // are here: the month's own totals are Month's job, and repeating them
   // under a filter would state something the list below contradicts.
-  const shown = useMemo(() => ledgerTotals(filtered), [filtered]);
+  const shown = useMemo(
+    () =>
+      showing === "past"
+        ? ledgerTotals(filtered)
+        : ledgerPlannedTotals(filteredPlanned),
+    [showing, filtered, filteredPlanned],
+  );
+  const shownCount =
+    showing === "past" ? filtered.length : filteredPlanned.length;
+  const totalCount =
+    showing === "past" ? transactions.length : planned.length;
   const shownOut = shown.expense + shown.savings + shown.investment;
 
   // A ledger is read a day at a time, not as one unbroken column. Grouping
   // here keeps a heading and its rows in the same object, so the list can
   // never draw a date with nothing under it.
   //
-  // Planned rows go into the same days, after the rest. A day's
-  // net counts only what has happened, and a day with nothing but planned
-  // rows has no net at all — a figure there would be a forecast set in the
-  // same type as the record.
+  // One half of the month at a time: what has happened, or what is still to
+  // come, soonest first. A day of planned rows has no net at all — a figure
+  // there would be a forecast set in the same type as the record.
   //
   // Oldest first is the list turned over, rows within a day included, so a
   // day reads in the order its rows were written.
   const days = useMemo(
     () =>
-      ledgerDays(
-        order === "newest" ? filtered : [...filtered].reverse(),
-        filteredPlanned,
-        order,
+      (showing === "past"
+        ? ledgerDays(
+            order === "newest" ? filtered : [...filtered].reverse(),
+            [],
+            order,
+          )
+        : ledgerDays([], filteredPlanned, "oldest")
       ).map((day) => ({
         date: day.date,
         net: day.net,
@@ -493,7 +495,7 @@ export default function TransactionsScreen() {
           ),
         ],
       })),
-    [filtered, filteredPlanned, order],
+    [showing, filtered, filteredPlanned, order],
   );
 
   const visibleIds = useMemo(() => filtered.map((tx) => tx.id), [filtered]);
@@ -509,8 +511,7 @@ export default function TransactionsScreen() {
   );
   const allState = selectAllState(visibleIds, selected);
 
-  function leaveSelectMode() {
-    setSelectMode(false);
+  function clearSelection() {
     setSelected(EMPTY_SELECTION);
   }
 
@@ -526,7 +527,7 @@ export default function TransactionsScreen() {
 
     void hapticWarning();
     toastDeleted(t("ledger.deleted", { count: result.deleted }), result.undo);
-    leaveSelectMode();
+    clearSelection();
   }
 
   function planMove(categoryId: string) {
@@ -556,7 +557,7 @@ export default function TransactionsScreen() {
       categories.find((category) => category.id === categoryId)?.name ??
       t("ledger.theNewCategory");
     toast(t("ledger.moved", { count: result.moved ?? 0, name }), "success");
-    leaveSelectMode();
+    clearSelection();
   }
 
   async function handleDuplicate() {
@@ -613,7 +614,6 @@ export default function TransactionsScreen() {
     setFilter("all");
     setCategoryFilter("all");
     setAccountFilter("all");
-    setWeekFrom(null);
     setSearch("");
   }
 
@@ -837,31 +837,23 @@ export default function TransactionsScreen() {
                 onChange={setFilter}
               />
             </View>
-            {/* In selection mode Done and Select all stay here, where the
-                thumb already is. */}
-            {selectMode ? (
-              <>
-                <Button
-                  label={
-                    allState === "all"
-                      ? t("ledger.clearAll")
-                      : t("ledger.selectAll")
-                  }
-                  variant="ghost"
-                  size="sm"
-                  onPress={() =>
-                    setSelected((current) =>
-                      toggleSelectAll(visibleIds, current),
-                    )
-                  }
-                />
-                <Button
-                  label={t("ledger.selectDone")}
-                  variant="ghost"
-                  size="sm"
-                  onPress={leaveSelectMode}
-                />
-              </>
+            {/* With rows picked, Select all stays here, where the thumb
+                already is. */}
+            {selected.size > 0 ? (
+              <Button
+                label={
+                  allState === "all"
+                    ? t("ledger.clearAll")
+                    : t("ledger.selectAll")
+                }
+                variant="ghost"
+                size="sm"
+                onPress={() =>
+                  setSelected((current) =>
+                    toggleSelectAll(visibleIds, current),
+                  )
+                }
+              />
             ) : null}
           </View>
 
@@ -884,18 +876,6 @@ export default function TransactionsScreen() {
                 />
               ) : null}
               <View className="flex-row flex-wrap gap-2">
-                {selectMode ? null : (
-                  <Button
-                    label={t("ledger.select")}
-                    variant="outline"
-                    size="sm"
-                    icon="checkbox-outline"
-                    onPress={() => {
-                      setSelectMode(true);
-                      setOptionsOpen(false);
-                    }}
-                  />
-                )}
                 <Button
                   label={t("ledger.importCsvShort")}
                   variant="outline"
@@ -907,12 +887,19 @@ export default function TransactionsScreen() {
             </View>
           ) : null}
 
-          <LedgerWeekStrip
-            weeks={weeks}
-            value={week?.from ?? null}
-            onChange={setWeekFrom}
-            className="mt-3"
-          />
+          {/* Past or still to come, when the month has both. */}
+          {transactions.length > 0 && planned.length > 0 ? (
+            <SegmentedControl
+              label={t("ledger.showWhen")}
+              value={showing}
+              onChange={setChosenTime}
+              segments={[
+                { value: "past", label: t("ledger.showPast") },
+                { value: "upcoming", label: t("ledger.showUpcoming") },
+              ]}
+              className="mt-3 w-52 self-start"
+            />
+          ) : null}
 
           {skipped.length > 0 ? (
             <SkippedLine
@@ -926,11 +913,11 @@ export default function TransactionsScreen() {
               hence the rule before it. The count only earns its line when a
               filter is hiding something. */}
           <View className="mt-3 border-t border-border pt-3">
-            {filtered.length !== transactions.length ? (
+            {shownCount !== totalCount ? (
               <Text variant="muted" className="mb-2 text-xs">
                 {t("ledger.shownOfTotal", {
-                  count: filtered.length,
-                  total: transactions.length,
+                  count: shownCount,
+                  total: totalCount,
                 })}
               </Text>
             ) : null}
@@ -945,14 +932,17 @@ export default function TransactionsScreen() {
                 value={formatEuro(shownOut)}
                 className="text-destructive"
               />
-              <SortToggle
-                order={order}
-                onPress={() =>
-                  setOrder((current) =>
-                    current === "newest" ? "oldest" : "newest",
-                  )
-                }
-              />
+              {/* What is to come reads soonest first, always. */}
+              {showing === "past" ? (
+                <SortToggle
+                  order={order}
+                  onPress={() =>
+                    setOrder((current) =>
+                      current === "newest" ? "oldest" : "newest",
+                    )
+                  }
+                />
+              ) : null}
             </View>
           </View>
         </>
@@ -1031,9 +1021,9 @@ export default function TransactionsScreen() {
         contentContainerStyle={{ paddingBottom: tabBarClearance }}
         ListFooterComponent={
           <>
-            {filtered.length > 0 ? (
+            {showing === "past" && filtered.length > 0 ? (
               <Text variant="muted" className="py-4 text-center text-xs">
-                {selectMode ? t("ledger.selectHint") : t("ledger.editHint")}
+                {t("ledger.editHint")}
               </Text>
             ) : null}
             {/* The same search, in every other month. Its month, opened,
@@ -1065,9 +1055,7 @@ export default function TransactionsScreen() {
                   accessibilityRole="button"
                   accessibilityLabel={`${occurrence.categoryName}, ${word}`}
                   accessibilityHint={occurrence.name}
-                  disabled={selectMode}
                   className="min-h-14 flex-row items-center gap-3 py-3"
-                  style={selectMode ? { opacity: 0.4 } : undefined}
                   onPress={() => {
                     void hapticLight();
                     setOpenPlanned(occurrence);
@@ -1127,14 +1115,7 @@ export default function TransactionsScreen() {
                   on web. */}
               <Pressable
                 accessibilityRole="button"
-                accessibilityLabel={
-                  selectMode
-                    ? t("ledger.selectRow", rowName)
-                    : t("ledger.editRow", rowName)
-                }
-                accessibilityState={
-                  selectMode ? { selected: selected.has(item.id) } : undefined
-                }
+                accessibilityLabel={t("ledger.editRow", rowName)}
                 // A hint rather than part of the label: the label is the
                 // action this row performs, and the row's standing is not
                 // part of the name of a button.
@@ -1143,37 +1124,25 @@ export default function TransactionsScreen() {
                 }
                 className={cn(
                   "min-h-14 flex-row items-center gap-3 py-3",
-                  selectMode && selected.has(item.id) && "bg-primary/5",
+                  selected.has(item.id) && "bg-primary/5",
                 )}
                 onPress={() => {
                   void hapticLight();
-                  if (selectMode) {
-                    setSelected((current) => toggleSelected(current, item.id));
-                    return;
-                  }
                   setEditing(item);
                 }}
+                // The box picks a row; a long press offers it again today.
                 onLongPress={() => {
                   void hapticLight();
-                  // Long-press enters selection when it is not already on,
-                  // which is the gesture people expect from a list.
-                  if (!selectMode) {
-                    setSelectMode(true);
-                    setSelected(() => new Set([item.id]));
-                    return;
-                  }
                   setDuplicating(item);
                 }}
               >
-                {selectMode ? (
-                  <RowCheckbox
-                    checked={selected.has(item.id)}
-                    label={t("ledger.selectRow", rowName)}
-                    onPress={() =>
-                      setSelected((current) => toggleSelected(current, item.id))
-                    }
-                  />
-                ) : null}
+                <RowCheckbox
+                  checked={selected.has(item.id)}
+                  label={t("ledger.selectRow", rowName)}
+                  onPress={() =>
+                    setSelected((current) => toggleSelected(current, item.id))
+                  }
+                />
                 <View>
                   <CategoryIcon icon={item.categories.icon} />
                   <AuthorBadge createdBy={item.created_by} />
@@ -1243,7 +1212,7 @@ export default function TransactionsScreen() {
       <SelectionBar
         summary={selectionSummary}
         pending={deletePending}
-        onCancel={leaveSelectMode}
+        onCancel={clearSelection}
         onDelete={() => void handleBulkDelete()}
         categories={categories}
         planMove={planMove}
