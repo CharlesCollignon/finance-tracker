@@ -277,12 +277,16 @@ The bank invitation stays at the foot of the page.
 
 ### Saved settings
 
-- `pluclair.plan.year-ahead:v1` (horizon, target, hidden accounts, events)
-  becomes `:v2` (horizon, target, with property). Events are dropped,
-  hidden accounts too.
-- `pluclair.plan.long-view:v2` becomes `:v3`. The envelopes are kept, and
-  a typed return becomes a shift from the historical median. `years`,
-  `inflation` and `withdrawalRate` are dropped.
+Built on the web as two new keys rather than a migration
+(`components/finance/plan/plan-storage.ts`):
+- `pluclair.plan.trajectory:v1:{user}`: the horizon, where « Et si… »
+  goes, and « Avec vos biens ». The extra itself is not kept.
+- `pluclair.plan.hypotheses:v1:{user}`: what was changed in
+  « Hypothèses », account by account; a typed return becomes a shift.
+- `pluclair.plan.year-ahead:v1` and `pluclair.plan.long-view:v2` are no
+  longer read: their returns were presets, not history, and carrying them
+  over would have opened the page on figures the reader no longer
+  recognised.
 - The phone's AsyncStorage keys follow the same path.
 
 ## Phases
@@ -330,7 +334,14 @@ The bank invitation stays at the foot of the page.
      year has always lasted.
 2. **The close moves to Le point** (`plan-close-to-bearing`), web and phone
    together, because it is a move, not a design. Plan still shows the old
-   page without the close. A « Nouveautés » entry.
+   page without the close. A « Nouveautés » entry. Built 2026-10-25,
+   from `main` (8f5e7ab, 88786f3, 38376a6):
+   - `BearingMonth.close` carries what the close needs;
+   - the web's `MomentumCard` opens the close and « Vos mois » in sheets
+     drawn outside its glass, and Le point reads `?close=1`;
+   - the phone's `MomentumCard` opens « Vos mois » in place;
+     `CLOSE_HREF` is `/bearing?close=1`;
+   - the entry is the web's; the phone's waits for the next APK.
 3. **The new page, web** (`plan-redesign-web`).
    - The three blocks and « Hypothèses ».
    - The removals, the storage migration and the calmer motion.
@@ -339,6 +350,17 @@ The bank invitation stays at the foot of the page.
      CONTEXT.md: Long view, What if, Milestone, Track; new terms for the
      replay, the crash test and the sustainable withdrawal.
    - Checked on a Vercel preview with real figures. A « Nouveautés » entry.
+   Built 2026-10-25 on Phase 1 with Phase 2 merged in (fb29ee3, 4d3bab6,
+   aa919d9, d8ed361), and checked scene by scene in a local harness; the
+   Vercel preview waits for the owner's OK to push.
+   - `history/plan-accounts.ts` turns the page's accounts into the
+     replay's: the shift, a PEL's contract rate, the current account and
+     what is set aside with no account (`cashFromYearAhead`).
+   - `replayPlan` takes `overflowTo`: a full Livret A's refused payment
+     stays on the current account, so « Et si… » on it still counts.
+   - Strings live in their own namespace, `trajectory`; the year ahead's
+     and the long view's components are gone, except the colours and
+     names the site's mock still draws (`year-ahead-parts.tsx`, Phase 5).
 4. **The new page, phone** (`plan-redesign-phone`), after the owner has seen
    the web. Its « Nouveautés » entry waits for the APK, as the design pass's
    does.
