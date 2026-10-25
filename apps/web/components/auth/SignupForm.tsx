@@ -1,21 +1,32 @@
 "use client";
 
-import { useActionState, useEffect } from "react";
+import { useActionState, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { ArrowRight } from "@phosphor-icons/react";
+import {
+  AnimatePresence,
+  LazyMotion,
+  MotionConfig,
+  domAnimation,
+  m,
+} from "motion/react";
+import { ArrowRight, CheckCircle } from "@phosphor-icons/react";
 import { Button, ButtonNub } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
 import { FormLabel } from "@/components/ui/FormLabel";
 import { Text } from "@/components/ui/Text";
-import { signUp } from "@/lib/actions/finance";
+import { signUp, type SignUpOutcome } from "@/lib/actions/finance";
 import { GoogleSignInButton } from "@/components/auth/GoogleSignInButton";
 import { AuthDivider } from "@/components/auth/AuthDivider";
+import { CheckInbox } from "@/components/auth/CheckInbox";
 import { ICON } from "@/lib/icon-scale";
 import { useT } from "@/lib/locale-context";
 import { resolveMessage } from "@finance/core/i18n/t";
 import type { FormState } from "@finance/core/action-result";
+import { EASE_STANDARD } from "@finance/core/motion";
+
+const EASE = [...EASE_STANDARD] as [number, number, number, number];
 
 /**
  * The acceptance line, with its two document names as links.
@@ -64,89 +75,176 @@ export function SignupForm({
 }) {
   const t = useT();
   const router = useRouter();
-  const [state, action, pending] = useActionState<FormState, FormData>(
-    signUp,
-    {},
-  );
+  const [state, action, pending] = useActionState<
+    FormState<SignUpOutcome>,
+    FormData
+  >(signUp, {});
+  // Controlled, so « La modifier » brings back what was typed rather than an
+  // empty form.
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirm, setConfirm] = useState("");
+  const [editing, setEditing] = useState(false);
+
+  const waiting = state.success && state.confirmEmail && !editing;
+  // The tick beside « Confirmez » only once the pair would be accepted.
+  const matching = password.length >= 6 && confirm === password;
+
+  function submit(formData: FormData) {
+    setEditing(false);
+    action(formData);
+  }
 
   useEffect(() => {
-    if (state.success && !state.message) {
+    if (state.success && !state.confirmEmail) {
       // New accounts go through setup first, so the dashboard has real
       // numbers in it rather than a screen of zeros.
       router.push("/welcome");
       router.refresh();
     }
-  }, [state.success, state.message, router]);
+  }, [state, router]);
 
   return (
-    <Card.Bezel
-      className="w-full max-w-md md:max-w-lg"
-      innerClassName="p-6 md:p-8"
-    >
-      <h1 className="text-center font-serif text-2xl italic md:text-3xl">
-        {t("auth.createAccount")}
-      </h1>
-      <p className="mt-1 text-center text-sm text-muted-foreground">
-        {t("auth.signUpHeading")}
-      </p>
-      <div className="mt-6">
-        <GoogleSignInButton label={t("auth.withGoogleSignUp")} />
-      </div>
-      <AuthDivider />
-      <form action={action} className="flex flex-col gap-4">
-        <div className="flex flex-col gap-2">
-          <FormLabel htmlFor="email">{t("auth.email")}</FormLabel>
-          <Input
-            id="email"
-            name="email"
-            type="email"
-            autoComplete="email"
-            required
-            className="text-base"
-          />
-        </div>
-        <div className="flex flex-col gap-2">
-          <FormLabel htmlFor="password">{t("auth.password")}</FormLabel>
-          <Input
-            id="password"
-            name="password"
-            type="password"
-            autoComplete="new-password"
-            required
-            minLength={6}
-            className="text-base"
-          />
-        </div>
-        {state.error && (
-          <Text className="text-center text-sm text-destructive">
-            {resolveMessage(t, state.error)}
-          </Text>
-        )}
-        {state.message && (
-          <Text className="text-center text-sm text-muted-foreground">
-            {resolveMessage(t, state.message)}
-          </Text>
-        )}
-        <Button
-          type="submit"
-          variant="pill"
-          size="lg"
-          className="w-full justify-between px-2"
-          disabled={pending}
+    <LazyMotion features={domAnimation} strict>
+      <MotionConfig reducedMotion="user">
+        <Card.Bezel
+          className="w-full max-w-md md:max-w-lg"
+          innerClassName="p-6 md:p-8"
         >
-          {pending ? t("auth.creating") : t("auth.signUp")}
-          <ButtonNub balanced>
-            <ArrowRight size={ICON.md} weight="bold" />
-          </ButtonNub>
-        </Button>
-      </form>
-      {legalLinks ? <LegalConsent /> : null}
-      <p className="mt-4 text-center text-sm text-muted-foreground">
-        {t("auth.haveAccount")}{" "}
-        <Link href="/login" className="font-medium underline">
-          {t("auth.signIn")}
-        </Link>
-      </p>
-    </Card.Bezel>
+          <AnimatePresence mode="wait" initial={false}>
+            {waiting ? (
+              <m.div
+                key="inbox"
+                initial={{ opacity: 0, scale: 0.97 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.97 }}
+                transition={{ duration: 0.25, ease: EASE }}
+              >
+                <CheckInbox
+                  email={email}
+                  onChangeAddress={() => setEditing(true)}
+                />
+              </m.div>
+            ) : (
+              <m.div
+                key="form"
+                initial={{ opacity: 0, scale: 0.97 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.97 }}
+                transition={{ duration: 0.25, ease: EASE }}
+              >
+                <h1 className="text-center font-serif text-2xl italic md:text-3xl">
+                  {t("auth.createAccount")}
+                </h1>
+                <p className="mt-1 text-center text-sm text-muted-foreground">
+                  {t("auth.signUpHeading")}
+                </p>
+                <div className="mt-6">
+                  <GoogleSignInButton label={t("auth.withGoogleSignUp")} />
+                </div>
+                <AuthDivider />
+                <form action={submit} className="flex flex-col gap-4">
+                  <div className="flex flex-col gap-2">
+                    <FormLabel htmlFor="email">{t("auth.email")}</FormLabel>
+                    <Input
+                      id="email"
+                      name="email"
+                      type="email"
+                      autoComplete="email"
+                      required
+                      value={email}
+                      onChange={(event) => setEmail(event.target.value)}
+                      className="text-base"
+                    />
+                  </div>
+                  <div className="flex flex-col gap-2">
+                    <FormLabel htmlFor="password">
+                      {t("auth.password")}
+                    </FormLabel>
+                    <Input
+                      id="password"
+                      name="password"
+                      type="password"
+                      autoComplete="new-password"
+                      required
+                      minLength={6}
+                      value={password}
+                      onChange={(event) => setPassword(event.target.value)}
+                      className="text-base"
+                    />
+                  </div>
+                  <div className="flex flex-col gap-2">
+                    <div className="flex items-center justify-between">
+                      <FormLabel htmlFor="confirm">
+                        {t("auth.confirmPassword")}
+                      </FormLabel>
+                      <AnimatePresence>
+                        {matching ? (
+                          <m.span
+                            key="match"
+                            initial={{ opacity: 0, scale: 0.4 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            exit={{ opacity: 0, scale: 0.4 }}
+                            transition={{
+                              type: "spring",
+                              stiffness: 500,
+                              damping: 22,
+                            }}
+                            className="text-primary"
+                          >
+                            <CheckCircle
+                              size={ICON.lg}
+                              weight="fill"
+                              aria-hidden
+                            />
+                          </m.span>
+                        ) : null}
+                      </AnimatePresence>
+                    </div>
+                    <Input
+                      id="confirm"
+                      name="confirm"
+                      type="password"
+                      autoComplete="new-password"
+                      required
+                      value={confirm}
+                      onChange={(event) => setConfirm(event.target.value)}
+                      className="text-base"
+                    />
+                  </div>
+                  {state.error && !pending ? (
+                    <Text
+                      role="alert"
+                      className="text-center text-sm text-destructive"
+                    >
+                      {resolveMessage(t, state.error)}
+                    </Text>
+                  ) : null}
+                  <Button
+                    type="submit"
+                    variant="pill"
+                    size="lg"
+                    className="w-full justify-between px-2"
+                    disabled={pending}
+                  >
+                    {pending ? t("auth.creating") : t("auth.signUp")}
+                    <ButtonNub balanced>
+                      <ArrowRight size={ICON.md} weight="bold" />
+                    </ButtonNub>
+                  </Button>
+                </form>
+                {legalLinks ? <LegalConsent /> : null}
+                <p className="mt-4 text-center text-sm text-muted-foreground">
+                  {t("auth.haveAccount")}{" "}
+                  <Link href="/login" className="font-medium underline">
+                    {t("auth.signIn")}
+                  </Link>
+                </p>
+              </m.div>
+            )}
+          </AnimatePresence>
+        </Card.Bezel>
+      </MotionConfig>
+    </LazyMotion>
   );
 }

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { newPasswordSchema, resetRequestSchema } from "./finance";
+import { newPasswordSchema, resetRequestSchema, signUpSchema } from "./finance";
 
 describe("newPasswordSchema", () => {
   it("accepts two identical passwords of six or more characters", () => {
@@ -24,6 +24,28 @@ describe("newPasswordSchema", () => {
       confirm: "abcdeg",
     });
     expect(result.success).toBe(false);
+    expect(result.error?.issues[0]?.message).toBe("errors.passwordsDiffer");
+    expect(result.error?.issues[0]?.path).toEqual(["confirm"]);
+  });
+});
+
+describe("signUpSchema", () => {
+  it("accepts an address and the same password twice", () => {
+    expect(
+      signUpSchema.safeParse({
+        email: "me@example.com",
+        password: "abcdef",
+        confirm: "abcdef",
+      }).success,
+    ).toBe(true);
+  });
+
+  it("names a mismatch, on the second field", () => {
+    const result = signUpSchema.safeParse({
+      email: "me@example.com",
+      password: "abcdef",
+      confirm: "abcdeg",
+    });
     expect(result.error?.issues[0]?.message).toBe("errors.passwordsDiffer");
     expect(result.error?.issues[0]?.path).toEqual(["confirm"]);
   });

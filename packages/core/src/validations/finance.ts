@@ -200,6 +200,18 @@ export const authSchema = z.object({
   password: z.string().min(6, "errors.passwordTooShort"),
 });
 
+/**
+ * Signing up with an address: the password typed twice, as when choosing a
+ * new one, because a typo here locks the new account out at its first
+ * sign-in.
+ */
+export const signUpSchema = authSchema
+  .extend({ confirm: z.string() })
+  .refine((value) => value.password === value.confirm, {
+    message: "errors.passwordsDiffer",
+    path: ["confirm"],
+  });
+
 /** Choosing a new password: the same floor as signing up, typed twice. */
 export const newPasswordSchema = z
   .object({
