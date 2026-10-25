@@ -315,8 +315,8 @@ Built on the web as two new keys rather than a migration
    - ten years: a median of 132 800 € in today's euros; 8 starts in 10
      between 90 300 € and 180 500 €; the worst start March 1999
      (66 800 €).
-   - speed: 553 starts in about 40 ms; thirty years of six accounts in
-     about 90 ms.
+   - speed (before Phase 4's rewrite): 553 starts in about 40 ms; thirty
+     years of six accounts in about 90 ms.
 
    **For Phase 3:**
    - `PlanWealth` must carry the positions (wallet, value, ISIN, symbol)
@@ -363,11 +363,31 @@ Built on the web as two new keys rather than a migration
      names the site's mock still draws (`year-ahead-parts.tsx`, Phase 5).
 4. **The new page, phone** (`plan-redesign-phone`), after the owner has seen
    the web. Its « Nouveautés » entry waits for the APK, as the design pass's
-   does.
+   does. Built 2026-10-25 on Phase 3, at the owner's « continue les
+   phases », before the web preview (30f4baf … 111bdd1):
+   - the replay reads each account's returns from arrays worked out once
+     per call, and the withdrawal is solved in closed form: four to twelve
+     times faster, the same figures to the last digit (the withdrawal to
+     1e-13). Without a JIT, as Hermes runs, a full pass went from about
+     640 ms to 110 ms;
+   - `history/plan-figures.ts` and `history/plan-settings.ts` hold what
+     the web's hook and storage had inline, and both apps read them;
+     `planWealthFromPortfolio` hands over the positions;
+   - the phone's four cards follow the web's; « Et si… » is replayed once
+     the slider has rested 150 ms; keys `plan-trajectory:v1:` and
+     `plan-hypotheses:v1:`;
+   - the old cards, their chart, Glow and Stepper go, with 75 strings.
+   Not seen running: the phone's web build no longer fits this machine,
+   so the screen waits for a device or an APK.
 5. **The site** (`plan-redesign-site`). The landing mock
    (`mocks/planning.tsx`), the feature page's demo (`PlanDemo.tsx`) and
    `year-ahead-sample.ts` are redrawn from the new engine on the sample.
-   The copy no longer promises the long view's 40 years.
+   The copy no longer promises the long view's 40 years. Built 2026-10-25
+   (05acc47, 4775007), checked in a local harness in French and English:
+   `plan-sample.ts` replays the sample person as the app would; the mock
+   draws the trajectory, 2008 and « Progression »; the demo plays the
+   horizon, the extra and its account; the copy and the Plan's
+   « Nouveautés » entry say so. `year-ahead-parts.tsx` goes.
 
 Phases 0 and 1 hold everything else up; 2 can be taken at any time.
 
