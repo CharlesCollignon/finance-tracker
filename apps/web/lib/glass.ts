@@ -50,8 +50,7 @@ export const GLASS_PANEL =
  * against busy content behind it". A control holding twelve small targets is
  * one to see clearly, not through.
  */
-export const SOLID_PANEL =
-  "border border-foreground/10 bg-popover shadow-xl shadow-black/40";
+export const SOLID_PANEL = "border border-foreground/10 bg-popover";
 
 /**
  * The hero card's extra lift.

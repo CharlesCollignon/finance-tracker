@@ -269,7 +269,7 @@ function SpaceSwitch() {
       <span className="flex h-7 items-center rounded-full px-3 text-muted-foreground">
         {t("space.mine")}
       </span>
-      <span className="flex h-7 items-center gap-1.5 rounded-full bg-background px-3 shadow-sm ring-1 ring-border">
+      <span className="flex h-7 items-center gap-1.5 rounded-full bg-background px-3 ring-1 ring-border">
         <span className="relative flex h-4 items-center">
           {together.members.map((initial, index) => (
             <span

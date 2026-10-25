@@ -17,6 +17,20 @@ import type { ChangelogEntry, RoadmapItem } from "./changelog";
  */
 export const CHANGELOG: readonly ChangelogEntry[] = [
   {
+    id: "2026-10-25-focus-rings",
+    date: "2026-10-25",
+    kind: "fixed",
+    platforms: ["web"],
+    fr: {
+      title: "Le contour doré revient au clavier",
+      body: "Sur le site, le bouton « + » et les messages en bas de l’écran montrent de nouveau le contour doré quand on y arrive au clavier. Le choix entre « Moi » et votre espace partagé retrouve son fin contour.",
+    },
+    en: {
+      title: "The gold outline is back for the keyboard",
+      body: "On the site, the “+” button and the messages at the bottom of the screen show the gold outline again when you reach them with the keyboard. The switch between “Me” and your shared space has its thin outline back.",
+    },
+  },
+  {
     id: "2026-10-25-iphone-home-screen",
     date: "2026-10-25",
     kind: "new",
