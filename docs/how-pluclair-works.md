@@ -180,7 +180,6 @@ today's prices) leaves it unmarked, so the Plan still shows it as new.
 | ----------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
 | Monthly summary and its `current` / `month_end` views                                                       | `monthly-summary.ts`, `budget.ts`                                                                              |
 | « Il vous reste » (left to spend) until the next pay day, and per day                                       | `left-to-spend.ts`; read by `@finance/data/left-to-spend` (next month's line too when the pay day falls in it) |
-| « Puis-je me permettre ? »                                                                                  | `afford.ts`                                                                                                    |
 | Le point's setup cards, one at a time                                                                       | `setup-steps.ts`                                                                                               |
 | The Journal's search: words in a note or a category name, or an amount                                      | `ledger-search.ts`; every month through `@finance/data/ledger-search`                                          |
 | Subscriptions: what is paid every month or year, a price up, a new one, one stopped, two of a kind          | `subscription-watch.ts`; read by `@finance/data/subscriptions`, and in the recap (`weekly-recap.ts`)           |
@@ -286,13 +285,14 @@ Both apps gather the month the same way, `@finance/data/bearing-month`
 Its cards are a file each on both apps (`BalanceCard`, `SpentCard`…, made of
 `card-parts.tsx`).
 
-« Il vous reste » is one line of the month in progress's balance card, on
-both apps, between its two figures and its curve (`LeftToSpendLine`): what
-the Courant accounts hold, less the charges due before the next pay day, at
-the lowest point until then, less the marge's share of those days. The pay
-day is the next payment of the largest recurring income; with none, the
-month's end. Tapping the line opens « Puis-je me permettre ? », which saves
-nothing, with « Comment c'est calculé ? » under it.
+« Il vous reste » is what the Courant accounts hold, less the charges due
+before the next pay day, at the lowest point until then, less the marge's
+share of those days. The pay day is the next payment of the largest
+recurring income; with none, the month's end. It is the Android widget's
+figure and one of Questions' readings (`read.left`); the balance card has
+not shown it since October 2026, when it left the card with « Puis-je me
+permettre ? » and « Comment c'est calculé ? » at the owner's ask. Under the
+balance the card says what the month still takes out instead.
 
 It needs a balance. Without a bank or a close, the setup card asks for one:
 typed once, it is a reading (`balance_readings`, migration 057) that anchors
@@ -536,8 +536,8 @@ Whether the app is used, never what it is used on (migration 058).
 `record_activity`, called as the signed-in user, keeps one row per person and
 day under a salted SHA-256 of the account (`insights.activity_days`; the salt
 and the rows are in a schema the API does not expose), with how many
-transactions were added, months closed and « Puis-je me permettre ? » asked
-that day. Nothing for an account that turned « Mesure d'audience » off in
+transactions were added and months closed that day (« Puis-je me
+permettre ? », counted until October 2026, is gone with its sheet). Nothing for an account that turned « Mesure d'audience » off in
 Profile (`user_preferences.measure_audience`). The web records a visit from
 the app layout, after the response (`after`); the phone when the tabs open
 and on each return to the front. Thirteen months, swept by the nightly

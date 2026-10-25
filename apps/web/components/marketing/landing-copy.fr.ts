@@ -43,7 +43,7 @@ export const landingCopyFr: LandingCopySections & {
 
   figure: {
     heading: "Un chiffre, chaque matin",
-    body: "Ce que vos comptes contiennent, moins les charges qui tombent avant votre prochain revenu, moins une marge pour ce que vous ne notez jamais. Recalculé à chaque dépense notée.",
+    body: "Ce que vos comptes contiennent, moins les charges qui tombent avant votre prochain revenu, moins une marge pour ce que vous ne notez jamais. Recalculé à chaque dépense notée, sur l’écran d’accueil de votre Android et dans Questions.",
     title: "Il vous reste",
     until: "jusqu’au {date}",
     perDay: "soit {amount} par jour",
@@ -60,7 +60,7 @@ export const landingCopyFr: LandingCopySections & {
       {
         id: "bearing",
         title: "Où vous en êtes, d’un coup d’œil",
-        body: "Le point s’ouvre sur ce qu’il vous reste jusqu’à votre prochain revenu, et sur la fin du mois une fois passé tout ce qui est prévu.",
+        body: "Le point s’ouvre sur ce qu’il y a sur votre compte, ce qui doit encore en sortir ce mois-ci, et la fin du mois une fois passé tout ce qui est prévu.",
       },
       {
         id: "ledger",
@@ -219,7 +219,7 @@ export const landingCopyFr: LandingCopySections & {
         },
         {
           title: "Voyez le mois en une ligne",
-          body: "Votre solde jour après jour, plein jusqu’à aujourd’hui et pointillé ensuite, avec son point le plus bas à venir. Au-dessus, ce qu’il vous reste jusqu’à la paie, et combien cela fait par jour.",
+          body: "Votre solde jour après jour, plein jusqu’à aujourd’hui et pointillé ensuite, avec son point le plus bas à venir. Au-dessus, sous votre solde, ce qui doit encore sortir ce mois-ci.",
         },
         {
           title: "Suivez une carte jusqu’à sa source",
@@ -411,8 +411,10 @@ export const landingCopyFr: LandingCopySections & {
 
   demos: {
     bearing: {
-      heading: "Puis-je me permettre ?",
-      hint: "Faites glisser un montant : le chiffre répond aussitôt. Rien n’est enregistré.",
+      heading: "Ce qui doit encore sortir",
+      hint: "Faites glisser les jours : votre solde et ce qui doit encore sortir suivent, jusqu’à la fin du mois.",
+      dayLabel: "Jour du mois",
+      day: "Le {date}",
     },
     ledger: {
       heading: "Ça se range tout seul",

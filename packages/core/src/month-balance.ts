@@ -191,28 +191,6 @@ export interface MonthBalance {
   lowest: { date: string; value: number } | null;
 }
 
-/**
- * Which explanation answers « Comment c'est calculé ? » under a month's
- * balance, the same on both apps: a net counted from zero, a month ahead
- * that only charges can speak for, or a balance carried from the bank, from
- * a close, or from a balance the user typed.
- */
-export type BalanceExplanation =
-  "net" | "planned" | "bank" | "close" | "reading";
-
-export function balanceExplanation(
-  balance: Pick<MonthBalance, "basis" | "period">,
-  source: "bank" | "close" | "reading" | "none",
-): BalanceExplanation {
-  if (balance.basis === "net" || source === "none") {
-    return "net";
-  }
-  if (balance.period === "future") {
-    return "planned";
-  }
-  return source;
-}
-
 /** What left the account on one day, or is set to: the chart's marker. */
 export interface DayOutflows {
   date: string;

@@ -389,7 +389,7 @@ export function CalendarView({
                             +{formatShortAmount(totals.income, locale)} {symbol}
                           </span>
                         ) : null}
-                        {totals.outflow > 0 ? (
+                        {totals.outflow - totals.invested > 0 ? (
                           <span
                             className={cn(
                               "privacy-amount truncate font-mono text-[10px]",
@@ -397,7 +397,29 @@ export function CalendarView({
                               totals.income > 0 && "-mt-0.5",
                             )}
                           >
-                            −{formatShortAmount(totals.outflow, locale)} 
+                            −
+                            {formatShortAmount(
+                              totals.outflow - totals.invested,
+                              locale,
+                            )}
+                             {symbol}
+                          </span>
+                        ) : null}
+                        {/* What went to an investment — the transfer to the
+                            broker above all — in the investment blue, as its
+                            row is in the list below. */}
+                        {totals.invested > 0 ? (
+                          <span
+                            className={cn(
+                              "privacy-amount truncate font-mono text-[10px]",
+                              "font-medium leading-tight md:text-xs",
+                              TYPE_AMOUNT_CLASS.investment,
+                              (totals.income > 0 ||
+                                totals.outflow - totals.invested > 0) &&
+                                "-mt-0.5",
+                            )}
+                          >
+                            −{formatShortAmount(totals.invested, locale)} 
                             {symbol}
                           </span>
                         ) : null}
@@ -407,14 +429,34 @@ export function CalendarView({
                             {symbol}
                           </span>
                         ) : null}
-                        {dayPlanned && dayPlanned.outflow > 0 ? (
+                        {dayPlanned &&
+                        dayPlanned.outflow - dayPlanned.invested > 0 ? (
                           <span
                             className={cn(
                               "privacy-amount truncate font-mono text-[10px] font-medium leading-tight text-muted-foreground md:text-xs",
                               dayPlanned.income > 0 ? "-mt-0.5" : "mt-auto",
                             )}
                           >
-                            −{formatShortAmount(dayPlanned.outflow, locale)} 
+                            −
+                            {formatShortAmount(
+                              dayPlanned.outflow - dayPlanned.invested,
+                              locale,
+                            )}
+                             {symbol}
+                          </span>
+                        ) : null}
+                        {dayPlanned && dayPlanned.invested > 0 ? (
+                          <span
+                            className={cn(
+                              "privacy-amount truncate font-mono text-[10px] font-medium leading-tight opacity-70 md:text-xs",
+                              TYPE_AMOUNT_CLASS.investment,
+                              dayPlanned.income > 0 ||
+                                dayPlanned.outflow - dayPlanned.invested > 0
+                                ? "-mt-0.5"
+                                : "mt-auto",
+                            )}
+                          >
+                            −{formatShortAmount(dayPlanned.invested, locale)} 
                             {symbol}
                           </span>
                         ) : null}

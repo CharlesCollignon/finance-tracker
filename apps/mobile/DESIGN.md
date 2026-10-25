@@ -390,7 +390,9 @@ The web's phone chrome: a header band with the orb and the screen title on the
 left and the refresh, privacy and account controls on the right, and the five
 tabs — six with Immobilier, for an account with `property.track` — in a glass
 pill floating 12 above the bottom edge and 16 in from each side
-(`TAB_BAR_INSET`, `TAB_BAR_SIDE` in `theme/chrome.ts`). The active tab is the
+(`TAB_BAR_INSET`, `TAB_BAR_SIDE` in `theme/chrome.ts`), in the web's order:
+Le point, Journal, Charges, Placements, Immobilier, then Plan, last at the
+owner's ask (October 2026). The active tab is the
 foreground with its filled icon, never gold. A label shrinks on one line, to
 80% at most, rather than lose its end: six tabs leave « Placements » less than
 it needs at 10pt on a 360pt phone. Screens pad their scroll content

@@ -17,7 +17,6 @@ import {
 import { withMyShare } from "@finance/core/my-share";
 import type { PurchaseToConfirm } from "@finance/core/purchases-to-confirm";
 import type { FulfilmentProposal } from "@finance/core/recurring-fulfilment";
-import { rollUpRecurring } from "@finance/core/recurring-rollup";
 import { firstCloseDay, type SetupFacts } from "@finance/core/setup-steps";
 import type { UpcomingCharge } from "@finance/core/still-to-come";
 import type { RecurringTemplateWithCategory } from "@finance/core/types/database";
@@ -134,12 +133,6 @@ export interface BearingMonth {
    * day. The month in progress with a balance only.
    */
   left: LeftToSpend | null;
-  /**
-   * « Reste chaque mois »: what a month's income leaves once its recurring
-   * charges are out (`rollUpRecurring`), for « Puis-je me permettre ? ».
-   * Null without a recurring income, and outside the month in progress.
-   */
-  eachMonth: number | null;
   /**
    * What Le point's setup cards ask about (`nextSetupStep`), all but the bank
    * invitation, which the page decides. The month in progress only.
@@ -285,7 +278,6 @@ export async function readBearingMonth(
   let dca: DcaMonth | null = null;
   let dcaProposal: FulfilmentProposal | null = null;
   let left: LeftToSpend | null = null;
-  let eachMonth: number | null = null;
   let yearReady: number | null = null;
   let setup: BearingMonth["setup"] = null;
 
@@ -298,8 +290,6 @@ export async function readBearingMonth(
       closes,
       bankFed,
     });
-    const rollup = rollUpRecurring(templates, { debited, year, month });
-    eachMonth = rollup.income > 0 ? rollup.left : null;
     const dismissed = await readDismissedPrompts(db, userId);
     // « Votre année », in January, until « Vu ».
     const reviewed = reviewedYear(today);
@@ -418,7 +408,6 @@ export async function readBearingMonth(
     dca,
     dcaProposal,
     left,
-    eachMonth,
     setup,
     yearReady,
     recurring: templates.some((template) => template.active),

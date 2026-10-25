@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowsClockwise, PencilSimple, Plus } from "@phosphor-icons/react";
+import { ArrowsClockwise, Plus } from "@phosphor-icons/react";
 import { formatSigned } from "@finance/core/amount-sign";
 import { PRICE_RANGES } from "@finance/core/instrument-price-series";
 import { formatSignedPercent } from "@finance/core/instrument-price-series";
@@ -267,11 +267,6 @@ function PositionRow({
             </p>
           </div>
         </div>
-        <PencilSimple
-          size={16}
-          weight="light"
-          className="mt-1 shrink-0 text-muted-foreground"
-        />
       </div>
       <div className="mt-1.5 flex flex-wrap items-center justify-between gap-x-4 gap-y-1.5">
         <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1 text-xs">

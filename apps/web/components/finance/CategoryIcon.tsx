@@ -48,6 +48,8 @@ interface CategoryIconProps {
 
 export function CategoryIcon({ icon, className }: CategoryIconProps) {
   const IconComponent = (icon && CATEGORY_ICONS[icon]) || DotsThree;
+  // Bitcoin's own mark rather than a glyph, wherever a category wears it.
+  const bitcoin = icon === "currency-btc";
 
   return (
     <span
@@ -58,7 +60,18 @@ export function CategoryIcon({ icon, className }: CategoryIconProps) {
       )}
       aria-hidden
     >
-      <IconComponent size={ICON.lg} weight="light" />
+      {bitcoin ? (
+        // eslint-disable-next-line @next/next/no-img-element -- a 9 KB local mark
+        <img
+          src="/logos/bitcoin.png"
+          alt=""
+          width={ICON.lg}
+          height={ICON.lg}
+          className="rounded-full"
+        />
+      ) : (
+        <IconComponent size={ICON.lg} weight="light" />
+      )}
     </span>
   );
 }

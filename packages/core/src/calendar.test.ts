@@ -45,7 +45,7 @@ describe("plannedTotals", () => {
         planned(40, "savings"),
         planned(2_400, "income"),
       ]),
-    ).toEqual({ income: 2_400, outflow: 940 });
+    ).toEqual({ income: 2_400, outflow: 940, invested: 0 });
     expect(plannedTotals([])).toBeNull();
   });
 });
@@ -104,6 +104,16 @@ describe("purchases made at the broker", () => {
     });
   });
 
+  it("set the transfer to the broker apart, for the investment blue", () => {
+    expect(computeDayTotals([transfer], debited).invested).toBe(1750);
+    expect(
+      plannedTotals(
+        [{ ...planned(1750, "investment"), categoryId: "cat-transfer" }],
+        debited,
+      ),
+    ).toEqual({ income: 0, outflow: 1750, invested: 1750 });
+  });
+
   it("are not planned money out either", () => {
     const plannedDca: PlannedOccurrence = {
       ...planned(400, "investment"),
@@ -120,7 +130,7 @@ describe("purchases made at the broker", () => {
         [plannedDca, plannedBitstack, planned(950, "expense")],
         debited,
       ),
-    ).toEqual({ income: 0, outflow: 968 });
+    ).toEqual({ income: 0, outflow: 968, invested: 18 });
   });
 
   it("come out of the month's « in and out »", () => {

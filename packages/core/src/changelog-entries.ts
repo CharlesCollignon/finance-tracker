@@ -17,6 +17,24 @@ import type { ChangelogEntry, RoadmapItem } from "./changelog";
  */
 export const CHANGELOG: readonly ChangelogEntry[] = [
   {
+    id: "2026-10-25-simpler-screens",
+    date: "2026-10-25",
+    kind: "better",
+    platforms: ["web"],
+    fr: {
+      title: "Le point, le Journal et Placements, plus simples",
+      body: "Sur Le point, ce qui doit encore sortir ce mois-ci s’affiche juste sous votre solde ; la ligne « Il vous reste » et « Puis-je me permettre ? » quittent la carte. Le Journal se lit en « Passé » ou « À venir », et chaque opération se coche directement pour être sélectionnée.",
+      detail:
+        "Le choix des semaines et le bouton « Sélectionner » disparaissent. Dans le Calendrier, le virement vers le courtier apparaît en bleu, la couleur des placements. Plan passe en dernier dans le menu. Dans Placements, toute la ligne d’une position s’ouvre d’un clic, sans le crayon. Et le Bitcoin a son logo.",
+    },
+    en: {
+      title: "Le point, the Journal and Placements, simpler",
+      body: "On Le point, what is still to go out this month now sits right under your balance; the “Il vous reste” line and “Can I afford it?” leave the card. The Journal reads as “Past” or “Upcoming”, and every transaction can be ticked to select it.",
+      detail:
+        "The week picker and the “Select” button are gone. In the Calendar, the transfer to your broker shows in blue, the colour of investments. Plan moves to the end of the menu. In Placements, a holding’s whole row opens with one click, without the pencil. And Bitcoin has its logo.",
+    },
+  },
+  {
     id: "2026-10-25-fades",
     date: "2026-10-25",
     kind: "better",

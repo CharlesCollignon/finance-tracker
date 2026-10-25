@@ -33,14 +33,16 @@ import {
   filterLedger,
   filterPlanned,
   ledgerDays,
+  ledgerPlannedTotals,
+  ledgerShowing,
   ledgerTotals,
-  ledgerWeeks,
   type LedgerOrder,
+  type LedgerTime,
   type LedgerTypeFilter,
 } from "@finance/core/ledger-view";
 import { AnimatedAmount } from "@/components/finance/AnimatedAmount";
 import { AnimatedDay, AnimatedDays } from "@/components/finance/AnimatedDays";
-import { LedgerWeekStrip } from "@/components/finance/LedgerWeekStrip";
+import { SegmentedControl } from "@/components/ui/SegmentedControl";
 import { amountSign } from "@finance/core/amount-sign";
 import {
   categoryTypeLabels,
@@ -139,7 +141,7 @@ function downloadCsv(filename: string, csv: string): void {
  * step, and the failure is silent: the columns simply stop lining up.
  *
  * Deliberately not a `<table>`. Each row is a button — clicking it opens the
- * editor, and in select mode it toggles — so the row is the control, and a
+ * editor; its box, always there, picks it — so the row is the control, and a
  * table row cannot be one without either nesting a button per cell or
  * wrapping a `<tr>` in something that is not allowed to contain it.
  */
@@ -267,7 +269,6 @@ export function TransactionsView({
   const [filter, setFilter] = useState<FilterType>("all");
   // A search followed from another month arrives with its words (`?q=`).
   const [search, setSearch] = useState(initialQuery);
-  const [selectMode, setSelectMode] = useState(false);
   const [storedSelection, setSelected] = useState<ReadonlySet<string>>(
     new Set(),
   );
@@ -277,10 +278,9 @@ export function TransactionsView({
   // The phone's filters-and-actions panel. On a wider screen everything in it
   // sits in the toolbar, so the flag only means anything below `md`.
   const [optionsOpen, setOptionsOpen] = useState(false);
-  // The week the list is narrowed to, by its first day. Kept by date rather
-  // than by position, so another month — which has no such week — simply
-  // shows all of itself, with nothing to reset.
-  const [weekFrom, setWeekFrom] = useState<string | null>(null);
+  // What has happened, or what the charges still call for. A month with
+  // nothing in the half asked for shows the other (`ledgerShowing`).
+  const [chosenTime, setChosenTime] = useState<LedgerTime>("past");
   const [order, setOrder] = useState<LedgerOrder>("newest");
   // How many times the order has been turned over: each time, the list is
   // dealt again from the top (see `AnimatedDays`).
@@ -295,28 +295,18 @@ export function TransactionsView({
     }),
     [filter, categoryFilter, search, accountFilter, bankAccounts],
   );
-  // The strip counts what every filter but the week's keeps, so it shows
-  // where in the month the rows are — and where a search found something.
-  const weeks = useMemo(
-    () =>
-      ledgerWeeks(
-        year,
-        month,
-        filterLedger(transactions, ledgerFilter, accountOf),
-        filterPlanned(planned, ledgerFilter),
-      ),
-    [year, month, transactions, planned, ledgerFilter, accountOf],
-  );
-  const week = weeks.find((each) => each.from === weekFrom) ?? null;
+  const showing = ledgerShowing(chosenTime, {
+    past: transactions.length,
+    upcoming: planned.length,
+  });
   const filtered = useMemo(
-    () =>
-      filterLedger(transactions, { ...ledgerFilter, range: week }, accountOf),
-    [transactions, ledgerFilter, week, accountOf],
+    () => filterLedger(transactions, ledgerFilter, accountOf),
+    [transactions, ledgerFilter, accountOf],
   );
   // The same filters, so a planned rent does not survive an "Income" chip.
   const filteredPlanned = useMemo(
-    () => filterPlanned(planned, { ...ledgerFilter, range: week }),
-    [planned, ledgerFilter, week],
+    () => filterPlanned(planned, ledgerFilter),
+    [planned, ledgerFilter],
   );
 
   // Oldest first is the newest-first list turned over, rows within a day
@@ -335,7 +325,6 @@ export function TransactionsView({
     filter !== "all" ||
     categoryFilter !== "all" ||
     ledgerFilter.accountId !== "all" ||
-    week !== null ||
     search.trim().length > 0;
 
   const visibleIds = useMemo(() => sortedRows.map((tx) => tx.id), [sortedRows]);
@@ -352,8 +341,7 @@ export function TransactionsView({
   );
   const allState = selectAllState(visibleIds, selected);
 
-  function leaveSelectMode() {
-    setSelectMode(false);
+  function clearSelection() {
     setSelected(new Set());
   }
 
@@ -361,7 +349,7 @@ export function TransactionsView({
     startDelete(async () => {
       const ids = [...selected];
       markDeleted(ids);
-      leaveSelectMode();
+      clearSelection();
       const result = await deleteTransactions(ids);
       if (!result.success) {
         toast(result.error, "error");
@@ -392,7 +380,7 @@ export function TransactionsView({
         categories.find((category) => category.id === categoryId)?.name ??
         t("ledger.theNewCategory");
       toast(t("ledger.moved", { count: result.moved ?? 0, name }), "success");
-      leaveSelectMode();
+      clearSelection();
     });
   }
 
@@ -414,17 +402,29 @@ export function TransactionsView({
   // hundred rows. Grouping here rather than in the markup keeps a heading and
   // its rows in the same object, so the list can never draw a date with
   // nothing under it.
-  // Planned rows join their day but not its net: the net says what the day
-  // did, and a planned row has not done anything yet.
+  // One half of the month at a time: what has happened, in the order asked
+  // for, or what is still to come, soonest first.
   const days = useMemo(
-    () => ledgerDays(sortedRows, filteredPlanned, order),
-    [sortedRows, filteredPlanned, order],
+    () =>
+      showing === "past"
+        ? ledgerDays(sortedRows, [], order)
+        : ledgerDays([], filteredPlanned, "oldest"),
+    [showing, sortedRows, filteredPlanned, order],
   );
 
   // The figures describe what is on screen, which is the whole reason they
   // are here: the month's own totals are Month's job, and repeating them
   // under a filter would state something the list below contradicts.
-  const shown = useMemo(() => ledgerTotals(filtered), [filtered]);
+  const shown = useMemo(
+    () =>
+      showing === "past"
+        ? ledgerTotals(filtered)
+        : ledgerPlannedTotals(filteredPlanned),
+    [showing, filtered, filteredPlanned],
+  );
+  const shownCount =
+    showing === "past" ? filtered.length : filteredPlanned.length;
+  const totalCount = showing === "past" ? transactions.length : planned.length;
   const shownOut = shown.expense + shown.savings + shown.investment;
 
   /**
@@ -614,25 +614,15 @@ export function TransactionsView({
                   ))}
                 </div>
 
-                {/* In selection mode a phone keeps Done and Select all here,
-                    where the thumb already is; everything else is desktop. */}
+                {/* With rows picked, a phone keeps Select all here, where the
+                    thumb already is; everything else is desktop. */}
                 <div
                   className={cn(
                     "shrink-0 items-center justify-end gap-1",
-                    selectMode ? "flex" : "hidden md:flex",
+                    selected.size > 0 ? "flex" : "hidden md:flex",
                   )}
                 >
-                  <Button
-                    variant="link"
-                    size="sm"
-                    className="h-8 px-2"
-                    onClick={() =>
-                      selectMode ? leaveSelectMode() : setSelectMode(true)
-                    }
-                  >
-                    {selectMode ? t("ledger.selectDone") : t("ledger.select")}
-                  </Button>
-                  {selectMode ? (
+                  {selected.size > 0 ? (
                     <Button
                       variant="link"
                       size="sm"
@@ -685,18 +675,6 @@ export function TransactionsView({
                   {renderCategoryFilter(true)}
                   {renderAccountFilter(true)}
                   <div className="flex flex-wrap gap-2">
-                    {selectMode ? null : (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => {
-                          setSelectMode(true);
-                          setOptionsOpen(false);
-                        }}
-                      >
-                        {t("ledger.select")}
-                      </Button>
-                    )}
                     <Button
                       variant="outline"
                       size="sm"
@@ -728,11 +706,19 @@ export function TransactionsView({
                 </div>
               ) : null}
 
-              <LedgerWeekStrip
-                weeks={weeks}
-                value={week?.from ?? null}
-                onChange={setWeekFrom}
-              />
+              {/* Past or still to come, when the month has both. */}
+              {transactions.length > 0 && planned.length > 0 ? (
+                <SegmentedControl
+                  label={t("ledger.showWhen")}
+                  value={showing}
+                  onChange={setChosenTime}
+                  segments={[
+                    { value: "past", label: t("ledger.showPast") },
+                    { value: "upcoming", label: t("ledger.showUpcoming") },
+                  ]}
+                  className="w-fit"
+                />
+              ) : null}
             </div>
 
             <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-1 border-t border-border pt-3 text-xs md:text-sm">
@@ -749,7 +735,11 @@ export function TransactionsView({
                   setDeals((count) => count + 1);
                 }}
                 title={t("ledger.sortFlip")}
-                className="-my-3.5 inline-flex min-h-11 items-center gap-1.5 text-muted-foreground transition-colors duration-hover hover:text-foreground"
+                className={cn(
+                  "-my-3.5 inline-flex min-h-11 items-center gap-1.5 text-muted-foreground transition-colors duration-hover hover:text-foreground",
+                  // What is to come reads soonest first, always.
+                  showing === "upcoming" && "hidden",
+                )}
               >
                 <ArrowDown
                   size={ICON.sm}
@@ -769,14 +759,14 @@ export function TransactionsView({
               <p
                 className={cn(
                   "mr-auto text-muted-foreground",
-                  filtered.length === transactions.length && "hidden md:block",
+                  shownCount === totalCount && "hidden md:block",
                 )}
               >
-                {filtered.length === transactions.length
-                  ? t("ledger.entryCount", { count: transactions.length })
+                {shownCount === totalCount
+                  ? t("ledger.entryCount", { count: totalCount })
                   : t("ledger.shownOfTotal", {
-                      count: filtered.length,
-                      total: transactions.length,
+                      count: shownCount,
+                      total: totalCount,
                     })}
               </p>
               <p className="flex flex-wrap gap-x-4 gap-y-1 md:gap-x-5">
@@ -803,7 +793,7 @@ export function TransactionsView({
               </p>
             </div>
 
-            {filtered.length === 0 && filteredPlanned.length === 0 ? (
+            {days.length === 0 ? (
               <EmptyState
                 title={t("ledger.noMatchTitle")}
                 description={t("ledger.noMatchBody")}
@@ -816,7 +806,6 @@ export function TransactionsView({
                       setFilter("all");
                       setCategoryFilter("all");
                       setAccountFilter("all");
-                      setWeekFrom(null);
                       setSearch("");
                     }}
                   >
@@ -850,25 +839,10 @@ export function TransactionsView({
                         <button
                           key={tx.id}
                           type="button"
-                          onClick={() =>
-                            selectMode
-                              ? setSelected((current) =>
-                                  toggleSelected(current, tx.id),
-                                )
-                              : setEditTransaction(tx)
-                          }
-                          aria-label={
-                            selectMode
-                              ? t("ledger.selectRow", {
-                                  name: tx.categories.name,
-                                })
-                              : t("ledger.editRow", {
-                                  name: tx.categories.name,
-                                })
-                          }
-                          aria-pressed={
-                            selectMode ? selected.has(tx.id) : undefined
-                          }
+                          onClick={() => setEditTransaction(tx)}
+                          aria-label={t("ledger.editRow", {
+                            name: tx.categories.name,
+                          })}
                           className={cn(
                             "-mx-2 flex w-[calc(100%+1rem)] items-center justify-between gap-3 rounded-control px-2 py-2.5 text-left",
                             // A press gives a little under the finger.
@@ -877,23 +851,21 @@ export function TransactionsView({
                             // The checkbox says which rows are picked; the
                             // wash only has to group them, which the raised
                             // ground does without the accent.
-                            selectMode && selected.has(tx.id) && "bg-muted",
+                            selected.has(tx.id) && "bg-muted",
                           )}
                         >
                           <span className="flex min-w-0 items-center gap-3">
-                            {selectMode ? (
-                              <RowCheckbox
-                                checked={selected.has(tx.id)}
-                                label={t("ledger.selectRow", {
-                                  name: tx.categories.name,
-                                })}
-                                onChange={() =>
-                                  setSelected((current) =>
-                                    toggleSelected(current, tx.id),
-                                  )
-                                }
-                              />
-                            ) : null}
+                            <RowCheckbox
+                              checked={selected.has(tx.id)}
+                              label={t("ledger.selectRow", {
+                                name: tx.categories.name,
+                              })}
+                              onChange={() =>
+                                setSelected((current) =>
+                                  toggleSelected(current, tx.id),
+                                )
+                              }
+                            />
                             <span className="relative shrink-0">
                               <CategoryIcon
                                 icon={tx.categories.icon}
@@ -954,7 +926,6 @@ export function TransactionsView({
                         <PlannedRow
                           key={occurrence.key}
                           occurrence={occurrence}
-                          disabled={selectMode}
                           onOpen={() => setOpenPlanned(occurrence)}
                         />
                       ))}
@@ -994,7 +965,7 @@ export function TransactionsView({
       <SelectionBar
         summary={selectionSummary}
         pending={deletePending}
-        onCancel={leaveSelectMode}
+        onCancel={clearSelection}
         onDelete={handleBulkDelete}
         categories={categories}
         planMove={planMove}
@@ -1011,15 +982,13 @@ export function TransactionsView({
  * cannot see it and little to one who can: the icon sits in a dashed outline
  * instead of a filled square, the name and amount are muted, and the second
  * line starts with the word. Pressing it opens what can be done about it;
- * in select mode it is inert, since there is nothing stored to select.
+ * it has no box, since there is nothing stored to select.
  */
 function PlannedRow({
   occurrence,
-  disabled,
   onOpen,
 }: {
   occurrence: PlannedOccurrence;
-  disabled: boolean;
   onOpen: () => void;
 }) {
   const t = useT();
@@ -1035,11 +1004,10 @@ function PlannedRow({
     <button
       type="button"
       onClick={onOpen}
-      disabled={disabled}
       aria-label={`${occurrence.name}, ${word}`}
       className={cn(
         "-mx-2 flex w-[calc(100%+1rem)] items-center justify-between gap-3 rounded-control px-2 py-2.5 text-left",
-        "transition-colors hover:bg-muted/40 disabled:cursor-default disabled:hover:bg-transparent",
+        "transition-colors hover:bg-muted/40",
         LEDGER_COLUMNS,
       )}
     >

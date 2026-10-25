@@ -312,6 +312,9 @@ export const en = {
     filterByCategory: "Filter by category",
     filterTransactions: "Filter transactions",
     allCategories: "All categories",
+    showWhen: "What the list shows",
+    showPast: "Past",
+    showUpcoming: "Upcoming",
     selectDone: "Done",
     select: "Select",
     clearAll: "Clear all",
@@ -383,8 +386,7 @@ export const en = {
     skippedBody: "Taken out of this month. Put one back to count it again.",
     review: "Review",
     fillThisMonth: "Fill this month",
-    selectHint: "Tap to select · Done to leave",
-    editHint: "Tap to edit · long-press to select",
+    editHint: "Tap to edit · long-press to repeat today",
     needsCategory: {
       one: "{count} transaction needs a category",
       other: "{count} transactions need a category",
@@ -419,10 +421,6 @@ export const en = {
     paidOn: "Paid on {date}",
     recurringEntry: "Recurring entry",
     /** The strip above the list: the month, then each of its weeks. */
-    weeks: "Weeks of the month",
-    wholeMonth: "Month",
-    wholeMonthLabel: "The whole month",
-    weekLabel: "{from} to {to}",
     sortNewest: "Newest first",
     sortOldest: "Oldest first",
     sortFlip: "Reverse the date order",
@@ -3395,18 +3393,6 @@ export const en = {
       other: "months, my longest run",
     },
   },
-  afford: {
-    title: "Can I afford it?",
-    amount: "Amount",
-    cadence: "How often",
-    once: "Once",
-    monthly: "Every month",
-    leftAfter: "You would have {amount} {until}",
-    missingAfter: "You would be short {amount} {until}",
-    lowestAfter: "Lowest point ahead: {amount} on {date}",
-    eachMonthAfter: "Each month would leave {amount}",
-    nothingSaved: "Nothing is saved: it is only the arithmetic.",
-  },
   /** The Android home-screen widget: « Il vous reste » and two ways in. */
   widget: {
     add: "Add a spend",
@@ -3419,18 +3405,6 @@ export const en = {
     byPayDay: "by {date}",
     byMonthEnd: "by the end of the month",
     perDay: "that is {amount} a day",
-    how: {
-      title: "How is this worked out?",
-      body: "What your accounts hold today, less what your recurring entries will take out before then, at its lowest point. It is what is left for everyday spending.",
-      payDay:
-        "It runs to the day before your next income, the largest of your recurring ones.",
-      monthEnd: "With no recurring income, it runs to the end of the month.",
-      marge: {
-        one: "Your allowance for unrecorded spending takes {amount} off for this day.",
-        other:
-          "Your allowance for unrecorded spending takes {amount} off for these {count} days.",
-      },
-    },
   },
   bearingMonth: {
     onAccount: "On your account",
@@ -3441,17 +3415,6 @@ export const en = {
     netSoFar: "This month so far",
     netByEnd: "By month end",
     netMonth: "This month",
-    how: {
-      title: "How is this worked out?",
-      net: "With no starting balance, the month counts from zero: what came in minus what went out. Close a month to see a real balance.",
-      planned:
-        "A month ahead counts your recurring entries only, from the balance expected at its start. Everyday spending is not in it.",
-      bank: "The balance comes from your bank. For the rest of the month, the app adds what your recurring entries still have to bring in or take out. Everyday spending not done yet is not in it.",
-      close:
-        "It starts from the balance you noted at your last month review. The app adds the transactions recorded since, then what your recurring entries still have to bring in or take out.",
-      reading:
-        "It starts from the balance you entered on Le point. The app adds the transactions recorded since, then what your recurring entries still have to bring in or take out. Your first month review takes over from it.",
-    },
     netCaption: "What came in, minus what went out.",
     byAccount: "By account",
     byAccountEnd: "By account, at month end",

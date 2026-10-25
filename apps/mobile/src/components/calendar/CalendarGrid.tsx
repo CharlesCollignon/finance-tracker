@@ -17,6 +17,7 @@ import { cn } from "@/lib/cn";
 import { hapticLight } from "@/lib/haptics";
 import { useLocale, useT } from "@/providers/LocaleProvider";
 import { useThemeColors } from "@/theme/useThemeColors";
+import { TYPE_AMOUNT_CLASS } from "@finance/core/category-styles";
 
 interface CalendarGridProps {
   weeks: CalendarDay[][];
@@ -175,11 +176,21 @@ export function CalendarGrid({
                       className="text-success"
                     />
                   ) : null}
-                  {totals.outflow > 0 ? (
+                  {totals.outflow - totals.invested > 0 ? (
                     <CellAmount
                       sign="−"
-                      amount={totals.outflow}
+                      amount={totals.outflow - totals.invested}
                       className="text-destructive"
+                    />
+                  ) : null}
+                  {/* What went to an investment — the transfer to the broker
+                      above all — in the investment blue, as its row is in
+                      the list below. */}
+                  {totals.invested > 0 ? (
+                    <CellAmount
+                      sign="−"
+                      amount={totals.invested}
+                      className={TYPE_AMOUNT_CLASS.investment}
                     />
                   ) : null}
                   {planned && planned.income > 0 ? (
@@ -189,11 +200,18 @@ export function CalendarGrid({
                       className="text-muted-foreground"
                     />
                   ) : null}
-                  {planned && planned.outflow > 0 ? (
+                  {planned && planned.outflow - planned.invested > 0 ? (
                     <CellAmount
                       sign="−"
-                      amount={planned.outflow}
+                      amount={planned.outflow - planned.invested}
                       className="text-muted-foreground"
+                    />
+                  ) : null}
+                  {planned && planned.invested > 0 ? (
+                    <CellAmount
+                      sign="−"
+                      amount={planned.invested}
+                      className={cn(TYPE_AMOUNT_CLASS.investment, "opacity-70")}
                     />
                   ) : null}
                 </View>

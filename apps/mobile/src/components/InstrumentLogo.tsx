@@ -1,9 +1,11 @@
 import { useState } from "react";
 import { Image, View } from "react-native";
 
+import { isBitcoinSymbol } from "@finance/core/crypto-holdings";
 import { instrumentLogoUrl } from "@finance/core/market/logo";
 
 import { CategoryIcon } from "@/components/CategoryIcon";
+import { BITCOIN_MARK } from "@/lib/bitcoin-mark";
 
 /**
  * A holding's own mark — the company's or the fund issuer's logo, as the
@@ -19,6 +21,17 @@ export function InstrumentLogo({
   fallbackIcon: string | null;
 }) {
   const [failed, setFailed] = useState(false);
+
+  // Bitcoin carries the app's own mark: a whole disc, nothing to crop.
+  if (isBitcoinSymbol(symbol)) {
+    return (
+      <Image
+        source={BITCOIN_MARK}
+        style={{ width: 32, height: 32, borderRadius: 16 }}
+        accessibilityIgnoresInvertColors
+      />
+    );
+  }
 
   if (!symbol || failed) {
     return <CategoryIcon icon={fallbackIcon} className="h-8 w-8 rounded-full" />;

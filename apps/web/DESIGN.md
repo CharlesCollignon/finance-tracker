@@ -775,6 +775,9 @@ all; changing one alone breaks the frame.
 
 ### Navigation
 
+- The surfaces run Le point, Journal, Charges, Placements, Immobilier (for
+  an account that has it), then Plan — last, at the owner's ask (October
+  2026) — in every bar (`navItems` in `lib/navigation.ts`).
 - From `md`, the bezel (`.app-frame`) and one notch cut from it (`TopNav`),
   centred, holding the five surfaces and, at its end, the add button as a
   gold "+" disc (its name in the tooltip and for screen readers). The notch is square where it meets the
@@ -1058,21 +1061,23 @@ the next free place with a single gold ring widening as it fades — then it
 rests. « Revoir » plays it again. Under reduced motion the icon is there,
 with no sheet and no « Revoir ».
 
-The Journal's list moves when the reader asks it to (October 2026). The
-week strip above it (`LedgerWeekStrip.tsx`) fades its bars in once, and its
-pill slides on the tabs' spring. Choosing a week moves the days that stay
+The Journal's list moves when the reader asks it to (October 2026). Above
+it, in a month that has both, a quiet « Passé · À venir » switch — the
+`SegmentedControl`, its pill sliding on the hover token — shows what has
+happened or what the charges still call for, soonest first; it took the
+week strip's place at the owner's ask. A filter moves the days that stay
 into their new places, fades out the ones leaving and fades in the ones
 arriving; the In and Out figures count to their new values. Turning the
 order over fades the list in again from the top instead, because moved,
 every day would cross every other with no ground under the text
-(`AnimatedDays.tsx`). A row gives a little under a press. Under reduced
-motion every state is its end state.
+(`AnimatedDays.tsx`). Every recorded row carries its box, so picking rows
+needs no mode; a row gives a little under a press. Under reduced motion
+every state is its end state.
 
 « Nouveautés » (`NouveautesPage.tsx`, October 2026) is the site's index: an
 entry list rather than a story, so less of it moves. Its name rises out of a
 mask; beside it the rhythm of the work, one bar a week since the first
-commit, grows up from its baseline bar after bar (the Journal's week strip
-at the scale of the project), names a week under a pointer and takes the
+commit, grows up from its baseline bar after bar, names a week under a pointer and takes the
 list to it on a press; this week's bar is in the status green while it holds
 something, the live dot's colour. Below, the list runs beside a rail held
 while it scrolls: the month being read fades to the next as the list

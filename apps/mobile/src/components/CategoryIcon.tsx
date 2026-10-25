@@ -1,7 +1,8 @@
 import { Ionicons } from "@expo/vector-icons";
-import { View } from "react-native";
+import { Image, View } from "react-native";
 import type { ComponentProps } from "react";
 
+import { BITCOIN_MARK } from "@/lib/bitcoin-mark";
 import { cn } from "@/lib/cn";
 import { useThemeColors } from "@/theme/useThemeColors";
 import { ICON } from "@/theme/tokens";
@@ -45,7 +46,17 @@ export function CategoryIcon({ icon, className }: CategoryIconProps) {
         className,
       )}
     >
-      <Ionicons name={name} size={ICON.lg} color={colors.foreground} />
+      {/* Bitcoin's own mark rather than a glyph, wherever a category
+          wears it. */}
+      {icon === "currency-btc" ? (
+        <Image
+          source={BITCOIN_MARK}
+          style={{ width: ICON.lg, height: ICON.lg, borderRadius: ICON.lg / 2 }}
+          accessibilityIgnoresInvertColors
+        />
+      ) : (
+        <Ionicons name={name} size={ICON.lg} color={colors.foreground} />
+      )}
     </View>
   );
 }

@@ -15,7 +15,6 @@ import {
   useScroll,
 } from "motion/react";
 import { EASE_STANDARD } from "@finance/core/motion";
-import { formatDayMonth } from "@finance/core/constants";
 import { usePathname } from "next/navigation";
 import { ArrowRight, CaretDown, Compass, List, X } from "@phosphor-icons/react";
 import { Orb } from "@/components/brand/Orb";
@@ -389,7 +388,6 @@ function ProductPanel({
       <m.div variants={arrive} className="row-span-1">
         <FeaturedCard
           page={pageOf(copy, "bearing")}
-          copy={copy}
           active={pathname === featureHref("bearing")}
           onNavigate={onNavigate}
         />
@@ -440,7 +438,6 @@ function SheetPanel({
       <m.div variants={arrive}>
         <FeaturedCard
           page={pageOf(copy, "bearing")}
-          copy={copy}
           active={pathname === featureHref("bearing")}
           onNavigate={onNavigate}
           compact
@@ -575,25 +572,25 @@ function PageCard({
 
 /**
  * Le point, the card the panel leads with: what the page is for, and the
- * figure it opens on, lit gold, from the landing's sample month.
+ * balance it opens on, lit gold, from the landing's sample month.
  */
 function FeaturedCard({
   page,
-  copy,
   active,
   onNavigate,
   compact = false,
 }: {
   page: Page;
-  copy: LocalisedLandingCopy;
   active: boolean;
   onNavigate: () => void;
   compact?: boolean;
 }) {
+  const t = useT();
   const locale = useLocale();
   const euro = useFormatCurrency();
-  const { leftToSpend } = landingSampleFor(locale);
-  const date = formatDayMonth(leftToSpend.through, locale);
+  // Le point's balance card, in the sample month: what is on the account,
+  // what is still to go out and come in, and where the month ends.
+  const { bearing, bearingMonth } = landingSampleFor(locale);
   return (
     <Link
       href={featureHref(page.id)}
@@ -622,29 +619,26 @@ function FeaturedCard({
         </span>
       </span>
       {compact ? null : (
-        // The sum behind the figure, as the landing puts it together.
         <span className="flex flex-col gap-1.5 font-mono text-xs tabular-nums">
           {[
-            [copy.figure.balance, euro(leftToSpend.balance)],
-            [
-              copy.figure.charges.replace("{date}", date),
-              `−${euro(leftToSpend.charges)}`,
-            ],
-            [copy.figure.marge, `−${euro(leftToSpend.marge)}`],
-          ].map(([label, value]) => (
+            t("bearingMonth.toGoOut", { amount: euro(bearingMonth.leaving) }),
+            t("bearingMonth.toComeIn", {
+              amount: euro(bearingMonth.arriving),
+            }),
+            `${t("bearingMonth.expectedEnd")} · ${euro(bearing.free)}`,
+          ].map((line) => (
             <span
-              key={label}
-              className="flex items-baseline justify-between gap-3 border-b border-white/[0.07] pb-1.5"
+              key={line}
+              className="border-b border-white/[0.07] pb-1.5 font-sans text-marketing-muted"
             >
-              <span className="font-sans text-marketing-muted">{label}</span>
-              <span className="text-marketing-ink">{value}</span>
+              {line}
             </span>
           ))}
         </span>
       )}
       <span className="block">
         <span className="block text-xs text-marketing-muted">
-          {copy.figure.title}
+          {t("bearingMonth.onAccount")}
         </span>
         <span
           className={cn(
@@ -652,11 +646,7 @@ function FeaturedCard({
             compact ? "mt-1 text-3xl" : "mt-1.5 text-5xl",
           )}
         >
-          {euro(leftToSpend.amount)}
-        </span>
-        <span className="mt-2 block text-xs text-marketing-muted">
-          {copy.figure.until.replace("{date}", date)} ·{" "}
-          {copy.figure.perDay.replace("{amount}", euro(leftToSpend.perDay))}
+          {euro(bearing.onHand)}
         </span>
       </span>
     </Link>

@@ -1,5 +1,4 @@
 import { Pressable, View } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
 
 import type { InvestmentPositionItem } from "@finance/core/investment-positions";
 import { isCryptoWallet } from "@finance/core/crypto-holdings";
@@ -15,7 +14,6 @@ import { Text } from "@/components/ui/Text";
 import { cn } from "@/lib/cn";
 import { useFormatCurrency } from "@/providers/CurrencyProvider";
 import { useThemeColors } from "@/theme/useThemeColors";
-import { ICON } from "@/theme/tokens";
 import { useLocale, useT } from "@/providers/LocaleProvider";
 import { formatSigned } from "@finance/core/amount-sign";
 
@@ -84,7 +82,13 @@ export function InvestmentPositionRow({
         : colors.destructive;
 
   return (
-    <View className="min-w-0 py-4">
+    // The whole row opens the position, as a ledger row does.
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={t("wallets.editPosition", { name: item.name })}
+      onPress={onEdit}
+      className="min-w-0 py-4 active:opacity-70"
+    >
       {hasLine ? (
         <PriceSparkline
           values={priceLine!.values}
@@ -135,19 +139,6 @@ export function InvestmentPositionRow({
             ) : null}
           </View>
         </View>
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel={t("wallets.editPosition", { name: item.name })}
-          onPress={onEdit}
-          hitSlop={8}
-          className="h-11 w-11 items-center justify-center"
-        >
-          <Ionicons
-            name="pencil-outline"
-            size={ICON.md}
-            color={colors.mutedForeground}
-          />
-        </Pressable>
       </View>
 
       <View className="mt-3 flex-row gap-2">
@@ -168,6 +159,6 @@ export function InvestmentPositionRow({
           }
         />
       </View>
-    </View>
+    </Pressable>
   );
 }
