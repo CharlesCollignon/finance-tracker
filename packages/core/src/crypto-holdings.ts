@@ -6,6 +6,15 @@ export const BITCOIN_INSTRUMENT = {
   name: "Bitcoin",
 } as const;
 
+/**
+ * Whether a market symbol is Bitcoin's, in any currency ("BTC-EUR",
+ * "BTC-USD", "BTC"): the apps draw it with the app's own Bitcoin mark rather
+ * than the logo CDN's.
+ */
+export function isBitcoinSymbol(symbol: string | null): boolean {
+  return symbol !== null && /^BTC(-[A-Z]{3})?$/i.test(symbol.trim());
+}
+
 export function isCryptoWallet(walletId: InvestmentWalletId): boolean {
   return walletId === "crypto";
 }
