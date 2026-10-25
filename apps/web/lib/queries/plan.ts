@@ -192,14 +192,6 @@ export async function gatherPlanWealth(
     ]);
     return {
       ...planWealthFromPortfolio(portfolio),
-      positions: portfolio.columns.flatMap((column) =>
-        column.items.map((item) => ({
-          walletId: column.walletId,
-          marketValue: item.marketValue,
-          isin: item.isin,
-          instrumentSymbol: item.instrumentSymbol,
-        })),
-      ),
       fees: walletFeeRates(
         portfolio.columns.flatMap((column) => column.items),
         wrapperFeesFromPlans(plans),
