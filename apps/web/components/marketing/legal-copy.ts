@@ -66,7 +66,7 @@ export const legalCopy: LegalCopy = {
     notice: "Legal notice",
   },
   updatedLabel: "Last updated:",
-  updated: "2026-10-13",
+  updated: "2026-10-25",
   contents: "On this page",
   draftNotice:
     "Draft for review. Highlighted blanks are for the operator to fill in, and the text has not been checked by a lawyer yet.",
@@ -166,6 +166,7 @@ export const legalCopy: LegalCopy = {
         points: [
           "Supabase: the database and sign-in, in the European Union, in Frankfurt (Germany).",
           "Vercel: hosting for the website and the server, with the server functions running in Paris, France.",
+          "Resend (Plus Five Five, Inc., United States): it sends the e-mails about your account — confirming your address and the link to change your password. For that it receives your e-mail address and the content of those e-mails, nothing else. They are sent from its European region (Ireland), but Resend processes this data mainly in the United States.",
           "OpenRouter (United States), only if you connect your own AI account: Pluclair has no AI model of its own, and reads and questions are written only by the model you chose, on your account and at your expense. OpenRouter receives the figures a read is written from — category names and monthly totals, the funds in a wallet and their values, the name and identifier of a fund to read — and, for a conversation in « Questions », your questions as you typed them — what you write there reaches it as it is —, the answers already given in that conversation, and what the model looks up to answer: totals by month, category or shop, your recurring entries, savings accounts, investments and loans, and, when the question is about them, individual entries (date, label, category, amount). It passes them to the model's provider (Mistral, OpenAI or Anthropic). If you ask it to read a scanned statement or a screenshot, it receives that file, once, and hands it to Mistral alone, on its servers in Europe, whatever model you chose for the rest; Pluclair does not keep it. Never your name, your email or your bank credentials. The account's key is kept encrypted on our server, and you can disconnect it at any time.",
           "Brevo (Sendinblue SAS, France), only if you create your statements address: it receives the e-mails your mail service forwards to that address and hands them to us, in the European Union.",
           "Google: only if you sign in with Google.",
@@ -174,7 +175,7 @@ export const legalCopy: LegalCopy = {
           "Address search: when you type a property's address, our server asks the French State's geocoding service (IGN Géoplateforme) to find it. IGN receives the address you typed, never your IP address or anything else about you. To estimate what a property is worth we read the public record of property sales (DVF) and the Notaires–INSEE price index, sending only a town code or the index's identifier. For a let property we download the ANIL's rent map whole, sending nothing about you.",
         ],
         after: [
-          "Vercel Inc. is a US company certified under the EU–US Data Privacy Framework, on which any transfer to it relies. Supabase keeps the data in the European Union, and relies on the European Commission's standard contractual clauses for any access from outside it. Each one's data processing agreement (DPA) is part of its terms of service and applies from the moment the account is opened.",
+          "Vercel Inc. is a US company certified under the EU–US Data Privacy Framework, on which any transfer to it relies. Supabase keeps the data in the European Union, and relies on the European Commission's standard contractual clauses for any access from outside it. Resend, a US company, is certified under the same EU–US framework and is also bound by those standard contractual clauses. Each one's data processing agreement (DPA) is part of its terms of service and applies from the moment the account is opened.",
           "If you connect an AI account, OpenRouter and the chosen model's provider may process those figures — and a statement you have read, which goes through OpenRouter — outside the European Union, most often in the United States: that transfer happens on your account, at your request, and you are told before you connect it.",
         ],
       },

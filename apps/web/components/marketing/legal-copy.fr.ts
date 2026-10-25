@@ -15,7 +15,7 @@ export const legalCopyFr: LegalCopy = {
     notice: "Mentions légales",
   },
   updatedLabel: "Dernière mise à jour\u00A0:",
-  updated: "2026-10-13",
+  updated: "2026-10-25",
   contents: "Sur cette page",
   draftNotice:
     "Brouillon à relire. Les blancs surlignés sont à compléter par l'éditeur, et le texte n'a pas encore été vérifié par un juriste.",
@@ -115,6 +115,7 @@ export const legalCopyFr: LegalCopy = {
         points: [
           "Supabase\u00A0: la base de données et la connexion, dans l'Union européenne, à Francfort (Allemagne).",
           "Vercel\u00A0: l'hébergement du site et du serveur, les fonctions serveur s'exécutant à Paris, en France.",
+          "Resend (Plus Five Five, Inc., États-Unis)\u00A0: il envoie les e-mails liés à votre compte — la confirmation de votre adresse et le lien pour changer de mot de passe. Il reçoit pour cela votre adresse e-mail et le contenu de ces e-mails, rien d'autre. Les envois partent de sa région européenne (Irlande), mais Resend traite ces données principalement aux États-Unis.",
           "OpenRouter (États-Unis), seulement si vous connectez votre propre compte IA\u00A0: Pluclair n'a pas de modèle d'IA à lui, et les lectures et les questions ne sont rédigées que par le modèle que vous avez choisi, sur votre compte et à vos frais. OpenRouter reçoit les chiffres à partir desquels une lecture est écrite — noms de catégories et totaux du mois, fonds d'un portefeuille et leurs valeurs, nom et identifiant d'un fonds à lire —, et, pour une conversation dans «\u00A0Questions\u00A0», vos questions telles que vous les avez tapées — ce que vous y écrivez lui parvient tel quel —, les réponses déjà données dans cette conversation, et ce que le modèle consulte pour y répondre\u00A0: des totaux par mois, catégorie ou commerce, vos opérations récurrentes, vos comptes d'épargne, vos placements et vos prêts, et, quand la question porte sur elles, des opérations une à une (date, libellé, catégorie, montant). Il les transmet au fournisseur du modèle (Mistral, OpenAI ou Anthropic). Si vous lui demandez de lire un relevé scanné ou une capture d'écran, il reçoit ce fichier, une fois, et le confie à Mistral seul, sur ses serveurs en Europe, quel que soit le modèle choisi pour le reste\u00A0; Pluclair ne le garde pas. Jamais votre nom, votre e-mail ni vos identifiants bancaires. La clé de ce compte est conservée chiffrée sur notre serveur, et vous pouvez le déconnecter à tout moment.",
           "Brevo (Sendinblue SAS, France), seulement si vous créez votre adresse de relevés\u00A0: il reçoit les e-mails que votre messagerie fait suivre à cette adresse et nous les transmet, dans l'Union européenne.",
           "Google : seulement si vous vous connectez avec Google.",
@@ -123,7 +124,7 @@ export const legalCopyFr: LegalCopy = {
           "La recherche d'adresse : quand vous saisissez l'adresse d'un bien, notre serveur demande au service de géocodage de l'État (Géoplateforme de l'IGN) de la retrouver. L'IGN reçoit l'adresse saisie, jamais votre adresse IP ni rien d'autre vous concernant. Pour estimer ce que vaut un bien, nous consultons les ventes immobilières publiques (DVF) et l'indice des prix Notaires-INSEE, en n'envoyant qu'un code de commune ou l'identifiant de l'indice. Pour un bien loué, nous téléchargeons la carte des loyers de l'ANIL en entier, sans rien envoyer vous concernant.",
         ],
         after: [
-          "Vercel Inc. est une société américaine certifiée au titre du cadre de protection des données UE–États-Unis, sur lequel repose tout transfert vers elle. Supabase conserve les données dans l'Union européenne, et s'appuie sur les clauses contractuelles types de la Commission européenne pour tout accès depuis l'extérieur. L'accord de traitement des données de chacun (DPA) fait partie de ses conditions d'utilisation et s'applique dès l'ouverture du compte.",
+          "Vercel Inc. est une société américaine certifiée au titre du cadre de protection des données UE–États-Unis, sur lequel repose tout transfert vers elle. Supabase conserve les données dans l'Union européenne, et s'appuie sur les clauses contractuelles types de la Commission européenne pour tout accès depuis l'extérieur. Resend, société américaine, est certifiée au titre du même cadre UE–États-Unis et s'engage en outre par ces clauses contractuelles types. L'accord de traitement des données de chacun (DPA) fait partie de ses conditions d'utilisation et s'applique dès l'ouverture du compte.",
           "Si vous connectez un compte IA, OpenRouter et le fournisseur du modèle choisi peuvent traiter ces chiffres — et un relevé que vous faites lire, qui passe par OpenRouter — hors de l'Union européenne, le plus souvent aux États-Unis\u00A0: ce transfert a lieu sur votre compte, à votre demande, et vous en êtes informé avant de le connecter.",
         ],
       },
