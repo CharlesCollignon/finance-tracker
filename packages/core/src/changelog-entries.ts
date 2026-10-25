@@ -17,6 +17,24 @@ import type { ChangelogEntry, RoadmapItem } from "./changelog";
  */
 export const CHANGELOG: readonly ChangelogEntry[] = [
   {
+    id: "2026-10-25-fades",
+    date: "2026-10-25",
+    kind: "better",
+    platforms: ["web"],
+    fr: {
+      title: "Tout apparaît en fondu, plus vite",
+      body: "Sur le site, les écrans, les cartes, les feuilles et les messages apparaissent et s’en vont en un fondu rapide, au lieu de glisser, de monter ou de rebondir. Les barres et les courbes apparaissent à leur valeur au lieu de pousser depuis zéro.",
+      detail:
+        "Ce qui suit le doigt ou la souris (interrupteurs, curseurs, glissés), les montants qui défilent jusqu’à leur valeur et les moments — un palier atteint, un mois clôturé — bougent comme avant. L’accueil, « À propos » et la page de téléchargement gardent leur animation au défilement.",
+    },
+    en: {
+      title: "Everything fades in, faster",
+      body: "On the site, screens, cards, sheets and messages appear and leave with a quick fade instead of sliding, rising or bouncing. Bars and curves appear at their value instead of growing from zero.",
+      detail:
+        "What follows your finger or pointer (switches, sliders, swipes), amounts counting up to their value and the moments — a milestone reached, a month closed — move as before. The home page, “About” and the download page keep their scroll animation.",
+    },
+  },
+  {
     id: "2026-10-25-focus-rings",
     date: "2026-10-25",
     kind: "fixed",
