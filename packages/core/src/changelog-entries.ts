@@ -17,6 +17,38 @@ import type { ChangelogEntry, RoadmapItem } from "./changelog";
  */
 export const CHANGELOG: readonly ChangelogEntry[] = [
   {
+    id: "2026-10-25-statements-phone",
+    date: "2026-10-25",
+    kind: "new",
+    platforms: ["phone"],
+    fr: {
+      title: "Vos relevés, aussi depuis le téléphone",
+      body: "Le fichier de votre banque — CSV, OFX, Excel, PDF… — s’importe depuis le téléphone comme sur le site : une carte par compte, les opérations qui attendent dans « À vérifier », et chaque import se défait pendant trente jours. Sur Android, partagez le fichier vers Pluclair depuis n’importe quelle appli : il s’ouvre dans l’import.",
+      detail:
+        "« Importer un relevé » est dans le menu de votre compte. Une capture ou un relevé scanné peut être lu par votre compte IA, si vous le demandez. Le 5 de chaque mois, un rappel vous demande le relevé du mois passé ; il se coupe dans le Profil.",
+    },
+    en: {
+      title: "Your statements, from the phone too",
+      body: "Your bank’s file — CSV, OFX, Excel, PDF… — imports from the phone as on the site: one card per account, the transactions waiting in “Review”, and each import can be undone for thirty days. On Android, share the file to Pluclair from any app: it opens in the import.",
+      detail:
+        "“Import a statement” is in your account menu. A screenshot or a scanned statement can be read by your AI account, if you ask. On the 5th of each month, a reminder asks for last month’s statement; it can be turned off in Profile.",
+    },
+  },
+  {
+    id: "2026-10-25-entraide-phone-smoother",
+    date: "2026-10-25",
+    kind: "fixed",
+    platforms: ["phone"],
+    fr: {
+      title: "Entraide, plus fluide sur le téléphone",
+      body: "Réagir ou répondre ne fige plus l’écran ; une réponse s’affiche dès qu’elle est envoyée, une modification ou une suppression dès qu’elle est enregistrée.",
+    },
+    en: {
+      title: "Entraide, smoother on the phone",
+      body: "Reacting or answering no longer freezes the screen; an answer shows as soon as it is sent, an edit or a deletion as soon as it is saved.",
+    },
+  },
+  {
     id: "2026-10-25-several-loans",
     date: "2026-10-25",
     kind: "better",
