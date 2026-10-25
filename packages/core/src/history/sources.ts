@@ -18,10 +18,11 @@ export interface HistorySource {
   terms: string;
   /**
    * `open`: reuse is allowed, commercial use included, with the source named.
-   * `requested`: no licence is stated; the authors' permission has been asked.
+   * `non-commercial`: reuse is allowed while Pluclair earns nothing — the day
+   * it does, this source has to be replaced.
    * `public`: a public decision, not a database.
    */
-  standing: "open" | "requested" | "public";
+  standing: "open" | "non-commercial" | "public";
   series: readonly HistorySeriesId[];
 }
 
@@ -36,13 +37,13 @@ export const HISTORY_SOURCES: readonly HistorySource[] = [
     series: ["cpi-fr"],
   },
   {
-    publisher: "Eugene F. Fama et Kenneth R. French",
+    publisher: "Jensen, Kelly et Pedersen",
     title:
-      "Kenneth R. French Data Library : marché américain, pays développés, Europe, émergents",
-    url: "https://mba.tuck.dartmouth.edu/pages/faculty/ken.french/data_library.html",
-    terms: "© Eugene F. Fama et Kenneth R. French ; autorisation demandée",
-    standing: "requested",
-    series: ["us", "world", "europe", "emerging"],
+      "Global Factor Data : rendement du marché de chaque pays, dividendes compris (« Is There a Replication Crisis in Finance? », Journal of Finance, 2023)",
+    url: "https://jkpfactors.com/",
+    terms: "CC BY-NC 4.0",
+    standing: "non-commercial",
+    series: ["us", "world", "europe"],
   },
   {
     publisher: "OCDE",
@@ -65,11 +66,12 @@ export const HISTORY_SOURCES: readonly HistorySource[] = [
   },
   {
     publisher: "Federal Reserve Board",
-    title: "H.10 Foreign Exchange Rates, via FRED",
+    title:
+      "H.10 Foreign Exchange Rates et H.15 Selected Interest Rates (bons du Trésor à trois mois), via FRED",
     url: "https://www.federalreserve.gov/releases/h10/",
     terms: "Domaine public (données du gouvernement fédéral américain)",
     standing: "open",
-    series: ["world", "us", "europe", "emerging"],
+    series: ["world", "us", "europe"],
   },
   {
     publisher: "Banque de France",

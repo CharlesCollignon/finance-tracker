@@ -80,11 +80,12 @@ offered; for 3 they kept the editable table.
    settled in Phase 0, before anything ships. Settled the same day, with
    the owner (see « Sources »):
    - shares are rebuilt rather than licensed from MSCI;
-   - the US come from Fama and French, used while their permission is
-     asked;
+   - each country's market comes from Global Factor Data (CC BY-NC 4.0),
+     because Pluclair stays free. It replaced Fama and French, which
+     states no licence, the same day;
    - the rebuild is weighted by market size, not GDP, after measuring both;
-   - the dividends missing from the OECD's prices are matched to Fama and
-     French, not to an MSCI factsheet.
+   - the dividends missing from the OECD's prices are matched to the
+     countries' own figures, not to an MSCI factsheet.
 6. **An edited return shifts history; it does not replace it.** The return
    field starts at the account's historical median (« 1970–2025 : 6,8 % »).
    Typing 5 % moves that account's whole history down by the difference.
@@ -122,9 +123,9 @@ offered; for 3 they kept the editable table.
     - each livret as its own regulated-rate history;
     - a PEL at its contract rate, as today.
     Index families with no series of their own follow a broader one:
-    Nasdaq-100 and Russell 2000 follow the whole US market. Emerging
-    markets, which start in July 1989, follow developed markets before
-    that. The replay records each stand-in it used.
+    Nasdaq-100 and Russell 2000 follow the whole US market, and emerging
+    markets follow developed ones, since no open source rebuilds them
+    faithfully (see « Sources »). The replay records each stand-in it used.
 12. **The milestones' dates come from the median replay** on the reader's
     real figures, so « Progression » and the trajectory agree. A reached
     milestone is still today's measured wealth, so the milestone push and
@@ -157,7 +158,6 @@ carries core as source, so size matters).
 | `world` | developed shares: MSCI World and FTSE All-World funds, the default | 1970 | built |
 | `us` | US shares, the whole market: S&P 500, and Nasdaq-100 and Russell 2000 as stand-ins | 1970 | built |
 | `europe` | European shares (STOXX Europe 600 funds) | 1970 | built |
-| `emerging` | emerging shares; `world` before | 1989-07 | built |
 | `bonds-fr` | French 10-year government bonds, for bond and mixed funds | 1970 | built |
 | `cpi-fr` | French consumer prices | 1970 | built |
 | `livret-a` | the Livret A's rate, by quinzaine | 1970 | built |
@@ -288,13 +288,14 @@ The bank invitation stays at the foot of the page.
 ## Phases
 
 0. **The data** (`plan-history-data`). Shares, bonds, prices and the
-   Livret A built on 2026-10-25 (2ccd0f8):
+   Livret A were built on 2026-10-25 (2ccd0f8), and the shares moved to
+   Global Factor Data the same evening:
    - `packages/core/src/history/` holds the series, the sources and tests:
      INSEE's yearly inflation, the Livret A's rates, the rebuild's dates;
    - `scripts/history-refresh.mjs` rebuilds them;
    - no screen changes; `Changelog: none`.
    Still to do: the LDDS, the LEP, the fonds euros and bitcoin (see
-   « Sources »), and the owner's e-mail to Kenneth French.
+   « Sources »).
 1. **The engine** (`plan-history-core`).
    - `replayPlan`, `crashTest`, `lossOdds`, `sustainableWithdrawal` and
      `historicalReturn`.
@@ -330,30 +331,68 @@ Phases 0 and 1 hold everything else up; 2 can be taken at any time.
 | Series | Source | Terms |
 | --- | --- | --- |
 | `cpi-fr` | INSEE: 000008964 (base 1980) to January 1990, then 001759970 (base 2015), chained by monthly change | Licence Ouverte 2.0 |
-| `us` | Fama and French: the US market, Mkt-RF + RF, from 1970 | © Fama and French; permission asked |
-| `world` | Fama and French « Developed » from July 1990; rebuilt before (below) | the same, plus OECD and World Bank |
-| `europe` | Fama and French « Europe » from July 1990; rebuilt before | the same |
-| `emerging` | Fama and French « Emerging » from July 1989 | © Fama and French |
+| `us` | Global Factor Data: the US market, value-weighted, over the Treasury bill, from 1970; the bill added back | CC BY-NC 4.0; Fed H.15 public domain |
+| `world` | Global Factor Data's developed countries from 1986, weighted by size (below); rebuilt before | the same, plus OECD and World Bank (CC BY 4.0) |
+| `europe` | the same with Europe's countries | the same |
 | `bonds-fr` | OECD, France's long-term rate (IRLT), as a 10-year bond at constant maturity | OECD terms: reuse with the source named |
 | dollar rates | Federal Reserve H.10 via FRED; in 1970, the OECD's rates and the Bretton Woods parities | US public domain |
 | `livret-a` | the arrêtés, as Banque de France's MIR1 series gives them, checked against a second compilation | public decisions |
 
-**The rebuild before July 1990:**
+**Non-commercial.** Global Factor Data is CC BY-NC 4.0, and the owner
+confirmed on 2026-10-25 that Pluclair stays free. If Pluclair ever earns
+money, the US and the regions need another source: Fama and French with
+their written permission (the draft e-mail is in this file's history,
+f75e118), or a paid licence.
+
+**From 1986: the countries' own figures, weighted by size.**
+- Each developed country's market, dividends in, over the US Treasury
+  bill; the three-month bill (H.15) is added back.
+- Weighted by its stock market's size at the previous year-end (World Bank),
+  carried through the year by its returns. A year the World Bank lacks
+  (Euronext's members since about 2015) is the last known size carried by
+  the market.
+- Hong Kong and Singapore are left out. The World Bank counts every
+  company listed there in full, mainland Chinese ones included (Hong Kong
+  as large as Japan), where a developed-market fund holds a sliver of
+  either.
+- Global Factor Data's own regions are not used: they do not weigh
+  countries by size, and return 3.2 %/yr over the bill for developed
+  markets over 1990–2025, where the United States alone return 7.9 %.
+
+**Before 1986: the rebuild.**
 - Each developed country's OECD share price index, in dollars.
-- Weighted by its market's size at the end of 1989 (World Bank, CC BY 4.0),
-  carried back month by month with its prices. Japan is 40 % of the mix in
-  1989 and the United States 56 % in 1970.
-- The United States' own return in it is Fama and French's.
-- Every other country gets the yearly dividend yield that makes the same
-  rebuild return what Fama and French do over 1990–2025: 2.6 % outside the
-  United States, 3.0 % for Europe.
+- Weighted by its market's size at the end of 1985 (World Bank), carried
+  back month by month with its prices. The United States are 63 % of the
+  mix in 1970, and Japan passes them in 1989.
+- The United States' own return in it is Global Factor Data's.
+- Every other country gets the yearly dividend yield that brings the OECD's
+  prices level with the countries' own figures over 1986–2025: 2.6 %
+  outside the United States, 3.0 % for Europe.
 
 **Checked once against MSCI World's published yearly returns** (kept in a
-scratch file, never stored): the rebuild returns 13.64 %/yr in dollars
-over 1970–1989, against 13.42 %; each year is within one to three points.
-Fama and French return 8.07 %/yr over 1990–2025, against 8.28 %.
+scratch file, never stored):
+- 1970–1989: 13.37 %/yr in dollars, against 13.42 %;
+- 1990–2025: 8.16 %/yr, against 8.28 %;
+- 1970–2025: 10.00 %/yr, against 10.09 %;
+- 2008: −36.0 % in euros.
+Weights by full market size, not float, put the United States near 60 %
+where a fund today holds about 72 %. In years when US shares lead, the
+series lags by a few points (2024: +15.3 % against +19.2 % in dollars).
 
 **Set aside, and why:**
+- **Fama and French.** Very close in quality (8.38 %/yr for developed
+  markets over 1990–2025), but no licence is stated, so it would have
+  needed permission.
+- **Emerging markets.** Weighted by the World Bank's figures, China counts
+  all its domestic A-shares, which a fund mostly does not hold, and Taiwan
+  is missing. The rebuild strays far from any fund (2007: +72 % against
+  +40 %; 2015: +4 % against −11 %), so emerging funds follow developed
+  ones.
+- **The IMF.** It has the S&P 500 monthly since 1970, but only as prices,
+  and commercial reuse of its data needs permission.
+- **Free market-data APIs** (Yahoo, Stooq, Alpha Vantage, Twelve Data,
+  Tiingo). Their free terms cover personal use only, and keeping their
+  figures in the app is redistributing them.
 - **MSCI.** Its index data and its factsheets « may not be used for
   commercial purposes without prior written permission ».
 - **The OECD's US index.** It behaves like the NYSE Composite, without
@@ -378,39 +417,13 @@ Fama and French return 8.07 %/yr over 1990–2025, against 8.28 %.
   quotes (`market/yahoo.ts`), the same terms the owner already accepted for
   prices.
 
-### The owner's part: asking Fama and French
-
-To send from the owner's address to Kenneth French (his address is on the
-Data Library page), filling in the bracket:
-
-> Subject: Using Data Library market returns in a personal-finance app
->
-> Dear Professor French,
->
-> I am building Pluclair, a personal-finance app for French savers. Its
-> planning page replays a person's own savings plan on historical market
-> returns, so that they see the range of outcomes and what past crashes
-> would have done to their money, rather than a fixed assumed return.
->
-> We would like to use the monthly market returns (Mkt-RF plus RF) from
-> the US research factors and the Developed, Developed ex US, Europe and
-> Emerging files. They would be stored in the app as monthly returns
-> converted to euros, refreshed once a year, and credited to the Kenneth
-> R. French Data Library, with a link, on the page that uses them.
-> Pluclair is [free / how it is paid for].
->
-> May we use the data this way? If you would like a different
-> attribution, or would rather we did not, please tell me and we will
-> follow your wishes.
->
-> Thank you for making the library available.
-
-If the answer is no, the US leg and the regions after 1990 need another
-source, and the rest of the plan waits for it.
-
 ## Risks
 
-- **Licences.** The world series is the blocker; see above.
+- **The shares' licence is non-commercial.** The day Pluclair charges for
+  anything, Global Factor Data has to be replaced first; see « Sources ».
+- **Emerging funds follow developed ones**, which understates how far they
+  have fallen (2008, and Asia in 1997–98). « Hypothèses » says so for any
+  account that holds them.
 - **Reading history as a promise.** Every figure says « depuis 1970 » or
   « si l'histoire se répétait », and the page names no product, fund or
   provider (advice tiers 0–3, `PLUCLAIR_UPGRADE_PLAN.md` D1). The « Aucun conseil »

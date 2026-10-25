@@ -29,8 +29,6 @@ export type HistorySeriesId =
   | "us"
   /** European shares, dividends reinvested. */
   | "europe"
-  /** Emerging-market shares, dividends reinvested; from July 1989. */
-  | "emerging"
   /** A ten-year French government bond held at constant maturity. */
   | "bonds-fr"
   /** The Livret A, at the rate in force each month. */
@@ -41,7 +39,6 @@ export const HISTORY_SERIES_IDS: readonly HistorySeriesId[] = [
   "world",
   "us",
   "europe",
-  "emerging",
   "bonds-fr",
   "livret-a",
 ];
@@ -74,10 +71,10 @@ export interface GeneratedHistory {
   /** The day the refresh ran, `YYYY-MM-DD`. */
   refreshed: string;
   /**
-   * The yearly dividend yield added to the price-only share indices outside
-   * the United States, before the source's own total returns begin: matched
-   * so that the reconstruction, over the years both exist, returns what the
-   * source does.
+   * The yearly dividend yield added to the OECD's price-only share indices
+   * outside the United States, before each country's own figures begin in
+   * 1986: matched so that, over the years both exist, the prices return
+   * what the countries' own figures do.
    */
   dividends: { exUs: number; europe: number };
   series: Record<

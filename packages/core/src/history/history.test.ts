@@ -69,10 +69,10 @@ describe("every series", () => {
   });
 
   it("reads a month, and nothing outside the series", () => {
-    const emerging = historySeries("emerging");
-    expect(returnIn(emerging, emerging.start)).toBe(emerging.returns[0]);
-    expect(returnIn(emerging, addMonths(emerging.start, -1))).toBeNull();
-    expect(returnIn(emerging, addMonths(HISTORY_END, 1))).toBeNull();
+    const world = historySeries("world");
+    expect(returnIn(world, world.start)).toBe(world.returns[0]);
+    expect(returnIn(world, addMonths(world.start, -1))).toBeNull();
+    expect(returnIn(world, addMonths(HISTORY_END, 1))).toBeNull();
   });
 });
 
@@ -89,11 +89,10 @@ describe("French prices", () => {
 });
 
 describe("shares", () => {
-  it("are Fama and French's own from July 1990, rebuilt before", () => {
-    expect(historySeries("world").reconstructedUntil).toBe("1990-06");
-    expect(historySeries("europe").reconstructedUntil).toBe("1990-06");
+  it("are the countries' own figures from 1986, rebuilt before", () => {
+    expect(historySeries("world").reconstructedUntil).toBe("1985-12");
+    expect(historySeries("europe").reconstructedUntil).toBe("1985-12");
     expect(historySeries("us").reconstructedUntil).toBeNull();
-    expect(historySeries("emerging").start).toBe("1989-07");
   });
 
   // Not a published figure: a guard against a broken refresh, wide enough

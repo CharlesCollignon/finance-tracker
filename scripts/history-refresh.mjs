@@ -15,18 +15,24 @@
  *
  * Shares, which are the hard part:
  *
- * - The United States are the whole American market with dividends, from
- *   Fama and French, from 1970.
- * - Developed markets and Europe are Fama and French's own total returns
- *   from July 1990. Before that they are rebuilt: each country's OECD share
- *   price index in dollars, weighted by its stock market's size at the end
- *   of 1989 (World Bank) and carried back month by month with its prices,
- *   so that a country's weight moves as its market did — Japan passes the
- *   United States in 1989, as it did. The United States in that mix are
- *   Fama and French's; every other country gets a dividend yield on top of
- *   its prices, the constant that makes the same rebuild return what Fama
- *   and French do over the years both exist.
- * - Emerging markets start in July 1989, with Fama and French.
+ * - Each country's whole market, dividends reinvested, in dollars, comes
+ *   from Global Factor Data (Jensen, Kelly and Pedersen; CC BY-NC 4.0): the
+ *   United States from 1926, most others from 1986. Its returns are over
+ *   the US Treasury bill, which is added back (Fed H.15, three months).
+ * - Developed markets and Europe are those countries weighted by the size
+ *   of their stock market at each year-end (World Bank), carried through the
+ *   year by their returns. Global Factor Data's own regions are not used:
+ *   they do not weigh countries by size, and return far less than any index
+ *   a fund follows.
+ * - Before 1986 they are rebuilt: the United States as above, every other
+ *   country from its OECD share price index in dollars, all weighted by
+ *   market size at the end of 1985 carried back by prices — Japan passes the
+ *   United States in 1989, as it did. Prices leave out dividends, so every
+ *   country but the United States gets the yearly yield that makes the
+ *   same rebuild return what the countries' own figures do from 1986.
+ * - Emerging markets have no series: weighted by the World Bank's figures,
+ *   China counts all its domestic shares and the result strays far from
+ *   any fund, and Taiwan is missing. Emerging funds follow developed ones.
  *
  * MSCI is not used anywhere: its index data and factsheets may not be used
  * commercially without its written permission.
@@ -50,10 +56,10 @@ if (!/^\d{4}-\d{2}$/.test(END ?? "")) {
   fail(`--end takes a month, YYYY-MM (got ${END}).`);
 }
 
-/** The month Fama and French's developed and European returns begin. */
-const FF_REGIONS_START = "1990-07";
+/** The month the countries' own figures take over from the rebuild. */
+const COUNTRIES_START = "1986-01";
 /** The year-end whose market sizes weight the rebuild before it. */
-const ANCHOR = "1989-12";
+const ANCHOR = "1985-12";
 
 // ------------------------------------------------------------- the months
 
@@ -119,7 +125,7 @@ async function fetchZipText(url) {
     const file = join(folder, "data.zip");
     writeFileSync(file, Buffer.from(await response.arrayBuffer()));
     return execFileSync("unzip", ["-p", file], {
-      encoding: "latin1",
+      encoding: "utf8",
       maxBuffer: 64 * 1024 * 1024,
     });
   } finally {
@@ -179,32 +185,47 @@ async function buildCpi() {
   });
 }
 
-// --------------------------------------------- Fed H.10 exchange rates
+// ------------------------------------------------------------ the markets
 
 /**
- * The developed markets the rebuild weighs, with their currency against the
- * dollar from H.10. `usdPer`: H.10 quotes dollars per unit (pound, Australian
- * and New Zealand dollars). `euro`: the rate the currency joined the euro
- * at, used from January 1999. `par`: the Bretton Woods parity in 1970, before
- * H.10 begins, for the currencies the OECD gives no 1970 rate for.
+ * The developed markets: Global Factor Data's name for each, whether it is
+ * European, and, for those the rebuild before 1986 reads, how to put its
+ * OECD price index into dollars. `fx`: its H.10 rate; `usdPer`: H.10 quotes
+ * dollars per unit (pound, Australian and New Zealand dollars); `euro`: the
+ * rate it joined the euro at, used from January 1999; `par`: its Bretton
+ * Woods parity in 1970, before H.10 begins, where the OECD gives none.
  */
-const COUNTRIES = {
-  USA: { europe: false },
-  JPN: { fx: "EXJPUS", europe: false },
-  GBR: { fx: "EXUSUK", usdPer: true, europe: true },
-  CAN: { fx: "EXCAUS", europe: false },
-  FRA: { fx: "EXFRUS", euro: 6.55957, par: 5.55419, europe: true },
-  DEU: { fx: "EXGEUS", euro: 1.95583, par: 3.66, europe: true },
-  CHE: { fx: "EXSZUS", europe: true },
-  AUS: { fx: "EXUSAL", usdPer: true, europe: false },
-  NLD: { fx: "EXNEUS", euro: 2.20371, par: 3.62, europe: true },
-  SWE: { fx: "EXSDUS", europe: true },
-  ITA: { fx: "EXITUS", euro: 1936.27, par: 625, europe: true },
-  ESP: { fx: "EXSPUS", euro: 166.386, europe: true },
-  BEL: { fx: "EXBEUS", euro: 40.3399, par: 50, europe: true },
-  DNK: { fx: "EXDNUS", europe: true },
-  NOR: { fx: "EXNOUS", europe: true },
-  NZL: { fx: "EXUSNZ", usdPer: true, europe: false },
+const MARKETS = {
+  USA: { europe: false, rebuild: true },
+  JPN: { europe: false, rebuild: true, fx: "EXJPUS" },
+  GBR: { europe: true, rebuild: true, fx: "EXUSUK", usdPer: true },
+  CAN: { europe: false, rebuild: true, fx: "EXCAUS" },
+  FRA: {
+    europe: true,
+    rebuild: true,
+    fx: "EXFRUS",
+    euro: 6.55957,
+    par: 5.55419,
+  },
+  DEU: { europe: true, rebuild: true, fx: "EXGEUS", euro: 1.95583, par: 3.66 },
+  CHE: { europe: true, rebuild: true, fx: "EXSZUS" },
+  AUS: { europe: false, rebuild: true, fx: "EXUSAL", usdPer: true },
+  NLD: { europe: true, rebuild: true, fx: "EXNEUS", euro: 2.20371, par: 3.62 },
+  SWE: { europe: true, rebuild: true, fx: "EXSDUS" },
+  ITA: { europe: true, rebuild: true, fx: "EXITUS", euro: 1936.27, par: 625 },
+  ESP: { europe: true, rebuild: true, fx: "EXSPUS", euro: 166.386 },
+  BEL: { europe: true, rebuild: true, fx: "EXBEUS", euro: 40.3399, par: 50 },
+  DNK: { europe: true, rebuild: true, fx: "EXDNUS" },
+  NOR: { europe: true, rebuild: true, fx: "EXNOUS" },
+  NZL: { europe: false, rebuild: true, fx: "EXUSNZ", usdPer: true },
+  FIN: { europe: true, rebuild: false },
+  AUT: { europe: true, rebuild: false },
+  IRL: { europe: true, rebuild: false },
+  PRT: { europe: true, rebuild: false },
+  ISR: { europe: false, rebuild: false },
+  // Not Hong Kong or Singapore: the World Bank counts every company listed
+  // there in full, mainland Chinese ones included — Hong Kong as large as
+  // Japan — where a developed-market fund holds a sliver of either.
 };
 
 async function fredSeries(id) {
@@ -221,8 +242,6 @@ async function fredSeries(id) {
   }
   return values;
 }
-
-// ------------------------------------------------------------- the OECD
 
 const OECD =
   "https://sdmx.oecd.org/public/rest/data/OECD.SDD.STES,DSD_STES@DF_FINMARK,4.0";
@@ -256,43 +275,36 @@ async function oecdMeasures(countries, measures, from, to) {
   return byMeasure;
 }
 
-// ----------------------------------------------- Fama and French returns
+const JKP = "https://jkpfactors-data.s3.amazonaws.com/public";
 
-const FF =
-  "https://mba.tuck.dartmouth.edu/pages/faculty/ken.french/ftp";
-
-/** A file's monthly market return, Mkt-RF plus RF, as month → fraction. */
-async function famaFrenchMarket(name) {
-  const text = await fetchZipText(`${FF}/${name}_CSV.zip`);
-  const values = new Map();
-  let columns = null;
-  for (const raw of text.split(/\r?\n/)) {
-    const line = raw.trim();
-    if (line.startsWith(",")) {
-      // Each table opens with its header; the first is the monthly one.
-      columns ??= line.split(",").map((cell) => cell.trim());
+/**
+ * Every country's value-weighted market return over the Treasury bill, in
+ * dollars, as country (upper case, as everywhere else here) → month → fraction.
+ */
+async function globalFactorMarkets() {
+  const csv = await fetchZipText(
+    `${JKP}/%5Ball_countries%5D_%5Bmkt%5D_%5Bmonthly%5D_%5Bvw%5D.zip`,
+  );
+  const [header, ...lines] = csv.trim().split(/\r?\n/);
+  const columns = header.split(",");
+  const at = (name) => columns.indexOf(name);
+  const byCountry = new Map();
+  for (const line of lines) {
+    const cells = line.split(",");
+    const value = Number(cells[at("ret")]);
+    if (!Number.isFinite(value)) {
       continue;
     }
-    const match = /^(\d{4})(\d{2})\s*,(.*)$/.exec(line);
-    if (!match || !columns) {
-      continue;
-    }
-    const cells = [match[1] + match[2], ...match[3].split(",")].map((cell) =>
-      Number(cell.trim()),
-    );
-    const excess = cells[columns.indexOf("Mkt-RF")];
-    const riskFree = cells[columns.indexOf("RF")];
-    if (excess > -99 && riskFree > -99) {
-      values.set(`${match[1]}-${match[2]}`, (excess + riskFree) / 100);
-    }
+    const country = cells[at("location")].toUpperCase();
+    const values = byCountry.get(country) ?? new Map();
+    values.set(cells[at("date")].slice(0, 7), value);
+    byCountry.set(country, values);
   }
-  if (values.size === 0) {
-    fail(`no monthly returns read from Fama and French's ${name}.`);
+  if (!byCountry.has("USA")) {
+    fail("Global Factor Data's market file has no United States.");
   }
-  return values;
+  return byCountry;
 }
-
-// ------------------------------------------- the World Bank's market sizes
 
 /** Stock market capitalisation, US dollars, as country → year → value. */
 async function marketSizes(countries, from, to) {
@@ -312,24 +324,16 @@ async function marketSizes(countries, from, to) {
   return sizes;
 }
 
-// ----------------------------------------------------------------- build
+// ----------------------------------------------------------------- read
 
-const countryIds = Object.keys(COUNTRIES);
-const fxIds = [
-  ...new Set(
-    Object.values(COUNTRIES)
-      .map((country) => country.fx)
-      .filter(Boolean),
-  ),
-];
+const marketIds = Object.keys(MARKETS);
+const rebuildIds = marketIds.filter((id) => MARKETS[id].rebuild);
+const fxIds = rebuildIds.map((id) => MARKETS[id].fx).filter(Boolean);
 
-/**
- * Share prices, the French long rate, and exchange rates for 1970, before
- * H.10 begins.
- */
+/** Share prices, the French long rate, and exchange rates for 1970. */
 async function oecdAll() {
   const byMeasure = await oecdMeasures(
-    countryIds,
+    rebuildIds,
     ["SHARE", "IRLT", "CC"],
     addMonths(START, -1),
     END,
@@ -343,25 +347,21 @@ const [
   [sharePrices, longRates, oecdRates],
   fxEntries,
   usdPerEur,
+  billRates,
   sizes,
-  ffUs,
-  ffDeveloped,
-  ffDevelopedExUs,
-  ffEurope,
-  ffEmerging,
+  markets,
 ] = await Promise.all([
   buildCpi(),
   oecdAll(),
   Promise.all(fxIds.map(async (id) => [id, await fredSeries(id)])),
   fredSeries("EXUSEU"),
-  marketSizes(countryIds, 1989, Number(END.slice(0, 4))),
-  famaFrenchMarket("F-F_Research_Data_Factors"),
-  famaFrenchMarket("Developed_3_Factors"),
-  famaFrenchMarket("Developed_ex_US_3_Factors"),
-  famaFrenchMarket("Europe_3_Factors"),
-  famaFrenchMarket("Emerging_5_Factors"),
+  fredSeries("TB3MS"),
+  marketSizes(marketIds, 1984, Number(END.slice(0, 4))),
+  globalFactorMarkets(),
 ]);
 const fx = new Map(fxEntries);
+
+// ------------------------------------------------------------ currencies
 
 /** Euros (francs before 1999) for one dollar, the month's average. */
 function eurPerUsd(month) {
@@ -370,35 +370,28 @@ function eurPerUsd(month) {
     return usd ? 1 / usd : null;
   }
   const francs =
-    month < "1971-01" ? COUNTRIES.FRA.par : fx.get("EXFRUS").get(month);
-  return francs ? francs / COUNTRIES.FRA.euro : null;
+    month < "1971-01" ? MARKETS.FRA.par : fx.get("EXFRUS").get(month);
+  return francs ? francs / MARKETS.FRA.euro : null;
 }
 
 /** A country's currency for one dollar, the month's average. */
 function localPerUsd(id, month) {
-  const country = COUNTRIES[id];
+  const market = MARKETS[id];
   if (id === "USA") {
     return 1;
   }
-  if (country.euro && month >= "1999-01") {
+  if (market.euro && month >= "1999-01") {
     const perUsd = eurPerUsd(month);
-    return perUsd ? country.euro * perUsd : null;
+    return perUsd ? market.euro * perUsd : null;
   }
-  const quoted = fx.get(country.fx).get(month);
+  const quoted = fx.get(market.fx).get(month);
   if (quoted !== undefined) {
-    return country.usdPer ? 1 / quoted : quoted;
+    return market.usdPer ? 1 / quoted : quoted;
   }
   if (month < "1971-01") {
-    return country.par ?? oecdRates.get(id)?.get(month) ?? null;
+    return market.par ?? oecdRates.get(id)?.get(month) ?? null;
   }
   return null;
-}
-
-/** A country's share price index in dollars, or null where unknown. */
-function priceInUsd(id, month) {
-  const price = sharePrices.get(id)?.get(month);
-  const perUsd = localPerUsd(id, month);
-  return price === undefined || !perUsd ? null : price / perUsd;
 }
 
 /** A dollar return carried into euros (francs before 1999). */
@@ -411,25 +404,68 @@ function inEuros(usdReturn, month) {
   return (1 + usdReturn) * (now / before) - 1;
 }
 
-function required(series, month, name) {
-  const value = series.get(month);
-  if (value === undefined) {
-    fail(`${name} has no return for ${month}.`);
+// ------------------------------------------------- what each country did
+
+/** The three-month Treasury bill over one month, as Global Factor Data's base. */
+function billReturn(month) {
+  const rate = billRates.get(month);
+  if (rate === undefined) {
+    fail(`the Fed has no Treasury bill rate for ${month}.`);
   }
-  return value;
+  return rate / 1200;
 }
 
-/** A market's size at a year-end, carried by its prices from the last one known. */
-function sizeAt(id, year) {
+/** A country's whole market in dollars, dividends in, or null before its data. */
+function countryReturn(id, month) {
+  const excess = markets.get(id)?.get(month);
+  return excess === undefined ? null : excess + billReturn(month);
+}
+
+/**
+ * Each country's market as a level, 1 the month before its first return
+ * (or before 1970, for the United States), so that a weight can be carried
+ * by what the market did.
+ */
+const countryLevels = new Map(
+  marketIds.map((id) => {
+    const months = [...(markets.get(id)?.keys() ?? [])]
+      .filter((month) => month >= START)
+      .sort();
+    const levels = new Map();
+    if (months.length > 0) {
+      let level = 1;
+      levels.set(addMonths(months[0], -1), level);
+      for (const month of monthRange(months[0], months.at(-1))) {
+        const ret = countryReturn(id, month);
+        if (ret === null) {
+          break;
+        }
+        level *= 1 + ret;
+        levels.set(month, level);
+      }
+    }
+    return [id, levels];
+  }),
+);
+
+/** A country's OECD share price index in dollars, or null where unknown. */
+function priceInUsd(id, month) {
+  const price = sharePrices.get(id)?.get(month);
+  const perUsd = localPerUsd(id, month);
+  return price === undefined || !perUsd ? null : price / perUsd;
+}
+
+/**
+ * A market's size at a year-end: the World Bank's figure, or the last one
+ * before it carried by the market's level.
+ */
+function sizeAt(id, year, levelAt) {
   const years = sizes.get(id);
-  if (!years) {
-    return null;
-  }
-  for (let known = year; known >= 1989; known -= 1) {
+  for (let known = year; years && known >= 1984; known -= 1) {
     const size = years.get(known);
     if (size) {
-      const then = priceInUsd(id, `${known}-12`);
-      const now = priceInUsd(id, `${year}-12`);
+      const then = levelAt(id, `${known}-12`);
+      const now = levelAt(id, `${year}-12`);
       return then && now ? (size * now) / then : null;
     }
   }
@@ -437,95 +473,108 @@ function sizeAt(id, year) {
 }
 
 /**
- * The price return of a set of countries weighted by market size: by the
- * size at `anchor` carried by prices, or, without one, by each previous
- * year-end's size carried through the year. Countries come in when their
- * index does.
+ * A size-weighted month: each country weighed by its size at the year-end
+ * before (or at `anchor`), carried by its level since. Countries come in
+ * once their figures and their size are both known.
  */
-function weightedPriceReturn(ids, month, anchor) {
+function weightedMonth(ids, month, { levelAt, returnOf, anchor = null }) {
   const before = addMonths(month, -1);
+  const base = anchor ?? `${Number(month.slice(0, 4)) - 1}-12`;
   let total = 0;
   let weighted = 0;
   for (const id of ids) {
-    const priceBefore = priceInUsd(id, before);
-    const priceNow = priceInUsd(id, month);
-    const base = anchor ?? `${Number(before.slice(0, 4)) - 1}-12`;
-    const priceAtBase = priceInUsd(id, base);
-    const size = sizeAt(id, Number(base.slice(0, 4)));
-    if (!priceBefore || !priceNow || !priceAtBase || !size) {
+    const levelBefore = levelAt(id, before);
+    const levelAtBase = levelAt(id, base);
+    const ret = returnOf(id, month);
+    const size = sizeAt(id, Number(base.slice(0, 4)), levelAt);
+    if (!levelBefore || !levelAtBase || ret === null || !size) {
       continue;
     }
-    const weight = (size * priceBefore) / priceAtBase;
+    const weight = (size * levelBefore) / levelAtBase;
     total += weight;
-    weighted += weight * (priceNow / priceBefore - 1);
+    weighted += weight * ret;
   }
   return total > 0 ? { ret: weighted / total, weight: total } : null;
 }
 
-/** The yearly yield that brings a price-only rebuild level with a total return. */
-function matchedDividend(ids, target, from) {
-  let rebuilt = 1;
-  let source = 1;
-  const months = monthRange(from, END);
-  for (const month of months) {
-    rebuilt *= 1 + weightedPriceReturn(ids, month, null).ret;
-    source *= 1 + required(target, month, "Fama and French");
-  }
-  return (source / rebuilt) ** (12 / months.length) - 1;
+/** The countries' own figures, weighted by size. */
+const fromCountries = {
+  levelAt: (id, month) => countryLevels.get(id)?.get(month) ?? null,
+  returnOf: countryReturn,
+};
+
+/** OECD prices alone, weighted by size: what the yield is matched against. */
+const fromPrices = {
+  levelAt: priceInUsd,
+  returnOf: (id, month) => {
+    const before = priceInUsd(id, addMonths(month, -1));
+    const now = priceInUsd(id, month);
+    return before && now ? now / before - 1 : null;
+  },
+};
+
+function compound(returns) {
+  return returns.reduce((level, value) => level * (1 + value), 1);
 }
 
-const exUs = countryIds.filter((id) => id !== "USA");
-const europe = countryIds.filter((id) => COUNTRIES[id].europe);
+/**
+ * The yearly yield that brings the OECD's prices level with the countries'
+ * own figures from 1986, for the same countries but the United States.
+ */
+function matchedDividend(ids) {
+  const months = monthRange(COUNTRIES_START, END);
+  const own = [];
+  const prices = [];
+  for (const month of months) {
+    own.push(weightedMonth(ids, month, fromCountries).ret);
+    prices.push(weightedMonth(ids, month, fromPrices).ret);
+  }
+  return (compound(own) / compound(prices)) ** (12 / months.length) - 1;
+}
+
+const developed = marketIds;
+const europe = marketIds.filter((id) => MARKETS[id].europe);
+const rebuildExUs = rebuildIds.filter((id) => id !== "USA");
 const dividends = {
-  exUs: matchedDividend(exUs, ffDevelopedExUs, FF_REGIONS_START),
-  europe: matchedDividend(europe, ffEurope, FF_REGIONS_START),
+  exUs: matchedDividend(rebuildExUs),
+  europe: matchedDividend(rebuildIds.filter((id) => MARKETS[id].europe)),
 };
 
 /**
- * Before Fama and French's regions: the United States' total return and
- * every other country's prices plus the matched yield, weighted by market
- * size at the end of 1989 carried back by prices.
+ * Before 1986: the United States' own figures and every other country's
+ * prices with the matched yield, weighted by size at the end of 1985
+ * carried back by prices.
  */
-function rebuiltReturn(ids, month, dividend) {
+function rebuiltMonth(ids, month, dividend) {
   const monthly = (1 + dividend) ** (1 / 12) - 1;
-  const before = addMonths(month, -1);
-  let total = 0;
-  let weighted = 0;
-  for (const id of ids) {
-    const priceBefore = priceInUsd(id, before);
-    const priceNow = priceInUsd(id, month);
-    const priceAtAnchor = priceInUsd(id, ANCHOR);
-    const size = sizes.get(id)?.get(1989);
-    if (!priceBefore || !priceNow || !priceAtAnchor || !size) {
-      continue;
-    }
-    const weight = (size * priceBefore) / priceAtAnchor;
-    const ret =
-      id === "USA"
-        ? required(ffUs, month, "Fama and French US")
-        : (priceNow / priceBefore) * (1 + monthly) - 1;
-    total += weight;
-    weighted += weight * ret;
+  const result = weightedMonth(ids, month, {
+    levelAt: priceInUsd,
+    returnOf: (id, at) => {
+      if (id === "USA") {
+        return countryReturn("USA", at);
+      }
+      const ret = fromPrices.returnOf(id, at);
+      return ret === null ? null : (1 + ret) * (1 + monthly) - 1;
+    },
+    anchor: ANCHOR,
+  });
+  if (!result) {
+    fail(`nothing to rebuild ${month} from.`);
   }
-  return weighted / total;
+  return result.ret;
 }
 
-/** The United States' share of the rebuild, for the summary. */
-function usShare(month) {
-  const all = weightedPriceReturn(countryIds, month, ANCHOR).weight;
-  const us = weightedPriceReturn(["USA"], month, ANCHOR).weight;
-  return us / all;
-}
-
-function regionSeries(ids, source, dividend) {
-  return MONTHS.map((month) =>
-    inEuros(
-      month >= FF_REGIONS_START
-        ? required(source, month, "Fama and French")
-        : rebuiltReturn(ids, month, dividend),
-      month,
-    ),
-  );
+function regionSeries(ownIds, rebuildFrom, dividend) {
+  return MONTHS.map((month) => {
+    if (month < COUNTRIES_START) {
+      return inEuros(rebuiltMonth(rebuildFrom, month, dividend), month);
+    }
+    const own = weightedMonth(ownIds, month, fromCountries);
+    if (!own) {
+      fail(`no country figures for ${month}.`);
+    }
+    return inEuros(own.ret, month);
+  });
 }
 
 /**
@@ -551,31 +600,32 @@ function bondSeries() {
   });
 }
 
-const emergingStart = [...ffEmerging.keys()].sort()[0];
+const rebuiltUntil = addMonths(COUNTRIES_START, -1);
 const built = {
   "cpi-fr": { start: START, reconstructedUntil: null, returns: cpi },
   world: {
     start: START,
-    reconstructedUntil: addMonths(FF_REGIONS_START, -1),
-    returns: regionSeries(countryIds, ffDeveloped, dividends.exUs),
+    reconstructedUntil: rebuiltUntil,
+    returns: regionSeries(developed, rebuildIds, dividends.exUs),
   },
   us: {
     start: START,
     reconstructedUntil: null,
-    returns: MONTHS.map((month) =>
-      inEuros(required(ffUs, month, "Fama and French US"), month),
-    ),
+    returns: MONTHS.map((month) => {
+      const ret = countryReturn("USA", month);
+      if (ret === null) {
+        fail(`Global Factor Data has no US return for ${month}.`);
+      }
+      return inEuros(ret, month);
+    }),
   },
   europe: {
     start: START,
-    reconstructedUntil: addMonths(FF_REGIONS_START, -1),
-    returns: regionSeries(europe, ffEurope, dividends.europe),
-  },
-  emerging: {
-    start: emergingStart,
-    reconstructedUntil: null,
-    returns: monthRange(emergingStart, END).map((month) =>
-      inEuros(required(ffEmerging, month, "Fama and French emerging"), month),
+    reconstructedUntil: rebuiltUntil,
+    returns: regionSeries(
+      europe,
+      rebuildIds.filter((id) => MARKETS[id].europe),
+      dividends.europe,
     ),
   },
   "bonds-fr": { start: START, reconstructedUntil: null, returns: bondSeries() },
@@ -589,7 +639,6 @@ const BOUNDS = {
   world: [-0.4, 0.4],
   us: [-0.4, 0.4],
   europe: [-0.4, 0.4],
-  emerging: [-0.5, 0.5],
   "bonds-fr": [-0.2, 0.2],
 };
 
@@ -607,10 +656,6 @@ for (const [id, series] of Object.entries(built)) {
 }
 
 // --------------------------------------------------------------- summary
-
-function compound(returns) {
-  return returns.reduce((level, value) => level * (1 + value), 1);
-}
 
 function worstFall(series) {
   let peak = 1;
@@ -636,14 +681,24 @@ function calendarYear(series, year) {
   return compound(series.returns.slice(from, from + 12)) - 1;
 }
 
+/** The United States' share of the rebuild at a month. */
+function usShare(month) {
+  const weightOf = (ids) =>
+    weightedMonth(ids, month, {
+      levelAt: priceInUsd,
+      returnOf: () => 0,
+      anchor: ANCHOR,
+    }).weight;
+  return weightOf(["USA"]) / weightOf(rebuildIds);
+}
+
 const percent = (value) => `${(value * 100).toFixed(1)} %`;
-const prices = compound(cpi);
-console.log(`\nInflation ${START}–${END}: prices ×${prices.toFixed(2)}.`);
+console.log(`\nInflation ${START}–${END}: prices ×${compound(cpi).toFixed(2)}.`);
 console.log(
-  `Dividends added before ${FF_REGIONS_START}: outside the US ${percent(dividends.exUs)}, Europe ${percent(dividends.europe)}.`,
+  `Dividends added before ${COUNTRIES_START}: outside the US ${percent(dividends.exUs)}, Europe ${percent(dividends.europe)}.`,
 );
 console.log(
-  `US share of the rebuild: ${percent(usShare(START))} in ${START}, ${percent(usShare(ANCHOR))} in ${ANCHOR}.`,
+  `US share of the rebuild: ${percent(usShare(addMonths(START, 1)))} in ${START}, ${percent(usShare(ANCHOR))} in ${ANCHOR}.`,
 );
 for (const [id, series] of Object.entries(built)) {
   if (id === "cpi-fr") {
@@ -652,8 +707,7 @@ for (const [id, series] of Object.entries(built)) {
   const years = series.returns.length / 12;
   const nominal = compound(series.returns) ** (1 / years) - 1;
   const deflator = compound(cpi.slice(monthsBetween(START, series.start)));
-  const real =
-    (compound(series.returns) / deflator) ** (1 / years) - 1;
+  const real = (compound(series.returns) / deflator) ** (1 / years) - 1;
   const fall = worstFall(series);
   console.log(
     `${id.padEnd(9)} from ${series.start}: ${percent(nominal)}/yr, ${percent(real)}/yr real; worst fall ${percent(fall.fall)} (${fall.from} → ${fall.to}); 2008 ${percent(calendarYear(series, 2008))}, 2022 ${percent(calendarYear(series, 2022))}`,
