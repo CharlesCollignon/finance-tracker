@@ -43,8 +43,11 @@ export function BearingMonthView({
   bankInvite = false,
   bankAttention = null,
   awaitingAccounts = 0,
+  askClose = false,
 }: {
   data: BearingMonth;
+  /** Open the month close at once: asked for from the attention row. */
+  askClose?: boolean;
   /** Whether to invite this reader to connect a bank: the first setup card. */
   bankInvite?: boolean;
   /** A connected bank about to stop, or stopped: shown above everything. */
@@ -66,7 +69,11 @@ export function BearingMonthView({
   const current = data.balance.period === "current";
   const past = data.balance.period === "past";
   const hasSpending = data.spending.total > 0;
-  const hasMomentum = current && (data.run !== null || data.invested !== null);
+  const hasMomentum =
+    current &&
+    (data.run !== null ||
+      data.invested !== null ||
+      (data.close?.overview.next ?? null) !== null);
   // One setup card at a time, for the month in progress.
   const setupStep = data.setup
     ? nextSetupStep({ ...data.setup, bankInvited: bankInvite })
@@ -156,7 +163,7 @@ export function BearingMonthView({
 
           {hasMomentum ? (
             <FadeInItem>
-              <MomentumCard data={data} />
+              <MomentumCard data={data} askClose={askClose} />
             </FadeInItem>
           ) : null}
 

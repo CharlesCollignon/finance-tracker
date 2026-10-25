@@ -19,8 +19,6 @@ export const planWebEn = {
   runMonthWon: "{month}: done",
   runMonthMissed: "{month}: missed",
   monthsChartLabel: "What each wrapped-up month saved",
-  closeDetails: "Month-end details and settings",
-  closeDetailsHide: "Hide the details",
 
   tableMonth: "Month",
   tableYear: "Year",

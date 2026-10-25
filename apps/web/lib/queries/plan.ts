@@ -8,16 +8,12 @@ import {
 import type { RecurringTemplateWithCategory } from "@finance/core/types/database";
 import { YEAR_AHEAD_MAX_MONTHS } from "@finance/core/year-ahead";
 import { getLocale } from "@/lib/locale";
-import { readCashBalance, readCloseWait } from "@/lib/queries/bank-balance";
-import type { CloseWaitAccount } from "@finance/data/bank-balance";
+import { readCashBalance } from "@/lib/queries/bank-balance";
 import {
   getRecurringTemplates,
   getSavingsReserve,
 } from "@/lib/queries/finance";
-import {
-  getMonthCloseOverview,
-  type MonthCloseOverview,
-} from "@/lib/queries/month-close";
+import { getMonthCloseOverview } from "@/lib/queries/month-close";
 import { getWalletPortfolio } from "@/lib/queries/wallet-portfolio";
 import { getWalletPlans } from "@/lib/queries/investments";
 import { walletFeeRates, wrapperFeesFromPlans } from "@finance/core/fund-costs";
@@ -68,12 +64,6 @@ export interface PlanBase {
    * one account built from the reserve.
    */
   savingsAccounts: PlanSavingsAccount[];
-  closes: MonthCloseOverview;
-  /**
-   * The accounts the month due waits on, when a bank should have closed it
-   * and cannot read one of them. Empty otherwise.
-   */
-  closeWait: CloseWaitAccount[];
   /**
    * The months ahead from the recurring templates, as far as the year
    * ahead's longest window: the card draws as many of them as the reader asks.
@@ -112,17 +102,14 @@ export async function gatherPlanBase(userId: string): Promise<PlanBase> {
       getNotificationSettings(await createClient(), userId).catch(() => null),
       getFlags(),
     ]);
-  const [properties, closeWait] = await Promise.all([
-    isFlagOn(flags, "property.track")
-      ? Promise.all([
-          getProperties(await createClient(), userId),
-          // The homes owned through the shared space, as this person's part
-          // of each (6c).
-          getJointPropertiesFor(await createClient(), userId).catch(() => []),
-        ]).then(([own, joint]) => [...own.properties, ...joint])
-      : null,
-    readCloseWait(userId, closes.next, today),
-  ]);
+  const properties = isFlagOn(flags, "property.track")
+    ? await Promise.all([
+        getProperties(await createClient(), userId),
+        // The homes owned through the shared space, as this person's part
+        // of each (6c).
+        getJointPropertiesFor(await createClient(), userId).catch(() => []),
+      ]).then(([own, joint]) => [...own.properties, ...joint])
+    : null;
 
   return {
     userId,
@@ -142,8 +129,6 @@ export async function gatherPlanBase(userId: string): Promise<PlanBase> {
       rate: account.rate,
       categoryId: account.categoryId,
     })),
-    closes,
-    closeWait,
     properties,
     projection: buildForwardProjection({
       templates,

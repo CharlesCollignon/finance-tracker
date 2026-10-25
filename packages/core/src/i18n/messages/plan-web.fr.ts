@@ -18,8 +18,6 @@ export const planWebFr: typeof planWebEn = {
   runMonthWon: "{month} : réussi",
   runMonthMissed: "{month} : manqué",
   monthsChartLabel: "Ce que chaque bilan a économisé",
-  closeDetails: "Détail et réglages du bilan",
-  closeDetailsHide: "Masquer le détail",
 
   tableMonth: "Mois",
   tableYear: "Année",

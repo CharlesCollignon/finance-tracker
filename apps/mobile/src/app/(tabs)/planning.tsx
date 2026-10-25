@@ -15,7 +15,6 @@ import {
 } from "@finance/core/future-plan";
 import { todayIsoLocal } from "@finance/core/constants";
 import { resolveMessage } from "@finance/core/i18n/t";
-import type { CloseableMonth } from "@finance/core/month-close";
 import { buildRunway } from "@finance/core/projection";
 import { isSavingsKind } from "@finance/core/savings-accounts";
 import {
@@ -26,18 +25,14 @@ import {
 } from "@finance/core/year-ahead";
 
 import { ConnectBankInvite } from "@/components/bank/ConnectBankInvite";
-import { MonthCloseHistoryCard } from "@/components/MonthCloseHistoryCard";
-import { MonthCloseSheet } from "@/components/MonthCloseSheet";
 import { FadeIn } from "@/components/motion/FadeIn";
 import { CushionCard } from "@/components/plan/CushionCard";
 import { LongViewCard, MAX_YEARS } from "@/components/plan/LongViewCard";
 import { MilestonesCard } from "@/components/plan/MilestonesCard";
-import { MonthsCard } from "@/components/plan/MonthsCard";
 import {
   NetWorthCard,
   PropertyLongViewCard,
 } from "@/components/plan/PropertyPlanCards";
-import { RunCard } from "@/components/plan/RunCard";
 import {
   YearAheadCard,
   type MilestoneSooner,
@@ -68,28 +63,13 @@ import { useLocale, useT } from "@/providers/LocaleProvider";
 import { useTabBarClearance } from "@/theme/chrome";
 
 /**
- * One close, and every figure the sheet reads while it is open. Assembled
- * from live data to render the trigger, and frozen the moment it is pressed:
- * recording a close rewrites the very figures the open sheet is showing —
- * `closes.next` usually empties, and the baseline is a median the new close
- * is one of — and driving the mounted sheet off them would tear it away,
- * reveal and undo included, the instant the refresh landed.
- */
-interface ClosePrompt {
-  month: CloseableMonth;
-  monthlyCommitted: number;
-  unrecordedCap: number | null;
-  baseline: number | null;
-}
-
-/**
  * Plan: where the money is heading, and the reasons to come back and look.
  *
  * The months ahead first, every account counting up over the bands that
  * get there, with why and a "what if" to slide; then the milestones on the way and the cushion the
  * savings make; then the long view after French tax, prefilled from the
- * user's own figures; and last the run of month-ends, with the close that
- * keeps it going and the months it is made of. With a property, net worth
+ * user's own figures. The run of month-ends and the close moved to Le point
+ * in October 2026. With a property, net worth
  * follows the cushion and the homes' own long view follows the long view —
  * beside the savings and investments, never counted in them.
  *
@@ -175,9 +155,6 @@ export default function PlanningScreen() {
   }
 
   const [extra, setExtra] = useState(0);
-  const [detailsOpen, setDetailsOpen] = useState(false);
-  const [closing, setClosing] = useState<ClosePrompt | null>(null);
-  const [sheetOpen, setSheetOpen] = useState(false);
 
   const data = base.data;
   const dataEnvelopes = useMemo(
@@ -293,18 +270,6 @@ export default function PlanningScreen() {
     : null;
   const cushion = buildCushion(runway?.months ?? null);
 
-  const closes = data?.closes ?? null;
-  const prompt: ClosePrompt | null =
-    closes?.next && runway
-      ? {
-          month: closes.next,
-          monthlyCommitted: runway.monthlyCommitted,
-          unrecordedCap: closes.settings.unrecordedCap,
-          baseline: closes.summary.baseline,
-        }
-      : null;
-  const sheet = closing ?? prompt;
-
   return (
     <Screen title={t("nav.plan")} className="pb-0">
       {base.loading && !data ? (
@@ -415,65 +380,12 @@ export default function PlanningScreen() {
             </FadeIn>
           ) : null}
 
-          {closes ? (
-            <FadeIn>
-              <RunCard
-                summary={closes.summary}
-                next={closes.next}
-                closeWait={data?.closeWait}
-                onOpen={() => {
-                  if (prompt) {
-                    setClosing(prompt);
-                    setSheetOpen(true);
-                  }
-                }}
-              />
-            </FadeIn>
-          ) : null}
-
-          {closes ? (
-            <FadeIn>
-              <MonthsCard
-                history={closes.history}
-                detailsOpen={detailsOpen}
-                onToggleDetails={() => setDetailsOpen((open) => !open)}
-              />
-            </FadeIn>
-          ) : null}
-
-          {closes && detailsOpen ? (
-            <MonthCloseHistoryCard
-              history={closes.history}
-              summary={closes.summary}
-              unrecordedCap={closes.settings.unrecordedCap}
-              closeDay={closes.settings.closeDay}
-            />
-          ) : null}
-
-          {/* Beside the run, because a connected bank is what closes
-              months without being asked. */}
+          {/* Last, because a connected bank is what makes the projection's
+              figures its own. */}
           <ConnectBankInvite surface="plan" bank={bank} />
         </ScrollView>
       ) : null}
 
-      {sheet ? (
-        <MonthCloseSheet
-          open={sheetOpen}
-          onOpenChange={(value) => {
-            if (!value) {
-              setSheetOpen(false);
-            }
-          }}
-          year={sheet.month.year}
-          month={sheet.month.month}
-          monthLabel={sheet.month.label}
-          observeOn={sheet.month.observeOn}
-          isBaseline={sheet.month.isBaseline}
-          monthlyCommitted={sheet.monthlyCommitted}
-          unrecordedCap={sheet.unrecordedCap}
-          baseline={sheet.baseline}
-        />
-      ) : null}
     </Screen>
   );
 }
