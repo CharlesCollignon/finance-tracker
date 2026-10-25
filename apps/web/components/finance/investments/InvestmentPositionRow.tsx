@@ -1,6 +1,5 @@
 "use client";
 
-import { PencilSimple } from "@phosphor-icons/react";
 import { InstrumentLogo } from "@/components/finance/InstrumentLogo";
 import { Sparkline } from "@/components/finance/charts";
 import { formatBtcAmount, isCryptoWallet } from "@finance/core/crypto-holdings";
@@ -12,7 +11,6 @@ import {
 import type { InvestmentPositionItem } from "@finance/core/investment-positions";
 import { cn } from "@/lib/utils";
 import { useFormatCurrency } from "@/lib/use-currency";
-import { ICON } from "@/lib/icon-scale";
 import { useLocale, useT } from "@/lib/locale-context";
 import { formatSigned } from "@finance/core/amount-sign";
 import {
@@ -64,55 +62,57 @@ export function InvestmentPositionRow({
         : "negative";
 
   return (
-    <div className="min-w-0 max-w-full py-4">
-      <div className="flex min-w-0 items-start justify-between gap-2">
-        <div className="flex min-w-0 items-start gap-2">
+    // The whole row opens the position, as a ledger row does.
+    <button
+      type="button"
+      onClick={onEdit}
+      aria-label={t("wallets.editPosition", { name: item.name })}
+      className={cn(
+        "-mx-2 block w-[calc(100%+1rem)] min-w-0 rounded-control px-2 py-4 text-left",
+        "transition-[background-color,scale] duration-press hover:bg-muted/40 active:scale-[0.99]",
+        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+      )}
+    >
+      <span className="flex min-w-0 items-start justify-between gap-2">
+        <span className="flex min-w-0 items-start gap-2">
           <InstrumentLogo
             symbol={item.instrumentSymbol}
             name={item.name}
             fallbackIcon={item.icon}
             className="size-8 shrink-0"
           />
-          <div className="min-w-0">
-            <p className="truncate text-sm font-medium leading-snug">
+          <span className="block min-w-0">
+            <span className="block truncate text-sm font-medium leading-snug">
               {item.name}
-            </p>
+            </span>
             {item.instrumentSymbol ? (
-              <p className="truncate text-xs text-muted-foreground">
+              <span className="block truncate text-xs text-muted-foreground">
                 {isCrypto
                   ? "Bitcoin"
                   : (item.instrumentName ?? item.instrumentSymbol)}
-              </p>
+              </span>
             ) : null}
             {item.needsShareCount ? (
-              <p className="mt-1 text-xs font-medium text-foreground">
+              <span className="block mt-1 text-xs font-medium text-foreground">
                 {isCrypto
                   ? t("wallets.addBtcForValue")
                   : t("wallets.addSharesForValue")}
-              </p>
+              </span>
             ) : null}
             {isCrypto && item.shareCount !== null && item.shareCount > 0 ? (
-              <p className="mt-0.5 text-xs text-muted-foreground">
+              <span className="block mt-0.5 text-xs text-muted-foreground">
                 {formatBtcAmount(item.shareCount, locale)}
-              </p>
+              </span>
             ) : null}
-          </div>
-        </div>
-        <button
-          type="button"
-          onClick={onEdit}
-          className="flex min-h-11 min-w-11 items-center justify-center text-muted-foreground transition-colors hover:text-foreground"
-          aria-label={t("wallets.editPosition", { name: item.name })}
-        >
-          <PencilSimple size={ICON.md} weight="light" />
-        </button>
-      </div>
+          </span>
+        </span>
+      </span>
 
       {/* The figures and the line share one row. Stacked, they were three
           bands of height per holding; side by side a wallet of a dozen fits
           on one screen. */}
-      <div className="mt-2 flex min-w-0 flex-wrap items-center justify-between gap-x-4 gap-y-2">
-        <div className="flex min-w-0 flex-wrap items-baseline gap-x-3 gap-y-1 text-xs sm:text-sm">
+      <span className="mt-2 flex min-w-0 flex-wrap items-center justify-between gap-x-4 gap-y-2">
+        <span className="flex min-w-0 flex-wrap items-baseline gap-x-3 gap-y-1 text-xs sm:text-sm">
           <InlineMetric
             label={valueLabel}
             value={formatEuro(item.marketValue)}
@@ -137,10 +137,10 @@ export function InvestmentPositionRow({
                   : "neutral"
             }
           />
-        </div>
+        </span>
 
         {hasPriceLine ? (
-          <div className="flex shrink-0 items-center gap-2">
+          <span className="flex shrink-0 items-center gap-2">
             <Sparkline
               values={priceLine!.values}
               width={110}
@@ -157,9 +157,9 @@ export function InvestmentPositionRow({
             >
               {formatSignedPercent(changePct, locale)}
             </span>
-          </div>
+          </span>
         ) : null}
-      </div>
-    </div>
+      </span>
+    </button>
   );
 }
