@@ -89,13 +89,13 @@ export async function findAddresses(query: string): Promise<AddressMatch[]> {
 
 /* ------------------------------------------------------------------ writing */
 
-export function addPropertyWithLoan(input: {
+export function addPropertyWithLoans(input: {
   property: PropertyChange;
-  loan: Omit<LoanChange, "propertyId"> | null;
-  payment: { categoryName: string; insuranceLabel?: string } | null;
+  loans: properties.NewLoan[];
+  payment: { categoryName: string; insuranceLabel?: string };
 }) {
   return asUser((userId) =>
-    properties.addPropertyWithLoan(supabase, userId, input),
+    properties.addPropertyWithLoans(supabase, userId, input),
   );
 }
 

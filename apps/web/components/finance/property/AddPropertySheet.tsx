@@ -16,6 +16,8 @@ import { MobileSheet } from "@/components/ui/MobileSheet";
 import { addProperty } from "@/lib/actions/property";
 import { useT } from "@/lib/locale-context";
 import { cn } from "@/lib/utils";
+import { ICON } from "@/lib/icon-scale";
+import { Plus } from "@phosphor-icons/react";
 import {
   Chips,
   HomeFields,
@@ -33,16 +35,25 @@ const STEP_KEYS: Record<Step, Key> = {
   3: "property.stepLoan",
 };
 
+/**
+ * How many loans one purchase is entered with: a main loan, a 0 % one, an
+ * employer's (Action Logement), a bridging loan. The drafts are held
+ * whether shown or not, so their number is fixed.
+ */
+const MAX_LOANS = 4;
+
 const STEP_FIELDS: Record<1 | 2, readonly string[]> = {
   1: HOME_FIELDS,
   2: PURCHASE_FIELDS,
 };
 
 /**
- * Adding a property in three steps — the home, the purchase, the loan — the
- * last one optional. The loan's payment is shown as it is typed, and goes
- * into the recurring entries unless the user says not to: they already told
- * the app everything it needs to write it.
+ * Adding a property in three steps — the home, the purchase, the loans — the
+ * last one optional. A purchase is often paid by several loans, a 0 % one
+ * beside the main one: each is entered with its own rate and length, and
+ * each payment is shown as it is typed and goes into the recurring entries
+ * unless the user says not to — they already told the app everything it
+ * needs to write it.
  */
 export function AddPropertySheet({
   open,
@@ -73,7 +84,14 @@ function AddPropertyForm({ onDone }: { onDone: () => void }) {
   const formRef = useRef<HTMLFormElement>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const property = usePropertyDraft(null);
-  const loan = useLoanDraft(null);
+  const drafts = [
+    useLoanDraft(null),
+    useLoanDraft(null, t("property.loanLabelNth", { n: 2 })),
+    useLoanDraft(null, t("property.loanLabelNth", { n: 3 })),
+    useLoanDraft(null, t("property.loanLabelNth", { n: 4 })),
+  ];
+  const [loanCount, setLoanCount] = useState(1);
+  const loans = drafts.slice(0, loanCount);
   const [hasLoan, setHasLoan] = useState(true);
 
   /** A new step starts at the top of the sheet, under its title. */
@@ -100,23 +118,51 @@ function AddPropertyForm({ onDone }: { onDone: () => void }) {
     if (Object.keys(stepErrors).length > 0) {
       return;
     }
-    if (step === 2 && !loan.firstPayment && property.purchasedOn) {
-      loan.setFirstPayment(aMonthAfter(property.purchasedOn));
+    if (step === 2 && !drafts[0].firstPayment && property.purchasedOn) {
+      drafts[0].setFirstPayment(aMonthAfter(property.purchasedOn));
     }
     moveTo(step === 1 ? 2 : 3);
   }
 
+  /** Another loan below the others, starting the month the first does. */
+  function addLoan() {
+    const next = drafts[loanCount];
+    if (!next.firstPayment) {
+      next.setFirstPayment(
+        drafts[0].firstPayment ||
+          (property.purchasedOn ? aMonthAfter(property.purchasedOn) : ""),
+      );
+    }
+    setLoanCount(loanCount + 1);
+  }
+
   function save() {
-    if (hasLoan && !loan.parsed.success) {
-      setErrors(errorsByField(loan.parsed.error.issues));
-      return;
+    if (hasLoan) {
+      // Each loan's errors under its own number, for its own fields.
+      const loanErrors = Object.fromEntries(
+        loans.flatMap((draft, index) =>
+          draft.parsed.success
+            ? []
+            : Object.entries(errorsByField(draft.parsed.error.issues)).map(
+                ([field, message]) => [`${index}:${field}`, message],
+              ),
+        ),
+      );
+      if (Object.keys(loanErrors).length > 0) {
+        setErrors(loanErrors);
+        return;
+      }
     }
     setErrors({});
     startTransition(async () => {
       const result = await addProperty({
         property: property.payload,
-        loan: hasLoan ? loan.fields : null,
-        addPayment: hasLoan && loan.addPayment,
+        loans: hasLoan
+          ? loans.map((draft) => ({
+              loan: draft.fields,
+              addPayment: draft.addPayment,
+            }))
+          : [],
       });
       if (result.error) {
         toast(result.error, "error");
@@ -183,7 +229,60 @@ function AddPropertyForm({ onDone }: { onDone: () => void }) {
               ]}
             />
             {hasLoan ? (
-              <LoanFields draft={loan} error={error} offerPayment />
+              <>
+                <p className="text-sm text-muted-foreground">
+                  {t("property.severalLoansHint")}
+                </p>
+                {loans.map((draft, index) => (
+                  <section
+                    // The drafts are fixed in number and order, so the index
+                    // is the loan's identity here.
+                    key={index}
+                    aria-label={draft.label || t("property.loanLabelDefault")}
+                    className={cn(
+                      "flex flex-col gap-5",
+                      index > 0 && "step-in border-t border-border pt-5",
+                    )}
+                    style={{ "--step-from": "8px" } as CSSProperties}
+                  >
+                    {loanCount > 1 ? (
+                      <div className="flex items-center justify-between gap-2">
+                        <h3 className="font-head text-base">
+                          {draft.label.trim() ||
+                            t("property.loanLabelNth", { n: index + 1 })}
+                        </h3>
+                        {index > 0 && index === loanCount - 1 ? (
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setLoanCount(loanCount - 1)}
+                          >
+                            {t("property.removeThisLoan")}
+                          </Button>
+                        ) : null}
+                      </div>
+                    ) : null}
+                    <LoanFields
+                      draft={draft}
+                      error={(field) => error(`${index}:${field}`)}
+                      offerPayment
+                    />
+                  </section>
+                ))}
+                {loanCount < MAX_LOANS ? (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="self-start"
+                    onClick={addLoan}
+                  >
+                    <Plus size={ICON.sm} aria-hidden className="mr-1.5" />
+                    {t("property.addAnotherLoan")}
+                  </Button>
+                ) : null}
+              </>
             ) : null}
           </>
         ) : null}

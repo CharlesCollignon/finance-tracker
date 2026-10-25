@@ -20,9 +20,9 @@ import { Button } from "@/components/ui/Button";
 import { ChipRow } from "@/components/ui/ChipRow";
 import { SheetGrabber } from "@/components/ui/SheetGrabber";
 import { Text } from "@/components/ui/Text";
-import { hapticSuccess, hapticWarning } from "@/lib/haptics";
+import { hapticLight, hapticSuccess, hapticWarning } from "@/lib/haptics";
 import {
-  addPropertyWithLoan,
+  addPropertyWithLoans,
   requestMarketReading,
   saveLoan,
   updateProperty,
@@ -137,6 +137,9 @@ const STEP_KEYS: Record<Step, Key> = {
   3: "property.stepLoan",
 };
 
+/** How many loans one purchase is entered with, as on the web. */
+const MAX_LOANS = 4;
+
 const STEP_FIELDS: Record<1 | 2, readonly string[]> = {
   1: HOME_FIELDS,
   2: PURCHASE_FIELDS,
@@ -164,7 +167,16 @@ function AddPropertyFlow({ onClose }: { onClose: () => void }) {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [pending, setPending] = useState(false);
   const property = usePropertyDraft(null);
-  const loan = useLoanDraft(null);
+  // Fixed in number, shown one by one: a main loan, a 0 % one beside it, an
+  // employer's, a bridging loan — as on the web.
+  const drafts = [
+    useLoanDraft(null),
+    useLoanDraft(null, t("property.loanLabelNth", { n: 2 })),
+    useLoanDraft(null, t("property.loanLabelNth", { n: 3 })),
+    useLoanDraft(null, t("property.loanLabelNth", { n: 4 })),
+  ];
+  const [loanCount, setLoanCount] = useState(1);
+  const loans = drafts.slice(0, loanCount);
   const [hasLoan, setHasLoan] = useState(true);
   const error = (field: string) => errors[field];
 
@@ -184,30 +196,54 @@ function AddPropertyFlow({ onClose }: { onClose: () => void }) {
       void hapticWarning();
       return;
     }
-    if (step === 2 && !loan.firstPayment && property.purchasedOn) {
-      loan.setFirstPayment(aMonthAfter(property.purchasedOn));
+    if (step === 2 && !drafts[0].firstPayment && property.purchasedOn) {
+      drafts[0].setFirstPayment(aMonthAfter(property.purchasedOn));
     }
     setStep(step === 1 ? 2 : 3);
   }
 
+  /** Another loan below the others, starting the month the first does. */
+  function addLoan() {
+    const next = drafts[loanCount];
+    if (!next.firstPayment) {
+      next.setFirstPayment(
+        drafts[0].firstPayment ||
+          (property.purchasedOn ? aMonthAfter(property.purchasedOn) : ""),
+      );
+    }
+    void hapticLight();
+    setLoanCount(loanCount + 1);
+  }
+
   async function save() {
-    if (hasLoan && !loan.parsed.success) {
-      setErrors(errorsByField(loan.parsed.error.issues));
-      void hapticWarning();
-      return;
+    if (hasLoan) {
+      // Each loan's errors under its own number, for its own fields.
+      const loanErrors = Object.fromEntries(
+        loans.flatMap((draft, index) =>
+          draft.parsed.success
+            ? []
+            : Object.entries(errorsByField(draft.parsed.error.issues)).map(
+                ([field, message]) => [`${index}:${field}`, message],
+              ),
+        ),
+      );
+      if (Object.keys(loanErrors).length > 0) {
+        setErrors(loanErrors);
+        void hapticWarning();
+        return;
+      }
     }
     setErrors({});
     setPending(true);
-    const result = await addPropertyWithLoan({
+    const result = await addPropertyWithLoans({
       property: property.payload,
-      loan: hasLoan ? loan.fields : null,
-      payment:
-        hasLoan && loan.addPayment
-          ? {
-              categoryName: loanPaymentCategoryName(locale),
-              insuranceLabel: t("property.insuranceWord"),
-            }
-          : null,
+      loans: hasLoan
+        ? loans.map((draft) => ({ loan: draft.fields, addPayment: draft.addPayment }))
+        : [],
+      payment: {
+        categoryName: loanPaymentCategoryName(locale),
+        insuranceLabel: t("property.insuranceWord"),
+      },
     });
     setPending(false);
     if (!result.success) {
@@ -221,10 +257,16 @@ function AddPropertyFlow({ onClose }: { onClose: () => void }) {
     toast(
       result.paymentAmount === null
         ? t("property.added", { name })
-        : t("property.addedWithPayment", {
-            name,
-            amount: formatEuro(result.paymentAmount, locale),
-          }),
+        : t(
+            result.paymentCount > 1
+              ? "property.addedWithPayments"
+              : "property.addedWithPayment",
+            {
+              name,
+              amount: formatEuro(result.paymentAmount, locale),
+              count: result.paymentCount,
+            },
+          ),
     );
     onClose();
     // Its screen, where the estimate arrives while the market is read.
@@ -281,7 +323,53 @@ function AddPropertyFlow({ onClose }: { onClose: () => void }) {
               ]}
             />
           </Field>
-          {hasLoan ? <LoanFields draft={loan} error={error} offerPayment /> : null}
+          {hasLoan ? (
+            <>
+              <Text variant="muted" className="text-sm">
+                {t("property.severalLoansHint")}
+              </Text>
+              {loans.map((draft, index) => (
+                // The drafts are fixed in number and order, so the index is
+                // the loan's identity here. A loan added later arrives.
+                <FadeIn
+                  key={index}
+                  className={index > 0 ? "gap-5 border-t border-border pt-5" : "gap-5"}
+                >
+                  {loanCount > 1 ? (
+                    <View className="flex-row items-center justify-between gap-2">
+                      <Text className="font-semibold">
+                        {draft.label.trim() || t("property.loanLabelNth", { n: index + 1 })}
+                      </Text>
+                      {index > 0 && index === loanCount - 1 ? (
+                        <Pressable
+                          accessibilityRole="button"
+                          hitSlop={8}
+                          onPress={() => setLoanCount(loanCount - 1)}
+                          className="min-h-11 justify-center"
+                        >
+                          <Text variant="muted" className="text-sm underline">
+                            {t("property.removeThisLoan")}
+                          </Text>
+                        </Pressable>
+                      ) : null}
+                    </View>
+                  ) : null}
+                  <LoanFields
+                    draft={draft}
+                    error={(field) => error(`${index}:${field}`)}
+                    offerPayment
+                  />
+                </FadeIn>
+              ))}
+              {loanCount < MAX_LOANS ? (
+                <Button
+                  label={t("property.addAnotherLoan")}
+                  variant="outline"
+                  onPress={addLoan}
+                />
+              ) : null}
+            </>
+          ) : null}
         </>
       ) : null}
       </View>

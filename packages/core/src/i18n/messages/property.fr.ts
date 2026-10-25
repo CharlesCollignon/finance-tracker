@@ -65,6 +65,11 @@ export const propertyFr: typeof propertyEn = {
   withLoan: "Oui",
   loanLabel: "Nom du prêt",
   loanLabelDefault: "Prêt principal",
+  loanLabelNth: "Prêt {n}",
+  severalLoansHint:
+    "Plusieurs prêts, comme un prêt à taux zéro à côté du prêt principal\u00A0? Ajoutez-les un par un\u00A0: chacun garde son taux, sa durée et sa mensualité.",
+  addAnotherLoan: "Ajouter un autre prêt",
+  removeThisLoan: "Retirer ce prêt",
   principal: "Montant emprunté",
   rate: "Taux (%)",
   rateHint: "Le taux nominal, hors assurance.",
@@ -95,6 +100,8 @@ export const propertyFr: typeof propertyEn = {
   added: "Bien ajouté : {name}",
   addedWithPayment:
     "Bien ajouté : {name}. Sa mensualité de {amount} rejoint vos opérations récurrentes.",
+  addedWithPayments:
+    "Bien ajouté : {name}. Ses {count} mensualités, {amount} en tout, rejoignent vos opérations récurrentes.",
 
   backToList: "Tous les biens",
   estimatedValue: "Valeur estimée",

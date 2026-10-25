@@ -66,6 +66,11 @@ export const propertyEn = {
   withLoan: "Yes",
   loanLabel: "Loan name",
   loanLabelDefault: "Main loan",
+  loanLabelNth: "Loan {n}",
+  severalLoansHint:
+    "Several loans, such as a 0 % loan beside the main one? Add them one by one: each keeps its own rate, length and monthly payment.",
+  addAnotherLoan: "Add another loan",
+  removeThisLoan: "Remove this loan",
   principal: "Amount borrowed",
   rate: "Rate (%)",
   rateHint: "The nominal rate, insurance aside.",
@@ -96,6 +101,8 @@ export const propertyEn = {
   added: "Property added: {name}",
   addedWithPayment:
     "Property added: {name}. Its {amount} monthly payment joins your recurring entries.",
+  addedWithPayments:
+    "Property added: {name}. Its {count} monthly payments, {amount} in all, join your recurring entries.",
 
   backToList: "All properties",
   estimatedValue: "Estimated value",

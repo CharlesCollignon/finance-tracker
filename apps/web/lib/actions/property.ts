@@ -45,23 +45,20 @@ interface AddedProperty {
  */
 export async function addProperty(input: {
   property: properties.PropertyChange;
-  loan: Omit<properties.LoanChange, "propertyId"> | null;
-  addPayment: boolean;
+  /** None, one, or several — each with its payment written or not. */
+  loans: properties.NewLoan[];
 }): Promise<ActionResult<AddedProperty>> {
   const t = await getT();
   const locale = await getLocale();
 
   return asOwner<AddedProperty>(async (db, userId) => {
-    const result = await properties.addPropertyWithLoan(db, userId, {
+    const result = await properties.addPropertyWithLoans(db, userId, {
       property: input.property,
-      loan: input.loan,
-      payment:
-        input.loan && input.addPayment
-          ? {
-              categoryName: loanPaymentCategoryName(locale),
-              insuranceLabel: t("property.insuranceWord"),
-            }
-          : null,
+      loans: input.loans,
+      payment: {
+        categoryName: loanPaymentCategoryName(locale),
+        insuranceLabel: t("property.insuranceWord"),
+      },
     });
     if (!result.success) {
       return { error: result.error };
@@ -77,10 +74,16 @@ export async function addProperty(input: {
       message:
         result.paymentAmount === null
           ? t("property.added", { name })
-          : t("property.addedWithPayment", {
-              name,
-              amount: formatEuro(result.paymentAmount, locale),
-            }),
+          : t(
+              result.paymentCount > 1
+                ? "property.addedWithPayments"
+                : "property.addedWithPayment",
+              {
+                name,
+                amount: formatEuro(result.paymentAmount, locale),
+                count: result.paymentCount,
+              },
+            ),
     };
   });
 }
