@@ -77,7 +77,14 @@ offered; for 3 they kept the editable table.
 5. **Data: monthly series since 1970, kept in git**, as `etf-shortlist.ts`
    is: reviewed in a diff, nothing to poison, nothing fetched at runtime.
    A script refreshes them once a year. The licence of each source is
-   settled in Phase 0, before anything ships.
+   settled in Phase 0, before anything ships. Settled the same day, with
+   the owner (see « Sources »):
+   - shares are rebuilt rather than licensed from MSCI;
+   - the US come from Fama and French, used while their permission is
+     asked;
+   - the rebuild is weighted by market size, not GDP, after measuring both;
+   - the dividends missing from the OECD's prices are matched to Fama and
+     French, not to an MSCI factsheet.
 6. **An edited return shifts history; it does not replace it.** The return
    field starts at the account's historical median (« 1970–2025 : 6,8 % »).
    Typing 5 % moves that account's whole history down by the difference.
@@ -114,9 +121,10 @@ offered; for 3 they kept the editable table.
     - AV as the fonds euros series, unless its funds are known;
     - each livret as its own regulated-rate history;
     - a PEL at its contract rate, as today.
-    A series that starts after 1970 (emerging, Europe, Nasdaq) uses its
-    parent family before its first month (`INDEX_FAMILY_CONTAINS`), and the
-    replay records that it did.
+    Index families with no series of their own follow a broader one:
+    Nasdaq-100 and Russell 2000 follow the whole US market. Emerging
+    markets, which start in July 1989, follow developed markets before
+    that. The replay records each stand-in it used.
 12. **The milestones' dates come from the median replay** on the reader's
     real figures, so « Progression » and the trajectory agree. A reached
     milestone is still today's measured wealth, so the milestone push and
@@ -140,23 +148,22 @@ offered; for 3 they kept the editable table.
 
 Monthly, January 1970 to the last full year, as total returns in euros
 (dividends reinvested; dollar series converted at the month's rate, francs
-and marks before 1999). Stored compactly: basis points in a string per
-series, about 660 values each. The phone carries core as source, so size
-matters; twelve series stay well under 100 kB.
+at 6,55957 before 1999). Stored as integers in hundred-thousandths, one row
+per calendar year, in `data.generated.ts` (30 kB for six series; the phone
+carries core as source, so size matters).
 
-| Series | Covers | Starts |
-| --- | --- | --- |
-| `world` | world equities (MSCI World, FTSE All-World, the default) | 1970 |
-| `us` | S&P 500 | 1970 |
-| `nasdaq` | Nasdaq-100 | 1985 |
-| `europe` | STOXX Europe 600 | 1987 |
-| `emerging` | emerging markets | 1988 |
-| `small-us` | Russell 2000 | 1979 |
-| `euro-bonds` | euro government bonds, for bond and mixed funds | 1970 |
-| `fonds-euros` | AV fonds euros, a yearly rate applied monthly | 1970 |
-| `livret-a`, `ldds`, `lep` | regulated rates (LDDS from Codevi) | 1970 / 1983 / 1982 |
-| `cpi-fr` | French consumer prices | 1970 |
-| `bitcoin` | BTC in euros | ~2013 |
+| Series | Covers | Starts | Status |
+| --- | --- | --- | --- |
+| `world` | developed shares: MSCI World and FTSE All-World funds, the default | 1970 | built |
+| `us` | US shares, the whole market: S&P 500, and Nasdaq-100 and Russell 2000 as stand-ins | 1970 | built |
+| `europe` | European shares (STOXX Europe 600 funds) | 1970 | built |
+| `emerging` | emerging shares; `world` before | 1989-07 | built |
+| `bonds-fr` | French 10-year government bonds, for bond and mixed funds | 1970 | built |
+| `cpi-fr` | French consumer prices | 1970 | built |
+| `livret-a` | the Livret A's rate, by quinzaine | 1970 | built |
+| `ldds`, `lep` | their regulated rates | 1970 / 1982 | to source |
+| `fonds-euros` | AV fonds euros, a yearly rate applied monthly | — | to source |
+| `bitcoin` | BTC in euros | ~2013 | to source |
 
 ### Functions
 
@@ -280,14 +287,14 @@ The bank invitation stays at the foot of the page.
 
 ## Phases
 
-0. **The data** (`plan-history-data`).
-   - Settle the sources with the owner (below), one licence at a time.
-   - Write the series into `packages/core/src/history/series/` with
-     `scripts/history-refresh.mjs`.
-   - Check every series against figures each provider publishes on its own
-     site: yearly returns from factsheets, INSEE's annual inflation, the
-     Livret A rates in force.
-   - No screen changes; `Changelog: none`.
+0. **The data** (`plan-history-data`). Shares, bonds, prices and the
+   Livret A built on 2026-10-25 (2ccd0f8):
+   - `packages/core/src/history/` holds the series, the sources and tests:
+     INSEE's yearly inflation, the Livret A's rates, the rebuild's dates;
+   - `scripts/history-refresh.mjs` rebuilds them;
+   - no screen changes; `Changelog: none`.
+   Still to do: the LDDS, the LEP, the fonds euros and bitcoin (see
+   « Sources »), and the owner's e-mail to Kenneth French.
 1. **The engine** (`plan-history-core`).
    - `replayPlan`, `crashTest`, `lossOdds`, `sustainableWithdrawal` and
      `historicalReturn`.
@@ -316,25 +323,90 @@ The bank invitation stays at the foot of the page.
 
 Phases 0 and 1 hold everything else up; 2 can be taken at any time.
 
-## Sources (Phase 0, the owner's call)
+## Sources (settled with the owner, 2026-10-25)
 
-| Series | Candidate | Licence | Standing |
-| --- | --- | --- | --- |
-| French inflation | INSEE, consumer prices, all households, chained | Licence Ouverte 2.0 | usable, with attribution |
-| Livret A, LEP, Codevi/LDDS | Banque de France (Webstat), rates set by arrêté | public | usable |
-| Fonds euros | France Assureurs / ACPR yearly averages | published facts; terms to read | to check |
-| Dollar, mark, franc rates | Federal Reserve H.10 (via FRED) | US public domain | usable |
-| US equities | Robert Shiller's monthly data (price, dividends, CPI since 1871) | no stated licence; widely mirrored, DataHub assumes public domain | the owner decides |
-| World equities | MSCI World Net Return | redistributing index values usually needs a paid MSCI licence | probably blocked |
-| Europe, emerging, Nasdaq, Russell | their index providers | the same as MSCI | probably blocked |
-| Bitcoin | the closes the app already fetches (`market/yahoo.ts`), or Coin Metrics' community data (CC BY-NC) | to check | to check |
+`packages/core/src/history/sources.ts` holds the same list for the page.
 
-If MSCI cannot be licensed, the fallback is a developed-markets series
-stitched from free academic data: Shiller's US series before 1990 and
-Kenneth French's developed-markets returns after. It is labelled « actions
-des pays développés », not « MSCI World », and its terms still have to be
-read. Settling this table is the first job of Phase 0. If the world series
-has no clean source, the plan changes before any code is written.
+| Series | Source | Terms |
+| --- | --- | --- |
+| `cpi-fr` | INSEE: 000008964 (base 1980) to January 1990, then 001759970 (base 2015), chained by monthly change | Licence Ouverte 2.0 |
+| `us` | Fama and French: the US market, Mkt-RF + RF, from 1970 | © Fama and French; permission asked |
+| `world` | Fama and French « Developed » from July 1990; rebuilt before (below) | the same, plus OECD and World Bank |
+| `europe` | Fama and French « Europe » from July 1990; rebuilt before | the same |
+| `emerging` | Fama and French « Emerging » from July 1989 | © Fama and French |
+| `bonds-fr` | OECD, France's long-term rate (IRLT), as a 10-year bond at constant maturity | OECD terms: reuse with the source named |
+| dollar rates | Federal Reserve H.10 via FRED; in 1970, the OECD's rates and the Bretton Woods parities | US public domain |
+| `livret-a` | the arrêtés, as Banque de France's MIR1 series gives them, checked against a second compilation | public decisions |
+
+**The rebuild before July 1990:**
+- Each developed country's OECD share price index, in dollars.
+- Weighted by its market's size at the end of 1989 (World Bank, CC BY 4.0),
+  carried back month by month with its prices. Japan is 40 % of the mix in
+  1989 and the United States 56 % in 1970.
+- The United States' own return in it is Fama and French's.
+- Every other country gets the yearly dividend yield that makes the same
+  rebuild return what Fama and French do over 1990–2025: 2.6 % outside the
+  United States, 3.0 % for Europe.
+
+**Checked once against MSCI World's published yearly returns** (kept in a
+scratch file, never stored): the rebuild returns 13.64 %/yr in dollars
+over 1970–1989, against 13.42 %; each year is within one to three points.
+Fama and French return 8.07 %/yr over 1990–2025, against 8.28 %.
+
+**Set aside, and why:**
+- **MSCI.** Its index data and its factsheets « may not be used for
+  commercial purposes without prior written permission ».
+- **The OECD's US index.** It behaves like the NYSE Composite, without
+  the Nasdaq's companies: 7.2 %/yr over 2010–2025, against 14.1 % for the
+  whole US market with dividends.
+- **Shiller's S&P 500.** It states no licence either, and its monthly
+  averages soften the troughs.
+- **GDP weights** (the owner's first choice). After measuring, they gave
+  8.6 %/yr over 2010–2025, against 9.6 % for market size and 11.3 % for
+  the index; the owner switched.
+
+**Still to source:**
+- **LDDS and LEP.** Webstat holds both (MIR1), but its API needs an
+  account. Either the owner opens a free one, or the rates are written from
+  the arrêtés as the Livret A's were. Until then the LDDS reads as the
+  Livret A, identical since August 2003, and the LEP too, flagged.
+- **Fonds euros.** The ACPR publishes yearly averages from 2009, and France
+  Assureurs before that; their terms are still to read. Before the first
+  published year, a proposal: the French 10-year yield as the coupon,
+  flagged.
+- **Bitcoin.** A proposal: the BTC-EUR closes the app already reads for
+  quotes (`market/yahoo.ts`), the same terms the owner already accepted for
+  prices.
+
+### The owner's part: asking Fama and French
+
+To send from the owner's address to Kenneth French (his address is on the
+Data Library page), filling in the bracket:
+
+> Subject: Using Data Library market returns in a personal-finance app
+>
+> Dear Professor French,
+>
+> I am building Pluclair, a personal-finance app for French savers. Its
+> planning page replays a person's own savings plan on historical market
+> returns, so that they see the range of outcomes and what past crashes
+> would have done to their money, rather than a fixed assumed return.
+>
+> We would like to use the monthly market returns (Mkt-RF plus RF) from
+> the US research factors and the Developed, Developed ex US, Europe and
+> Emerging files. They would be stored in the app as monthly returns
+> converted to euros, refreshed once a year, and credited to the Kenneth
+> R. French Data Library, with a link, on the page that uses them.
+> Pluclair is [free / how it is paid for].
+>
+> May we use the data this way? If you would like a different
+> attribution, or would rather we did not, please tell me and we will
+> follow your wishes.
+>
+> Thank you for making the library available.
+
+If the answer is no, the US leg and the regions after 1990 need another
+source, and the rest of the plan waits for it.
 
 ## Risks
 
