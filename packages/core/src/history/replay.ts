@@ -122,6 +122,8 @@ class History {
   readonly end: HistoryMonth;
   /** Months from the epoch to the end, both counted. */
   readonly length: number;
+  /** French prices' change, by month index. */
+  readonly inflation: Float64Array;
   private readonly offsets = new Map<
     HistorySeriesId,
     { series: HistorySeries; offset: number }
@@ -132,6 +134,10 @@ class History {
     this.epoch = this.cpi.start;
     this.end = this.cpi.end;
     this.length = monthsBetween(this.epoch, this.end) + 1;
+    this.inflation = Float64Array.from(
+      { length: this.length },
+      (_, index) => this.cpi.returns[index] ?? 0,
+    );
   }
 
   /** A series and how many months after the epoch it starts. */
@@ -152,10 +158,6 @@ class History {
     return at >= 0 && at < series.returns.length ? series.returns[at] : null;
   }
 
-  inflation(index: number): number {
-    return this.cpi.returns[index] ?? 0;
-  }
-
   /** The month index of the first month a set of sources all have. */
   firstShared(keys: readonly MixKey[]): number {
     return keys.reduce((latest, key) => {
@@ -172,69 +174,98 @@ class History {
 }
 
 /**
- * One stretch of history: reads each source's return, standing in where a
- * source falls short, and notes what stood in.
+ * Each account's return month by month over the whole history, fees and the
+ * shift in, worked out once per call: the loops over starts then read an
+ * array rather than every source every month, which is what lets a phone
+ * replay five hundred starts while a slider moves.
+ *
+ * A window a source does not cover reads its stand-in — the Livret A month
+ * by month for the LEP, prices for bitcoin — noted as it is handed out.
  */
-class Window {
-  readonly standIns = new Map<MixKey, StandIn>();
-  private readonly covered = new Map<MixKey, boolean>();
+class Tracks {
+  private readonly cache = new Map<string, Float64Array>();
 
   constructor(
     private readonly history: History,
-    /** Month index of the window's first month. */
-    readonly start: number,
-    readonly months: number,
+    private readonly prepared: readonly Prepared[],
   ) {}
 
-  /** The nominal return of a source at a month index of this window. */
-  nominal(key: MixKey, index: number, inflation: number): number {
+  /**
+   * Account `index`'s nominal return by month index, as a window from
+   * `start` over `months` reads it.
+   */
+  read(
+    index: number,
+    start: number,
+    months: number,
+    standIns?: Map<MixKey, StandIn>,
+  ): Float64Array {
+    const each = this.prepared[index];
+    const flat: MixKey[] = [];
+    if (each.fixed === null) {
+      for (const [key] of each.keys) {
+        if (key === "cash") {
+          continue;
+        }
+        const { series, offset } = this.history.entry(key);
+        const stop = offset + series.returns.length;
+        if (start >= offset && start + months <= stop) {
+          continue;
+        }
+        const standIn = STAND_INS[key];
+        if (standIn?.kind === "window") {
+          flat.push(key);
+          standIns?.set(key, { key, as: "flat" });
+        } else if (standIn?.kind === "month") {
+          standIns?.set(key, { key, as: standIn.by });
+        } else {
+          const missing = start < offset ? start : stop;
+          throw new Error(
+            `No history for ${key} in ${this.history.month(missing)}.`,
+          );
+        }
+      }
+    }
+    const signature = `${index}:${flat.join(",")}`;
+    let returns = this.cache.get(signature);
+    if (!returns) {
+      returns = this.compute(each, flat);
+      this.cache.set(signature, returns);
+    }
+    return returns;
+  }
+
+  private compute(each: Prepared, flat: readonly MixKey[]): Float64Array {
+    const returns = new Float64Array(this.history.length);
+    for (let at = 0; at < returns.length; at += 1) {
+      let base = each.fixed ?? 0;
+      if (each.fixed === null) {
+        for (const [key, weight] of each.keys) {
+          base += weight * this.nominal(key, at, flat);
+        }
+      }
+      returns[at] = (1 + base) * each.adjust - 1;
+    }
+    return returns;
+  }
+
+  /** A source's return at a month index; NaN where it has none. */
+  private nominal(key: MixKey, at: number, flat: readonly MixKey[]): number {
     if (key === "cash") {
       return 0;
     }
-    const standIn = STAND_INS[key];
-    if (standIn?.kind === "window" && !this.covers(key)) {
-      this.standIns.set(key, { key, as: "flat" });
-      return inflation;
+    if (flat.includes(key)) {
+      return this.history.inflation[at];
     }
-    const own = this.history.at(key, index);
+    const own = this.history.at(key, at);
     if (own !== null) {
       return own;
     }
-    if (standIn?.kind === "month") {
-      this.standIns.set(key, { key, as: standIn.by });
-      return this.history.at(standIn.by, index) ?? 0;
-    }
-    throw new Error(`No history for ${key} in ${this.history.month(index)}.`);
+    const standIn = STAND_INS[key];
+    return standIn?.kind === "month"
+      ? (this.history.at(standIn.by, at) ?? 0)
+      : Number.NaN;
   }
-
-  private covers(key: MixKey): boolean {
-    let known = this.covered.get(key);
-    if (known === undefined) {
-      const { series, offset } = this.history.entry(key as HistorySeriesId);
-      known =
-        this.start >= offset &&
-        this.start + this.months <= offset + series.returns.length;
-      this.covered.set(key, known);
-    }
-    return known;
-  }
-}
-
-/** One account's nominal return in a month, fees and shift included. */
-function accountReturn(
-  prepared: Prepared,
-  window: Window,
-  index: number,
-  inflation: number,
-): number {
-  const base =
-    prepared.fixed ??
-    prepared.keys.reduce(
-      (sum, [key, weight]) =>
-        sum + weight * window.nominal(key, index, inflation),
-      0,
-    );
-  return (1 + base) * prepared.adjust - 1;
 }
 
 function paymentIn(account: ReplayAccount, index: number): number {
@@ -283,7 +314,7 @@ export interface ReplayResult {
 }
 
 /** The value at a fraction of the way through sorted values. */
-function quantile(sorted: readonly number[], q: number): number {
+function quantile(sorted: ArrayLike<number>, q: number): number {
   if (sorted.length === 0) {
     return 0;
   }
@@ -310,55 +341,72 @@ export function replayPlan(input: ReplayInput): ReplayResult {
   }
 
   const prepared = prepare(input.accounts);
-  const realByMonth = Array.from({ length: months }, () => [] as number[]);
-  const nominalByMonth = Array.from({ length: months }, () => [] as number[]);
-  const ends: { start: number; value: number }[] = [];
-  const accountEnds = input.accounts.map(() => [] as number[]);
+  const tracks = new Tracks(history, prepared);
+  const count = input.accounts.length;
+  const realByMonth = Array.from(
+    { length: months },
+    () => new Float64Array(starts),
+  );
+  const nominalByMonth = Array.from(
+    { length: months },
+    () => new Float64Array(starts),
+  );
+  const ends = new Float64Array(starts);
+  const accountEnds = input.accounts.map(() => new Float64Array(starts));
   const standIns = new Map<MixKey, StandIn>();
+  const payments = input.accounts.map((account) =>
+    Float64Array.from({ length: months }, (_, k) => paymentIn(account, k)),
+  );
+  const ceilings = input.accounts.map((account) => account.ceiling ?? null);
+  const values = new Float64Array(count);
 
   const overflow = input.accounts.findIndex(
     (account) => account.id === input.overflowTo,
   );
 
   for (let s = 0; s < starts; s += 1) {
-    const window = new Window(history, s, months);
-    const values = input.accounts.map((account) => account.value);
+    const returns = prepared.map((_, index) =>
+      tracks.read(index, s, months, standIns),
+    );
+    input.accounts.forEach((account, index) => {
+      values[index] = account.value;
+    });
     // What full accounts refused, with nowhere named to go: still money.
     let spilled = 0;
     let prices = 1;
     for (let k = 0; k < months; k += 1) {
-      const inflation = history.inflation(s + k);
+      const at = s + k;
+      const inflation = history.inflation[at];
       prices *= 1 + inflation;
       spilled /= 1 + inflation;
       let refused = 0;
-      prepared.forEach((each, index) => {
-        const ret = accountReturn(each, window, s + k, inflation);
-        const grown = (values[index] * (1 + ret)) / (1 + inflation);
-        const payment = paymentIn(each.account, k);
-        const ceiling = each.account.ceiling ?? null;
+      for (let index = 0; index < count; index += 1) {
+        const grown =
+          (values[index] * (1 + returns[index][at])) / (1 + inflation);
+        const payment = payments[index][k];
+        const ceiling = ceilings[index];
         const room =
           ceiling === null
             ? payment
             : Math.max(0, Math.min(payment, ceiling - grown));
         values[index] = grown + room;
         refused += payment - room;
-      });
+      }
       if (overflow >= 0) {
         values[overflow] += refused;
       } else if (input.overflowTo !== null) {
         spilled += refused;
       }
-      const total = values.reduce((sum, value) => sum + value, spilled);
-      realByMonth[k].push(total);
-      nominalByMonth[k].push(total * prices);
+      let total = spilled;
+      for (let index = 0; index < count; index += 1) {
+        total += values[index];
+      }
+      realByMonth[k][s] = total;
+      nominalByMonth[k][s] = total * prices;
     }
-    ends.push({
-      start: s,
-      value: values.reduce((sum, value) => sum + value, spilled),
-    });
-    values.forEach((value, index) => accountEnds[index].push(value));
-    for (const [key, standIn] of window.standIns) {
-      standIns.set(key, standIn);
+    ends[s] = realByMonth[months - 1][s];
+    for (let index = 0; index < count; index += 1) {
+      accountEnds[index][s] = values[index];
     }
   }
 
@@ -369,17 +417,21 @@ export function replayPlan(input: ReplayInput): ReplayResult {
   };
   const nominalMedian: number[] = [];
   for (let k = 0; k < months; k += 1) {
-    const sorted = realByMonth[k].sort(ascending);
+    // A typed array sorts by value, natively.
+    const sorted = realByMonth[k].sort();
     band.p10.push(quantile(sorted, 0.1));
     band.p50.push(quantile(sorted, 0.5));
     band.p90.push(quantile(sorted, 0.9));
-    nominalMedian.push(quantile(nominalByMonth[k].sort(ascending), 0.5));
+    nominalMedian.push(quantile(nominalByMonth[k].sort(), 0.5));
   }
-  const byValue = [...ends].sort((left, right) => left.value - right.value);
-  const sortedEnds = byValue.map((end) => end.value);
-  const named = (end: { start: number; value: number }) => ({
-    start: history.month(end.start),
-    value: end.value,
+  // Starts by where they end, the earlier first on a tie.
+  const byValue = Array.from({ length: starts }, (_, start) => start).sort(
+    (left, right) => ends[left] - ends[right],
+  );
+  const sortedEnds = Float64Array.from(ends).sort();
+  const named = (start: number) => ({
+    start: history.month(start),
+    value: ends[start],
   });
 
   return {
@@ -398,7 +450,7 @@ export function replayPlan(input: ReplayInput): ReplayResult {
     best: named(byValue[byValue.length - 1]),
     accounts: input.accounts.map((account, index) => ({
       id: account.id,
-      median: quantile(accountEnds[index].sort(ascending), 0.5),
+      median: quantile(accountEnds[index].sort(), 0.5),
     })),
     standIns: [...standIns.values()],
   };
@@ -449,20 +501,20 @@ export interface CrashTest {
 /** One run from the peak, in the euros of the day, payments flat. */
 function crashRun(
   history: History,
+  tracks: Tracks,
   prepared: readonly Prepared[],
   start: number,
   withPayments: boolean,
 ): CrashPoint[] {
   const months = history.length - start;
-  const window = new Window(history, start, months);
+  const returns = prepared.map((_, index) => tracks.read(index, start, months));
   const values = prepared.map((each) => each.account.value);
   let invested = values.reduce((sum, value) => sum + value, 0);
   const path: CrashPoint[] = [];
   for (let k = 0; k < months; k += 1) {
-    const inflation = history.inflation(start + k);
     let total = 0;
     prepared.forEach((each, index) => {
-      const ret = accountReturn(each, window, start + k, inflation);
+      const ret = returns[index][start + k];
       const payment = withPayments ? paymentIn(each.account, k) : 0;
       values[index] = values[index] * (1 + ret) + payment;
       invested += payment;
@@ -514,8 +566,9 @@ export function crashTest(
     .filter((account) => !reaches(account))
     .map((account) => account.id);
 
-  const path = crashRun(history, kept, start, true);
-  const alone = crashRun(history, kept, start, false);
+  const tracks = new Tracks(history, kept);
+  const path = crashRun(history, tracks, kept, start, true);
+  const alone = crashRun(history, tracks, kept, start, false);
   let lowIndex = 0;
   path.forEach((point, index) => {
     const gap = point.value - point.invested;
@@ -565,17 +618,15 @@ export function lossOdds(
   const [prepared] = prepare([
     { id: "odds", value: 1, monthly: 0, ...account },
   ]);
+  const tracks = new Tracks(history, [prepared]);
   const from = history.firstShared(Object.keys(account.mix) as MixKey[]);
   const windows = Math.max(0, history.length - from - months + 1);
   let losses = 0;
   for (let s = from; s < from + windows; s += 1) {
-    const window = new Window(history, s, months);
+    const returns = tracks.read(0, s, months);
     let value = 1;
-    for (let k = 0; k < months; k += 1) {
-      const inflation = history.inflation(s + k);
-      value =
-        (value * (1 + accountReturn(prepared, window, s + k, inflation))) /
-        (1 + inflation);
+    for (let at = s; at < s + months; at += 1) {
+      value = (value * (1 + returns[at])) / (1 + history.inflation[at]);
     }
     if (value < 1) {
       losses += 1;
@@ -615,43 +666,27 @@ export function sustainableWithdrawal(
     return null;
   }
   const prepared = prepare(accounts);
+  const tracks = new Tracks(history, prepared);
 
   const rates: number[] = [];
   for (let s = 0; s < starts; s += 1) {
-    const window = new Window(history, s, months);
-    // The whole's real growth, month by month, once for this start.
-    const factors: number[] = [];
-    for (let k = 0; k < months; k += 1) {
-      const inflation = history.inflation(s + k);
+    const returns = prepared.map((_, index) => tracks.read(index, s, months));
+    // Taking r a month from a start of 1 leaves, after month m, the growth
+    // so far times (1 − r × the sum of 1 / the growth to each month before
+    // it): the money lasts while that sum stays under 1 / r, and the sum
+    // only rises, so the rate that lasts to the end is the one that just
+    // reaches it. The most is 25 % a year.
+    let grownSoFar = 1;
+    let sum = 0;
+    for (let at = s; at < s + months; at += 1) {
       let grown = 0;
-      prepared.forEach((each) => {
-        grown +=
-          each.account.value *
-          (1 + accountReturn(each, window, s + k, inflation));
+      prepared.forEach((each, index) => {
+        grown += each.account.value * (1 + returns[index][at]);
       });
-      factors.push(grown / total / (1 + inflation));
+      grownSoFar *= grown / total / (1 + history.inflation[at]);
+      sum += 1 / grownSoFar;
     }
-    const lasts = (rate: number) => {
-      let value = 1;
-      for (const factor of factors) {
-        value = value * factor - rate / 12;
-        if (value < 0) {
-          return false;
-        }
-      }
-      return true;
-    };
-    let low = 0;
-    let high = 0.25;
-    for (let step = 0; step < 40; step += 1) {
-      const mid = (low + high) / 2;
-      if (lasts(mid)) {
-        low = mid;
-      } else {
-        high = mid;
-      }
-    }
-    rates.push(low);
+    rates.push(Math.min(0.25, 12 / sum));
   }
   rates.sort(ascending);
   return {
@@ -688,13 +723,12 @@ export function historicalReturn(
   const [prepared] = prepare([
     { id: "history", value: 1, monthly: 0, ...account },
   ]);
-  const window = new Window(history, from, months);
+  const returns = new Tracks(history, [prepared]).read(0, from, months);
   let nominal = 1;
   let prices = 1;
-  for (let k = 0; k < months; k += 1) {
-    const inflation = history.inflation(from + k);
-    nominal *= 1 + accountReturn(prepared, window, from + k, inflation);
-    prices *= 1 + inflation;
+  for (let at = from; at < from + months; at += 1) {
+    nominal *= 1 + returns[at];
+    prices *= 1 + history.inflation[at];
   }
   return {
     from: history.month(from),
