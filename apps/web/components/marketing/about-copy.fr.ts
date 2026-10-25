@@ -146,7 +146,8 @@ export const aboutCopyFr: AboutCopy = {
       "Si un avertissement parle d’une application inconnue, choisissez « Installer quand même ». Les mises à jour s’installent par-dessus, et vos données restent.",
     ],
     iphone:
-      "Sur iPhone, pas encore d’app : Pluclair s’utilise dans Safari, avec le même compte.",
+      "Sur iPhone, pas encore d’app : Pluclair se met sur l’écran d’accueil depuis Safari, avec le même compte.",
+    iphoneHow: "Comment faire",
   },
 
   elsewhere: {

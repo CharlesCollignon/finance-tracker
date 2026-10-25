@@ -5,6 +5,7 @@ import {
   DeviceMobile,
 } from "@phosphor-icons/react/dist/ssr";
 import type { AboutCopy } from "@/components/marketing/about-copy";
+import { IPHONE_HREF } from "@/components/marketing/download-copy";
 import {
   CTA_BASE,
   CTA_QUIET,
@@ -13,6 +14,7 @@ import {
 } from "@/components/marketing/cta-classes";
 import { LandingBloom } from "@/components/marketing/LandingOrb";
 import { FadeUp, RiseWords } from "@/components/marketing/LandingReveal";
+import { marketingFocus } from "@/components/marketing/marketing-focus";
 import { cn } from "@/lib/utils";
 
 /**
@@ -113,7 +115,18 @@ export function TryBeta({
                   aria-hidden
                   className="mt-0.5 shrink-0 text-marketing-muted"
                 />
-                {copy.iphone}
+                <span>
+                  {copy.iphone}{" "}
+                  <Link
+                    href={IPHONE_HREF}
+                    className={cn(
+                      "rounded-control text-marketing-muted underline underline-offset-4 transition-colors duration-hover hover:text-white",
+                      marketingFocus,
+                    )}
+                  >
+                    {copy.iphoneHow}
+                  </Link>
+                </span>
               </p>
             </div>
           </FadeUp>

@@ -32,6 +32,8 @@ export const landingCopy = {
       "Income, spending, savings and investments in one place. What repeats fills itself in each month, and once a month Pluclair checks against your bank to find what slipped through.",
     /** Beside the buttons while the site hands out the APK. */
     android: "Download for Android",
+    /** In its place on an iPhone, to the download page's iPhone section. */
+    iphone: "Install on iPhone",
   },
 
   /** The three commitments, as one sentence rather than three cards. */

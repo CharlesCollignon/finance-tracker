@@ -34,6 +34,7 @@ export const landingCopyFr: LandingCopySections & {
     tagline:
       "Vos revenus, vos dépenses, votre épargne et vos placements au même endroit. Ce qui revient chaque mois s’ajoute tout seul, et une fois par mois, Pluclair compare avec votre banque pour retrouver ce qui a filé.",
     android: "Télécharger pour Android",
+    iphone: "Installer sur iPhone",
   },
 
   promise: {
