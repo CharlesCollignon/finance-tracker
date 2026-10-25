@@ -1510,6 +1510,8 @@ export const en = {
     welcomeBack: "Welcome back",
     signUpHeading: "Start tracking income and expenses",
     linkExpired: "Sign-in link expired or invalid. Please try again.",
+    confirmLinkExpired:
+      "This confirmation link has expired or was already used. If your address is already confirmed, sign in; if not, sign up again with the same address to get a new link.",
     redirecting: "Redirecting…",
     finishingSignIn: "Finishing sign-in…",
     confirmEmail: "Check your email to confirm your account, then sign in.",

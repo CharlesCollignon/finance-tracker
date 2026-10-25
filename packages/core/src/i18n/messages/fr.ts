@@ -1158,6 +1158,8 @@ export const fr: Messages = {
     welcomeBack: "Content de vous revoir",
     signUpHeading: "Commencez à suivre vos revenus et vos dépenses",
     linkExpired: "Lien de connexion expiré ou invalide. Veuillez réessayer.",
+    confirmLinkExpired:
+      "Ce lien de confirmation a expiré ou a déjà servi. Si votre adresse est déjà confirmée, connectez-vous\u00A0; sinon, inscrivez-vous de nouveau avec la même adresse pour recevoir un nouveau lien.",
     redirecting: "Redirection…",
     finishingSignIn: "Connexion en cours…",
     confirmEmail:
