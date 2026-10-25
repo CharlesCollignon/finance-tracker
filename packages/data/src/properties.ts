@@ -21,6 +21,7 @@ import {
   type MarketContext,
 } from "@finance/core/property";
 import type { RentReference } from "@finance/core/rent-reference";
+import type { PropertyChoice } from "@finance/core/rental";
 import type {
   CategoryType,
   Property,
@@ -465,15 +466,16 @@ export async function getProperties(
 
 /**
  * Each property's name, for a picker: what a recurring template can be
- * attached to. Empty before migration 049.
+ * attached to. Empty before migration 049. Its use too, which decides
+ * whether an income is offered the picker (`offersPropertyLink`).
  */
 export async function getPropertyNames(
   db: Db,
   userId: string,
-): Promise<{ id: string; name: string }[]> {
+): Promise<PropertyChoice[]> {
   const { data, error } = await db
     .from("properties")
-    .select("id, name")
+    .select("id, name, usage")
     .eq("user_id", userId)
     .order("purchased_on");
   if (error) {

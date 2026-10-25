@@ -34,6 +34,10 @@ import { toTypedAmount } from "@/lib/typed-amount";
 import { useFormatCurrency } from "@/providers/CurrencyProvider";
 import { useLocale, useT } from "@/providers/LocaleProvider";
 import { resolveMessage } from "@finance/core/i18n/t";
+import {
+  offersPropertyLink,
+  type PropertyChoice,
+} from "@finance/core/rental";
 
 interface RecurringFormModalProps {
   open: boolean;
@@ -43,7 +47,7 @@ interface RecurringFormModalProps {
   /** The days this charge has been recorded on this month, today included. */
   recordedThisMonth?: string[];
   /** The user's properties, which a charge can belong to. */
-  properties?: { id: string; name: string }[];
+  properties?: PropertyChoice[];
 }
 
 /**
@@ -126,7 +130,7 @@ interface RecurringFormBodyProps {
    * does not offer it — the field is not drawn and not sent, so saving leaves
    * the charge's property as it was.
    */
-  properties?: { id: string; name: string }[];
+  properties?: PropertyChoice[];
   /**
    * The kind of money the category picker opens on — a kind's « + » on
    * Récurrents opens on that kind's.
@@ -189,6 +193,13 @@ export function RecurringFormBody({
   // said under the schedule, as the web does.
   const isYearlyExpense =
     recurrence === "yearly" && selectedCategory?.type === "expense";
+  // « Bien » only where a property can matter, as on the web: not for a
+  // DCA, nor a salary when nothing is let.
+  const offerProperty = offersPropertyLink(
+    selectedCategory?.type,
+    properties,
+    template?.property_id,
+  );
   // The app's transfer to the broker, kept from the ticked DCAs, as on the
   // web: opened here through a link, it says so and keeps its pricing.
   const follows = template?.pricing_type === "purchases";
@@ -324,7 +335,7 @@ export function RecurringFormBody({
       payload.endsOn = endsOn.trim();
     }
     // Only when the field was drawn: empty detaches, absent leaves it be.
-    if (properties.length > 0) {
+    if (offerProperty) {
       payload.propertyId = propertyId;
     }
     // Only sent when the question was on screen, so an answer given to a
@@ -430,7 +441,7 @@ export function RecurringFormBody({
         </>
       )}
 
-      {properties.length > 0 ? (
+      {offerProperty ? (
         <>
           <Text className="mb-2 text-sm font-medium">
             {t("property.attachLabel")}

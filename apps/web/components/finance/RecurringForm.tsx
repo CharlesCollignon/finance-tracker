@@ -45,11 +45,12 @@ import type { InstrumentSearchResult } from "@finance/core/market/yahoo";
 import { useLocale, useT } from "@/lib/locale-context";
 import { resolveMessage } from "@finance/core/i18n/t";
 import type { FormState } from "@finance/core/action-result";
+import { offersPropertyLink, type PropertyChoice } from "@finance/core/rental";
 
 interface RecurringFormProps {
   categories: Category[];
   /** The user's properties, which a charge can belong to. */
-  properties?: { id: string; name: string }[];
+  properties?: PropertyChoice[];
   template?: RecurringTemplateWithCategory | null;
   /** The days this charge is already recorded on this month, up to today. */
   recordedDates?: string[];
@@ -105,7 +106,7 @@ interface RecurringFormBodyProps {
    * not offer it — the field is not drawn and the form does not send it, so
    * saving leaves the charge's property as it was.
    */
-  properties?: { id: string; name: string }[];
+  properties?: PropertyChoice[];
   template?: RecurringTemplateWithCategory | null;
   /** For a new charge, the kind of money its category picker opens on. */
   initialType?: CategoryType;
@@ -245,6 +246,14 @@ export function RecurringFormBody({
    */
   const supportsShares =
     selectedCategory?.type === "investment" && !isCryptoCategory;
+  // « Bien » only where a property can matter: not for a DCA, nor a salary
+  // when nothing is let. Hidden, the field is not sent, and a new charge
+  // keeps no property it was given before its category changed.
+  const offerProperty = offersPropertyLink(
+    selectedCategory?.type,
+    properties,
+    template?.property_id,
+  );
   /*
    * Following the DCAs is the broker transfer's: an investment the account
    * pays (the purchases themselves never touch it), once a month.
@@ -531,7 +540,7 @@ export function RecurringFormBody({
           )}
         </>
       )}
-      {properties.length > 0 ? (
+      {offerProperty ? (
         <div className="flex flex-col gap-2">
           <span id="recurring-property" className="text-sm font-medium">
             {t("property.attachLabel")}

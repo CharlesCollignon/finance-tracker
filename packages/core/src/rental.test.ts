@@ -5,6 +5,7 @@ import {
   isLet,
   lettingRule,
   monthlyEquivalent,
+  offersPropertyLink,
   rentalFigures,
   rentPerM2,
   type PropertyTemplate,
@@ -125,7 +126,12 @@ describe("rentalFigures", () => {
       template({ id: "tpl-insurance", amount: 12 }),
     ];
     const figures = rentalFigures(
-      [loan({ insurance_separate: true, insurance_template_id: "tpl-insurance" })],
+      [
+        loan({
+          insurance_separate: true,
+          insurance_template_id: "tpl-insurance",
+        }),
+      ],
       withInsurance,
       114_500,
       TODAY,
@@ -134,7 +140,12 @@ describe("rentalFigures", () => {
   });
 
   it("gives no yield without a rent", () => {
-    const figures = rentalFigures([], [template({ amount: 60 })], 114_500, TODAY);
+    const figures = rentalFigures(
+      [],
+      [template({ amount: 60 })],
+      114_500,
+      TODAY,
+    );
     expect(figures).toMatchObject({
       rent: 0,
       cashFlow: -60,
@@ -187,5 +198,36 @@ describe("lettingRule", () => {
     });
     expect(lettingRule("G", "97502", TODAY)).toBeNull();
     expect(lettingRule("G", null, TODAY)?.status.kind).toBe("closed");
+  });
+});
+
+describe("offersPropertyLink", () => {
+  const home = { id: "h", name: "Maison", usage: "main_home" as const };
+  const flat = { id: "f", name: "Studio", usage: "rental_bare" as const };
+
+  it("offers it for an expense", () => {
+    expect(offersPropertyLink("expense", [home], null)).toBe(true);
+  });
+
+  it("offers it for an income only where a property is let", () => {
+    expect(offersPropertyLink("income", [home], null)).toBe(false);
+    expect(offersPropertyLink("income", [home, flat], null)).toBe(true);
+  });
+
+  it("never offers it for savings or an investment", () => {
+    expect(offersPropertyLink("investment", [home, flat], null)).toBe(false);
+    expect(offersPropertyLink("savings", [home, flat], null)).toBe(false);
+  });
+
+  it("waits for a category", () => {
+    expect(offersPropertyLink(undefined, [home], null)).toBe(false);
+  });
+
+  it("keeps it for an entry already attached, so it can be taken off", () => {
+    expect(offersPropertyLink("investment", [home], "h")).toBe(true);
+  });
+
+  it("offers nothing without a property", () => {
+    expect(offersPropertyLink("expense", [], null)).toBe(false);
   });
 });

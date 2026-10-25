@@ -1,3 +1,4 @@
+import type { PropertyChoice } from "@finance/core/rental";
 import type { ActionResult } from "@finance/core/action-result";
 import type { AddressMatch } from "@finance/core/address-search";
 import * as properties from "@finance/data/properties";
@@ -65,9 +66,7 @@ export function setPropertyShare(propertyId: string, share: number) {
   return properties.setPropertyShare(supabase, propertyId, share);
 }
 
-export function getPropertyNames(
-  userId: string,
-): Promise<{ id: string; name: string }[]> {
+export function getPropertyNames(userId: string): Promise<PropertyChoice[]> {
   return properties.getPropertyNames(supabase, userId);
 }
 
