@@ -19,7 +19,6 @@ import {
   RiseLines,
   RiseWords,
 } from "@/components/marketing/LandingReveal";
-import { ABOUT_HREF } from "@/components/marketing/about-copy";
 import { landingCopyFor } from "@/components/marketing/landing-copy";
 import { marketingFocus } from "@/components/marketing/marketing-focus";
 import {
@@ -27,7 +26,13 @@ import {
   nouveautesEntryHref,
 } from "@/components/marketing/nouveautes-copy";
 import { openRoadmap } from "@/components/marketing/nouveautes/open-roadmap";
-import { ANDROID_DOWNLOAD_PATH, storeLinks } from "@/lib/store-links";
+import { DOWNLOAD_HREF } from "@/components/marketing/download-copy";
+import {
+  CTA_BASE,
+  CTA_QUIET,
+  CTA_SIZES,
+} from "@/components/marketing/cta-classes";
+import { storeLinks } from "@/lib/store-links";
 import { FeatureBento } from "@/components/marketing/landing/FeatureBento";
 import { FigureSection } from "@/components/marketing/landing/FigureSection";
 import { OrbFinale } from "@/components/marketing/landing/OrbFinale";
@@ -76,11 +81,10 @@ export async function LandingPage({ isLoggedIn }: LandingPageProps) {
     finalCta,
   } = landingCopyFor(locale);
   // The phone app leaves « Bientôt » once a store has it, or the site hands
-  // out its APK. The APK goes through `/android`, which follows the file
-  // wherever it is hosted; Google Play, once it has the app, replaces it.
+  // out its APK. The APK's buttons lead to its download page, which says how
+  // to install it; Google Play, once it has the app, replaces it.
   const stores = storeLinks();
-  const apk =
-    stores.androidApk && !stores.googlePlay ? ANDROID_DOWNLOAD_PATH : null;
+  const apk = stores.androidApk && !stores.googlePlay ? DOWNLOAD_HREF : null;
   const inStores = [
     { href: stores.appStore, label: phone.appStore, Icon: AppleLogo },
     { href: stores.googlePlay, label: phone.googlePlay, Icon: GooglePlayLogo },
@@ -141,12 +145,20 @@ export async function LandingPage({ isLoggedIn }: LandingPageProps) {
             </p>
           </FadeUp>
           <FadeUp trigger="mount" delay={1.2}>
-            <LandingCtas
-              isLoggedIn={isLoggedIn}
-              size="lg"
-              shine
-              className="mt-8"
-            />
+            {/* The Android app among the first things seen, not after six
+                sections of scrolling: most visitors on a phone want it. */}
+            <div className="mt-8 flex flex-wrap items-center gap-3">
+              <LandingCtas isLoggedIn={isLoggedIn} size="lg" shine />
+              {apk ? (
+                <Link
+                  href={apk}
+                  className={cn(CTA_BASE, CTA_SIZES.lg, CTA_QUIET, "gap-2.5")}
+                >
+                  <AndroidLogo size={20} weight="fill" aria-hidden />
+                  {hero.android}
+                </Link>
+              ) : null}
+            </div>
           </FadeUp>
           {latest ? (
             <FadeUp trigger="mount" delay={1.45}>
@@ -226,7 +238,7 @@ export async function LandingPage({ isLoggedIn }: LandingPageProps) {
                 <p className="mt-4 text-sm leading-relaxed text-marketing-faint">
                   {phone.apkNote}{" "}
                   <Link
-                    href={`${ABOUT_HREF}#android`}
+                    href={DOWNLOAD_HREF}
                     className={cn(
                       "rounded-control text-marketing-muted underline underline-offset-4 transition-colors duration-hover hover:text-white",
                       marketingFocus,
