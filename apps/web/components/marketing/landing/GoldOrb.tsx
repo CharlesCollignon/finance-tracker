@@ -69,8 +69,9 @@ void main() {
   vec2 q = (p - centre) / radius;
   float r = length(q);
 
-  vec3 gold = vec3(0.925, 0.698, 0.369);
-  vec3 ember = vec3(0.62, 0.24, 0.07);
+  // The orb's orange (--orb-c2, lit) and the red it falls to in shadow.
+  vec3 gold = vec3(0.968, 0.588, 0.232);
+  vec3 ember = vec3(0.594, 0.207, 0.066);
   vec3 colour = vec3(0.0);
   float alpha = 0.0;
 

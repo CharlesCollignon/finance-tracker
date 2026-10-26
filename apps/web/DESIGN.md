@@ -223,7 +223,9 @@ the colour is in what it paints on.
 
 - **Lamplit Gold** (`#ecb25e`): The only warm thing in the system and the only
   colour permitted to carry emphasis — an orange-gold since October 2026,
-  moved with the orb so the accent and the mark read as one brand colour. At
+  moved with the orb so the accent and the mark read as one brand colour. The
+  orb went further to orange on 2026-10-26 (`--orb-c2` at 29°) and the accent
+  stayed here, a step paler and more gold than the mark. At
   10:1 against the page it is legible as text, not just as fill, so it serves
   as both the primary button's ground and an emphatic figure's ink. Also the
   focus ring.

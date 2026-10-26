@@ -17,6 +17,20 @@ import type { ChangelogEntry, RoadmapItem } from "./changelog";
  */
 export const CHANGELOG: readonly ChangelogEntry[] = [
   {
+    id: "2026-10-26-orange-orb",
+    date: "2026-10-26",
+    kind: "better",
+    platforms: ["web"],
+    fr: {
+      title: "Un orbe plus orange",
+      body: "L’orbe de Pluclair passe à un orange plus franc partout où il apparaît : l’icône de l’onglet et de l’écran d’accueil, le logo en haut de page, la connexion et le site.",
+    },
+    en: {
+      title: "A more orange orb",
+      body: "Pluclair’s orb turns a clearer orange wherever it appears: the tab and home-screen icon, the logo at the top of the page, sign-in and the site.",
+    },
+  },
+  {
     id: "2026-10-26-softer-ground",
     date: "2026-10-26",
     kind: "better",

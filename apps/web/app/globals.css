@@ -860,9 +860,9 @@ html:has(.marketing-shell) {
 .marketing-bloom {
   background: radial-gradient(
     closest-side,
-    rgba(244, 162, 58, 0.32) 0%,
-    rgba(244, 162, 58, 0.13) 42%,
-    rgba(244, 162, 58, 0.04) 64%,
+    rgba(250, 137, 30, 0.32) 0%,
+    rgba(250, 137, 30, 0.13) 42%,
+    rgba(250, 137, 30, 0.04) 64%,
     transparent 78%
   );
 }
@@ -898,16 +898,18 @@ html:has(.marketing-shell) {
      Orange-gold since October 2026, at the owner's asking: c2 moved from
      36° to 33.5° of hue and to 89% saturation, c1 followed it to 40°, and
      c3 to 24°, because a warm body darkens towards red rather than towards
-     its own hue. The floor on all three is `--warning` at 27°, which marks a
-     row waiting on a decision: the body sits 6.5° off it and well below its
-     lightness, so an 8px dot in the app is still its own colour next to the
-     mark in the header.
+     its own hue. `--primary` moved with it, to #ecb25e, a step paler than
+     the body so that it still reads as the accent of an interface rather
+     than as light.
 
-     `--primary` moved with it, to #ecb25e, a step paler than the body so
-     that it still reads as the accent of an interface rather than as light. */
-  --orb-c1: 255 217 140;
-  --orb-c2: 244 162 58;
-  --orb-c3: 106 48 10;
+     Orange since 2026-10-26, asked for again before an APK: c2 to 29° and
+     96% saturation, c1 to 35°, c3 to 18°. The accent stayed where it was.
+     The body now sits 2° off `--warning` (27°), which marks a row waiting on
+     a decision; it is six points darker, and the mark and an 8px dot are
+     rarely side by side. */
+  --orb-c1: 255 200 122;
+  --orb-c2: 250 137 30;
+  --orb-c3: 105 36 7;
   /* One churn of the interior, one turn of the near cloud layer, one of the
      far one against it. The interior walks `--angle` through five conic
      sweeps; each layer then carries its masses round bodily, in opposite

@@ -98,7 +98,7 @@ export async function ogCard({
             display: "flex",
             borderRadius: 9999,
             boxShadow:
-              "0 0 140px 40px rgba(236, 178, 94, 0.30), 0 0 320px 120px rgba(236, 178, 94, 0.10)",
+              "0 0 140px 40px rgba(250, 137, 30, 0.30), 0 0 320px 120px rgba(250, 137, 30, 0.10)",
           }}
         />
         {/* eslint-disable-next-line @next/next/no-img-element -- drawn by next/og, not a page */}
