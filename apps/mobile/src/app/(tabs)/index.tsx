@@ -12,6 +12,7 @@ import { PurchasesToConfirm } from "@/components/PurchasesToConfirm";
 import { BalanceBetweenCard } from "@/components/bearing/BalanceBetweenCard";
 import { TodoStrip } from "@/components/bearing/TodoStrip";
 import { SetupCard } from "@/components/bearing/SetupCard";
+import { ShareMonthCard } from "@/components/bearing/ShareMonthCard";
 import { YearReadyCard } from "@/components/bearing/YearReadyCard";
 import { BalanceCard } from "@/components/bearing/BalanceCard";
 import { MomentumCard } from "@/components/bearing/MomentumCard";
@@ -277,6 +278,13 @@ export default function HomeScreen() {
             {data.spending.total > 0 ? (
               <FadeIn>
                 <WhereItWentCard data={data} />
+              </FadeIn>
+            ) : null}
+
+            {/* The month to send: not a month ahead, nor a first visit. */}
+            {!data.empty && period !== "future" ? (
+              <FadeIn>
+                <ShareMonthCard year={year} month={month} />
               </FadeIn>
             ) : null}
 

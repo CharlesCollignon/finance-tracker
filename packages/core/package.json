@@ -110,6 +110,7 @@
     "./space-balance": "./src/space-balance.ts",
     "./receipts": "./src/receipts.ts",
     "./palette": "./src/palette.ts",
+    "./month-share": "./src/month-share.ts",
     "./uuid": "./src/uuid.ts",
     "./validations/splits": "./src/validations/splits.ts",
     "./validations/filing-rules": "./src/validations/filing-rules.ts",
