@@ -14,6 +14,8 @@ import { CategoryPanel, type PanelTransaction } from "./CategoryPanel";
 import type { CategoryCard } from "./CategoryTile";
 
 interface CategoryHistoryViewProps {
+  /** The category open on arrival, when the address names one (`?open=`). */
+  initialOpenId?: string | null;
   cards: CategoryCard[];
   /** Already in the order the band should read, app's or model's. */
   findings: CategoryFinding[];
@@ -60,6 +62,7 @@ const PANEL_ID = "category-panel";
  * re-rank — keep their own pending state, as `MonthRead` does.
  */
 export function CategoryHistoryView({
+  initialOpenId = null,
   cards,
   findings,
   remarks,
@@ -82,7 +85,7 @@ export function CategoryHistoryView({
   readModels,
 }: CategoryHistoryViewProps) {
   const t = useT();
-  const [openId, setOpenId] = useState<string | null>(null);
+  const [openId, setOpenId] = useState<string | null>(initialOpenId);
 
   if (cards.length === 0) {
     return (

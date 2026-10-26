@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { CheckCircle, Plus } from "@phosphor-icons/react";
 import {
   amountInputToNumber,
+  amountToInput,
   formatAmountInput,
   isAmountInputComplete,
   sanitizeAmountInput,
@@ -53,6 +54,8 @@ interface QuickAddSheetProps {
   merchants: MerchantRule[];
   /** Prefills the date — the calendar opens the sheet on the day being viewed. */
   defaultDate?: string;
+  /** Prefills the amount — the palette's « Ajouter une opération de… ». */
+  defaultAmount?: number;
   /** Which kind the sheet opens on: the Charges page opens it on a charge. */
   kind: AddKind;
   /** For a charge, the kind of money its category picker opens on. */
@@ -160,6 +163,7 @@ interface QuickAddFieldsProps {
   recentCategoryIds: string[];
   merchants: MerchantRule[];
   defaultDate?: string;
+  defaultAmount?: number;
   onDone: () => void;
 }
 
@@ -177,6 +181,7 @@ function QuickAddFields({
   recentCategoryIds,
   merchants,
   defaultDate,
+  defaultAmount,
   onDone,
 }: QuickAddFieldsProps) {
   const { toast } = useToast();
@@ -184,7 +189,9 @@ function QuickAddFields({
   const symbol = CURRENCY_SYMBOL[currency] ?? "€";
 
   const today = todayIsoLocal();
-  const [amount, setAmount] = useState("");
+  const [amount, setAmount] = useState(() =>
+    defaultAmount !== undefined ? amountToInput(defaultAmount) : "",
+  );
   const [categoryId, setCategoryId] = useState("");
   const [occurredOn, setOccurredOn] = useState(defaultDate ?? today);
   const [note, setNote] = useState("");

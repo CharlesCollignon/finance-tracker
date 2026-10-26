@@ -18,6 +18,7 @@ import { spaceFr } from "./space.fr";
 import { askFr } from "./ask.fr";
 import { rulesFr } from "./rules.fr";
 import { merchantsFr } from "./merchants.fr";
+import { paletteFr } from "./palette.fr";
 
 /**
  * What the app says, in French.
@@ -2911,4 +2912,5 @@ export const fr: Messages = {
   ask: askFr,
   rules: rulesFr,
   merchants: merchantsFr,
+  palette: paletteFr,
 };

@@ -131,6 +131,15 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
           categories={quickEntry.categories}
           recentCategoryIds={quickEntry.recentCategoryIds}
           merchants={quickEntry.merchants}
+          // For the palette Cmd+K opens: the active charges by name, and
+          // whether Immobilier is a page to offer.
+          charges={(templates ?? [])
+            .filter((template) => template.active)
+            .map((template) => ({
+              id: template.id,
+              name: template.description?.trim() || template.categories.name,
+            }))}
+          showProperty={flags ? isFlagOn(flags, "property.track") : false}
         >
           <ServiceWorkerRegistration />
           {user ? <MonthFill /> : null}
