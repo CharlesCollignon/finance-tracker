@@ -860,6 +860,18 @@ noticed — in that order (`attention.ts`), each leading to where it is done.
 The one place that counts; the decision cards below keep their place.
 _Avoid_: notifications, alerts, tasks, inbox (that is the review)
 
+**Demo account**:
+_En français_ : la démo (« Essayer la démo »)
+One auth user marked `demo: true` in its app metadata (migration 081,
+`scripts/seed-demo.mjs`), which « Essayer la démo » on the site signs a
+visitor in as. The same account for every visitor at once, so read-only: a
+trigger on every public table refuses its writes, and the toast says so.
+Its rows are the sample (`demo-sample.ts`), nine months built for the day
+and rebuilt every night by `/api/cron/demo`, so it always reads as this
+month; never counted among the readers. A line above the app says it is
+the demo. Not the landing's mocks, which are drawings of the same figures.
+_Avoid_: sandbox, test account, trial
+
 ### Shared space
 
 **Shared space**:

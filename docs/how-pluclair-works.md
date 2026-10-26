@@ -821,6 +821,26 @@ in the same wallet still held, first in first out; a sell with buys missing
 is counted and said. The reader was built on synthetic exports: a real one,
 anonymised, is the owner's part (`REFERENCE_APP_PLAN.md`).
 
+## The demo
+
+« Essayer la démo » (`/demo`, web only): signs the visitor in as the demo
+account — one auth user with `demo: true` in its app metadata, made by
+`scripts/seed-demo.mjs` with `DEMO_EMAIL` and `DEMO_PASSWORD`, which the
+route reads from the environment (`lib/demo-env.ts`); unset, the link goes
+to signing up, and the landing shows no demo. Someone signed in as
+themselves is sent to the app, never signed out. The account is shared by
+every visitor, so migration 081 makes it read-only: `refuse_demo_write`,
+a trigger on every public table, raises `demo_read_only` for a session
+whose `auth.uid()` is the demo (`dbError` turns it into
+`errors.demoReadOnly`), and `receipt_folder_is_mine` says no to its files.
+`DemoBanner` sits above the shell (`isDemoUser`, `lib/demo.ts`). The rows
+are `@finance/core/demo-sample` — nine months built for the day, the
+landing's figures — written by `@finance/data/demo`'s `resetDemo` under
+the service role, which the triggers let through: nightly from
+`/api/cron/demo` (`vercel.json`), and once from the script after the
+account is made. A table added after 081 needs the trigger too; the
+migration says how.
+
 ## Search
 
 The Journal's search filters the month on screen and, under it, lists the

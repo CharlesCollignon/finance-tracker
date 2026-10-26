@@ -179,9 +179,17 @@ This plan sits beside `EVERYDAY_PLAN.md` (daily use), `STATEMENTS_PLAN.md`
 
 ## Phase 10 — The demo (branch `reference-10-demo`)
 
-- A seeded account (`scripts/seed-demo.mjs`), `is_demo` on `owners`, writes
-  refused by RLS, nightly reset in the sweep; « Essayer la démo » on the
-  site opens it signed in.
+- Migration 081: `demo: true` in the auth user's app metadata (not a column
+  on `owners`: nothing else needs it), `is_demo_user`, `demo_user_id`, and
+  `refuse_demo_write` on every public table — writes refused by trigger
+  rather than by RLS, so no policy had to change.
+- `@finance/core/demo-sample` (nine months built for the day, the
+  landing's figures), `@finance/data/demo`'s `resetDemo`, `/api/cron/demo`
+  nightly (its own route, after the sweep), `scripts/seed-demo.mjs` for the
+  account and the first seed; `/demo` signs the visitor in, `DemoBanner`
+  above the shell, « Essayer la démo » in the hero when `DEMO_EMAIL` is set.
+- Owner's part: choose `DEMO_EMAIL`/`DEMO_PASSWORD`, set them on Vercel,
+  run the script once with `CRON_SECRET`.
 
 ## Phase 11 — One Journal (branch `reference-11-journal-core`)
 

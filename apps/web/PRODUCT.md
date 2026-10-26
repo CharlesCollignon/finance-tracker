@@ -109,6 +109,10 @@ shop, where answering one teaches the matcher. Until launch it is reachable by
 the owner's account alone, so anything written for a general audience
 describes the first three.
 
+A visitor can look round first: « Essayer la démo » on the site opens a
+sample account, the same for everyone and read-only (migration 081),
+rebuilt nightly for the current month.
+
 Surfaces in this app: the Bearing, the Ledger (list, calendar, by category),
 transactions, the Plan (`/plan`), recurring, categories, investments (each
 wallet's « Opérations » and the Analyse tab's dividends and realised gains)

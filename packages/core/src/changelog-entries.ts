@@ -17,6 +17,24 @@ import type { ChangelogEntry, RoadmapItem } from "./changelog";
  */
 export const CHANGELOG: readonly ChangelogEntry[] = [
   {
+    id: "2026-10-26-demo",
+    date: "2026-10-26",
+    kind: "new",
+    platforms: ["web"],
+    fr: {
+      title: "Essayer la démo",
+      body: "Sur le site, « Essayer la démo » ouvre Pluclair sur un compte d’exemple, sans rien créer : neuf mois d’un budget inventé, ses récurrents, ses placements, ses clôtures. Tout s’y lit, rien ne s’y écrit — c’est le même compte pour tout le monde — et il est refait chaque nuit pour le mois en cours.",
+      detail:
+        "Une ligne au-dessus de l’app le rappelle, avec le chemin vers votre propre compte. Le compte de démo n’est pas compté parmi les lecteurs.",
+    },
+    en: {
+      title: "Try the demo",
+      body: "On the site, “Try the demo” opens Pluclair on a sample account, with nothing to create: nine months of a made-up budget, its recurring entries, its investments, its closes. Everything reads, nothing writes — it is the same account for everyone — and it is rebuilt every night for the current month.",
+      detail:
+        "A line above the app says so, with the way to an account of your own. The demo account is not counted among the readers.",
+    },
+  },
+  {
     id: "2026-10-26-wallet-events",
     date: "2026-10-26",
     kind: "new",
