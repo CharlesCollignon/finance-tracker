@@ -350,8 +350,8 @@ Built on the web as two new keys rather than a migration
      CONTEXT.md: Long view, What if, Milestone, Track; new terms for the
      replay, the crash test and the sustainable withdrawal.
    - Checked on a Vercel preview with real figures. A « Nouveautés » entry.
-   Built 2026-10-25 on Phase 1 with Phase 2 merged in (fb29ee3, 4d3bab6,
-   aa919d9, d8ed361), and checked scene by scene in a local harness; the
+   Built 2026-10-25 on Phase 1 with Phase 2 merged in (fb29ee3, 9e10e16,
+   8afda1d, 42a6098), and checked scene by scene in a local harness; the
    Vercel preview waits for the owner's OK to push.
    - `history/plan-accounts.ts` turns the page's accounts into the
      replay's: the shift, a PEL's contract rate, the current account and
@@ -364,7 +364,7 @@ Built on the web as two new keys rather than a migration
 4. **The new page, phone** (`plan-redesign-phone`), after the owner has seen
    the web. Its « Nouveautés » entry waits for the APK, as the design pass's
    does. Built 2026-10-25 on Phase 3, at the owner's « continue les
-   phases », before the web preview (30f4baf … 111bdd1):
+   phases », before the web preview (6d5e288 … fc0c777):
    - the replay reads each account's returns from arrays worked out once
      per call, and the withdrawal is solved in closed form: four to twelve
      times faster, the same figures to the last digit (the withdrawal to
@@ -383,7 +383,7 @@ Built on the web as two new keys rather than a migration
    (`mocks/planning.tsx`), the feature page's demo (`PlanDemo.tsx`) and
    `year-ahead-sample.ts` are redrawn from the new engine on the sample.
    The copy no longer promises the long view's 40 years. Built 2026-10-25
-   (05acc47, 4775007), checked in a local harness in French and English:
+   (06e78c8, 1018830), checked in a local harness in French and English:
    `plan-sample.ts` replays the sample person as the app would; the mock
    draws the trajectory, 2008 and « Progression »; the demo plays the
    horizon, the extra and its account; the copy and the Plan's
