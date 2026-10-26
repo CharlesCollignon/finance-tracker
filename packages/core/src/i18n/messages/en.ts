@@ -2227,8 +2227,8 @@ export const en = {
    *
    * Phrased as "compared to X" rather than "than X" so that the month name
    * is never preceded by a word that elides in French: "que août" is wrong
-   * and "qu'août" is right, and no template can choose between them. "à
-   * août" sidesteps the question entirely.
+   * and "qu'août" is right. The translator elides « de » and « que » itself
+   * since October 2026, but "à août" never needed it.
    */
   comparison: {
     flat: "About the same as {when}.",
