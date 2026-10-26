@@ -17,6 +17,7 @@ import { propertyFr } from "./property.fr";
 import { spaceFr } from "./space.fr";
 import { askFr } from "./ask.fr";
 import { rulesFr } from "./rules.fr";
+import { merchantsFr } from "./merchants.fr";
 
 /**
  * What the app says, in French.
@@ -79,6 +80,7 @@ export const fr: Messages = {
     ledgerList: "Liste",
     ledgerCalendar: "Calendrier",
     ledgerByCategory: "Par catégorie",
+    ledgerByMerchant: "Par commerce",
     walletsPositions: "Comptes",
     walletsAnalysis: "Analyse",
     walletsLookThrough: "Composition",
@@ -2869,4 +2871,5 @@ export const fr: Messages = {
   space: spaceFr,
   ask: askFr,
   rules: rulesFr,
+  merchants: merchantsFr,
 };

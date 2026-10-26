@@ -10,6 +10,7 @@ import {
 import { readYearReview } from "@finance/data/year-review";
 import * as fulfilment from "@finance/data/fulfilment";
 import * as filingRules from "@finance/data/filing-rules";
+import { readMerchantScreen } from "@finance/data/merchant-screen";
 import * as statements from "@finance/data/statements";
 import * as closes from "@finance/data/month-close";
 import { isMissingSchema } from "@finance/data/schema";
@@ -608,6 +609,17 @@ export function getFilingRules(
   userId: string,
 ): ReturnType<typeof filingRules.readFilingRules> {
   return filingRules.readFilingRules(supabase, userId);
+}
+
+/** « Par commerce »: the last twelve months, one card a shop. */
+export function getMerchantScreen(
+  userId: string,
+  locale: Locale,
+): ReturnType<typeof readMerchantScreen> {
+  return readMerchantScreen(supabase, userId, {
+    ...getCurrentMonth(),
+    locale,
+  });
 }
 
 /** « Votre année » for one year (`readYearReview`). */

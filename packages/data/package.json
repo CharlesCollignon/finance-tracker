@@ -52,6 +52,7 @@
     "./spaces": "./src/spaces.ts",
     "./statements": "./src/statements.ts",
     "./filing-rules": "./src/filing-rules.ts",
+    "./merchant-screen": "./src/merchant-screen.ts",
     "./ask": "./src/ask.ts",
     "./templates": "./src/templates.ts",
     "./wallet-plans": "./src/wallet-plans.ts",
