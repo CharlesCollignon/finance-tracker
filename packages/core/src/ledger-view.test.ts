@@ -2,9 +2,14 @@ import { describe, expect, it } from "vitest";
 
 import type { PlannedOccurrence } from "./apply-recurring";
 import {
+  buildLedgerView,
   filterLedger,
   filterPlanned,
+  hasLedgerFilters,
+  hiddenFilterCount,
+  ledgerCategoryOptions,
   ledgerDays,
+  ledgerRows,
   ledgerTotals,
   ledgerPlannedTotals,
   ledgerShowing,
@@ -173,5 +178,98 @@ describe("ledgerShowing", () => {
     expect(ledgerShowing("upcoming", { past: 3, upcoming: 0 })).toBe("past");
     expect(ledgerShowing("past", { past: 0, upcoming: 2 })).toBe("upcoming");
     expect(ledgerShowing("past", { past: 0, upcoming: 0 })).toBe("past");
+  });
+});
+
+describe("ledgerRows", () => {
+  it("orders newest first, and oldest first as that list turned over", () => {
+    expect(ledgerRows(rows, "newest").map((r) => r.id)).toEqual([
+      "a",
+      "b",
+      "c",
+    ]);
+    expect(ledgerRows(rows, "oldest").map((r) => r.id)).toEqual([
+      "c",
+      "b",
+      "a",
+    ]);
+  });
+});
+
+describe("ledgerCategoryOptions", () => {
+  it("names the categories the rows and the planned rows use, by name", () => {
+    expect(
+      ledgerCategoryOptions(rows, [planned("2026-10-20", "Loyer")]),
+    ).toEqual([
+      { id: "Courses-id", name: "Courses" },
+      { id: "Loyer-id", name: "Loyer" },
+      { id: "Salaire-id", name: "Salaire" },
+    ]);
+  });
+});
+
+describe("the filter helpers", () => {
+  it("count the filters behind the button, and say whether any is on", () => {
+    expect(hiddenFilterCount(all)).toBe(0);
+    expect(hiddenFilterCount({ ...all, categoryId: "x", accountId: "y" })).toBe(
+      2,
+    );
+    expect(hasLedgerFilters(all)).toBe(false);
+    expect(hasLedgerFilters({ ...all, query: " a" })).toBe(true);
+    expect(hasLedgerFilters({ ...all, type: "income" })).toBe(true);
+    expect(hasLedgerFilters({ ...all, accountId: "y" })).toBe(true);
+  });
+});
+
+describe("buildLedgerView", () => {
+  it("works the whole list out once: the half shown, the rows, their days and figures", () => {
+    const view = buildLedgerView({
+      transactions: rows,
+      planned: [planned("2026-10-20", "Loyer")],
+      filter: all,
+      time: "past",
+      order: "oldest",
+    });
+    expect(view.showing).toBe("past");
+    expect(view.rows.map((r) => r.id)).toEqual(["c", "b", "a"]);
+    expect(view.days.map((d) => d.date)).toEqual(["2026-10-01", "2026-10-03"]);
+    expect(view.days[1]!.rows.map((r) => r.id)).toEqual(["b", "a"]);
+    expect(view.totals).toEqual({
+      income: 2000,
+      expense: 55,
+      savings: 0,
+      investment: 0,
+    });
+    expect(view.shownCount).toBe(3);
+    expect(view.totalCount).toBe(3);
+    expect(view.visibleIds).toEqual(["c", "b", "a"]);
+  });
+
+  it("shows what is to come when nothing has happened, soonest first", () => {
+    const ahead = buildLedgerView({
+      transactions: [],
+      planned: [planned("2026-10-25", "Loyer"), planned("2026-10-20", "Loyer")],
+      filter: all,
+      time: "past",
+      order: "newest",
+    });
+    expect(ahead.showing).toBe("upcoming");
+    expect(ahead.days.map((d) => d.date)).toEqual(["2026-10-20", "2026-10-25"]);
+    expect(ahead.totals.expense).toBe(100);
+    expect(ahead.shownCount).toBe(2);
+    expect(ahead.visibleIds).toEqual([]);
+  });
+
+  it("keeps the figures to what the filter keeps", () => {
+    const view = buildLedgerView({
+      transactions: rows,
+      planned: [],
+      filter: { ...all, type: "expense" },
+      time: "past",
+      order: "newest",
+    });
+    expect(view.totals.income).toBe(0);
+    expect(view.shownCount).toBe(2);
+    expect(view.totalCount).toBe(3);
   });
 });

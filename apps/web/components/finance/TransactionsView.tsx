@@ -32,12 +32,10 @@ import { PlannedOccurrenceSheet } from "@/components/finance/PlannedOccurrenceSh
 import type { PlannedOccurrence } from "@finance/core/apply-recurring";
 import { buildLedgerCsv } from "@finance/core/ledger-csv";
 import {
-  filterLedger,
-  filterPlanned,
-  ledgerDays,
-  ledgerPlannedTotals,
-  ledgerShowing,
-  ledgerTotals,
+  buildLedgerView,
+  hasLedgerFilters,
+  hiddenFilterCount,
+  LEDGER_TYPE_FILTERS,
   type LedgerOrder,
   type LedgerTime,
   type LedgerTypeFilter,
@@ -201,13 +199,10 @@ export function TransactionsView({
    */
   const filterOptions = useMemo(() => {
     const labels = categoryTypeLabels(locale);
-    return [
-      { value: "all" as FilterType, label: t("ledger.allTypes") },
-      { value: "income" as FilterType, label: labels.income },
-      { value: "expense" as FilterType, label: labels.expense },
-      { value: "savings" as FilterType, label: labels.savings },
-      { value: "investment" as FilterType, label: labels.investment },
-    ];
+    return LEDGER_TYPE_FILTERS.map((value) => ({
+      value,
+      label: value === "all" ? t("ledger.allTypes") : labels[value],
+    }));
   }, [locale, t]);
 
   /**
@@ -297,39 +292,26 @@ export function TransactionsView({
     }),
     [filter, categoryFilter, search, accountFilter, bankAccounts],
   );
-  const showing = ledgerShowing(chosenTime, {
-    past: transactions.length,
-    upcoming: planned.length,
-  });
-  const filtered = useMemo(
-    () => filterLedger(transactions, ledgerFilter, accountOf),
-    [transactions, ledgerFilter, accountOf],
+  // What the list shows, worked out once and the same way as on the phone
+  // (`buildLedgerView`): which half of the month, the rows the filter
+  // keeps, their order, their days and the figures over them.
+  const view = useMemo(
+    () =>
+      buildLedgerView({
+        transactions,
+        planned,
+        filter: ledgerFilter,
+        time: chosenTime,
+        order,
+        accountOf,
+      }),
+    [transactions, planned, ledgerFilter, chosenTime, order, accountOf],
   );
-  // The same filters, so a planned rent does not survive an "Income" chip.
-  const filteredPlanned = useMemo(
-    () => filterPlanned(planned, ledgerFilter),
-    [planned, ledgerFilter],
-  );
+  const { showing, filtered, days, visibleIds, shownCount, totalCount } = view;
+  const shown = view.totals;
 
-  // Oldest first is the newest-first list turned over, rows within a day
-  // included, so a day reads in the order its rows were written.
-  const sortedRows = useMemo(() => {
-    const newest = [...filtered].sort((a, b) =>
-      b.occurred_on.localeCompare(a.occurred_on),
-    );
-    return order === "newest" ? newest : newest.reverse();
-  }, [filtered, order]);
-
-  const dropdownFilters =
-    (categoryFilter !== "all" ? 1 : 0) +
-    (ledgerFilter.accountId !== "all" ? 1 : 0);
-  const hasActiveFilters =
-    filter !== "all" ||
-    categoryFilter !== "all" ||
-    ledgerFilter.accountId !== "all" ||
-    search.trim().length > 0;
-
-  const visibleIds = useMemo(() => sortedRows.map((tx) => tx.id), [sortedRows]);
+  const dropdownFilters = hiddenFilterCount(ledgerFilter);
+  const hasActiveFilters = hasLedgerFilters(ledgerFilter);
   // A filter can hide rows that are still in the stored set. Pruning here
   // rather than in an effect means the hidden ones can never be acted on,
   // without a render pass spent synchronising state to itself.
@@ -400,33 +382,6 @@ export function TransactionsView({
     toast(t("ledger.exported", { count: filtered.length }), "success");
   }
 
-  // A ledger is read a day at a time, not as one unbroken column of two
-  // hundred rows. Grouping here rather than in the markup keeps a heading and
-  // its rows in the same object, so the list can never draw a date with
-  // nothing under it.
-  // One half of the month at a time: what has happened, in the order asked
-  // for, or what is still to come, soonest first.
-  const days = useMemo(
-    () =>
-      showing === "past"
-        ? ledgerDays(sortedRows, [], order)
-        : ledgerDays([], filteredPlanned, "oldest"),
-    [showing, sortedRows, filteredPlanned, order],
-  );
-
-  // The figures describe what is on screen, which is the whole reason they
-  // are here: the month's own totals are Month's job, and repeating them
-  // under a filter would state something the list below contradicts.
-  const shown = useMemo(
-    () =>
-      showing === "past"
-        ? ledgerTotals(filtered)
-        : ledgerPlannedTotals(filteredPlanned),
-    [showing, filtered, filteredPlanned],
-  );
-  const shownCount =
-    showing === "past" ? filtered.length : filteredPlanned.length;
-  const totalCount = showing === "past" ? transactions.length : planned.length;
   const shownOut = shown.expense + shown.savings + shown.investment;
 
   /**

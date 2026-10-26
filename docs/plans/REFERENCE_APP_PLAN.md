@@ -195,6 +195,11 @@ This plan sits beside `EVERYDAY_PLAN.md` (daily use), `STATEMENTS_PLAN.md`
 
 - The list's view model (rows, planned rows, filters, search, selection) in
   `@finance/core/ledger-view`, both apps reading it; no change on screen.
+  Done as `buildLedgerView` (the half shown, the rows kept and ordered,
+  their days, the figures), `ledgerCategoryOptions`, `hiddenFilterCount`,
+  `hasLedgerFilters` and `LEDGER_TYPE_FILTERS`: the two Journals' memo
+  clusters became one call each; `filterLedger`, `ledgerDays` and the
+  selection module were already shared.
 
 ## Phase 12 — The Android listener (branch `reference-12-listener`)
 
