@@ -860,6 +860,17 @@ noticed — in that order (`attention.ts`), each leading to where it is done.
 The one place that counts; the decision cards below keep their place.
 _Avoid_: notifications, alerts, tasks, inbox (that is the review)
 
+**Bank notification**:
+_En français_ : notification de la banque (l'écran : Les notifications de votre banque)
+A bank app's notification on the phone — « Paiement de 12,30 € chez
+MONOP' » — read on Android, with the person's « Accès aux notifications »,
+as a provisional line on the account they chose (`notification.ts`,
+`modules/notification-listener`, flag `listener.android`). Only the bank
+apps ticked are read, on the phone only; what is not one operation is
+dropped. A line a statement later confirms rather than adds again, as an
+alert e-mail's. Unverified on a device.
+_Avoid_: push (that is Pluclair's own), alert (the e-mail's word), sync
+
 **Demo account**:
 _En français_ : la démo (« Essayer la démo »)
 One auth user marked `demo: true` in its app metadata (migration 081,

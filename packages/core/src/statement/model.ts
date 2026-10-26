@@ -26,6 +26,8 @@ export type StatementFormat =
   | "ods"
   /** A bank's alert e-mails, read as lines (`mail.ts`). */
   | "email"
+  /** A bank app's notifications on the phone, read as lines (`notification.ts`). */
+  | "notification"
   /** Read elsewhere: a PDF statement, an old binary Excel, an image. */
   | "pdf"
   | "xls"

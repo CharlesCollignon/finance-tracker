@@ -73,6 +73,7 @@ export async function readStatementImports(
     .eq("user_id", ownerId)
     // A bank's alerts, one line each, are no import to list or undo.
     .neq("format", "email")
+    .neq("format", "notification")
     .order("created_at", { ascending: false })
     .limit(limit);
   if (error) {
@@ -118,7 +119,11 @@ export interface FeedCoverage {
   pending: number;
 }
 
-export const NO_COVERAGE: FeedCoverage = { lines: 0, lastDay: null, pending: 0 };
+export const NO_COVERAGE: FeedCoverage = {
+  lines: 0,
+  lastDay: null,
+  pending: 0,
+};
 
 /**
  * How far the lines reach into a month, and what waits there: what Le point
@@ -216,7 +221,10 @@ export interface MailItem {
 }
 
 /** What waits from e-mails, newest first. */
-export async function readMailItems(db: Db, userId: string): Promise<MailItem[]> {
+export async function readMailItems(
+  db: Db,
+  userId: string,
+): Promise<MailItem[]> {
   const { data, error } = await db
     .from("statement_mail_items")
     .select("id, kind, format, bank, file_name, received_at, statement")

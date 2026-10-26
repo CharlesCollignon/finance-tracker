@@ -56,7 +56,10 @@ export async function POST(request: Request) {
     const format = readStatementFile(bytes).format;
     if (body.action === "readPdf") {
       return format === "pdf"
-        ? Response.json({ success: true, statement: await readPdfStatement(bytes) })
+        ? Response.json({
+            success: true,
+            statement: await readPdfStatement(bytes),
+          })
         : Response.json({ error: "errors.invalidInput" });
     }
     if (format !== "pdf" && format !== "image") {
@@ -64,13 +67,18 @@ export async function POST(request: Request) {
     }
     const result = await scanStatement(session.userId, bytes, format);
     return Response.json(
-      "error" in result ? result : { success: true, statement: result.statement },
+      "error" in result
+        ? result
+        : { success: true, statement: result.statement },
     );
   }
 
   switch (body.action) {
     case "inbox":
-      return Response.json({ success: true, ...(await inboxView(session.supabase, session.userId)) });
+      return Response.json({
+        success: true,
+        ...(await inboxView(session.supabase, session.userId)),
+      });
     case "inboxStart":
       return Response.json(await startInbox(session.userId));
     case "inboxStop":
@@ -134,7 +142,12 @@ export async function POST(request: Request) {
       session.supabase,
       { userId: session.userId, ownerId },
       parsed.data,
-      { write: body.action === "import" },
+      {
+        write: body.action === "import",
+        // A notification's line, like an alert e-mail's, waits for the
+        // statement that confirms it (`planStatement`).
+        provisional: parsed.data.source === "notification",
+      },
     ),
   );
 }

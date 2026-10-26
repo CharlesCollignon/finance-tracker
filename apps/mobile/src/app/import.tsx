@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { Pressable, ScrollView, View } from "react-native";
+import { useCallback, useEffect, useState } from "react";
+import { Platform, Pressable, ScrollView, View } from "react-native";
 import { useRouter, type Href } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import * as DocumentPicker from "expo-document-picker";
@@ -50,6 +50,10 @@ import {
   scanOnServer,
   undoStatementImport,
 } from "@/lib/statements";
+import { drainBankNotifications } from "@/lib/bank-notifications";
+import { useFlag } from "@/hooks/useFlag";
+import { useAppForeground } from "@/hooks/useAppForeground";
+import { listenerAvailable } from "../../modules/notification-listener";
 import { useAuth } from "@/providers/AuthProvider";
 import { useLocale, useT } from "@/providers/LocaleProvider";
 import { useOwner } from "@/providers/OwnerProvider";
@@ -155,6 +159,26 @@ export default function ImportScreen() {
   );
   const accounts = known?.accounts ?? [];
   const imports = known?.imports ?? [];
+
+  // The bank apps' notifications (Android, behind a flag): read each time
+  // this screen opens or the app comes back, and said when they brought
+  // something.
+  const listenerOn =
+    useFlag("listener.android") && Platform.OS === "android" && listenerAvailable;
+  const readNotifications = useCallback(async () => {
+    if (!listenerOn || !userId || !ownerId) {
+      return;
+    }
+    const result = await drainBankNotifications(userId, ownerId);
+    if (result.kind === "read" && result.brought > 0) {
+      toast(t("listener.read", { count: result.brought }));
+      onRefresh();
+    }
+  }, [listenerOn, userId, ownerId, toast, t, onRefresh]);
+  useEffect(() => {
+    void readNotifications();
+  }, [readNotifications]);
+  useAppForeground(() => void readNotifications());
 
   const [stage, setStage] = useState<Stage>({ kind: "start" });
   const [choices, setChoices] = useState<BlockChoice[]>([]);
@@ -474,6 +498,26 @@ export default function ImportScreen() {
             </View>
 
             {known?.mail ? <MailInbox view={known.mail} /> : null}
+
+            {listenerOn ? (
+              <View className="gap-2 rounded-card border border-border bg-card/70 p-card">
+                <View className="flex-row items-center gap-2">
+                  <Ionicons name="notifications-outline" size={ICON.md} color={colors.primary} />
+                  <Text variant="head">{t("listener.title")}</Text>
+                </View>
+                <Text variant="muted" className="text-sm">
+                  {t("listener.invite")}
+                </Text>
+                <View className="flex-row">
+                  <Button
+                    label={t("listener.open")}
+                    variant="outline"
+                    size="sm"
+                    onPress={() => router.push("/bank-notifications" as Href)}
+                  />
+                </View>
+              </View>
+            ) : null}
 
             {imports.length > 0 ? (
               <View className="gap-1 rounded-card border border-border bg-card/70 p-card">

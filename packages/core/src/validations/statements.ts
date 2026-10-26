@@ -65,6 +65,8 @@ export const statementImportSchema = z.object({
     "image",
     // A bank's alert e-mails, read as lines (`alertOf`).
     "email",
+    // A bank app's notifications on the phone (`notificationAlert`).
+    "notification",
   ]),
   bank: z.string().max(40).nullable(),
   fileName: z.string().max(200).nullable(),
@@ -77,7 +79,7 @@ export const statementImportSchema = z.object({
       amount: z.string().regex(/^-?\d{1,10}(\.\d{1,2})?$/),
     })
     .nullable(),
-  source: z.enum(["file", "paste", "share", "email"]),
+  source: z.enum(["file", "paste", "share", "email", "notification"]),
   /**
    * Read by the person's AI account off a picture or a scan: every line
    * then waits in « À vérifier », nothing filed unasked.

@@ -205,6 +205,14 @@ This plan sits beside `EVERYDAY_PLAN.md` (daily use), `STATEMENTS_PLAN.md`
 
 - STATEMENTS_PLAN Phase 5: a notification-listener module behind a flag,
   bank alerts read as provisional lines; unverified until an APK runs it.
+  Done: `modules/notification-listener` (a `NotificationListenerService`
+  keeping the chosen bank apps' notifications in a queue of two hundred,
+  an Expo module reading it), `notification.ts` in core (`BANK_APP_PACKAGES`,
+  `notificationAlert` on the alert e-mails' reader, `alertInText`), the
+  `listener.android` flag (migration 082, off), the phone's screen (access,
+  apps, account, read now) and the reading on each return to Import, the
+  route marking `source: "notification"` lines provisional. Not run: no
+  Android build here; the package names are the Play Store's as known.
 
 ## Phase 13 — The landing (branch `reference-13-landing`)
 

@@ -755,6 +755,24 @@ Récurrents propose what repeats, Le point count the review, and
 « Fiabilité du mois » read the month's lines. The sync's write path
 (`apps/web/lib/bank/feed-write.ts`) writes either kind, each line marked.
 
+### The bank apps' notifications (Android)
+
+Behind `listener.android` (migration 082, off by default) and only in a
+build carrying `apps/mobile/modules/notification-listener`: a
+`NotificationListenerService` that, once the person grants « Accès aux
+notifications » on Android's own page, keeps the title and text of the
+notifications posted by the bank apps they ticked (`Store`, shared
+preferences, two hundred at most) and nothing else. Each time Import opens
+or the app comes back (`useAppForeground`), `drainBankNotifications`
+(`lib/bank-notifications.ts`) takes the queue, reads each with
+`notificationAlert` (`@finance/core/statement/notification`: the bank by
+the app's package, `BANK_APP_PACKAGES`; the words by `alertInText`, the
+alert e-mails' reader) and sends the lines to `/api/statements` as
+`format: "notification"`, `source: "notification"`, on the account chosen on
+« Les notifications de votre banque » — provisional, as an alert e-mail's,
+until a statement confirms them. Nothing is taken from the queue before an
+account is chosen. Unverified on a device until an APK runs it.
+
 ## Splits and receipts
 
 Migration 079, `@finance/data/splits`. **A split** keeps the row it was

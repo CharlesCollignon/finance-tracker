@@ -22,6 +22,7 @@ import { paletteFr } from "./palette.fr";
 import { monthShareFr } from "./month-share.fr";
 import { eventsFr } from "./events.fr";
 import { demoFr } from "./demo.fr";
+import { listenerFr } from "./listener.fr";
 
 /**
  * What the app says, in French.
@@ -2921,4 +2922,5 @@ export const fr: Messages = {
   monthShare: monthShareFr,
   events: eventsFr,
   demo: demoFr,
+  listener: listenerFr,
 };
