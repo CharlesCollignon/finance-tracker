@@ -6,19 +6,7 @@ export const futurePlanFr: typeof futurePlanEn = {
   inYearsTitle: { one: "Dans un an", other: "Dans {count} ans" },
   accountCurrent: "Compte courant",
   accountElsewhere: "Autre épargne",
-
-  whatIfTo: "Sur",
-  whatIfToLabel: "Où va le supplément",
-
-  whatIfTitle: "Et si…",
-  whatIfLabel: "Mettre de côté en plus chaque mois",
   whatIfPerMonth: "+{amount} par mois",
-  whatIfNone: "Faites glisser pour voir ce qu'un petit effort change.",
-  whatIfSooner: {
-    one: "{milestone} atteint {count} mois plus tôt",
-    other: "{milestone} atteint {count} mois plus tôt",
-  },
-  whatIfNowReached: "{milestone} atteint en {month}",
   milestoneBeyond: "au-delà de {count} ans",
   milestoneNew: "Nouveau palier !",
   cushionMonths: { one: "{count} mois", other: "{count} mois" },

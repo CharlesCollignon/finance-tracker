@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { Envelope } from "../future-plan";
 import {
-  parseHypothesesEdits,
+  parsePlanEdits,
   parseTrajectorySettings,
   TRAJECTORY_DEFAULT_SETTINGS,
   typedReturns,
@@ -15,17 +15,18 @@ describe("parseTrajectorySettings", () => {
   });
 
   it("keeps a horizon it offers, and only that", () => {
-    expect(
-      parseTrajectorySettings({ years: 30, to: "pea", withProperty: true }),
-    ).toEqual({ years: 30, to: "pea", withProperty: true });
+    expect(parseTrajectorySettings({ years: 30, withProperty: true })).toEqual({
+      years: 30,
+      withProperty: true,
+    });
     expect(parseTrajectorySettings({ years: 40 }).years).toBe(10);
   });
 });
 
-describe("parseHypothesesEdits", () => {
+describe("parsePlanEdits", () => {
   it("keeps each figure inside its field's bounds", () => {
     expect(
-      parseHypothesesEdits({
+      parsePlanEdits({
         pea: { initial: -5, fees: 0.2, taxOnGains: 2, annualReturn: 0.5 },
         av: { monthly: 150 },
       }),
@@ -37,9 +38,9 @@ describe("parseHypothesesEdits", () => {
 
   it("drops accounts it does not know and figures that are not numbers", () => {
     expect(
-      parseHypothesesEdits({ nowhere: { initial: 5 }, pea: { initial: "5" } }),
+      parsePlanEdits({ nowhere: { initial: 5 }, pea: { initial: "5" } }),
     ).toEqual({});
-    expect(parseHypothesesEdits(undefined)).toEqual({});
+    expect(parsePlanEdits(undefined)).toEqual({});
   });
 });
 

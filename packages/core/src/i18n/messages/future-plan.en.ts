@@ -8,21 +8,7 @@ export const futurePlanEn = {
   inYearsTitle: { one: "A year from now", other: "{count} years from now" },
   accountCurrent: "Current account",
   accountElsewhere: "Other savings",
-
-  /* What if, aimed */
-  whatIfTo: "Into",
-  whatIfToLabel: "Where the extra goes",
-
-  /* What if */
-  whatIfTitle: "What if…",
-  whatIfLabel: "Put aside more each month",
   whatIfPerMonth: "+{amount} a month",
-  whatIfNone: "Slide to see what a little more each month changes.",
-  whatIfSooner: {
-    one: "{milestone} reached {count} month sooner",
-    other: "{milestone} reached {count} months sooner",
-  },
-  whatIfNowReached: "{milestone} reached in {month}",
   milestoneBeyond: "beyond {count} years",
   milestoneNew: "New milestone!",
   cushionMonths: { one: "{count} month", other: "{count} months" },

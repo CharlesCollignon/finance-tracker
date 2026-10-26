@@ -2,7 +2,6 @@ import { describe, expect, it } from "vitest";
 import { buildMilestones } from "../future-plan";
 import { addMonths, monthsBetween } from "./month";
 import {
-  crashTest,
   historicalReturn,
   lossOdds,
   replayPlan,
@@ -199,47 +198,6 @@ describe("replayPlan", () => {
   });
 });
 
-describe("crashTest", () => {
-  // The 2000 episode starts the month after its August peak: five months of
-  // falls by a tenth, then a tenth up each month.
-  const falls = reader({
-    world: series("world", "2000-01", (index) => {
-      const month = addMonths("2000-01", index);
-      if (month < "2000-09") {
-        return 0;
-      }
-      return month < "2001-02" ? -0.1 : 0.1;
-    }),
-    bitcoin: series("bitcoin", "2002-01", () => 0),
-  });
-
-  it("finds the worst month and how long the money took to come back", () => {
-    const alone = crashTest([account()], "2000", falls);
-    expect(alone.low.month).toBe("2001-01");
-    expect(alone.low.value).toBeCloseTo(1000 * 0.9 ** 5, 6);
-    expect(alone.low.lossShare).toBeCloseTo(0.9 ** 5 - 1, 6);
-    // 590.49 × 1.1⁶ is the first month back over 1 000.
-    expect(alone.recoveredAfter).toBe(11);
-  });
-
-  it("comes back sooner with the payments carrying on", () => {
-    const steady = crashTest([account({ monthly: 100 })], "2000", falls);
-    expect(steady.recoveredAfter).not.toBeNull();
-    expect(steady.recoveredAfter!).toBeLessThan(steady.recoveredAfterAlone!);
-    expect(steady.recoveredAfterAlone).toBe(11);
-  });
-
-  it("leaves out what the history does not reach", () => {
-    const test = crashTest(
-      [account(), account({ id: "crypto", mix: { bitcoin: 1 } })],
-      "2000",
-      falls,
-    );
-    expect(test.absent).toEqual(["crypto"]);
-    expect(test.path[0].invested).toBe(1000);
-  });
-});
-
 describe("lossOdds", () => {
   it("counts the windows that ended below their start", () => {
     const shrinking = lossOdds(
@@ -316,14 +274,6 @@ describe("on the real history", () => {
     expect(result.end.p50).toBeLessThan(result.end.p90);
     expect(result.end.p50).toBeGreaterThan(1300);
     expect(result.end.p50).toBeLessThan(2600);
-  });
-
-  it("puts world shares through 2008", () => {
-    const test = crashTest([account()], "2008");
-    expect(test.low.month >= "2008-10" && test.low.month <= "2009-03").toBe(
-      true,
-    );
-    expect(test.low.lossShare).toBeLessThan(-0.4);
   });
 
   it("has lost to prices over a year about a third of the time", () => {

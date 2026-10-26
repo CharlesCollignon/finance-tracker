@@ -11,15 +11,12 @@ import {
   trajectoryAccountKey,
 } from "@finance/core/history/plan-figures";
 import { EASE_STANDARD } from "@finance/core/motion";
-import {
-  niceTicks,
-  resampleSeries,
-  type YearAheadAccountId,
-} from "@finance/core/year-ahead";
+import { niceTicks, resampleSeries } from "@finance/core/year-ahead";
 import type { LocalisedLandingCopy } from "@/components/marketing/landing-copy";
 import {
-  SAMPLE_TARGETS,
+  SAMPLE_MONTHLY,
   sampleTrajectory,
+  type SampleMonthly,
 } from "@/components/marketing/plan-sample";
 import { useLocale, useT } from "@/lib/locale-context";
 import { useFormatCurrency } from "@/lib/use-currency";
@@ -37,15 +34,22 @@ const MORPH = {
 /** The sample's year: the horizon lands this many years after it. */
 const SAMPLE_YEAR = 2026;
 
+/** The sample's accounts a visitor can pay into, and each slider's top. */
+const PAYABLE: { id: keyof SampleMonthly; max: number }[] = [
+  { id: "livret_a", max: 500 },
+  { id: "pea", max: 1000 },
+];
+
 /**
  * « Votre trajectoire », played with the landing's sample person: the
- * horizon from one year to thirty, so much more set aside each month into
- * the account picked, and the card answering as it moves — the middle start
+ * horizon from one year to thirty, and what goes into its Livret A and PEA
+ * each month, as « Vos comptes » lets a reader change it — the middle start
  * counting to its new value, the gold line and the band eight starts in ten
- * end in morphing on their labelled scale, the worst start named, each
- * account's value counting to its new end. The same replay as the app's
- * Plan (`@finance/core/history`: every start since 1970, in today's euros),
- * on the same sample as the mock above it.
+ * end in morphing on their labelled scale, the sample as it is dashed
+ * behind, the worst start named, each account's value counting to its new
+ * end. The same replay as the app's Plan (`@finance/core/history`: every
+ * start since 1970, in today's euros), on the same sample as the mock
+ * above it.
  */
 export function PlanDemo({ copy }: { copy: Copy }) {
   const t = useT();
@@ -54,14 +58,15 @@ export function PlanDemo({ copy }: { copy: Copy }) {
   const money = (value: number) => euro(Math.round(value));
   const still = useReducedMotion() ?? false;
   const [years, setYears] = useState<TrajectoryYears>(10);
-  const [extra, setExtra] = useState(100);
-  const [to, setTo] = useState<YearAheadAccountId>("pea");
+  const [monthly, setMonthly] = useState<Required<SampleMonthly>>({
+    ...SAMPLE_MONTHLY,
+  });
+  const changed = PAYABLE.some(({ id }) => monthly[id] !== SAMPLE_MONTHLY[id]);
 
   const without = useMemo(() => sampleTrajectory(years), [years]);
   const played = useMemo(
-    () =>
-      extra > 0 ? sampleTrajectory(years, { monthly: extra, to }) : without,
-    [years, extra, to, without],
+    () => (changed ? sampleTrajectory(years, monthly) : without),
+    [years, monthly, changed, without],
   );
   const { result, today } = played;
   const gain = result.end.p50 - without.result.end.p50;
@@ -121,36 +126,29 @@ export function PlanDemo({ copy }: { copy: Copy }) {
             </Chip>
           ))}
         </div>
-        <Range
-          label={t("futurePlan.whatIfLabel")}
-          value={extra}
-          min={0}
-          max={500}
-          step={25}
-          onChange={setExtra}
-          display={t("futurePlan.whatIfPerMonth", { amount: euro(extra) })}
-        />
-        <div
-          className="flex flex-wrap items-center gap-2"
-          role="group"
-          aria-label={t("futurePlan.whatIfToLabel")}
-        >
-          <span className="text-sm text-marketing-muted">
-            {t("futurePlan.whatIfTo")}
-          </span>
-          {SAMPLE_TARGETS.map((id) => (
-            <Chip key={id} active={id === to} onClick={() => setTo(id)}>
-              {name(id)}
-            </Chip>
-          ))}
-        </div>
+        {PAYABLE.map(({ id, max }) => (
+          <Range
+            key={id}
+            label={`${name(id)} · ${t("futurePlan.fieldMonthly")}`}
+            value={monthly[id]}
+            min={0}
+            max={max}
+            step={25}
+            onChange={(value) =>
+              setMonthly((current) => ({ ...current, [id]: value }))
+            }
+            display={t("futurePlan.whatIfPerMonth", {
+              amount: euro(monthly[id]),
+            })}
+          />
+        ))}
         <p className="min-h-6 text-sm text-marketing-muted" aria-live="polite">
-          {extra > 0
+          {Math.round(gain) > 0
             ? t("trajectory.whatIfResult", {
                 amount: money(gain),
                 year: String(SAMPLE_YEAR + years),
               })
-            : t("futurePlan.whatIfNone")}
+            : null}
         </p>
         <p className="text-xs text-marketing-faint">{copy.note}</p>
       </div>
@@ -210,7 +208,7 @@ export function PlanDemo({ copy }: { copy: Copy }) {
             />
             <m.path
               initial={false}
-              animate={{ d: shape.baseline, opacity: extra > 0 ? 0.7 : 0 }}
+              animate={{ d: shape.baseline, opacity: changed ? 0.7 : 0 }}
               transition={morph}
               fill="none"
               stroke="white"

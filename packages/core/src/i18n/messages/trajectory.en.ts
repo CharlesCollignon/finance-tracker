@@ -22,9 +22,6 @@ export const trajectoryEn = {
   whatIfResult: "{amount} more by {year}",
   chartLabel:
     "Your accounts, start by start since 1970: the middle line, and the band 8 starts in 10 end in",
-
-  whyTitle: "Where this comes from",
-  accountLine: "{today} today → {then}",
   follows: "Follows {series}",
   followsMix: "Follows {first}, and {rest}",
   lossLine:
@@ -56,35 +53,6 @@ export const trajectoryEn = {
     cash: "nothing: idle cash",
   },
 
-  historyTitle: "Facing history",
-  episodeLabel: "Which fall",
-  fact2000:
-    "The dot-com bubble: developed-market shares lost half their value in euros between summer 2000 and March 2003 — and 2008 came before they were back.",
-  fact2008:
-    "The financial crisis: almost half their value lost in euros between May 2007 and February 2009.",
-  fact2020:
-    "Covid: a fifth lost in three months, back before the year was out.",
-  fact2022:
-    "Inflation and rising rates: shares and bonds fell together, and the Livret A paid less than prices rose.",
-  replayedFrom: "Your accounts today, replayed from the peak of {month}",
-  lowLine: "At worst {loss} ({share}), in {month}",
-  recovered: {
-    one: "Your stake back after {count} month, keeping your payments going",
-    other: "Your stake back after {count} months, keeping your payments going",
-  },
-  recoveredAlone: {
-    one: "({count} without them)",
-    other: "({count} without them)",
-  },
-  notRecovered: "Not back yet by {month}",
-  neverBelow: "Your accounts would never have ended below what you put in.",
-  absent: "Without {names}, whose history does not reach back that far.",
-  noShares:
-    "With no shares, history reaches your savings through prices: over a year, the Livret A ended below inflation {count} times in 100 since 1970.",
-  noSharesLink: "Add an investment",
-  chartValue: "What they were worth",
-  chartInvested: "What you had put in",
-
   progressionTitle: "Progress",
   nextMilestone: "Next milestone: {amount}",
   milestoneWhen: "{month}, from the middle start",
@@ -92,10 +60,13 @@ export const trajectoryEn = {
   cushionLabel: "Safety cushion",
   runLink: "Close the month on Le point",
 
-  hypothesesTitle: "Assumptions",
-  hypothesesHide: "Hide the assumptions",
-  hypothesesLead:
-    "Filled in from your accounts and the history of what they follow. A return you change moves the account’s whole history: its falls keep their shape.",
+  accountsTitle: "Your accounts",
+  accountsLead:
+    "The chart replays these accounts from every start since 1970: what they hold today, what you put in each month, and what their history returned. Change a figure and the chart follows; what you put into an account on top comes off your current account.",
+  accountColumn: "Account",
+  totalLine: "Where the chart starts",
+  monthlyFromLedger: "from your recurring items",
+  sourcesFold: "Sources and method",
   returnFromHistory: "History {from}–{to}: {rate}",
   returnContract: "Your contract’s rate",
   returnNone: "No history long enough for a return.",
@@ -103,5 +74,4 @@ export const trajectoryEn = {
     "Everything is in today’s euros, with French inflation as INSEE measures it.",
   reconstructedNote:
     "Before 1986, shares are rebuilt from the OECD’s prices; before 2000, the fonds euros follows the 10-year French government bond.",
-  sourcesTitle: "Sources",
 };

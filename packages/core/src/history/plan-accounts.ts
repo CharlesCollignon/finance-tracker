@@ -1,7 +1,7 @@
 /**
  * The Plan's accounts as the replay takes them: the savings accounts and
  * wallets from the reader's figures, the current account walked forward by
- * the ledger, the reader's own returns from « Hypothèses », and « Et si… ».
+ * the ledger, and the reader's own returns from « Vos comptes ».
  *
  * A return the reader types is a shift from history, not a replacement for
  * it (the owner's call, October 2026): the account keeps every rise and fall
@@ -13,7 +13,7 @@
 
 import type { Envelope, EnvelopeId } from "../future-plan";
 import type { InvestmentWalletId } from "../investments";
-import type { YearAhead, YearAheadAccountId } from "../year-ahead";
+import type { YearAhead } from "../year-ahead";
 import { replayAccount, type WalletMix } from "./mix";
 import {
   historicalReturn,
@@ -45,17 +45,37 @@ export interface CashAccount {
 export interface PlanAccountsInput {
   envelopes: readonly Envelope[];
   wallets: Partial<Record<InvestmentWalletId, WalletMix>>;
-  /** The reader's own yearly returns, from « Hypothèses ». */
+  /** The reader's own yearly returns, from « Vos comptes ». */
   returns?: Partial<Record<EnvelopeId, number>>;
   cash?: readonly CashAccount[];
-  /** « Et si… »: so much more each month, into this account. */
-  extra?: { monthly: number; to: YearAheadAccountId } | null;
+  /**
+   * What the reader's edits put into the accounts each month beyond their
+   * own figures (`monthlyFromCurrent`), taken off the current account: money
+   * moved, not made.
+   */
+  fromCurrent?: number;
   read?: SeriesReader;
 }
 
 /**
+ * How much more goes into the accounts each month with the reader's edits
+ * than with their own figures — or less, as a negative. A transfer raised in
+ * « Vos comptes » comes from the current account, where that money was
+ * otherwise left: counting it in both would count it twice.
+ */
+export function monthlyFromCurrent(
+  own: readonly Envelope[],
+  edited: readonly Envelope[],
+): number {
+  return edited.reduce((sum, envelope) => {
+    const before = own.find((each) => each.id === envelope.id);
+    return sum + envelope.monthly - (before?.monthly ?? envelope.monthly);
+  }, 0);
+}
+
+/**
  * What an account's history returned a year, before fees: where its return
- * starts in « Hypothèses », and what a typed return is measured from. Null
+ * starts in « Vos comptes », and what a typed return is measured from. Null
  * for a PEL, which pays its contract, and for anything holding bitcoin,
  * whose eleven years are no long run to start from.
  */
@@ -106,17 +126,17 @@ export function cashFromYearAhead(
 /** The accounts to replay, the cash first, in the envelopes' order after. */
 export function planAccounts(input: PlanAccountsInput): ReplayAccount[] {
   const read = input.read ?? historySeries;
-  const extra = input.extra && input.extra.monthly > 0 ? input.extra : null;
 
+  const moved = input.fromCurrent ?? 0;
   const cash = (input.cash ?? []).map((account): ReplayAccount => {
-    const more = extra?.to === account.id ? extra.monthly : 0;
+    const less = account.id === "current" ? moved : 0;
     return {
       id: account.id,
       value: account.value,
       mix: {},
-      monthly: account.monthly + more,
-      schedule: more
-        ? account.schedule.map((payment) => payment + more)
+      monthly: account.monthly - less,
+      schedule: less
+        ? account.schedule.map((payment) => payment - less)
         : account.schedule,
     };
   });
@@ -135,9 +155,6 @@ export function planAccounts(input: PlanAccountsInput): ReplayAccount[] {
           account = { ...account, shift: (1 + typed) / (1 + base) - 1 };
         }
       }
-    }
-    if (extra?.to === envelope.id) {
-      account = { ...account, monthly: account.monthly + extra.monthly };
     }
     return account;
   });

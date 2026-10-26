@@ -7,26 +7,20 @@ import {
 } from "@finance/core/future-plan";
 import {
   cashFromYearAhead,
+  monthlyFromCurrent,
   planAccounts,
 } from "@finance/core/history/plan-accounts";
 import {
-  crashTests,
-  investedAccounts,
   planMilestones,
   replayTrajectory,
   taxAtHorizon,
 } from "@finance/core/history/plan-figures";
-import type {
-  CrashEpisodeId,
-  CrashTest,
-  ReplayAccount,
-  ReplayResult,
-} from "@finance/core/history/replay";
+import { historyReturnFor } from "@finance/core/history/plan-accounts";
+import type { ReplayAccount, ReplayResult } from "@finance/core/history/replay";
 import type { ProjectionPoint } from "@finance/core/projection";
 import {
   buildYearAhead,
   YEAR_AHEAD_MAX_MONTHS,
-  type YearAheadAccountId,
 } from "@finance/core/year-ahead";
 
 /**
@@ -117,12 +111,11 @@ const SAMPLE_CASH = cashFromYearAhead(
   }),
 );
 
-/** Where « Et si… » can go in the sample. */
-export const SAMPLE_TARGETS: YearAheadAccountId[] = [
-  "livret_a",
-  "pea",
-  "current",
-];
+/** The sample's accounts the demo lets a visitor pay into, and how much. */
+export type SampleMonthly = Partial<Record<"livret_a" | "pea", number>>;
+
+/** What the sample puts into each of them now. */
+export const SAMPLE_MONTHLY = { livret_a: 150, pea: 200 } as const;
 
 export interface SampleTrajectory {
   accounts: ReplayAccount[];
@@ -133,39 +126,54 @@ export interface SampleTrajectory {
   afterTax: number;
 }
 
-/** The sample's accounts replayed to `years`, with an extra if one is played. */
+/**
+ * The sample's accounts replayed to `years`, with what goes into its Livret
+ * A and PEA each month changed if a visitor changed it.
+ */
 export function sampleTrajectory(
   years: number,
-  extra?: { monthly: number; to: YearAheadAccountId },
+  monthly: SampleMonthly = {},
 ): SampleTrajectory {
+  const envelopes = SAMPLE_ENVELOPES.map((envelope) => ({
+    ...envelope,
+    monthly: monthly[envelope.id as keyof SampleMonthly] ?? envelope.monthly,
+  }));
   const accounts = planAccounts({
-    envelopes: SAMPLE_ENVELOPES,
+    envelopes,
     wallets: {},
     cash: SAMPLE_CASH,
-    extra,
+    // What a visitor moves into an account leaves the current account.
+    fromCurrent: monthlyFromCurrent(SAMPLE_ENVELOPES, envelopes),
   });
   const result = replayTrajectory(accounts, years);
   return {
     accounts,
     result,
     today: accounts.reduce((sum, account) => sum + account.value, 0),
-    afterTax:
-      result.end.p50 -
-      taxAtHorizon({
-        result,
-        accounts,
-        envelopes: SAMPLE_ENVELOPES,
-        extra: extra ?? null,
-      }),
+    afterTax: result.end.p50 - taxAtHorizon({ result, accounts, envelopes }),
   };
 }
 
-/** The sample's investments through one of the great falls. */
-export function sampleCrash(episode: CrashEpisodeId): CrashTest {
-  const invested = investedAccounts(
-    planAccounts({ envelopes: SAMPLE_ENVELOPES, wallets: {} }),
-  );
-  return crashTests(invested)![episode];
+/** One of the sample's accounts as « Vos comptes » lists it. */
+export interface SampleAccountRow {
+  id: string;
+  today: number;
+  monthly: number;
+  /** What its history returned a year; null for the cash and for bitcoin. */
+  annualReturn: number | null;
+}
+
+/** The sample's accounts, the cash first, as « Vos comptes » lists them. */
+export function sampleAccountRows(): SampleAccountRow[] {
+  return sampleTrajectory(1).accounts.map((account) => {
+    const envelope = SAMPLE_ENVELOPES.find((each) => each.id === account.id);
+    return {
+      id: account.id,
+      today: account.value,
+      monthly: account.monthly,
+      annualReturn: envelope ? historyReturnFor(envelope, {}) : null,
+    };
+  });
 }
 
 /** The sample's milestones, dated on the middle start. */

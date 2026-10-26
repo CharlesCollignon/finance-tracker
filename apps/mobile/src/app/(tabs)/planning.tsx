@@ -1,20 +1,18 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { RefreshControl, ScrollView, View } from "react-native";
 
 import type { TrajectoryYears } from "@finance/core/history/plan-accounts";
 import {
   TRAJECTORY_DEFAULT_SETTINGS,
-  type HypothesesEdits,
+  type PlanEdits,
   type TrajectorySettings,
 } from "@finance/core/history/plan-settings";
 import { resolveMessage } from "@finance/core/i18n/t";
-import { resolveExtraTarget } from "@finance/core/year-ahead";
 import type { PropertyRead } from "@finance/data/properties";
 
 import { ConnectBankInvite } from "@/components/bank/ConnectBankInvite";
 import { FadeIn } from "@/components/motion/FadeIn";
-import { HistoryCard } from "@/components/plan/HistoryCard";
-import { HypothesesPanel } from "@/components/plan/HypothesesPanel";
+import { PlanAccounts } from "@/components/plan/PlanAccounts";
 import { ProgressionCard } from "@/components/plan/ProgressionCard";
 import { TrajectoryCard } from "@/components/plan/TrajectoryCard";
 import { usePlanReplay } from "@/components/plan/use-plan-replay";
@@ -28,11 +26,10 @@ import { hapticSuccess } from "@/lib/haptics";
 import {
   gatherPlanBase,
   gatherPlanWealth,
-  loadHypothesesEdits,
+  loadPlanEdits,
   loadSeenMilestone,
   loadTrajectorySettings,
-  planEnvelopes,
-  saveHypothesesEdits,
+  savePlanEdits,
   saveSeenMilestone,
   saveTrajectorySettings,
   type PlanBase,
@@ -44,23 +41,14 @@ import { useLocale, useT } from "@/providers/LocaleProvider";
 import { useTabBarClearance } from "@/theme/chrome";
 
 /**
- * How long the slider rests before « Et si… » is replayed: two replays of
- * five hundred starts each are too much to run on every step of a drag on
- * a phone, and the figure that lands once the finger pauses is the one
- * read.
- */
-const EXTRA_SETTLE_MS = 150;
-
-/**
  * Plan: where the money could go, replayed on what markets actually did —
  * the web's page (docs/plans/PLAN_REDESIGN_PLAN.md), with the same figures
  * from `@finance/core/history`.
  *
  * « Votre trajectoire », the accounts replayed from every start since 1970,
- * with « Et si… »; « Face à l'histoire », today's investments through the
- * great falls; « Progression », the milestones, the cushion and the run;
- * and « Hypothèses », folded, every figure the reader's to change. The month
- * close lives on Le point.
+ * with « Vos comptes » under the chart — every figure the line is made of,
+ * the reader's to change; then « Progression », the milestones, the cushion
+ * and the run. The month close lives on Le point.
  *
  * The screen is drawn once the investments' market value has come, because
  * every card counts them and a figure that jumps when they land is one
@@ -104,7 +92,7 @@ export default function PlanningScreen() {
   const [settings, setSettings] = useState<TrajectorySettings>(
     TRAJECTORY_DEFAULT_SETTINGS,
   );
-  const [edits, setEdits] = useState<HypothesesEdits>({});
+  const [edits, setEdits] = useState<PlanEdits>({});
   const [settingsUser, setSettingsUser] = useState<string | null>(null);
   useEffect(() => {
     if (!user) {
@@ -113,7 +101,7 @@ export default function PlanningScreen() {
     let cancelled = false;
     void Promise.all([
       loadTrajectorySettings(user.id),
-      loadHypothesesEdits(user.id),
+      loadPlanEdits(user.id),
     ]).then(([stored, storedEdits]) => {
       if (!cancelled) {
         setSettings(stored);
@@ -134,10 +122,10 @@ export default function PlanningScreen() {
     }
   }
 
-  function changeEdits(next: HypothesesEdits) {
+  function changeEdits(next: PlanEdits) {
     setEdits(next);
     if (user) {
-      void saveHypothesesEdits(user.id, next);
+      void savePlanEdits(user.id, next);
     }
   }
 
@@ -213,28 +201,16 @@ function PlanCards({
   onPropertiesChanged: () => void;
   settings: TrajectorySettings;
   onSettings: (settings: TrajectorySettings) => void;
-  edits: HypothesesEdits;
-  onEdits: (edits: HypothesesEdits) => void;
+  edits: PlanEdits;
+  onEdits: (edits: PlanEdits) => void;
 }) {
   const locale = useLocale();
-  const [extra, setExtra] = useState(0);
-  // The slider answers at once; the replays follow once it rests.
-  const [settledExtra, setSettledExtra] = useState(0);
-  useEffect(() => {
-    const timer = setTimeout(() => setSettledExtra(extra), EXTRA_SETTLE_MS);
-    return () => clearTimeout(timer);
-  }, [extra]);
-
   const hasProperty = properties !== null;
-  const accounts = useMemo(() => planEnvelopes(base, wealth), [base, wealth]);
-  const target = resolveExtraTarget(settings.to, accounts);
   const replay = usePlanReplay({
     base,
     wealth,
     edits,
     years: settings.years,
-    extra: settledExtra,
-    target,
     properties: settings.withProperty ? properties : null,
   });
 
@@ -272,43 +248,32 @@ function PlanCards({
           onYears={(years: TrajectoryYears) =>
             onSettings({ ...settings, years })
           }
-          extra={extra}
-          onExtra={setExtra}
-          target={target}
-          onTarget={(to) => onSettings({ ...settings, to })}
-          targets={["current", ...accounts.map((each) => each.id)]}
           hasProperty={hasProperty}
           withProperty={settings.withProperty}
           onWithProperty={(withProperty) =>
             onSettings({ ...settings, withProperty })
           }
-          year={base.year}
-        />
-      </FadeIn>
-      <FadeIn>
-        <HistoryCard crashes={replay.crashes} />
+        >
+          <PlanAccounts
+            replay={replay}
+            edits={edits}
+            onEdits={onEdits}
+            properties={properties}
+            today={base.today}
+            years={settings.years}
+            onGrowthKept={onPropertiesChanged}
+          />
+        </TrajectoryCard>
       </FadeIn>
       <FadeIn>
         <ProgressionCard
           milestones={replay.milestones}
-          withExtra={replay.milestonesWithExtra}
           wealth={replay.wealth}
           cushion={replay.cushion}
           run={base.run}
           fresh={fresh}
           year={base.year}
           month={base.month}
-        />
-      </FadeIn>
-      <FadeIn>
-        <HypothesesPanel
-          envelopes={replay.dataEnvelopes}
-          edited={replay.envelopes}
-          edits={edits}
-          wallets={replay.wallets}
-          onEdits={onEdits}
-          properties={properties}
-          onGrowthKept={onPropertiesChanged}
         />
       </FadeIn>
     </View>

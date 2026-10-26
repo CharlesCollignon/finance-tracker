@@ -3,6 +3,7 @@ import type { Envelope } from "../future-plan";
 import {
   cashFromYearAhead,
   historyReturnFor,
+  monthlyFromCurrent,
   planAccounts,
 } from "./plan-accounts";
 import type { HistorySeries, HistorySeriesId } from "./series";
@@ -81,24 +82,27 @@ describe("planAccounts", () => {
     });
     expect(pel.fixedRate).toBe(0.03);
   });
+});
 
-  it("adds « Et si… » to the account it goes to", () => {
-    const into = planAccounts({
-      envelopes: [envelope({})],
+describe("monthlyFromCurrent", () => {
+  it("takes a raised transfer off the current account", () => {
+    const own = [
+      envelope({ monthly: 100 }),
+      envelope({ id: "av", monthly: 50 }),
+    ];
+    const edited = [
+      envelope({ monthly: 300 }),
+      envelope({ id: "av", monthly: 0 }),
+    ];
+    expect(monthlyFromCurrent(own, edited)).toBe(150);
+    const accounts = planAccounts({
+      envelopes: edited,
       wallets: {},
-      cash: [{ id: "current", value: 0, schedule: [10, 20], monthly: 30 }],
-      extra: { monthly: 50, to: "pea" },
+      cash: [{ id: "current", value: 0, schedule: [400, 380], monthly: 390 }],
+      fromCurrent: monthlyFromCurrent(own, edited),
       read,
     });
-    expect(into.find((account) => account.id === "pea")?.monthly).toBe(150);
-    const onCurrent = planAccounts({
-      envelopes: [],
-      wallets: {},
-      cash: [{ id: "current", value: 0, schedule: [10, 20], monthly: 30 }],
-      extra: { monthly: 50, to: "current" },
-      read,
-    });
-    expect(onCurrent[0]).toMatchObject({ monthly: 80, schedule: [60, 70] });
+    expect(accounts[0]).toMatchObject({ monthly: 240, schedule: [250, 230] });
   });
 });
 

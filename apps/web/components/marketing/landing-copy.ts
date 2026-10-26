@@ -105,7 +105,7 @@ export const landingCopy = {
     body: "The same account on your computer, with room to look further ahead.",
     items: [
       { id: "wallets", caption: "What your funds are really made of" },
-      { id: "plan", caption: "Your trajectory, held up to history" },
+      { id: "plan", caption: "Your trajectory, and the accounts behind it" },
       { id: "property", caption: "Your home, and how much of it is yours" },
       { id: "month-read", caption: "Your month, put into words" },
     ],
@@ -300,17 +300,17 @@ export const landingCopy = {
     {
       id: "plan",
       title: "Plan",
-      body: "Your trajectory, the great market falls, and your milestones.",
+      body: "Your trajectory, the accounts behind it, and your milestones.",
       utility:
-        "Your own accounts replayed on what markets actually did since 1970: where they could be in one to thirty years, in today’s euros, what the great falls would have done to them, and the milestones your savings will pass. The past is not a promise, and nothing here moves any money.",
+        "Your own accounts replayed on what markets actually did since 1970: where they could be in one to thirty years, in today’s euros, every figure the chart is made of under it, and the milestones your savings will pass. The past is not a promise, and nothing here moves any money.",
       steps: [
         {
           title: "Your trajectory",
-          body: "Every account, replayed from every starting month since 1970: the middle start’s figure, and the range 8 starts in 10 end in, with the worst one named. Slide to set a little more aside in the account you choose.",
+          body: "Every account, replayed from every starting month since 1970: the middle start’s figure, and the range 8 starts in 10 end in, with the worst one named.",
         },
         {
-          title: "Held up to history",
-          body: "What 2000, 2008, 2020 and 2022 would have done to what you have invested today, and how many months until it was worth what you had put in, payments carrying on.",
+          title: "The accounts behind it",
+          body: "Under the chart, the accounts it is made of: what each holds, what you put in each month, what its history returned. Change a figure and the chart follows.",
         },
         {
           title: "Your milestones and your cushion",
@@ -496,7 +496,7 @@ export const landingCopy = {
     },
     plan: {
       heading: "Your money, replayed since 1970",
-      hint: "Pick a horizon, set a little more aside, choose where: the trajectory moves with it.",
+      hint: "Pick a horizon, change what goes into each account every month: the trajectory follows.",
       note: "Nothing is moved: this is the Plan’s replay, on a sample person’s accounts. The past is not a promise.",
     },
     wallets: {

@@ -2,15 +2,15 @@
 
 import { useMemo, useSyncExternalStore } from "react";
 import {
-  parseHypothesesEdits,
+  parsePlanEdits,
   parseTrajectorySettings,
-  type HypothesesEdits,
+  type PlanEdits,
   type TrajectorySettings,
 } from "@finance/core/history/plan-settings";
 
 /**
  * What the Plan page remembers in this browser: how the reader left the
- * trajectory, and what they changed in « Hypothèses », read with the rule
+ * trajectory, and what they changed in « Vos comptes », read with the rule
  * the phone reads its own with (`@finance/core/history/plan-settings`). The
  * milestone already celebrated is the account's, not the browser's
  * (`user_preferences.milestone_seen`), so every device agrees.
@@ -25,7 +25,7 @@ import {
  */
 
 const TRAJECTORY_KEY = "pluclair.plan.trajectory:v1:";
-const HYPOTHESES_KEY = "pluclair.plan.hypotheses:v1:";
+const EDITS_KEY = "pluclair.plan.edits:v1:";
 const CHANGE_EVENT = "pluclair-plan-storage";
 
 function read(key: string): string | null {
@@ -92,19 +92,16 @@ export function saveTrajectorySettings(
   write(TRAJECTORY_KEY + userId, JSON.stringify(settings));
 }
 
-/* ------------------------------------------------------------ hypotheses */
+/* --------------------------------------------------------- the accounts */
 
-export function useHypothesesEdits(userId: string): HypothesesEdits {
-  const raw = useStored(HYPOTHESES_KEY + userId);
-  return useMemo(() => parseHypothesesEdits(parseJson(raw)), [raw]);
+export function usePlanEdits(userId: string): PlanEdits {
+  const raw = useStored(EDITS_KEY + userId);
+  return useMemo(() => parsePlanEdits(parseJson(raw)), [raw]);
 }
 
-export function saveHypothesesEdits(
-  userId: string,
-  edits: HypothesesEdits,
-): void {
+export function savePlanEdits(userId: string, edits: PlanEdits): void {
   write(
-    HYPOTHESES_KEY + userId,
+    EDITS_KEY + userId,
     Object.keys(edits).length > 0 ? JSON.stringify(edits) : null,
   );
 }

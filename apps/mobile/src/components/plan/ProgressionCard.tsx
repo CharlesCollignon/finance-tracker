@@ -25,13 +25,12 @@ import { PlanCard, PlanCardHeader } from "./PlanCard";
  * one card — what the reader has done, said back, never a score.
  *
  * The next milestone has a date, from the middle start of the replay on the
- * reader's own figures, and « Et si… » moves it. A milestone crossed since
+ * reader's own figures. A milestone crossed since
  * the last visit pops once, on whichever device sees it first. The run is
  * told here and kept on Le point, where the month is closed.
  */
 export function ProgressionCard({
   milestones,
-  withExtra,
   wealth,
   cushion,
   run,
@@ -40,8 +39,6 @@ export function ProgressionCard({
   month,
 }: {
   milestones: readonly Milestone[];
-  /** Months away with « Et si… », by amount; null without it. */
-  withExtra: Map<number, number | null> | null;
   /** Savings and investments today. */
   wealth: number;
   cushion: Cushion;
@@ -61,28 +58,6 @@ export function ProgressionCard({
   const reached = milestones.filter((each) => each.reached);
   const next = milestones.find((each) => !each.reached) ?? null;
   const progress = next ? Math.min(1, wealth / next.amount) : 0;
-
-  const sooner = (() => {
-    if (!next || !withExtra) {
-      return null;
-    }
-    const after = withExtra.get(next.amount) ?? null;
-    if (after === null) {
-      return null;
-    }
-    if (next.monthsAway === null) {
-      return t("futurePlan.whatIfNowReached", {
-        milestone: shown(next.amount),
-        month: monthAheadLabel(year, month, after, locale),
-      });
-    }
-    return after < next.monthsAway
-      ? t("futurePlan.whatIfSooner", {
-          milestone: shown(next.amount),
-          count: next.monthsAway - after,
-        })
-      : null;
-  })();
 
   const months = (count: number) => t("futurePlan.cushionMonths", { count });
   const last = CUSHION_TARGETS[CUSHION_TARGETS.length - 1]!;
@@ -169,14 +144,6 @@ export function ProgressionCard({
               }}
             />
           </View>
-          {sooner ? (
-            <View className="flex-row items-center gap-1.5">
-              <Ionicons name="sparkles" size={ICON.sm} color={colors.primary} />
-              <Text className="shrink text-sm font-medium text-primary">
-                {sooner}
-              </Text>
-            </View>
-          ) : null}
         </View>
       ) : null}
 

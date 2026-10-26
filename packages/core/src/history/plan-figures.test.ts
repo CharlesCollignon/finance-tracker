@@ -2,7 +2,6 @@ import { describe, expect, it } from "vitest";
 import type { Envelope } from "../future-plan";
 import {
   accountOdds,
-  crashTests,
   investedAccounts,
   mixKeys,
   planMilestones,
@@ -39,15 +38,6 @@ describe("investedAccounts", () => {
   });
 });
 
-describe("crashTests", () => {
-  it("is null with nothing invested, and puts the rest through each fall", () => {
-    expect(crashTests([])).toBeNull();
-    const tests = crashTests([account({})])!;
-    expect(Object.keys(tests)).toEqual(["2000", "2008", "2020", "2022"]);
-    expect(tests["2008"].low.loss).toBeLessThan(0);
-  });
-});
-
 describe("planMilestones", () => {
   it("counts what is there today and dates what is ahead", () => {
     const milestones = planMilestones({
@@ -58,21 +48,6 @@ describe("planMilestones", () => {
     expect(reached.at(-1)?.amount).toBeLessThanOrEqual(30_000);
     const next = milestones.find((each) => !each.reached)!;
     expect(next.monthsAway).toBeGreaterThan(0);
-  });
-
-  it("brings a milestone closer with an extra, and not on the current account", () => {
-    const envelopes = [envelope({})];
-    const next = (to: "pea" | "current") =>
-      planMilestones({
-        envelopes,
-        wallets: {},
-        extra: { monthly: 500, to },
-      }).find((each) => !each.reached)!;
-    const without = planMilestones({ envelopes, wallets: {} }).find(
-      (each) => !each.reached,
-    )!;
-    expect(next("pea").monthsAway!).toBeLessThan(without.monthsAway!);
-    expect(next("current").monthsAway).toBe(without.monthsAway);
   });
 });
 
@@ -96,26 +71,18 @@ describe("taxAtHorizon", () => {
   const envelopes = [envelope({ taxOnGains: 0.3 })];
 
   it("taxes the gain over what went in, at the account's rate", () => {
-    expect(
-      taxAtHorizon({ result, accounts, envelopes, extra: null }),
-    ).toBeCloseTo((3_000 - 1_000 - 1_200) * 0.3, 6);
+    expect(taxAtHorizon({ result, accounts, envelopes })).toBeCloseTo(
+      (3_000 - 1_000 - 1_200) * 0.3,
+      6,
+    );
   });
 
-  it("counts the extra as money put in, and never taxes a loss", () => {
-    expect(
-      taxAtHorizon({
-        result,
-        accounts,
-        envelopes,
-        extra: { monthly: 50, to: "pea" },
-      }),
-    ).toBeCloseTo((3_000 - 1_000 - 1_800) * 0.3, 6);
+  it("never taxes a loss", () => {
     expect(
       taxAtHorizon({
         result: { ...result, accounts: [{ id: "pea", median: 900 }] },
         accounts,
         envelopes,
-        extra: null,
       }),
     ).toBe(0);
   });

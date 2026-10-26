@@ -12,11 +12,11 @@ import {
 import { walletMixes } from "@finance/core/history/mix";
 import {
   cashFromYearAhead,
+  monthlyFromCurrent,
   planAccounts,
 } from "@finance/core/history/plan-accounts";
 import {
   accountOdds,
-  crashTests,
   homesLine,
   investedAccounts,
   planMilestones,
@@ -26,12 +26,10 @@ import {
 import {
   typedReturns,
   withEdits,
-  type HypothesesEdits,
+  type PlanEdits,
 } from "@finance/core/history/plan-settings";
 import {
   sustainableWithdrawal,
-  type CrashEpisodeId,
-  type CrashTest,
   type LossOdds,
   type ReplayAccount,
   type ReplayResult,
@@ -40,33 +38,27 @@ import { buildRunway } from "@finance/core/projection";
 import {
   buildYearAhead,
   YEAR_AHEAD_MAX_MONTHS,
-  type YearAheadAccountId,
 } from "@finance/core/year-ahead";
 import type { PlanBase, PlanWealth } from "@/lib/queries/plan";
 import { planEnvelopes } from "./plan-envelopes";
 
 export interface PlanReplay {
-  /** The reader's figures, untouched: what the milestones and crashes read. */
+  /** The reader's figures, untouched: what the milestones read. */
   dataEnvelopes: Envelope[];
-  /** The same with « Hypothèses » laid over: what the trajectory reads. */
+  /** The same with « Vos comptes » laid over: what the trajectory reads. */
   envelopes: Envelope[];
   wallets: ReturnType<typeof walletMixes>;
   accounts: ReplayAccount[];
   months: number;
-  /** As things stand, and with « Et si… » when there is one. */
   result: ReplayResult;
-  withExtra: ReplayResult | null;
   /** The homes' line, in today's euros, when they join the figure. */
   property: number[] | null;
   /** Everything today, the homes included when they join. */
   today: number;
   milestones: Milestone[];
-  /** Months until each milestone ahead with « Et si… », by amount. */
-  milestonesWithExtra: Map<number, number | null> | null;
   /** Savings and investments today, as the milestones count them. */
   wealth: number;
   cushion: ReturnType<typeof buildCushion>;
-  crashes: Record<CrashEpisodeId, CrashTest> | null;
   /** How often each account ended below prices at the horizon. */
   odds: Map<string, LossOdds>;
   withdrawal: ReturnType<typeof sustainableWithdrawal>;
@@ -84,16 +76,12 @@ export function usePlanReplay({
   wealth,
   edits,
   years,
-  extra,
-  target,
   withProperty,
 }: {
   base: PlanBase;
   wealth: PlanWealth | null;
-  edits: HypothesesEdits;
+  edits: PlanEdits;
   years: number;
-  extra: number;
-  target: YearAheadAccountId;
   withProperty: boolean;
 }): PlanReplay {
   const months = years * 12;
@@ -124,28 +112,20 @@ export function usePlanReplay({
   const returns = useMemo(() => typedReturns(edits), [edits]);
 
   const accounts = useMemo(
-    () => planAccounts({ envelopes, wallets, returns, cash }),
-    [envelopes, wallets, returns, cash],
+    () =>
+      planAccounts({
+        envelopes,
+        wallets,
+        returns,
+        cash,
+        // A transfer raised here comes from the current account.
+        fromCurrent: monthlyFromCurrent(dataEnvelopes, envelopes),
+      }),
+    [envelopes, dataEnvelopes, wallets, returns, cash],
   );
   const result = useMemo(
     () => replayTrajectory(accounts, years),
     [accounts, years],
-  );
-  const withExtra = useMemo(
-    () =>
-      extra > 0
-        ? replayTrajectory(
-            planAccounts({
-              envelopes,
-              wallets,
-              returns,
-              cash,
-              extra: { monthly: extra, to: target },
-            }),
-            years,
-          )
-        : null,
-    [envelopes, wallets, returns, cash, extra, target, years],
   );
 
   const property = useMemo(
@@ -164,18 +144,6 @@ export function usePlanReplay({
     () => planMilestones({ envelopes: dataEnvelopes, wallets }),
     [dataEnvelopes, wallets],
   );
-  const milestonesWithExtra = useMemo(() => {
-    if (extra <= 0 || !dataEnvelopes.some((each) => each.id === target)) {
-      return null;
-    }
-    return new Map(
-      planMilestones({
-        envelopes: dataEnvelopes,
-        wallets,
-        extra: { monthly: extra, to: target },
-      }).map((each) => [each.amount, each.monthsAway]),
-    );
-  }, [extra, target, dataEnvelopes, wallets]);
 
   const cushion = useMemo(
     () =>
@@ -190,13 +158,13 @@ export function usePlanReplay({
     [base],
   );
 
-  // History's falls, on what is invested today: the reader's figures, not
-  // their edits — these are the markets as they were.
+  // The withdrawal's rate is measured on what is invested, on the reader's
+  // own figures rather than their edits: it has to be one that history
+  // actually held to.
   const invested = useMemo(
     () => investedAccounts(planAccounts({ envelopes: dataEnvelopes, wallets })),
     [dataEnvelopes, wallets],
   );
-  const crashes = useMemo(() => crashTests(invested), [invested]);
   const odds = useMemo(() => accountOdds(accounts, years), [accounts, years]);
   const withdrawal = useMemo(
     () =>
@@ -213,14 +181,11 @@ export function usePlanReplay({
     accounts,
     months,
     result,
-    withExtra,
     property,
     today,
     milestones,
-    milestonesWithExtra,
     wealth: wealthNow,
     cushion,
-    crashes,
     odds,
     withdrawal,
     investedIds: new Set(invested.map((account) => account.id)),

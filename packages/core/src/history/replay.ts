@@ -10,19 +10,17 @@
  * « départs », never « chances », because three hundred overlapping windows
  * are not three hundred futures.
  *
- * Four questions, one function each:
+ * Three questions, one function each:
  *
  * - `replayPlan`: where the accounts end up, start by start, and the band
  *   most starts fall in.
- * - `crashTest`: what one of the great falls would do to them today, and
- *   how long the money takes to be worth what was put in.
  * - `lossOdds`: how often an account has ended below where it started,
  *   once prices are counted.
  * - `sustainableWithdrawal`: the yearly withdrawal that has always lasted.
  *
  * Everything runs in today's euros, deflated month by month by French
- * prices, except the crash tests, which are told in the euros of the day:
- * « −9 800 € en mars 2009 » is what the statement would have said.
+ * prices. The great falls were replayed too until October 2026, when the
+ * owner took « Face à l'histoire » off the Plan.
  *
  * Pure: the series come from `historySeries` unless a test hands in its own.
  */
@@ -453,143 +451,6 @@ export function replayPlan(input: ReplayInput): ReplayResult {
       median: quantile(accountEnds[index].sort(), 0.5),
     })),
     standIns: [...standIns.values()],
-  };
-}
-
-/* -------------------------------------------------------- the crash tests */
-
-export type CrashEpisodeId = "2000" | "2008" | "2020" | "2022";
-
-/**
- * The great falls of developed shares in euros, by the month their peak
- * closed — measured on the `world` series: 2000 fell 52 % to March 2003,
- * 2008 49 % to February 2009, 2020 22 % to March, 2022 16 % to June.
- */
-export const CRASH_EPISODES: Record<CrashEpisodeId, { peak: HistoryMonth }> = {
-  "2000": { peak: "2000-08" },
-  "2008": { peak: "2007-05" },
-  "2020": { peak: "2019-12" },
-  "2022": { peak: "2021-12" },
-};
-
-export interface CrashPoint {
-  month: HistoryMonth;
-  /** What the accounts were worth, in the euros of the day. */
-  value: number;
-  /** What had been put in: today's value plus the payments so far. */
-  invested: number;
-}
-
-export interface CrashTest {
-  episode: CrashEpisodeId;
-  /** Month by month from the peak to the end of the history. */
-  path: CrashPoint[];
-  /** The month furthest below what was put in. */
-  low: CrashPoint & { loss: number; lossShare: number };
-  /**
-   * Months from the peak until the accounts were worth what was put in,
-   * payments carrying on; 0 if they never fell below it, null if they had
-   * not recovered when the history ends.
-   */
-  recoveredAfter: number | null;
-  /** The same with no payment after the peak. */
-  recoveredAfterAlone: number | null;
-  /** Accounts the history does not reach back to, left out: bitcoin in 2000. */
-  absent: string[];
-}
-
-/** One run from the peak, in the euros of the day, payments flat. */
-function crashRun(
-  history: History,
-  tracks: Tracks,
-  prepared: readonly Prepared[],
-  start: number,
-  withPayments: boolean,
-): CrashPoint[] {
-  const months = history.length - start;
-  const returns = prepared.map((_, index) => tracks.read(index, start, months));
-  const values = prepared.map((each) => each.account.value);
-  let invested = values.reduce((sum, value) => sum + value, 0);
-  const path: CrashPoint[] = [];
-  for (let k = 0; k < months; k += 1) {
-    let total = 0;
-    prepared.forEach((each, index) => {
-      const ret = returns[index][start + k];
-      const payment = withPayments ? paymentIn(each.account, k) : 0;
-      values[index] = values[index] * (1 + ret) + payment;
-      invested += payment;
-      total += values[index];
-    });
-    path.push({ month: history.month(start + k), value: total, invested });
-  }
-  return path;
-}
-
-/** Months until a run is worth what went in again, from its lowest point. */
-function recovery(path: readonly CrashPoint[]): number | null {
-  let lowIndex = 0;
-  path.forEach((point, index) => {
-    const gap = point.value - point.invested;
-    if (gap < path[lowIndex].value - path[lowIndex].invested) {
-      lowIndex = index;
-    }
-  });
-  if (path.length === 0 || path[lowIndex].value >= path[lowIndex].invested) {
-    return 0;
-  }
-  for (let k = lowIndex; k < path.length; k += 1) {
-    if (path[k].value >= path[k].invested) {
-      return k + 1;
-    }
-  }
-  return null;
-}
-
-/**
- * Today's accounts put through one of the great falls, from its peak: the
- * worst month, and how long until the money was worth what had gone in.
- * Accounts whose history does not reach back that far are left out and
- * named, rather than given a history they did not have.
- */
-export function crashTest(
-  accounts: readonly ReplayAccount[],
-  episode: CrashEpisodeId,
-  read: SeriesReader = historySeries,
-): CrashTest {
-  const history = new History(read);
-  const start = monthsBetween(history.epoch, CRASH_EPISODES[episode].peak) + 1;
-  const reaches = (account: ReplayAccount) =>
-    account.fixedRate !== undefined ||
-    history.firstShared(Object.keys(account.mix) as MixKey[]) <= start;
-  const kept = prepare(accounts.filter(reaches));
-  const absent = accounts
-    .filter((account) => !reaches(account))
-    .map((account) => account.id);
-
-  const tracks = new Tracks(history, kept);
-  const path = crashRun(history, tracks, kept, start, true);
-  const alone = crashRun(history, tracks, kept, start, false);
-  let lowIndex = 0;
-  path.forEach((point, index) => {
-    const gap = point.value - point.invested;
-    if (gap < path[lowIndex].value - path[lowIndex].invested) {
-      lowIndex = index;
-    }
-  });
-  const low = path[lowIndex];
-  const loss = low.value - low.invested;
-
-  return {
-    episode,
-    path,
-    low: {
-      ...low,
-      loss,
-      lossShare: low.invested > 0 ? loss / low.invested : 0,
-    },
-    recoveredAfter: recovery(path),
-    recoveredAfterAlone: recovery(alone),
-    absent,
   };
 }
 

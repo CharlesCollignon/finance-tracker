@@ -20,9 +20,6 @@ export const trajectoryFr: typeof trajectoryEn = {
   whatIfResult: "{amount} de plus en {year}",
   chartLabel:
     "Vos comptes, départ par départ depuis 1970 : la ligne médiane, et la bande où finissent 8 départs sur 10",
-
-  whyTitle: "D'où vient ce chiffre",
-  accountLine: "{today} aujourd'hui → {then}",
   follows: "Suit {series}",
   followsMix: "Suit {first}, et {rest}",
   lossLine:
@@ -54,37 +51,6 @@ export const trajectoryFr: typeof trajectoryEn = {
     cash: "rien : de l'argent qui dort",
   },
 
-  historyTitle: "Face à l'histoire",
-  episodeLabel: "Quelle chute",
-  fact2000:
-    "La bulle internet : les actions des pays développés ont perdu la moitié de leur valeur en euros entre l'été 2000 et mars 2003 — et 2008 est arrivé avant la remontée.",
-  fact2008:
-    "La crise financière : près de la moitié de leur valeur perdue en euros entre mai 2007 et février 2009.",
-  fact2020:
-    "Le Covid : un cinquième perdu en trois mois, retrouvé avant la fin de l'année.",
-  fact2022:
-    "L'inflation et la hausse des taux : actions et obligations ont baissé ensemble, et le Livret A a rapporté moins que la hausse des prix.",
-  replayedFrom:
-    "Vos comptes d'aujourd'hui, rejoués depuis le sommet de {month}",
-  lowLine: "Au pire {loss} ({share}), en {month}",
-  recovered: {
-    one: "Votre mise retrouvée en {count} mois en continuant vos versements",
-    other: "Votre mise retrouvée en {count} mois en continuant vos versements",
-  },
-  recoveredAlone: {
-    one: "({count} sans eux)",
-    other: "({count} sans eux)",
-  },
-  notRecovered: "Pas encore retrouvée fin {month}",
-  neverBelow:
-    "Vos comptes n'auraient jamais fini sous ce que vous y aviez mis.",
-  absent: "Sans {names}, dont l'histoire ne remonte pas jusque-là.",
-  noShares:
-    "Sans placement en Bourse, l'histoire touche vos livrets par les prix : sur un an, le Livret A a fini sous l'inflation {count} fois sur 100 depuis 1970.",
-  noSharesLink: "Ajouter un placement",
-  chartValue: "Ce qu'ils valaient",
-  chartInvested: "Ce que vous y aviez mis",
-
   progressionTitle: "Progression",
   nextMilestone: "Prochain palier : {amount}",
   milestoneWhen: "{month}, au départ médian",
@@ -92,10 +58,13 @@ export const trajectoryFr: typeof trajectoryEn = {
   cushionLabel: "Matelas de sécurité",
   runLink: "Faire le bilan sur Le point",
 
-  hypothesesTitle: "Hypothèses",
-  hypothesesHide: "Masquer les hypothèses",
-  hypothesesLead:
-    "Préremplies avec vos comptes et l'histoire de ce qu'ils suivent. Un rendement modifié décale toute l'histoire du compte : ses chutes gardent leur forme.",
+  accountsTitle: "Vos comptes",
+  accountsLead:
+    "La courbe rejoue ces comptes sur chaque départ depuis 1970 : ce qu'ils ont aujourd'hui, ce que vous y mettez chaque mois et ce que leur histoire a rapporté. Changez un chiffre, la courbe suit ; ce que vous mettez en plus sur un compte est pris sur votre compte courant.",
+  accountColumn: "Compte",
+  totalLine: "Au départ de la courbe",
+  monthlyFromLedger: "d'après vos récurrents",
+  sourcesFold: "Sources et méthode",
   returnFromHistory: "Historique {from}–{to} : {rate}",
   returnContract: "Le taux de votre contrat",
   returnNone: "Pas d'histoire assez longue pour un rendement.",
@@ -103,5 +72,4 @@ export const trajectoryFr: typeof trajectoryEn = {
     "Tout est en euros d'aujourd'hui, avec l'inflation française mesurée par l'INSEE.",
   reconstructedNote:
     "Avant 1986, les actions sont reconstituées à partir des cours de l'OCDE ; avant 2000, le fonds euros suit l'emprunt d'État français à 10 ans.",
-  sourcesTitle: "Sources",
 };

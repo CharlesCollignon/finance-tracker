@@ -1,12 +1,12 @@
 /**
  * The Plan's figures around the replay, worked out one way for the web and
  * the phone: the trajectory's rule for a full livret, what counts as
- * invested, the great falls, the milestones on the middle start, how often
- * each account ended below prices, what selling at the horizon would cost in
- * tax, and the homes' line.
+ * invested, the milestones on the middle start, how often each account ended
+ * below prices, what selling at the horizon would cost in tax, and the
+ * homes' line.
  *
- * One function each, so each app's hook can remember each apart and moving
- * « Et si… » redoes only what reads it.
+ * One function each, so each app's hook can remember each apart and a
+ * figure changed in « Vos comptes » redoes only what reads it.
  */
 
 import { formatMonthLabel } from "../constants";
@@ -24,16 +24,11 @@ import type { InvestmentWalletId } from "../investments";
 import type { MarketContext } from "../property";
 import { DEFAULT_PROPERTY_GROWTH, projectProperty } from "../property-future";
 import type { Property, PropertyLoan } from "../types/database";
-import type { YearAheadAccountId } from "../year-ahead";
 import type { WalletMix } from "./mix";
 import { planAccounts } from "./plan-accounts";
 import {
-  CRASH_EPISODES,
-  crashTest,
   lossOdds,
   replayPlan,
-  type CrashEpisodeId,
-  type CrashTest,
   type LossOdds,
   type MixKey,
   type ReplayAccount,
@@ -50,7 +45,7 @@ const PROPERTY_INFLATION = 0.02;
 
 /**
  * The accounts replayed to the horizon. A full livret refuses the transfer
- * and the money stays on the current account, so « Et si… » into a Livret
+ * and the money stays on the current account, so a payment into a Livret A
  * at its ceiling still counts.
  */
 export function replayTrajectory(
@@ -62,8 +57,7 @@ export function replayTrajectory(
 
 /**
  * What is invested: every account following something other than the
- * regulated livrets and cash. History's falls and the withdrawal are about
- * these.
+ * regulated livrets and cash. The withdrawal is about these.
  */
 export function investedAccounts(
   accounts: readonly ReplayAccount[],
@@ -75,39 +69,20 @@ export function investedAccounts(
   );
 }
 
-/** Today's investments through each great fall; null with none. */
-export function crashTests(
-  invested: readonly ReplayAccount[],
-): Record<CrashEpisodeId, CrashTest> | null {
-  if (invested.length === 0) {
-    return null;
-  }
-  return Object.fromEntries(
-    (Object.keys(CRASH_EPISODES) as CrashEpisodeId[]).map((id) => [
-      id,
-      crashTest(invested, id),
-    ]),
-  ) as Record<CrashEpisodeId, CrashTest>;
-}
-
 /**
  * The milestones, on money that exists: the reader's own savings and
- * investments, never their edits in « Hypothèses », dated on the middle
+ * investments, never their edits in « Vos comptes », dated on the middle
  * start in the euros of the day, thirty years out whatever the horizon.
- * With « Et si… », the same with so much more a month into one account; on
- * the current account it moves nothing, as the milestones do not count it.
  */
 export function planMilestones({
   envelopes,
   wallets,
-  extra = null,
 }: {
   envelopes: readonly Envelope[];
   wallets: Partial<Record<InvestmentWalletId, WalletMix>>;
-  extra?: { monthly: number; to: YearAheadAccountId } | null;
 }): Milestone[] {
   const median = replayPlan({
-    accounts: planAccounts({ envelopes, wallets, extra }),
+    accounts: planAccounts({ envelopes, wallets }),
     months: MILESTONE_MONTHS,
     overflowTo: null,
   }).nominalMedian;
@@ -129,19 +104,16 @@ export function accountOdds(
 /**
  * What selling everything at the horizon would cost in tax, in today's
  * euros: each account's gain over what went in, read on its own middle
- * start, at its own rate. The payments counted are the plan's, the extra
- * included where it goes.
+ * start, at its own rate.
  */
 export function taxAtHorizon({
   result,
   accounts,
   envelopes,
-  extra,
 }: {
   result: ReplayResult;
   accounts: readonly ReplayAccount[];
   envelopes: readonly Envelope[];
-  extra: { monthly: number; to: YearAheadAccountId } | null;
 }): number {
   return result.accounts.reduce((sum, end) => {
     const envelope = envelopes.find((each) => each.id === end.id);
@@ -149,9 +121,7 @@ export function taxAtHorizon({
     if (!envelope || !account) {
       return sum;
     }
-    const monthly =
-      account.monthly + (extra && end.id === extra.to ? extra.monthly : 0);
-    const gains = end.median - account.value - monthly * result.months;
+    const gains = end.median - account.value - account.monthly * result.months;
     return sum + Math.max(0, gains) * envelope.taxOnGains;
   }, 0);
 }

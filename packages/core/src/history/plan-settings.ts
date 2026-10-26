@@ -1,16 +1,15 @@
 /**
  * What the Plan remembers on a device — how the reader left the trajectory,
- * and what they changed in « Hypothèses » — read with one rule on the web
+ * and what they changed in « Vos comptes » — read with one rule on the web
  * (localStorage) and the phone (AsyncStorage), so a setting means the same
  * on both.
  *
  * A convenience rather than a record: nothing the app reports elsewhere
- * rests on what someone typed into « Hypothèses ». Anything stored by an
+ * rests on what someone typed into « Vos comptes ». Anything stored by an
  * older build, or by hand, is read defensively.
  */
 
 import { ENVELOPE_ORDER, type Envelope, type EnvelopeId } from "../future-plan";
-import type { YearAheadAccountId } from "../year-ahead";
 import {
   TRAJECTORY_DEFAULT_YEARS,
   TRAJECTORY_YEARS,
@@ -21,23 +20,16 @@ import {
 
 export interface TrajectorySettings {
   years: TrajectoryYears;
-  /** Where « Et si… » goes; null for the default. */
-  to: YearAheadAccountId | null;
   /** Whether the homes' net value joins the line. */
   withProperty: boolean;
 }
 
 export const TRAJECTORY_DEFAULT_SETTINGS: TrajectorySettings = {
   years: TRAJECTORY_DEFAULT_YEARS,
-  to: null,
   withProperty: false,
 };
 
-/**
- * How the reader last left the trajectory. The extra itself is never kept:
- * it is something to play with, and a figure that opens inflated by last
- * week's play would be one nobody trusts.
- */
+/** How the reader last left the trajectory. */
 export function parseTrajectorySettings(raw: unknown): TrajectorySettings {
   if (!raw || typeof raw !== "object") {
     return TRAJECTORY_DEFAULT_SETTINGS;
@@ -47,20 +39,18 @@ export function parseTrajectorySettings(raw: unknown): TrajectorySettings {
     years:
       TRAJECTORY_YEARS.find((each) => each === stored.years) ??
       TRAJECTORY_DEFAULT_YEARS,
-    to:
-      typeof stored.to === "string" ? (stored.to as YearAheadAccountId) : null,
     withProperty: stored.withProperty === true,
   };
 }
 
-/* ------------------------------------------------------------ hypotheses */
+/* --------------------------------------------------------- the accounts */
 
 /** What the reader changed on one account; anything absent is their figure. */
 export type EnvelopeEdit = Partial<
   Pick<Envelope, "initial" | "monthly" | "fees" | "taxOnGains" | "annualReturn">
 >;
 
-export type HypothesesEdits = Partial<Record<EnvelopeId, EnvelopeEdit>>;
+export type PlanEdits = Partial<Record<EnvelopeId, EnvelopeEdit>>;
 
 function finite(value: unknown): number | undefined {
   return typeof value === "number" && Number.isFinite(value)
@@ -69,12 +59,12 @@ function finite(value: unknown): number | undefined {
 }
 
 /** Each figure within the bounds its field allows. */
-export function parseHypothesesEdits(raw: unknown): HypothesesEdits {
+export function parsePlanEdits(raw: unknown): PlanEdits {
   if (!raw || typeof raw !== "object") {
     return {};
   }
   const stored = raw as Record<string, unknown>;
-  const edits: HypothesesEdits = {};
+  const edits: PlanEdits = {};
   for (const id of ENVELOPE_ORDER) {
     const row = stored[id] as Record<string, unknown> | undefined;
     if (!row || typeof row !== "object") {
@@ -103,7 +93,7 @@ export function parseHypothesesEdits(raw: unknown): HypothesesEdits {
 /** The reader's figures with their edits laid over, return aside. */
 export function withEdits(
   envelopes: readonly Envelope[],
-  edits: HypothesesEdits,
+  edits: PlanEdits,
 ): Envelope[] {
   return envelopes.map((envelope) => {
     const edit = edits[envelope.id];
@@ -123,7 +113,7 @@ export function withEdits(
 
 /** The returns the reader typed, account by account. */
 export function typedReturns(
-  edits: HypothesesEdits,
+  edits: PlanEdits,
 ): Partial<Record<EnvelopeId, number>> {
   const returns: Partial<Record<EnvelopeId, number>> = {};
   for (const [id, edit] of Object.entries(edits) as [

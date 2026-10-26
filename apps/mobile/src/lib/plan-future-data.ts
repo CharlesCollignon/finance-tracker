@@ -8,10 +8,10 @@ import {
 } from "@finance/core/future-plan";
 import type { PositionForMix } from "@finance/core/history/mix";
 import {
-  parseHypothesesEdits,
+  parsePlanEdits,
   parseTrajectorySettings,
   TRAJECTORY_DEFAULT_SETTINGS,
-  type HypothesesEdits,
+  type PlanEdits,
   type TrajectorySettings,
 } from "@finance/core/history/plan-settings";
 import type { Locale } from "@finance/core/i18n/locale";
@@ -185,13 +185,13 @@ export function planEnvelopes(
 
 /**
  * How the reader left the trajectory, and what they changed in
- * « Hypothèses », kept on the phone and read with the web's rule
+ * « Vos comptes », kept on the phone and read with the web's rule
  * (`@finance/core/history/plan-settings`). The keys before October 2026 —
  * the long view's and the year ahead's — are no longer read: their returns
  * were presets, not history.
  */
 const TRAJECTORY_KEY = "plan-trajectory:v1:";
-const HYPOTHESES_KEY = "plan-hypotheses:v1:";
+const EDITS_KEY = "plan-edits:v1:";
 
 async function readStored(key: string): Promise<unknown> {
   try {
@@ -225,21 +225,19 @@ export async function saveTrajectorySettings(
   }
 }
 
-export async function loadHypothesesEdits(
-  userId: string,
-): Promise<HypothesesEdits> {
-  return parseHypothesesEdits(await readStored(HYPOTHESES_KEY + userId));
+export async function loadPlanEdits(userId: string): Promise<PlanEdits> {
+  return parsePlanEdits(await readStored(EDITS_KEY + userId));
 }
 
-export async function saveHypothesesEdits(
+export async function savePlanEdits(
   userId: string,
-  edits: HypothesesEdits,
+  edits: PlanEdits,
 ): Promise<void> {
   try {
     if (Object.keys(edits).length === 0) {
-      await AsyncStorage.removeItem(HYPOTHESES_KEY + userId);
+      await AsyncStorage.removeItem(EDITS_KEY + userId);
     } else {
-      await AsyncStorage.setItem(HYPOTHESES_KEY + userId, JSON.stringify(edits));
+      await AsyncStorage.setItem(EDITS_KEY + userId, JSON.stringify(edits));
     }
   } catch {
     // A plan that is not remembered is still a plan.

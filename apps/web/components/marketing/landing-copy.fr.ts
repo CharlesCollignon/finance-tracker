@@ -90,7 +90,7 @@ export const landingCopyFr: LandingCopySections & {
     body: "Le même compte sur votre ordinateur, avec de la place pour voir loin.",
     items: [
       { id: "wallets", caption: "Ce que contiennent vraiment vos fonds" },
-      { id: "plan", caption: "Votre trajectoire, face à l’histoire" },
+      { id: "plan", caption: "Votre trajectoire, et les comptes qui la font" },
       { id: "property", caption: "Votre logement, et la part qui est à vous" },
       { id: "month-read", caption: "Votre mois, mis en mots" },
     ],
@@ -269,17 +269,17 @@ export const landingCopyFr: LandingCopySections & {
     },
     plan: {
       title: "Plan",
-      body: "Votre trajectoire, les grandes chutes des marchés, et vos paliers.",
+      body: "Votre trajectoire, les comptes qui la font, et vos paliers.",
       utility:
-        "Vos propres comptes rejoués sur ce que les marchés ont vraiment fait depuis 1970 : où ils peuvent aller dans un à trente ans, en euros d’aujourd’hui, ce que les grandes chutes leur auraient fait, et les paliers que votre épargne franchira. Le passé ne dit pas l’avenir, et rien ici ne déplace d’argent.",
+        "Vos propres comptes rejoués sur ce que les marchés ont vraiment fait depuis 1970 : où ils peuvent aller dans un à trente ans, en euros d’aujourd’hui, sous la courbe chaque chiffre dont elle est faite, et les paliers que votre épargne franchira. Le passé ne dit pas l’avenir, et rien ici ne déplace d’argent.",
       steps: [
         {
           title: "Votre trajectoire",
-          body: "Chaque compte, rejoué depuis chaque mois de départ depuis 1970 : le chiffre du départ médian, et la fourchette où finissent 8 départs sur 10, avec le pire nommé. Faites glisser pour mettre un peu plus de côté sur le compte de votre choix.",
+          body: "Chaque compte, rejoué depuis chaque mois de départ depuis 1970 : le chiffre du départ médian, et la fourchette où finissent 8 départs sur 10, avec le pire nommé.",
         },
         {
-          title: "Face à l’histoire",
-          body: "Ce que 2000, 2008, 2020 et 2022 auraient fait à ce que vous avez placé aujourd’hui, et en combien de mois votre mise serait revenue, en continuant vos versements.",
+          title: "Les comptes qui la font",
+          body: "Sous la courbe, les comptes dont elle est faite : ce que chacun a, ce que vous y mettez chaque mois, ce que son histoire a rapporté. Changez un chiffre, la courbe suit.",
         },
         {
           title: "Vos paliers et votre matelas",
@@ -454,7 +454,7 @@ export const landingCopyFr: LandingCopySections & {
     },
     plan: {
       heading: "Votre argent, rejoué depuis 1970",
-      hint: "Choisissez l’horizon, mettez un peu plus de côté, choisissez où : la trajectoire bouge avec.",
+      hint: "Choisissez l’horizon, changez ce que vous mettez chaque mois sur chaque compte : la trajectoire suit.",
       note: "Rien n’est déplacé : c’est le calcul du Plan, sur les comptes d’une personne d’exemple. Le passé ne dit pas l’avenir.",
     },
     wallets: {
