@@ -103,7 +103,7 @@ function Card({ item, index }: { item: Item; index: number }) {
 
   const shell = cn(
     "group relative isolate flex h-full flex-col gap-6 overflow-hidden rounded-[1.75rem] p-6 glass-flat md:p-7",
-    "before:pointer-events-none before:absolute before:inset-0 before:-z-10 before:opacity-0 before:transition-opacity before:duration-500 before:[background:radial-gradient(22rem_circle_at_var(--x,50%)_var(--y,50%),rgb(236_178_94/0.12),transparent_60%)] hover:before:opacity-100",
+    "before:pointer-events-none before:absolute before:inset-0 before:-z-10 before:opacity-0 before:transition-opacity before:duration-500 before:[background:radial-gradient(22rem_circle_at_var(--x,50%)_var(--y,50%),rgb(250_152_66/0.12),transparent_60%)] hover:before:opacity-100",
   );
 
   return (

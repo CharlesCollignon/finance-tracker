@@ -93,7 +93,7 @@ function NeighbourCard({
         }}
         className={cn(
           "group relative isolate flex h-full flex-col gap-6 overflow-hidden rounded-[1.75rem] border border-white/10 bg-white/[0.03] p-7 transition-colors duration-300 hover:border-white/20 hover:bg-white/[0.05]",
-          "before:pointer-events-none before:absolute before:inset-0 before:-z-10 before:opacity-0 before:transition-opacity before:duration-500 before:[background:radial-gradient(20rem_circle_at_var(--x,50%)_var(--y,50%),rgb(236_178_94/0.14),transparent_60%)] hover:before:opacity-100",
+          "before:pointer-events-none before:absolute before:inset-0 before:-z-10 before:opacity-0 before:transition-opacity before:duration-500 before:[background:radial-gradient(20rem_circle_at_var(--x,50%)_var(--y,50%),rgb(250_152_66/0.14),transparent_60%)] hover:before:opacity-100",
           side === "next" && "md:items-end md:text-right",
           marketingFocus,
         )}

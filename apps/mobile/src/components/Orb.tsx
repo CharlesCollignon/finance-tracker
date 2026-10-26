@@ -123,15 +123,16 @@ const WANDER = 0.055;
  * Orange-gold since October 2026: the body moved from 36° of hue to 33.5°
  * and to 89% saturation, the light followed to 40°, and the shadow went to
  * 24°, because a warm body darkens towards red rather than towards its own
- * hue. `primary` in `theme/tokens.ts` moved with it, to #ecb25e, so the
- * accent and the mark read as one brand colour.
+ * hue.
  *
- * Orange since 2026-10-26, at the owner's asking: the body to 29° and 96%
- * saturation, the light to 35°, the shadow to 18°. The accent stayed.
+ * Orange since 2026-10-26, asked for twice at the owner's asking: the body
+ * to 26° and 97% saturation, the light to 32°, the shadow to 15°. `primary`
+ * in `theme/tokens.ts` moved with it, to #fa9842, so the accent and the
+ * mark read as one brand colour again.
  */
-const C1 = "#ffc87a";
-const C2 = "#fa891e";
-const C3 = "#692407";
+const C1 = "#ffbf75";
+const C2 = "#fb7b18";
+const C3 = "#691f07";
 
 /** Alpha times glass, clamped — 2.6 × 0.72 would otherwise ask for 187%. */
 const a = (alpha: number, glass: number) => Math.min(1, alpha * glass);

@@ -400,7 +400,7 @@ function Backdrop({ slide }: { slide: number }) {
             width: size,
             height: size,
             borderRadius: size / 2,
-            backgroundColor: "rgba(236,178,94,0.22)",
+            backgroundColor: "rgba(250,152,66,0.22)",
           },
           goldStyle,
         ]}
@@ -618,7 +618,7 @@ function ClosesSlide({ review }: { review: YearReview }) {
                 backgroundColor: month.inBestRun
                   ? COLORS.primary
                   : month.won
-                    ? "rgba(236,178,94,0.4)"
+                    ? "rgba(250,152,66,0.4)"
                     : month.closed
                       ? "rgba(245,243,239,0.25)"
                       : "transparent",
@@ -691,7 +691,7 @@ function CategorySlide({ review }: { review: YearReview }) {
         className="self-start rounded-full px-4 py-1.5"
         style={{
           backgroundColor:
-            category.change < 0 ? "rgba(52,211,153,0.15)" : "rgba(236,178,94,0.15)",
+            category.change < 0 ? "rgba(52,211,153,0.15)" : "rgba(250,152,66,0.15)",
         }}
       >
         <Text
@@ -772,8 +772,8 @@ function MilestonesSlide({ review }: { review: YearReview }) {
             className="rounded-card px-6 py-5"
             style={{
               borderWidth: 1,
-              borderColor: "rgba(236,178,94,0.6)",
-              backgroundColor: "rgba(236,178,94,0.1)",
+              borderColor: "rgba(250,152,66,0.6)",
+              backgroundColor: "rgba(250,152,66,0.1)",
             }}
           >
             <PrivateAmount style={{ fontSize: 28, color: COLORS.primary }}>

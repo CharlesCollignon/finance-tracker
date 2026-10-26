@@ -49,7 +49,7 @@ export function MonthCloseDemo({ copy }: { copy: Copy }) {
               transition={{ type: "spring", stiffness: 160, damping: 24 }}
             />
             <m.div
-              className="h-full bg-[repeating-linear-gradient(135deg,rgb(236_178_94/0.85)_0_6px,rgb(236_178_94/0.45)_6px_12px)] shadow-[0_0_30px_rgb(236_178_94/0.5)]"
+              className="h-full bg-[repeating-linear-gradient(135deg,rgb(250_152_66/0.85)_0_6px,rgb(250_152_66/0.45)_6px_12px)] shadow-[0_0_30px_rgb(250_152_66/0.5)]"
               animate={{ width: `${(1 - bankShare) * 100}%` }}
               transition={{ type: "spring", stiffness: 160, damping: 24 }}
             />

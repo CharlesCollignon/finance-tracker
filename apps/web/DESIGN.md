@@ -7,19 +7,19 @@ colors:
   sidebar-ground: "#0d0d15"
   card-surface: "#131320"
   raised-surface: "#1c1c2b"
-  accent-wash: "#262015"
+  accent-wash: "#281e15"
   bloom-violet: "rgba(139, 74, 255, 0.17)"
   bloom-violet-deep: "rgba(124, 58, 237, 0.07)"
   offstage-magenta: "rgba(232, 74, 178, 0.05)"
   rail-indigo: "rgba(88, 52, 196, 0.06)"
   bounce-purple: "rgba(84, 48, 160, 0.08)"
-  lamplit-gold: "#ecb25e"
-  lamplit-gold-hover: "#f2c27a"
+  lamplit-orange: "#fa9842"
+  lamplit-orange-hover: "#fbb26a"
   foreground: "#ececf1"
   muted-foreground: "#9b9bad"
   success: "#34d399"
   info: "#22d3ee"
-  warning: "#fb923c"
+  warning: "#fbbd23"
   destructive: "#f87171"
   hairline: "rgba(236, 236, 241, 0.1)"
   hairline-strong: "rgba(236, 236, 241, 0.16)"
@@ -84,13 +84,13 @@ spacing:
   shell-bottom-nav: "3.5rem"
 components:
   button-primary:
-    backgroundColor: "{colors.lamplit-gold}"
+    backgroundColor: "{colors.lamplit-orange}"
     textColor: "{colors.cool-near-black}"
     rounded: "{rounded.control}"
     padding: "8px 16px"
     height: "44px"
   button-primary-hover:
-    backgroundColor: "{colors.lamplit-gold-hover}"
+    backgroundColor: "{colors.lamplit-orange-hover}"
   button-secondary:
     backgroundColor: "{colors.raised-surface}"
     textColor: "{colors.foreground}"
@@ -110,7 +110,7 @@ components:
     padding: "8px 16px"
     height: "44px"
   button-pill:
-    backgroundColor: "{colors.lamplit-gold}"
+    backgroundColor: "{colors.lamplit-orange}"
     textColor: "{colors.cool-near-black}"
     rounded: "9999px"
     padding: "6px 6px 6px 20px"
@@ -221,15 +221,14 @@ the colour is in what it paints on.
 
 ### Primary
 
-- **Lamplit Gold** (`#ecb25e`): The only warm thing in the system and the only
-  colour permitted to carry emphasis — an orange-gold since October 2026,
-  moved with the orb so the accent and the mark read as one brand colour. The
-  orb went further to orange on 2026-10-26 (`--orb-c2` at 29°) and the accent
-  stayed here, a step paler and more gold than the mark. At
-  10:1 against the page it is legible as text, not just as fill, so it serves
+- **Lamplit Orange** (`#fa9842`): The only warm thing in the system and the only
+  colour permitted to carry emphasis — orange since 2026-10-26 (an
+  orange-gold before), moved with the orb so the accent and the mark read as
+  one brand colour, a step paler than the mark's body. At
+  9:1 against the page it is legible as text, not just as fill, so it serves
   as both the primary button's ground and an emphatic figure's ink. Also the
   focus ring.
-- **Lamplit Gold Hover** (`#f2c27a`): The lift on a primary control's hover.
+- **Lamplit Orange Hover** (`#fbb26a`): The lift on a primary control's hover.
   The only state change a primary button makes to its fill.
 
 ### Neutral
@@ -249,7 +248,7 @@ the colour is in what it paints on.
   step that reads as a distinct surface rather than as the page.
 - **Raised Surface** (`#1c1c2b`): Secondary buttons, muted fills, and the hover
   ground for outline and ghost controls.
-- **Accent Wash** (`#262015`): A warm-tinted low surface for where the accent
+- **Accent Wash** (`#281e15`): A warm-tinted low surface for where the accent
   needs a resting ground rather than a fill.
 - **Foreground** (`#ececf1`): Primary text. Never pure white.
 - **Muted Foreground** (`#9b9bad`): Secondary text, captions, row subtitles and
@@ -295,7 +294,7 @@ room's identity; fainter kept the light and took out the cast. The phone's
   Without it the lower half of the page is dead black and the whole thing reads
   as a bloom pasted onto a void rather than as a lit room.
 
-**Lamplit Gold at 10%** (`rgba(236, 178, 94, 0.10)`) closes the stack, low and
+**Lamplit Orange at 10%** (`rgba(250, 152, 66, 0.10)`) closes the stack, low and
 faint in the bottom-left corner, so the palette still belongs to Pluclair
 rather than to the reference the bloom was drawn from. It is the accent's one
 non-semantic appearance, and at a tenth of an alpha over near-black it does not
@@ -321,9 +320,10 @@ the corners were already dark, and darkening them again only cost the violet.
 ### Status
 
 - **Success** (`#34d399`), **Info** (`#22d3ee`), **Destructive** (`#f87171`),
-  **Warning** (`#fb923c`). Warning is orange rather than amber specifically so
-  that a row awaiting a decision can be told apart at 8px from both the gold
-  accent and a destructive amount sitting in the same row.
+  **Warning** (`#fbbd23`). Warning is amber rather than orange specifically so
+  that a row awaiting a decision can be told apart at 8px from both the orange
+  accent and a destructive amount sitting in the same row. It was orange
+  (`#fb923c`) while the accent was gold; the two traded places on 2026-10-26.
 
 ### Semantic Amount Colors
 
@@ -332,7 +332,7 @@ is not purely decorative. An amount is coloured by what kind of money it is:
 
 - **Income** — Success green (`#34d399`)
 - **Expense** — Destructive salmon (`#f87171`)
-- **Savings** — Lamplit Gold (`#ecb25e`)
+- **Savings** — Lamplit Orange (`#fa9842`)
 - **Investment** — Info cyan (`#22d3ee`)
 
 The same mapping drives allocation charts, so a slice and a row agree about
@@ -350,7 +350,7 @@ what a category is.
 on `:root` as well as `.dark` so nothing depends on the class being present.
 Do not introduce a light theme, a light-mode token pair, or a `light:` variant.
 
-**The Rare Accent Rule.** Lamplit Gold earns attention by being scarce. Its
+**The Rare Accent Rule.** Lamplit Orange earns attention by being scarce. Its
 places are the primary action, the focus ring, a figure that genuinely leads a
 screen, a savings amount (systematically), and a moment (see Moments): a
 milestone reached, a cushion rung lit, a run of month-ends still alive, a month
@@ -734,8 +734,8 @@ all; changing one alone breaks the frame.
   precisely, and the gesture stops there.
 - **Shape:** Control radius (`0.625rem`), minimum height 44px on touch, relaxed
   on large screens.
-- **Primary:** Lamplit Gold ground with near-black ink, plus a 1px rim.
-  Hover raises the fill to `#f2c27a`.
+- **Primary:** Lamplit Orange ground with near-black ink, plus a 1px rim.
+  Hover raises the fill to `#fbb26a`.
 - **Secondary:** Raised surface ground, foreground ink, hover to muted.
 - **Outline / Ghost:** Transparent ground — outline carries a hairline, ghost
   does not — both washing to muted on hover.
@@ -743,7 +743,7 @@ all; changing one alone breaks the frame.
 - **Pill:** Fully round, used for the marketing call to action, carrying a
   circular **nub** that drifts up and to the right on hover.
 - **States:** `active:scale(0.98)` on press; focus-visible draws a 2px ring in
-  Lamplit Gold with a 2px offset against the page. Disabled drops to 50%
+  Lamplit Orange with a 2px offset against the page. Disabled drops to 50%
   opacity with the cursor disallowed.
 
 ### Cards / Containers
@@ -766,7 +766,7 @@ all; changing one alone breaks the frame.
 
 - **Style:** Card-surface ground, 1px hairline, control radius, `8px 12px`
   padding, 44px minimum height, placeholder in muted foreground.
-- **Focus:** 2px Lamplit Gold ring; the border itself does not shift.
+- **Focus:** 2px Lamplit Orange ring; the border itself does not shift.
 - **Error:** Border and text both turn Destructive, driven by `aria-invalid`
   rather than by a separate visual prop.
 
@@ -1165,7 +1165,7 @@ away until the menu is opened again.
 - **Don't** reach for a second display typeface to signal importance; headings
   are the body sans at 600.
 - **Don't** colour an amount by whether it is positive or negative.
-- **Don't** spend Lamplit Gold on decoration; its semantic and emphatic uses are
+- **Don't** spend Lamplit Orange on decoration; its semantic and emphatic uses are
   the whole of its job.
 - **Don't** hard-code a hex, an alpha literal, or a duration where a token
   exists — the ten alpha literals and the twenty-eight type triples are exactly

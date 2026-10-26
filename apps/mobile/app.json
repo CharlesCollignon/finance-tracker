@@ -63,7 +63,7 @@
       [
         "expo-notifications",
         {
-          "color": "#fa891e",
+          "color": "#fb7b18",
           "defaultChannel": "reminders"
         }
       ],

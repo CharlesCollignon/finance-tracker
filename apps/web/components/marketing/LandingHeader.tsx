@@ -516,7 +516,7 @@ function follow(event: ReactPointerEvent<HTMLElement>) {
 
 const cardBase =
   "group relative isolate flex overflow-hidden rounded-[1.25rem] border border-white/[0.07] bg-white/[0.03] transition-[transform,background-color,border-color] duration-300 hover:-translate-y-0.5 hover:border-white/15 hover:bg-white/[0.06] " +
-  "before:pointer-events-none before:absolute before:inset-0 before:-z-10 before:opacity-0 before:transition-opacity before:duration-500 before:[background:radial-gradient(14rem_circle_at_var(--x,50%)_var(--y,50%),rgb(236_178_94/0.14),transparent_60%)] hover:before:opacity-100";
+  "before:pointer-events-none before:absolute before:inset-0 before:-z-10 before:opacity-0 before:transition-opacity before:duration-500 before:[background:radial-gradient(14rem_circle_at_var(--x,50%)_var(--y,50%),rgb(250_152_66/0.14),transparent_60%)] hover:before:opacity-100";
 
 function PageCard({
   page,
@@ -599,7 +599,7 @@ function FeaturedCard({
       aria-current={active ? "page" : undefined}
       className={cn(
         cardBase,
-        "h-full flex-col justify-between gap-6 [background:radial-gradient(120%_90%_at_0%_0%,rgb(236_178_94/0.16),transparent_60%),rgb(255_255_255/0.03)]",
+        "h-full flex-col justify-between gap-6 [background:radial-gradient(120%_90%_at_0%_0%,rgb(250_152_66/0.16),transparent_60%),rgb(255_255_255/0.03)]",
         compact ? "p-4" : "p-5",
         marketingFocus,
       )}

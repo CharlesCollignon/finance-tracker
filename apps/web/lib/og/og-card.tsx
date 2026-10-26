@@ -23,7 +23,7 @@ export const OG_CONTENT_TYPE = "image/png";
 const GROUND = "#06060a";
 const INK = "#f6f3ed";
 const MUTED = "rgba(255, 255, 255, 0.55)";
-const GOLD = "#ecb25e";
+const GOLD = "#fa9842";
 
 /** A line under the title longer than this is cut at a word, with « … ». */
 const SUBTITLE_MAX = 150;
@@ -98,7 +98,7 @@ export async function ogCard({
             display: "flex",
             borderRadius: 9999,
             boxShadow:
-              "0 0 140px 40px rgba(250, 137, 30, 0.30), 0 0 320px 120px rgba(250, 137, 30, 0.10)",
+              "0 0 140px 40px rgba(251, 123, 24, 0.30), 0 0 320px 120px rgba(251, 123, 24, 0.10)",
           }}
         />
         {/* eslint-disable-next-line @next/next/no-img-element -- drawn by next/og, not a page */}

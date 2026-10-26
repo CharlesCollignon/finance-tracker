@@ -61,7 +61,7 @@ export function FigureSection({ copy }: { copy: FigureCopy }) {
   const gold = useTransform(
     done,
     [0, 1],
-    ["rgb(255 255 255 / 0.85)", "rgb(236 178 94 / 1)"],
+    ["rgb(255 255 255 / 0.85)", "rgb(250 152 66 / 1)"],
   );
   const rule = useTransform(p, [0.62, 0.74], [0, 1]);
   const perDayY = useTransform(done, [0, 1], [16, 0]);
@@ -96,7 +96,7 @@ export function FigureSection({ copy }: { copy: FigureCopy }) {
           {/* The light the figure sits in, swelling as the sum resolves. */}
           <m.div
             aria-hidden
-            className="pointer-events-none absolute -inset-16 -z-10 rounded-full bg-[radial-gradient(closest-side,rgb(236_178_94/0.22),transparent)] blur-2xl"
+            className="pointer-events-none absolute -inset-16 -z-10 rounded-full bg-[radial-gradient(closest-side,rgb(250_152_66/0.22),transparent)] blur-2xl"
             style={{ opacity: done, scale: glow }}
           />
           <dl className="flex flex-col gap-3 font-mono text-sm tabular-nums sm:text-base">

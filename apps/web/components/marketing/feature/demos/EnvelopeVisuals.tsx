@@ -78,7 +78,7 @@ export function PeaVisual({ copy }: { copy: Items["pea"] }) {
         </p>
         <div className="relative mt-4 h-3 overflow-hidden rounded-full bg-white/[0.07]">
           <m.span
-            className="absolute inset-y-0 left-0 rounded-full bg-primary shadow-[0_0_16px_rgb(236_178_94/0.7)]"
+            className="absolute inset-y-0 left-0 rounded-full bg-primary shadow-[0_0_16px_rgb(250_152_66/0.7)]"
             initial={{ width: "0%" }}
             animate={{ width: `${Math.max(status.ratio * 100, 2)}%` }}
             transition={{ duration: 1.2, ease: EASE, delay: 0.2 }}
@@ -163,7 +163,7 @@ export function AvVisual({ copy }: { copy: Items["av"] }) {
                 initial={{ backgroundColor: "rgba(255,255,255,0.06)" }}
                 animate={{
                   backgroundColor: lit
-                    ? "rgba(236,178,94,0.85)"
+                    ? "rgba(250,152,66,0.85)"
                     : "rgba(255,255,255,0.06)",
                 }}
                 transition={{ delay: 0.15 + index * 0.09, duration: 0.4 }}
@@ -300,7 +300,7 @@ export function PerVisual({ copy }: { copy: Items["per"] }) {
         </div>
       </div>
       <m.div
-        className="rounded-2xl border-2 border-primary/60 bg-primary/[0.06] px-6 py-5 text-center shadow-[0_0_40px_-12px_rgb(236_178_94/0.6)]"
+        className="rounded-2xl border-2 border-primary/60 bg-primary/[0.06] px-6 py-5 text-center shadow-[0_0_40px_-12px_rgb(250_152_66/0.6)]"
         initial={{ scale: 0.9, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         transition={{ delay: 0.8, type: "spring", stiffness: 260, damping: 18 }}
@@ -352,7 +352,7 @@ export function CryptoVisual({ copy }: { copy: Items["crypto"] }) {
           <span
             className={cn(
               face,
-              "border-2 border-primary/70 [background:radial-gradient(circle_at_35%_30%,#f6d79a,#ecb25e_45%,#9a6a26)] text-[#3a2508] shadow-[0_20px_40px_-16px_rgb(236_178_94/0.6)]",
+              "border-2 border-primary/70 [background:radial-gradient(circle_at_35%_30%,#fccf9c,#fa9842_45%,#98491b)] text-[#3a1b08] shadow-[0_20px_40px_-16px_rgb(250_152_66/0.6)]",
             )}
           >
             <CurrencyBtc size={56} weight="bold" />
@@ -411,12 +411,12 @@ export function LivretVisual({ copy }: { copy: Items["livret"] }) {
       </div>
       <div className="relative h-14 overflow-hidden rounded-2xl border border-white/10 bg-white/[0.03]">
         <m.div
-          className="absolute inset-y-0 left-0 [background:linear-gradient(90deg,rgb(236_178_94/0.25),rgb(236_178_94/0.6))]"
+          className="absolute inset-y-0 left-0 [background:linear-gradient(90deg,rgb(250_152_66/0.25),rgb(250_152_66/0.6))]"
           initial={{ width: "0%" }}
           animate={{ width: `${share * 100}%` }}
           transition={{ duration: 1.4, ease: EASE, delay: 0.2 }}
         >
-          <span className="absolute inset-y-0 right-0 w-0.5 bg-primary shadow-[0_0_12px_rgb(236_178_94/0.9)]" />
+          <span className="absolute inset-y-0 right-0 w-0.5 bg-primary shadow-[0_0_12px_rgb(250_152_66/0.9)]" />
         </m.div>
         <span className="absolute inset-y-0 right-0 flex items-center px-4 font-mono text-sm text-primary">
           {percent(rate)}

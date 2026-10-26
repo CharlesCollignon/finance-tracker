@@ -31,11 +31,11 @@ export const CTA_SIZES = {
    button is neither glass nor a recess — it is a lens flare, which is what it
    already looked like at nav size.
 
-   Nothing is lost by it. The fill is Lamplit Gold, `--primary` at #ecb25e,
-   which this file's note above measures at 10:1 on the near-black marketing
+   Nothing is lost by it. The fill is Lamplit Orange, `--primary` at #fa9842,
+   which this file's note above measures at 9:1 on the near-black marketing
    ground; the other button in the pair is a 6%-white pane behind a hairline.
    Which of the two is the primary action was never the halo's work. */
-/* Gold glass: Lamplit Gold as a gradient, lighter at the top left and deeper
+/* Gold glass: Lamplit Orange as a gradient, lighter at the top left and deeper
    at the bottom right, a little transparent and blurred over what is behind
    it — the Earth, the stars — with a thin light along its top edge. Hover
    brightens it rather than lifting it. See `.marketing-cta-gold` in

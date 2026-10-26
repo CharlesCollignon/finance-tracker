@@ -5,14 +5,14 @@ colors:
   cool-near-black: "#0a0a10"
   card-surface: "#131320"
   raised-surface: "#1c1c2b"
-  accent-wash: "#262015"
-  lamplit-gold: "#ecb25e"
-  lamplit-gold-hover: "#f2c27a"
+  accent-wash: "#281e15"
+  lamplit-orange: "#fa9842"
+  lamplit-orange-hover: "#fbb26a"
   foreground: "#ececf1"
   muted-foreground: "#9b9bad"
   success: "#34d399"
   info: "#22d3ee"
-  warning: "#fb923c"
+  warning: "#fbbd23"
   destructive: "#f87171"
   hairline: "rgba(236, 236, 241, 0.10)"
   hairline-strong: "rgba(236, 236, 241, 0.16)"
@@ -77,7 +77,7 @@ spacing:
   icon-hero: "28px"
 components:
   button-primary:
-    backgroundColor: "{colors.lamplit-gold}"
+    backgroundColor: "{colors.lamplit-orange}"
     textColor: "{colors.cool-near-black}"
     rounded: "{rounded.control}"
     padding: "10px 16px"
@@ -95,7 +95,7 @@ components:
     padding: "10px 16px"
     height: "48px"
   button-pill:
-    backgroundColor: "{colors.lamplit-gold}"
+    backgroundColor: "{colors.lamplit-orange}"
     textColor: "{colors.cool-near-black}"
     rounded: "{rounded.pill}"
     padding: "6px 6px 6px 20px"
@@ -167,12 +167,12 @@ modifiers keep working, plus the mobile-only hairline weights.
 
 ### Primary
 
-- **Lamplit Gold** (`#ecb25e`): The accent, the primary button's fill, and the
-  colour of a savings amount — an orange-gold since October 2026, moved with
-  the orb; the orb went further to orange on 2026-10-26 and the accent stayed.
-  At 10:1 on this ground it reads as text as well as fill.
-- **Lamplit Gold Hover** (`#f2c27a`): The pressed and hovered state of a gold
-  control.
+- **Lamplit Orange** (`#fa9842`): The accent, the primary button's fill, and the
+  colour of a savings amount — orange since 2026-10-26 (an orange-gold
+  before), moved with the orb. At 9:1 on this ground it reads as text as well
+  as fill.
+- **Lamplit Orange Hover** (`#fbb26a`): The pressed and hovered state of an
+  orange control.
 
 ### Neutral
 
@@ -180,7 +180,7 @@ modifiers keep working, plus the mobile-only hairline weights.
 - **Card Surface** (`#131320`): Drawn at 70% opacity, so what shows through is
   part of the colour.
 - **Raised Surface** (`#1c1c2b`): Secondary controls and muted fills.
-- **Accent Wash** (`#262015`): A warm low surface where the accent needs a
+- **Accent Wash** (`#281e15`): A warm low surface where the accent needs a
   ground rather than a fill.
 - **Foreground** (`#ececf1`) and **Muted Foreground** (`#9b9bad`): Primary and
   secondary text.
@@ -195,13 +195,14 @@ purely decorative:
 
 - **Income** — Success green (`#34d399`)
 - **Expense** — Destructive salmon (`#f87171`)
-- **Savings** — Lamplit Gold (`#ecb25e`)
+- **Savings** — Lamplit Orange (`#fa9842`)
 - **Investment** — Info cyan (`#22d3ee`)
 
-**Awaiting Orange** (`#fb923c`) is separate from all four. It marks a row
-waiting on a decision, and it is orange rather than amber specifically so that
-at 8px it can be told apart from both the gold accent and a salmon amount
-sitting in the same row.
+**Awaiting Amber** (`#fbbd23`) is separate from all four. It marks a row
+waiting on a decision, and it is amber rather than orange specifically so that
+at 8px it can be told apart from both the orange accent and a salmon amount
+sitting in the same row. It was orange while the accent was gold; the two
+traded places on 2026-10-26.
 
 ### Chart Colors
 

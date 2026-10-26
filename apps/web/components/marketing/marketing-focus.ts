@@ -1,7 +1,7 @@
 /**
  * The marketing site's focus ring, in one place.
  *
- * DESIGN.md states it as a system rule — "a 2px ring in Lamplit Gold with a
+ * DESIGN.md states it as a system rule — "a 2px ring in Lamplit Orange with a
  * 2px offset against the page" — and the call-to-action pair was the only
  * thing on the public site that drew it. Everything else fell back to the
  * user agent's outline: the wordmark, the Product trigger and its menu, the

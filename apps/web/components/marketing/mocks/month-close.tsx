@@ -44,7 +44,7 @@ function RunCard() {
       title={t("futurePlan.runTitle")}
     >
       <div className="flex items-center gap-4">
-        <span className="flex size-16 shrink-0 items-center justify-center rounded-full bg-accent shadow-[0_0_24px_rgb(236_178_94/0.35)]">
+        <span className="flex size-16 shrink-0 items-center justify-center rounded-full bg-accent shadow-[0_0_24px_rgb(250_152_66/0.35)]">
           <Flame size={28} weight="fill" className="text-primary" />
         </span>
         <div>

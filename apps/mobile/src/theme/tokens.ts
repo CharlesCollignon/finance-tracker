@@ -14,22 +14,23 @@ import type { TextStyle } from "react-native";
  * between and no second set of values to keep honest.
  */
 export const COLORS = {
-  // Surfaces stay the cool near-black they were; only the accent turns gold.
-  // At 10:1 on this ground the orange-gold reads as text too, and needs no rim.
+  // Surfaces stay the cool near-black they were; only the accent is warm.
+  // Orange since 2026-10-26, with the orb. At 9:1 on this ground it reads as
+  // text too, and needs no rim.
   background: "#0a0a10",
   foreground: "#ececf1",
   card: "#131320",
   cardForeground: "#ececf1",
-  primary: "#ecb25e",
-  primaryHover: "#f2c27a",
+  primary: "#fa9842",
+  primaryHover: "#fbb26a",
   primaryForeground: "#0a0a10",
-  primaryInk: "#ecb25e",
-  primaryRim: "#ecb25e",
+  primaryInk: "#fa9842",
+  primaryRim: "#fa9842",
   secondary: "#1c1c2b",
   secondaryForeground: "#ececf1",
   muted: "#1c1c2b",
   mutedForeground: "#9b9bad",
-  accent: "#262015",
+  accent: "#281e15",
   accentForeground: "#ececf1",
   success: "#34d399",
   successForeground: "#0a0a10",
@@ -37,10 +38,11 @@ export const COLORS = {
   infoForeground: "#0a0a10",
   destructive: "#f87171",
   destructiveForeground: "#0a0a10",
-  // Orange, and deliberately not the gold `primary`: this marks a row waiting
-  // on a decision, and at 8px it has to be told apart from both the tan accent
-  // and the salmon `destructive` already sitting on the amount in the same row.
-  warning: "#fb923c",
+  // Amber, and deliberately not the orange `primary`: this marks a row waiting
+  // on a decision, and at 8px it has to be told apart from both the accent and
+  // the salmon `destructive` already sitting on the amount in the same row. It
+  // was orange while the accent was gold; the two traded places on 2026-10-26.
+  warning: "#fbbd23",
   warningForeground: "#0a0a10",
   border: "rgba(236,236,241,0.10)",
   hairlineStrong: "rgba(236,236,241,0.16)",

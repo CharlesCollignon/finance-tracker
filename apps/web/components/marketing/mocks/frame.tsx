@@ -591,7 +591,7 @@ export function MobileShell({
       </div>
       {back ? null : (
         <>
-          <span className="absolute bottom-[4.5rem] right-4 flex size-14 items-center justify-center rounded-full border border-[rgba(255,240,210,0.35)] bg-[rgba(236,178,94,0.72)] text-primary-foreground shadow-[0_10px_30px_-10px_rgba(236,178,94,0.6)]">
+          <span className="absolute bottom-[4.5rem] right-4 flex size-14 items-center justify-center rounded-full border border-[rgba(255,240,210,0.35)] bg-[rgba(250,152,66,0.72)] text-primary-foreground shadow-[0_10px_30px_-10px_rgba(250,152,66,0.6)]">
             <Plus size={26} weight="bold" />
           </span>
           <MobileTabBar active={active} space={space} />
