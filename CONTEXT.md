@@ -763,6 +763,16 @@ from the card, which is the name and the figure that are true whether or not
 anyone opens it.
 _Avoid_: drawer, expander, detail view
 
+**Month trust**:
+_En français_ : fiabilité du mois (« Fiabilité du mois », la carte)
+What the month's figures rest on, said as four facts on Le point: how far
+the bank's or a statement's lines reach into the month, the occurrences
+arrived and still awaited, what waits in the review inbox, and the month
+close and what it found. Each is a measurement with a message key
+(`month-trust.ts`) and, where there is one, the place it is dealt with —
+never a verdict, and never a score.
+_Avoid_: score, health, confidence, status
+
 ### Shared space
 
 **Shared space**:

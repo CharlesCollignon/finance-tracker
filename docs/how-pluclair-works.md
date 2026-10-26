@@ -199,6 +199,7 @@ today's prices) leaves it unmarked, so the Plan still shows it as new.
 | The Notaires–INSEE index, and which series carries a place                                                  | `price-index.ts` (series in `seriesFor`)                                                                       |
 | Fund costs, look-through, target trades                                                                     | `fund-costs.ts`, `look-through.ts`, `look-through-target.ts`                                                   |
 | Money-weighted return                                                                                       | `xirr.ts`, `investment-returns.ts`                                                                             |
+| « Fiabilité du mois »: the lines' reach, the occurrences arrived and awaited, the review, the close         | `month-trust.ts` (read by `@finance/data/bearing-month`, the coverage from `@finance/data/statements`)        |
 
 ## AI features
 
@@ -712,7 +713,9 @@ Old binary Excel files are named and left aside. Such lines are kept beside the 
 from their files are `bank_accounts` rows with `source = 'file'` and a
 `statement_key`. Only the bank's lines make a ledger bank-fed
 (`hasBankFeed`), so recurring charges keep being written on their day for
-someone who imports monthly. The sync's write path
+someone who imports monthly. Any line at all (`hasFeedLines`) is what makes
+Récurrents propose what repeats, Le point count the review, and
+« Fiabilité du mois » read the month's lines. The sync's write path
 (`apps/web/lib/bank/feed-write.ts`) writes either kind, each line marked.
 
 ## Search

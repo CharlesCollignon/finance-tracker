@@ -17,6 +17,42 @@ import type { ChangelogEntry, RoadmapItem } from "./changelog";
  */
 export const CHANGELOG: readonly ChangelogEntry[] = [
   {
+    id: "2026-10-26-month-trust",
+    date: "2026-10-26",
+    kind: "new",
+    platforms: ["web"],
+    fr: {
+      title: "« Fiabilité du mois »",
+      body: "Sur Le point, une carte dit sur quoi reposent les chiffres du mois : jusqu’où va le relevé, les opérations récurrentes passées ou encore attendues, ce qui reste à vérifier, et le bilan — fait, à faire, ou prévu tel jour.",
+      detail:
+        "Chaque ligne est un fait, jamais une note. Une ligne qui mène quelque part s’ouvre d’un geste : le Journal, « À vérifier », le bilan.",
+    },
+    en: {
+      title: "“Month check”",
+      body: "On the Overview, a card says what the month’s figures rest on: how far the statement reaches, the recurring entries arrived or still awaited, what is left to review, and the close — done, ready, or due on a given day.",
+      detail:
+        "Each line is a fact, never a score. A line that leads somewhere opens with a press: the Ledger, the review, the close.",
+    },
+  },
+  {
+    id: "2026-10-26-proposals-for-imports",
+    date: "2026-10-26",
+    kind: "better",
+    platforms: ["web"],
+    fr: {
+      title: "Ce qui revient, repéré aussi dans vos relevés",
+      body: "Récurrents propose ce qui a l’air de revenir — un abonnement, un prélèvement — dès que des lignes sont arrivées, par un relevé importé comme par la banque. Jusqu’ici, seule une banque connectée y donnait droit.",
+      detail:
+        "Le point compte aussi, pour tout le monde, les lignes qui attendent une catégorie après un import.",
+    },
+    en: {
+      title: "Repeats spotted in your statements too",
+      body: "Recurring now proposes what looks like it repeats — a subscription, a direct debit — as soon as lines have come in, from an imported statement as much as from a bank. Until now only a connected bank qualified.",
+      detail:
+        "The Overview also counts, for everyone, the lines waiting for a category after an import.",
+    },
+  },
+  {
     id: "2026-10-26-accounts-order",
     date: "2026-10-26",
     kind: "better",
