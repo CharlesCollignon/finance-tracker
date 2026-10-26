@@ -22,12 +22,12 @@ export const CHANGELOG: readonly ChangelogEntry[] = [
     kind: "better",
     platforms: ["web"],
     fr: {
-      title: "Un fond moins violet",
-      body: "La lumière violette derrière l’app se fait plus discrète : les mêmes couleurs aux mêmes endroits, environ un quart plus douces.",
+      title: "Un fond plus sombre, moins violet",
+      body: "La lumière violette derrière l’app est réduite de plus de moitié : le fond est presque noir, avec juste une touche de violet en haut.",
     },
     en: {
-      title: "A less purple background",
-      body: "The violet light behind the app is quieter: the same colours in the same places, about a quarter softer.",
+      title: "A darker, less purple background",
+      body: "The violet light behind the app is cut by more than half: the background is almost black, with just a touch of violet at the top.",
     },
   },
   {

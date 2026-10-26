@@ -8,11 +8,11 @@ colors:
   card-surface: "#131320"
   raised-surface: "#1c1c2b"
   accent-wash: "#262015"
-  bloom-violet: "rgba(139, 74, 255, 0.32)"
-  bloom-violet-deep: "rgba(124, 58, 237, 0.14)"
-  offstage-magenta: "rgba(232, 74, 178, 0.11)"
-  rail-indigo: "rgba(88, 52, 196, 0.15)"
-  bounce-purple: "rgba(84, 48, 160, 0.16)"
+  bloom-violet: "rgba(139, 74, 255, 0.17)"
+  bloom-violet-deep: "rgba(124, 58, 237, 0.07)"
+  offstage-magenta: "rgba(232, 74, 178, 0.05)"
+  rail-indigo: "rgba(88, 52, 196, 0.06)"
+  bounce-purple: "rgba(84, 48, 160, 0.08)"
   lamplit-gold: "#ecb25e"
   lamplit-gold-hover: "#f2c27a"
   foreground: "#ececf1"
@@ -264,30 +264,32 @@ than paint: each is an alpha stop in a radial gradient read through the page's
 near-black, and none of them is a token, because nothing above the backdrop is
 meant to reach for them.
 
-They were turned down twice in October 2026, at the owner's ask for "a little
-less purple": the same hues and placements, each violet about a quarter fainter
+They were turned down three times in October 2026, at the owner's ask for
+less purple: the same hues and placements, each violet about a quarter fainter
 and the magenta nearly halved on the 12th, then every violet a quarter fainter
-again on the 26th, the veil below with them both times. A bluer violet was
-tried beside it and lost the room's identity; fainter kept the light and took
-out the cast. The phone's `AppBackdrop` moved by the same proportions.
+again on the 26th, and about half again the same day ("still too purple, more
+dark"), the veil below with them each time. What is left is a dark room with a
+hint of violet at the top. A bluer violet was tried beside it and lost the
+room's identity; fainter kept the light and took out the cast. The phone's
+`AppBackdrop` moved by the same proportions.
 
-- **Bloom Violet** (`rgba(139, 74, 255, 0.32)`): The main light, and the
-  brightest colour in the system by a wide margin. It is centred on the content
-  column's optical centre, which is the middle of the window at every width.
+- **Bloom Violet** (`rgba(139, 74, 255, 0.17)`): The main light. It is
+  centred on the content column's optical centre, which is the middle of the
+  window at every width.
   It sat at 58% on a desktop while a 224–256px side rail pushed the column
   right; the rail became the top bar, and the light came back to 50%.
-- **Bloom Violet Deep** (`rgba(124, 58, 237, 0.14)`): The main light's second
+- **Bloom Violet Deep** (`rgba(124, 58, 237, 0.07)`): The main light's second
   stop, at 44% of its radius. One stop falls off like a spotlight; the second
   is what makes it fall off like a room.
-- **Offstage Magenta** (`rgba(232, 74, 178, 0.11)`): A second source high on
+- **Offstage Magenta** (`rgba(232, 74, 178, 0.05)`): A second source high on
   the right, placed as though it were out of frame. One centred glow reads as a
   spotlight; two of different hue, size and position read as depth.
-- **Rail Indigo** (`rgba(88, 52, 196, 0.15)`): Down the left edge. Its one job
+- **Rail Indigo** (`rgba(88, 52, 196, 0.06)`): Down the left edge. Its one job
   was to keep the navigation rail from reading as a separate black panel
   bolted onto a coloured page. The rail is gone, so for now it only colours the
   left of the room; it is the first stop to question if the bloom is ever
   redrawn.
-- **Bounce Purple** (`rgba(84, 48, 160, 0.16)`): The bounce along the bottom.
+- **Bounce Purple** (`rgba(84, 48, 160, 0.08)`): The bounce along the bottom.
   Without it the lower half of the page is dead black and the whole thing reads
   as a bloom pasted onto a void rather than as a lit room.
 
@@ -299,7 +301,7 @@ compete with the places the accent is actually spent.
 
 Over the bloom sits a WebGL veil (`DarkVeil`): a CPPN fragment shader
 hue-shifted 258° onto the same violet, rendered at `0.34` of the element's
-resolution, blurred `64px`, and composited at 25% opacity in `screen`. The blur
+resolution, blurred `64px`, and composited at 12% opacity in `screen`. The blur
 is the design rather than a concession — left sharp the shader draws hard
 diagonal streaks that read as a smear across the page, and throwing it out of
 focus keeps only the one thing CSS cannot do, which is colour that moves. The
