@@ -700,6 +700,16 @@ export function disconnectAiAccount(): Promise<ActionResult> {
 /* --------------------------------------------------- what to be told */
 
 /** Turn one kind of notification on or off, for the account. */
+/** Keep Placements' accounts in this order, here and on the web. */
+export function saveAccountOrder(
+  order: readonly string[],
+  locale: Locale,
+): Promise<ActionResult> {
+  return asUser((userId) =>
+    preferences.setAccountOrder(supabase, userId, order, locale),
+  );
+}
+
 /** « Mesure d'audience »: count this account in the audience figures, or not. */
 export function setAudienceMeasurement(
   wanted: boolean,
