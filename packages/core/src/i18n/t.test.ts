@@ -76,6 +76,37 @@ describe("translator", () => {
     );
   });
 
+  it("elides French « de » and « que » before a vowel", () => {
+    const t = translator("fr");
+    expect(t("monthClose.closeMonth", { month: "octobre" })).toBe(
+      "Faire le bilan d'octobre",
+    );
+    expect(t("monthClose.closeMonth", { month: "mars" })).toBe(
+      "Faire le bilan de mars",
+    );
+    expect(t("push.close.body", { month: "août" })).toBe(
+      "C'est le jour de lecture : notez le solde de votre compte pour voir ce qu'août vous a laissé.",
+    );
+    expect(t("statements.openSite", { bank: "ING" })).toBe(
+      "Ouvrir le site d'ING",
+    );
+  });
+
+  it("does not elide before a figure, an h or in English", () => {
+    expect(
+      translator("fr")("statements.openSite", { bank: "Hello bank" }),
+    ).toBe("Ouvrir le site de Hello bank");
+    expect(
+      translator("fr")("ledger.repeatBody", {
+        category: "Café",
+        amount: "8 €",
+      }),
+    ).toBe("Ajoute un autre Café de 8 € daté d'aujourd'hui.");
+    expect(
+      translator("en")("monthClose.closeMonth", { month: "October" }),
+    ).toBe("Close October");
+  });
+
   it("reads as the plural when a plural message is asked for without a count", () => {
     expect(translator("en")("push.arrived.title")).toBe("Did these arrive?");
   });

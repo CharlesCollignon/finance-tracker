@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import type { PropertyRead } from "@finance/data/properties";
 import { ConnectBankInvite } from "@/components/finance/bank/ConnectBankInvite";
 import { GLASS_CARD } from "@/lib/glass";
 import { useT } from "@/lib/locale-context";
@@ -70,10 +71,19 @@ function PlanCards({
 }) {
   const settings = useTrajectorySettings(base.userId);
   const edits = usePlanEdits(base.userId);
+  // A home's growth as just kept in « Vos comptes ». It is saved without a
+  // redraw (see `setGrowth`), so the line takes it from here rather than
+  // from the homes the page was read with.
+  const [growths, setGrowths] = useState<Readonly<Record<string, number>>>({});
+  const properties = useMemo(
+    () => withGrowths(base.properties, growths),
+    [base.properties, growths],
+  );
 
   const hasProperty = (base.properties?.length ?? 0) > 0;
   const replay = usePlanReplay({
     base,
+    properties,
     wealth,
     edits,
     years: settings.years,
@@ -98,9 +108,12 @@ function PlanCards({
           replay={replay}
           edits={edits}
           onEdits={(next) => savePlanEdits(base.userId, next)}
-          properties={base.properties}
+          properties={properties}
           today={base.today}
           years={settings.years}
+          onGrowthKept={(propertyId, growth) =>
+            setGrowths((kept) => ({ ...kept, [propertyId]: growth }))
+          }
         />
       </TrajectoryCard>
       <ProgressionCard
@@ -113,6 +126,21 @@ function PlanCards({
         month={base.month}
       />
     </div>
+  );
+}
+
+/** The homes, each with the growth kept for it on this page, if any. */
+function withGrowths(
+  properties: PropertyRead[] | null,
+  growths: Readonly<Record<string, number>>,
+): PropertyRead[] | null {
+  return (
+    properties?.map((read) => {
+      const growth = growths[read.property.id];
+      return growth === undefined
+        ? read
+        : { ...read, property: { ...read.property, yearly_growth: growth } };
+    }) ?? null
   );
 }
 

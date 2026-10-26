@@ -105,20 +105,56 @@ function isPluralMessage(value: unknown): value is PluralMessage {
  * blanked, so the gap says which variable is missing instead of hiding that
  * one was expected.
  */
-function interpolate(template: string, vars: Vars | undefined): string {
+function interpolate(
+  locale: Locale,
+  template: string,
+  vars: Vars | undefined,
+): string {
   if (!vars) {
     return template;
   }
 
-  return template.replace(/\{(\w+)\}/g, (match, name: string) => {
+  const filled = locale === "fr" ? elide(template, vars) : template;
+
+  return filled.replace(/\{(\w+)\}/g, (match, name: string) => {
     const value = vars[name];
     return value === undefined ? match : String(value);
   });
 }
 
+/**
+ * French « de » and « que » before a value that starts with a vowel:
+ * « d'octobre », « qu'août », « d'Amazon ».
+ *
+ * A template cannot choose — « Faire le bilan de {month} » is right for
+ * mars and wrong for octobre — so the word is elided here, once the value is
+ * known, rather than worked around phrase by phrase. Only these two words:
+ * « le » and « la » elide too, but what follows them in the messages is a
+ * date or a day, written in figures. No « h »: a brand's h is aspirated as
+ * often as not (« de Hello bank »), and no month starts with one.
+ */
+function elide(template: string, vars: Vars): string {
+  return template.replace(
+    /(^|\s)(de|De|que|Que) \{(\w+)\}/g,
+    (match, before: string, word: string, name: string) => {
+      const value = vars[name];
+      if (value === undefined || !VOWEL.test(String(value))) {
+        return match;
+      }
+      return `${before}${word.slice(0, -1)}'{${name}}`;
+    },
+  );
+}
+
+const VOWEL = /^[aeiouAEIOUàâäéèêëîïôöùûüÀÂÄÉÈÊËÎÏÔÖÙÛÜœŒæÆ]/;
+
 function resolve(locale: Locale, key: string, vars: Vars | undefined): string {
+  const own = lookup(messages[locale], key);
+  // The language the words are in, which is the fallback's when the
+  // message had to come from it.
+  const written = own === undefined ? FALLBACK_LOCALE : locale;
   const message =
-    lookup(messages[locale], key) ??
+    own ??
     (locale === FALLBACK_LOCALE
       ? undefined
       : lookup(messages[FALLBACK_LOCALE], key));
@@ -128,7 +164,7 @@ function resolve(locale: Locale, key: string, vars: Vars | undefined): string {
   }
 
   if (typeof message === "string") {
-    return interpolate(message, vars);
+    return interpolate(written, message, vars);
   }
 
   const count = vars?.count;
@@ -137,14 +173,14 @@ function resolve(locale: Locale, key: string, vars: Vars | undefined): string {
     // translation gap, so it reads as the plural rather than as the key: the
     // sentence still makes sense while the missing variable shows up as an
     // unfilled `{count}`.
-    return interpolate(message.other, vars);
+    return interpolate(written, message.other, vars);
   }
 
   const category = pluralCategory(locale, count);
   const form =
     (category === "many" ? message.many : message[category]) ?? message.other;
 
-  return interpolate(form, vars);
+  return interpolate(written, form, vars);
 }
 
 /**

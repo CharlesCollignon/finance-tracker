@@ -70,6 +70,7 @@ export function PlanAccounts({
   properties,
   today,
   years,
+  onGrowthKept,
 }: {
   replay: PlanReplay;
   edits: PlanEdits;
@@ -79,6 +80,8 @@ export function PlanAccounts({
   /** The ISO day, for the homes' values. */
   today: string;
   years: number;
+  /** A home's growth was saved: the line takes it at once. */
+  onGrowthKept: (propertyId: string, growth: number) => void;
 }) {
   const t = useT();
   const locale = useLocale();
@@ -303,7 +306,12 @@ export function PlanAccounts({
 
         {replay.property && properties
           ? properties.map((read) => (
-              <HomeRow key={read.property.id} read={read} today={today} />
+              <HomeRow
+                key={read.property.id}
+                read={read}
+                today={today}
+                onKept={(growth) => onGrowthKept(read.property.id, growth)}
+              />
             ))
           : null}
       </ul>
@@ -490,7 +498,15 @@ function accountNotes({
  * A home in the chart: its net value today, and its yearly growth — the one
  * figure here kept for the account, saved when the field is left.
  */
-function HomeRow({ read, today }: { read: PropertyRead; today: string }) {
+function HomeRow({
+  read,
+  today,
+  onKept,
+}: {
+  read: PropertyRead;
+  today: string;
+  onKept: (growth: number) => void;
+}) {
   const t = useT();
   const { toast } = useToast();
   const format = useFormatCurrency();
@@ -508,7 +524,9 @@ function HomeRow({ read, today }: { read: PropertyRead; today: string }) {
     }
     setKept(growth);
     void setGrowth(read.property.id, growth).then((result) => {
-      if (!result.success) {
+      if (result.success) {
+        onKept(growth);
+      } else {
         toast(result.error, "error");
       }
     });
@@ -546,6 +564,7 @@ function HomeRow({ read, today }: { read: PropertyRead; today: string }) {
 /** Where the history comes from and on what terms, folded. */
 function SourcesFold() {
   const t = useT();
+  const locale = useLocale();
   const [open, setOpen] = useState(false);
   return (
     <div className="border-t border-border pt-2">
@@ -574,19 +593,19 @@ function SourcesFold() {
           </div>
           <ul className="flex flex-col gap-1.5">
             {HISTORY_SOURCES.map((source) => (
-              <li key={source.title}>
+              <li key={source.url}>
                 <a
                   href={source.url}
                   target="_blank"
                   rel="noreferrer"
                   className="font-medium text-foreground underline-offset-4 hover:underline"
                 >
-                  {source.publisher}
+                  {source.publisher[locale]}
                 </a>
                 {" — "}
-                {source.title}
+                {source.title[locale]}
                 {" · "}
-                {source.terms}
+                {source.terms[locale]}
               </li>
             ))}
           </ul>

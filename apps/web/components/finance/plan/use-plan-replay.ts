@@ -39,6 +39,7 @@ import {
   buildYearAhead,
   YEAR_AHEAD_MAX_MONTHS,
 } from "@finance/core/year-ahead";
+import type { PropertyRead } from "@finance/data/properties";
 import type { PlanBase, PlanWealth } from "@/lib/queries/plan";
 import { planEnvelopes } from "./plan-envelopes";
 
@@ -73,12 +74,15 @@ export interface PlanReplay {
  */
 export function usePlanReplay({
   base,
+  properties,
   wealth,
   edits,
   years,
   withProperty,
 }: {
   base: PlanBase;
+  /** The homes, with any growth kept on the page since it was read. */
+  properties: readonly PropertyRead[] | null;
   wealth: PlanWealth | null;
   edits: PlanEdits;
   years: number;
@@ -130,10 +134,10 @@ export function usePlanReplay({
 
   const property = useMemo(
     () =>
-      withProperty && base.properties && base.properties.length > 0
-        ? homesLine(base.properties, base.today, months)
+      withProperty && properties && properties.length > 0
+        ? homesLine(properties, base.today, months)
         : null,
-    [withProperty, base.properties, base.today, months],
+    [withProperty, properties, base.today, months],
   );
   const today =
     accounts.reduce((sum, account) => sum + account.value, 0) +

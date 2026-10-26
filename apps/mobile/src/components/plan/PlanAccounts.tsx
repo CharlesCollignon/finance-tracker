@@ -499,6 +499,7 @@ function HomeRow({
 /** Where the history comes from and on what terms, folded. */
 function SourcesFold() {
   const t = useT();
+  const locale = useLocale();
   const colors = useThemeColors();
   const [open, setOpen] = useState(false);
   return (
@@ -534,16 +535,16 @@ function SourcesFold() {
           </Text>
           {HISTORY_SOURCES.map((source) => (
             <Pressable
-              key={source.title}
+              key={source.url}
               accessibilityRole="link"
               onPress={() => void Linking.openURL(source.url)}
               className="min-h-11 justify-center"
             >
               <Text variant="muted" className="text-xs">
                 <Text className="text-xs font-medium text-foreground underline">
-                  {source.publisher}
+                  {source.publisher[locale]}
                 </Text>
-                {` — ${source.title} · ${source.terms}`}
+                {` — ${source.title[locale]} · ${source.terms[locale]}`}
               </Text>
             </Pressable>
           ))}
