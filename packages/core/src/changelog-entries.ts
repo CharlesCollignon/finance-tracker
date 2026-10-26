@@ -17,6 +17,52 @@ import type { ChangelogEntry, RoadmapItem } from "./changelog";
  */
 export const CHANGELOG: readonly ChangelogEntry[] = [
   {
+    id: "2026-10-26-softer-ground",
+    date: "2026-10-26",
+    kind: "better",
+    platforms: ["web"],
+    fr: {
+      title: "Un fond moins violet",
+      body: "La lumière violette derrière l’app se fait plus discrète : les mêmes couleurs aux mêmes endroits, environ un quart plus douces.",
+    },
+    en: {
+      title: "A less purple background",
+      body: "The violet light behind the app is quieter: the same colours in the same places, about a quarter softer.",
+    },
+  },
+  {
+    id: "2026-10-26-elision",
+    date: "2026-10-26",
+    kind: "fixed",
+    platforms: ["web"],
+    fr: {
+      title: "« d’octobre », plus « de octobre »",
+      body: "L’app écrit « Faire le bilan d’octobre » ou « ce qu’août vous a laissé » : partout où un mois, une banque ou un nom commence par une voyelle.",
+    },
+    en: {
+      title: "French months, properly elided",
+      body: "In French, the app now writes « d’octobre » and « qu’août » rather than « de octobre », wherever a month, a bank or a name starts with a vowel.",
+    },
+  },
+  {
+    id: "2026-10-26-plan-fixes",
+    date: "2026-10-26",
+    kind: "fixed",
+    platforms: ["web"],
+    fr: {
+      title: "Plan : la croissance d’un bien compte tout de suite",
+      body: "Dans « Vos comptes », changer la croissance annuelle d’un bien déplace la courbe de vos biens aussitôt, et plus seulement à la visite suivante.",
+      detail:
+        "« Sources et méthode » nomme aussi ses sources en anglais quand l’app est en anglais.",
+    },
+    en: {
+      title: "Plan: a home’s growth counts at once",
+      body: "In “Your accounts”, changing a home’s yearly growth moves your homes’ line straight away, not only on your next visit.",
+      detail:
+        "“Sources and method” also names its sources in English when the app is in English.",
+    },
+  },
+  {
     id: "2026-10-26-plan-history",
     date: "2026-10-26",
     kind: "new",
@@ -1394,7 +1440,7 @@ export const CHANGELOG: readonly ChangelogEntry[] = [
  */
 export const CHANGELOG_STATS = {
   /** `git rev-list --count HEAD` on the branch that wrote the newest entry. */
-  commits: 1118,
+  commits: 1124,
   /** The repository's first commit. */
   since: "2026-06-15",
   asOf: "2026-10-26",
