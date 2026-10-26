@@ -1,4 +1,5 @@
 import { cache } from "react";
+import { orderAccounts } from "@finance/core/account-order";
 import type { AccountId, AccountTarget } from "@finance/core/allocation";
 import { getCurrentMonth, todayIsoLocal } from "@finance/core/constants";
 import { monthlyContributions } from "@finance/core/future-plan";
@@ -28,6 +29,8 @@ import {
   type SavingsAccountsRead,
 } from "@/lib/queries/savings-accounts";
 import { getWalletPortfolio } from "@/lib/queries/wallet-portfolio";
+import { createClient } from "@/lib/supabase/server";
+import * as preferences from "@finance/data/preferences";
 
 /**
  * What both Placements tabs read: the accounts the user keeps and what each
@@ -44,7 +47,10 @@ export interface PlacementsBase {
   savings: SavingsAccountsRead;
   /** The wallets the user keeps: those with holdings, and those added. */
   keptWallets: InvestmentWalletId[];
-  /** Every account kept, savings first, in the usual order. */
+  /**
+   * Every account kept, in the reader's order: the one they dragged them
+   * into, else the CTO, the PEA and crypto first (`account-order.ts`).
+   */
   accounts: AccountId[];
   /** What the recurring entries put into each wallet a month. */
   fundingNeeds: WalletFundingNeed[];
@@ -64,6 +70,7 @@ export const getPlacementsBase = cache(
       plans,
       investmentTransactions,
       savings,
+      accountOrder,
     ] = await Promise.all([
       // No position-value history: neither tab plots it, and the monthly
       // closes behind `chartPoints` are a Yahoo round trip per symbol.
@@ -72,6 +79,7 @@ export const getPlacementsBase = cache(
       getWalletPlans(userId),
       getInvestmentTransactions(userId),
       getSavingsAccounts(userId),
+      createClient().then((db) => preferences.readAccountOrder(db, userId)),
     ]);
 
     // Before migration 046 there is no `shown`, and every wallet with a plan
@@ -134,7 +142,7 @@ export const getPlacementsBase = cache(
       investmentTransactions,
       savings,
       keptWallets: kept,
-      accounts: [...savingsKinds, ...kept],
+      accounts: orderAccounts([...savingsKinds, ...kept], accountOrder),
       fundingNeeds: buildWalletFundingNeeds(
         investmentTemplates,
         current.year,

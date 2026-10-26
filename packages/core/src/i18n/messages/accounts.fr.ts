@@ -33,6 +33,8 @@ export const accountsFr: typeof accountsEn = {
   rateLivret: "Le taux de votre banque.",
 
   yourAccounts: "Vos comptes",
+  reorderHint: "Faites glisser pour changer l'ordre (ou Alt + flèches)",
+  movedTo: "{name} : place {position} sur {count}",
   savingsGroup: "Épargne",
   investGroup: "Placements",
   total: "Votre patrimoine",

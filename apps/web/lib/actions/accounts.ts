@@ -6,9 +6,10 @@ import type {
   SavingsAccountKind,
   WalletId,
 } from "@finance/core/types/database";
+import * as preferences from "@finance/data/preferences";
 import * as savings from "@finance/data/savings-accounts";
 import { asUser } from "@/lib/actions/as-user";
-import { getT } from "@/lib/locale";
+import { getLocale, getT } from "@/lib/locale";
 
 /**
  * Adding, changing and removing the accounts Placements keeps: savings
@@ -119,4 +120,16 @@ export async function removeWallet(wallet: string): Promise<ActionResult> {
         }
       : { error: result.error };
   });
+}
+
+/**
+ * Keep Placements' accounts in the order they were just dragged into, here
+ * and on the phone. No redraw: the page has already moved them.
+ */
+export async function saveAccountOrder(order: string[]): Promise<ActionResult> {
+  const locale = await getLocale();
+  return asUser(
+    (db, userId) => preferences.setAccountOrder(db, userId, order, locale),
+    { redraw: "never" },
+  );
 }

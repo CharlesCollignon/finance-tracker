@@ -38,6 +38,8 @@ export const accountsEn = {
   rateLivret: "Your bank's rate.",
 
   yourAccounts: "Your accounts",
+  reorderHint: "Drag to change the order (or Alt + arrows)",
+  movedTo: "{name}: place {position} of {count}",
   savingsGroup: "Savings",
   investGroup: "Investments",
   total: "What you own",

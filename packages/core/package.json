@@ -18,6 +18,7 @@
     "./entraide-copy": "./src/entraide-copy.ts",
     "./entraide-mask": "./src/entraide-mask.ts",
     "./widget-figure": "./src/widget-figure.ts",
+    "./account-order": "./src/account-order.ts",
     "./allocation": "./src/allocation.ts",
     "./amount-input": "./src/amount-input.ts",
     "./amount-sign": "./src/amount-sign.ts",
