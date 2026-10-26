@@ -86,10 +86,11 @@
 :root,
 .dark {
   /* Surfaces stay the cool near-black they were; only the accent is warm.
-     An orange-gold since October 2026, moved with the orb so the brand reads
-     as one colour: 35° of hue, where it was a paler 40°. At 10:1 on this
-     ground it can be text as well as fill and needs no rim. The orb's own
-     family (`--orb-c1/2/3`) sits a step warmer still, as a lit body does. */
+     Orange since 2026-10-26 (28° of hue; an orange-gold at 35° before, a
+     paler gold at 40° before that), moved with the orb so the brand reads as
+     one colour. At 9:1 on this ground it can be text as well as fill and
+     needs no rim. The orb's own family (`--orb-c1/2/3`) sits a step deeper
+     still, as a lit body does. */
   --background: #0a0a10;
   --foreground: #ececf1;
   /* The desktop shell's bezel and the notch cut from it: the one surface
@@ -100,17 +101,17 @@
   --card-foreground: #ececf1;
   --popover: #131320;
   --popover-foreground: #ececf1;
-  --primary: #ecb25e;
-  --primary-hover: #f2c27a;
+  --primary: #fa9842;
+  --primary-hover: #fbb26a;
   --primary-foreground: #0a0a10;
-  --primary-ink: #ecb25e;
+  --primary-ink: #fa9842;
   /* No visible rim needed at 10:1; matching the fill keeps it out of the way. */
-  --primary-rim: #ecb25e;
+  --primary-rim: #fa9842;
   --secondary: #1c1c2b;
   --secondary-foreground: #ececf1;
   --muted: #1c1c2b;
   --muted-foreground: #9b9bad;
-  --accent: #262015;
+  --accent: #281e15;
   --accent-foreground: #ececf1;
   --success: #34d399;
   --success-foreground: #0a0a10;
@@ -118,11 +119,12 @@
   --info-foreground: #0a0a10;
   --destructive: #f87171;
   --destructive-foreground: #0a0a10;
-  /* Orange rather than amber, and deliberately not the gold `--primary`: this
-     marks a row waiting on a decision, and it has to be told apart at 8px from
-     both the tan accent and the salmon `--destructive` sitting on the amount in
-     the same row. */
-  --warning: #fb923c;
+  /* Amber, and deliberately not the orange `--primary`: this marks a row
+     waiting on a decision, and it has to be told apart at 8px from both the
+     accent and the salmon `--destructive` sitting on the amount in the same
+     row. It was orange (#fb923c) while the accent was gold; when the accent
+     became orange (2026-10-26) the two traded places. */
+  --warning: #fbbd23;
   --warning-foreground: #0a0a10;
   --border: rgba(236, 236, 241, 0.1);
   --hairline-strong: rgba(236, 236, 241, 0.16);
@@ -130,7 +132,7 @@
      the frame without being the brightest thing at the window's edge. */
   --scrollbar-thumb: rgba(236, 236, 241, 0.22);
   --input: #131320;
-  --ring: #ecb25e;
+  --ring: #fa9842;
   --chart-1: #d8a041;
   --chart-2: #b05645;
   --chart-3: #9fd08b;
@@ -138,12 +140,12 @@
   --chart-5: #968d88;
   --sidebar: #0d0d15;
   --sidebar-foreground: #ececf1;
-  --sidebar-primary: #ecb25e;
+  --sidebar-primary: #fa9842;
   --sidebar-primary-foreground: #0a0a10;
   --sidebar-accent: #1c1c2b;
   --sidebar-accent-foreground: #ececf1;
   --sidebar-border: rgba(236, 236, 241, 0.1);
-  --sidebar-ring: #ecb25e;
+  --sidebar-ring: #fa9842;
   --shadow-bezel-inset: inset 0 1px 1px rgba(255, 246, 230, 0.08);
   color-scheme: dark;
 }
@@ -733,8 +735,8 @@ html:has(.marketing-shell) {
   background: var(--primary);
   border: 4px solid #0b0b12;
   box-shadow:
-    0 0 0 1px rgb(236 178 94 / 0.6),
-    0 6px 18px -4px rgb(236 178 94 / 0.6);
+    0 0 0 1px rgb(250 152 66 / 0.6),
+    0 6px 18px -4px rgb(250 152 66 / 0.6);
   transition: transform 150ms cubic-bezier(0.32, 0.72, 0, 1);
 }
 .marketing-range::-webkit-slider-thumb:hover,
@@ -747,7 +749,7 @@ html:has(.marketing-shell) {
   border-radius: 999px;
   background: var(--primary);
   border: 4px solid #0b0b12;
-  box-shadow: 0 0 0 1px rgb(236 178 94 / 0.6);
+  box-shadow: 0 0 0 1px rgb(250 152 66 / 0.6);
 }
 .marketing-range:focus-visible {
   outline: 2px solid var(--primary);
@@ -769,10 +771,10 @@ html:has(.marketing-shell) {
   min-width: 0;
 }
 
-/* --- the gold glass button ----------------------------------------------- */
+/* --- the orange glass button --------------------------------------------- */
 
-/* The marketing site's primary button: Lamplit Gold (#ecb25e, its hover
-   #f2c27a) as a gradient, at about nine tenths opacity and blurred, so what
+/* The marketing site's primary button: Lamplit Orange (#fa9842, its hover
+   #fbb26a) as a gradient, at about nine tenths opacity and blurred, so what
    is behind it shows through softly, with a thin light along the top edge.
    Even at its most transparent the text on it stays above 6:1. Hover fades a
    brighter gradient in on a layer of its own, since a gradient cannot
@@ -783,9 +785,9 @@ html:has(.marketing-shell) {
   overflow: hidden;
   background: linear-gradient(
     135deg,
-    rgb(242 194 122 / 0.95) 0%,
-    rgb(236 178 94 / 0.87) 48%,
-    rgb(214 146 58 / 0.89) 100%
+    rgb(251 178 106 / 0.95) 0%,
+    rgb(250 152 66 / 0.87) 48%,
+    rgb(244 132 52 / 0.89) 100%
   );
   -webkit-backdrop-filter: blur(16px) saturate(140%);
   backdrop-filter: blur(16px) saturate(140%);
@@ -802,9 +804,9 @@ html:has(.marketing-shell) {
   border-radius: inherit;
   background: linear-gradient(
     135deg,
-    rgb(248 210 150 / 0.95) 0%,
-    rgb(242 194 122 / 0.9) 48%,
-    rgb(224 160 72 / 0.9) 100%
+    rgb(252 203 151 / 0.95) 0%,
+    rgb(251 178 106 / 0.9) 48%,
+    rgb(242 135 54 / 0.9) 100%
   );
   opacity: 0;
   transition: opacity 200ms cubic-bezier(0.32, 0.72, 0, 1);
@@ -860,9 +862,9 @@ html:has(.marketing-shell) {
 .marketing-bloom {
   background: radial-gradient(
     closest-side,
-    rgba(250, 137, 30, 0.32) 0%,
-    rgba(250, 137, 30, 0.13) 42%,
-    rgba(250, 137, 30, 0.04) 64%,
+    rgba(251, 123, 24, 0.32) 0%,
+    rgba(251, 123, 24, 0.13) 42%,
+    rgba(251, 123, 24, 0.04) 64%,
     transparent 78%
   );
 }
@@ -898,18 +900,16 @@ html:has(.marketing-shell) {
      Orange-gold since October 2026, at the owner's asking: c2 moved from
      36° to 33.5° of hue and to 89% saturation, c1 followed it to 40°, and
      c3 to 24°, because a warm body darkens towards red rather than towards
-     its own hue. `--primary` moved with it, to #ecb25e, a step paler than
-     the body so that it still reads as the accent of an interface rather
-     than as light.
+     its own hue.
 
-     Orange since 2026-10-26, asked for again before an APK: c2 to 29° and
-     96% saturation, c1 to 35°, c3 to 18°. The accent stayed where it was.
-     The body now sits 2° off `--warning` (27°), which marks a row waiting on
-     a decision; it is six points darker, and the mark and an 8px dot are
-     rarely side by side. */
-  --orb-c1: 255 200 122;
-  --orb-c2: 250 137 30;
-  --orb-c3: 105 36 7;
+     Orange since 2026-10-26, asked for twice before an APK: c2 to 26° and
+     97% saturation, c1 to 32°, c3 to 15°. `--primary` moved with it, to
+     #fa9842 (28°), a step paler than the body so that it still reads as the
+     accent of an interface rather than as light, and `--warning` went to
+     amber to stay apart from both. */
+  --orb-c1: 255 191 117;
+  --orb-c2: 251 123 24;
+  --orb-c3: 105 31 7;
   /* One churn of the interior, one turn of the near cloud layer, one of the
      far one against it. The interior walks `--angle` through five conic
      sweeps; each layer then carries its masses round bodily, in opposite
@@ -1457,7 +1457,7 @@ html:has(.marketing-shell) {
     ),
     radial-gradient(
       60% 40% at 12% 100%,
-      rgba(236, 178, 94, 0.1) 0%,
+      rgba(250, 152, 66, 0.1) 0%,
       transparent 70%
     );
 }

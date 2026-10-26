@@ -157,7 +157,7 @@ export function PhoneStory({ copy }: { copy: StoryCopy }) {
           {/* The phone's own light, behind it. */}
           <div
             aria-hidden
-            className="pointer-events-none absolute left-1/2 top-1/2 -z-10 size-[min(34rem,90vw)] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[radial-gradient(closest-side,rgb(236_178_94/0.16),transparent)] blur-2xl"
+            className="pointer-events-none absolute left-1/2 top-1/2 -z-10 size-[min(34rem,90vw)] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[radial-gradient(closest-side,rgb(250_152_66/0.16),transparent)] blur-2xl"
           />
           <Phone3D
             rotateX={rotateX}

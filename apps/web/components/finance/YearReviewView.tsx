@@ -584,7 +584,7 @@ function ClosesSlide({ review }: { review: YearReview }) {
               className={cn(
                 "size-7 rounded-full border",
                 month.inBestRun
-                  ? "border-primary bg-primary shadow-[0_0_18px_rgba(236,178,94,0.55)]"
+                  ? "border-primary bg-primary shadow-[0_0_18px_rgba(250,152,66,0.55)]"
                   : month.won
                     ? "border-primary/70 bg-primary/40"
                     : month.closed

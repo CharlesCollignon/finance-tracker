@@ -146,7 +146,7 @@ export function EnvelopeDeck() {
               className={cn(
                 "flex w-36 shrink-0 snap-start flex-col gap-3 rounded-3xl border p-4 text-left transition-colors duration-300 [background:linear-gradient(165deg,#1b1b28,#0d0d15_75%)]",
                 card.id === chosen
-                  ? "border-primary/60 shadow-[0_0_30px_-10px_rgb(236_178_94/0.7)]"
+                  ? "border-primary/60 shadow-[0_0_30px_-10px_rgb(250_152_66/0.7)]"
                   : "border-white/10",
                 marketingFocus,
               )}
@@ -279,7 +279,7 @@ function FanCard({
         className={cn(
           "flex size-full flex-col justify-between rounded-[1.6rem] border p-5 text-left shadow-[0_30px_60px_-30px_rgba(0,0,0,0.95)] transition-[border-color,box-shadow] duration-300 [background:linear-gradient(165deg,#1d1d2b,#0d0d15_72%)]",
           chosen
-            ? "border-primary/60 shadow-[0_0_50px_-14px_rgb(236_178_94/0.75)]"
+            ? "border-primary/60 shadow-[0_0_50px_-14px_rgb(250_152_66/0.75)]"
             : "border-white/10 hover:border-white/25",
           marketingFocus,
         )}

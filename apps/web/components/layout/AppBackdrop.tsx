@@ -44,7 +44,7 @@ const DarkVeil = dynamic(() => import("@/components/DarkVeil"), {
  *
  * One centred glow reads as a spotlight. Three of different hue, size and
  * position read as depth: the violet high and wide, a magenta out to one side
- * as if from a second source off-frame, and the brand gold low and faint so
+ * as if from a second source off-frame, and the brand orange low and faint so
  * the palette still belongs to Pluclair rather than to the reference it was
  * drawn from.
  *
@@ -75,9 +75,9 @@ const BLOOM = [
   // The lower half was dead black, which made the page look like a bloom
   // pasted onto a void rather than a lit room. This is the bounce.
   "radial-gradient(95% 60% at var(--bloom-x) 82%, rgba(84,48,160,0.08) 0%, transparent 74%)",
-  // The brand gold, low and faint, so the palette still belongs to Pluclair
+  // The brand orange, low and faint, so the palette still belongs to Pluclair
   // rather than to the reference it was drawn from.
-  "radial-gradient(60% 40% at 12% 100%, rgba(236,178,94,0.10) 0%, transparent 70%)",
+  "radial-gradient(60% 40% at 12% 100%, rgba(250,152,66,0.10) 0%, transparent 70%)",
 ].join(", ");
 
 /** Rotates the shader's own palette toward the reference's violet. */

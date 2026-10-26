@@ -22,12 +22,16 @@ export const CHANGELOG: readonly ChangelogEntry[] = [
     kind: "better",
     platforms: ["web"],
     fr: {
-      title: "Un orbe plus orange",
-      body: "L’orbe de Pluclair passe à un orange plus franc partout où il apparaît : l’icône de l’onglet et de l’écran d’accueil, le logo en haut de page, la connexion et le site.",
+      title: "Pluclair passe à l’orange",
+      body: "L’orbe de Pluclair prend un orange franc partout où il apparaît : l’icône de l’onglet et de l’écran d’accueil, le logo en haut de page, la connexion et le site. Les boutons et les montants mis en avant passent au même orange.",
+      detail:
+        "Les opérations qui attendent votre réponse sont désormais signalées en ambre, pour rester bien distinctes des boutons.",
     },
     en: {
-      title: "A more orange orb",
-      body: "Pluclair’s orb turns a clearer orange wherever it appears: the tab and home-screen icon, the logo at the top of the page, sign-in and the site.",
+      title: "Pluclair turns orange",
+      body: "Pluclair’s orb takes a clear orange wherever it appears: the tab and home-screen icon, the logo at the top of the page, sign-in and the site. Buttons and highlighted amounts take the same orange.",
+      detail:
+        "Transactions waiting for your answer are now marked in amber, so they stay clearly apart from the buttons.",
     },
   },
   {

@@ -69,7 +69,7 @@ export function PropertyDemo({ copy }: { copy: Copy }) {
             initial={false}
             animate={{ cx: dotX, cy: dotY }}
             transition={{ type: "spring", stiffness: 160, damping: 20 }}
-            style={{ filter: "drop-shadow(0 0 10px rgb(236 178 94 / 0.8))" }}
+            style={{ filter: "drop-shadow(0 0 10px rgb(250 152 66 / 0.8))" }}
           />
         </svg>
         <Range
@@ -84,7 +84,7 @@ export function PropertyDemo({ copy }: { copy: Copy }) {
       <div className="flex flex-col gap-5">
         <div className="relative h-44 overflow-hidden rounded-[1.5rem] border border-white/10 bg-white/[0.04]">
           <m.div
-            className="absolute inset-x-0 bottom-0 bg-[linear-gradient(to_top,rgb(236_178_94/0.85),rgb(236_178_94/0.35))]"
+            className="absolute inset-x-0 bottom-0 bg-[linear-gradient(to_top,rgb(250_152_66/0.85),rgb(250_152_66/0.35))]"
             animate={{ height: `${share * 100}%` }}
             transition={{ type: "spring", stiffness: 120, damping: 20 }}
           />

@@ -4,10 +4,10 @@
   "title": "Design System: Pluclair",
   "extensions": {
     "colorMeta": {
-      "lamplit-gold": {
+      "lamplit-orange": {
         "role": "primary",
-        "displayName": "Lamplit Gold",
-        "canonical": "#ecb25e",
+        "displayName": "Lamplit Orange",
+        "canonical": "#fa9842",
         "tonalRamp": [
           "#2a2113",
           "#453620",
@@ -15,7 +15,7 @@
           "#7f663d",
           "#9d7f4d",
           "#bc9a5e",
-          "#ecb25e",
+          "#fa9842",
           "#f3ddb4"
         ]
       },
@@ -101,8 +101,8 @@
       },
       "warning": {
         "role": "tertiary",
-        "displayName": "Awaiting Orange",
-        "canonical": "#fb923c"
+        "displayName": "Awaiting Amber",
+        "canonical": "#fbbd23"
       },
       "destructive": {
         "role": "tertiary",
@@ -230,7 +230,7 @@
       "refersTo": "button-primary",
       "description": "The one gold control on a screen. Used for the single action that screen exists for.",
       "html": "<button class=\"ds-btn-primary\">Close the month</button>",
-      "css": ".ds-btn-primary { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; padding: 8px 16px; background: #ecb25e; color: #0a0a10; border: 1px solid #ecb25e; border-radius: 0.625rem; font-family: 'Instrument Sans', Helvetica, Arial, sans-serif; font-size: 0.875rem; font-weight: 500; letter-spacing: -0.01em; cursor: pointer; transition: all 200ms cubic-bezier(0.32, 0.72, 0, 1); } .ds-btn-primary:hover { background: #f2c27a; } .ds-btn-primary:active { transform: scale(0.98); } .ds-btn-primary:focus-visible { outline: none; box-shadow: 0 0 0 2px #0a0a10, 0 0 0 4px #ecb25e; }"
+      "css": ".ds-btn-primary { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; padding: 8px 16px; background: #fa9842; color: #0a0a10; border: 1px solid #fa9842; border-radius: 0.625rem; font-family: 'Instrument Sans', Helvetica, Arial, sans-serif; font-size: 0.875rem; font-weight: 500; letter-spacing: -0.01em; cursor: pointer; transition: all 200ms cubic-bezier(0.32, 0.72, 0, 1); } .ds-btn-primary:hover { background: #fbb26a; } .ds-btn-primary:active { transform: scale(0.98); } .ds-btn-primary:focus-visible { outline: none; box-shadow: 0 0 0 2px #0a0a10, 0 0 0 4px #fa9842; }"
     },
     {
       "name": "Secondary Button",
@@ -238,7 +238,7 @@
       "refersTo": "button-secondary",
       "description": "The ordinary control. Everything that is an action but not the action.",
       "html": "<button class=\"ds-btn-secondary\">Skip this one</button>",
-      "css": ".ds-btn-secondary { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; padding: 8px 16px; background: #1c1c2b; color: #ececf1; border: none; border-radius: 0.625rem; font-family: 'Instrument Sans', Helvetica, Arial, sans-serif; font-size: 0.875rem; font-weight: 500; letter-spacing: -0.01em; cursor: pointer; transition: all 200ms cubic-bezier(0.32, 0.72, 0, 1); } .ds-btn-secondary:hover { background: #262033; } .ds-btn-secondary:active { transform: scale(0.98); } .ds-btn-secondary:focus-visible { outline: none; box-shadow: 0 0 0 2px #0a0a10, 0 0 0 4px #ecb25e; }"
+      "css": ".ds-btn-secondary { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; padding: 8px 16px; background: #1c1c2b; color: #ececf1; border: none; border-radius: 0.625rem; font-family: 'Instrument Sans', Helvetica, Arial, sans-serif; font-size: 0.875rem; font-weight: 500; letter-spacing: -0.01em; cursor: pointer; transition: all 200ms cubic-bezier(0.32, 0.72, 0, 1); } .ds-btn-secondary:hover { background: #262033; } .ds-btn-secondary:active { transform: scale(0.98); } .ds-btn-secondary:focus-visible { outline: none; box-shadow: 0 0 0 2px #0a0a10, 0 0 0 4px #fa9842; }"
     },
     {
       "name": "Outline Button",
@@ -246,7 +246,7 @@
       "refersTo": "button-outline",
       "description": "A hairline-bounded control for a secondary path that still needs an edge.",
       "html": "<button class=\"ds-btn-outline\">Review inbox</button>",
-      "css": ".ds-btn-outline { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; padding: 8px 16px; background: transparent; color: #ececf1; border: 1px solid rgba(236, 236, 241, 0.1); border-radius: 0.625rem; font-family: 'Instrument Sans', Helvetica, Arial, sans-serif; font-size: 0.875rem; font-weight: 500; letter-spacing: -0.01em; cursor: pointer; transition: all 200ms cubic-bezier(0.32, 0.72, 0, 1); } .ds-btn-outline:hover { background: #1c1c2b; } .ds-btn-outline:active { transform: scale(0.98); } .ds-btn-outline:focus-visible { outline: none; box-shadow: 0 0 0 2px #0a0a10, 0 0 0 4px #ecb25e; }"
+      "css": ".ds-btn-outline { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; padding: 8px 16px; background: transparent; color: #ececf1; border: 1px solid rgba(236, 236, 241, 0.1); border-radius: 0.625rem; font-family: 'Instrument Sans', Helvetica, Arial, sans-serif; font-size: 0.875rem; font-weight: 500; letter-spacing: -0.01em; cursor: pointer; transition: all 200ms cubic-bezier(0.32, 0.72, 0, 1); } .ds-btn-outline:hover { background: #1c1c2b; } .ds-btn-outline:active { transform: scale(0.98); } .ds-btn-outline:focus-visible { outline: none; box-shadow: 0 0 0 2px #0a0a10, 0 0 0 4px #fa9842; }"
     },
     {
       "name": "Pill Button with Nub",
@@ -254,7 +254,7 @@
       "refersTo": "button-pill",
       "description": "The marketing call to action. A circular nub nests flush inside the end padding and drifts up-and-right on hover.",
       "html": "<button class=\"ds-btn-pill\">Start with this month<span class=\"ds-btn-nub\"><svg width=\"14\" height=\"14\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><line x1=\"5\" y1=\"12\" x2=\"19\" y2=\"12\"/><polyline points=\"12 5 19 12 12 19\"/></svg></span></button>",
-      "css": ".ds-btn-pill { display: inline-flex; align-items: center; gap: 12px; min-height: 44px; padding: 6px 6px 6px 20px; background: #ecb25e; color: #0a0a10; border: 1px solid #ecb25e; border-radius: 9999px; font-family: 'Instrument Sans', Helvetica, Arial, sans-serif; font-size: 0.875rem; font-weight: 500; letter-spacing: -0.01em; cursor: pointer; transition: all 200ms cubic-bezier(0.32, 0.72, 0, 1); } .ds-btn-pill:hover { background: #f2c27a; } .ds-btn-pill:active { transform: scale(0.98); } .ds-btn-pill:focus-visible { outline: none; box-shadow: 0 0 0 2px #06060a, 0 0 0 4px #ecb25e; } .ds-btn-nub { display: flex; align-items: center; justify-content: center; width: 30px; height: 30px; border-radius: 9999px; background: rgba(0, 0, 0, 0.1); transition: transform 200ms cubic-bezier(0.32, 0.72, 0, 1); } .ds-btn-pill:hover .ds-btn-nub { transform: translate(2px, -2px); }"
+      "css": ".ds-btn-pill { display: inline-flex; align-items: center; gap: 12px; min-height: 44px; padding: 6px 6px 6px 20px; background: #fa9842; color: #0a0a10; border: 1px solid #fa9842; border-radius: 9999px; font-family: 'Instrument Sans', Helvetica, Arial, sans-serif; font-size: 0.875rem; font-weight: 500; letter-spacing: -0.01em; cursor: pointer; transition: all 200ms cubic-bezier(0.32, 0.72, 0, 1); } .ds-btn-pill:hover { background: #fbb26a; } .ds-btn-pill:active { transform: scale(0.98); } .ds-btn-pill:focus-visible { outline: none; box-shadow: 0 0 0 2px #06060a, 0 0 0 4px #fa9842; } .ds-btn-nub { display: flex; align-items: center; justify-content: center; width: 30px; height: 30px; border-radius: 9999px; background: rgba(0, 0, 0, 0.1); transition: transform 200ms cubic-bezier(0.32, 0.72, 0, 1); } .ds-btn-pill:hover .ds-btn-nub { transform: translate(2px, -2px); }"
     },
     {
       "name": "Text Input",
@@ -262,7 +262,7 @@
       "refersTo": "input",
       "description": "Card-surface ground with a hairline. Focus draws a gold ring; the border itself does not move.",
       "html": "<input class=\"ds-input\" type=\"text\" placeholder=\"Closing balance\" />",
-      "css": ".ds-input { width: 100%; min-height: 44px; padding: 8px 12px; background: #131320; color: #ececf1; border: 1px solid rgba(236, 236, 241, 0.1); border-radius: 0.625rem; font-family: 'Instrument Sans', Helvetica, Arial, sans-serif; font-size: 0.875rem; letter-spacing: -0.01em; transition: border-color 200ms cubic-bezier(0.32, 0.72, 0, 1); } .ds-input::placeholder { color: #9b9bad; } .ds-input:focus-visible { outline: none; box-shadow: 0 0 0 2px #ecb25e; }"
+      "css": ".ds-input { width: 100%; min-height: 44px; padding: 8px 12px; background: #131320; color: #ececf1; border: 1px solid rgba(236, 236, 241, 0.1); border-radius: 0.625rem; font-family: 'Instrument Sans', Helvetica, Arial, sans-serif; font-size: 0.875rem; letter-spacing: -0.01em; transition: border-color 200ms cubic-bezier(0.32, 0.72, 0, 1); } .ds-input::placeholder { color: #9b9bad; } .ds-input:focus-visible { outline: none; box-shadow: 0 0 0 2px #fa9842; }"
     },
     {
       "name": "Card with Bezel",
@@ -301,7 +301,7 @@
       },
       {
         "name": "The Rare Accent Rule",
-        "body": "Lamplit Gold earns attention by being scarce. Its places are the primary action, the focus ring, a figure that genuinely leads a screen, and — systematically — a savings amount. Outside those, a surface that reaches for it in three unrelated places has spent it. The count is true rather than aspirational: roughly twenty-three roles across ninety-eight call sites were pulled back to these four, so add a fifth only by changing the rule first.",
+        "body": "Lamplit Orange earns attention by being scarce. Its places are the primary action, the focus ring, a figure that genuinely leads a screen, and — systematically — a savings amount. Outside those, a surface that reaches for it in three unrelated places has spent it. The count is true rather than aspirational: roughly twenty-three roles across ninety-eight call sites were pulled back to these four, so add a fifth only by changing the rule first.",
         "section": "colors"
       },
       {
@@ -373,7 +373,7 @@
       "Don't add a fourth marketing grey or a fourth display clamp. Both counts are the result of a deliberate reduction.",
       "Don't reach for a second display typeface to signal importance; headings are the body sans at 600.",
       "Don't colour an amount by whether it is positive or negative.",
-      "Don't spend Lamplit Gold on decoration; its semantic and emphatic uses are the whole of its job.",
+      "Don't spend Lamplit Orange on decoration; its semantic and emphatic uses are the whole of its job.",
       "Don't hard-code a hex, an alpha literal, or a duration where a token exists — the ten alpha literals and the twenty-eight type triples are exactly what this system was consolidated out of.",
       "Don't use Fraunces for headings or prose, and don't let a figure set in it lose tabular-nums."
     ]

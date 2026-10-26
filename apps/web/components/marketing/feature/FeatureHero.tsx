@@ -251,7 +251,7 @@ function StageScreen({
     <div ref={ref} className="relative mt-16 [perspective:1800px] md:mt-20">
       <m.div
         aria-hidden
-        className="pointer-events-none absolute inset-x-[10%] -bottom-10 top-1/3 -z-10 rounded-full bg-[radial-gradient(closest-side,rgb(236_178_94/0.22),transparent)] blur-3xl"
+        className="pointer-events-none absolute inset-x-[10%] -bottom-10 top-1/3 -z-10 rounded-full bg-[radial-gradient(closest-side,rgb(250_152_66/0.22),transparent)] blur-3xl"
         style={{ opacity: glow }}
       />
       <m.div style={{ rotateX, scale, y, transformOrigin: "50% 100%" }}>
@@ -290,7 +290,7 @@ function PhoneScreen({
     >
       <div
         aria-hidden
-        className="pointer-events-none absolute left-1/2 top-1/2 -z-10 size-[min(30rem,80vw)] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[radial-gradient(closest-side,rgb(236_178_94/0.18),transparent)] blur-2xl"
+        className="pointer-events-none absolute left-1/2 top-1/2 -z-10 size-[min(30rem,80vw)] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[radial-gradient(closest-side,rgb(250_152_66/0.18),transparent)] blur-2xl"
       />
       <Phone3D
         rotateX={rotateX}

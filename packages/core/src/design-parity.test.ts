@@ -28,7 +28,7 @@ function cssVars(css: string): Map<string, string> {
   return vars;
 }
 
-/** "#ecb25e" or "rgba(236, 236, 241, 0.1)" as "236 178 94". */
+/** "#fa9842" or "rgba(236, 236, 241, 0.1)" as "250 152 66". */
 function channels(value: string): string {
   const hex = /^#([0-9a-f]{6})$/i.exec(value);
   if (hex) {

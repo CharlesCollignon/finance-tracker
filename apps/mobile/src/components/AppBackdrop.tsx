@@ -14,7 +14,7 @@ import Svg, { Defs, RadialGradient, Rect, Stop } from "react-native-svg";
  * Three offset lights rather than one. A single centred glow reads as a
  * spotlight; three of different hue, size and position read as depth — the
  * violet high and wide, a magenta from a source off to one side, and the
- * brand gold low and faint so the palette still belongs to Pluclair rather
+ * brand orange low and faint so the palette still belongs to Pluclair rather
  * than to the reference it was drawn from. The same four stops as the web
  * `BLOOM`, so the two apps are recognisably the same product.
  *
@@ -59,7 +59,7 @@ const LIGHTS = [
     cx: "18%",
     cy: "96%",
     r: "70%",
-    color: "#ecb25e",
+    color: "#fa9842",
     opacity: 0.1,
   },
 ] as const;

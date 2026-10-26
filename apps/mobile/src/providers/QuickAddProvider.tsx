@@ -143,8 +143,8 @@ export function useQuickAdd(): QuickAddValue | null {
   return useContext(QuickAddContext);
 }
 
-/** The add button's ground: the gold (`COLORS.primary`), at 72 %. */
-const GOLD_GLASS = "rgba(236,178,94,0.72)";
+/** The add button's ground: the accent (`COLORS.primary`), at 72 %. */
+const GOLD_GLASS = "rgba(250,152,66,0.72)";
 /** A lighter edge, so the glass reads as a surface over the content. */
 const GLASS_RIM = "rgba(255,240,210,0.35)";
 
@@ -203,7 +203,7 @@ function QuickAddFab() {
           animatedStyle,
         ]}
       >
-        {/* Gold glass: still the one gold control on the screen, but what
+        {/* Orange glass: still the one accent control on the screen, but what
             scrolls under it shows through, frosted, rather than being cut
             off by a solid disc. */}
         <Blur

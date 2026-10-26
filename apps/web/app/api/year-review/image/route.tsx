@@ -19,7 +19,7 @@ import { createClient } from "@/lib/supabase/server";
 
 /** What the image is drawn on, and in: the app's own colours. */
 const GROUND = "#0a0a10";
-const GOLD = "#ecb25e";
+const GOLD = "#fa9842";
 const INK = "#f5f3ef";
 const MUTED = "#9a98a6";
 

@@ -36,12 +36,12 @@ const PLATE = "#0a0a10";
  * icons came out as. A warm brown-black keeps every blended pixel inside the
  * gold family.
  */
-const CORE = "#251309";
+const CORE = "#251209";
 /* The live orb's orange (`--orb-c1/2/3`), each a step lighter: at the
    opacity the still render paints them, the live values come out as rust. */
-const C1 = "#ffdca3";
-const C2 = "#fc9936";
-const C3 = "#77340d";
+const C1 = "#ffd7a3";
+const C2 = "#fc8f36";
+const C3 = "#772f0d";
 
 /**
  * The orb, still.

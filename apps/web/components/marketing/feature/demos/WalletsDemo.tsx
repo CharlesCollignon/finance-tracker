@@ -30,7 +30,7 @@ export function WalletsDemo({ copy }: { copy: Copy }) {
     <div className="flex flex-col gap-8">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <span className="inline-flex items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3">
-          <span className="size-2.5 rounded-full bg-primary shadow-[0_0_12px_rgb(236_178_94/0.8)]" />
+          <span className="size-2.5 rounded-full bg-primary shadow-[0_0_12px_rgb(250_152_66/0.8)]" />
           <span className="font-medium text-marketing-ink">{copy.fund}</span>
         </span>
         <div className="flex gap-2">
