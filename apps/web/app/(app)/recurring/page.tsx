@@ -10,6 +10,7 @@ import {
   getDebitedWalletCategories,
   getRecurringProposals,
   hasBankFeed,
+  hasFeedLines,
 } from "@/lib/queries/bank";
 import { todayIsoLocal } from "@finance/core/constants";
 import { isFlagOn } from "@finance/core/flags";
@@ -34,11 +35,20 @@ export default async function RecurringPage({
   const owner = await getOwner();
   const ownerId = owner?.ownerId ?? user.id;
 
-  const [templates, categories, bankFed, recordedThisMonth, params, flags] =
-    await Promise.all([
+  const [
+    templates,
+    categories,
+    bankFed,
+    feedShown,
+    recordedThisMonth,
+    params,
+    flags,
+  ] = await Promise.all([
       getRecurringTemplates(ownerId),
       getCategories(ownerId),
       hasBankFeed(ownerId),
+      // Any line at all, a statement's as much as the bank's.
+      hasFeedLines(ownerId),
       // What editing a charge asks about: the days it is already recorded on
       // this month.
       getRecordedThisMonth(ownerId),
@@ -50,16 +60,14 @@ export default async function RecurringPage({
     ? await getPropertyNames(ownerId)
     : [];
 
-  // Only worth asking where there is a statement to read it out of. Without
-  // one the transactions are the user's own typing, and they already know
-  // what repeats.
-  // And only a bank can have debited a wallet from the account.
-  const [proposals, debited] = bankFed
-    ? await Promise.all([
-        getRecurringProposals(ownerId, todayIsoLocal()),
-        getDebitedWalletCategories(ownerId),
-      ])
-    : [[], []];
+  // Only worth asking where there are lines to read it out of — the bank's
+  // or a statement's. Without any, the transactions are the user's own
+  // typing, and they already know what repeats.
+  // Only a bank can have debited a wallet from the account.
+  const [proposals, debited] = await Promise.all([
+    feedShown ? getRecurringProposals(ownerId, todayIsoLocal()) : [],
+    bankFed ? getDebitedWalletCategories(ownerId) : [],
+  ]);
 
   return (
     <RecurringView
