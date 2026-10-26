@@ -1015,6 +1015,57 @@ export type Database = {
         };
         Relationships: [];
       };
+      filing_rules: {
+        Row: {
+          applied_count: number;
+          category_id: string;
+          created_at: string;
+          created_by: string | null;
+          created_from: string | null;
+          direction: string;
+          id: string;
+          user_id: string;
+          words: string;
+        };
+        Insert: {
+          applied_count?: number;
+          category_id: string;
+          created_at?: string;
+          created_by?: string | null;
+          created_from?: string | null;
+          direction?: string;
+          id?: string;
+          user_id: string;
+          words: string;
+        };
+        Update: {
+          applied_count?: number;
+          category_id?: string;
+          created_at?: string;
+          created_by?: string | null;
+          created_from?: string | null;
+          direction?: string;
+          id?: string;
+          user_id?: string;
+          words?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "filing_rules_category_id_fkey";
+            columns: ["category_id"];
+            isOneToOne: false;
+            referencedRelation: "categories";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "filing_rules_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "owners";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       housing_price_index: {
         Row: {
           quarter: string;
@@ -2627,6 +2678,10 @@ export type Database = {
     Functions: {
       acting_for: { Args: { target_user: string }; Returns: boolean };
       bearing_pins_valid: { Args: { pins: Json }; Returns: boolean };
+      bump_filing_rule: {
+        Args: { by: number; rule: string };
+        Returns: undefined;
+      };
       create_space: { Args: { new_name?: string }; Returns: string };
       create_space_invite: { Args: { target_space: string }; Returns: string };
       entraide_author_guard: {

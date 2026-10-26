@@ -112,6 +112,7 @@ interface Narrowed {
     direction: "in" | "out";
     status: "pending" | "imported" | "ignored";
   };
+  filing_rules: { direction: "in" | "out" };
   month_closes: { balance_source: "manual" | "bank" };
   month_reads: { source: "pressed" | "auto"; locale: Locale };
   savings_accounts: { kind: SavingsAccountKind };
