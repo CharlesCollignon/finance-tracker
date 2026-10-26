@@ -147,10 +147,10 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
           {user ? <MonthFill /> : null}
           {user ? <LiveRefresh renderedAt={renderedAt} /> : null}
           <OutboxBanner />
-          {user && isDemoUser(user) ? <DemoBanner /> : null}
           <AppShell
             displayName={name}
             initial={initial}
+            banner={user && isDemoUser(user) ? <DemoBanner /> : null}
             badges={{ bearing: arrivedCount, ledger: inboxCount }}
             showProperty={flags ? isFlagOn(flags, "property.track") : false}
             nouveautes={nouveautes}

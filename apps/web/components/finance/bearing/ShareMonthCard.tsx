@@ -18,7 +18,13 @@ import { cn } from "@/lib/utils";
  * `/api/month-share/image`, drawn for the account asking and kept
  * nowhere. The phone shares the image through its own sheet.
  */
-export function ShareMonthCard({ year, month }: { year: number; month: number }) {
+export function ShareMonthCard({
+  year,
+  month,
+}: {
+  year: number;
+  month: number;
+}) {
   const t = useT();
   const locale = useLocale();
   const [withAmounts, setWithAmounts] = useState(false);
@@ -56,34 +62,43 @@ export function ShareMonthCard({ year, month }: { year: number; month: number })
       icon={<ShareNetwork size={ICON.sm} weight="bold" />}
       title={t("monthShare.share")}
     >
-      <p className="text-sm text-muted-foreground">{t("monthShare.shareHint")}</p>
-      <label className="flex items-center justify-between gap-3 text-sm">
-        <span>{t("monthShare.withAmounts")}</span>
-        <Switch
-          checked={withAmounts}
-          onChange={setWithAmounts}
-          label={t("monthShare.withAmounts")}
-        />
-      </label>
-      <div className="flex flex-wrap gap-2">
-        <Button
-          type="button"
-          size="sm"
-          disabled={pending}
-          onClick={() => void share()}
-          className="gap-2"
-        >
-          <ShareNetwork size={ICON.md} aria-hidden />
-          {t("monthShare.shareImage")}
-        </Button>
-        <Link
-          href={`/print/month?y=${year}&m=${month}&amounts=${withAmounts ? 1 : 0}`}
-          target="_blank"
-          className={cn(buttonVariants({ variant: "outline", size: "sm" }), "gap-2")}
-        >
-          <Printer size={ICON.md} aria-hidden />
-          {t("monthShare.sharePrint")}
-        </Link>
+      {/* The whole row of Le point's grid: the words on the left, the
+          switch and the two ways out on the right, once there is room. */}
+      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between md:gap-6">
+        <p className="text-sm text-muted-foreground md:max-w-prose">
+          {t("monthShare.shareHint")}
+        </p>
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-2 md:shrink-0 md:justify-end">
+          <label className="flex items-center gap-2 text-sm">
+            <span>{t("monthShare.withAmounts")}</span>
+            <Switch
+              checked={withAmounts}
+              onChange={setWithAmounts}
+              label={t("monthShare.withAmounts")}
+            />
+          </label>
+          <Button
+            type="button"
+            size="sm"
+            disabled={pending}
+            onClick={() => void share()}
+            className="gap-2"
+          >
+            <ShareNetwork size={ICON.md} aria-hidden />
+            {t("monthShare.shareImage")}
+          </Button>
+          <Link
+            href={`/print/month?y=${year}&m=${month}&amounts=${withAmounts ? 1 : 0}`}
+            target="_blank"
+            className={cn(
+              buttonVariants({ variant: "outline", size: "sm" }),
+              "gap-2",
+            )}
+          >
+            <Printer size={ICON.md} aria-hidden />
+            {t("monthShare.sharePrint")}
+          </Link>
+        </div>
       </div>
     </Card>
   );
