@@ -1356,6 +1356,20 @@ export const fr: Messages = {
     actionReview: "Vérifier",
     actionClose: "Faire le bilan",
     actionStart: "Commencer",
+    actionConfirm: "Confirmer",
+    actionImport: "Importer",
+    todo: "À faire",
+    todoLess: "Replier",
+    attentionArrived: {
+      one: "{count} opération ressemble à une récurrente : c'est arrivé ?",
+      other:
+        "{count} opérations ressemblent à des récurrentes : c'est arrivé ?",
+    },
+    attentionPurchases: {
+      one: "{count} achat dans un compte à confirmer",
+      other: "{count} achats dans un compte à confirmer",
+    },
+    attentionStatement: "Le relevé de {month} n'est pas encore importé",
     attentionSwallowed: {
       one: "{count} opération bancaire a été fusionnée avec une opération récurrente",
       other:

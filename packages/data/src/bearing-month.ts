@@ -2,8 +2,10 @@ import { buildAttention, type AttentionItem } from "@finance/core/attention";
 import {
   formatMonthLabel,
   getMonthBounds,
+  shiftIsoDate,
   shiftMonth,
 } from "@finance/core/constants";
+import { monthLong } from "@finance/core/i18n/calendar-names";
 import type { DcaMonth } from "@finance/core/dca-need";
 import type { Locale } from "@finance/core/i18n/locale";
 import { payTemplate, type LeftToSpend } from "@finance/core/left-to-spend";
@@ -20,6 +22,7 @@ import { buildRunway } from "@finance/core/projection";
 import type { PurchaseToConfirm } from "@finance/core/purchases-to-confirm";
 import type { FulfilmentProposal } from "@finance/core/recurring-fulfilment";
 import { firstCloseDay, type SetupFacts } from "@finance/core/setup-steps";
+import { STATEMENT_REMINDER_DAY } from "@finance/core/statement-reminder";
 import type { UpcomingCharge } from "@finance/core/still-to-come";
 import type { RecurringTemplateWithCategory } from "@finance/core/types/database";
 import { reviewedYear, yearReviewPrompt } from "@finance/core/year-review";
@@ -49,7 +52,12 @@ import { getMonthCloseOverview, type MonthCloseOverview } from "./month-close";
 import { readDismissedPrompts } from "./preferences";
 import { getPurchasesToConfirm } from "./purchases-to-confirm";
 import { readMyShare } from "./spaces";
-import { hasFeedLines, NO_COVERAGE, readFeedCoverage } from "./statements";
+import {
+  hasFeedLines,
+  NO_COVERAGE,
+  readFeedCoverage,
+  readStatementImports,
+} from "./statements";
 import { getRecurringTemplates } from "./templates";
 
 /**
@@ -395,6 +403,23 @@ export async function readBearingMonth(
 
     invested = total > 0 ? total : null;
 
+    // Last month's statement, for someone who brings their own: from the
+    // day the reminder says it, until it is brought.
+    let statementDue: { month: string } | null = null;
+    if (
+      feeds &&
+      !bankFed &&
+      Number(today.slice(8, 10)) >= STATEMENT_REMINDER_DAY
+    ) {
+      const latest = (await readStatementImports(db, userId)).find(
+        (row) => row.undoneAt === null,
+      );
+      const lastMonthEnd = shiftIsoDate(first, -1);
+      if (latest && (!latest.to || latest.to < lastMonthEnd)) {
+        statementDue = { month: monthLong(previousMonth.month, locale) };
+      }
+    }
+
     attention = buildAttention({
       swallowed,
       pendingInbox: pending,
@@ -402,6 +427,11 @@ export async function readBearingMonth(
         ? { monthLabel: closes.next.label, isBaseline: closes.next.isBaseline }
         : null,
       proposals: proposals.length,
+      // The two questions Le point's own cards ask, counted here so the
+      // strip is the one place that counts.
+      arrived: arrived?.proposals.length ?? 0,
+      purchases: purchases.length,
+      statementDue,
     });
   }
 

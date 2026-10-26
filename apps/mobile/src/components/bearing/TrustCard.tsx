@@ -5,7 +5,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { formatShortDate } from "@finance/core/constants";
 import type { TrustSignal } from "@finance/core/month-trust";
 
-import { attentionHref } from "@/components/bearing/AttentionRow";
+import { attentionHref } from "@/components/bearing/TodoStrip";
 import { HomeCard } from "@/components/bearing/card-parts";
 import { PrivateAmount } from "@/components/PrivateAmount";
 import { Text } from "@/components/ui/Text";
@@ -76,8 +76,11 @@ export function TrustCard({ signals }: { signals: TrustSignal[] }) {
               accessibilityLabel={text}
               hitSlop={4}
               onPress={() => {
-                void hapticLight();
-                router.push(attentionHref(signal.href!));
+                const to = attentionHref(signal.href!);
+                if (to) {
+                  void hapticLight();
+                  router.push(to);
+                }
               }}
             >
               {row}

@@ -1756,6 +1756,20 @@ export const en = {
     actionReview: "Review",
     actionClose: "Close",
     actionStart: "Start",
+    actionConfirm: "Confirm",
+    actionImport: "Import",
+    /** « À faire »: the strip on the Overview that holds every item. */
+    todo: "To do",
+    todoLess: "Show less",
+    attentionArrived: {
+      one: "{count} movement looks like a charge: did it arrive?",
+      other: "{count} movements look like charges: did they arrive?",
+    },
+    attentionPurchases: {
+      one: "{count} purchase inside a wallet to confirm",
+      other: "{count} purchases inside a wallet to confirm",
+    },
+    attentionStatement: "{month}'s statement is not in yet",
     attentionSwallowed: {
       one: "{count} bank transaction was merged into a recurring charge",
       other: "{count} bank transactions were merged into recurring charges",

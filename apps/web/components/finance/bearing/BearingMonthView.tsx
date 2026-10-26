@@ -3,13 +3,12 @@
 import type { ReactNode } from "react";
 import { nextSetupStep } from "@finance/core/setup-steps";
 import type { BankAttention } from "@finance/core/bank-attention";
+import { bankAttentionItems, sortAttention } from "@finance/core/attention";
 import type { BearingMonth } from "@/lib/bearing/month";
 import { MyShareProvider } from "@/components/finance/bearing/MyShareToggle";
-import { AttentionRow } from "@/components/finance/bearing/AttentionRow";
+import { TodoStrip } from "@/components/finance/bearing/TodoStrip";
 import { ArrivedCharges } from "@/components/finance/ArrivedCharges";
 import { PurchasesToConfirm } from "@/components/finance/PurchasesToConfirm";
-import { BankAttentionBanner } from "@/components/finance/bank/BankAttentionBanner";
-import { NewAccountsLine } from "@/components/finance/bank/NewAccountsLine";
 import { SetupCard } from "@/components/finance/bearing/SetupCard";
 import { YearReadyCard } from "@/components/finance/bearing/YearReadyCard";
 import { MonthPicker } from "@/components/layout/MonthPicker";
@@ -83,28 +82,27 @@ export function BearingMonthView({
   // a row of zeros.
   const hasSpentBefore =
     data.spent.total > 0 || data.spent.trend.some((entry) => entry.total > 0);
+  // « À faire »: the month's list and the person's bank, read as one. The
+  // bank is the person's whatever owner is on screen.
+  const todo = sortAttention([
+    ...data.attention,
+    ...bankAttentionItems({ bank: bankAttention, awaitingAccounts }),
+  ]);
 
   return (
     <MyShareProvider on={data.myShare?.on ?? false}>
       <div className="flex min-w-0 flex-col gap-4 md:gap-5">
         <MonthPicker basePath="/bearing" className="self-center" />
 
-        {bankAttention ? (
-          <BankAttentionBanner attention={bankAttention} />
-        ) : null}
-
-        {awaitingAccounts > 0 ? (
-          <NewAccountsLine count={awaitingAccounts} />
-        ) : null}
-
-        {data.attention.length > 0 ? (
-          <AttentionRow attention={data.attention} />
-        ) : null}
+        {todo.length > 0 ? <TodoStrip items={todo} /> : null}
 
         {/* Before the figures, because answering one changes them: a salary
           confirmed as arrived stops being counted as still to come. */}
         {data.arrived ? (
-          <section className={cn(GLASS_CARD, "rounded-card p-card")}>
+          <section
+            id="arrived"
+            className={cn(GLASS_CARD, "scroll-mt-20 rounded-card p-card")}
+          >
             <ArrivedCharges proposals={data.arrived.proposals} />
           </section>
         ) : null}
@@ -116,7 +114,10 @@ export function BearingMonthView({
 
         {/* The same kind of question, for what the bank cannot see. */}
         {data.purchases.length > 0 ? (
-          <section className={cn(GLASS_CARD, "rounded-card p-card")}>
+          <section
+            id="purchases"
+            className={cn(GLASS_CARD, "scroll-mt-20 rounded-card p-card")}
+          >
             <PurchasesToConfirm purchases={data.purchases} />
           </section>
         ) : null}
