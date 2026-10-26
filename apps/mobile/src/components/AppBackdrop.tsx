@@ -24,8 +24,9 @@ import Svg, { Defs, RadialGradient, Rect, Stop } from "react-native-svg";
 
 /**
  * Matching `apps/web/components/layout/AppBackdrop.tsx`, turned down with it
- * in October 2026: each violet about a quarter fainter, the magenta nearly
- * halved, for a little less purple.
+ * twice in October 2026 for a little less purple: each violet about a
+ * quarter fainter and the magenta nearly halved on the 12th, every violet a
+ * quarter fainter again on the 26th.
  */
 const LIGHTS = [
   {
@@ -34,7 +35,7 @@ const LIGHTS = [
     cy: "-8%",
     r: "85%",
     color: "#8b4aff",
-    opacity: 0.42,
+    opacity: 0.32,
   },
   {
     id: "magenta",
@@ -42,7 +43,7 @@ const LIGHTS = [
     cy: "12%",
     r: "50%",
     color: "#e84ab2",
-    opacity: 0.17,
+    opacity: 0.13,
   },
   {
     id: "indigo",
@@ -50,7 +51,7 @@ const LIGHTS = [
     cy: "42%",
     r: "55%",
     color: "#5834c4",
-    opacity: 0.21,
+    opacity: 0.16,
   },
   {
     id: "gold",
