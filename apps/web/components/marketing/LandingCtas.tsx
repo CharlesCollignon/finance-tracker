@@ -41,6 +41,8 @@ interface LandingCtasProps {
    * on scroll: it narrows and fades rather than leaving the row at once.
    */
   foldSecondary?: boolean;
+  /** A demo account is configured: the hero pair gets « Essayer la démo ». */
+  demo?: boolean;
   className?: string;
 }
 
@@ -50,6 +52,7 @@ export function LandingCtas({
   layout = "pair",
   shine = false,
   foldSecondary = false,
+  demo = false,
   className,
 }: LandingCtasProps) {
   const gold = cn(solid, shine && "marketing-cta-shine");
@@ -98,6 +101,13 @@ export function LandingCtas({
           {copy.cta.signIn}
         </Link>
       )}
+      {demo && layout === "pair" ? (
+        // The sample account (migration 081): a look round before an
+        // account, signed in as nobody in particular.
+        <Link href="/demo" className={cn(base, sizes[size], quiet)}>
+          {copy.cta.tryDemo}
+        </Link>
+      ) : null}
     </div>
   );
 }

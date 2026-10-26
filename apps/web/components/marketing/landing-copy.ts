@@ -652,6 +652,8 @@ export const landingCopy = {
     goToDashboard: "See where you stand",
     /** The nav pill's button at phone width, where the line above does not fit. */
     openShort: "Open",
+    /** Beside the signup pair in the hero, when a demo account is configured. */
+    tryDemo: "Try the demo",
   },
 } as const;
 

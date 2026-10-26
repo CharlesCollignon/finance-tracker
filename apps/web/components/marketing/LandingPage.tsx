@@ -47,6 +47,8 @@ import { cn } from "@/lib/utils";
 
 interface LandingPageProps {
   isLoggedIn: boolean;
+  /** A demo account is configured (`DEMO_EMAIL`, migration 081). */
+  demo?: boolean;
 }
 
 /** Text a little narrower than its screen, on whichever side it falls. */
@@ -70,7 +72,10 @@ const SPLIT = "md:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]";
  * section of DESIGN.md). What is not open to everyone yet is said once,
  * under "Coming soon", in the future tense.
  */
-export async function LandingPage({ isLoggedIn }: LandingPageProps) {
+export async function LandingPage({
+  isLoggedIn,
+  demo = false,
+}: LandingPageProps) {
   const [locale, request] = await Promise.all([getLocale(), headers()]);
   const iphone = isIphone(request.get("user-agent"));
   const {
@@ -154,7 +159,12 @@ export async function LandingPage({ isLoggedIn }: LandingPageProps) {
                 sections of scrolling: most visitors on a phone want it. An
                 iPhone cannot open the APK, so it is offered its own way. */}
             <div className="mt-8 flex flex-wrap items-center gap-3">
-              <LandingCtas isLoggedIn={isLoggedIn} size="lg" shine />
+              <LandingCtas
+                isLoggedIn={isLoggedIn}
+                size="lg"
+                shine
+                demo={demo}
+              />
               {apk ? (
                 <Link
                   href={iphone ? IPHONE_HREF : apk}

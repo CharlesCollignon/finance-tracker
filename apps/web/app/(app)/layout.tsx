@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { after } from "next/server";
 import { recordActivity } from "@finance/data/activity";
 import { AppShell } from "@/components/layout/AppShell";
+import { DemoBanner } from "@/components/layout/DemoBanner";
 import { LiveRefresh } from "@/components/layout/LiveRefresh";
 import { MonthFill } from "@/components/layout/MonthFill";
 import { OutboxBanner } from "@/components/layout/OutboxBanner";
@@ -10,6 +11,7 @@ import { RefreshProvider } from "@/components/layout/RefreshProvider";
 import { ServiceWorkerRegistration } from "@/components/layout/ServiceWorkerRegistration";
 import { ToastProvider } from "@/components/layout/ToastProvider";
 import { getAuthUser } from "@/lib/auth/get-user";
+import { isDemoUser } from "@/lib/demo";
 import { getOwner } from "@/lib/owner";
 import { getQuickEntryContext } from "@/lib/queries/quick-entry";
 import { accountLabel } from "@/lib/account-label";
@@ -145,6 +147,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
           {user ? <MonthFill /> : null}
           {user ? <LiveRefresh renderedAt={renderedAt} /> : null}
           <OutboxBanner />
+          {user && isDemoUser(user) ? <DemoBanner /> : null}
           <AppShell
             displayName={name}
             initial={initial}

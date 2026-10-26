@@ -21,6 +21,7 @@ import { merchantsEn } from "./merchants.en";
 import { paletteEn } from "./palette.en";
 import { monthShareEn } from "./month-share.en";
 import { eventsEn } from "./events.en";
+import { demoEn } from "./demo.en";
 
 /**
  * What the app says, in English.
@@ -3658,6 +3659,8 @@ export const en = {
     notFound: "Not found — it may already have been deleted.",
     offline: "No connection right now. Try again in a moment.",
     couldNotSave: "That did not save. Try again.",
+    demoReadOnly:
+      "The demo is read-only: a sample everyone looks at. Create your own account to write.",
     /**
      * Validation messages, carried by the Zod schemas as keys.
      *
@@ -3743,6 +3746,7 @@ export const en = {
   palette: paletteEn,
   monthShare: monthShareEn,
   events: eventsEn,
+  demo: demoEn,
 } satisfies MessageTree;
 
 export type Messages = typeof en;

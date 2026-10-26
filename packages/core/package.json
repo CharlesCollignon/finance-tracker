@@ -74,6 +74,7 @@
     "./instrument-price-series": "./src/instrument-price-series.ts",
     "./instrument-reading": "./src/instrument-reading.ts",
     "./investment-positions": "./src/investment-positions.ts",
+    "./demo-sample": "./src/demo-sample.ts",
     "./investment-events": "./src/investment-events.ts",
     "./investment-returns": "./src/investment-returns.ts",
     "./investment-streak": "./src/investment-streak.ts",

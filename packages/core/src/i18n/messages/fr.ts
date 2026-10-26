@@ -21,6 +21,7 @@ import { merchantsFr } from "./merchants.fr";
 import { paletteFr } from "./palette.fr";
 import { monthShareFr } from "./month-share.fr";
 import { eventsFr } from "./events.fr";
+import { demoFr } from "./demo.fr";
 
 /**
  * What the app says, in French.
@@ -2830,6 +2831,8 @@ export const fr: Messages = {
     notFound: "Introuvable — il a peut-être déjà été supprimé.",
     offline: "Pas de connexion pour l'instant. Réessayez dans un moment.",
     couldNotSave: "L'enregistrement n'a pas fonctionné. Réessayez.",
+    demoReadOnly:
+      "La démo est en lecture seule : un exemple que tout le monde regarde. Créez votre compte pour y écrire.",
     amountPositive: "Le montant doit être positif",
     invalidDate: "Date invalide",
     nothingSelected: "Rien de sélectionné",
@@ -2917,4 +2920,5 @@ export const fr: Messages = {
   palette: paletteFr,
   monthShare: monthShareFr,
   events: eventsFr,
+  demo: demoFr,
 };

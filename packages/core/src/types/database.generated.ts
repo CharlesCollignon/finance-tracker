@@ -2741,6 +2741,7 @@ export type Database = {
       };
       create_space: { Args: { new_name?: string }; Returns: string };
       create_space_invite: { Args: { target_space: string }; Returns: string };
+      demo_user_id: { Args: Record<PropertyKey, never>; Returns: string };
       entraide_author_guard: {
         Args: {
           author: string;
@@ -2827,6 +2828,7 @@ export type Database = {
           key: string;
         }[];
       };
+      is_demo_user: { Args: { uid: string }; Returns: boolean };
       join_space: { Args: { invite_token: string }; Returns: string };
       leave_space: { Args: { target_space: string }; Returns: undefined };
       merge_tags: {

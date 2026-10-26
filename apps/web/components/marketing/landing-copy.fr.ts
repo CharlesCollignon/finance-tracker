@@ -613,5 +613,6 @@ export const landingCopyFr: LandingCopySections & {
     openApp: "Ouvrir l’application",
     goToDashboard: "Voir où vous en êtes",
     openShort: "Ouvrir",
+    tryDemo: "Essayer la démo",
   },
 };
