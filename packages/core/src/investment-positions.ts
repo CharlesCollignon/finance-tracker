@@ -9,6 +9,7 @@ import {
   type InvestmentWalletId,
 } from "./investments";
 import { formatMonthCompact, todayIsoLocal } from "./constants";
+import type { PositionForMix } from "./history/mix";
 import { BITCOIN_INSTRUMENT, isCryptoWallet } from "./crypto-holdings";
 import type { Locale } from "./i18n/locale";
 
@@ -693,17 +694,21 @@ export function portfolioQuoteSymbols(
 }
 
 /**
- * A portfolio as the Plan reads it: what each wallet is worth today, and the
- * wallet each position-linked recurring purchase goes into.
+ * A portfolio as the Plan reads it: what each wallet is worth today, the
+ * wallet each position-linked recurring purchase goes into, and every
+ * position with what it is, for the history each wallet follows
+ * (`walletMixes`).
  */
 export function planWealthFromPortfolio(
   portfolio: InvestmentPortfolioSummary,
 ): {
   wallets: Partial<Record<InvestmentWalletId, number>>;
   templateWallets: Record<string, InvestmentWalletId>;
+  positions: PositionForMix[];
 } {
   const wallets: Partial<Record<InvestmentWalletId, number>> = {};
   const templateWallets: Record<string, InvestmentWalletId> = {};
+  const positions: PositionForMix[] = [];
   for (const column of portfolio.columns) {
     wallets[column.walletId] =
       (wallets[column.walletId] ?? 0) + column.totalMarketValue;
@@ -711,7 +716,13 @@ export function planWealthFromPortfolio(
       if (item.recurringTemplateId) {
         templateWallets[item.recurringTemplateId] = column.walletId;
       }
+      positions.push({
+        walletId: column.walletId,
+        marketValue: item.marketValue,
+        isin: item.isin,
+        instrumentSymbol: item.instrumentSymbol,
+      });
     }
   }
-  return { wallets, templateWallets };
+  return { wallets, templateWallets, positions };
 }

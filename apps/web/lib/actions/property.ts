@@ -273,9 +273,10 @@ export async function saveLoanForProperty(
 }
 
 /**
- * How much a year a property is expected to gain, for the long view. Kept
- * quietly, as the long view's own figures are: the card already shows it,
- * and a redraw would put the long view back behind its placeholder.
+ * How much a year a property is expected to gain, for the homes' line in the
+ * Plan's trajectory. Kept quietly: a redraw would put the whole Plan back
+ * behind its placeholders while the investments' prices are read again, so
+ * the line takes the new rate on the next visit.
  */
 export async function setGrowth(
   propertyId: string,

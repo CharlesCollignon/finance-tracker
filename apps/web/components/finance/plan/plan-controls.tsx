@@ -1,13 +1,12 @@
 "use client";
 
-import { useId, useState, type CSSProperties, type ReactNode } from "react";
+import { useId, useState, type ReactNode } from "react";
 import { parseTypedAmount } from "@finance/core/amount-input";
 import { formatMonthLabel } from "@finance/core/constants";
 import { INTL_LOCALES, type Locale } from "@finance/core/i18n/locale";
 import { GLASS_CARD } from "@/lib/glass";
 import { useLocale } from "@/lib/locale-context";
 import { cn } from "@/lib/utils";
-import styles from "./plan.module.css";
 
 /**
  * A card on the Plan page: glass over the lit ground, a small icon and its
@@ -52,46 +51,6 @@ export function PlanCard({
   );
 }
 
-/**
- * A slider over a native range input, filled to the thumb. The input does
- * the keyboard and the screen reader; `valueText` is what it announces.
- */
-export function Slider({
-  value,
-  min,
-  max,
-  step,
-  onChange,
-  label,
-  valueText,
-  className,
-}: {
-  value: number;
-  min: number;
-  max: number;
-  step: number;
-  onChange: (value: number) => void;
-  label: string;
-  valueText: string;
-  className?: string;
-}) {
-  const fill = max > min ? ((value - min) / (max - min)) * 100 : 0;
-  return (
-    <input
-      type="range"
-      min={min}
-      max={max}
-      step={step}
-      value={value}
-      onChange={(event) => onChange(Number(event.target.value))}
-      aria-label={label}
-      aria-valuetext={valueText}
-      className={cn(styles.slider, className)}
-      style={{ "--fill": `${fill}%` } as CSSProperties}
-    />
-  );
-}
-
 function plainNumber(value: number, locale: Locale): string {
   return new Intl.NumberFormat(INTL_LOCALES[locale], {
     maximumFractionDigits: 2,
@@ -120,8 +79,11 @@ export function NumberField({
   className,
 }: {
   label: string;
-  /** Said to a screen reader only, where the row already shows what it is. */
-  labelHidden?: boolean;
+  /**
+   * Said to a screen reader only, where the row already shows what it is;
+   * `"md"` from the medium width up, where a table's header row names it.
+   */
+  labelHidden?: boolean | "md";
   value: number;
   onChange: (value: number) => void;
   min?: number;
@@ -141,7 +103,14 @@ export function NumberField({
     <div className={cn("flex min-w-0 flex-col gap-1", className)}>
       <label
         htmlFor={id}
-        className={labelHidden ? "sr-only" : "text-xs text-muted-foreground"}
+        className={
+          labelHidden === true
+            ? "sr-only"
+            : cn(
+                "text-xs text-muted-foreground",
+                labelHidden === "md" && "md:sr-only",
+              )
+        }
       >
         {label}
       </label>

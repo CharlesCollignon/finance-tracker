@@ -17,6 +17,42 @@ import type { ChangelogEntry, RoadmapItem } from "./changelog";
  */
 export const CHANGELOG: readonly ChangelogEntry[] = [
   {
+    id: "2026-10-26-plan-history",
+    date: "2026-10-26",
+    kind: "new",
+    platforms: ["web"],
+    fr: {
+      title: "Plan rejoue vos comptes sur l’histoire des marchés",
+      body: "Plan montre où vos comptes peuvent aller en les rejouant sur ce que les marchés ont vraiment fait depuis 1970 : un chiffre au départ médian, la fourchette où finissent 8 départs sur 10 et le pire départ, en euros d’aujourd’hui.",
+      detail:
+        "Sous la courbe, « Vos comptes » montre de quoi elle est faite : ce que chaque compte a aujourd’hui, ce que vous y mettez chaque mois, son rendement historique, ses frais et l’impôt, tout modifiable ; un versement augmenté est pris sur votre compte courant. « Progression » réunit vos paliers, votre matelas et votre série, et les dates des paliers suivent désormais le départ médian. Les événements, « Et si… » et la vue « dans N ans » laissent place à cette page plus simple. Sur le site, la page du Plan le montre sur une personne d’exemple, trajectoire à jouer comprise.",
+    },
+    en: {
+      title: "Plan replays your accounts on market history",
+      body: "Plan shows where your accounts could go by replaying them on what markets actually did since 1970: one figure from the middle start, the range 8 starts in 10 end in, and the worst start, in today’s euros.",
+      detail:
+        "Under the chart, “Your accounts” shows what it is made of: what each account holds today, what you put in each month, its historical return, its fees and tax, all yours to change; a payment you raise comes off your current account. “Progress” brings your milestones, cushion and run together, and the milestones’ dates now follow the middle start. The events, “What if” and the “in N years” view give way to this simpler page. On the site, the Plan’s page shows it on a sample person, with a trajectory to play with.",
+    },
+  },
+  {
+    id: "2026-10-26-close-on-bearing",
+    date: "2026-10-26",
+    kind: "better",
+    platforms: ["web"],
+    fr: {
+      title: "Le bilan du mois se fait sur Le point",
+      body: "Votre série, le bouton « Faire le bilan du mois » et « Vos mois » quittent Plan pour la carte « Sur la durée » de Le point : le mois se clôture là où il se lit.",
+      detail:
+        "« Vos mois » ouvre les barres de chaque mois, tous vos bilans, votre marge et votre jour de lecture. Quand un mois est prêt pour son bilan, le rappel en haut de Le point ouvre directement la feuille.",
+    },
+    en: {
+      title: "The month close moves to Le point",
+      body: "Your run, the “Close the month” button and “Your months” leave Plan for Le point’s “Over time” card: a month is closed where it is read.",
+      detail:
+        "“Your months” opens each month’s bar, every close, your allowance and your reading day. When a month is ready to close, the reminder at the top of Le point opens the sheet straight away.",
+    },
+  },
+  {
     id: "2026-10-25-simpler-screens",
     date: "2026-10-25",
     kind: "better",
@@ -1358,10 +1394,10 @@ export const CHANGELOG: readonly ChangelogEntry[] = [
  */
 export const CHANGELOG_STATS = {
   /** `git rev-list --count HEAD` on the branch that wrote the newest entry. */
-  commits: 1035,
+  commits: 1118,
   /** The repository's first commit. */
   since: "2026-06-15",
-  asOf: "2026-10-13",
+  asOf: "2026-10-26",
 } as const;
 
 /**

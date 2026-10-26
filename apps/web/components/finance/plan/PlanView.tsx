@@ -1,63 +1,21 @@
 "use client";
 
-import {
-  Suspense,
-  use,
-  useEffect,
-  useMemo,
-  useState,
-  type ReactNode,
-} from "react";
-import { domAnimation, LazyMotion, m, MotionConfig } from "motion/react";
-import { CaretDown, GearSix, Sparkle } from "@phosphor-icons/react";
-import {
-  buildCushion,
-  buildMilestones,
-  cushionEnvelopes,
-  cushionSavings,
-  ENVELOPE_ORDER,
-  monthsUntil,
-  projectEnvelopes,
-  type EnvelopeId,
-  wealthToday,
-  withKnownFees,
-} from "@finance/core/future-plan";
-import { buildRunway } from "@finance/core/projection";
-import { isSavingsKind } from "@finance/core/savings-accounts";
-import {
-  resolveExtraTarget,
-  type YearAheadAccountId,
-} from "@finance/core/year-ahead";
-import { MonthCloseHistory } from "@/components/finance/MonthCloseHistory";
-import { FADE_IN } from "@/components/motion/fade";
+import { useEffect, useState } from "react";
 import { ConnectBankInvite } from "@/components/finance/bank/ConnectBankInvite";
-import { markMilestoneSeen } from "@/lib/actions/plan";
 import { GLASS_CARD } from "@/lib/glass";
-import { ICON } from "@/lib/icon-scale";
-import { useLocale, useT } from "@/lib/locale-context";
+import { useT } from "@/lib/locale-context";
 import type { PlanBase, PlanWealth } from "@/lib/queries/plan";
-import { useFormatCurrency } from "@/lib/use-currency";
 import { cn } from "@/lib/utils";
-import { HORIZON_MAX, LongViewCard } from "./LongViewCard";
-import { CushionCard, MilestonesCard } from "./MilestonesCard";
-import { monthLabelAhead } from "./plan-controls";
-import { planEnvelopes } from "./plan-envelopes";
-import { NetWorthCard, PropertyLongViewCard } from "./PropertyPlanCards";
+import { PlanAccounts } from "./PlanAccounts";
 import {
-  clearLongViewDraft,
-  saveLongViewDraft,
-  saveYearAheadSettings,
-  useLongViewDraft,
-  useYearAheadSettings,
-  type LongViewDraft,
+  savePlanEdits,
+  saveTrajectorySettings,
+  usePlanEdits,
+  useTrajectorySettings,
 } from "./plan-storage";
-import { MonthsCard, RunCard } from "./RunCard";
-import { YearAheadCard } from "./YearAheadCard";
-
-/** Where the long view opens, before the reader changes anything. */
-const DEFAULT_YEARS = 20;
-const DEFAULT_INFLATION = 0.02;
-const DEFAULT_WITHDRAWAL = 0.04;
+import { ProgressionCard } from "./ProgressionCard";
+import { TrajectoryCard } from "./TrajectoryCard";
+import { usePlanReplay } from "./use-plan-replay";
 
 interface PlanViewProps {
   base: PlanBase;
@@ -68,181 +26,93 @@ interface PlanViewProps {
 }
 
 /**
- * Plan: where the money is heading, and what keeps it going.
+ * Plan: where the money could go, replayed on what markets actually did.
  *
- * Four things, in the order a returning reader wants them: a year from now
- * with a slider to play with; the milestones on the way and the cushion the
- * savings make; the long view, after French tax; and the run of month-ends
- * with what each one saved. With a property, net worth sits under the
- * cushion and the homes' own long view under the long view's — beside the
- * savings and investments, never counted in them. Budgets, goals and tags used to live here and are
- * gone; the month-close settings stay, folded away under the months.
+ * Two cards since October 2026 (docs/plans/PLAN_REDESIGN_PLAN.md):
+ * « Votre trajectoire », the accounts replayed from every start since 1970,
+ * with « Vos comptes » under the chart — every figure the line is made of,
+ * the reader's to change; then « Progression », the milestones, the cushion
+ * and the run. The month close lives on Le point.
  *
- * Each card rises into place as it first scrolls into view.
- *
- * Drawn in two loads, as the phone draws it. The year ahead, the cushion and
- * the run need only the ledger and are here at once; the milestones and the
- * long view need the market value of the investment accounts, so they stream
- * in behind their own placeholders.
+ * The page arrives at once and holds still: no card waits to be scrolled
+ * to. It is drawn once the investments' market value has come, because
+ * every card counts them and a figure that jumps when they land is one
+ * nobody trusts; the cards' shapes stand in until then.
  */
 export function PlanView({ base, wealth, bankInvite }: PlanViewProps) {
-  const draft = useLongViewDraft(base.userId);
-  const yearAhead = useYearAheadSettings(base.userId);
-  const [extra, setExtra] = useState(0);
-
-  // The year ahead is drawn at once on the savings, and the wallets join it
-  // when their market value arrives — rising into the chart rather than
-  // holding the whole card back.
-  const { done: wealthDone, value: wealthValue } = useSettled(wealth);
-  const yearEnvelopes = useMemo(() => {
-    const all = planEnvelopes(base, wealthValue);
-    return wealthDone
-      ? all
-      : all.filter(
-          (envelope) => envelope.id === "savings" || isSavingsKind(envelope.id),
-        );
-  }, [base, wealthDone, wealthValue]);
-  const target = resolveExtraTarget(yearAhead.to, yearEnvelopes);
-
-  // The cushion is the savings at hand — every declared account but a PEL,
-  // or everything saved in one — the reader's corrections in the long view
-  // included, against the fixed costs; or the user's own figures, when the
-  // long view has had its savings taken out. The phone reads it the same way.
-  const runway = buildRunway(
-    cushionSavings(
-      cushionEnvelopes(draft?.envelopes ?? null, planEnvelopes(base, null)),
-    ),
-    base.templates,
-    base.year,
-    base.month,
-  );
-
-  // Everything saved in one is offered only to someone who has declared no
-  // savings account: beside them it would count the same euros twice.
-  const offerable = ENVELOPE_ORDER.filter(
-    (id) => id !== "savings" || base.savingsAccounts.length === 0,
-  );
+  const { done, value } = useSettled(wealth);
+  const t = useT();
 
   return (
-    <LazyMotion features={domAnimation} strict>
-      <MotionConfig reducedMotion="user">
+    <div className="flex flex-col gap-4 md:gap-5">
+      <p className="text-sm text-muted-foreground">{t("trajectory.intro")}</p>
+      {done ? (
+        <PlanCards base={base} wealth={value} />
+      ) : (
         <div className="flex flex-col gap-4 md:gap-5">
-          <Intro />
-
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-5">
-            <Reveal className="md:col-span-2">
-              <YearAheadCard
-                projection={base.projection}
-                hasTemplates={base.hasTemplates}
-                envelopes={yearEnvelopes}
-                pending={!wealthDone}
-                settings={yearAhead}
-                onSettingsChange={(next) =>
-                  saveYearAheadSettings(base.userId, next)
-                }
-                target={target}
-                extra={extra}
-                onExtraChange={setExtra}
-                milestoneLine={
-                  extra > 0 ? (
-                    <Suspense fallback={null}>
-                      <WhatIfMilestone
-                        base={base}
-                        wealth={wealth}
-                        extra={extra}
-                        target={target}
-                      />
-                    </Suspense>
-                  ) : null
-                }
-              />
-            </Reveal>
-
-            <Reveal>
-              <Suspense fallback={<CardPlaceholder rows={3} />}>
-                <Milestones base={base} wealth={wealth} />
-              </Suspense>
-            </Reveal>
-
-            <Reveal>
-              <CushionCard cushion={buildCushion(runway.months)} />
-            </Reveal>
-
-            {base.properties && base.properties.length > 0 ? (
-              <Reveal className="md:col-span-2">
-                <Suspense fallback={<CardPlaceholder rows={3} />}>
-                  <NetWorth
-                    base={base}
-                    wealth={wealth}
-                    properties={base.properties}
-                  />
-                </Suspense>
-              </Reveal>
-            ) : null}
-
-            <Reveal className="md:col-span-2">
-              <Suspense fallback={<CardPlaceholder rows={5} />}>
-                <LongView
-                  base={base}
-                  wealth={wealth}
-                  draft={draft}
-                  offerable={offerable}
-                />
-              </Suspense>
-            </Reveal>
-
-            <Reveal>
-              <RunCard
-                closes={base.closes}
-                closeWait={base.closeWait}
-                monthlyCommitted={runway.monthlyCommitted}
-              />
-            </Reveal>
-
-            <Reveal>
-              <MonthsCard history={base.closes.history} />
-            </Reveal>
-
-            <Reveal className="md:col-span-2">
-              <CloseDetails base={base} />
-            </Reveal>
-
-            {/* Under the run, because a connected bank is what makes the month's
-            bilan do itself. */}
-            {bankInvite ? (
-              <Reveal className="md:col-span-2">
-                <ConnectBankInvite surface="plan" />
-              </Reveal>
-            ) : null}
-          </div>
+          <CardPlaceholder rows={7} />
+          <CardPlaceholder rows={2} />
         </div>
-      </MotionConfig>
-    </LazyMotion>
+      )}
+      {/* Last, because a connected bank is what makes the figures above the
+          reader's own. */}
+      {bankInvite ? <ConnectBankInvite surface="plan" /> : null}
+    </div>
   );
 }
 
-/**
- * A card fading in the first time it scrolls into view. The page is long,
- * and an entrance played on load has finished before the reader ever
- * reaches the run; this one waits for them.
- */
-function Reveal({
-  className,
-  children,
+function PlanCards({
+  base,
+  wealth,
 }: {
-  className?: string;
-  children: ReactNode;
+  base: PlanBase;
+  wealth: PlanWealth | null;
 }) {
+  const settings = useTrajectorySettings(base.userId);
+  const edits = usePlanEdits(base.userId);
+
+  const hasProperty = (base.properties?.length ?? 0) > 0;
+  const replay = usePlanReplay({
+    base,
+    wealth,
+    edits,
+    years: settings.years,
+    withProperty: settings.withProperty && hasProperty,
+  });
+
   return (
-    <m.div
-      className={className}
-      initial={{ opacity: 0 }}
-      whileInView={{ opacity: 1 }}
-      viewport={{ once: true, amount: 0.12 }}
-      transition={FADE_IN}
-    >
-      {children}
-    </m.div>
+    <div className="flex flex-col gap-4 md:gap-5">
+      <TrajectoryCard
+        replay={replay}
+        years={settings.years}
+        onYears={(years) =>
+          saveTrajectorySettings(base.userId, { ...settings, years })
+        }
+        hasProperty={hasProperty}
+        withProperty={settings.withProperty}
+        onWithProperty={(withProperty) =>
+          saveTrajectorySettings(base.userId, { ...settings, withProperty })
+        }
+      >
+        <PlanAccounts
+          replay={replay}
+          edits={edits}
+          onEdits={(next) => savePlanEdits(base.userId, next)}
+          properties={base.properties}
+          today={base.today}
+          years={settings.years}
+        />
+      </TrajectoryCard>
+      <ProgressionCard
+        milestones={replay.milestones}
+        wealth={replay.wealth}
+        cushion={replay.cushion}
+        run={base.run}
+        seen={base.milestoneSeen}
+        year={base.year}
+        month={base.month}
+      />
+    </div>
   );
 }
 
@@ -275,249 +145,21 @@ function useSettled<T>(promise: Promise<T | null>): {
     : { done: false, value: null };
 }
 
-function Intro() {
-  const t = useT();
-  return (
-    <p className="text-sm text-muted-foreground">{t("futurePlan.intro")}</p>
-  );
-}
-
-/* ---------------------------------------------- what needs market prices */
-
-/**
- * The accounts from the user's own figures, and their monthly gross value
- * over the longest horizon the page offers.
- *
- * The milestones and the "what if" read these and never the long view's
- * edits: a milestone is about money that exists, and a reader trying out a
- * 12% return should not be told they have passed one. Forty years whatever
- * the horizon slider says, so moving it never moves a milestone.
- */
-function useFromData(base: PlanBase, wealth: Promise<PlanWealth | null>) {
-  const resolved = use(wealth);
-  return useMemo(() => {
-    const envelopes = planEnvelopes(base, resolved);
-    return {
-      envelopes,
-      current: wealthToday(envelopes),
-      series: projectEnvelopes({
-        envelopes,
-        years: HORIZON_MAX,
-        inflation: DEFAULT_INFLATION,
-        withdrawalRate: DEFAULT_WITHDRAWAL,
-      }).monthly,
-    };
-  }, [base, resolved]);
-}
-
-function Milestones({
-  base,
-  wealth,
-}: {
-  base: PlanBase;
-  wealth: Promise<PlanWealth | null>;
-}) {
-  const { current, series } = useFromData(base, wealth);
-  const milestones = useMemo(
-    () => buildMilestones(current, series),
-    [current, series],
-  );
-  const topReached = milestones.reduce<number | null>(
-    (top, milestone) =>
-      milestone.reached ? Math.max(top ?? 0, milestone.amount) : top,
-    null,
-  );
-
-  // Celebrated once, on whichever device sees it first: when a tier was
-  // crossed since the last visit, on the user's real figures. A first visit
-  // only records where they stand. The figure the page loaded with is held,
-  // so writing the new one does not take the badge away again.
-  const [seen] = useState(base.milestoneSeen);
-  const isNew = seen !== null && topReached !== null && topReached > seen;
-
-  useEffect(() => {
-    if (topReached !== null && (seen === null || topReached > seen)) {
-      void markMilestoneSeen(topReached);
-    }
-  }, [seen, topReached]);
-
-  return (
-    <MilestonesCard
-      milestones={milestones}
-      current={current}
-      horizonYears={HORIZON_MAX}
-      year={base.year}
-      month={base.month}
-      isNew={isNew}
-    />
-  );
-}
-
-/** Net worth today, the homes beside what the milestones count. */
-function NetWorth({
-  base,
-  wealth,
-  properties,
-}: {
-  base: PlanBase;
-  wealth: Promise<PlanWealth | null>;
-  properties: NonNullable<PlanBase["properties"]>;
-}) {
-  const { current } = useFromData(base, wealth);
-  return (
-    <NetWorthCard liquid={current} properties={properties} today={base.today} />
-  );
-}
-
-/**
- * What the "Et si…" extra does to the next milestone it moves, if any.
- *
- * The extra goes into the account picked, so the milestones' series is
- * projected again with it there, compounding at that account's return. On
- * the current account it moves no milestone: they count savings and
- * investments.
- */
-function WhatIfMilestone({
-  base,
-  wealth,
-  extra,
-  target,
-}: {
-  base: PlanBase;
-  wealth: Promise<PlanWealth | null>;
-  extra: number;
-  target: YearAheadAccountId;
-}) {
-  const t = useT();
-  const locale = useLocale();
-  const format = useFormatCurrency();
-  const { envelopes, current, series } = useFromData(base, wealth);
-
-  const line = useMemo(() => {
-    if (!envelopes.some((envelope) => envelope.id === target)) {
-      return null;
-    }
-    const boosted = projectEnvelopes({
-      envelopes: envelopes.map((envelope) =>
-        envelope.id === target
-          ? { ...envelope, monthly: envelope.monthly + extra }
-          : envelope,
-      ),
-      years: HORIZON_MAX,
-      inflation: DEFAULT_INFLATION,
-      withdrawalRate: DEFAULT_WITHDRAWAL,
-    }).monthly;
-    for (const milestone of buildMilestones(current, series)) {
-      if (milestone.reached) {
-        continue;
-      }
-      const before = monthsUntil(milestone.amount, series);
-      const after = monthsUntil(milestone.amount, boosted);
-      if (after === null) {
-        continue;
-      }
-      if (before === null) {
-        return t("futurePlan.whatIfNowReached", {
-          milestone: format(milestone.amount),
-          month: monthLabelAhead(base.year, base.month, after, locale),
-        });
-      }
-      if (after < before) {
-        return t("futurePlan.whatIfSooner", {
-          milestone: format(milestone.amount),
-          count: before - after,
-        });
-      }
-    }
-    return null;
-  }, [
-    envelopes,
-    current,
-    series,
-    extra,
-    target,
-    t,
-    format,
-    locale,
-    base.year,
-    base.month,
-  ]);
-
-  if (!line) {
-    return null;
-  }
-  return (
-    <p className="privacy-sensitive mt-1 flex items-center gap-1.5 text-sm text-primary-ink">
-      <Sparkle size={ICON.sm} weight="fill" aria-hidden />
-      {line}
-    </p>
-  );
-}
-
-function LongView({
-  base,
-  wealth,
-  draft,
-  offerable,
-}: {
-  base: PlanBase;
-  wealth: Promise<PlanWealth | null>;
-  draft: LongViewDraft | null;
-  offerable: readonly EnvelopeId[];
-}) {
-  const { envelopes } = useFromData(base, wealth);
-  const view = useMemo<LongViewDraft>(
-    () =>
-      draft
-        ? // An edit saved before accounts had fees takes the known ones.
-          { ...draft, envelopes: withKnownFees(draft.envelopes, envelopes) }
-        : {
-            years: DEFAULT_YEARS,
-            inflation: DEFAULT_INFLATION,
-            withdrawalRate: DEFAULT_WITHDRAWAL,
-            envelopes,
-          },
-    [draft, envelopes],
-  );
-  const projection = useMemo(() => projectEnvelopes(view), [view]);
-
-  const card = (
-    <LongViewCard
-      view={view}
-      projection={projection}
-      edited={draft !== null}
-      offerable={offerable}
-      onChange={(next) => saveLongViewDraft(base.userId, next)}
-      onReset={() => clearLongViewDraft(base.userId)}
-    />
-  );
-  if (!base.properties || base.properties.length === 0) {
-    return card;
-  }
-  // The homes follow the long view's horizon and inflation, so moving the
-  // slider moves both cards.
-  return (
-    <div className="flex flex-col gap-4 md:gap-5">
-      {card}
-      <PropertyLongViewCard
-        properties={base.properties}
-        today={base.today}
-        years={view.years}
-        inflation={view.inflation}
-        liquidNet={projection.netValue}
-      />
-    </div>
-  );
-}
-
 /** A card's shape while what it needs is on its way. */
-function CardPlaceholder({ rows }: { rows: number }) {
+function CardPlaceholder({
+  rows,
+  className,
+}: {
+  rows: number;
+  className?: string;
+}) {
   return (
     <div
       aria-hidden
       className={cn(
         GLASS_CARD,
         "flex h-full flex-col gap-3 rounded-card p-card",
+        className,
       )}
     >
       <div className="h-7 w-40 animate-pulse rounded-control bg-muted/40" />
@@ -528,54 +170,5 @@ function CardPlaceholder({ rows }: { rows: number }) {
         />
       ))}
     </div>
-  );
-}
-
-/* ------------------------------------------------- the close's settings */
-
-/**
- * The close's own settings — the allowance and the reading day — and the
- * month-by-month detail, folded away under the months: they are set once and
- * looked at rarely, and the page above is what it is for.
- */
-function CloseDetails({ base }: { base: PlanBase }) {
-  const t = useT();
-  return (
-    <details className={cn(GLASS_CARD, "group rounded-card")}>
-      <summary
-        className={cn(
-          "flex min-h-14 cursor-pointer list-none items-center justify-between gap-3 rounded-card px-card",
-          "text-sm font-medium text-muted-foreground transition-colors duration-hover hover:text-foreground",
-          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-          "[&::-webkit-details-marker]:hidden",
-        )}
-      >
-        <span className="flex items-center gap-2">
-          <span
-            aria-hidden
-            className="flex size-7 items-center justify-center rounded-full bg-muted text-foreground"
-          >
-            <GearSix size={ICON.sm} weight="fill" />
-          </span>
-          <span className="group-open:hidden">{t("planWeb.closeDetails")}</span>
-          <span className="hidden group-open:inline">
-            {t("planWeb.closeDetailsHide")}
-          </span>
-        </span>
-        <CaretDown
-          size={ICON.sm}
-          aria-hidden
-          className="transition-transform duration-hover group-open:rotate-180"
-        />
-      </summary>
-      <div className="px-1.5 pb-1.5">
-        <MonthCloseHistory
-          history={base.closes.history}
-          summary={base.closes.summary}
-          unrecordedCap={base.closes.settings.unrecordedCap}
-          closeDay={base.closes.settings.closeDay}
-        />
-      </div>
-    </details>
   );
 }

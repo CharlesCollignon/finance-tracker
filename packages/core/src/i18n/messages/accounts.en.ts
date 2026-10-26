@@ -85,8 +85,6 @@ export const accountsEn = {
   emptyBody:
     "Livret A, PEL, PEA… Add the ones you have, and the Plan will show what each one becomes.",
 
-  breakdown: "By account",
-
   analysisIntro:
     "What each account earns, how your money is spread, and what it costs you.",
   returnSavings: "{rate} a year, after tax",

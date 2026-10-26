@@ -3,6 +3,7 @@ import { removalFr } from "./removal.fr";
 import { planPhoneFr } from "./plan-phone.fr";
 import { planWebFr } from "./plan-web.fr";
 import { futurePlanFr } from "./future-plan.fr";
+import { trajectoryFr } from "./trajectory.fr";
 import { accountsFr } from "./accounts.fr";
 import { placementsWebFr } from "./placements-web.fr";
 import { placementsPhoneFr } from "./placements-phone.fr";
@@ -1622,12 +1623,6 @@ export const fr: Messages = {
     saved: "Enregistré",
   },
 
-  projection: {
-    noIncomeCharge:
-      "Aucune opération récurrente n'apporte de revenu\u00A0: votre salaire n'entre dans aucun de ces chiffres. Ajoutez-le dans Récurrents et tout change ici.",
-    noIncomeCta: "Ajouter un revenu récurrent",
-  },
-
   runway: {
     underAMonth: "Moins d'un mois de dépenses fixes.",
     months: "{count} mois de dépenses fixes.",
@@ -2830,6 +2825,7 @@ export const fr: Messages = {
   planPhone: planPhoneFr,
   planWeb: planWebFr,
   futurePlan: futurePlanFr,
+  trajectory: trajectoryFr,
   accounts: accountsFr,
   placementsWeb: placementsWebFr,
   placementsPhone: placementsPhoneFr,

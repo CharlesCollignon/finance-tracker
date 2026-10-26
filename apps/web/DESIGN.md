@@ -811,8 +811,8 @@ all; changing one alone breaks the frame.
 ### Moments
 
 A moment is something the user did, said back to them where it happened: a
-milestone reached, a cushion rung lit and the run kept alive on Plan, a month
-closed in the close sheet, the review inbox emptied, a loan half repaid or
+milestone reached and a cushion rung lit on Plan, the run kept alive and a
+month closed in the close sheet on Le point, the review inbox emptied, a loan half repaid or
 repaid on its card, and half a home the user's. It replaced, in October 2026, the rule that
 only Plan celebrates. The allowance is specific:
 
@@ -874,85 +874,55 @@ pops in with a gold tick, and under it how many shops were just filed under a
 category — « 3 commerces appris pour la prochaine fois. » — which is what the
 next sync learns from. Counted, not guessed: the groups filed in that sitting.
 
-### Plan: Where Moments Gather
+### Plan: History as Witness
 
-Plan (`components/finance/plan/`) is where the money is heading: the months
-ahead account by account with « Pourquoi » and « Et si… », the milestones and
-the cushion, the long view after French tax, and the run of month-ends with
-what each one saved. Most of the app's moments live here, and the allowance is
-specific:
+Plan (`components/finance/plan/`) is where the money could go, replayed on
+what markets actually did (October 2026, `docs/plans/PLAN_REDESIGN_PLAN.md`).
+Two cards, and nothing else: « Votre trajectoire », with « Vos comptes »
+under its chart, then « Progression ». The run of month-ends, the close and
+« Vos mois » live on Le point's momentum card
+(`components/finance/bearing/MomentumCard.tsx`). Every figure comes from
+`@finance/core/history`: the user's own accounts put through every start
+since January 1970, in today's euros.
 
-- **Gold means done.** Reached milestones (the orb, `tone="mark"`, in a glow of
-  `--primary` drawn as a radial light, never a shadow), lit cushion rungs, the
-  live flame, and the savings bars, which are gold because they are savings.
-  Everything still ahead is neutral.
-- **Motion arrives, then rests.** Curves, the long view's stack and the bars
-  fade in, as everything in the app does (`plan.module.css`); only the moments
-  move more — badges pop past their size and settle, on the shared moments'
-  pop and flame. The only loops are the flame's sway and the glow's breath,
-  both in place, and both switched off under reduced motion.
-- **Play answers at once.** The slider, the horizon and every field of the
-  long view redraw immediately; a calculator that animates between answers is
-  one you wait for. The headline figures count to their new value.
-- **The months ahead show where, and why** (October 2026, the owner's call).
-  The figure is every account at the end of the window
-  (`packages/core/src/year-ahead.ts`). That is the current account walked
-  forward by the recurring entries, plus each savings account and wallet as
-  the milestones see it, plus « Autre épargne » for money set aside that no
-  account receives. The chart is one gold line, the visible accounts added
-  up, inside a gold-washed range where 8 futures in 10 end. The range comes
-  from each account's long-run volatility. The chart is zoomed on where the
-  money is, with two to four round amounts as labelled gridlines, so the
-  scale stays honest. Under the figure: that range in words, the value after
-  tax if everything were sold, and an « En euros d'aujourd'hui » switch. The
-  assumptions are written under the accounts: prices +2 %/yr with salary
-  and charges, shares ±15 %/yr, crypto ±65 %, known fees deducted (October
-  2026, the owner asked for "a more realisable future").
-  The accounts are rows, not stacked bands (stacked, they were too thin to
-  read): colour dot, name, a sparkline, today → end and the change. The
-  sparklines share one scale in euros, so a steep one is a big change. The
-  colours are the long view's chart tokens in its order; the current account
-  is the ink, and « Autre épargne » and anything past four accounts are the
-  muted "Autres". A row takes its account out of the figure; pointing at a
-  « Pourquoi » row lights its account's row.
-  Under the legend, one panel at a time behind a switch, so the card reads
-  calmly (the owner asked for it simpler, October 2026). On a wide card
-  each panel uses the whole width in two columns: « Pourquoi »'s rows, and
-  « Et si… »'s extra beside its events. « Pourquoi » is one
-  month's income cut into charges, everyday spending, each account and what
-  stays on the current account, with one sentence for interest and returns.
-  « Et si… » aims its extra at one account. Events (a raise, a bonus, a big
-  expense) are added from one « + Un événement » button and land on the
-  current account, each as a one-line row and a marker that rides the line
-  and is dragged from month to month. The window (6 mois to 5 ans), the target, the hidden accounts and the
-  events stay in this browser; the extra does not.
-- **The months ahead morph instead of redrawing.** This is the one exception
-  to "arrives, then rests", kept to this card. Every path there is drawn from
-  the same 61 points (the sparklines from 25), so a longer window stretches
-  the line, its range and every sparkline instead of redrawing them. The morph is
-  550ms on the one curve. The pills that slide (the window, the target) and
-  the crosshair's readout follow on one quick spring (`FOLLOW` in
-  `year-ahead-parts.tsx`). Under reduced motion every one of them lands at
-  once.
-- **The page meets the reader where they scroll.** Each card fades in the
-  first time it comes into view (`Reveal` in `PlanView.tsx`), rather than all
-  at once on load, finished before the run is reached. The
-  cards carry no light under the pointer: one was tried and the owner had it
-  taken off (October 2026).
-- **The long view is a calculator, and says so.** It opens on the user's own
-  figures and the 2026 French rates, every input is theirs to change, the
-  edits stay in this browser, and "Revenir à mes chiffres" goes back. The
-  milestones never read those edits: they are about money that exists.
-  Each wallet has « Frais par an », pre-filled with what Placements knows
-  (fund charges weighted by value, plus the envelope's fee); livrets have
-  none. The fees come off the return in the long view, the milestones and
-  the year ahead alike (`Envelope.fees`, October 2026).
-- **What the future is made of, quietly.** Under the long view's net value, a
-  1.5px bar of each account's share (2px seams, chart tokens in the accounts'
-  order, never gold) and one muted line naming them, four at most and the rest
-  as "Autres". It follows the year the chart is being read at; which accounts
-  are named, and so their colours, is decided at the horizon and held while
-  the chart is scrubbed — a colour follows its account, never its rank.
+- **One figure, said honestly.** The trajectory's headline is the middle
+  start at the horizon (1, 5, 10, 20 or 30 years; thirty is the ceiling,
+  where the starts already overlap heavily). Under it, in words: the band
+  eight starts in ten end in, the value after tax if everything were sold,
+  and the worst start, named by its month. The copy says « départs », never
+  « chances ». The chart is one gold line inside a gold-washed band, two to
+  four round amounts as gridlines, and a crosshair that reads a month out
+  to the pointer, a finger or the arrow keys.
+- **The chart sits on its accounts.** « Vos comptes » is in the same card,
+  under the chart, so the line and what makes it are read together: a row
+  per account — what it holds today, what goes in each month, the return
+  its history gave, its fees, the tax on its gains — each a field to
+  change, and the chart follows. The current account and what is set aside
+  with no account are rows too, read-only, because the line starts from
+  them; a total says where it starts. A monthly figure raised in a row is
+  taken off the current account's — money moved, not made — so the total a
+  month holds and only what it earns changes. Under each name, the history it
+  follows and how often that ended below prices over the horizon. A
+  changed return shifts that account's whole history, its falls kept. A
+  home, when « Avec vos biens » is on, is a row with its yearly growth. The
+  withdrawal that has always lasted thirty years, and the sources with
+  their terms, folded, close the card. On a phone-width screen each row is
+  a small card of labelled fields; from the medium width up, a table whose
+  header row names the columns.
+- **« Progression » keeps the moments.** Reached milestones in gold pills,
+  the next with its date on the middle start, the cushion's three rungs,
+  and the run with the way to Le point — three columns side by side. A
+  milestone crossed since the last visit pops once, on the shared moments'
+  pop; nothing else on the page moves on its own.
+- **Motion is quiet.** The page draws at once, without fading cards in as
+  they scroll into view; a new horizon crossfades the chart rather than
+  morphing it; the headline is the one figure that counts.
+  Gold means done or the middle line, never decoration.
+- **Taken off in October 2026, at the owner's call:** « Face à l'histoire »
+  (today's investments through 2000, 2008, 2020 and 2022) and « Et si… »
+  (a slider of so much more a month): the first was one card too many, the
+  second too vague to be of use. Changing an account's monthly figure in
+  « Vos comptes » answers the same question, on the reader's own account.
 
 ### Placements: The User's Own Accounts
 

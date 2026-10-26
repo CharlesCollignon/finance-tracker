@@ -1,4 +1,5 @@
 import { getCurrentMonth, todayIsoLocal } from "@finance/core/constants";
+import type { PositionForMix } from "@finance/core/history/mix";
 import type { InvestmentWalletId } from "@finance/core/investments";
 import { planWealthFromPortfolio } from "@finance/core/investment-positions";
 import {
@@ -8,16 +9,12 @@ import {
 import type { RecurringTemplateWithCategory } from "@finance/core/types/database";
 import { YEAR_AHEAD_MAX_MONTHS } from "@finance/core/year-ahead";
 import { getLocale } from "@/lib/locale";
-import { readCashBalance, readCloseWait } from "@/lib/queries/bank-balance";
-import type { CloseWaitAccount } from "@finance/data/bank-balance";
+import { readCashBalance } from "@/lib/queries/bank-balance";
 import {
   getRecurringTemplates,
   getSavingsReserve,
 } from "@/lib/queries/finance";
-import {
-  getMonthCloseOverview,
-  type MonthCloseOverview,
-} from "@/lib/queries/month-close";
+import { getMonthCloseOverview } from "@/lib/queries/month-close";
 import { getWalletPortfolio } from "@/lib/queries/wallet-portfolio";
 import { getWalletPlans } from "@/lib/queries/investments";
 import { walletFeeRates, wrapperFeesFromPlans } from "@finance/core/fund-costs";
@@ -38,22 +35,20 @@ import { getFlags } from "@/lib/flags";
  * (`apps/mobile/src/lib/plan-future-data.ts`), so both draw the same page
  * from the same reads.
  *
- * The year ahead, the cushion and the run come from the ledger alone — a few
- * indexed reads — and are on screen at once. The milestones and the long view
- * also need what each investment account is worth today, which asks the
- * market for prices, so they stream in after and never hold the rest back.
+ * The ledger's part — the recurring entries, the savings, the run — comes
+ * from a few indexed reads. What each investment account is worth asks the
+ * market for prices, so it arrives on its own; the page waits for both,
+ * because every card counts the investments.
  */
 
 export interface PlanBase {
   /** Scopes what this browser remembers to the account it remembers it for. */
   userId: string;
   today: string;
-  /** The month in progress, where the year ahead starts. */
+  /** The month in progress, where the trajectory starts. */
   year: number;
   month: number;
   templates: RecurringTemplateWithCategory[];
-  /** Whether any recurring entry is running: without one there is no year ahead to draw. */
-  hasTemplates: boolean;
   /**
    * The highest milestone already celebrated, on any device, or null before
    * the first. Read with the page and held by it: the page writes the new one
@@ -68,19 +63,18 @@ export interface PlanBase {
    * one account built from the reserve.
    */
   savingsAccounts: PlanSavingsAccount[];
-  closes: MonthCloseOverview;
   /**
-   * The accounts the month due waits on, when a bank should have closed it
-   * and cannot read one of them. Empty otherwise.
+   * The run of months closed inside the allowance, for « Progression »;
+   * null before a month has been measured. The close itself is on Le point.
    */
-  closeWait: CloseWaitAccount[];
+  run: { streak: number; best: number } | null;
   /**
-   * The months ahead from the recurring templates, as far as the year
-   * ahead's longest window: the card draws as many of them as the reader asks.
+   * The months ahead from the recurring templates, which walk the current
+   * account forward in the trajectory.
    */
   projection: ForwardProjection;
   /**
-   * The user's properties, for net worth and the long view — null for an
+   * The user's properties, for « Avec vos biens » — null for an
    * account without `property.track`, which sees neither.
    */
   properties: PropertyRead[] | null;
@@ -112,17 +106,14 @@ export async function gatherPlanBase(userId: string): Promise<PlanBase> {
       getNotificationSettings(await createClient(), userId).catch(() => null),
       getFlags(),
     ]);
-  const [properties, closeWait] = await Promise.all([
-    isFlagOn(flags, "property.track")
-      ? Promise.all([
-          getProperties(await createClient(), userId),
-          // The homes owned through the shared space, as this person's part
-          // of each (6c).
-          getJointPropertiesFor(await createClient(), userId).catch(() => []),
-        ]).then(([own, joint]) => [...own.properties, ...joint])
-      : null,
-    readCloseWait(userId, closes.next, today),
-  ]);
+  const properties = isFlagOn(flags, "property.track")
+    ? await Promise.all([
+        getProperties(await createClient(), userId),
+        // The homes owned through the shared space, as this person's part
+        // of each (6c).
+        getJointPropertiesFor(await createClient(), userId).catch(() => []),
+      ]).then(([own, joint]) => [...own.properties, ...joint])
+    : null;
 
   return {
     userId,
@@ -130,11 +121,11 @@ export async function gatherPlanBase(userId: string): Promise<PlanBase> {
     year,
     month,
     templates,
-    hasTemplates: templates.some(
-      (template) =>
-        template.active && (!template.ends_on || template.ends_on >= today),
-    ),
     milestoneSeen: settings?.milestoneSeen ?? null,
+    run:
+      closes.summary.sample > 0
+        ? { streak: closes.summary.streak, best: closes.summary.bestStreak }
+        : null,
     savingsReserve,
     savingsAccounts: savings.accounts.map((account) => ({
       kind: account.kind,
@@ -142,8 +133,6 @@ export async function gatherPlanBase(userId: string): Promise<PlanBase> {
       rate: account.rate,
       categoryId: account.categoryId,
     })),
-    closes,
-    closeWait,
     properties,
     projection: buildForwardProjection({
       templates,
@@ -164,11 +153,16 @@ export async function gatherPlanBase(userId: string): Promise<PlanBase> {
 export interface PlanWealth {
   /** What each investment account is worth today. */
   wallets: Partial<Record<InvestmentWalletId, number>>;
+  /**
+   * Every position, with what it is worth and what it is: the history each
+   * wallet follows is read from its funds (`walletMixes`).
+   */
+  positions: PositionForMix[];
   /** The account each position-linked recurring purchase goes into. */
   templateWallets: Record<string, InvestmentWalletId>;
   /**
    * What each account costs a year, funds and envelope together, as a
-   * fraction — taken off its return in the year ahead.
+   * fraction — taken off its return in the replay.
    */
   fees: Partial<Record<InvestmentWalletId, number>>;
 }
@@ -177,9 +171,9 @@ export interface PlanWealth {
  * What the investment accounts hold, at market prices.
  *
  * Null when the portfolio cannot be read — a quote source down, a timeout —
- * rather than an error: the page then shows the long view from the savings
- * alone, which is less than it could say and still true, where a thrown
- * error would take the year ahead and the run down with it.
+ * rather than an error: the page then replays the savings alone, which is
+ * less than it could say and still true, where a thrown error would take
+ * the whole page down with it.
  */
 export async function gatherPlanWealth(
   userId: string,
@@ -187,7 +181,7 @@ export async function gatherPlanWealth(
   try {
     const [portfolio, plans] = await Promise.all([
       getWalletPortfolio(userId, { includeHistory: false }),
-      // Fees left unknown are better than a Plan without its long view.
+      // Fees left unknown are better than a Plan without its investments.
       getWalletPlans(userId).catch(() => []),
     ]);
     return {

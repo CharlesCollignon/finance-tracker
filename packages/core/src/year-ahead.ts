@@ -78,20 +78,13 @@ export interface YearAheadEvent {
   month: number;
 }
 
-/** What a new event starts at, before the reader changes it. */
-export const YEAR_AHEAD_EVENT_DEFAULTS: Record<YearAheadEventKind, number> = {
-  raise: 100,
-  bonus: 1000,
-  expense: 2000,
-};
-
 /** Past this many, the curve is a calendar rather than a picture. */
 export const YEAR_AHEAD_MAX_EVENTS = 6;
 
 /** The card's settings, as a browser or the phone remembers them. */
 export interface YearAheadSettings {
   horizon: YearAheadHorizon;
-  /** Every figure in today's euros, at `YEAR_AHEAD_INFLATION`. */
+  /** Every figure in today's euros, at the walk's `inflation`. */
   realTerms: boolean;
   /** Where « Et si… » puts the extra; null for the default account. */
   to: YearAheadAccountId | null;
@@ -200,14 +193,6 @@ export function resolveExtraTarget(
 }
 
 /* ---------------------------------------------------------------- realism */
-
-/**
- * How fast prices rise each year: the ECB's target, which French inflation
- * has hovered around since 2024. Income, charges and everyday spending rise
- * with it month by month; the regular transfers to savings stay what the
- * reader set, as they do in life until someone changes them.
- */
-export const YEAR_AHEAD_INFLATION = 0.02;
 
 /**
  * How much a year can swing around an account's expected return — its

@@ -11,7 +11,10 @@ function Bone({ className }: { className?: string }) {
   );
 }
 
-/** The page's shape while it gathers: the year ahead, two cards, the long view. */
+/**
+ * The page's shape while it gathers: the trajectory, « Face à l'histoire »
+ * beside « Progression », and « Hypothèses » folded.
+ */
 export default function PlanLoading() {
   return (
     <>
@@ -46,11 +49,10 @@ export default function PlanLoading() {
             <div
               className={cn(
                 GLASS_CARD,
-                "flex flex-col gap-3 rounded-card p-card md:col-span-2",
+                "flex min-h-14 items-center rounded-card px-card md:col-span-2",
               )}
             >
-              <Bone className="h-4 w-40" />
-              <Bone className="h-52 w-full" />
+              <Bone className="h-4 w-32" />
             </div>
           </div>
         </div>

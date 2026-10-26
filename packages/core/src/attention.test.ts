@@ -68,7 +68,7 @@ describe("buildAttention", () => {
         id: "close",
         tone: "waiting",
         messageKey: "month.attentionBaseline",
-        href: "/plan",
+        href: "/bearing?close=1",
         actionKey: "month.actionStart",
       },
     ]);

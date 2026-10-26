@@ -15,6 +15,7 @@ import {
   type MonthBalance,
 } from "@finance/core/month-balance";
 import { withMyShare } from "@finance/core/my-share";
+import { buildRunway } from "@finance/core/projection";
 import type { PurchaseToConfirm } from "@finance/core/purchases-to-confirm";
 import type { FulfilmentProposal } from "@finance/core/recurring-fulfilment";
 import { firstCloseDay, type SetupFacts } from "@finance/core/setup-steps";
@@ -22,6 +23,7 @@ import type { UpcomingCharge } from "@finance/core/still-to-come";
 import type { RecurringTemplateWithCategory } from "@finance/core/types/database";
 import { reviewedYear, yearReviewPrompt } from "@finance/core/year-review";
 
+import { readCloseWait, type CloseWaitAccount } from "./bank-balance";
 import { hasBankFeed } from "./bank-feed";
 import {
   countPendingFeedItems,
@@ -42,7 +44,7 @@ import {
   type BalanceSource,
   type MonthBalanceRead,
 } from "./month-balance";
-import { getMonthCloseOverview } from "./month-close";
+import { getMonthCloseOverview, type MonthCloseOverview } from "./month-close";
 import { readDismissedPrompts } from "./preferences";
 import { getPurchasesToConfirm } from "./purchases-to-confirm";
 import { readMyShare } from "./spaces";
@@ -103,6 +105,18 @@ export interface BearingMonth {
   } | null;
   /** The month in progress only — the run and wallets are about now. */
   run: { streak: number; best: number } | null;
+  /**
+   * The month close, for the month in progress: the months closed, the one
+   * due, and what its sheet reads. It moved here from the Plan in October
+   * 2026 — a month is closed where the month is read.
+   */
+  close: {
+    overview: MonthCloseOverview;
+    /** A month's fixed costs: the days a close's savings would cover. */
+    monthlyCommitted: number;
+    /** The accounts the month due waits on, when the bank should close it. */
+    wait: CloseWaitAccount[];
+  } | null;
   invested: number | null;
   attention: AttentionItem[];
   /**
@@ -271,6 +285,7 @@ export async function readBearingMonth(
   /* --------------------------------------- what only the present has */
 
   let run: BearingMonth["run"] = null;
+  let close: BearingMonth["close"] = null;
   let invested: number | null = null;
   let attention: AttentionItem[] = [];
   let arrived: FulfilmentReport | null = null;
@@ -356,6 +371,12 @@ export async function readBearingMonth(
       };
     }
 
+    close = {
+      overview: closes,
+      monthlyCommitted: buildRunway(0, templates, year, month).monthlyCommitted,
+      wait: await readCloseWait(db, userId, closes.next, today),
+    };
+
     invested = total > 0 ? total : null;
 
     attention = buildAttention({
@@ -401,6 +422,7 @@ export async function readBearingMonth(
     upcoming: shownUpcoming,
     outflows,
     run,
+    close,
     invested,
     attention,
     arrived: arrived && arrived.proposals.length > 0 ? arrived : null,
