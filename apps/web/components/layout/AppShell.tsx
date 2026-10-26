@@ -25,6 +25,12 @@ interface AppShellProps {
   space?: SpaceView | null;
   /** « Nouveautés » this person has not seen yet, for the account menu. */
   nouveautes?: number;
+  /**
+   * A line above every page — the demo's — drawn inside the column, under
+   * the band: from `md` the band is fixed over the page, and anything put
+   * before the shell ends up beneath it.
+   */
+  banner?: ReactNode;
 }
 
 export function AppShell({
@@ -35,6 +41,7 @@ export function AppShell({
   showProperty = false,
   space = null,
   nouveautes = 0,
+  banner = null,
 }: AppShellProps) {
   return (
     <SpaceProvider space={space}>
@@ -79,6 +86,7 @@ export function AppShell({
             the account menu, and the failure mode is not local: the pane would grow to fit the
             band, the document would grow with the pane, and every card on
             every page would inherit the overflow through its own `w-full`. */}
+            {banner}
             <main className="flex min-h-0 min-w-0 flex-1 flex-col">
               <PageEnter>{children}</PageEnter>
             </main>

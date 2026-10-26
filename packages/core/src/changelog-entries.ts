@@ -17,6 +17,20 @@ import type { ChangelogEntry, RoadmapItem } from "./changelog";
  */
 export const CHANGELOG: readonly ChangelogEntry[] = [
   {
+    id: "2026-10-26-le-point-layout",
+    date: "2026-10-26",
+    kind: "fixed",
+    platforms: ["web"],
+    fr: {
+      title: "Le point et la démo, deux retouches",
+      body: "Sur Le point, « Fiabilité du mois » et « Partager ce mois » prennent toute la largeur : les faits côte à côte, le texte à gauche et les boutons à droite, plus de carte seule à côté d’un vide. Dans la démo, la ligne qui le rappelle n’est plus cachée sous la barre du haut sur ordinateur.",
+    },
+    en: {
+      title: "The Overview and the demo, two touches",
+      body: "On the Overview, “Month check” and “Share this month” take the whole width: the facts side by side, the words on the left and the buttons on the right, no more card alone beside an empty space. In the demo, the line saying so is no longer hidden under the top bar on a computer.",
+    },
+  },
+  {
     id: "2026-10-26-site",
     date: "2026-10-26",
     kind: "better",

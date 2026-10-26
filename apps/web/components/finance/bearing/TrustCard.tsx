@@ -36,7 +36,9 @@ export function TrustCard({ signals }: { signals: TrustSignal[] }) {
       icon={<ShieldCheck size={ICON.sm} weight="bold" />}
       title={t("bearingMonth.trust.title")}
     >
-      <ul className="flex flex-col gap-2">
+      {/* One fact a cell, side by side once there is room: the card runs
+          the whole row of Le point's grid. */}
+      <ul className="grid grid-cols-1 gap-x-6 gap-y-1 sm:grid-cols-2 xl:grid-cols-4">
         {signals.map((signal) => {
           const text = t(signal.messageKey, {
             ...signal.params,
@@ -78,7 +80,9 @@ export function TrustCard({ signals }: { signals: TrustSignal[] }) {
                   />
                 </Link>
               ) : (
-                <div className="flex items-center gap-2.5 px-1 py-1">{body}</div>
+                <div className="flex items-center gap-2.5 px-1 py-1">
+                  {body}
+                </div>
               )}
             </li>
           );

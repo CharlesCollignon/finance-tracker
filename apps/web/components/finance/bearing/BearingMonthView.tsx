@@ -182,9 +182,11 @@ export function BearingMonthView({
           ) : null}
 
           {/* What the figures above rest on: the lines, the charges, the
-              review, the close. Not on a first visit, which has none yet. */}
+              review, the close. Not on a first visit, which has none yet.
+              The whole row, as a strip: a fact a cell, never a card left
+              alone beside an empty one. */}
           {!data.empty && data.trust.length > 0 ? (
-            <FadeInItem>
+            <FadeInItem className="md:col-span-2 xl:col-span-3">
               <TrustCard signals={data.trust} />
             </FadeInItem>
           ) : null}
@@ -210,7 +212,7 @@ export function BearingMonthView({
           {/* The month to send or to print: not a month ahead, which has
               nothing to say yet, nor a first visit. */}
           {!data.empty && data.balance.period !== "future" ? (
-            <FadeInItem>
+            <FadeInItem className="md:col-span-2 xl:col-span-3">
               <ShareMonthCard year={data.year} month={data.month} />
             </FadeInItem>
           ) : null}
