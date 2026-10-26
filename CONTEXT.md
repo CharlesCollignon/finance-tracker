@@ -843,6 +843,17 @@ part du commun » counts a person's spending as their part of what the space
 spent instead of what they transferred to it; their balance does not move.
 _Avoid_: quota, contribution, split of income
 
+**Balance between you**:
+_En français_ : équilibre entre vous (« Équilibre entre vous », la carte)
+What each partner put into the joint account over a span — their own
+« Versement au compte commun » rows, the one sum of theirs the space may
+read (`space_contributions`, migration 078) — against their part of what
+the space spent; and the one line it adds up to: what the partner behind
+would put into the account to be level with the split. On Le point under
+« Commun » for the month, in the profile's space section since the space
+began. A fact, never a payment between the two (`space-balance.ts`).
+_Avoid_: settle up, who owes whom, debt, IOU
+
 **Leaving**:
 _En français_ : quitter l'espace
 The access goes at once, the rows stay with the partner who stays, and the

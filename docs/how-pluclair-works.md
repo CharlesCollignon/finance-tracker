@@ -203,6 +203,7 @@ today's prices) leaves it unmarked, so the Plan still shows it as new.
 | Money-weighted return                                                                                       | `xirr.ts`, `investment-returns.ts`                                                                             |
 | « Fiabilité du mois »: the lines' reach, the occurrences arrived and awaited, the review, the close         | `month-trust.ts` (read by `@finance/data/bearing-month`, the coverage from `@finance/data/statements`)        |
 | « Par commerce »: a shop's visits, its normal month, its twelve months (`merchantKeyOf`, two meaningful words) | `merchant-screen.ts` (read by `@finance/data/merchant-screen`)                                                |
+| « Équilibre entre vous »: each partner's part of the joint spending against what they put in                | `space-balance.ts` (read by `@finance/data/space-balance`, `space_contributions`)                             |
 
 ## AI features
 
@@ -499,6 +500,16 @@ their transfers to the joint account plus their part of the space's
 expenses (`withMyShare`, `readMyShare`); the balance, « Il vous reste » and
 the closes are untouched. Remembered in the `pluclair-my-share` cookie on the
 web and on the device on the phone.
+
+**The balance between you** (migration 078, `@finance/core/space-balance`,
+`@finance/data/space-balance`): what each partner put into the joint
+account — `space_contributions`, a member-only function summing each
+member's own « Versement au compte commun » rows over a span, by the
+category's name in either language — against their part of what the space
+spent, and what the partner behind would put in to be level with the
+split. A card on Le point under « Commun » (`BalanceBetweenCard`, both
+apps, the month shown) and a row in the profile's space section since the
+space began. Never a payment between the two.
 
 **A home owned together** (migration 063): Immobilier is a shared screen
 like the others, so under « Commun » it lists and adds the space's homes,

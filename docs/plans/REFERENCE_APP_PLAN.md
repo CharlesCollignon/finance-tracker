@@ -132,6 +132,9 @@ This plan sits beside `EVERYDAY_PLAN.md` (daily use), `STATEMENTS_PLAN.md`
 
 ## Phase 5 — « Équilibre » in the shared space (branch `reference-5-balance`)
 
+- Migration 078 `space_contributions`: a member reads what each partner put
+  into the joint account over a span — their own transfer rows, the one sum
+  the space may read.
 - `@finance/core/space-balance`: per month, what each partner transferred to
   the joint account against their share of what the space spent; the
   difference, said as a fact.
@@ -140,7 +143,7 @@ This plan sits beside `EVERYDAY_PLAN.md` (daily use), `STATEMENTS_PLAN.md`
 
 ## Phase 6 — Splits and receipts (branch `reference-6-splits`)
 
-- Migration 078: `transactions.split_group`, `transactions.receipt_path`,
+- Migration 079: `transactions.split_group`, `transactions.receipt_path`,
   a private storage bucket `receipts` with owner-only policies.
 - Split a row into parts from its form, the Journal drawing the group as
   one with its parts; attach a photo or a PDF; « Lire le ticket » on the
@@ -160,7 +163,7 @@ This plan sits beside `EVERYDAY_PLAN.md` (daily use), `STATEMENTS_PLAN.md`
 
 ## Phase 9 — Broker imports, dividends, realised gains (branch `reference-9-broker`)
 
-- Migration 079: `investment_events` (buy, sell, dividend, fee) per wallet.
+- Migration 080: `investment_events` (buy, sell, dividend, fee) per wallet.
 - Readers for broker and exchange exports (positions and events), the
   Placements import, dividends as income inside the wallet, realised gains
   per wrapper and year; both apps.
@@ -189,7 +192,7 @@ This plan sits beside `EVERYDAY_PLAN.md` (daily use), `STATEMENTS_PLAN.md`
 
 ## The owner's part
 
-- Merge and push each phase; run migrations 077–079 on the hosted project.
+- Merge and push each phase; run migrations 077–080 on the hosted project.
 - Real anonymised broker exports for Phase 9's fixtures.
 - Mailgun set-up for the e-mail route (`statements-email-setup`).
 - An APK for Phases 3–12's phone screens, and a device for Phase 12.

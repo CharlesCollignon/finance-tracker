@@ -17,6 +17,24 @@ import type { ChangelogEntry, RoadmapItem } from "./changelog";
  */
 export const CHANGELOG: readonly ChangelogEntry[] = [
   {
+    id: "2026-10-26-space-balance",
+    date: "2026-10-26",
+    kind: "new",
+    platforms: ["web"],
+    fr: {
+      title: "À deux : l’équilibre entre vous",
+      body: "Sous « Commun », Le point dit ce que chacun a versé sur le compte commun ce mois-ci, face à sa part de ce qu’il a dépensé — et ce que celui qui est en retard verserait pour être au niveau du partage. Le profil le dit depuis le début de l’espace.",
+      detail:
+        "Un partenaire apprend ce que l’autre a versé sur le compte qu’ils partagent, et rien d’autre de son argent. Jamais un paiement entre vous : un versement au compte commun, si vous le voulez.",
+    },
+    en: {
+      title: "For two: the balance between you",
+      body: "Under “Shared”, the Overview says what each of you put into the joint account this month, against your part of what it spent — and what the one behind would put in to be level with the split. The profile says it since the space began.",
+      detail:
+        "A partner learns what the other put into the account they share, and nothing else of their money. Never a payment between you: a transfer to the joint account, if you want one.",
+    },
+  },
+  {
     id: "2026-10-26-by-shop",
     date: "2026-10-26",
     kind: "new",
