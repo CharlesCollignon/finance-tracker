@@ -14,6 +14,8 @@ import { FRENCH_SAVINGS_2026 } from "@finance/core/savings-accounts";
 import type { WalletPlan } from "@finance/core/types/database";
 import { formatAnnualRate } from "@finance/core/xirr";
 import { AllocationCard } from "@/components/finance/AllocationCard";
+import { EventsCard } from "@/components/finance/analysis/EventsCard";
+import type { InvestmentEvent } from "@finance/core/investment-events";
 import { FundCostCard } from "@/components/finance/FundCostCard";
 import {
   accountShortName,
@@ -42,6 +44,8 @@ interface AnalysisViewProps {
   monthly: Partial<Record<AccountId, number>>;
   targets: AccountTarget[];
   monthlyContribution: number;
+  /** What happened inside the wallets (migration 080), newest first. */
+  events: InvestmentEvent[];
 }
 
 /**
@@ -61,6 +65,7 @@ export function AnalysisView({
   monthly,
   targets,
   monthlyContribution,
+  events,
 }: AnalysisViewProps) {
   const t = useT();
 
@@ -111,6 +116,12 @@ export function AnalysisView({
           monthlyContribution={monthlyContribution}
         />
       </FadeInItem>
+
+      {keptWallets.length > 0 ? (
+        <FadeInItem>
+          <EventsCard events={events} />
+        </FadeInItem>
+      ) : null}
 
       <FadeInItem>
         <section className="flex flex-col gap-4">

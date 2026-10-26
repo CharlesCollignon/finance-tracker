@@ -20,14 +20,23 @@ import { ACCOUNT_ALLOWANCE, writerStateFor } from "@/lib/ai/writer";
  * a re-rank at all.
  */
 
-export default async function HistoryPage() {
+export default async function HistoryPage({
+  searchParams,
+}: {
+  /** `?open=`: a category to open on arrival — the palette's way in. */
+  searchParams: Promise<{ open?: string }>;
+}) {
   const user = await getAuthUser();
 
   if (!user) {
     redirect("/login");
   }
 
-  const [supabase, locale] = await Promise.all([createClient(), getLocale()]);
+  const [supabase, locale, params] = await Promise.all([
+    createClient(),
+    getLocale(),
+    searchParams,
+  ]);
   const owner = await getOwner();
   const ownerId = owner?.ownerId ?? user.id;
   // The category reads and the re-rank are a person's (their tallies, their
@@ -88,6 +97,7 @@ export default async function HistoryPage() {
   // this loads.
   return (
     <CategoryHistoryView
+      initialOpenId={typeof params.open === "string" ? params.open : null}
       cards={screen.cards}
       findings={screen.findings}
       remarks={screen.remarks}

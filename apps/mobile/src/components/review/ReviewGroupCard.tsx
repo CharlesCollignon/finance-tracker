@@ -32,6 +32,12 @@ interface ReviewGroupCardProps {
   onLeaveOut: () => void;
   onFileRow: (row: PendingFeedRow) => void;
   onLeaveOutRow: (row: PendingFeedRow) => void;
+  /**
+   * « Toujours ranger ici »: whether filing the group also writes a rule
+   * with these words (migration 077), and the words it would hold. Absent
+   * for a mixed group, whose rows disagree on what the shop is.
+   */
+  always?: { on: boolean; words: string; onToggle: () => void };
 }
 
 /**
@@ -121,6 +127,7 @@ export function ReviewGroupCard({
   onLeaveOut,
   onFileRow,
   onLeaveOutRow,
+  always,
 }: ReviewGroupCardProps) {
   const t = useT();
   const locale = useLocale();
@@ -215,6 +222,32 @@ export function ReviewGroupCard({
           onPress={onLeaveOut}
         />
       </View>
+
+      {always ? (
+        <Pressable
+          accessibilityRole="checkbox"
+          accessibilityState={{ checked: always.on }}
+          accessibilityLabel={t("rules.always")}
+          accessibilityHint={t("rules.alwaysHint", { words: always.words })}
+          hitSlop={6}
+          onPress={() => {
+            void hapticLight();
+            always.onToggle();
+          }}
+          className="min-h-11 flex-row items-start gap-2 py-1"
+        >
+          <Ionicons
+            name={always.on ? "checkbox" : "square-outline"}
+            size={ICON.md}
+            color={always.on ? colors.foreground : colors.mutedForeground}
+            style={{ marginTop: 1 }}
+          />
+          <Text variant="muted" className="min-w-0 flex-1 text-xs">
+            <Text className="text-xs text-foreground">{t("rules.always")}</Text>
+            {` · ${t("rules.alwaysHint", { words: always.words })}`}
+          </Text>
+        </Pressable>
+      ) : null}
 
       {expanded && !single ? (
         <View className="border-t border-border">

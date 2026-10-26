@@ -183,3 +183,139 @@ export function ledgerDays(
     ? days.sort((a, b) => b.date.localeCompare(a.date))
     : days.sort((a, b) => a.date.localeCompare(b.date));
 }
+
+/** The type chips, in the order drawn: everything, then each kind of money. */
+export const LEDGER_TYPE_FILTERS: readonly LedgerTypeFilter[] = [
+  "all",
+  "income",
+  "expense",
+  "savings",
+  "investment",
+];
+
+/**
+ * The rows in the order they are read: newest day first, rows within a day
+ * as they were given. Oldest first is that list turned over, rows within a
+ * day included, so a day reads in the order its rows were written.
+ */
+export function ledgerRows(
+  filtered: readonly TransactionWithCategory[],
+  order: LedgerOrder,
+): TransactionWithCategory[] {
+  const newest = [...filtered].sort((a, b) =>
+    b.occurred_on.localeCompare(a.occurred_on),
+  );
+  return order === "newest" ? newest : newest.reverse();
+}
+
+/**
+ * The categories the month's rows use, by name, for the category filter —
+ * the planned rows' too, so a month ahead, which has only those, filters
+ * the same way.
+ */
+export function ledgerCategoryOptions(
+  transactions: readonly TransactionWithCategory[],
+  planned: readonly PlannedOccurrence[],
+): { id: string; name: string }[] {
+  const seen = new Map<string, string>();
+  for (const tx of transactions) {
+    if (!seen.has(tx.category_id)) {
+      seen.set(tx.category_id, tx.categories.name);
+    }
+  }
+  for (const occurrence of planned) {
+    if (!seen.has(occurrence.categoryId)) {
+      seen.set(occurrence.categoryId, occurrence.categoryName);
+    }
+  }
+  return [...seen.entries()]
+    .map(([id, name]) => ({ id, name }))
+    .sort((a, b) => a.name.localeCompare(b.name));
+}
+
+/**
+ * The filters tucked behind the button — the category and the account —
+ * which it has to own up to.
+ */
+export function hiddenFilterCount(filter: LedgerFilter): number {
+  return (
+    (filter.categoryId !== "all" ? 1 : 0) +
+    ((filter.accountId ?? "all") !== "all" ? 1 : 0)
+  );
+}
+
+/** Whether anything narrows the list: a chip, a dropdown, or words typed. */
+export function hasLedgerFilters(filter: LedgerFilter): boolean {
+  return (
+    filter.type !== "all" ||
+    hiddenFilterCount(filter) > 0 ||
+    filter.query.trim().length > 0
+  );
+}
+
+/** Everything the list draws, from one call: both apps read this. */
+export interface LedgerView {
+  showing: LedgerTime;
+  /** The recorded rows the filter keeps, in the order given. */
+  filtered: TransactionWithCategory[];
+  filteredPlanned: PlannedOccurrence[];
+  /** `filtered`, in the order read. */
+  rows: TransactionWithCategory[];
+  /** The half shown, a day at a time. */
+  days: LedgerDay[];
+  /** The figures over what is on screen. */
+  totals: Record<CategoryType, number>;
+  shownCount: number;
+  totalCount: number;
+  /** The ids a selection can hold: the rows on screen. */
+  visibleIds: string[];
+}
+
+/**
+ * What the Journal shows, worked out once: which half of the month, the
+ * rows the filter keeps, their order, their days and the figures over
+ * them. The figures describe what is on screen, which is the whole reason
+ * they are there: the month's own totals are Le point's, and repeating
+ * them under a filter would state something the list contradicts. A day
+ * of planned rows has no net at all — a figure there would be a forecast
+ * set in the same type as the record.
+ */
+export function buildLedgerView({
+  transactions,
+  planned,
+  filter,
+  time,
+  order,
+  accountOf,
+}: {
+  transactions: readonly TransactionWithCategory[];
+  planned: readonly PlannedOccurrence[];
+  filter: LedgerFilter;
+  time: LedgerTime;
+  order: LedgerOrder;
+  accountOf?: ReadonlyMap<string, string>;
+}): LedgerView {
+  const showing = ledgerShowing(time, {
+    past: transactions.length,
+    upcoming: planned.length,
+  });
+  const filtered = filterLedger(transactions, filter, accountOf);
+  const filteredPlanned = filterPlanned(planned, filter);
+  const rows = ledgerRows(filtered, order);
+  const past = showing === "past";
+  return {
+    showing,
+    filtered,
+    filteredPlanned,
+    rows,
+    days: past
+      ? ledgerDays(rows, [], order)
+      : ledgerDays([], filteredPlanned, "oldest"),
+    totals: past
+      ? ledgerTotals(filtered)
+      : ledgerPlannedTotals(filteredPlanned),
+    shownCount: past ? filtered.length : filteredPlanned.length,
+    totalCount: past ? transactions.length : planned.length,
+    visibleIds: rows.map((tx) => tx.id),
+  };
+}

@@ -19,6 +19,13 @@ import * as categories from "@finance/data/categories";
 import * as account from "@finance/data/account";
 import * as closing from "@finance/data/closing";
 import * as feed from "@finance/data/feed-decisions";
+import * as filingRules from "@finance/data/filing-rules";
+import type { FilingRuleInput } from "@finance/core/validations/filing-rules";
+import * as splits from "@finance/data/splits";
+import * as investmentEvents from "@finance/data/investment-events";
+import type { ReadEvent } from "@finance/core/investment-events";
+import type { InvestmentEventInput } from "@finance/core/validations/investment-events";
+import type { SplitInput } from "@finance/core/validations/splits";
 import * as proposals from "@finance/data/recurring-proposals";
 import * as decisions from "@finance/data/fulfilment-decisions";
 import * as deletions from "@finance/data/deletions";
@@ -554,6 +561,56 @@ export async function reopenSwallowedFeedItems(): Promise<
   return asOwner((userId) => feed.reopenSwallowedFeedItems(supabase, userId));
 }
 
+/* ------------------------------------------------ splits and receipts */
+
+/**
+ * One payment in several parts, and the receipt behind a row —
+ * `@finance/data/splits` (migration 079), the web's own bodies.
+ */
+
+export async function splitTransaction(
+  input: SplitInput,
+): Promise<ActionResult<{ ids: string[] }>> {
+  return asOwner((userId) => splits.splitTransaction(supabase, userId, input));
+}
+
+export async function unsplitTransaction(id: string): Promise<ActionResult> {
+  return asOwner((userId) => splits.unsplitTransaction(supabase, userId, id));
+}
+
+export async function setReceipt(
+  id: string,
+  path: string | null,
+): Promise<ActionResult> {
+  return asOwner((userId) => splits.setReceipt(supabase, userId, id, path));
+}
+
+/* ------------------------------------------------------ the filing rules */
+
+/**
+ * The rules a person writes for filing a line — `@finance/data/filing-rules`
+ * (migration 077), the web's own bodies, through the phone's own session.
+ */
+
+export async function addFilingRule(
+  input: FilingRuleInput,
+): Promise<ActionResult<{ id: string; words: string }>> {
+  return asOwner((userId) => filingRules.addFilingRule(supabase, userId, input));
+}
+
+export async function updateFilingRule(
+  id: string,
+  input: FilingRuleInput,
+): Promise<ActionResult> {
+  return asOwner((userId) =>
+    filingRules.updateFilingRule(supabase, userId, id, input),
+  );
+}
+
+export async function deleteFilingRule(id: string): Promise<ActionResult> {
+  return asOwner((userId) => filingRules.deleteFilingRule(supabase, userId, id));
+}
+
 /* ------------------------------- what the statement implies, as entries */
 
 /**
@@ -727,5 +784,32 @@ export function setNotificationPref(
 ): Promise<ActionResult> {
   return asUser((userId) =>
     preferences.setNotificationPref(supabase, userId, kind, wanted, locale),
+  );
+}
+
+/**
+ * What happened inside a wallet (migration 080) —
+ * `@finance/data/investment-events`, the web's actions. A wallet is a
+ * person's, never a space's, so these run as the user.
+ */
+export async function addInvestmentEvent(
+  input: InvestmentEventInput,
+): Promise<ActionResult<{ id: string }>> {
+  return asUser((userId) =>
+    investmentEvents.addInvestmentEvent(supabase, userId, input),
+  );
+}
+
+export async function deleteInvestmentEvent(id: string): Promise<ActionResult> {
+  return asUser((userId) =>
+    investmentEvents.deleteInvestmentEvent(supabase, userId, id),
+  );
+}
+
+export async function importInvestmentEvents(
+  read: ReadEvent[],
+): Promise<ActionResult<{ added: number; known: number }>> {
+  return asUser((userId) =>
+    investmentEvents.importInvestmentEvents(supabase, userId, read),
   );
 }

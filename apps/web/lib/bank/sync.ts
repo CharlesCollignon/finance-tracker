@@ -283,6 +283,7 @@ export async function syncBankFeed(
         existing: context.existing,
         categoryIdsByName: context.categoryIdsByName,
         seenProviderIds: context.seenProviderIds,
+        rules: context.rules,
         ownIbans,
         jointTransfer,
       });

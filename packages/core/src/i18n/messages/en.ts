@@ -16,6 +16,13 @@ import { actionsEn } from "./actions.en";
 import { propertyEn } from "./property.en";
 import { spaceEn } from "./space.en";
 import { askEn } from "./ask.en";
+import { rulesEn } from "./rules.en";
+import { merchantsEn } from "./merchants.en";
+import { paletteEn } from "./palette.en";
+import { monthShareEn } from "./month-share.en";
+import { eventsEn } from "./events.en";
+import { demoEn } from "./demo.en";
+import { listenerEn } from "./listener.en";
 
 /**
  * What the app says, in English.
@@ -119,6 +126,7 @@ export const en = {
     ledgerList: "List",
     ledgerCalendar: "Calendar",
     ledgerByCategory: "By category",
+    ledgerByMerchant: "By shop",
     walletsPositions: "Accounts",
     walletsAnalysis: "Analysis",
     walletsLookThrough: "What's inside",
@@ -804,6 +812,46 @@ export const en = {
     saved: "Transaction saved",
     duplicating: "Duplicating…",
     duplicateToToday: "Duplicate to today",
+    /** One payment in several parts (migration 079). */
+    split: "Split into parts",
+    splitTitle: "Split this payment",
+    splitHint:
+      "One receipt, several categories: each part becomes a row of its own, and the parts stay one payment.",
+    splitPart: "Part {index}",
+    splitRemainder: "Still to place: {amount}",
+    splitOver: "{amount} too much",
+    splitAddPart: "Add a part",
+    splitRemovePart: "Remove this part",
+    splitSave: "Split",
+    splitSaving: "Splitting…",
+    splitDone: "Payment split",
+    splitTwoParts: "Two parts at least",
+    splitTooMany: "Ten parts at most",
+    splitMustSum: "The parts must add up to the payment",
+    splitMark: "Part of a split payment",
+    unsplit: "Put the parts back together",
+    unsplitDone: "Payment put back together",
+    /** The picture or the PDF behind a row (migration 079). */
+    receipt: "Receipt",
+    receiptAttach: "Attach a receipt",
+    receiptAttaching: "Attaching…",
+    receiptAttached: "Receipt attached",
+    receiptView: "Open",
+    receiptRemove: "Remove",
+    receiptRemoved: "Receipt removed",
+    receiptMark: "Has a receipt",
+    receiptKind: "A picture (JPEG, PNG, WebP) or a PDF",
+    receiptTooBig: "10 MB at most",
+    receiptRead: "Read the receipt",
+    receiptReading: "Reading…",
+    receiptReadHint:
+      "Your own AI account copies the shop, the day and the total off it. You apply them, or not.",
+    receiptReadResult: "{merchant} · {date} · {amount}",
+    receiptReadNothing: "Nothing readable on it",
+    receiptReadFailed: "The receipt could not be read",
+    receiptNoAccount: "Reading a receipt needs your AI account, connected in your profile",
+    receiptApply: "Apply to this row",
+    receiptApplied: "Row updated from the receipt",
     duplicated: "Duplicated to today",
     deleteTransaction: "Delete transaction",
     deleting: "Deleting…",
@@ -1756,6 +1804,20 @@ export const en = {
     actionReview: "Review",
     actionClose: "Close",
     actionStart: "Start",
+    actionConfirm: "Confirm",
+    actionImport: "Import",
+    /** « À faire »: the strip on the Overview that holds every item. */
+    todo: "To do",
+    todoLess: "Show less",
+    attentionArrived: {
+      one: "{count} movement looks like a charge: did it arrive?",
+      other: "{count} movements look like charges: did they arrive?",
+    },
+    attentionPurchases: {
+      one: "{count} purchase inside a wallet to confirm",
+      other: "{count} purchases inside a wallet to confirm",
+    },
+    attentionStatement: "{month}'s statement is not in yet",
     attentionSwallowed: {
       one: "{count} bank transaction was merged into a recurring charge",
       other: "{count} bank transactions were merged into recurring charges",
@@ -3425,6 +3487,36 @@ export const en = {
     bestRun: "Best: {count}",
     noRunYet: "Close a month under your allowance to start a run.",
     invested: "Your investments today",
+    /**
+     * « Fiabilité du mois »: what backs the month's figures, each line a
+     * fact (`@finance/core/month-trust`). An amount and a day are formatted
+     * by the client before `t()`.
+     */
+    trust: {
+      title: "Month check",
+      typedByHand: "Typed by hand, no statement",
+      noLines: "No bank line this month yet",
+      coveredUntil: "Statement through {date}",
+      chargesArrived: {
+        one: "{count} charge arrived",
+        other: "{count} charges arrived",
+      },
+      chargesAwaited: {
+        one: "{count} charge still awaited",
+        other: "{count} charges still awaited",
+      },
+      inboxPending: {
+        one: "{count} transaction to review",
+        other: "{count} transactions to review",
+      },
+      inboxClear: "Everything filed",
+      closed: "Closed: {amount} unrecorded",
+      closedClear: "Closed, nothing unrecorded",
+      closedBaseline: "Starting balance set",
+      closeDue: "Close on {date}",
+      closeReady: "Ready to close",
+      notClosed: "Not closed",
+    },
   },
 
   /**
@@ -3568,6 +3660,8 @@ export const en = {
     notFound: "Not found — it may already have been deleted.",
     offline: "No connection right now. Try again in a moment.",
     couldNotSave: "That did not save. Try again.",
+    demoReadOnly:
+      "The demo is read-only: a sample everyone looks at. Create your own account to write.",
     /**
      * Validation messages, carried by the Zod schemas as keys.
      *
@@ -3648,6 +3742,13 @@ export const en = {
   property: propertyEn,
   space: spaceEn,
   ask: askEn,
+  rules: rulesEn,
+  merchants: merchantsEn,
+  palette: paletteEn,
+  monthShare: monthShareEn,
+  events: eventsEn,
+  demo: demoEn,
+  listener: listenerEn,
 } satisfies MessageTree;
 
 export type Messages = typeof en;

@@ -218,7 +218,14 @@ to stop it:
    real ones are the next fixtures.
 5. **Bank notifications** (`statements-notifications`), Android: the
    native listener, per-bank-app parsing on the phone, the queue, the
-   inbox. New APK.
+   inbox. New APK. Built on `reference-1-trust` (REFERENCE_APP_PLAN Phase
+   12): `apps/mobile/modules/notification-listener` (the service and its
+   queue, in Kotlin), `@finance/core/statement/notification` (the bank by
+   its app's package, the words read as an alert e-mail's), the phone's
+   « Les notifications de votre banque » screen behind the
+   `listener.android` flag (migration 082), the lines sent to
+   `/api/statements` as `source: "notification"`, provisional. Unverified
+   until an APK runs it on a device.
 
 Phases 0–2 make the import as easy as a file can be; 3–5 each add a way in
 and can be taken or left on their own.

@@ -19,14 +19,24 @@ import { monthNumber, strictAmount, strictDate } from "./values";
 
 /** The domains each bank's e-mails come from, without the « www. ». */
 const BANK_SENDERS: Record<BankId, readonly string[]> = {
-  boursobank: ["boursobank.com", "boursobank.fr", "boursorama.com", "boursorama.fr"],
+  boursobank: [
+    "boursobank.com",
+    "boursobank.fr",
+    "boursorama.com",
+    "boursorama.fr",
+  ],
   "credit-agricole": ["credit-agricole.fr", "credit-agricole.com"],
   "bnp-paribas": ["bnpparibas.com", "bnpparibas.fr", "bnpparibas"],
   "societe-generale": ["societegenerale.fr", "societegenerale.com", "sg.fr"],
   lcl: ["lcl.fr", "lcl.com"],
   "caisse-epargne": ["caisse-epargne.fr"],
   "banque-populaire": ["banquepopulaire.fr"],
-  "credit-mutuel": ["creditmutuel.fr", "creditmutuel.com", "cmne.fr", "cmso.com"],
+  "credit-mutuel": [
+    "creditmutuel.fr",
+    "creditmutuel.com",
+    "cmne.fr",
+    "cmso.com",
+  ],
   cic: ["cic.fr"],
   "la-banque-postale": ["labanquepostale.fr"],
   fortuneo: ["fortuneo.fr", "fortuneo.com"],
@@ -42,12 +52,20 @@ const BANK_SENDERS: Record<BankId, readonly string[]> = {
 };
 
 /** The bank an address writes from: its domain, or one under it. */
-export function bankFromSender(address: string | null | undefined): BankId | null {
-  const domain = /@([a-z0-9.-]+)/i.exec(address ?? "")?.[1]?.toLowerCase().replace(/\.$/, "");
+export function bankFromSender(
+  address: string | null | undefined,
+): BankId | null {
+  const domain = /@([a-z0-9.-]+)/i
+    .exec(address ?? "")?.[1]
+    ?.toLowerCase()
+    .replace(/\.$/, "");
   if (!domain) {
     return null;
   }
-  for (const [bank, domains] of Object.entries(BANK_SENDERS) as [BankId, readonly string[]][]) {
+  for (const [bank, domains] of Object.entries(BANK_SENDERS) as [
+    BankId,
+    readonly string[],
+  ][]) {
     if (domains.some((one) => domain === one || domain.endsWith(`.${one}`))) {
       return bank;
     }
@@ -61,12 +79,17 @@ export function bankFromSender(address: string | null | undefined): BankId | nul
  * by hand, which comes from their own address — the sender its forwarded
  * header names (« De : BoursoBank <alertes@boursobank.com> »).
  */
-export function bankOfMail(mail: { from: string; text: string }): BankId | null {
+export function bankOfMail(mail: {
+  from: string;
+  text: string;
+}): BankId | null {
   const direct = bankFromSender(mail.from);
   if (direct) {
     return direct;
   }
-  for (const match of mail.text.slice(0, 6000).matchAll(/^\s*>?\s*(?:de|from|exp[ée]diteur)\s*:\s*([^\n]+)$/gim)) {
+  for (const match of mail.text
+    .slice(0, 6000)
+    .matchAll(/^\s*>?\s*(?:de|from|exp[ée]diteur)\s*:\s*([^\n]+)$/gim)) {
     const bank = bankFromSender(match[1]);
     if (bank) {
       return bank;
@@ -129,8 +152,12 @@ export function mailText(html: string): string {
     .replace(/<\/(p|div|tr|li|h[1-6]|table)>/gi, "\n")
     .replace(/<\/t[dh]>/gi, " ")
     .replace(/<[^>]+>/g, " ")
-    .replace(/&#(\d+);/g, (_, code: string) => String.fromCharCode(Number(code)))
-    .replace(/&#x([0-9a-f]+);/gi, (_, code: string) => String.fromCharCode(parseInt(code, 16)))
+    .replace(/&#(\d+);/g, (_, code: string) =>
+      String.fromCharCode(Number(code)),
+    )
+    .replace(/&#x([0-9a-f]+);/gi, (_, code: string) =>
+      String.fromCharCode(parseInt(code, 16)),
+    )
     .replace(/&([a-z]+);/gi, (whole, name: string) => ENTITIES[name] ?? whole)
     .replace(/[ \t  ]+/g, " ")
     .replace(/ *\n */g, "\n")
@@ -188,7 +215,10 @@ function dayOf(context: string, receivedOn: string): string {
     const found = pick(iso);
     if (found) return found;
   }
-  const named = /\b(?:le\s+)(\d{1,2})(?:er)?\s+([a-zéû]{3,9})\.?(?:\s+(\d{4}))?/i.exec(context);
+  const named =
+    /\b(?:le\s+)(\d{1,2})(?:er)?\s+([a-zéû]{3,9})\.?(?:\s+(\d{4}))?/i.exec(
+      context,
+    );
   if (named) {
     const month = monthNumber(named[2]!);
     if (month) {
@@ -206,10 +236,16 @@ function dayOf(context: string, receivedOn: string): string {
 /** The sentence an amount sits in: from the line or stop before it to the one after. */
 function sentenceAround(text: string, at: number, length: number): string {
   const before = text.slice(0, at);
-  const start = Math.max(before.lastIndexOf("\n"), before.search(/[.!?]\s[^.!?]*$/) + 1, 0);
+  const start = Math.max(
+    before.lastIndexOf("\n"),
+    before.search(/[.!?]\s[^.!?]*$/) + 1,
+    0,
+  );
   const rest = text.slice(at + length);
   const end = rest.search(/\n|[.!?](?:\s|$)/);
-  return text.slice(start, at + length + (end === -1 ? rest.length : end)).trim();
+  return text
+    .slice(start, at + length + (end === -1 ? rest.length : end))
+    .trim();
 }
 
 /** The two lines either side of the amount's own: a labelled e-mail's block. */
@@ -253,18 +289,42 @@ export function alertOf(mail: {
   if (!bank) {
     return null;
   }
-  const text = `${mail.subject}\n${mail.text}`.slice(0, 4000);
+  return alertInText(bank, `${mail.subject}\n${mail.text}`, mail.receivedOn);
+}
+
+/**
+ * The one operation a bank's words announce, wherever they came from — an
+ * e-mail, or a notification on the phone (`notification.ts`) — or null:
+ * no amount in them that plainly went one way.
+ */
+export function alertInText(
+  bank: BankId,
+  words: string,
+  receivedOn: string,
+): MailAlert | null {
+  const text = words.slice(0, 4000);
 
   for (const match of text.matchAll(EURO_AMOUNT)) {
     const at = match.index ?? 0;
     const sentence = sentenceAround(text, at, match[0].length);
     // What the amount's own line says just before it: « Solde : », « plafond de ».
-    const lead = text.slice(Math.max(0, at - 60, text.lastIndexOf("\n", at - 1) + 1), at);
-    if (NOT_A_MOVE.test(lead) || (NOT_A_MOVE.test(sentence) && !MONEY_OUT.test(sentence) && !MONEY_IN.test(sentence))) {
+    const lead = text.slice(
+      Math.max(0, at - 60, text.lastIndexOf("\n", at - 1) + 1),
+      at,
+    );
+    if (
+      NOT_A_MOVE.test(lead) ||
+      (NOT_A_MOVE.test(sentence) &&
+        !MONEY_OUT.test(sentence) &&
+        !MONEY_IN.test(sentence))
+    ) {
       continue;
     }
     // A labelled e-mail says the way on another line: « Type : Prélèvement ».
-    const near = MONEY_IN.test(sentence) || MONEY_OUT.test(sentence) ? sentence : linesAround(text, at);
+    const near =
+      MONEY_IN.test(sentence) || MONEY_OUT.test(sentence)
+        ? sentence
+        : linesAround(text, at);
     const goesIn = MONEY_IN.test(near);
     const goesOut = MONEY_OUT.test(near);
     // A refund of a payment is money in; otherwise both, or neither, is no answer.
@@ -283,12 +343,14 @@ export function alertOf(mail: {
       continue;
     }
     const counterparty =
-      COUNTERPARTY.map((pattern) => pattern.exec(sentence) ?? pattern.exec(text))
+      COUNTERPARTY.map(
+        (pattern) => pattern.exec(sentence) ?? pattern.exec(text),
+      )
         .find((found) => found)?.[1]
         ?.trim()
         .replace(/\s+/g, " ") ?? null;
     const line = makeLine({
-      date: dayOf(sentence, mail.receivedOn),
+      date: dayOf(sentence, receivedOn),
       amount: direction === "out" ? -Math.abs(amount) : Math.abs(amount),
       label: counterparty ?? sentence.slice(0, 140),
       counterparty,
@@ -299,7 +361,9 @@ export function alertOf(mail: {
     }
     const tail =
       TAIL.exec(text)?.[1] ??
-      /(?:compte|carte)[^\n\d]{0,30}?n[°o]\s*\d{2,}(\d{4})\b/i.exec(text)?.[1] ??
+      /(?:compte|carte)[^\n\d]{0,30}?n[°o]\s*\d{2,}(\d{4})\b/i.exec(
+        text,
+      )?.[1] ??
       null;
     return { bank, tail, line };
   }

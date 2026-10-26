@@ -78,9 +78,11 @@ Three commitments stated on the marketing site and binding on all future work
   no transfer, no payment and no standing order in it, and the bank connection
   is read-only, with no version of it that could initiate a payment.
 - **It does not act on a rule the user did not write.** A statement row files
-  itself only where the user has put that shop in the same place twice;
-  everything else waits in the review inbox, and a recurring template writes
-  into each month exactly what the user set it up to write, and nothing else.
+  itself only where the user wrote a filing rule for its words (since
+  October 2026, `CONTEXT.md` « Filing rule ») or has put that shop in the
+  same place twice; everything else waits in the review inbox, and a
+  recurring template writes into each month exactly what the user set it up
+  to write, and nothing else.
 - **It does not tell the user what to do.** No advice, no score, no nudge to
   switch products. This binds Pluclair's own voice: the app, the guides, and
   the owner's answers in Entraide, marked « Pluclair ». What members write in
@@ -107,9 +109,14 @@ shop, where answering one teaches the matcher. Until launch it is reachable by
 the owner's account alone, so anything written for a general audience
 describes the first three.
 
+A visitor can look round first: « Essayer la démo » on the site opens a
+sample account, the same for everyone and read-only (migration 081),
+rebuilt nightly for the current month.
+
 Surfaces in this app: the Bearing, the Ledger (list, calendar, by category),
-transactions, the Plan (`/plan`), recurring, categories, investments and
-look-through, properties (`/property` and each one's page; the
+transactions, the Plan (`/plan`), recurring, categories, investments (each
+wallet's « Opérations » and the Analyse tab's dividends and realised gains)
+and look-through, properties (`/property` and each one's page; the
 `property.track` flag, on for everyone since migration 063, stays as a
 switch),
 history, import, Questions (`/ask`), welcome, profile and its Bank page (`/bank`: connect, the
@@ -129,7 +136,8 @@ see `LEGAL_DRAFT` in `components/marketing/legal-copy.ts`).
   launch, no public surface may describe connecting a bank in the present
   tense: the marketing site lists it under « Bientôt » with the other things
   built and not open to everyone — property, the AI of your choice, the mobile
-  app (the owner's call, October 2026) — and its answers on data and money
+  app (the owner's call, October 2026), the bank apps' notifications on
+  Android — and its answers on data and money
   stay true of the app as a visitor can have it. Launching changes both, with the
   owner's sign-off on the brand promises.
 - Pluclair asks a bank for new data only when the user presses Refresh. The

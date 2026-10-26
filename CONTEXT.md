@@ -38,6 +38,29 @@ rather than hundreds of rows, and one answer files a whole group, with the
 category its history suggests already picked.
 _Avoid_: pending, unfiled, queue, triage
 
+**Filing rule**:
+_En français_ : règle de rangement (l'écran : Règles de rangement)
+A rule the user wrote for filing a line: words to find in it, whole and
+without case or accents, the category it goes to, and the way the money
+went. Asked before anything the matcher learned, so a line it files is
+filed on a rule the user wrote (commitment 2) — money coming in included,
+since they asked. Written from the review's « Toujours ranger ici » with
+the shop's words, or on its own screen; the most specific rule wins; each
+counts the lines it filed (`filing-rules.ts`, migration 077).
+_Avoid_: filter, automation, learned rule (that is the matcher's memory)
+
+**By shop**:
+_En français_ : par commerce (la vue du Journal : Par commerce)
+The Journal's fourth view: every place the money went over the last twelve
+months, one card a shop — how often, how much a time, what a normal month
+comes to (the median of the months it was visited), when last, its usual
+category, its twelve months and its rows. A shop is the first two words
+that mean something in a row's note, the card noise and the town dropped
+(`merchant-screen.ts`), so « Carrefour Market » stays apart from
+« Carrefour City » and a bakery from the next. A fact about what was
+recorded, never a judgement on it.
+_Avoid_: merchant page, vendor, payee, brand
+
 **Bank connection**:
 _En français_ : connexion bancaire
 One user's link to their own bank, through their own open-banking.io account:
@@ -234,6 +257,26 @@ because the account received or paid it on its own day. A row that has one
 says so: "Reçu le 22 sept." for money in, "Payé le 22 sept." for money out.
 _Avoid_: value date, booking date, real date
 
+**Split**:
+_En français_ : paiement partagé en plusieurs (« Partager en plusieurs », « Réunir les parts »)
+One payment in several parts: the row it was made from, kept with its id,
+its day and the bank line that may point at it, as the first part, and the
+others written beside it, each a transaction of its own in its own
+category, all carrying one `split_group` (migration 079). Every figure
+counts rows, so each part counts where it belongs; the Journal marks the
+parts. « Réunir » puts the amounts back into the first row and takes the
+others away.
+_Avoid_: itemised, line items, sub-transactions
+
+**Receipt**:
+_En français_ : justificatif (« Joindre un justificatif », « Lire le ticket »)
+The picture or the PDF behind a row: a private file in the `receipts`
+bucket under the owner's folder, its path on the row
+(`transactions.receipt_path`, migration 079). Read, when the person asks,
+by their own AI account — the shop, the day, the total — and applied to
+the row by them or not; never read by anything else, and never on its own.
+_Avoid_: attachment, document, proof, invoice (the thing, not the file)
+
 ### Closing the books
 
 **Closing balance**:
@@ -408,6 +451,21 @@ most, so two assurance-vie contracts are one wallet. Placements lists only the
 wallets the user keeps: those with a position and those they added
 (`wallet_plans.shown`); removing one removes its positions.
 _Avoid_: account, portfolio, broker
+
+**Wallet event**:
+_En français_ : opération du compte (l'écran : Opérations)
+What happened inside a wallet, one row each (`investment_events`,
+migration 080): a buy, a sell, a dividend, a fee — the day, the line, its
+ISIN, the shares moved, the cash that moved, never signed. Typed by hand
+on the wallet's « Opérations » sheet, or read off the broker's export (a
+CSV or a spreadsheet, `readBrokerRows`), each line known again by its
+fingerprint so the same file read twice adds nothing twice. From them,
+on Analyse, the realised gains per wallet and year — each sell against
+the oldest buys of the same line still held, first in first out — the
+dividends received and the fees taken (`investment-events.ts`). A
+person's own, never a space's; apart from the ledger, which records what
+was sent to the broker, and from the position, which says what is held.
+_Avoid_: transaction (that is the ledger's), trade, movement
 
 **Savings account**:
 _En français_ : compte d'épargne (Livret A, LDDS, LEP, CEL, PEL, autre livret)
@@ -763,6 +821,68 @@ from the card, which is the name and the figure that are true whether or not
 anyone opens it.
 _Avoid_: drawer, expander, detail view
 
+**Month trust**:
+_En français_ : fiabilité du mois (« Fiabilité du mois », la carte)
+What the month's figures rest on, said as four facts on Le point: how far
+the bank's or a statement's lines reach into the month, the occurrences
+arrived and still awaited, what waits in the review inbox, and the month
+close and what it found. Each is a measurement with a message key
+(`month-trust.ts`) and, where there is one, the place it is dealt with —
+never a verdict, and never a score.
+_Avoid_: score, health, confidence, status
+
+**Palette**:
+_En français_ : palette (Cmd+K, sur l'ordinateur)
+What Cmd+K opens on the web: the add, a question and every page first,
+then what the words typed name — an amount to add, a month to open in the
+Journal or on Le point, a shop, a category, a recurring template
+(`palette.ts`). The arrows choose, Enter opens. The phone has its search
+and its « + » instead.
+_Avoid_: command bar, launcher, spotlight, omnibox
+
+**Month to share**:
+_En français_ : relevé du mois (« Partager ce mois »)
+One month as a few lines to send or to print: what came in, what went
+out, the month's net, what the close kept and found unrecorded, what is
+still to go out, and « Où c'est parti » — with the amounts, or with the
+shares and a sign only, the person's choice (`month-share.ts`). An image
+for the share sheet on both apps, and on the web a page to print or save
+as a PDF, with the month's rows when the amounts are in.
+_Avoid_: report, export (that is the CSV), summary
+
+**To-do strip**:
+_En français_ : « À faire » (la bande)
+Everything waiting for the reader, in one strip under Le point's month
+picker, with its count: a swallowed row, a bank feed that stopped, the
+close, « C'est arrivé ? », a purchase to confirm, the review inbox, accounts
+awaiting a role, last month's statement, a consent to renew, a repeat
+noticed — in that order (`attention.ts`), each leading to where it is done.
+The one place that counts; the decision cards below keep their place.
+_Avoid_: notifications, alerts, tasks, inbox (that is the review)
+
+**Bank notification**:
+_En français_ : notification de la banque (l'écran : Les notifications de votre banque)
+A bank app's notification on the phone — « Paiement de 12,30 € chez
+MONOP' » — read on Android, with the person's « Accès aux notifications »,
+as a provisional line on the account they chose (`notification.ts`,
+`modules/notification-listener`, flag `listener.android`). Only the bank
+apps ticked are read, on the phone only; what is not one operation is
+dropped. A line a statement later confirms rather than adds again, as an
+alert e-mail's. Unverified on a device.
+_Avoid_: push (that is Pluclair's own), alert (the e-mail's word), sync
+
+**Demo account**:
+_En français_ : la démo (« Essayer la démo »)
+One auth user marked `demo: true` in its app metadata (migration 081,
+`scripts/seed-demo.mjs`), which « Essayer la démo » on the site signs a
+visitor in as. The same account for every visitor at once, so read-only: a
+trigger on every public table refuses its writes, and the toast says so.
+Its rows are the sample (`demo-sample.ts`), nine months built for the day
+and rebuilt every night by `/api/cron/demo`, so it always reads as this
+month; never counted among the readers. A line above the app says it is
+the demo. Not the landing's mocks, which are drawings of the same figures.
+_Avoid_: sandbox, test account, trial
+
 ### Shared space
 
 **Shared space**:
@@ -799,6 +919,17 @@ worked out from incomes, which stay each one's own. Switched on, « Avec ma
 part du commun » counts a person's spending as their part of what the space
 spent instead of what they transferred to it; their balance does not move.
 _Avoid_: quota, contribution, split of income
+
+**Balance between you**:
+_En français_ : équilibre entre vous (« Équilibre entre vous », la carte)
+What each partner put into the joint account over a span — their own
+« Versement au compte commun » rows, the one sum of theirs the space may
+read (`space_contributions`, migration 078) — against their part of what
+the space spent; and the one line it adds up to: what the partner behind
+would put into the account to be level with the split. On Le point under
+« Commun » for the month, in the profile's space section since the space
+began. A fact, never a payment between the two (`space-balance.ts`).
+_Avoid_: settle up, who owes whom, debt, IOU
 
 **Leaving**:
 _En français_ : quitter l'espace

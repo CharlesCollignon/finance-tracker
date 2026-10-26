@@ -9,6 +9,8 @@ import {
 } from "@finance/core/bank-feed";
 import { buildMerchantIndex } from "@finance/core/merchant-memory";
 import { buildBankMerchantIndex } from "@finance/core/bank-merchant";
+import type { FilingRule } from "@finance/core/filing-rules";
+import { bumpFilingRules, readFilingRules } from "@finance/data/filing-rules";
 import type { Database } from "@finance/core/types/database";
 import { cashDateOf } from "@finance/core/cash-date";
 import { isPurchaseInsideWallet } from "@finance/core/categories";
@@ -40,6 +42,8 @@ export interface OwnerContext {
   existing: ExistingLedgerRow[];
   categoryIdsByName: ReturnType<typeof indexCategoriesByName>;
   seenProviderIds: Set<string>;
+  /** The rules the owner wrote, asked before anything learned (migration 077). */
+  rules: FilingRule[];
 }
 
 /**
@@ -55,7 +59,7 @@ export async function ownerContext(
   supabase: Client,
   ownerId: string,
 ): Promise<OwnerContext> {
-  const [history, { data: categories }, seen] = await Promise.all([
+  const [history, { data: categories }, seen, rules] = await Promise.all([
     allRows(
       (from, to) =>
         supabase
@@ -80,6 +84,9 @@ export async function ownerContext(
         .order("id")
         .range(from, to),
     ),
+    // A read that fails costs the rules and nothing else: a sync without
+    // them is a sync that asks more.
+    readFilingRules(supabase, ownerId).catch((): FilingRule[] => []),
   ]);
 
   const past = history;
@@ -112,7 +119,30 @@ export async function ownerContext(
     })),
     categoryIdsByName: indexCategoriesByName(categories ?? []),
     seenProviderIds: new Set(seen.map((row) => row.provider_id as string)),
+    rules,
   };
+}
+
+/**
+ * Count, on each rule, the new rows it filed: the « Règles » page says how
+ * many lines each one has answered for. After the writes, and never
+ * waited on for the ledger's sake.
+ */
+async function countRuleFilings(
+  supabase: Client,
+  automatic: readonly PlannedFeedRow[],
+): Promise<void> {
+  const counts = new Map<string, number>();
+  for (const row of automatic) {
+    const ruleId =
+      row.decision.kind === "auto" ? row.decision.suggestion.ruleId : undefined;
+    if (ruleId) {
+      counts.set(ruleId, (counts.get(ruleId) ?? 0) + 1);
+    }
+  }
+  if (counts.size > 0) {
+    await bumpFilingRules(supabase, counts).catch(() => undefined);
+  }
 }
 
 /** Rows per batched write: well inside a request PostgREST will take. */
@@ -261,6 +291,9 @@ export async function writePlan(
     }
     imported += links.length;
   }
+
+  // What the rules filed, counted on them — after the ledger is written.
+  await countRuleFilings(supabase, automatic);
 
   return { imported, pending, matched };
 }

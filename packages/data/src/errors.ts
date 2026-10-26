@@ -24,6 +24,10 @@ export function dbError(error: { code?: string; message?: string }): string {
   }
 
   const text = (error.message ?? "").toLowerCase();
+  // The demo account (migration 081): shared by every visitor, so read-only.
+  if (text.includes("demo_read_only")) {
+    return "errors.demoReadOnly";
+  }
   if (
     text.includes("fetch") ||
     text.includes("network") ||

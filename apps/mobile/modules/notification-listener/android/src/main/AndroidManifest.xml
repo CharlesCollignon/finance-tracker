@@ -1,0 +1,17 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+  <application>
+    <!-- The service Android hands notifications to, once the person grants
+         « Accès aux notifications » in the system settings. It keeps only
+         the notifications of the bank apps the person picked
+         (docs/plans/STATEMENTS_PLAN.md, Phase 5). -->
+    <service
+      android:name="expo.modules.pluclairlistener.PluclairListenerService"
+      android:label="Pluclair"
+      android:exported="true"
+      android:permission="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE">
+      <intent-filter>
+        <action android:name="android.service.notification.NotificationListenerService" />
+      </intent-filter>
+    </service>
+  </application>
+</manifest>

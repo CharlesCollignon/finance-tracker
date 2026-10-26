@@ -7,6 +7,7 @@ import {
   buildWalletFundingNeeds,
   type WalletFundingNeed,
 } from "@finance/core/investment-upcoming";
+import type { InvestmentEvent } from "@finance/core/investment-events";
 import type { InvestmentPortfolioSummary } from "@finance/core/investment-positions";
 import {
   keptWallets,
@@ -30,6 +31,7 @@ import {
 } from "@/lib/queries/savings-accounts";
 import { getWalletPortfolio } from "@/lib/queries/wallet-portfolio";
 import { createClient } from "@/lib/supabase/server";
+import { readInvestmentEvents } from "@finance/data/investment-events";
 import * as preferences from "@finance/data/preferences";
 
 /**
@@ -58,6 +60,8 @@ export interface PlacementsBase {
   savingsMonthly: Partial<Record<SavingsAccountKind, number>>;
   /** The target share each account was given, savings accounts included. */
   targets: AccountTarget[];
+  /** What happened inside the wallets (migration 080), newest first. */
+  events: InvestmentEvent[];
 }
 
 export const getPlacementsBase = cache(
@@ -71,6 +75,7 @@ export const getPlacementsBase = cache(
       investmentTransactions,
       savings,
       accountOrder,
+      events,
     ] = await Promise.all([
       // No position-value history: neither tab plots it, and the monthly
       // closes behind `chartPoints` are a Yahoo round trip per symbol.
@@ -80,6 +85,7 @@ export const getPlacementsBase = cache(
       getInvestmentTransactions(userId),
       getSavingsAccounts(userId),
       createClient().then((db) => preferences.readAccountOrder(db, userId)),
+      createClient().then((db) => readInvestmentEvents(db, userId)),
     ]);
 
     // Before migration 046 there is no `shown`, and every wallet with a plan
@@ -150,6 +156,7 @@ export const getPlacementsBase = cache(
       ),
       savingsMonthly,
       targets,
+      events,
     };
   },
 );

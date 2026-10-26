@@ -70,6 +70,7 @@ import {
   getRecurringProposals,
   getRecurringTemplates,
   hasBankFeed,
+  hasFeedLines,
 } from "@/lib/queries";
 import { useTabBarClearance } from "@/theme/chrome";
 import { useLocale, useT } from "@/providers/LocaleProvider";
@@ -133,7 +134,7 @@ export default function RecurringScreen() {
           debited: new Set<string>(),
         };
       }
-      const [templates, categories, recorded, properties, bankFed] =
+      const [templates, categories, recorded, properties, bankFed, feedShown] =
         await Promise.all([
           getRecurringTemplates(ownerId),
           getCategories(ownerId),
@@ -144,17 +145,21 @@ export default function RecurringScreen() {
           // properties.
           showProperty ? getPropertyNames(ownerId) : Promise.resolve([]),
           hasBankFeed(ownerId),
+          // Any line at all, a statement's as much as the bank's.
+          hasFeedLines(ownerId),
         ]);
-      // Only worth asking where there is a statement to read it out of, as
-      // on the web. Without one the transactions are the user's own typing,
-      // and they already know what repeats.
-      // And only a bank can have debited a wallet from the account.
-      const [proposals, debited] = bankFed
-        ? await Promise.all([
-            getRecurringProposals(ownerId, todayIsoLocal()),
-            getDebitedWalletCategories(ownerId),
-          ])
-        : [[], new Set<string>()];
+      // Only worth asking where there are lines to read it out of — the
+      // bank's or a statement's — as on the web. Without any, the
+      // transactions are the user's own typing, and they already know what
+      // repeats. Only a bank can have debited a wallet from the account.
+      const [proposals, debited] = await Promise.all([
+        feedShown
+          ? getRecurringProposals(ownerId, todayIsoLocal())
+          : Promise.resolve([] as RecurringProposal[]),
+        bankFed
+          ? getDebitedWalletCategories(ownerId)
+          : Promise.resolve(new Set<string>()),
+      ]);
       return { templates, categories, recorded, properties, proposals, debited };
     }, [ownerId, showProperty], {
       reads: ["templates", "categories", "transactions", "properties", "bank"],

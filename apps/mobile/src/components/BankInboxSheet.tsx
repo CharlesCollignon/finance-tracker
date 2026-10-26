@@ -21,6 +21,7 @@ import {
   type FeedGroup,
 } from "@finance/core/bank-inbox-groups";
 import type { BankMerchantIndex } from "@finance/core/bank-merchant";
+import { suggestRuleWords } from "@finance/core/filing-rules";
 import type { Category } from "@finance/core/types/database";
 
 import { ReviewCategoryChooser } from "@/components/review/ReviewCategoryChooser";
@@ -133,6 +134,8 @@ export function BankInboxSheet({
    * is an empty selection rather than a comparison that can reach into null.
    */
   const [choices, setChoices] = useState<Record<string, string>>({});
+  // « Toujours ranger ici », by group: a rule written with the filing.
+  const [always, setAlways] = useState<Record<string, boolean>>({});
   // Rows answered here, hidden at once rather than when the screen's reload
   // arrives. By row, so an undo puts back exactly what it took.
   const [hidden, setHidden] = useState<ReadonlySet<string>>(new Set());
@@ -271,13 +274,21 @@ export function BankInboxSheet({
         decision.matched > 0
           ? t("inboxGroups.alreadyRecorded", { count: decision.matched })
           : null,
+        decision.rule
+          ? t("rules.ruleWritten", { words: decision.rule.words, category: name })
+          : null,
       ]
         .filter((part): part is string => part !== null)
         .join(" · ") || t("inbox.done")
     );
   }
 
-  function file(ids: string[], categoryId: string) {
+  function file(
+    ids: string[],
+    categoryId: string,
+    /** A whole group, with « Toujours ranger ici » asked for. */
+    rule?: { words: string; direction: "in" | "out"; createdFrom: string },
+  ) {
     if (!categoryId) {
       toast(t("inbox.pickCategoryFirst"), "error");
       return;
@@ -288,7 +299,7 @@ export function BankInboxSheet({
     decide(
       ids,
       async () => {
-        const result = await fileFeedGroup(ids, categoryId);
+        const result = await fileFeedGroup(ids, categoryId, rule);
         if (!("error" in result)) {
           setTaught((current) => new Map(current).set(key, ids));
         }
@@ -503,11 +514,31 @@ export function BankInboxSheet({
                   file(
                     group.rows.map((row) => row.id),
                     choices[group.key] ?? group.suggestedCategoryId ?? "",
+                    always[group.key]
+                      ? {
+                          words: suggestRuleWords(group.name),
+                          direction: group.direction,
+                          createdFrom: group.name.slice(0, 200),
+                        }
+                      : undefined,
                   )
                 }
                 onLeaveOut={() => leaveOut(group.rows.map((row) => row.id))}
                 onFileRow={(row) => file([row.id], choices[row.id] ?? "")}
                 onLeaveOutRow={(row) => leaveOut([row.id])}
+                always={
+                  !group.mixed && suggestRuleWords(group.name)
+                    ? {
+                        on: always[group.key] ?? false,
+                        words: suggestRuleWords(group.name),
+                        onToggle: () =>
+                          setAlways((current) => ({
+                            ...current,
+                            [group.key]: !(current[group.key] ?? false),
+                          })),
+                      }
+                    : undefined
+                }
               />
             </Animated.View>
           ))}

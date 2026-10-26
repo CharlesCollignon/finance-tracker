@@ -1,6 +1,7 @@
 import { RefreshControl, ScrollView, View } from "react-native";
 import { useLocalSearchParams } from "expo-router";
 
+import { bankAttentionItems, sortAttention } from "@finance/core/attention";
 import { awaitingRole } from "@finance/core/bank-accounts";
 import { getMonthBounds, todayIsoLocal } from "@finance/core/constants";
 
@@ -8,14 +9,15 @@ import { ArrivedCharges } from "@/components/ArrivedCharges";
 import { MonthPicker } from "@/components/MonthPicker";
 import { MonthRead } from "@/components/MonthRead";
 import { PurchasesToConfirm } from "@/components/PurchasesToConfirm";
-import { BankAttentionBanner } from "@/components/bank/BankAttentionBanner";
-import { NewAccountsLine } from "@/components/bank/NewAccountsLine";
-import { AttentionRow } from "@/components/bearing/AttentionRow";
+import { BalanceBetweenCard } from "@/components/bearing/BalanceBetweenCard";
+import { TodoStrip } from "@/components/bearing/TodoStrip";
 import { SetupCard } from "@/components/bearing/SetupCard";
+import { ShareMonthCard } from "@/components/bearing/ShareMonthCard";
 import { YearReadyCard } from "@/components/bearing/YearReadyCard";
 import { BalanceCard } from "@/components/bearing/BalanceCard";
 import { MomentumCard } from "@/components/bearing/MomentumCard";
 import { SpentCard } from "@/components/bearing/SpentCard";
+import { TrustCard } from "@/components/bearing/TrustCard";
 import { UpcomingCard } from "@/components/bearing/UpcomingCard";
 import { WhereItWentCard } from "@/components/bearing/WhereItWentCard";
 import { WeeklyRecapCard } from "@/components/bearing/WeeklyRecapCard";
@@ -25,7 +27,7 @@ import { ScreenSkeleton } from "@/components/ui/Skeleton";
 import { ScreenError } from "@/components/ScreenError";
 import { useBankState } from "@/hooks/useBankState";
 import { useRefreshable } from "@/hooks/useRefreshable";
-import { getBankAccounts } from "@/lib/queries";
+import { getBankAccounts, getSpaceBalance } from "@/lib/queries";
 import { shouldInvite } from "@/lib/bank-connect";
 import { nextSetupStep } from "@finance/core/setup-steps";
 import {
@@ -103,6 +105,22 @@ export default function HomeScreen() {
     { reads: ["transactions", "templates", "bank", "preferences"] },
   );
 
+  // « Équilibre », under « Commun »: what each partner put into the joint
+  // account this month, against their part of what it spent (078). Read
+  // apart, like the recap: the balance should not wait on it.
+  const { data: spaceBalance } = useRefreshable(
+    async () =>
+      joint && space
+        ? await getSpaceBalance(
+            space,
+            getMonthBounds(year, month).start,
+            getMonthBounds(year, month).end,
+          ).catch(() => null)
+        : null,
+    [joint, space?.id, year, month],
+    { reads: ["transactions", "preferences"] },
+  );
+
   // Whether a bank can be connected here at all is the deployment's to say.
   const { bank } = useBankState();
 
@@ -134,6 +152,17 @@ export default function HomeScreen() {
   const hasSpentBefore =
     data !== null &&
     (data.spent.total > 0 || data.spent.trend.some((entry) => entry.total > 0));
+  // « À faire »: the month's list and the person's bank, read as one. The
+  // bank is the person's whatever owner is on screen.
+  const todo = data
+    ? sortAttention([
+        ...data.attention,
+        ...bankAttentionItems({
+          bank: bank?.attention ?? null,
+          awaitingAccounts: awaitingAccounts ?? 0,
+        }),
+      ])
+    : [];
 
   return (
     <Screen title={t("nav.bearing")} className="px-4 py-0" shared>
@@ -154,16 +183,6 @@ export default function HomeScreen() {
         {/* A newer APK on the site: nothing else would say so. */}
         <NewVersionBanner />
 
-        {/* Above the figures, because a bank feed that has stopped leaves
-            every one of them quietly stale. */}
-        {bank?.attention ? (
-          <BankAttentionBanner attention={bank.attention} />
-        ) : null}
-
-        {awaitingAccounts ? (
-          <NewAccountsLine count={awaitingAccounts} />
-        ) : null}
-
         {data ? (
           <View
             // Replayed per month: a new month is a new set of figures arriving.
@@ -171,9 +190,10 @@ export default function HomeScreen() {
             className="gap-4"
             style={stale ? { opacity: 0.5 } : undefined}
           >
-            {data.attention.length > 0 ? (
-              <AttentionRow attention={data.attention} />
-            ) : null}
+            {/* Above the figures: a bank feed that has stopped leaves every
+                one of them quietly stale, and a question answered changes
+                them. */}
+            {todo.length > 0 ? <TodoStrip items={todo} /> : null}
 
             {/* Before the figures, because answering one changes them: a
                 salary confirmed as arrived stops being counted as still to
@@ -226,6 +246,12 @@ export default function HomeScreen() {
               </FadeIn>
             ) : null}
 
+            {joint && spaceBalance ? (
+              <FadeIn>
+                <BalanceBetweenCard balance={spaceBalance} />
+              </FadeIn>
+            ) : null}
+
             {!past && data.upcoming && data.recurring ? (
               <FadeIn>
                 <UpcomingCard data={data} />
@@ -241,9 +267,24 @@ export default function HomeScreen() {
               </FadeIn>
             ) : null}
 
+            {/* What the figures above rest on: the lines, the charges, the
+                review, the close. Not on a first visit, which has none. */}
+            {!data.empty && data.trust.length > 0 ? (
+              <FadeIn>
+                <TrustCard signals={data.trust} />
+              </FadeIn>
+            ) : null}
+
             {data.spending.total > 0 ? (
               <FadeIn>
                 <WhereItWentCard data={data} />
+              </FadeIn>
+            ) : null}
+
+            {/* The month to send: not a month ahead, nor a first visit. */}
+            {!data.empty && period !== "future" ? (
+              <FadeIn>
+                <ShareMonthCard year={year} month={month} />
               </FadeIn>
             ) : null}
 

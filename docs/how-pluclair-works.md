@@ -29,7 +29,8 @@ Vocabulary is fixed by `CONTEXT.md`; product commitments by
 | Bearing                | `/bearing`                               | `(tabs)/index`                                                           |
 | Ledger — list          | `/transactions`                          | `(tabs)/transactions`                                                    |
 | Ledger — calendar      | `/calendar`                              | `(tabs)/calendar`                                                        |
-| Ledger — by category   | `/history`                               | none                                                                     |
+| Ledger — by category   | `/history`                               | `(tabs)/history`                                                         |
+| Ledger — by shop       | `/merchants`                             | `(tabs)/merchants`                                                       |
 | Charges                | `/recurring`                             | `(tabs)/recurring`                                                       |
 | Plan                   | `/plan`                                  | `(tabs)/planning`                                                        |
 | Wallets — positions    | `/investments`                           | `(tabs)/investments`                                                     |
@@ -37,6 +38,7 @@ Vocabulary is fixed by `CONTEXT.md`; product commitments by
 | Property — list        | `/property` (flag `property.track`)      | `(tabs)/property` (same flag)                                            |
 | Property — one         | `/property/[id]` (flag `property.track`) | `property/[id]`, pushed over the tabs                                    |
 | Categories             | `/categories`                            | `categories`                                                             |
+| Filing rules           | `/rules`                                 | `rules`                                                                  |
 | Import (CSV, OFX)      | `/import`                                | `import`                                                                 |
 | Welcome                | `/welcome`                               | `onboarding`                                                             |
 | Profile                | `/profile`                               | `(tabs)/profile`                                                         |
@@ -182,6 +184,7 @@ today's prices) leaves it unmarked, so the Plan still shows it as new.
 | « Il vous reste » (left to spend) until the next pay day, and per day                                       | `left-to-spend.ts`; read by `@finance/data/left-to-spend` (next month's line too when the pay day falls in it) |
 | Le point's setup cards, one at a time                                                                       | `setup-steps.ts`                                                                                               |
 | The Journal's search: words in a note or a category name, or an amount                                      | `ledger-search.ts`; every month through `@finance/data/ledger-search`                                          |
+| The Journal's list: the half shown, the rows a filter keeps, their order, their days, the figures over them, the category and type filters| `ledger-view.ts` (`buildLedgerView`, both apps; selection in `selection.ts`)                                   |
 | Subscriptions: what is paid every month or year, a price up, a new one, one stopped, two of a kind          | `subscription-watch.ts`; read by `@finance/data/subscriptions`, and in the recap (`weekly-recap.ts`)           |
 | Month close, Kept, Unrecorded spending                                                                      | `month-close.ts` (closes in `month_closes`; reading day in `month_close_settings.close_day`, default 5)        |
 | Forward projection, runway                                                                                  | `projection.ts`                                                                                                |
@@ -199,6 +202,10 @@ today's prices) leaves it unmarked, so the Plan still shows it as new.
 | The Notaires–INSEE index, and which series carries a place                                                  | `price-index.ts` (series in `seriesFor`)                                                                       |
 | Fund costs, look-through, target trades                                                                     | `fund-costs.ts`, `look-through.ts`, `look-through-target.ts`                                                   |
 | Money-weighted return                                                                                       | `xirr.ts`, `investment-returns.ts`                                                                             |
+| « Dividendes et plus-values réalisées »: realised gains per wallet and year (first in, first out), dividends and fees by year| `investment-events.ts` (rows read by `@finance/data/investment-events`)                                        |
+| « Fiabilité du mois »: the lines' reach, the occurrences arrived and awaited, the review, the close         | `month-trust.ts` (read by `@finance/data/bearing-month`, the coverage from `@finance/data/statements`)        |
+| « Par commerce »: a shop's visits, its normal month, its twelve months (`merchantKeyOf`, two meaningful words) | `merchant-screen.ts` (read by `@finance/data/merchant-screen`)                                                |
+| « Équilibre entre vous »: each partner's part of the joint spending against what they put in                | `space-balance.ts` (read by `@finance/data/space-balance`, `space_contributions`)                             |
 
 ## AI features
 
@@ -284,6 +291,17 @@ Both apps gather the month the same way, `@finance/data/bearing-month`
 `gatherHomeMonth` hand it their client and their own pricing of the wallets.
 Its cards are a file each on both apps (`BalanceCard`, `SpentCard`…, made of
 `card-parts.tsx`).
+
+« À faire » (`TodoStrip`, both apps) is the one list of what waits:
+`buildAttention` (the month's: a swallowed row, the close, « C'est
+arrivé ? », purchases to confirm, the review, last month's statement for an
+importer, a repeat noticed) and `bankAttentionItems` (the person's bank: a
+feed that stopped, a consent to renew, accounts awaiting a role), merged by
+`sortAttention` into a fixed order. It replaced the attention row and the
+two bank banners in October 2026; the decision cards below it keep their
+place, and the strip's two in-place items point at them (`/bearing#arrived`,
+`/bearing#purchases`). « Fiabilité du mois » (`TrustCard`) sits after the
+momentum card and says what the month's figures rest on.
 
 « Il vous reste » is what the Courant accounts hold, less the charges due
 before the next pay day, at the lowest point until then, less the marge's
@@ -485,6 +503,16 @@ expenses (`withMyShare`, `readMyShare`); the balance, « Il vous reste » and
 the closes are untouched. Remembered in the `pluclair-my-share` cookie on the
 web and on the device on the phone.
 
+**The balance between you** (migration 078, `@finance/core/space-balance`,
+`@finance/data/space-balance`): what each partner put into the joint
+account — `space_contributions`, a member-only function summing each
+member's own « Versement au compte commun » rows over a span, by the
+category's name in either language — against their part of what the space
+spent, and what the partner behind would put in to be level with the
+split. A card on Le point under « Commun » (`BalanceBetweenCard`, both
+apps, the month shown) and a row in the profile's space section since the
+space began. Never a payment between the two.
+
 **A home owned together** (migration 063): Immobilier is a shared screen
 like the others, so under « Commun » it lists and adds the space's homes,
 and their loans' payments are the space's charges. Each partner's part of
@@ -562,6 +590,16 @@ account from 12 to 13 October 2026, until open-banking.io answered that its
 customers may not give their access to an app reading on their behalf.
 Everyone else enters balances and transactions by hand or imports a CSV. Rows the matcher
 would not file wait in the review inbox at `?review=inbox`.
+
+**Filing rules** (migration 077, `@finance/core/filing-rules`,
+`@finance/data/filing-rules`): the rules a person writes — words to find,
+whole and without case or accents, a category, the money's way. `decide`
+asks them before the learned matcher and the MCC, and a line one files is
+`decided_by = 'auto:rule'`; `writePlan` counts what each filed
+(`bump_filing_rule`). Written from the review's « Toujours ranger ici »
+(`importFeedItems` on the web, `/api/bank/feed` for the phone, with the
+group's `suggestRuleWords`) or on `/rules` (the phone's `rules`), reached
+from Catégories; the owner on screen's, so a joint account has the space's.
 
 Connecting is a four-step wizard on both apps (`ConnectBankSheet`): the
 account at open-banking.io with its price, the bank connected there, the
@@ -712,8 +750,115 @@ Old binary Excel files are named and left aside. Such lines are kept beside the 
 from their files are `bank_accounts` rows with `source = 'file'` and a
 `statement_key`. Only the bank's lines make a ledger bank-fed
 (`hasBankFeed`), so recurring charges keep being written on their day for
-someone who imports monthly. The sync's write path
+someone who imports monthly. Any line at all (`hasFeedLines`) is what makes
+Récurrents propose what repeats, Le point count the review, and
+« Fiabilité du mois » read the month's lines. The sync's write path
 (`apps/web/lib/bank/feed-write.ts`) writes either kind, each line marked.
+
+### The bank apps' notifications (Android)
+
+Behind `listener.android` (migration 082, off by default) and only in a
+build carrying `apps/mobile/modules/notification-listener`: a
+`NotificationListenerService` that, once the person grants « Accès aux
+notifications » on Android's own page, keeps the title and text of the
+notifications posted by the bank apps they ticked (`Store`, shared
+preferences, two hundred at most) and nothing else. Each time Import opens
+or the app comes back (`useAppForeground`), `drainBankNotifications`
+(`lib/bank-notifications.ts`) takes the queue, reads each with
+`notificationAlert` (`@finance/core/statement/notification`: the bank by
+the app's package, `BANK_APP_PACKAGES`; the words by `alertInText`, the
+alert e-mails' reader) and sends the lines to `/api/statements` as
+`format: "notification"`, `source: "notification"`, on the account chosen on
+« Les notifications de votre banque » — provisional, as an alert e-mail's,
+until a statement confirms them. Nothing is taken from the queue before an
+account is chosen. Unverified on a device until an APK runs it.
+
+## Splits and receipts
+
+Migration 079, `@finance/data/splits`. **A split** keeps the row it was
+made from as its first part — its id, its day, the bank line that may point
+at it — and writes the other parts beside it, every part carrying one
+`split_group`; every figure counts rows, so nothing else changes.
+« Réunir » puts the amounts back into the first row and deletes the others
+(no undo: a split can be made again). `PartsEditor` on both apps, in the
+edit sheet; the Journal marks a part with a fork.
+
+**A receipt** is a private object in the `receipts` bucket under the
+owner's folder (`receipt_folder_is_mine` holds the four storage policies to
+the person's id or a space they are in), its path on the row. The web's
+`lib/actions/receipts.ts` attaches, opens (a signed link), removes and
+reads it through the person's session; the phone does the same through
+Supabase storage on its own session (`lib/receipts.ts`) and asks
+`/api/receipts` for the reading. The reading — the shop, the day, the total
+(`@finance/core/receipts`, `RECEIPT_SCHEMA`) — is written by the person's
+own AI account with the statement scan's writer (Mistral, EU), sent once
+and kept nowhere, and applied to the row only when they press « Appliquer ».
+
+## The palette
+
+Cmd/Ctrl+K on the web opens `CommandPalette` (`components/layout/`),
+mounted by `QuickAddProvider` with what it can name: every page in the
+reader's language (`APP_NAV_ITEMS` and their views, Immobilier under its
+flag, Catégories, Règles, Importer, Profil, Nouveautés), the categories,
+the shops the merchant memory knows, the active charges by name (handed
+down by the app layout). `@finance/core/palette` works out the list from
+what was typed — an amount (an add with it filled in, through the quick
+add's `defaultAmount`), a month in either language (`parseMonthQuery`), and
+the pages, categories, shops and charges whose words match — and the sheet
+draws it as a listbox the arrows walk. A category opens By category on it
+(`/history?open=`), a shop opens By shop on its words, a charge opens
+Récurrents with its editor (`/recurring?edit=`).
+
+## The month to share
+
+« Partager ce mois » (`ShareMonthCard`, both apps, any month not ahead):
+`@finance/core/month-share` turns Le point's month into a few lines — in,
+out, net, kept and unrecorded from the close, still to go out, « Où c'est
+parti » — with the amounts or with the shares and a sign only. The web's
+`/api/month-share/image` draws them as a PNG (`lib/bearing/share.ts`, the
+cookie session or the phone's bearer with `?owner=` for a space), and
+`/print/month` draws them as a page outside the app shell, the month's rows
+under them when the amounts are in, for the browser's print dialog. The
+phone downloads the image and hands it to its share sheet
+(`lib/month-share.ts`), as « Votre année » does.
+
+## Inside a wallet
+
+« Opérations » (`WalletEventsSheet`, both apps, one sheet per wallet): what
+happened inside the account — a buy, a sell, a dividend, a fee
+(`investment_events`, migration 080, a person's own). Typed by hand, or read
+off the broker's export in the browser or on the phone: `tableRows`
+(`@finance/core/statement`) gives a CSV, a spreadsheet or a web page's table
+as rows, `readBrokerRows` (`@finance/core/investment-events`) finds the
+columns by their names in French or English and each line's kind by its
+words, else by the sign of its amount beside a quantity; the lines are
+shown before `importInvestmentEvents` stores them, each with a fingerprint
+(day, kind, amount, instrument, rank) the unique index knows again, so a
+file read twice adds nothing twice. On Analyse, `EventsCard` adds them up
+with `summariseEvents`: each sell against the oldest buys of the same line
+in the same wallet still held, first in first out; a sell with buys missing
+is counted and said. The reader was built on synthetic exports: a real one,
+anonymised, is the owner's part (`REFERENCE_APP_PLAN.md`).
+
+## The demo
+
+« Essayer la démo » (`/demo`, web only): signs the visitor in as the demo
+account — one auth user with `demo: true` in its app metadata, made by
+`scripts/seed-demo.mjs` with `DEMO_EMAIL` and `DEMO_PASSWORD`, which the
+route reads from the environment (`lib/demo-env.ts`); unset, the link goes
+to signing up, and the landing shows no demo. Someone signed in as
+themselves is sent to the app, never signed out. The account is shared by
+every visitor, so migration 081 makes it read-only: `refuse_demo_write`,
+a trigger on every public table, raises `demo_read_only` for a session
+whose `auth.uid()` is the demo (`dbError` turns it into
+`errors.demoReadOnly`), and `receipt_folder_is_mine` says no to its files.
+`DemoBanner` sits above the shell (`isDemoUser`, `lib/demo.ts`). The rows
+are `@finance/core/demo-sample` — nine months built for the day, the
+landing's figures — written by `@finance/data/demo`'s `resetDemo` under
+the service role, which the triggers let through: nightly from
+`/api/cron/demo` (`vercel.json`), and once from the script after the
+account is made. A table added after 081 needs the trigger too; the
+migration says how.
 
 ## Search
 
@@ -793,7 +938,7 @@ assertion script:
 - The Wallets page's fund-cost card and the look-through page can show different annual costs: only the look-through falls back to the shortlist's charge hints.
 - Dead schema: `user_preferences.bearing_pins` and the `bearing_arrangements` table have no readers.
 - The `delete-account` edge function deletes a fixed list of older tables and relies on `on delete cascade` for the rest.
-- The phone has no By category view, no look-through and no wallet read.
+- The phone has no wallet read.
 - The phone's Immobilier screens were run in the Expo web build (adding a
   property with its loan, the list, a property's screen, the chip in
   Récurrents), not on a device. That build needs three local changes to

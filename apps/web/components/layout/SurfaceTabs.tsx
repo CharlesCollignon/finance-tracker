@@ -125,11 +125,12 @@ export function tabbedSurfaceOf(pathname: string): string | null {
   return null;
 }
 
-/** The Ledger's views: the same record, looked at three ways. */
+/** The Ledger's views: the same record, looked at four ways. */
 export const LEDGER_TABS: SurfaceTab[] = [
   { href: "/transactions", labelKey: "nav.ledgerList" },
   { href: "/calendar", labelKey: "nav.ledgerCalendar" },
   { href: "/history", labelKey: "nav.ledgerByCategory" },
+  { href: "/merchants", labelKey: "nav.ledgerByMerchant" },
 ];
 
 /**

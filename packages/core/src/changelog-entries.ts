@@ -17,6 +17,222 @@ import type { ChangelogEntry, RoadmapItem } from "./changelog";
  */
 export const CHANGELOG: readonly ChangelogEntry[] = [
   {
+    id: "2026-10-26-site",
+    date: "2026-10-26",
+    kind: "better",
+    platforms: ["web"],
+    fr: {
+      title: "Le site dit ce qui est nouveau",
+      body: "Sur pluclair.com, « Et tout ce qu’il y a autour » compte six cartes de plus — les règles de rangement, la vue par commerce, les parts et le ticket, « Partager ce mois », les opérations d’un compte de placement, Cmd+K —, les pages Le point, Journal, Placements et Espace commun disent ce qu’elles ont gagné, deux questions rejoignent « Vos questions », et « Bientôt » annonce les notifications de la banque.",
+      detail:
+        "Rien n’y est promis qui ne soit déjà dans l’application ; ce qui ne l’est pas encore reste au futur, sous « Bientôt ».",
+    },
+    en: {
+      title: "The site says what is new",
+      body: "On pluclair.com, “And everything around it” has six more cards — filing rules, the view by shop, parts and the receipt, “Share this month”, an investment account’s operations, Cmd+K —, the Overview, Ledger, Investments and Shared space pages say what they gained, two questions join “Your questions”, and “Coming soon” announces the bank’s notifications.",
+      detail:
+        "Nothing is promised there that is not already in the app; what is not yet stays in the future tense, under “Coming soon”.",
+    },
+  },
+  {
+    id: "2026-10-26-demo",
+    date: "2026-10-26",
+    kind: "new",
+    platforms: ["web"],
+    fr: {
+      title: "Essayer la démo",
+      body: "Sur le site, « Essayer la démo » ouvre Pluclair sur un compte d’exemple, sans rien créer : neuf mois d’un budget inventé, ses récurrents, ses placements, ses clôtures. Tout s’y lit, rien ne s’y écrit — c’est le même compte pour tout le monde — et il est refait chaque nuit pour le mois en cours.",
+      detail:
+        "Une ligne au-dessus de l’app le rappelle, avec le chemin vers votre propre compte. Le compte de démo n’est pas compté parmi les lecteurs.",
+    },
+    en: {
+      title: "Try the demo",
+      body: "On the site, “Try the demo” opens Pluclair on a sample account, with nothing to create: nine months of a made-up budget, its recurring entries, its investments, its closes. Everything reads, nothing writes — it is the same account for everyone — and it is rebuilt every night for the current month.",
+      detail:
+        "A line above the app says so, with the way to an account of your own. The demo account is not counted among the readers.",
+    },
+  },
+  {
+    id: "2026-10-26-wallet-events",
+    date: "2026-10-26",
+    kind: "new",
+    platforms: ["web"],
+    fr: {
+      title: "Ce qui se passe dans un compte de placement",
+      body: "Sur chaque compte de Placements, « Opérations » : une ligne achetée ou vendue, un dividende reçu, des frais prélevés — saisis à la main, ou lus dans l’export du courtier (un CSV ou un tableur), montrés avant d’être ajoutés, jamais ajoutés deux fois. Sur Analyse, une carte « Dividendes et plus-values réalisées » les additionne par année et par compte.",
+      detail:
+        "Chaque vente est rapprochée des achats les plus anciens de la même ligne encore détenus, premier entré premier sorti, comme le fisc les lit ; une vente dont les achats manquent le dit. La lecture des exports repose sur les noms des colonnes et les mots de chaque ligne, en français ou en anglais, et a été mise au point sur des exemples : vérifiez le premier fichier lu.",
+    },
+    en: {
+      title: "What happens inside an investment account",
+      body: "On each account under Placements, “Operations”: a line bought or sold, a dividend received, a fee taken — typed by hand, or read off the broker’s export (a CSV or a spreadsheet), shown before they are added, never added twice. On Analyse, a “Dividends and realised gains” card adds them up by year and account.",
+      detail:
+        "Each sale is set against the oldest purchases of the same line still held, first in first out, as the tax office reads them; a sale whose purchases are missing says so. The reading of exports rests on the names of the columns and the words of each line, in French or English, and was built on samples: check the first file read.",
+    },
+  },
+  {
+    id: "2026-10-26-month-share",
+    date: "2026-10-26",
+    kind: "new",
+    platforms: ["web"],
+    fr: {
+      title: "Partager ce mois",
+      body: "Sur Le point, une carte envoie le mois en image — entré, sorti, le mois, économisé, non noté, et où c’est parti — avec les montants, ou avec les parts seulement. Sur l’ordinateur, la même chose en page à imprimer ou à enregistrer en PDF, avec les opérations du mois.",
+      detail:
+        "Dessiné pour votre compte au moment où vous le demandez, et gardé nulle part. Pour un partenaire, un comptable, ou vous-même.",
+    },
+    en: {
+      title: "Share this month",
+      body: "On the Overview, a card sends the month as an image — came in, went out, the month, kept, unrecorded, and where it went — with the amounts, or with the shares only. On the desktop, the same as a page to print or save as a PDF, with the month’s entries.",
+      detail:
+        "Drawn for your account when you ask, and kept nowhere. For a partner, an accountant, or yourself.",
+    },
+  },
+  {
+    id: "2026-10-26-palette",
+    date: "2026-10-26",
+    kind: "better",
+    platforms: ["web"],
+    fr: {
+      title: "Cmd+K ouvre une palette",
+      body: "Sur l’ordinateur, Cmd+K (Ctrl+K) ouvre une palette : ajouter une opération ou une récurrente, poser une question, aller à n’importe quelle page — et, dès que vous tapez, un montant à ajouter, un mois à ouvrir, un commerce, une catégorie, une opération récurrente.",
+      detail:
+        "Les flèches choisissent, Entrée ouvre, Échap ferme. L’ajout reste la première ligne : Cmd+K puis Entrée, comme avant à une touche près. Un montant tapé arrive déjà rempli dans l’ajout.",
+    },
+    en: {
+      title: "Cmd+K opens a palette",
+      body: "On the desktop, Cmd+K (Ctrl+K) opens a palette: add a transaction or a recurring entry, ask a question, go to any page — and, as you type, an amount to add, a month to open, a shop, a category, a recurring entry.",
+      detail:
+        "The arrows choose, Enter opens, Escape closes. The add stays the first line: Cmd+K then Enter, as before but for one key. An amount typed arrives already filled into the add.",
+    },
+  },
+  {
+    id: "2026-10-26-splits-receipts",
+    date: "2026-10-26",
+    kind: "new",
+    platforms: ["web"],
+    fr: {
+      title: "Un paiement en plusieurs parts, et le ticket derrière",
+      body: "Depuis une opération : « Partager en plusieurs » place son montant dans deux catégories ou plus, chaque part devenant une opération, les parts restant un seul paiement — et « Réunir les parts » les rassemble. « Joindre un justificatif » garde la photo ou le PDF du ticket avec l’opération.",
+      detail:
+        "« Lire le ticket » demande à votre propre compte IA d’y relever le commerce, le jour et le total ; vous les appliquez, ou pas. Le fichier est à vous seul, et n’est lu que quand vous le demandez.",
+    },
+    en: {
+      title: "One payment in several parts, and the receipt behind it",
+      body: "From an entry: “Split into parts” places its amount in two categories or more, each part becoming an entry, the parts staying one payment — and “Put the parts back together” rejoins them. “Attach a receipt” keeps the picture or the PDF with the entry.",
+      detail:
+        "“Read the receipt” asks your own AI account to copy the shop, the day and the total off it; you apply them, or not. The file is yours alone, and is read only when you ask.",
+    },
+  },
+  {
+    id: "2026-10-26-space-balance",
+    date: "2026-10-26",
+    kind: "new",
+    platforms: ["web"],
+    fr: {
+      title: "À deux : l’équilibre entre vous",
+      body: "Sous « Commun », Le point dit ce que chacun a versé sur le compte commun ce mois-ci, face à sa part de ce qu’il a dépensé — et ce que celui qui est en retard verserait pour être au niveau du partage. Le profil le dit depuis le début de l’espace.",
+      detail:
+        "Un partenaire apprend ce que l’autre a versé sur le compte qu’ils partagent, et rien d’autre de son argent. Jamais un paiement entre vous : un versement au compte commun, si vous le voulez.",
+    },
+    en: {
+      title: "For two: the balance between you",
+      body: "Under “Shared”, the Overview says what each of you put into the joint account this month, against your part of what it spent — and what the one behind would put in to be level with the split. The profile says it since the space began.",
+      detail:
+        "A partner learns what the other put into the account they share, and nothing else of their money. Never a payment between you: a transfer to the joint account, if you want one.",
+    },
+  },
+  {
+    id: "2026-10-26-by-shop",
+    date: "2026-10-26",
+    kind: "new",
+    platforms: ["web"],
+    fr: {
+      title: "Le Journal, par commerce",
+      body: "Une quatrième vue du Journal : chaque endroit où votre argent est allé ces douze derniers mois, du plus gros au plus petit — combien de fois, combien à chaque fois, ce que ça fait un mois normal, et la dernière fois. Un commerce s'ouvre sur ses douze mois et ses opérations.",
+      detail:
+        "La recherche trouve un commerce par ses mots ou sa catégorie. Un commerce est reconnu à ses deux premiers mots, quelle que soit la façon dont la banque l'écrit.",
+    },
+    en: {
+      title: "The Ledger, by shop",
+      body: "A fourth Ledger view: every place your money went in the last twelve months, biggest first — how many times, how much a time, what a normal month comes to, and when last. A shop opens on its twelve months and its entries.",
+      detail:
+        "The search finds a shop by its words or its category. A shop is known by its first two words, however the bank spells it.",
+    },
+  },
+  {
+    id: "2026-10-26-filing-rules",
+    date: "2026-10-26",
+    kind: "new",
+    platforms: ["web"],
+    fr: {
+      title: "Des règles de rangement, écrites par vous",
+      body: "Dans « À vérifier », cochez « Toujours ranger ici » en classant un commerce : une règle est écrite avec ses mots, et la prochaine ligne qui les contient se range toute seule. Vos règles se lisent, se modifient et se suppriment depuis Catégories.",
+      detail:
+        "Une règle passe avant ce que l’application a appris seule, et vaut aussi pour l’argent qui rentre — un salaire, un loyer perçu. La plus précise l’emporte, et chacune compte les lignes qu’elle a rangées.",
+    },
+    en: {
+      title: "Filing rules, written by you",
+      body: "In the review, tick “Always file here” as you file a shop: a rule is written with its words, and the next line that contains them files itself. Your rules can be read, changed and deleted from Categories.",
+      detail:
+        "A rule comes before anything the app learned on its own, and holds for money coming in too — a salary, a rent received. The most specific wins, and each counts the lines it filed.",
+    },
+  },
+  {
+    id: "2026-10-26-todo-strip",
+    date: "2026-10-26",
+    kind: "better",
+    platforms: ["web"],
+    fr: {
+      title: "« À faire », en une bande",
+      body: "Sur Le point, tout ce qui vous attend tient dans une bande sous le mois, avec son compte : le bilan, « C'est arrivé ? », les achats à confirmer, « À vérifier », un relevé à importer, une banque à renouveler. Chaque ligne mène là où ça se règle.",
+      detail:
+        "Les deux bandeaux de la banque et la ligne « en attente » disparaissent : la bande les compte à leur place. Les cartes qui posent la question restent où elles sont, un peu plus bas.",
+    },
+    en: {
+      title: "“To do”, in one strip",
+      body: "On the Overview, everything waiting for you fits in one strip under the month, with its count: the close, “did it arrive?”, purchases to confirm, the review, a statement to import, a bank to renew. Each line leads to where it is done.",
+      detail:
+        "The two bank banners and the “waiting” row are gone: the strip counts them in their place. The cards that ask the question stay where they were, a little lower.",
+    },
+  },
+  {
+    id: "2026-10-26-month-trust",
+    date: "2026-10-26",
+    kind: "new",
+    platforms: ["web"],
+    fr: {
+      title: "« Fiabilité du mois »",
+      body: "Sur Le point, une carte dit sur quoi reposent les chiffres du mois : jusqu’où va le relevé, les opérations récurrentes passées ou encore attendues, ce qui reste à vérifier, et le bilan — fait, à faire, ou prévu tel jour.",
+      detail:
+        "Chaque ligne est un fait, jamais une note. Une ligne qui mène quelque part s’ouvre d’un geste : le Journal, « À vérifier », le bilan.",
+    },
+    en: {
+      title: "“Month check”",
+      body: "On the Overview, a card says what the month’s figures rest on: how far the statement reaches, the recurring entries arrived or still awaited, what is left to review, and the close — done, ready, or due on a given day.",
+      detail:
+        "Each line is a fact, never a score. A line that leads somewhere opens with a press: the Ledger, the review, the close.",
+    },
+  },
+  {
+    id: "2026-10-26-proposals-for-imports",
+    date: "2026-10-26",
+    kind: "better",
+    platforms: ["web"],
+    fr: {
+      title: "Ce qui revient, repéré aussi dans vos relevés",
+      body: "Récurrents propose ce qui a l’air de revenir — un abonnement, un prélèvement — dès que des lignes sont arrivées, par un relevé importé comme par la banque. Jusqu’ici, seule une banque connectée y donnait droit.",
+      detail:
+        "Le point compte aussi, pour tout le monde, les lignes qui attendent une catégorie après un import.",
+    },
+    en: {
+      title: "Repeats spotted in your statements too",
+      body: "Recurring now proposes what looks like it repeats — a subscription, a direct debit — as soon as lines have come in, from an imported statement as much as from a bank. Until now only a connected bank qualified.",
+      detail:
+        "The Overview also counts, for everyone, the lines waiting for a category after an import.",
+    },
+  },
+  {
     id: "2026-10-26-accounts-order",
     date: "2026-10-26",
     kind: "better",
@@ -1487,6 +1703,17 @@ export const CHANGELOG_STATS = {
  * and nowhere else. An item leaves this list the day its entry is written.
  */
 export const ROADMAP: readonly RoadmapItem[] = [
+  {
+    id: "listener",
+    fr: {
+      title: "Les notifications de votre banque",
+      body: "Sur Android, avec l’« Accès aux notifications », chaque paiement que votre banque annonce deviendra une ligne à vérifier au moment où il s’affiche — lu sur le téléphone seulement, et pour les applications bancaires que vous choisissez. Construit ; ouvert quand une version de l’application l’aura fait tourner.",
+    },
+    en: {
+      title: "Your bank’s notifications",
+      body: "On Android, with “Notification access”, each payment your bank announces will become a line to check the moment it shows — read on the phone only, and for the bank apps you choose. Built; open once a build of the app has run it.",
+    },
+  },
   {
     id: "stores",
     fr: {

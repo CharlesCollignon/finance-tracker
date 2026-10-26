@@ -1,9 +1,12 @@
 "use client";
 
 import { useActionState, useEffect, useState, useTransition } from "react";
+import Link from "next/link";
 import {
   Archive,
   ArrowCounterClockwise,
+  ArrowRight,
+  Funnel,
   PencilSimple,
   Plus,
   Trash,
@@ -141,6 +144,26 @@ export function CategoriesView({ categories }: CategoriesViewProps) {
             </ButtonNub>
           </Button>
         </div>
+
+        {/* The rules a person writes for filing a line (077): the words
+            they decided, and where they go. */}
+        <Link
+          href="/rules"
+          className="flex items-center gap-3 rounded-control border border-border px-4 py-3 transition-colors duration-hover hover:bg-muted/40"
+        >
+          <Funnel size={ICON.md} className="shrink-0" aria-hidden />
+          <span className="min-w-0 flex-1">
+            <span className="block text-sm font-medium">{t("rules.link")}</span>
+            <span className="block text-xs text-muted-foreground">
+              {t("rules.linkHint")}
+            </span>
+          </span>
+          <ArrowRight
+            size={ICON.sm}
+            className="shrink-0 text-muted-foreground"
+            aria-hidden
+          />
+        </Link>
 
         <div className="flex flex-col gap-5">
           {groups.map((group) => (

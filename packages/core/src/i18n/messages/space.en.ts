@@ -65,4 +65,18 @@ export const spaceEn = {
     "Your share of the shared space ({part}) counted, your transfers to it taken out.",
   transferCategory: "Transfer to the joint account",
   addedBy: "Added by {name}",
+
+  /** « Équilibre » (`@finance/core/space-balance`): put in, against the split. */
+  balanceTitle: "Balance between you",
+  balanceRow: "Balance between you",
+  balanceSince: "Since the space began",
+  balanceHint:
+    "What each of you put into the joint account, against your part of what it spent.",
+  balancePut: "{name} put in {amount}",
+  balancePart: "their part: {amount}",
+  balanceSettle:
+    "{name} would put in {amount} more to be level with the split",
+  balanceEven: "Level with the split",
+  balanceNothing: "Nothing put in and nothing spent yet",
+  balanceSpent: "Spent together: {amount}",
 };

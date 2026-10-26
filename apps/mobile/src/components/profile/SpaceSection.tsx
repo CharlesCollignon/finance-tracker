@@ -3,7 +3,9 @@ import { View } from "react-native";
 import Animated from "react-native-reanimated";
 import { Ionicons } from "@expo/vector-icons";
 
+import { todayIsoLocal } from "@finance/core/constants";
 import { resolveMessage } from "@finance/core/i18n/t";
+import { spaceBalanceIsEmpty } from "@finance/core/space-balance";
 import {
   createSpace,
   createSpaceInvite,
@@ -17,9 +19,12 @@ import { Input } from "@/components/ui/Input";
 import { ListRow, ListSection } from "@/components/ui/ListRow";
 import { Text } from "@/components/ui/Text";
 import { percent, SplitEditor } from "@/components/space/SplitEditor";
+import { useRefreshable } from "@/hooks/useRefreshable";
 import { hapticSuccess } from "@/lib/haptics";
+import { getSpaceBalance } from "@/lib/queries";
 import { exportSpaceRows, inviteUrl, sendInvite } from "@/lib/space";
 import { supabase } from "@/lib/supabase";
+import { useFormatCurrency } from "@/providers/CurrencyProvider";
 import { useLocale, useT } from "@/providers/LocaleProvider";
 import { useOwner } from "@/providers/OwnerProvider";
 import { useToast } from "@/providers/ToastProvider";
@@ -51,6 +56,19 @@ export function SpaceSection({ selfName }: { selfName: string }) {
   const myPart =
     space?.members.find((member) => member.userId === userId)?.share ?? 0.5;
   const stage = !space ? "empty" : partner ? "together" : "waiting";
+  const format = useFormatCurrency();
+
+  // « Équilibre » since the space began (078), for its row below.
+  const { data: balance } = useRefreshable(
+    async () =>
+      space && partner
+        ? await getSpaceBalance(space, "1970-01-01", todayIsoLocal()).catch(
+            () => null,
+          )
+        : null,
+    [space?.id, partner?.userId],
+    { reads: ["transactions", "preferences"] },
+  );
 
   function say(result: { error?: string; message?: string }, fallback?: string) {
     const text = result.error ?? result.message ?? fallback;
@@ -237,6 +255,23 @@ export function SpaceSection({ selfName }: { selfName: string }) {
               />
             ) : null
           }
+        />
+      ) : null}
+      {space && partner && balance ? (
+        <ListRow
+          icon="scale-outline"
+          label={t("space.balanceRow")}
+          hint={
+            spaceBalanceIsEmpty(balance)
+              ? t("space.balanceNothing")
+              : balance.settle
+                ? t("space.balanceSettle", {
+                    name: balance.settle.name,
+                    amount: format(balance.settle.amount),
+                  })
+                : t("space.balanceEven")
+          }
+          value={t("space.balanceSince")}
         />
       ) : null}
       {space ? (

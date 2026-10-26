@@ -10,7 +10,13 @@ import {
   readBankAttention,
 } from "@/lib/bank/attention";
 import { shouldInviteToConnect } from "@/lib/bank/invite";
-import { getCurrentMonth, parseMonthParams } from "@finance/core/constants";
+import {
+  getCurrentMonth,
+  getMonthBounds,
+  parseMonthParams,
+} from "@finance/core/constants";
+import { readSpaceBalance } from "@finance/data/space-balance";
+import { createClient } from "@/lib/supabase/server";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { BearingMonthView } from "@/components/finance/bearing/BearingMonthView";
@@ -49,8 +55,9 @@ export default async function BearingPage({ searchParams }: BearingPageProps) {
     params.y && params.m
       ? parseMonthParams(params.y, params.m)
       : getCurrentMonth();
-  const [data, bankInvite, bankAttention, awaitingAccounts] = await Promise.all(
-    [
+  const space = owner?.space ?? null;
+  const [data, bankInvite, bankAttention, awaitingAccounts, spaceBalance] =
+    await Promise.all([
       gatherBearingMonth(
         ownerId,
         year,
@@ -64,8 +71,20 @@ export default async function BearingPage({ searchParams }: BearingPageProps) {
       joint ? false : shouldInviteToConnect(user.id, "bearing"),
       readBankAttention(user.id),
       countAccountsAwaitingRole(user.id),
-    ],
-  );
+      // « Équilibre », under « Commun »: what each partner put into the
+      // joint account this month, against their part of what it spent
+      // (migration 078). A read that fails costs the card and nothing else.
+      joint && space
+        ? createClient().then((db) =>
+            readSpaceBalance(
+              db,
+              space,
+              getMonthBounds(year, month).start,
+              getMonthBounds(year, month).end,
+            ).catch(() => null),
+          )
+        : null,
+    ]);
 
   return (
     <>
@@ -76,6 +95,7 @@ export default async function BearingPage({ searchParams }: BearingPageProps) {
           bankInvite={bankInvite}
           bankAttention={bankAttention}
           awaitingAccounts={awaitingAccounts}
+          spaceBalance={spaceBalance}
           // « Faire le bilan » from the attention row, here or anywhere.
           askClose={params.close === "1"}
           // The week is this month's to recap, not a month browsed to.

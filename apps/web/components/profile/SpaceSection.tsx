@@ -15,9 +15,14 @@ import {
   DownloadSimple,
   PencilSimple,
   Plus,
+  Scales,
   ShareNetwork,
   SignOut,
 } from "@phosphor-icons/react";
+import {
+  spaceBalanceIsEmpty,
+  type SpaceBalance,
+} from "@finance/core/space-balance";
 import type { Space } from "@finance/data/spaces";
 import { FADE, FADE_IN, FADE_OUT } from "@/components/motion/fade";
 import { Button } from "@/components/ui/Button";
@@ -37,6 +42,7 @@ import {
 import { ICON } from "@/lib/icon-scale";
 import { useT } from "@/lib/locale-context";
 import { MICRO } from "@/lib/type-scale";
+import { useFormatCurrency } from "@/lib/use-currency";
 import { cn } from "@/lib/utils";
 
 /** How long « Copié » stays before the button reads « Copier » again. */
@@ -56,12 +62,16 @@ export function SpaceSection({
   space,
   userId,
   selfName,
+  balance = null,
 }: {
   space: Space | null;
   userId: string;
   selfName: string;
+  /** « Équilibre » since the space began (078); null without one. */
+  balance?: SpaceBalance | null;
 }) {
   const t = useT();
+  const format = useFormatCurrency();
   const { toast } = useToast();
   const [pending, startTransition] = useTransition();
   const [open, setOpen] = useState<OpenRow>(null);
@@ -323,6 +333,23 @@ export function SpaceSection({
                   ) : null
                 }
               />
+              {balance && partner ? (
+                <ListRow
+                  icon={Scales}
+                  label={t("space.balanceRow")}
+                  hint={
+                    spaceBalanceIsEmpty(balance)
+                      ? t("space.balanceNothing")
+                      : balance.settle
+                        ? t("space.balanceSettle", {
+                            name: balance.settle.name,
+                            amount: format(balance.settle.amount),
+                          })
+                        : t("space.balanceEven")
+                  }
+                  value={t("space.balanceSince")}
+                />
+              ) : null}
               <ListRow
                 icon={SignOut}
                 label={t("space.leave")}

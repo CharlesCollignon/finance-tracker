@@ -7,9 +7,15 @@ import {
   ArrowRight,
   BellRinging,
   CalendarStar,
+  ChartLineUp,
+  Command,
   Eye,
   EyeSlash,
+  Funnel,
   MagnifyingGlass,
+  Receipt,
+  ShareNetwork,
+  Storefront,
 } from "@phosphor-icons/react";
 import { EASE_STANDARD } from "@finance/core/motion";
 import { Orb } from "@/components/brand/Orb";
@@ -37,6 +43,13 @@ const SPAN: Record<string, string> = {
   search: "md:col-span-3",
   alerts: "md:col-span-3",
   privacy: "md:col-span-3",
+  // What the reference-app phases added (October 2026): two rows of three.
+  rules: "md:col-span-2",
+  merchants: "md:col-span-2",
+  receipts: "md:col-span-2",
+  share: "md:col-span-2",
+  operations: "md:col-span-2",
+  palette: "md:col-span-2",
 };
 
 /**
@@ -159,6 +172,39 @@ function Picture({
       return <AlertPicture seen={seen} />;
     case "privacy":
       return <PrivacyPicture hover={hover} />;
+    case "rules":
+      return (
+        <IconPicture icon={<Funnel size={26} weight="light" />} seen={seen} />
+      );
+    case "merchants":
+      return (
+        <IconPicture
+          icon={<Storefront size={26} weight="light" />}
+          seen={seen}
+        />
+      );
+    case "receipts":
+      return (
+        <IconPicture icon={<Receipt size={26} weight="light" />} seen={seen} />
+      );
+    case "share":
+      return (
+        <IconPicture
+          icon={<ShareNetwork size={26} weight="light" />}
+          seen={seen}
+        />
+      );
+    case "operations":
+      return (
+        <IconPicture
+          icon={<ChartLineUp size={26} weight="light" />}
+          seen={seen}
+        />
+      );
+    case "palette":
+      return (
+        <IconPicture icon={<Command size={26} weight="light" />} seen={seen} />
+      );
     default:
       return null;
   }

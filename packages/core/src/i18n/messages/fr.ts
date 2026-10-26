@@ -16,6 +16,13 @@ import { actionsFr } from "./actions.fr";
 import { propertyFr } from "./property.fr";
 import { spaceFr } from "./space.fr";
 import { askFr } from "./ask.fr";
+import { rulesFr } from "./rules.fr";
+import { merchantsFr } from "./merchants.fr";
+import { paletteFr } from "./palette.fr";
+import { monthShareFr } from "./month-share.fr";
+import { eventsFr } from "./events.fr";
+import { demoFr } from "./demo.fr";
+import { listenerFr } from "./listener.fr";
 
 /**
  * What the app says, in French.
@@ -78,6 +85,7 @@ export const fr: Messages = {
     ledgerList: "Liste",
     ledgerCalendar: "Calendrier",
     ledgerByCategory: "Par catégorie",
+    ledgerByMerchant: "Par commerce",
     walletsPositions: "Comptes",
     walletsAnalysis: "Analyse",
     walletsLookThrough: "Composition",
@@ -627,6 +635,45 @@ export const fr: Messages = {
     saved: "Opération enregistrée",
     duplicating: "Duplication…",
     duplicateToToday: "Dupliquer à aujourd'hui",
+    split: "Partager en plusieurs",
+    splitTitle: "Partager ce paiement",
+    splitHint:
+      "Un ticket, plusieurs catégories : chaque part devient une opération, et les parts restent un seul paiement.",
+    splitPart: "Part {index}",
+    splitRemainder: "Reste à placer : {amount}",
+    splitOver: "{amount} de trop",
+    splitAddPart: "Ajouter une part",
+    splitRemovePart: "Retirer cette part",
+    splitSave: "Partager",
+    splitSaving: "Partage…",
+    splitDone: "Paiement partagé",
+    splitTwoParts: "Deux parts au moins",
+    splitTooMany: "Dix parts au plus",
+    splitMustSum: "Les parts doivent faire le montant du paiement",
+    splitMark: "Part d'un paiement partagé",
+    unsplit: "Réunir les parts",
+    unsplitDone: "Paiement réuni",
+    receipt: "Justificatif",
+    receiptAttach: "Joindre un justificatif",
+    receiptAttaching: "Envoi…",
+    receiptAttached: "Justificatif joint",
+    receiptView: "Ouvrir",
+    receiptRemove: "Retirer",
+    receiptRemoved: "Justificatif retiré",
+    receiptMark: "Avec un justificatif",
+    receiptKind: "Une photo (JPEG, PNG, WebP) ou un PDF",
+    receiptTooBig: "10 Mo au plus",
+    receiptRead: "Lire le ticket",
+    receiptReading: "Lecture…",
+    receiptReadHint:
+      "Votre compte IA y relève le commerce, le jour et le total. Vous les appliquez, ou pas.",
+    receiptReadResult: "{merchant} · {date} · {amount}",
+    receiptReadNothing: "Rien de lisible dessus",
+    receiptReadFailed: "Le ticket n'a pas pu être lu",
+    receiptNoAccount:
+      "Lire un ticket demande votre compte IA, connecté depuis votre profil",
+    receiptApply: "Appliquer à cette opération",
+    receiptApplied: "Opération mise à jour d'après le ticket",
     duplicated: "Dupliquée à aujourd'hui",
     deleteTransaction: "Supprimer l'opération",
     deleting: "Suppression…",
@@ -1356,6 +1403,20 @@ export const fr: Messages = {
     actionReview: "Vérifier",
     actionClose: "Faire le bilan",
     actionStart: "Commencer",
+    actionConfirm: "Confirmer",
+    actionImport: "Importer",
+    todo: "À faire",
+    todoLess: "Replier",
+    attentionArrived: {
+      one: "{count} opération ressemble à une récurrente : c'est arrivé ?",
+      other:
+        "{count} opérations ressemblent à des récurrentes : c'est arrivé ?",
+    },
+    attentionPurchases: {
+      one: "{count} achat dans un compte à confirmer",
+      other: "{count} achats dans un compte à confirmer",
+    },
+    attentionStatement: "Le relevé de {month} n'est pas encore importé",
     attentionSwallowed: {
       one: "{count} opération bancaire a été fusionnée avec une opération récurrente",
       other:
@@ -2663,6 +2724,31 @@ export const fr: Messages = {
     noRunYet:
       "Faites le bilan d'un mois sous votre marge pour lancer une série.",
     invested: "Valeur de vos placements",
+    trust: {
+      title: "Fiabilité du mois",
+      typedByHand: "Noté à la main, sans relevé",
+      noLines: "Aucune ligne de la banque ce mois-ci",
+      coveredUntil: "Relevé jusqu'au {date}",
+      chargesArrived: {
+        one: "{count} opération récurrente passée",
+        other: "{count} opérations récurrentes passées",
+      },
+      chargesAwaited: {
+        one: "{count} opération récurrente encore attendue",
+        other: "{count} opérations récurrentes encore attendues",
+      },
+      inboxPending: {
+        one: "{count} opération à vérifier",
+        other: "{count} opérations à vérifier",
+      },
+      inboxClear: "Tout est rangé",
+      closed: "Bilan fait : {amount} non notés",
+      closedClear: "Bilan fait, rien de non noté",
+      closedBaseline: "Solde de départ saisi",
+      closeDue: "Bilan le {date}",
+      closeReady: "Bilan à faire",
+      notClosed: "Pas de bilan",
+    },
   },
 
   bearing: {
@@ -2746,6 +2832,8 @@ export const fr: Messages = {
     notFound: "Introuvable — il a peut-être déjà été supprimé.",
     offline: "Pas de connexion pour l'instant. Réessayez dans un moment.",
     couldNotSave: "L'enregistrement n'a pas fonctionné. Réessayez.",
+    demoReadOnly:
+      "La démo est en lecture seule : un exemple que tout le monde regarde. Créez votre compte pour y écrire.",
     amountPositive: "Le montant doit être positif",
     invalidDate: "Date invalide",
     nothingSelected: "Rien de sélectionné",
@@ -2828,4 +2916,11 @@ export const fr: Messages = {
   property: propertyFr,
   space: spaceFr,
   ask: askFr,
+  rules: rulesFr,
+  merchants: merchantsFr,
+  palette: paletteFr,
+  monthShare: monthShareFr,
+  events: eventsFr,
+  demo: demoFr,
+  listener: listenerFr,
 };

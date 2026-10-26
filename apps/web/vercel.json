@@ -31,6 +31,10 @@
       "schedule": "0 3 * * *"
     },
     {
+      "path": "/api/cron/demo",
+      "schedule": "30 3 * * *"
+    },
+    {
       "path": "/api/cron/market",
       "schedule": "0 9 * * 1"
     }

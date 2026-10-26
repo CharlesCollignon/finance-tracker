@@ -40,11 +40,13 @@ export async function deleteAllUserData(db: Db, userId: string): Promise<void> {
     .select("id")
     .eq("user_id", userId);
   const txIds = (txs ?? []).map((tx) => tx.id);
-  if (txIds.length > 0) {
+  // A few hundred ids at a time: the filter travels in the URL, and a
+  // year of entries in one made it too long for the gateway.
+  for (let index = 0; index < txIds.length; index += 200) {
     const { error } = await db
       .from("transaction_tags")
       .delete()
-      .in("transaction_id", txIds);
+      .in("transaction_id", txIds.slice(index, index + 200));
     if (error) {
       throw error;
     }

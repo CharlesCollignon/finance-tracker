@@ -72,26 +72,9 @@ const MIN_WORD = 3;
 export function bankMerchantKey(
   description: string | null | undefined,
 ): string {
-  if (!description) {
-    return "";
-  }
-
-  let value = description;
-  for (const pattern of CARD_NOISE) {
-    value = value.replace(pattern, " ");
-  }
-
-  const words = normalizeMerchant(value)
-    .split(" ")
-    .filter((word) => word.length > 0);
-
+  const words = merchantWords(description);
   const meaningful: string[] = [];
   for (const word of words) {
-    // A single letter is a leftover, not a name: "BIO C BON" should key on
-    // "bio bon", not on "bio c".
-    if (word.length < 2 || NOT_A_MERCHANT.has(word)) {
-      continue;
-    }
     meaningful.push(word);
     // One word is enough once it is long enough to stand alone.
     if (meaningful.length === 1 && word.length >= MIN_WORD + 2) {
@@ -104,6 +87,31 @@ export function bankMerchantKey(
 
   const key = meaningful.join(" ").trim();
   return key.length >= MIN_WORD ? key : "";
+}
+
+/**
+ * The words of a bank description that could name the merchant, in order:
+ * the card noise gone, then everything `normalizeMerchant` drops, then the
+ * articles and company forms, then the single letters — a single letter is
+ * a leftover, not a name: "BIO C BON" should key on "bio bon", not on
+ * "bio c". What `bankMerchantKey` keys on, and what « Par commerce » groups
+ * by (`merchant-screen`).
+ */
+export function merchantWords(
+  description: string | null | undefined,
+): string[] {
+  if (!description) {
+    return [];
+  }
+
+  let value = description;
+  for (const pattern of CARD_NOISE) {
+    value = value.replace(pattern, " ");
+  }
+
+  return normalizeMerchant(value)
+    .split(" ")
+    .filter((word) => word.length >= 2 && !NOT_A_MERCHANT.has(word));
 }
 
 export interface BankMerchantRule {

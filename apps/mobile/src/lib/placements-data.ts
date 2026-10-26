@@ -10,6 +10,7 @@ import {
   buildInvestmentReturns,
   type InvestmentReturns,
 } from "@finance/core/investment-returns";
+import type { InvestmentEvent } from "@finance/core/investment-events";
 import type { InvestmentPortfolioSummary } from "@finance/core/investment-positions";
 import { contributionStreak } from "@finance/core/investment-streak";
 import {
@@ -31,6 +32,7 @@ import type {
 } from "@finance/core/types/database";
 
 import {
+  getInvestmentEvents,
   getInvestmentTransactions,
   getRecurringTemplates,
   getWalletPortfolio,
@@ -60,6 +62,8 @@ export interface PlacementsData {
   streak: number;
   /** The order the reader dragged the accounts into, or null (migration 076). */
   accountOrder: AccountId[] | null;
+  /** What happened inside the wallets (migration 080), newest first. */
+  events: InvestmentEvent[];
 }
 
 export async function getPlacementsData(
@@ -68,15 +72,23 @@ export async function getPlacementsData(
   { includeHistory = false }: { includeHistory?: boolean } = {},
 ): Promise<PlacementsData> {
   const { year, month } = getCurrentMonth();
-  const [portfolio, templates, transactions, plans, savings, accountOrder] =
-    await Promise.all([
-      getWalletPortfolio(userId, locale, { includeHistory }),
-      getRecurringTemplates(userId),
-      getInvestmentTransactions(userId),
-      getWalletPlans(userId),
-      getSavingsState(userId),
-      preferences.readAccountOrder(supabase, userId),
-    ]);
+  const [
+    portfolio,
+    templates,
+    transactions,
+    plans,
+    savings,
+    accountOrder,
+    events,
+  ] = await Promise.all([
+    getWalletPortfolio(userId, locale, { includeHistory }),
+    getRecurringTemplates(userId),
+    getInvestmentTransactions(userId),
+    getWalletPlans(userId),
+    getSavingsState(userId),
+    preferences.readAccountOrder(supabase, userId),
+    getInvestmentEvents(userId),
+  ]);
   const allTemplates = templates as RecurringTemplateWithCategory[];
   const investmentTemplates = allTemplates.filter(
     (template) => template.categories.type === "investment",
@@ -100,6 +112,7 @@ export async function getPlacementsData(
     savings,
     streak: contributionStreak(transactions, todayIsoLocal()),
     accountOrder,
+    events,
   };
 }
 

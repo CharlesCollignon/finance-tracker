@@ -15,6 +15,12 @@ export type PricingType = "fixed" | "shares" | "purchases";
 
 export type WalletId = "pea" | "cto" | "av" | "per" | "crypto";
 
+/** What happened inside a wallet — see migration 080. */
+export type InvestmentEventKind = "buy" | "sell" | "dividend" | "fee";
+
+/** Typed by hand, or read off a broker's export — see migration 080. */
+export type InvestmentEventSource = "manual" | "file";
+
 /** A kind of savings account — see migration 046. */
 export type SavingsAccountKind =
   "livret_a" | "ldds" | "lep" | "pel" | "cel" | "livret";
@@ -111,6 +117,11 @@ interface Narrowed {
   bank_feed_items: {
     direction: "in" | "out";
     status: "pending" | "imported" | "ignored";
+  };
+  filing_rules: { direction: "in" | "out" };
+  investment_events: {
+    kind: InvestmentEventKind;
+    source: InvestmentEventSource;
   };
   month_closes: { balance_source: "manual" | "bank" };
   month_reads: { source: "pressed" | "auto"; locale: Locale };
@@ -261,8 +272,20 @@ export type RecurringTemplate = WithOptionalAuthor<
 >;
 export type RecurringSkip =
   Database["public"]["Tables"]["recurring_skips"]["Row"];
-export type Transaction = WithOptionalAuthor<
-  Database["public"]["Tables"]["transactions"]["Row"]
+/**
+ * A split's group and a receipt's path (migration 079) are optional on a
+ * row as the apps hold it, for the same reason the author is: every
+ * fixture and every select that reads a row without them stays a row.
+ */
+type WithOptionalAttachments<
+  Row extends { split_group: string | null; receipt_path: string | null },
+> = Omit<Row, "split_group" | "receipt_path"> & {
+  split_group?: string | null;
+  receipt_path?: string | null;
+};
+
+export type Transaction = WithOptionalAttachments<
+  WithOptionalAuthor<Database["public"]["Tables"]["transactions"]["Row"]>
 >;
 export type InvestmentPosition =
   Database["public"]["Tables"]["investment_positions"]["Row"];

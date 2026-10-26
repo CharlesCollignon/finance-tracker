@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Pressable, RefreshControl, ScrollView, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
+import { useRouter, type Href } from "expo-router";
 
 import { categoryTypeLabels } from "@finance/core/category-styles";
 import { groupCategoriesByType } from "@finance/core/categories";
@@ -160,6 +160,35 @@ export default function CategoriesScreen() {
               setFormOpen(true);
             }}
           />
+
+          {/* The rules a person writes for filing a line (077): the words
+              they decided, and where they go. */}
+          <Pressable
+            accessibilityRole="link"
+            accessibilityLabel={t("rules.link")}
+            onPress={() => {
+              void hapticLight();
+              router.push("/rules" as Href);
+            }}
+            className="min-h-14 flex-row items-center gap-3 rounded-control border border-border px-4 py-3"
+          >
+            <Ionicons
+              name="funnel-outline"
+              size={ICON.md}
+              color={colors.foreground}
+            />
+            <View className="min-w-0 flex-1">
+              <Text className="text-sm font-medium">{t("rules.link")}</Text>
+              <Text variant="muted" className="text-xs">
+                {t("rules.linkHint")}
+              </Text>
+            </View>
+            <Ionicons
+              name="chevron-forward"
+              size={ICON.md}
+              color={colors.mutedForeground}
+            />
+          </Pressable>
 
           {categories.length === 0 ? (
             <EmptyState

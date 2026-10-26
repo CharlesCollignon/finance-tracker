@@ -10,6 +10,7 @@ import {
 } from "@finance/core/savings-accounts";
 import { formatAnnualRate } from "@finance/core/xirr";
 
+import { EventsCard } from "@/components/EventsCard";
 import { FundCostCard } from "@/components/FundCostCard";
 import { SurfaceTabs, WALLET_TABS } from "@/components/layout/SurfaceTabs";
 import { WalletPlanPanel } from "@/components/WalletPlanPanel";
@@ -195,6 +196,10 @@ export default function AnalysisScreen() {
               plans={data.plans}
               monthlyContribution={monthlyContribution}
             />
+          ) : null}
+
+          {data && wallets.length > 0 ? (
+            <EventsCard events={data.events} />
           ) : null}
 
           {/* Fees last: a figure worth checking once a year, not on every

@@ -66,4 +66,17 @@ export const spaceFr: typeof spaceEn = {
     "Votre part du commun ({part}) comptée, vos versements au compte commun retirés.",
   transferCategory: "Versement au compte commun",
   addedBy: "Ajouté par {name}",
+
+  balanceTitle: "Équilibre entre vous",
+  balanceRow: "Équilibre entre vous",
+  balanceSince: "Depuis le début de l'espace",
+  balanceHint:
+    "Ce que chacun a versé sur le compte commun, face à sa part de ce qu'il a dépensé.",
+  balancePut: "{name} a versé {amount}",
+  balancePart: "sa part : {amount}",
+  balanceSettle:
+    "{name} verserait {amount} de plus pour être au niveau du partage",
+  balanceEven: "Au niveau du partage",
+  balanceNothing: "Rien de versé ni de dépensé pour l'instant",
+  balanceSpent: "Dépensé ensemble : {amount}",
 };

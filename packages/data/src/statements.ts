@@ -1,3 +1,4 @@
+import { allRows } from "@finance/core/paging";
 import type { Statement } from "@finance/core/statement";
 import type { Db } from "./client";
 
@@ -72,6 +73,7 @@ export async function readStatementImports(
     .eq("user_id", ownerId)
     // A bank's alerts, one line each, are no import to list or undo.
     .neq("format", "email")
+    .neq("format", "notification")
     .order("created_at", { ascending: false })
     .limit(limit);
   if (error) {
@@ -105,6 +107,56 @@ export async function hasFeedLines(db: Db, userId: string): Promise<boolean> {
     .select("id", { count: "exact", head: true })
     .eq("user_id", userId);
   return (count ?? 0) > 0;
+}
+
+/** The lines dated in one month, for « Fiabilité du mois ». */
+export interface FeedCoverage {
+  /** Every line of the month, the bank's or a statement's, whatever became of it. */
+  lines: number;
+  /** The last day a line reached, ISO; null when there is none. */
+  lastDay: string | null;
+  /** The month's lines still waiting in « À vérifier ». */
+  pending: number;
+}
+
+export const NO_COVERAGE: FeedCoverage = {
+  lines: 0,
+  lastDay: null,
+  pending: 0,
+};
+
+/**
+ * How far the lines reach into a month, and what waits there: what Le point
+ * says the month's figures rest on (`@finance/core/month-trust`). Days and
+ * statuses only, so a busy month is a small read.
+ */
+export async function readFeedCoverage(
+  db: Db,
+  userId: string,
+  from: string,
+  to: string,
+): Promise<FeedCoverage> {
+  const rows = await allRows(
+    (start, end) =>
+      db
+        .from("bank_feed_items")
+        .select("occurred_on, status")
+        .eq("user_id", userId)
+        .gte("occurred_on", from)
+        .lte("occurred_on", to)
+        .order("occurred_on", { ascending: false })
+        .order("id")
+        .range(start, end),
+    { max: 3000 },
+  ).catch(() => null);
+  if (!rows) {
+    return NO_COVERAGE;
+  }
+  return {
+    lines: rows.length,
+    lastDay: rows[0]?.occurred_on ?? null,
+    pending: rows.filter((row) => row.status === "pending").length,
+  };
 }
 
 /**
@@ -169,7 +221,10 @@ export interface MailItem {
 }
 
 /** What waits from e-mails, newest first. */
-export async function readMailItems(db: Db, userId: string): Promise<MailItem[]> {
+export async function readMailItems(
+  db: Db,
+  userId: string,
+): Promise<MailItem[]> {
   const { data, error } = await db
     .from("statement_mail_items")
     .select("id, kind, format, bank, file_name, received_at, statement")

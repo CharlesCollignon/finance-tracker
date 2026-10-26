@@ -125,26 +125,16 @@ import {
   type LedgerAccounts,
 } from "@finance/core/bank-accounts";
 import {
-  filterLedger,
-  filterPlanned,
-  ledgerDays,
-  ledgerPlannedTotals,
-  ledgerShowing,
-  ledgerTotals,
+  buildLedgerView,
+  hiddenFilterCount,
+  LEDGER_TYPE_FILTERS,
+  ledgerCategoryOptions,
   type LedgerOrder,
   type LedgerTime,
   type LedgerTypeFilter,
 } from "@finance/core/ledger-view";
 
 type FilterType = LedgerTypeFilter;
-
-const FILTERS: FilterType[] = [
-  "all",
-  "income",
-  "expense",
-  "savings",
-  "investment",
-];
 
 /** Stable identity, so the derived selection keeps a steady reference. */
 const EMPTY_SELECTION: ReadonlySet<string> = new Set();
@@ -401,24 +391,11 @@ export default function TransactionsScreen() {
     );
   }, [data, transactions, year, month]);
 
-  const usedCategories = useMemo(() => {
-    const seen = new Map<string, string>();
-    for (const tx of transactions) {
-      if (!seen.has(tx.category_id)) {
-        seen.set(tx.category_id, tx.categories.name);
-      }
-    }
-    // A future month has only planned rows, and filtering them by category
-    // should work the same as filtering the rows that have happened.
-    for (const occurrence of planned) {
-      if (!seen.has(occurrence.categoryId)) {
-        seen.set(occurrence.categoryId, occurrence.categoryName);
-      }
-    }
-    return [...seen.entries()]
-      .map(([id, name]) => ({ id, name }))
-      .sort((a, b) => a.name.localeCompare(b.name));
-  }, [transactions, planned]);
+  // The categories the month uses, for the filter — the web's rule.
+  const usedCategories = useMemo(
+    () => ledgerCategoryOptions(transactions, planned),
+    [transactions, planned],
+  );
 
   const bankAccounts = data?.accounts ?? null;
   const accountOf = useMemo(
@@ -434,57 +411,31 @@ export default function TransactionsScreen() {
     }),
     [filter, categoryFilter, search, accountFilter, bankAccounts],
   );
-  const showing = ledgerShowing(chosenTime, {
-    past: transactions.length,
-    upcoming: planned.length,
-  });
-  // Category name and note, each on its own, as on the web.
-  const filtered = useMemo(
-    () => filterLedger(transactions, ledgerFilter, accountOf),
-    [transactions, ledgerFilter, accountOf],
-  );
-  // The same filters over the planned rows, so choosing "Expense" or a
-  // category narrows what is to come as well as what has happened.
-  const filteredPlanned = useMemo(
-    () => filterPlanned(planned, ledgerFilter),
-    [planned, ledgerFilter],
-  );
-  // The figures describe what is on screen, which is the whole reason they
-  // are here: the month's own totals are Month's job, and repeating them
-  // under a filter would state something the list below contradicts.
-  const shown = useMemo(
+  // What the list shows, worked out once and the same way as on the web
+  // (`buildLedgerView`): which half of the month, the rows the filter
+  // keeps, their order, their days and the figures over them.
+  const view = useMemo(
     () =>
-      showing === "past"
-        ? ledgerTotals(filtered)
-        : ledgerPlannedTotals(filteredPlanned),
-    [showing, filtered, filteredPlanned],
+      buildLedgerView({
+        transactions,
+        planned,
+        filter: ledgerFilter,
+        time: chosenTime,
+        order,
+        accountOf,
+      }),
+    [transactions, planned, ledgerFilter, chosenTime, order, accountOf],
   );
-  const shownCount =
-    showing === "past" ? filtered.length : filteredPlanned.length;
-  const totalCount =
-    showing === "past" ? transactions.length : planned.length;
+  const { showing, filtered, visibleIds, shownCount, totalCount } = view;
+  const shown = view.totals;
   const shownOut = shown.expense + shown.savings + shown.investment;
 
-  // A ledger is read a day at a time, not as one unbroken column. Grouping
-  // here keeps a heading and its rows in the same object, so the list can
-  // never draw a date with nothing under it.
-  //
-  // One half of the month at a time: what has happened, or what is still to
-  // come, soonest first. A day of planned rows has no net at all — a figure
-  // there would be a forecast set in the same type as the record.
-  //
-  // Oldest first is the list turned over, rows within a day included, so a
-  // day reads in the order its rows were written.
+  // A day's rows and its planned rows as one list, for the section list: a
+  // heading and its rows in the same object, so a date is never drawn with
+  // nothing under it.
   const days = useMemo(
     () =>
-      (showing === "past"
-        ? ledgerDays(
-            order === "newest" ? filtered : [...filtered].reverse(),
-            [],
-            order,
-          )
-        : ledgerDays([], filteredPlanned, "oldest")
-      ).map((day) => ({
+      view.days.map((day) => ({
         date: day.date,
         net: day.net,
         recorded: day.rows.length,
@@ -495,10 +446,8 @@ export default function TransactionsScreen() {
           ),
         ],
       })),
-    [showing, filtered, filteredPlanned, order],
+    [view.days],
   );
-
-  const visibleIds = useMemo(() => filtered.map((tx) => tx.id), [filtered]);
   // A filter can hide rows still held in the stored set; pruning here rather
   // than in an effect means the hidden ones can never be acted on.
   const selected = useMemo(
@@ -619,7 +568,7 @@ export default function TransactionsScreen() {
 
   const typeOptions = useMemo(() => {
     const labels = categoryTypeLabels(locale);
-    return FILTERS.map((value) => ({
+    return LEDGER_TYPE_FILTERS.map((value) => ({
       value,
       label: value === "all" ? t("ledger.allTypes") : labels[value],
     }));
@@ -652,9 +601,7 @@ export default function TransactionsScreen() {
 
   // The category and the account are the filters tucked behind the button,
   // so they are the ones the button has to own up to.
-  const hiddenFilters =
-    (categoryFilter === "all" ? 0 : 1) +
-    (ledgerFilter.accountId === "all" ? 0 : 1);
+  const hiddenFilters = hiddenFilterCount(ledgerFilter);
   const nothingAtAll = transactions.length === 0 && planned.length === 0;
 
   /*
@@ -1159,6 +1106,24 @@ export default function TransactionsScreen() {
                       {item.categories.name}
                     </Text>
                     <FulfilmentDot state={fulfilment} />
+                    {/* One payment in several parts, and the picture
+                        behind a row (migration 079). */}
+                    {item.split_group ? (
+                      <Ionicons
+                        name="git-branch-outline"
+                        size={ICON.xs}
+                        color={colors.mutedForeground}
+                        accessibilityLabel={t("transaction.splitMark")}
+                      />
+                    ) : null}
+                    {item.receipt_path ? (
+                      <Ionicons
+                        name="attach-outline"
+                        size={ICON.xs}
+                        color={colors.mutedForeground}
+                        accessibilityLabel={t("transaction.receiptMark")}
+                      />
+                    ) : null}
                   </View>
                   {subtitle ? (
                     <Text variant="muted" numberOfLines={1} className="text-xs">

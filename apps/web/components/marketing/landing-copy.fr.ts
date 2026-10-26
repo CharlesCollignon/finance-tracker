@@ -135,6 +135,42 @@ export const landingCopyFr: LandingCopySections & {
         body: "Tous les montants masqués d’un coup — dans le train, au bureau.",
         link: "",
       },
+      {
+        id: "rules",
+        title: "Vos règles de rangement",
+        body: "Une ligne qui contient ces mots va là, à chaque fois : vos règles passent avant tout ce que Pluclair a appris.",
+        link: "",
+      },
+      {
+        id: "merchants",
+        title: "Par commerce",
+        body: "Les passages de chaque commerce, son mois habituel et ses douze mois, dans une vue du Journal.",
+        link: "",
+      },
+      {
+        id: "receipts",
+        title: "Des parts, et le ticket",
+        body: "Un paiement en plusieurs catégories, et le ticket gardé derrière — lu par votre IA si vous le souhaitez.",
+        link: "",
+      },
+      {
+        id: "share",
+        title: "Partager ce mois",
+        body: "Le mois en image à envoyer ou en page à imprimer, avec les montants ou avec les parts seulement.",
+        link: "",
+      },
+      {
+        id: "operations",
+        title: "Dans chaque compte",
+        body: "Une ligne vendue, un dividende, des frais — saisis ou lus dans l’export du courtier, et les plus-values par année.",
+        link: "",
+      },
+      {
+        id: "palette",
+        title: "Cmd+K",
+        body: "Sur l’ordinateur, un raccourci pour ajouter, demander ou aller n’importe où — un montant tapé arrive déjà rempli.",
+        link: "",
+      },
     ],
   },
 
@@ -198,6 +234,16 @@ export const landingCopyFr: LandingCopySections & {
         answer:
           "Oui : un geste floute tous les montants à l’écran. Pratique dans le train.",
       },
+      {
+        question: "Je peux regarder avant de créer un compte ?",
+        answer:
+          "Oui : « Essayer la démo », sur cette page, ouvre Pluclair sur un compte d’exemple — neuf mois d’un budget inventé, ses récurrents, ses placements, ses clôtures. Tout s’y lit, rien ne s’y écrit, et il est refait chaque nuit pour le mois en cours.",
+      },
+      {
+        question: "Je peux aussi apporter le relevé de mon courtier ?",
+        answer:
+          "Oui. Sur chaque compte de placement, « Opérations » lit l’export du courtier (un CSV ou un tableur) : une ligne achetée ou vendue, un dividende reçu, des frais prélevés — montrés avant d’être ajoutés, jamais ajoutés deux fois. Analyse donne ensuite les dividendes et les plus-values réalisées par année, premier entré premier sorti.",
+      },
     ],
   },
 
@@ -211,7 +257,7 @@ export const landingCopyFr: LandingCopySections & {
       title: "Le point",
       body: "Où vous en êtes aujourd’hui, et comment le mois va finir.",
       utility:
-        "Deux chiffres en haut : ce qu’il y a sur votre compte maintenant, et où il en sera à la fin du mois. Dessous, le mois en courbe, puis quelques cartes — ce que vous avez dépensé, ce qui doit encore partir, où c’est parti —, chacune menant à l’écran qui porte ses chiffres.",
+        "Deux chiffres en haut : ce qu’il y a sur votre compte maintenant, et où il en sera à la fin du mois. Dessous, le mois en courbe, puis quelques cartes — ce que vous avez dépensé, ce qui doit encore partir, où c’est parti —, chacune menant à l’écran qui porte ses chiffres. Sous le choix du mois, une bande dit ce qui vous attend — un solde à recopier, une ligne à confirmer, des lignes à vérifier —, et une ligne dit jusqu’où le mois est fiable : ce qui vient des fichiers de votre banque, ce que vous avez saisi, ce que la clôture a trouvé.",
       steps: [
         {
           title: "Lisez les deux chiffres",
@@ -239,11 +285,15 @@ export const landingCopyFr: LandingCopySections & {
         },
         {
           title: "Il propose, vous décidez",
-          body: "Rangez deux fois un commerçant dans la même catégorie, et Pluclair vous la propose la fois suivante. Vous validez, les propositions s’affinent — le classement reste le vôtre.",
+          body: "Rangez deux fois un commerçant dans la même catégorie, et Pluclair vous la propose la fois suivante. Vous validez, les propositions s’affinent — le classement reste le vôtre. Dites « Toujours ranger ici » et une règle s’écrit : une ligne avec ces mots va là à chaque fois, avant tout ce qui a été appris. Une quatrième vue, par commerce, montre les passages de chaque commerce et son mois habituel.",
         },
         {
           title: "Ou apportez votre relevé",
           body: "Le fichier que donne votre banque, tel quel : CSV, Excel, OFX, PDF… Pluclair reconnaît ce qu’il connaît déjà, le reste attend dans « À vérifier », et un import s’annule pendant un mois.",
+        },
+        {
+          title: "Des parts, et le ticket",
+          body: "Un paiement en plusieurs catégories — les courses et le cadeau d’un coup — et le ticket gardé derrière, lu par votre compte IA si vous le souhaitez. Le Journal marque une part d’une fourche et un ticket d’un trombone.",
         },
       ],
     },
@@ -304,6 +354,10 @@ export const landingCopyFr: LandingCopySections & {
         {
           title: "Demandez une revue",
           body: "Une IA lit la Composition et dit ce qu’elle remarque. Elle ne cite que des fonds d’une liste fermée, et n’écrit aucun chiffre d’elle-même.",
+        },
+        {
+          title: "Ce qui se passe dedans",
+          body: "Sur chaque compte, « Opérations » : une ligne vendue, un dividende reçu, des frais prélevés — saisis, ou lus dans l’export du courtier, montrés avant d’être ajoutés et jamais ajoutés deux fois. Analyse les additionne par année : dividendes, et plus-values réalisées premier entré premier sorti.",
         },
       ],
     },
@@ -403,7 +457,7 @@ export const landingCopyFr: LandingCopySections & {
         },
         {
           title: "Votre part",
-          body: "Fixez la répartition des dépenses communes — moitié chacun, ou autrement — et voyez vos dépenses avec votre part du commun.",
+          body: "Fixez la répartition des dépenses communes — moitié chacun, ou autrement — et voyez vos dépenses avec votre part du commun. Le point dit ensuite qui doit quoi : ce que chacun a payé du commun face à sa part, mois par mois.",
         },
       ],
     },
@@ -613,5 +667,6 @@ export const landingCopyFr: LandingCopySections & {
     openApp: "Ouvrir l’application",
     goToDashboard: "Voir où vous en êtes",
     openShort: "Ouvrir",
+    tryDemo: "Essayer la démo",
   },
 };

@@ -1015,6 +1015,57 @@ export type Database = {
         };
         Relationships: [];
       };
+      filing_rules: {
+        Row: {
+          applied_count: number;
+          category_id: string;
+          created_at: string;
+          created_by: string | null;
+          created_from: string | null;
+          direction: string;
+          id: string;
+          user_id: string;
+          words: string;
+        };
+        Insert: {
+          applied_count?: number;
+          category_id: string;
+          created_at?: string;
+          created_by?: string | null;
+          created_from?: string | null;
+          direction?: string;
+          id?: string;
+          user_id: string;
+          words: string;
+        };
+        Update: {
+          applied_count?: number;
+          category_id?: string;
+          created_at?: string;
+          created_by?: string | null;
+          created_from?: string | null;
+          direction?: string;
+          id?: string;
+          user_id?: string;
+          words?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "filing_rules_category_id_fkey";
+            columns: ["category_id"];
+            isOneToOne: false;
+            referencedRelation: "categories";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "filing_rules_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "owners";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       housing_price_index: {
         Row: {
           quarter: string;
@@ -1105,6 +1156,57 @@ export type Database = {
           top_constituents?: NonNullable<Json>;
           user_id?: string;
           version?: number;
+        };
+        Relationships: [];
+      };
+      investment_events: {
+        Row: {
+          amount: number;
+          created_at: string;
+          fingerprint: string | null;
+          id: string;
+          instrument_name: string | null;
+          instrument_symbol: string | null;
+          isin: string | null;
+          kind: string;
+          note: string | null;
+          occurred_on: string;
+          quantity: number | null;
+          source: string;
+          user_id: string;
+          wallet: Database["public"]["Enums"]["investment_wallet"];
+        };
+        Insert: {
+          amount: number;
+          created_at?: string;
+          fingerprint?: string | null;
+          id?: string;
+          instrument_name?: string | null;
+          instrument_symbol?: string | null;
+          isin?: string | null;
+          kind: string;
+          note?: string | null;
+          occurred_on: string;
+          quantity?: number | null;
+          source?: string;
+          user_id: string;
+          wallet: Database["public"]["Enums"]["investment_wallet"];
+        };
+        Update: {
+          amount?: number;
+          created_at?: string;
+          fingerprint?: string | null;
+          id?: string;
+          instrument_name?: string | null;
+          instrument_symbol?: string | null;
+          isin?: string | null;
+          kind?: string;
+          note?: string | null;
+          occurred_on?: string;
+          quantity?: number | null;
+          source?: string;
+          user_id?: string;
+          wallet?: Database["public"]["Enums"]["investment_wallet"];
         };
         Relationships: [];
       };
@@ -2382,7 +2484,9 @@ export type Database = {
           id: string;
           note: string | null;
           occurred_on: string;
+          receipt_path: string | null;
           recurring_template_id: string | null;
+          split_group: string | null;
           user_id: string;
         };
         Insert: {
@@ -2395,7 +2499,9 @@ export type Database = {
           id?: string;
           note?: string | null;
           occurred_on: string;
+          receipt_path?: string | null;
           recurring_template_id?: string | null;
+          split_group?: string | null;
           user_id: string;
         };
         Update: {
@@ -2408,7 +2514,9 @@ export type Database = {
           id?: string;
           note?: string | null;
           occurred_on?: string;
+          receipt_path?: string | null;
           recurring_template_id?: string | null;
+          split_group?: string | null;
           user_id?: string;
         };
         Relationships: [
@@ -2627,8 +2735,13 @@ export type Database = {
     Functions: {
       acting_for: { Args: { target_user: string }; Returns: boolean };
       bearing_pins_valid: { Args: { pins: Json }; Returns: boolean };
+      bump_filing_rule: {
+        Args: { by: number; rule: string };
+        Returns: undefined;
+      };
       create_space: { Args: { new_name?: string }; Returns: string };
       create_space_invite: { Args: { target_space: string }; Returns: string };
+      demo_user_id: { Args: Record<PropertyKey, never>; Returns: string };
       entraide_author_guard: {
         Args: {
           author: string;
@@ -2715,6 +2828,7 @@ export type Database = {
           key: string;
         }[];
       };
+      is_demo_user: { Args: { uid: string }; Returns: boolean };
       join_space: { Args: { invite_token: string }; Returns: string };
       leave_space: { Args: { target_space: string }; Returns: undefined };
       merge_tags: {
@@ -2738,6 +2852,10 @@ export type Database = {
           kind: string;
           target: string;
         }[];
+      };
+      receipt_folder_is_mine: {
+        Args: { object_name: string };
+        Returns: boolean;
       };
       record_activity: { Args: { event?: string }; Returns: undefined };
       record_bank_pull: {
@@ -3126,6 +3244,18 @@ export type Database = {
       soft_delete_transactions: {
         Args: { ids: string[]; target_user: string };
         Returns: string;
+      };
+      space_contributions: {
+        Args: {
+          category_names: string[];
+          from_day: string;
+          target_space: string;
+          to_day: string;
+        };
+        Returns: {
+          total: number;
+          user_id: string;
+        }[];
       };
       space_people: {
         Args: { target_space: string };

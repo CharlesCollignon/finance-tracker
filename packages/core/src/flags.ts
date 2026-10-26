@@ -33,6 +33,12 @@ const FLAG_KEYS = [
    * (migration 049, docs/plans/REAL_ESTATE_PLAN.md).
    */
   "property.track",
+  /**
+   * The bank apps' notifications read on the phone, Android only
+   * (migration 082, docs/plans/STATEMENTS_PLAN.md Phase 5): the screen
+   * that turns it on, and the reading itself.
+   */
+  "listener.android",
 ] as const;
 
 export type FlagKey = (typeof FLAG_KEYS)[number];

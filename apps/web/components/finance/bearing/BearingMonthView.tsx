@@ -3,14 +3,16 @@
 import type { ReactNode } from "react";
 import { nextSetupStep } from "@finance/core/setup-steps";
 import type { BankAttention } from "@finance/core/bank-attention";
+import { bankAttentionItems, sortAttention } from "@finance/core/attention";
+import type { SpaceBalance } from "@finance/core/space-balance";
 import type { BearingMonth } from "@/lib/bearing/month";
+import { BalanceBetweenCard } from "@/components/finance/bearing/BalanceBetweenCard";
 import { MyShareProvider } from "@/components/finance/bearing/MyShareToggle";
-import { AttentionRow } from "@/components/finance/bearing/AttentionRow";
+import { TodoStrip } from "@/components/finance/bearing/TodoStrip";
 import { ArrivedCharges } from "@/components/finance/ArrivedCharges";
 import { PurchasesToConfirm } from "@/components/finance/PurchasesToConfirm";
-import { BankAttentionBanner } from "@/components/finance/bank/BankAttentionBanner";
-import { NewAccountsLine } from "@/components/finance/bank/NewAccountsLine";
 import { SetupCard } from "@/components/finance/bearing/SetupCard";
+import { ShareMonthCard } from "@/components/finance/bearing/ShareMonthCard";
 import { YearReadyCard } from "@/components/finance/bearing/YearReadyCard";
 import { MonthPicker } from "@/components/layout/MonthPicker";
 import { FadeIn, FadeInItem } from "@/components/motion/FadeIn";
@@ -19,6 +21,7 @@ import { cn } from "@/lib/utils";
 import { BalanceCard } from "@/components/finance/bearing/BalanceCard";
 import { MomentumCard } from "@/components/finance/bearing/MomentumCard";
 import { SpentCard } from "@/components/finance/bearing/SpentCard";
+import { TrustCard } from "@/components/finance/bearing/TrustCard";
 import { UpcomingCard } from "@/components/finance/bearing/UpcomingCard";
 import { WhereItWentCard } from "@/components/finance/bearing/WhereItWentCard";
 
@@ -43,9 +46,12 @@ export function BearingMonthView({
   bankInvite = false,
   bankAttention = null,
   awaitingAccounts = 0,
+  spaceBalance = null,
   askClose = false,
 }: {
   data: BearingMonth;
+  /** « Équilibre » between the partners, under « Commun »; null elsewhere. */
+  spaceBalance?: SpaceBalance | null;
   /** Open the month close at once: asked for from the attention row. */
   askClose?: boolean;
   /** Whether to invite this reader to connect a bank: the first setup card. */
@@ -82,28 +88,27 @@ export function BearingMonthView({
   // a row of zeros.
   const hasSpentBefore =
     data.spent.total > 0 || data.spent.trend.some((entry) => entry.total > 0);
+  // « À faire »: the month's list and the person's bank, read as one. The
+  // bank is the person's whatever owner is on screen.
+  const todo = sortAttention([
+    ...data.attention,
+    ...bankAttentionItems({ bank: bankAttention, awaitingAccounts }),
+  ]);
 
   return (
     <MyShareProvider on={data.myShare?.on ?? false}>
       <div className="flex min-w-0 flex-col gap-4 md:gap-5">
         <MonthPicker basePath="/bearing" className="self-center" />
 
-        {bankAttention ? (
-          <BankAttentionBanner attention={bankAttention} />
-        ) : null}
-
-        {awaitingAccounts > 0 ? (
-          <NewAccountsLine count={awaitingAccounts} />
-        ) : null}
-
-        {data.attention.length > 0 ? (
-          <AttentionRow attention={data.attention} />
-        ) : null}
+        {todo.length > 0 ? <TodoStrip items={todo} /> : null}
 
         {/* Before the figures, because answering one changes them: a salary
           confirmed as arrived stops being counted as still to come. */}
         {data.arrived ? (
-          <section className={cn(GLASS_CARD, "rounded-card p-card")}>
+          <section
+            id="arrived"
+            className={cn(GLASS_CARD, "scroll-mt-20 rounded-card p-card")}
+          >
             <ArrivedCharges proposals={data.arrived.proposals} />
           </section>
         ) : null}
@@ -115,7 +120,10 @@ export function BearingMonthView({
 
         {/* The same kind of question, for what the bank cannot see. */}
         {data.purchases.length > 0 ? (
-          <section className={cn(GLASS_CARD, "rounded-card p-card")}>
+          <section
+            id="purchases"
+            className={cn(GLASS_CARD, "scroll-mt-20 rounded-card p-card")}
+          >
             <PurchasesToConfirm purchases={data.purchases} />
           </section>
         ) : null}
@@ -155,6 +163,12 @@ export function BearingMonthView({
             </FadeInItem>
           ) : null}
 
+          {spaceBalance ? (
+            <FadeInItem>
+              <BalanceBetweenCard balance={spaceBalance} />
+            </FadeInItem>
+          ) : null}
+
           {!past && data.upcoming && data.recurring ? (
             <FadeInItem>
               <UpcomingCard data={data} />
@@ -164,6 +178,14 @@ export function BearingMonthView({
           {hasMomentum ? (
             <FadeInItem>
               <MomentumCard data={data} askClose={askClose} />
+            </FadeInItem>
+          ) : null}
+
+          {/* What the figures above rest on: the lines, the charges, the
+              review, the close. Not on a first visit, which has none yet. */}
+          {!data.empty && data.trust.length > 0 ? (
+            <FadeInItem>
+              <TrustCard signals={data.trust} />
             </FadeInItem>
           ) : null}
 
@@ -182,6 +204,14 @@ export function BearingMonthView({
           {readSlot ? (
             <FadeInItem className="md:col-span-2 xl:col-span-3">
               {readSlot}
+            </FadeInItem>
+          ) : null}
+
+          {/* The month to send or to print: not a month ahead, which has
+              nothing to say yet, nor a first visit. */}
+          {!data.empty && data.balance.period !== "future" ? (
+            <FadeInItem>
+              <ShareMonthCard year={data.year} month={data.month} />
             </FadeInItem>
           ) : null}
         </FadeIn>

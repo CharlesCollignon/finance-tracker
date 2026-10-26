@@ -11,11 +11,14 @@ import {
 } from "react";
 import { Plus } from "@phosphor-icons/react";
 import type { MerchantRule } from "@finance/core/merchant-memory";
+import type { PaletteSource } from "@finance/core/palette";
 import type { Category, CategoryType } from "@finance/core/types/database";
 import {
   QuickAddSheet,
   type AddKind,
 } from "@/components/finance/QuickAddSheet";
+import { CommandPalette } from "@/components/layout/CommandPalette";
+import { APP_NAV_ITEMS, PROPERTY_NAV_ITEM } from "@/lib/navigation";
 import { cn } from "@/lib/utils";
 import { ICON } from "@/lib/icon-scale";
 import { useT } from "@/lib/locale-context";
@@ -23,6 +26,8 @@ import { useT } from "@/lib/locale-context";
 interface OpenOptions {
   /** A date to start on — the calendar opens the sheet on the day in view. */
   date?: string;
+  /** An amount already typed — the palette's « Ajouter une opération de… ». */
+  amount?: number;
   /** Which kind to start on. A transaction unless the caller says otherwise. */
   kind?: AddKind;
   /**
@@ -54,14 +59,23 @@ export function QuickAddProvider({
   categories,
   recentCategoryIds,
   merchants,
+  charges = [],
+  showProperty = false,
 }: {
   children: ReactNode;
   categories: Category[];
   recentCategoryIds: string[];
   merchants: MerchantRule[];
+  /** The active charges, for the palette to name. */
+  charges?: { id: string; name: string }[];
+  /** Whether Immobilier is among the pages the palette offers. */
+  showProperty?: boolean;
 }) {
+  const t = useT();
   const [isOpen, setIsOpen] = useState(false);
+  const [paletteOpen, setPaletteOpen] = useState(false);
   const [date, setDate] = useState<string | undefined>(undefined);
+  const [amount, setAmount] = useState<number | undefined>(undefined);
   const [kind, setKind] = useState<AddKind>("transaction");
   const [categoryType, setCategoryType] = useState<CategoryType | undefined>(
     undefined,
@@ -69,10 +83,49 @@ export function QuickAddProvider({
 
   const open = useCallback((options?: OpenOptions) => {
     setDate(options?.date);
+    setAmount(options?.amount);
     setKind(options?.kind ?? "transaction");
     setCategoryType(options?.categoryType);
     setIsOpen(true);
   }, []);
+
+  // What the palette can name: every page in the reader's language, the
+  // categories, the shops the ledger knows, the active charges.
+  const paletteSource = useMemo<PaletteSource>(() => {
+    const pages: { href: string; label: string }[] = [];
+    for (const item of APP_NAV_ITEMS) {
+      pages.push({ href: item.href, label: t(item.labelKey) });
+      for (const child of item.children) {
+        if (child.href !== item.href) {
+          pages.push({
+            href: child.href,
+            label: `${t(item.labelKey)} · ${t(child.labelKey)}`,
+          });
+        }
+      }
+    }
+    if (showProperty) {
+      pages.push({
+        href: PROPERTY_NAV_ITEM.href,
+        label: t(PROPERTY_NAV_ITEM.labelKey),
+      });
+    }
+    pages.push(
+      { href: "/categories", label: t("pages.categories") },
+      { href: "/rules", label: t("rules.title") },
+      { href: "/import", label: t("pages.import") },
+      { href: "/profile", label: t("nav.profile") },
+      { href: "/nouveautes", label: t("nav.nouveautes") },
+    );
+    return {
+      pages,
+      categories: categories
+        .filter((category) => !category.archived)
+        .map((category) => ({ id: category.id, name: category.name })),
+      shops: merchants.map((rule) => ({ key: rule.key, label: rule.label })),
+      charges,
+    };
+  }, [t, showProperty, categories, merchants, charges]);
 
   // The installed app's "Add transaction" shortcut lands on /transactions?add=1.
   // Read from location rather than useSearchParams, which would force every
@@ -99,7 +152,9 @@ export function QuickAddProvider({
   }, []);
 
   /**
-   * One shortcut, and it carries a modifier.
+   * One shortcut, and it carries a modifier. It opens the palette since
+   * October 2026 — whose first line is the add, so Enter is all the add
+   * costs — rather than the add sheet itself.
    *
    * There were two. Beside Cmd/Ctrl+K there was a bare `n`, bound on `window`
    * for the whole app and guarded only by "the focus is not in a field". That
@@ -120,9 +175,8 @@ export function QuickAddProvider({
     function handleKeyDown(event: KeyboardEvent) {
       if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
         event.preventDefault();
-        setDate(undefined);
-        setKind("transaction");
-        setIsOpen(true);
+        setIsOpen(false);
+        setPaletteOpen(true);
       }
     }
 
@@ -139,6 +193,13 @@ export function QuickAddProvider({
     <QuickAddContext.Provider value={value}>
       {children}
       <QuickAddFab />
+      <CommandPalette
+        open={paletteOpen}
+        onOpenChange={setPaletteOpen}
+        source={paletteSource}
+        onAdd={(typed) => open({ amount: typed ?? undefined })}
+        onAddCharge={() => open({ kind: "charge" })}
+      />
       <QuickAddSheet
         open={isOpen}
         onOpenChange={setIsOpen}
@@ -146,6 +207,7 @@ export function QuickAddProvider({
         recentCategoryIds={recentCategoryIds}
         merchants={merchants}
         defaultDate={date}
+        defaultAmount={amount}
         kind={kind}
         categoryType={categoryType}
       />
