@@ -15,6 +15,8 @@ import { useToast } from "@/components/layout/ToastProvider";
 import { useDeletedToast } from "@/lib/use-deleted-toast";
 import { MobileSheet } from "@/components/ui/MobileSheet";
 import { CategoryPicker } from "@/components/finance/CategoryPicker";
+import { PartsEditor } from "@/components/finance/PartsEditor";
+import { ReceiptSection } from "@/components/finance/ReceiptSection";
 import {
   deleteTransaction,
   saveQuickTransaction,
@@ -287,6 +289,19 @@ function TransactionFormFields({
       </form>
 
       <div className="mt-6 space-y-3 border-t border-border pt-4">
+        {/* The picture behind the row, and one payment in several parts
+            (migration 079): each closes the sheet once the row has changed
+            under it. */}
+        <ReceiptSection
+          transaction={transaction}
+          onApplied={() => onOpenChange(false)}
+        />
+        <PartsEditor
+          transaction={transaction}
+          categories={categories}
+          onDone={() => onOpenChange(false)}
+        />
+
         <Button
           type="button"
           variant="outline"

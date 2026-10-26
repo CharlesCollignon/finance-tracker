@@ -9,6 +9,8 @@ import type {
 } from "@finance/core/types/database";
 
 import { CategoryPicker } from "@/components/pickers/CategoryPicker";
+import { PartsEditor } from "@/components/PartsEditor";
+import { ReceiptRow } from "@/components/ReceiptRow";
 import { Button } from "@/components/ui/Button";
 import { DateField } from "@/components/ui/DateField";
 import { Input } from "@/components/ui/Input";
@@ -256,6 +258,16 @@ export function TransactionFormModal({
             />
 
             <View className="mt-6 gap-3 border-t border-border pt-4">
+              {/* The picture behind the row, and one payment in several
+                  parts (migration 079): each closes the sheet once the row
+                  has changed under it. */}
+              <ReceiptRow transaction={transaction} onApplied={onClose} />
+              <PartsEditor
+                transaction={transaction}
+                categories={categories}
+                onDone={onClose}
+              />
+
               {confirmDelete ? (
                 <View className="gap-2">
                   <Text variant="muted" className="text-sm">

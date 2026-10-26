@@ -1159,6 +1159,24 @@ export default function TransactionsScreen() {
                       {item.categories.name}
                     </Text>
                     <FulfilmentDot state={fulfilment} />
+                    {/* One payment in several parts, and the picture
+                        behind a row (migration 079). */}
+                    {item.split_group ? (
+                      <Ionicons
+                        name="git-branch-outline"
+                        size={ICON.xs}
+                        color={colors.mutedForeground}
+                        accessibilityLabel={t("transaction.splitMark")}
+                      />
+                    ) : null}
+                    {item.receipt_path ? (
+                      <Ionicons
+                        name="attach-outline"
+                        size={ICON.xs}
+                        color={colors.mutedForeground}
+                        accessibilityLabel={t("transaction.receiptMark")}
+                      />
+                    ) : null}
                   </View>
                   {subtitle ? (
                     <Text variant="muted" numberOfLines={1} className="text-xs">

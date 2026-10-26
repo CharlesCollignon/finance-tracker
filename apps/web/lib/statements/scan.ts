@@ -79,7 +79,7 @@ function errorOf(failure: string | null): string {
 }
 
 /** The person's writer, made to read a statement: Mistral, on Mistral's servers. */
-function scanWriter(writer: Writer): Writer {
+export function scanWriter(writer: Writer): Writer {
   return {
     ...writer,
     model: SCAN_MODEL,

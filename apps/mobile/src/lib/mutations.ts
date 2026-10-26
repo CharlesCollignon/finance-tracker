@@ -21,6 +21,8 @@ import * as closing from "@finance/data/closing";
 import * as feed from "@finance/data/feed-decisions";
 import * as filingRules from "@finance/data/filing-rules";
 import type { FilingRuleInput } from "@finance/core/validations/filing-rules";
+import * as splits from "@finance/data/splits";
+import type { SplitInput } from "@finance/core/validations/splits";
 import * as proposals from "@finance/data/recurring-proposals";
 import * as decisions from "@finance/data/fulfilment-decisions";
 import * as deletions from "@finance/data/deletions";
@@ -554,6 +556,30 @@ export async function reopenSwallowedFeedItems(): Promise<
   ActionResult<{ reopened: number }>
 > {
   return asOwner((userId) => feed.reopenSwallowedFeedItems(supabase, userId));
+}
+
+/* ------------------------------------------------ splits and receipts */
+
+/**
+ * One payment in several parts, and the receipt behind a row —
+ * `@finance/data/splits` (migration 079), the web's own bodies.
+ */
+
+export async function splitTransaction(
+  input: SplitInput,
+): Promise<ActionResult<{ ids: string[] }>> {
+  return asOwner((userId) => splits.splitTransaction(supabase, userId, input));
+}
+
+export async function unsplitTransaction(id: string): Promise<ActionResult> {
+  return asOwner((userId) => splits.unsplitTransaction(supabase, userId, id));
+}
+
+export async function setReceipt(
+  id: string,
+  path: string | null,
+): Promise<ActionResult> {
+  return asOwner((userId) => splits.setReceipt(supabase, userId, id, path));
 }
 
 /* ------------------------------------------------------ the filing rules */

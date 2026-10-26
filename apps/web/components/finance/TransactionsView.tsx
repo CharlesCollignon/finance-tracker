@@ -12,7 +12,9 @@ import {
   ArrowDown,
   ArrowRight,
   DownloadSimple,
+  GitFork,
   MagnifyingGlass,
+  Paperclip,
   SlidersHorizontal,
   UploadSimple,
 } from "@phosphor-icons/react";
@@ -884,6 +886,22 @@ export function TransactionsView({
                                 <FulfilmentDot
                                   state={fulfilmentStates.get(tx.id)}
                                 />
+                                {/* One payment in several parts, and the
+                                    picture behind a row (migration 079). */}
+                                {tx.split_group ? (
+                                  <GitFork
+                                    size={ICON.xs}
+                                    aria-label={t("transaction.splitMark")}
+                                    className="shrink-0 text-muted-foreground"
+                                  />
+                                ) : null}
+                                {tx.receipt_path ? (
+                                  <Paperclip
+                                    size={ICON.xs}
+                                    aria-label={t("transaction.receiptMark")}
+                                    className="shrink-0 text-muted-foreground"
+                                  />
+                                ) : null}
                               </span>
                               {/* Under the name until there is a column for
                                   it, so a narrow screen still shows it. The
