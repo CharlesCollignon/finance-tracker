@@ -825,6 +825,16 @@ Journal or on Le point, a shop, a category, a recurring template
 and its « + » instead.
 _Avoid_: command bar, launcher, spotlight, omnibox
 
+**Month to share**:
+_En français_ : relevé du mois (« Partager ce mois »)
+One month as a few lines to send or to print: what came in, what went
+out, the month's net, what the close kept and found unrecorded, what is
+still to go out, and « Où c'est parti » — with the amounts, or with the
+shares and a sign only, the person's choice (`month-share.ts`). An image
+for the share sheet on both apps, and on the web a page to print or save
+as a PDF, with the month's rows when the amounts are in.
+_Avoid_: report, export (that is the CSV), summary
+
 **To-do strip**:
 _En français_ : « À faire » (la bande)
 Everything waiting for the reader, in one strip under Le point's month

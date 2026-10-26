@@ -17,6 +17,24 @@ import type { ChangelogEntry, RoadmapItem } from "./changelog";
  */
 export const CHANGELOG: readonly ChangelogEntry[] = [
   {
+    id: "2026-10-26-month-share",
+    date: "2026-10-26",
+    kind: "new",
+    platforms: ["web"],
+    fr: {
+      title: "Partager ce mois",
+      body: "Sur Le point, une carte envoie le mois en image — entré, sorti, le mois, économisé, non noté, et où c’est parti — avec les montants, ou avec les parts seulement. Sur l’ordinateur, la même chose en page à imprimer ou à enregistrer en PDF, avec les opérations du mois.",
+      detail:
+        "Dessiné pour votre compte au moment où vous le demandez, et gardé nulle part. Pour un partenaire, un comptable, ou vous-même.",
+    },
+    en: {
+      title: "Share this month",
+      body: "On the Overview, a card sends the month as an image — came in, went out, the month, kept, unrecorded, and where it went — with the amounts, or with the shares only. On the desktop, the same as a page to print or save as a PDF, with the month’s entries.",
+      detail:
+        "Drawn for your account when you ask, and kept nowhere. For a partner, an accountant, or yourself.",
+    },
+  },
+  {
     id: "2026-10-26-palette",
     date: "2026-10-26",
     kind: "better",

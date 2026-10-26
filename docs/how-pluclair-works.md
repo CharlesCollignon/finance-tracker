@@ -789,6 +789,19 @@ draws it as a listbox the arrows walk. A category opens By category on it
 (`/history?open=`), a shop opens By shop on its words, a charge opens
 Récurrents with its editor (`/recurring?edit=`).
 
+## The month to share
+
+« Partager ce mois » (`ShareMonthCard`, both apps, any month not ahead):
+`@finance/core/month-share` turns Le point's month into a few lines — in,
+out, net, kept and unrecorded from the close, still to go out, « Où c'est
+parti » — with the amounts or with the shares and a sign only. The web's
+`/api/month-share/image` draws them as a PNG (`lib/bearing/share.ts`, the
+cookie session or the phone's bearer with `?owner=` for a space), and
+`/print/month` draws them as a page outside the app shell, the month's rows
+under them when the amounts are in, for the browser's print dialog. The
+phone downloads the image and hands it to its share sheet
+(`lib/month-share.ts`), as « Votre année » does.
+
 ## Search
 
 The Journal's search filters the month on screen and, under it, lists the
