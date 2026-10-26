@@ -20,6 +20,7 @@ import { rulesEn } from "./rules.en";
 import { merchantsEn } from "./merchants.en";
 import { paletteEn } from "./palette.en";
 import { monthShareEn } from "./month-share.en";
+import { eventsEn } from "./events.en";
 
 /**
  * What the app says, in English.
@@ -3741,6 +3742,7 @@ export const en = {
   merchants: merchantsEn,
   palette: paletteEn,
   monthShare: monthShareEn,
+  events: eventsEn,
 } satisfies MessageTree;
 
 export type Messages = typeof en;

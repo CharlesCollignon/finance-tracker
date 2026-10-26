@@ -20,6 +20,7 @@ import {
 } from "@/components/accounts/AddAccountSheet";
 import { AccountChipRow } from "@/components/accounts/AccountChipRow";
 import { NewPositionSheet } from "@/components/accounts/NewPositionSheet";
+import { WalletEventsSheet } from "@/components/accounts/WalletEventsSheet";
 import { PeaCard } from "@/components/PeaCard";
 import { SavingsAccountCard } from "@/components/accounts/SavingsAccountCard";
 import { InvestmentPositionRow } from "@/components/InvestmentPositionRow";
@@ -72,6 +73,9 @@ export default function InvestmentsScreen() {
   );
   const [removingWallet, setRemovingWallet] =
     useState<InvestmentWalletId | null>(null);
+  const [eventsWallet, setEventsWallet] = useState<InvestmentWalletId | null>(
+    null,
+  );
   const [removePending, setRemovePending] = useState(false);
   const [editingPosition, setEditingPosition] =
     useState<InvestmentPositionItem | null>(null);
@@ -330,6 +334,25 @@ export default function InvestmentsScreen() {
                   size="sm"
                   onPress={() => setNewPositionIn(activeWallet)}
                 />
+                {/* What happened inside the account — a sale, a dividend,
+                    a fee — typed or read off the broker's export; the
+                    Analyse view adds them up by year. */}
+                <Button
+                  label={
+                    (data?.events ?? []).some(
+                      (event) => event.wallet === activeWallet,
+                    )
+                      ? `${t("events.open")} · ${t("events.count", {
+                          count: (data?.events ?? []).filter(
+                            (event) => event.wallet === activeWallet,
+                          ).length,
+                        })}`
+                      : t("events.open")
+                  }
+                  variant="outline"
+                  size="sm"
+                  onPress={() => setEventsWallet(activeWallet)}
+                />
                 <Button
                   label={t("accounts.remove")}
                   variant="ghost"
@@ -365,6 +388,14 @@ export default function InvestmentsScreen() {
       <NewPositionSheet
         wallet={newPositionIn}
         onClose={() => setNewPositionIn(null)}
+      />
+      <WalletEventsSheet
+        wallet={eventsWallet}
+        events={(data?.events ?? []).filter(
+          (event) => event.wallet === eventsWallet,
+        )}
+        onClose={() => setEventsWallet(null)}
+        onChanged={onRefresh}
       />
       <AddAccountSheet
         open={adding}

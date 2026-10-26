@@ -10,6 +10,7 @@ import {
 import { readYearReview } from "@finance/data/year-review";
 import * as fulfilment from "@finance/data/fulfilment";
 import * as filingRules from "@finance/data/filing-rules";
+import * as investmentEvents from "@finance/data/investment-events";
 import { readMerchantScreen } from "@finance/data/merchant-screen";
 import { readSpaceBalance } from "@finance/data/space-balance";
 import type { Space } from "@finance/data/spaces";
@@ -607,6 +608,13 @@ export function searchEveryMonth(
 }
 
 /** The rules a person wrote for filing a line (`readFilingRules`, 077). */
+/** What happened inside the wallets (migration 080), newest first. */
+export function getInvestmentEvents(
+  userId: string,
+): ReturnType<typeof investmentEvents.readInvestmentEvents> {
+  return investmentEvents.readInvestmentEvents(supabase, userId);
+}
+
 export function getFilingRules(
   userId: string,
 ): ReturnType<typeof filingRules.readFilingRules> {

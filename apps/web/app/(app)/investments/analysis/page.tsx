@@ -62,6 +62,7 @@ export default async function AnalysisPage() {
       monthly={monthly}
       targets={base.targets}
       monthlyContribution={monthlyContribution}
+      events={base.events}
     />
   );
 }

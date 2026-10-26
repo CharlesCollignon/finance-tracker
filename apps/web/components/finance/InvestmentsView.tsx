@@ -44,6 +44,7 @@ import { ICON } from "@/lib/icon-scale";
 import { useLocale, useT } from "@/lib/locale-context";
 import { formatSigned } from "@finance/core/amount-sign";
 import { WalletPanel } from "@/components/finance/investments/WalletPanel";
+import type { InvestmentEvent } from "@finance/core/investment-events";
 
 interface InvestmentsViewProps {
   portfolio: InvestmentPortfolioSummary;
@@ -61,6 +62,8 @@ interface InvestmentsViewProps {
   savingsMonthly: Partial<Record<SavingsAccountKind, number>>;
   /** Each wallet's plan row: the PEA's opening date and ceiling live there. */
   plans: WalletPlan[];
+  /** What happened inside the wallets (migration 080), newest first. */
+  events: InvestmentEvent[];
 }
 
 /**
@@ -82,6 +85,7 @@ export function InvestmentsView({
   accounts,
   savingsMonthly,
   plans,
+  events,
 }: InvestmentsViewProps) {
   const t = useT();
   const locale = useLocale();
@@ -300,6 +304,7 @@ export function InvestmentsView({
               key={activeWallet}
               column={activeColumn}
               priceSeries={priceSeries}
+              events={events.filter((event) => event.wallet === activeWallet)}
               onEdit={setEditingItem}
               onAdd={() => setAddingWallet(activeWallet)}
               removeConfirm={t("accounts.removeWalletConfirm", {

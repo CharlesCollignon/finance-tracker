@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Plus } from "@phosphor-icons/react";
+import { ListBullets, Plus } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { SegmentedControl } from "@/components/ui/SegmentedControl";
@@ -24,12 +24,16 @@ import { useT } from "@/lib/locale-context";
 import { formatSigned } from "@finance/core/amount-sign";
 import { InvestmentPositionRow } from "@/components/finance/investments/InvestmentPositionRow";
 import { Metric } from "@/components/finance/investments/metrics";
+import { WalletEventsSheet } from "@/components/finance/investments/WalletEventsSheet";
+import type { InvestmentEvent } from "@finance/core/investment-events";
 
 /** One wallet on the Placements screen: its figures, its chart, its positions. */
 
 interface WalletPanelProps {
   column: InvestmentColumnSummary;
   priceSeries: Record<string, InstrumentPriceSeries>;
+  /** What happened inside this wallet (migration 080), newest first. */
+  events: InvestmentEvent[];
   onEdit: (item: InvestmentPositionItem) => void;
   onAdd: () => void;
   /** What removing the wallet takes with it, in a sentence. */
@@ -45,6 +49,7 @@ function rangeLabel(range: PriceRange, allLabel: string): string {
 export function WalletPanel({
   column,
   priceSeries,
+  events,
   onEdit,
   onAdd,
   removeConfirm,
@@ -52,6 +57,7 @@ export function WalletPanel({
 }: WalletPanelProps) {
   const t = useT();
   const formatEuro = useFormatCurrency();
+  const [eventsOpen, setEventsOpen] = useState(false);
   const showPl = column.hasMarketSnapshot && column.totalGainLoss !== 0;
   const [range, setRange] = useState<PriceRange>("1Y");
   // Largest first by default. A wallet is opened to see where the money is
@@ -184,9 +190,27 @@ export function WalletPanel({
         )}
       </div>
 
-      <div className="border-t border-border pt-4">
+      {/* What happened inside the account — a sale, a dividend, a fee —
+          typed or read off the broker's export; the Analyse tab adds
+          them up by year. */}
+      <div className="flex flex-wrap items-center justify-between gap-2 border-t border-border pt-4">
+        <Button size="sm" variant="outline" onClick={() => setEventsOpen(true)}>
+          <ListBullets size={ICON.md} weight="light" className="mr-1" />
+          {t("events.open")}
+          {events.length > 0 ? (
+            <span className="ml-1 text-muted-foreground">
+              · {t("events.count", { count: events.length })}
+            </span>
+          ) : null}
+        </Button>
         <RemoveAccount confirmText={removeConfirm} onRemove={onRemove} />
       </div>
+      <WalletEventsSheet
+        wallet={column.walletId}
+        events={events}
+        open={eventsOpen}
+        onOpenChange={setEventsOpen}
+      />
     </Card.Bezel>
   );
 }

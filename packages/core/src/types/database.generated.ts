@@ -1159,6 +1159,57 @@ export type Database = {
         };
         Relationships: [];
       };
+      investment_events: {
+        Row: {
+          amount: number;
+          created_at: string;
+          fingerprint: string | null;
+          id: string;
+          instrument_name: string | null;
+          instrument_symbol: string | null;
+          isin: string | null;
+          kind: string;
+          note: string | null;
+          occurred_on: string;
+          quantity: number | null;
+          source: string;
+          user_id: string;
+          wallet: Database["public"]["Enums"]["investment_wallet"];
+        };
+        Insert: {
+          amount: number;
+          created_at?: string;
+          fingerprint?: string | null;
+          id?: string;
+          instrument_name?: string | null;
+          instrument_symbol?: string | null;
+          isin?: string | null;
+          kind: string;
+          note?: string | null;
+          occurred_on: string;
+          quantity?: number | null;
+          source?: string;
+          user_id: string;
+          wallet: Database["public"]["Enums"]["investment_wallet"];
+        };
+        Update: {
+          amount?: number;
+          created_at?: string;
+          fingerprint?: string | null;
+          id?: string;
+          instrument_name?: string | null;
+          instrument_symbol?: string | null;
+          isin?: string | null;
+          kind?: string;
+          note?: string | null;
+          occurred_on?: string;
+          quantity?: number | null;
+          source?: string;
+          user_id?: string;
+          wallet?: Database["public"]["Enums"]["investment_wallet"];
+        };
+        Relationships: [];
+      };
       investment_positions: {
         Row: {
           category_id: string | null;

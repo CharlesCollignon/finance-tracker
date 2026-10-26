@@ -4,7 +4,7 @@
  * PDF — or a picture of it their AI account reads, as the lines the bank
  * feed takes. `docs/plans/STATEMENTS_PLAN.md`.
  */
-export { readStatementFile, readStatementText } from "./read";
+export { readStatementFile, readStatementText, tableRows } from "./read";
 export { readPdfPages, type PdfPage, type PdfText } from "./pdf";
 export { SCAN_SCHEMA, statementFromScan } from "./scan";
 export {

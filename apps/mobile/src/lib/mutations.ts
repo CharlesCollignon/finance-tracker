@@ -22,6 +22,9 @@ import * as feed from "@finance/data/feed-decisions";
 import * as filingRules from "@finance/data/filing-rules";
 import type { FilingRuleInput } from "@finance/core/validations/filing-rules";
 import * as splits from "@finance/data/splits";
+import * as investmentEvents from "@finance/data/investment-events";
+import type { ReadEvent } from "@finance/core/investment-events";
+import type { InvestmentEventInput } from "@finance/core/validations/investment-events";
 import type { SplitInput } from "@finance/core/validations/splits";
 import * as proposals from "@finance/data/recurring-proposals";
 import * as decisions from "@finance/data/fulfilment-decisions";
@@ -781,5 +784,32 @@ export function setNotificationPref(
 ): Promise<ActionResult> {
   return asUser((userId) =>
     preferences.setNotificationPref(supabase, userId, kind, wanted, locale),
+  );
+}
+
+/**
+ * What happened inside a wallet (migration 080) —
+ * `@finance/data/investment-events`, the web's actions. A wallet is a
+ * person's, never a space's, so these run as the user.
+ */
+export async function addInvestmentEvent(
+  input: InvestmentEventInput,
+): Promise<ActionResult<{ id: string }>> {
+  return asUser((userId) =>
+    investmentEvents.addInvestmentEvent(supabase, userId, input),
+  );
+}
+
+export async function deleteInvestmentEvent(id: string): Promise<ActionResult> {
+  return asUser((userId) =>
+    investmentEvents.deleteInvestmentEvent(supabase, userId, id),
+  );
+}
+
+export async function importInvestmentEvents(
+  read: ReadEvent[],
+): Promise<ActionResult<{ added: number; known: number }>> {
+  return asUser((userId) =>
+    investmentEvents.importInvestmentEvents(supabase, userId, read),
   );
 }

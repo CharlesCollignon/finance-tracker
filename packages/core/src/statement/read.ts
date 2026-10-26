@@ -125,7 +125,10 @@ function fromBlocks(
     format,
     bank: read.bank ?? null,
     // Held to its own balances, where the file states both.
-    blocks: read.blocks.map((block) => ({ ...block, check: checkBlock(block) })),
+    blocks: read.blocks.map((block) => ({
+      ...block,
+      check: checkBlock(block),
+    })),
     skipped: read.skipped,
     problem:
       read.blocks.length === 0
@@ -135,6 +138,27 @@ function fromBlocks(
         : null,
     table: null,
   };
+}
+
+/**
+ * A file's rows, when it is a table — a CSV, a spreadsheet, a web page's
+ * table — for a reader of something other than a bank statement (a
+ * broker's export, `investment-events.ts`). Null for what is not a table:
+ * a PDF, an image, an OFX.
+ */
+export function tableRows(bytes: Uint8Array): string[][] | null {
+  switch (detectStatementFormat(bytes)) {
+    case "xlsx":
+      return xlsxRows(bytes);
+    case "ods":
+      return odsRows(bytes);
+    case "html":
+      return htmlTable(statementText(bytes)).rows;
+    case "csv":
+      return csvRows(statementText(bytes));
+    default:
+      return null;
+  }
 }
 
 /** A CSV's rows, under the delimiter that gives the most even table. */

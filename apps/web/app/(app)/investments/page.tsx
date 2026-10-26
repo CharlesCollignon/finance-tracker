@@ -41,6 +41,7 @@ export default async function InvestmentsPage() {
       accounts={base.accounts}
       savingsMonthly={base.savingsMonthly}
       plans={base.plans}
+      events={base.events}
     />
   );
 }

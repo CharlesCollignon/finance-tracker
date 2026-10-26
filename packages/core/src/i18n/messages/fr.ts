@@ -20,6 +20,7 @@ import { rulesFr } from "./rules.fr";
 import { merchantsFr } from "./merchants.fr";
 import { paletteFr } from "./palette.fr";
 import { monthShareFr } from "./month-share.fr";
+import { eventsFr } from "./events.fr";
 
 /**
  * What the app says, in French.
@@ -2915,4 +2916,5 @@ export const fr: Messages = {
   merchants: merchantsFr,
   palette: paletteFr,
   monthShare: monthShareFr,
+  events: eventsFr,
 };

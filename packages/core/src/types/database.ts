@@ -15,6 +15,12 @@ export type PricingType = "fixed" | "shares" | "purchases";
 
 export type WalletId = "pea" | "cto" | "av" | "per" | "crypto";
 
+/** What happened inside a wallet — see migration 080. */
+export type InvestmentEventKind = "buy" | "sell" | "dividend" | "fee";
+
+/** Typed by hand, or read off a broker's export — see migration 080. */
+export type InvestmentEventSource = "manual" | "file";
+
 /** A kind of savings account — see migration 046. */
 export type SavingsAccountKind =
   "livret_a" | "ldds" | "lep" | "pel" | "cel" | "livret";
@@ -113,6 +119,10 @@ interface Narrowed {
     status: "pending" | "imported" | "ignored";
   };
   filing_rules: { direction: "in" | "out" };
+  investment_events: {
+    kind: InvestmentEventKind;
+    source: InvestmentEventSource;
+  };
   month_closes: { balance_source: "manual" | "bank" };
   month_reads: { source: "pressed" | "auto"; locale: Locale };
   savings_accounts: { kind: SavingsAccountKind };
