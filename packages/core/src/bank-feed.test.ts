@@ -571,3 +571,99 @@ describe("not recording the same movement twice", () => {
     expect(plan.review).toHaveLength(2);
   });
 });
+
+describe("decide with filing rules", () => {
+  const categoryIdsByName = indexCategoriesByName([
+    { id: "c-groceries", name: "Groceries" },
+  ]);
+  const transports = {
+    id: "r-navigo",
+    words: "navigo",
+    categoryId: "c-transport",
+    categoryName: "Transports",
+    direction: "out" as const,
+    appliedCount: 0,
+    createdFrom: null,
+  };
+
+  it("files by the rule the person wrote before anything learned", () => {
+    const candidate = toCandidate(
+      bank({
+        creditorName: "PRLV NAVIGO ANNUEL",
+        merchantCategoryCode: "5411",
+      }),
+      { locale: "fr" },
+    )!;
+    const decision = decide(candidate, {
+      merchants: buildMerchantIndex([]),
+      categoryIdsByName,
+      rules: [transports],
+    });
+    expect(decision).toEqual({
+      kind: "auto",
+      suggestion: {
+        categoryId: "c-transport",
+        categoryName: "Transports",
+        reason: "rule",
+        ruleId: "r-navigo",
+      },
+    });
+  });
+
+  it("files money coming in by a rule written for it, and asks otherwise", () => {
+    const candidate = toCandidate(
+      bank({
+        creditDebitIndicator: "CRDT",
+        debtorName: "VIR SALAIRE ACME",
+        creditorName: null,
+      }),
+      { locale: "fr" },
+    )!;
+    const salary = {
+      ...transports,
+      id: "r-salary",
+      words: "salaire",
+      categoryId: "c-salary",
+      categoryName: "Salaire",
+      direction: "in" as const,
+    };
+    expect(
+      decide(candidate, {
+        merchants: buildMerchantIndex([]),
+        categoryIdsByName,
+        rules: [salary],
+      }).kind,
+    ).toBe("auto");
+    expect(
+      decide(candidate, {
+        merchants: buildMerchantIndex([]),
+        categoryIdsByName,
+        rules: [transports],
+      }).kind,
+    ).toBe("review");
+  });
+
+  it("still raises a possible duplicate ahead of a rule", () => {
+    const candidate = toCandidate(bank({ creditorName: "NAVIGO" }), {
+      locale: "fr",
+    })!;
+    const decision = decide(candidate, {
+      merchants: buildMerchantIndex([]),
+      categoryIdsByName,
+      rules: [transports],
+      existing: [
+        {
+          transactionId: "tx-1",
+          occurredOn: "2026-09-12",
+          amount: 42.1,
+          isIncome: false,
+          fromRecurringTemplate: true,
+          alreadyClaimed: false,
+          categoryId: "c-transport",
+          insideWallet: false,
+        },
+      ],
+    });
+    expect(decision.kind).toBe("review");
+  });
+});

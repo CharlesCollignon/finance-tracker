@@ -145,6 +145,7 @@ function RootNavigator({ fontsReady }: { fontsReady: boolean }) {
         <Stack.Screen name="(auth)" />
         <Stack.Screen name="auth/callback" />
         <Stack.Screen name="categories" />
+        <Stack.Screen name="rules" />
         <Stack.Screen name="bank" />
         <Stack.Screen name="import" />
         <Stack.Screen name="onboarding" />

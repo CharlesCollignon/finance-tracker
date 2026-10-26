@@ -11,6 +11,7 @@ import type { Locale } from "@finance/core/i18n/locale";
 import type { BankConnectionStatus } from "@finance/core/types/database";
 
 import {
+  addFilingRule,
   ignoreFeedItem,
   importFeedItem,
   undoFeedDecision,
@@ -325,6 +326,8 @@ export interface GroupDecision {
   ignored: number;
   /** Every row the decision took, so all of it can be taken back. */
   decidedIds: string[];
+  /** The filing rule written with the group, when one was asked for. */
+  rule?: { words: string } | null;
 }
 
 /**
@@ -376,6 +379,7 @@ async function decideGroup(
     matched: result.matched ?? 0,
     ignored: result.ignored ?? 0,
     decidedIds: result.decidedIds ?? [],
+    rule: result.rule ?? null,
   };
 }
 
@@ -384,10 +388,33 @@ async function decideGroup(
  * duplicate check is the web's own and a group filed on the phone is filed
  * exactly as it would have been there.
  */
-export function fileFeedGroup(ids: string[], categoryId: string) {
-  return webApiAvailable()
-    ? decideGroup({ action: "import", ids, categoryId })
-    : decideRowByRow(ids, (id) => importFeedItem(id, categoryId), "imported");
+export function fileFeedGroup(
+  ids: string[],
+  categoryId: string,
+  /**
+   * « Toujours ranger ici »: a filing rule written with the group on the
+   * server (migration 077). Without the web app, the rows are filed one by
+   * one and the rule is written here, through the phone's own session.
+   */
+  rule?: { words: string; direction: "in" | "out"; createdFrom: string },
+) {
+  if (webApiAvailable()) {
+    return decideGroup({ action: "import", ids, categoryId, rule });
+  }
+  return decideRowByRow(
+    ids,
+    (id) => importFeedItem(id, categoryId),
+    "imported",
+  ).then(async (decision) => {
+    if ("error" in decision || !rule) {
+      return decision;
+    }
+    const written = await addFilingRule({ ...rule, categoryId });
+    return {
+      ...decision,
+      rule: written.success ? { words: written.words } : null,
+    };
+  });
 }
 
 /** Leave every row of a group out. */

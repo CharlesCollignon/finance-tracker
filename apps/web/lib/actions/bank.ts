@@ -15,6 +15,7 @@ import {
   type BatchFeedResult,
 } from "@finance/data/feed-decisions";
 import * as feed from "@finance/data/feed-decisions";
+import { addFilingRule } from "@finance/data/filing-rules";
 import { asOwner } from "@/lib/actions/as-user";
 import { autoCloseMonths } from "@/lib/bank/auto-close";
 import { syncBankFeed, type SyncOutcome } from "@/lib/bank/sync";
@@ -135,22 +136,31 @@ export async function ignoreFeedItem(itemId: string): Promise<ActionResult> {
 export async function importFeedItems(
   itemIds: string[],
   categoryId: string,
-): Promise<BatchFeedResult> {
+  /**
+   * « Toujours ranger ici »: a filing rule written with the group, so the
+   * next line with these words files itself (migration 077). The rule's
+   * refusal — the words exist already — costs the rule and not the filing.
+   */
+  rule?: { words: string; direction: "in" | "out"; createdFrom?: string },
+): Promise<BatchFeedResult & { rule?: { words: string } | null }> {
   const owner = await getOwner();
   const user = owner ? { id: owner.ownerId } : null;
   if (!user) {
     return { error: "errors.notAuthenticated" };
   }
-  const result = await fileFeedItems(
-    await createClient(),
-    user.id,
-    itemIds,
-    categoryId,
-  );
-  if (!result.error) {
-    revalidateApp();
+  const db = await createClient();
+  const result = await fileFeedItems(db, user.id, itemIds, categoryId);
+  if (result.error) {
+    return result;
   }
-  return result;
+  const written = rule
+    ? await addFilingRule(db, user.id, { ...rule, categoryId })
+    : null;
+  revalidateApp();
+  return {
+    ...result,
+    rule: written?.success ? { words: written.words } : null,
+  };
 }
 
 /** Leave a whole group out, in one write. See `ignoreFeedItem`. */

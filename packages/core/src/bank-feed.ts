@@ -23,6 +23,7 @@ import { translator } from "./i18n/t";
 import { categoryNameForMcc, mccNeedsReview } from "./bank-mcc";
 import { categoryNameVariants } from "./constants";
 import { lookupBankMerchant, type BankMerchantIndex } from "./bank-merchant";
+import { findFilingRule, type FilingRule } from "./filing-rules";
 import {
   lookupMerchant,
   normalizeMerchant,
@@ -280,12 +281,14 @@ export function findLedgerMatch(
   return best;
 }
 
-export type FeedReason = "merchant" | "mcc" | "joint-transfer";
+export type FeedReason = "merchant" | "mcc" | "joint-transfer" | "rule";
 
 export interface FeedSuggestion {
   categoryId: string;
   categoryName: string;
   reason: FeedReason;
+  /** The filing rule that answered, when one did (`reason: "rule"`). */
+  ruleId?: string;
 }
 
 export type FeedDecision =
@@ -331,6 +334,12 @@ export interface DecideOptions {
   bankMerchants?: BankMerchantIndex;
   /** What the ledger already holds, so the feed does not record it twice. */
   existing?: readonly ExistingLedgerRow[];
+  /**
+   * The rules the person wrote (`filing-rules`), asked before anything the
+   * app learned: a rule files its line whichever way the money went and
+   * whatever the card network's code says.
+   */
+  rules?: readonly FilingRule[];
   /** Category name to id, for resolving what an MCC suggests. */
   categoryIdsByName: ReadonlyMap<string, { id: string; name: string }>;
   /**
@@ -358,6 +367,7 @@ export function decide(
     categoryIdsByName,
     existing = [],
     jointTransfer,
+    rules,
   }: DecideOptions,
 ): FeedDecision {
   // Whether this movement is already recorded is asked first, because the
@@ -395,6 +405,22 @@ export function decide(
         categoryId: jointTransfer.category.id,
         categoryName: jointTransfer.category.name,
         reason: "joint-transfer",
+      },
+    };
+  }
+
+  // What the person wrote down comes before what the app learned, and
+  // before the questions below: a rule they wrote for money coming in is
+  // the one case a salary is filed unasked, because they asked for it.
+  const written = rules ? findFilingRule(rules, candidate) : null;
+  if (written) {
+    return {
+      kind: "auto",
+      suggestion: {
+        categoryId: written.categoryId,
+        categoryName: written.categoryName,
+        reason: "rule",
+        ruleId: written.id,
       },
     };
   }

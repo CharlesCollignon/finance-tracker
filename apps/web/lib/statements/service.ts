@@ -284,6 +284,7 @@ export async function planStatement(
     existing: context.existing,
     categoryIdsByName: context.categoryIdsByName,
     seenProviderIds: context.seenProviderIds,
+    rules: context.rules,
     ownIbans,
   });
   // Lines an AI read off a picture are each looked at once, filed by no one.

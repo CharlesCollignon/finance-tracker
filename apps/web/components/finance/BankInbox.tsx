@@ -21,6 +21,7 @@ import { cn } from "@/lib/utils";
 import { useFormatCurrency } from "@/lib/use-currency";
 import { usePrefersReducedMotion } from "@/lib/use-reduced-motion";
 import { formatDayMonth, formatShortDate } from "@finance/core/constants";
+import { suggestRuleWords } from "@finance/core/filing-rules";
 import type { FeedGroup } from "@finance/core/bank-inbox-groups";
 import {
   ignoreFeedItem,
@@ -203,6 +204,9 @@ export function BankInbox({
   const [leaving, setLeaving] = useState<ReadonlySet<string>>(new Set());
   // Opened or shut by hand; otherwise a mixed group is open and the rest shut.
   const [toggled, setToggled] = useState<Record<string, boolean>>({});
+  // « Toujours ranger ici »: the groups whose filing also writes a rule with
+  // the shop's words (`suggestRuleWords`), so the next line files itself.
+  const [always, setAlways] = useState<Record<string, boolean>>({});
   const [focusedKey, setFocusedKey] = useState<string | null>(null);
   const groupRefs = useRef(new Map<string, HTMLLIElement>());
   const leaveTimers = useRef(new Map<string, number>());
@@ -400,9 +404,18 @@ export function BankInbox({
     const ids = group.rows.map((row) => row.id);
     const name =
       categories.find((category) => category.id === categoryId)?.name ?? "";
+    // A rule with the group's words, when asked for: a group of one is
+    // the line itself, which is the words a rule is written from.
+    const rule = always[group.key]
+      ? {
+          words: suggestRuleWords(group.name),
+          direction: group.direction,
+          createdFrom: group.name.slice(0, 200),
+        }
+      : undefined;
     dismiss(group);
     startTransition(async () => {
-      const result = await importFeedItems(ids, categoryId);
+      const result = await importFeedItems(ids, categoryId, rule);
       if (result.error) {
         restore(group.key, ids);
         toast(result.error, "error");
@@ -417,6 +430,11 @@ export function BankInbox({
       }
       if (result.matched) {
         parts.push(t("inboxGroups.alreadyRecorded", { count: result.matched }));
+      }
+      if (result.rule) {
+        parts.push(
+          t("rules.ruleWritten", { words: result.rule.words, category: name }),
+        );
       }
       offerUndo(
         parts.join(" · ") || t("inbox.done"),
@@ -742,6 +760,35 @@ export function BankInbox({
                           : t("inboxGroups.leaveOutAll")}
                       </Button>
                     </div>
+
+                    {/* « Toujours ranger ici »: a rule written with the
+                        filing, so the next line with these words files
+                        itself (migration 077). Not for a mixed group, whose
+                        rows disagree on what the shop is. */}
+                    {!group.mixed && suggestRuleWords(group.name) ? (
+                      <label className="flex cursor-pointer items-start gap-2 text-xs text-muted-foreground">
+                        <input
+                          type="checkbox"
+                          checked={always[group.key] ?? false}
+                          onChange={(event) =>
+                            setAlways((current) => ({
+                              ...current,
+                              [group.key]: event.target.checked,
+                            }))
+                          }
+                          className="mt-0.5 h-4 w-4 accent-foreground"
+                        />
+                        <span>
+                          <span className="text-foreground">
+                            {t("rules.always")}
+                          </span>
+                          {" · "}
+                          {t("rules.alwaysHint", {
+                            words: suggestRuleWords(group.name),
+                          })}
+                        </span>
+                      </label>
+                    ) : null}
 
                     {expanded ? (
                       <ul className="mt-1 flex flex-col divide-y divide-border border-t border-border">

@@ -19,6 +19,8 @@ import * as categories from "@finance/data/categories";
 import * as account from "@finance/data/account";
 import * as closing from "@finance/data/closing";
 import * as feed from "@finance/data/feed-decisions";
+import * as filingRules from "@finance/data/filing-rules";
+import type { FilingRuleInput } from "@finance/core/validations/filing-rules";
 import * as proposals from "@finance/data/recurring-proposals";
 import * as decisions from "@finance/data/fulfilment-decisions";
 import * as deletions from "@finance/data/deletions";
@@ -552,6 +554,32 @@ export async function reopenSwallowedFeedItems(): Promise<
   ActionResult<{ reopened: number }>
 > {
   return asOwner((userId) => feed.reopenSwallowedFeedItems(supabase, userId));
+}
+
+/* ------------------------------------------------------ the filing rules */
+
+/**
+ * The rules a person writes for filing a line — `@finance/data/filing-rules`
+ * (migration 077), the web's own bodies, through the phone's own session.
+ */
+
+export async function addFilingRule(
+  input: FilingRuleInput,
+): Promise<ActionResult<{ id: string; words: string }>> {
+  return asOwner((userId) => filingRules.addFilingRule(supabase, userId, input));
+}
+
+export async function updateFilingRule(
+  id: string,
+  input: FilingRuleInput,
+): Promise<ActionResult> {
+  return asOwner((userId) =>
+    filingRules.updateFilingRule(supabase, userId, id, input),
+  );
+}
+
+export async function deleteFilingRule(id: string): Promise<ActionResult> {
+  return asOwner((userId) => filingRules.deleteFilingRule(supabase, userId, id));
 }
 
 /* ------------------------------- what the statement implies, as entries */

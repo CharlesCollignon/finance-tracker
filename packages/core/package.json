@@ -105,6 +105,8 @@
     "./month-read-budget": "./src/month-read-budget.ts",
     "./month-read-prompt": "./src/month-read-prompt.ts",
     "./month-trust": "./src/month-trust.ts",
+    "./filing-rules": "./src/filing-rules.ts",
+    "./validations/filing-rules": "./src/validations/filing-rules.ts",
     "./motion": "./src/motion.ts",
     "./outbox": "./src/outbox.ts",
     "./paging": "./src/paging.ts",
