@@ -125,10 +125,13 @@ const WANDER = 0.055;
  * 24°, because a warm body darkens towards red rather than towards its own
  * hue. `primary` in `theme/tokens.ts` moved with it, to #ecb25e, so the
  * accent and the mark read as one brand colour.
+ *
+ * Orange since 2026-10-26, at the owner's asking: the body to 29° and 96%
+ * saturation, the light to 35°, the shadow to 18°. The accent stayed.
  */
-const C1 = "#ffd98c";
-const C2 = "#f4a23a";
-const C3 = "#6a300a";
+const C1 = "#ffc87a";
+const C2 = "#fa891e";
+const C3 = "#692407";
 
 /** Alpha times glass, clamped — 2.6 × 0.72 would otherwise ask for 187%. */
 const a = (alpha: number, glass: number) => Math.min(1, alpha * glass);
