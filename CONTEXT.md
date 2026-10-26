@@ -773,6 +773,16 @@ close and what it found. Each is a measurement with a message key
 never a verdict, and never a score.
 _Avoid_: score, health, confidence, status
 
+**To-do strip**:
+_En français_ : « À faire » (la bande)
+Everything waiting for the reader, in one strip under Le point's month
+picker, with its count: a swallowed row, a bank feed that stopped, the
+close, « C'est arrivé ? », a purchase to confirm, the review inbox, accounts
+awaiting a role, last month's statement, a consent to renew, a repeat
+noticed — in that order (`attention.ts`), each leading to where it is done.
+The one place that counts; the decision cards below keep their place.
+_Avoid_: notifications, alerts, tasks, inbox (that is the review)
+
 ### Shared space
 
 **Shared space**:

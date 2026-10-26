@@ -286,6 +286,17 @@ Both apps gather the month the same way, `@finance/data/bearing-month`
 Its cards are a file each on both apps (`BalanceCard`, `SpentCard`…, made of
 `card-parts.tsx`).
 
+« À faire » (`TodoStrip`, both apps) is the one list of what waits:
+`buildAttention` (the month's: a swallowed row, the close, « C'est
+arrivé ? », purchases to confirm, the review, last month's statement for an
+importer, a repeat noticed) and `bankAttentionItems` (the person's bank: a
+feed that stopped, a consent to renew, accounts awaiting a role), merged by
+`sortAttention` into a fixed order. It replaced the attention row and the
+two bank banners in October 2026; the decision cards below it keep their
+place, and the strip's two in-place items point at them (`/bearing#arrived`,
+`/bearing#purchases`). « Fiabilité du mois » (`TrustCard`) sits after the
+momentum card and says what the month's figures rest on.
+
 « Il vous reste » is what the Courant accounts hold, less the charges due
 before the next pay day, at the lowest point until then, less the marge's
 share of those days. The pay day is the next payment of the largest

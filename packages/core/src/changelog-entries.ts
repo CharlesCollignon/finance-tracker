@@ -17,6 +17,24 @@ import type { ChangelogEntry, RoadmapItem } from "./changelog";
  */
 export const CHANGELOG: readonly ChangelogEntry[] = [
   {
+    id: "2026-10-26-todo-strip",
+    date: "2026-10-26",
+    kind: "better",
+    platforms: ["web"],
+    fr: {
+      title: "« À faire », en une bande",
+      body: "Sur Le point, tout ce qui vous attend tient dans une bande sous le mois, avec son compte : le bilan, « C'est arrivé ? », les achats à confirmer, « À vérifier », un relevé à importer, une banque à renouveler. Chaque ligne mène là où ça se règle.",
+      detail:
+        "Les deux bandeaux de la banque et la ligne « en attente » disparaissent : la bande les compte à leur place. Les cartes qui posent la question restent où elles sont, un peu plus bas.",
+    },
+    en: {
+      title: "“To do”, in one strip",
+      body: "On the Overview, everything waiting for you fits in one strip under the month, with its count: the close, “did it arrive?”, purchases to confirm, the review, a statement to import, a bank to renew. Each line leads to where it is done.",
+      detail:
+        "The two bank banners and the “waiting” row are gone: the strip counts them in their place. The cards that ask the question stay where they were, a little lower.",
+    },
+  },
+  {
     id: "2026-10-26-month-trust",
     date: "2026-10-26",
     kind: "new",
