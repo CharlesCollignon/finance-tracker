@@ -2433,7 +2433,9 @@ export type Database = {
           id: string;
           note: string | null;
           occurred_on: string;
+          receipt_path: string | null;
           recurring_template_id: string | null;
+          split_group: string | null;
           user_id: string;
         };
         Insert: {
@@ -2446,7 +2448,9 @@ export type Database = {
           id?: string;
           note?: string | null;
           occurred_on: string;
+          receipt_path?: string | null;
           recurring_template_id?: string | null;
+          split_group?: string | null;
           user_id: string;
         };
         Update: {
@@ -2459,7 +2463,9 @@ export type Database = {
           id?: string;
           note?: string | null;
           occurred_on?: string;
+          receipt_path?: string | null;
           recurring_template_id?: string | null;
+          split_group?: string | null;
           user_id?: string;
         };
         Relationships: [
@@ -2793,6 +2799,10 @@ export type Database = {
           kind: string;
           target: string;
         }[];
+      };
+      receipt_folder_is_mine: {
+        Args: { object_name: string };
+        Returns: boolean;
       };
       record_activity: { Args: { event?: string }; Returns: undefined };
       record_bank_pull: {

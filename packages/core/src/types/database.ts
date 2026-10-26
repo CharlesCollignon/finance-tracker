@@ -262,8 +262,20 @@ export type RecurringTemplate = WithOptionalAuthor<
 >;
 export type RecurringSkip =
   Database["public"]["Tables"]["recurring_skips"]["Row"];
-export type Transaction = WithOptionalAuthor<
-  Database["public"]["Tables"]["transactions"]["Row"]
+/**
+ * A split's group and a receipt's path (migration 079) are optional on a
+ * row as the apps hold it, for the same reason the author is: every
+ * fixture and every select that reads a row without them stays a row.
+ */
+type WithOptionalAttachments<
+  Row extends { split_group: string | null; receipt_path: string | null },
+> = Omit<Row, "split_group" | "receipt_path"> & {
+  split_group?: string | null;
+  receipt_path?: string | null;
+};
+
+export type Transaction = WithOptionalAttachments<
+  WithOptionalAuthor<Database["public"]["Tables"]["transactions"]["Row"]>
 >;
 export type InvestmentPosition =
   Database["public"]["Tables"]["investment_positions"]["Row"];
