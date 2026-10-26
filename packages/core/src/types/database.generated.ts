@@ -3182,6 +3182,18 @@ export type Database = {
         Args: { ids: string[]; target_user: string };
         Returns: string;
       };
+      space_contributions: {
+        Args: {
+          category_names: string[];
+          from_day: string;
+          target_space: string;
+          to_day: string;
+        };
+        Returns: {
+          total: number;
+          user_id: string;
+        }[];
+      };
       space_people: {
         Args: { target_space: string };
         Returns: {
