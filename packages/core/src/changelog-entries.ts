@@ -17,8 +17,8 @@ import type { ChangelogEntry, RoadmapItem } from "./changelog";
  */
 export const CHANGELOG: readonly ChangelogEntry[] = [
   {
-    id: "2026-10-25-plan-history",
-    date: "2026-10-25",
+    id: "2026-10-26-plan-history",
+    date: "2026-10-26",
     kind: "new",
     platforms: ["web"],
     fr: {
@@ -35,8 +35,8 @@ export const CHANGELOG: readonly ChangelogEntry[] = [
     },
   },
   {
-    id: "2026-10-25-close-on-bearing",
-    date: "2026-10-25",
+    id: "2026-10-26-close-on-bearing",
+    date: "2026-10-26",
     kind: "better",
     platforms: ["web"],
     fr: {
@@ -1394,10 +1394,10 @@ export const CHANGELOG: readonly ChangelogEntry[] = [
  */
 export const CHANGELOG_STATS = {
   /** `git rev-list --count HEAD` on the branch that wrote the newest entry. */
-  commits: 1035,
+  commits: 1118,
   /** The repository's first commit. */
   since: "2026-06-15",
-  asOf: "2026-10-13",
+  asOf: "2026-10-26",
 } as const;
 
 /**
