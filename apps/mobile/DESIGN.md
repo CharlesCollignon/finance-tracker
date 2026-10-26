@@ -417,7 +417,7 @@ Where the money could go, replayed on what markets actually did
 `docs/plans/PLAN_REDESIGN_PLAN.md`). Every figure comes from
 `@finance/core/history`: the user's own accounts put through every start
 since January 1970, in today's euros. The screen is drawn once the
-investments' value has come, because every card counts them. Top to bottom:
+investments' value has come, because every card counts them. Two cards:
 
 - **Votre trajectoire** — the hero, in a bezel. A segmented control for the
   horizon (1, 5, 10, 20, 30 years); the middle start at that horizon counts
@@ -425,28 +425,26 @@ investments' value has come, because every card counts them. Top to bottom:
   the value after tax, the worst start by its month. The chart is one gold
   line inside a gold-washed band with round amounts as gridlines; a finger
   along it reads a month out in the lines above, with a tick each year it
-  crosses. « Avec vos biens » adds the homes' net value as a plain line.
-  **Et si…**: the 0–500 € slider (`ExtraSlider`) and three chips, and the
-  account it goes to; the replay follows once the slider has rested 150 ms,
-  as two replays per step are too much for the phone, and one line says
-  what it adds by the horizon year. « D'où vient ce chiffre » unfolds each
-  account today → then, the history it follows, how often it ended below
-  prices, the withdrawal that has always lasted thirty years, and the caveat.
-- **Face à l'histoire** — today's investments from the peaks of 2000, 2008,
-  2020 and 2022: one sentence of what happened, the worst month against
-  what had gone in, how long until it was back, with and without the
-  payments, and a two-line chart. With nothing invested, how often the
-  Livret A paid less than prices rose, and the way to Placements.
+  crosses, and a vertical swipe that starts on it still scrolls. « Avec vos
+  biens » adds the homes' net value as a plain line.
+- **Vos comptes**, in the same bezel under the chart, because the line is
+  made of them: one small card per account — what it holds today and what
+  goes in each month, the return its history gave and its fees, the tax on
+  its gains — each a field, and the chart follows. The current account and
+  what is set aside with no account are cards too, read-only; a total says
+  where the line starts. A monthly figure raised on a card is taken off the
+  current account's: money moved, not made. Under each name, the history it follows and how
+  often that ended below prices. A home's yearly growth, saved for the
+  account when the field is left. Then the withdrawal that has always lasted
+  thirty years, and the sources behind a disclosure, each a link. Edits are
+  kept on the phone (`plan-edits:v1:`), read with the web's rule.
 - **Progression** — reached milestones as gold pills, the next with its date
-  on the middle start and what « Et si… » does to it; the cushion's three
-  rungs; the run, and the way to Le point. A milestone crossed since the
-  last visit pops once (a zoom on the enter duration) with a success haptic.
-- **Hypothèses**, folded — each account's figures, the return pre-filled
-  from its history (a PEL's contract rate, nothing for bitcoin), fees and
-  tax; a changed return shifts the account's whole history. Each home's
-  yearly growth, saved for the account when the field is left. Then the
-  sources, each a link. Edits are kept on the phone (`plan-hypotheses:v1:`),
-  read with the web's rule.
+  on the middle start; the cushion's three rungs; the run, and the way to
+  Le point. A milestone crossed since the last visit pops once (a zoom on
+  the enter duration) with a success haptic.
+
+« Face à l'histoire » and « Et si… » were taken off in October 2026, at the
+owner's call, as on the web.
 
 The run, the close and the months moved to Le point in October 2026
 (`components/bearing/MomentumCard.tsx`): the streak and its last six months,

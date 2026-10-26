@@ -92,6 +92,29 @@ offered; for 3 they kept the editable table.
    The line and the range move together, and the crashes keep their shape.
    The milestones never read edits, as today.
 
+## After the preview (2026-10-26)
+
+The owner saw the web on a Vercel preview (« c'est pas mal ») and asked for:
+
+1. **« Face à l'histoire » off.** The crash tests leave the page and the
+   engine (`crashTest` and its tests go with them).
+2. **« Et si… » off**, « trop flou et pas vraiment pratique ».
+3. **« Hypothèses » forward, under a better name, with a layout that shows
+   the chart is built from those figures.** It is now « Vos comptes », in
+   the trajectory's own card, under the chart: a row per account (today,
+   each month, return, fees, tax), the current account and what is set
+   aside with no account as read-only rows, and a total that is where the
+   line starts. « D'où vient ce chiffre » is folded into the rows (the
+   history each follows, how often it ended below prices). The sources go
+   in a « Sources et méthode » fold at the card's foot. « Progression »
+   spans the page under it, three columns.
+
+Found while doing it: a monthly figure raised in « Vos comptes » (or by
+« Et si… » before it) was money counted twice, since the current account
+already kept it as what is left each month. It is now taken off the
+current account (`monthlyFromCurrent`): money moved, not made. The lead
+line under « Vos comptes » says so.
+
 ## Assumed (stands unless the owner says otherwise)
 
 7. **Horizons 1 · 5 · 10 · 20 · 30 years, 10 by default.** Thirty is the

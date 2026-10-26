@@ -324,10 +324,10 @@ _Avoid_: breakdown, component, driver
 
 **What if**:
 _En français_ : Et si…
-An extra amount a month, chosen on a slider on the Plan, added to one
-account in the trajectory's replay, so the user sees what it would change by
-the horizon, and how much sooner a milestone comes. Never saved anywhere; it
-is a question, not an instruction.
+_Taken off the Plan in October 2026, at the owner's call: too vague to be of
+use. Changing an account's monthly figure in « Vos comptes » answers it._
+An extra amount a month, chosen on a slider, added to one account in the
+trajectory's replay.
 _Avoid_: scenario, simulation, goal
 
 **Milestone**:
@@ -335,7 +335,7 @@ _En français_ : palier
 A round amount of savings and investments together (1 000 €, 5 000 €,
 10 000 € … 1 M€), celebrated when reached, with the month the next ones come
 on the middle start of the replay. Judged on the user's real figures, never
-on what they typed into « Hypothèses », so a milestone cannot be reached by
+on what they typed into « Vos comptes », so a milestone cannot be reached by
 editing.
 Distinct from a savings goal, which was retired: nobody sets a milestone.
 _Avoid_: goal, target, badge, level
@@ -363,13 +363,15 @@ three hundred of them are not three hundred futures: the copy says « 8
 départs sur 10 », never « 8 chances sur 10 ».
 _Avoid_: scenario, path, chance
 
-**Fall replayed**:
-_En français_ : Face à l'histoire
-Today's investments put through one of the great falls — those of 2000,
-2008, 2020 and 2022 — from its peak, in the euros of the day: the worst
-month against what had gone in, and how long until the money was worth it
-again, with the payments and without.
-_Avoid_: stress test, crash simulation
+**Plan accounts**:
+_En français_ : vos comptes
+The accounts the trajectory is made of, listed under its chart: what each
+holds today, what goes in each month, the yearly return its history gave,
+its fees and the tax on its gains, each the user's to change. A monthly
+figure raised there is taken off the current account, which is where that
+money was otherwise left: moved, not made. Kept on the device; the
+milestones never read it. Was « Hypothèses », folded, until October 2026.
+_Avoid_: assumptions, hypotheses, settings
 
 **Sustainable withdrawal**:
 _En français_ : revenu durable
@@ -379,7 +381,7 @@ _Avoid_: 4 % rule, safe withdrawal rate
 
 **Shift**:
 _En français_ : rendement modifié
-A return the user types in « Hypothèses »: the account's whole history is
+A return the user types in « Vos comptes »: the account's whole history is
 scaled so it returns that over the years, its falls kept.
 _Avoid_: assumption, override
 

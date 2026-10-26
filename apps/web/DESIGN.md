@@ -878,9 +878,9 @@ next sync learns from. Counted, not guessed: the groups filed in that sitting.
 
 Plan (`components/finance/plan/`) is where the money could go, replayed on
 what markets actually did (October 2026, `docs/plans/PLAN_REDESIGN_PLAN.md`).
-Three cards and a fold, and nothing else: « Votre trajectoire », « Face à
-l'histoire », « Progression », and « Hypothèses » folded under them. The run
-of month-ends, the close and « Vos mois » live on Le point's momentum card
+Two cards, and nothing else: « Votre trajectoire », with « Vos comptes »
+under its chart, then « Progression ». The run of month-ends, the close and
+« Vos mois » live on Le point's momentum card
 (`components/finance/bearing/MomentumCard.tsx`). Every figure comes from
 `@finance/core/history`: the user's own accounts put through every start
 since January 1970, in today's euros.
@@ -893,37 +893,36 @@ since January 1970, in today's euros.
   « chances ». The chart is one gold line inside a gold-washed band, two to
   four round amounts as gridlines, and a crosshair that reads a month out
   to the pointer, a finger or the arrow keys.
-- **Where it comes from, folded.** « D'où vient ce chiffre » lists each
-  account today → at the horizon, the history it follows, and how often it
-  has ended below prices over that horizon since 1970; the current account
-  is cash that loses what prices take; bitcoin, with eleven years, is held
-  at today's value; then the withdrawal that has always lasted thirty years.
-  The caveat « Le passé ne dit pas l'avenir » is always there.
-- **« Et si… » answers at once.** A slider (0–500 € a month) and the account
-  it goes to; the figure counts to its new value and one line says what it
-  adds by the horizon year. A full livret refuses the rest, which stays on
-  the current account (`overflowTo` in the replay). The extra is never kept.
-- **History's falls, as facts.** « Face à l'histoire » replays today's
-  investments from the peaks of 2000, 2008, 2020 and 2022, in the euros of
-  the day: one sentence of what happened, the worst month against what had
-  gone in, and how long until the money was worth it again, with the
-  payments and without them when that differs. Accounts whose history does
-  not reach back are named, not invented. With nothing invested, it says
-  how often the Livret A paid less than prices rose.
+- **The chart sits on its accounts.** « Vos comptes » is in the same card,
+  under the chart, so the line and what makes it are read together: a row
+  per account — what it holds today, what goes in each month, the return
+  its history gave, its fees, the tax on its gains — each a field to
+  change, and the chart follows. The current account and what is set aside
+  with no account are rows too, read-only, because the line starts from
+  them; a total says where it starts. A monthly figure raised in a row is
+  taken off the current account's — money moved, not made — so the total a
+  month holds and only what it earns changes. Under each name, the history it
+  follows and how often that ended below prices over the horizon. A
+  changed return shifts that account's whole history, its falls kept. A
+  home, when « Avec vos biens » is on, is a row with its yearly growth. The
+  withdrawal that has always lasted thirty years, and the sources with
+  their terms, folded, close the card. On a phone-width screen each row is
+  a small card of labelled fields; from the medium width up, a table whose
+  header row names the columns.
 - **« Progression » keeps the moments.** Reached milestones in gold pills,
-  the next with its date on the middle start and what « Et si… » does to it,
-  the cushion's three rungs, and the run with the way to Le point. A
+  the next with its date on the middle start, the cushion's three rungs,
+  and the run with the way to Le point — three columns side by side. A
   milestone crossed since the last visit pops once, on the shared moments'
   pop; nothing else on the page moves on its own.
-- **« Hypothèses » is the user's.** Each account's figures, the return
-  pre-filled with what its history returned (a PEL's contract rate; nothing
-  for bitcoin), fees and tax; a changed return shifts that account's whole
-  history, its falls kept. A home's yearly growth is kept for the account.
-  Then where the history comes from, each source named with its terms.
-- **Motion is quieter than it was.** The page draws at once, without fading
-  cards in as they scroll into view; a new horizon crossfades the chart
-  rather than morphing it; the headline is the one figure that counts.
+- **Motion is quiet.** The page draws at once, without fading cards in as
+  they scroll into view; a new horizon crossfades the chart rather than
+  morphing it; the headline is the one figure that counts.
   Gold means done or the middle line, never decoration.
+- **Taken off in October 2026, at the owner's call:** « Face à l'histoire »
+  (today's investments through 2000, 2008, 2020 and 2022) and « Et si… »
+  (a slider of so much more a month): the first was one card too many, the
+  second too vague to be of use. Changing an account's monthly figure in
+  « Vos comptes » answers the same question, on the reader's own account.
 
 ### Placements: The User's Own Accounts
 
