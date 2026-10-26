@@ -774,6 +774,21 @@ Supabase storage on its own session (`lib/receipts.ts`) and asks
 own AI account with the statement scan's writer (Mistral, EU), sent once
 and kept nowhere, and applied to the row only when they press « Appliquer ».
 
+## The palette
+
+Cmd/Ctrl+K on the web opens `CommandPalette` (`components/layout/`),
+mounted by `QuickAddProvider` with what it can name: every page in the
+reader's language (`APP_NAV_ITEMS` and their views, Immobilier under its
+flag, Catégories, Règles, Importer, Profil, Nouveautés), the categories,
+the shops the merchant memory knows, the active charges by name (handed
+down by the app layout). `@finance/core/palette` works out the list from
+what was typed — an amount (an add with it filled in, through the quick
+add's `defaultAmount`), a month in either language (`parseMonthQuery`), and
+the pages, categories, shops and charges whose words match — and the sheet
+draws it as a listbox the arrows walk. A category opens By category on it
+(`/history?open=`), a shop opens By shop on its words, a charge opens
+Récurrents with its editor (`/recurring?edit=`).
+
 ## Search
 
 The Journal's search filters the month on screen and, under it, lists the

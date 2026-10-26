@@ -816,6 +816,15 @@ close and what it found. Each is a measurement with a message key
 never a verdict, and never a score.
 _Avoid_: score, health, confidence, status
 
+**Palette**:
+_En français_ : palette (Cmd+K, sur l'ordinateur)
+What Cmd+K opens on the web: the add, a question and every page first,
+then what the words typed name — an amount to add, a month to open in the
+Journal or on Le point, a shop, a category, a recurring template
+(`palette.ts`). The arrows choose, Enter opens. The phone has its search
+and its « + » instead.
+_Avoid_: command bar, launcher, spotlight, omnibox
+
 **To-do strip**:
 _En français_ : « À faire » (la bande)
 Everything waiting for the reader, in one strip under Le point's month

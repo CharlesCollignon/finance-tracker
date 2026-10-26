@@ -17,6 +17,24 @@ import type { ChangelogEntry, RoadmapItem } from "./changelog";
  */
 export const CHANGELOG: readonly ChangelogEntry[] = [
   {
+    id: "2026-10-26-palette",
+    date: "2026-10-26",
+    kind: "better",
+    platforms: ["web"],
+    fr: {
+      title: "Cmd+K ouvre une palette",
+      body: "Sur l’ordinateur, Cmd+K (Ctrl+K) ouvre une palette : ajouter une opération ou une récurrente, poser une question, aller à n’importe quelle page — et, dès que vous tapez, un montant à ajouter, un mois à ouvrir, un commerce, une catégorie, une opération récurrente.",
+      detail:
+        "Les flèches choisissent, Entrée ouvre, Échap ferme. L’ajout reste la première ligne : Cmd+K puis Entrée, comme avant à une touche près. Un montant tapé arrive déjà rempli dans l’ajout.",
+    },
+    en: {
+      title: "Cmd+K opens a palette",
+      body: "On the desktop, Cmd+K (Ctrl+K) opens a palette: add a transaction or a recurring entry, ask a question, go to any page — and, as you type, an amount to add, a month to open, a shop, a category, a recurring entry.",
+      detail:
+        "The arrows choose, Enter opens, Escape closes. The add stays the first line: Cmd+K then Enter, as before but for one key. An amount typed arrives already filled into the add.",
+    },
+  },
+  {
     id: "2026-10-26-splits-receipts",
     date: "2026-10-26",
     kind: "new",
