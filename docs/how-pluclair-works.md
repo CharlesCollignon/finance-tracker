@@ -753,6 +753,27 @@ Récurrents propose what repeats, Le point count the review, and
 « Fiabilité du mois » read the month's lines. The sync's write path
 (`apps/web/lib/bank/feed-write.ts`) writes either kind, each line marked.
 
+## Splits and receipts
+
+Migration 079, `@finance/data/splits`. **A split** keeps the row it was
+made from as its first part — its id, its day, the bank line that may point
+at it — and writes the other parts beside it, every part carrying one
+`split_group`; every figure counts rows, so nothing else changes.
+« Réunir » puts the amounts back into the first row and deletes the others
+(no undo: a split can be made again). `PartsEditor` on both apps, in the
+edit sheet; the Journal marks a part with a fork.
+
+**A receipt** is a private object in the `receipts` bucket under the
+owner's folder (`receipt_folder_is_mine` holds the four storage policies to
+the person's id or a space they are in), its path on the row. The web's
+`lib/actions/receipts.ts` attaches, opens (a signed link), removes and
+reads it through the person's session; the phone does the same through
+Supabase storage on its own session (`lib/receipts.ts`) and asks
+`/api/receipts` for the reading. The reading — the shop, the day, the total
+(`@finance/core/receipts`, `RECEIPT_SCHEMA`) — is written by the person's
+own AI account with the statement scan's writer (Mistral, EU), sent once
+and kept nowhere, and applied to the row only when they press « Appliquer ».
+
 ## Search
 
 The Journal's search filters the month on screen and, under it, lists the

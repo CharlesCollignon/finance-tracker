@@ -17,6 +17,24 @@ import type { ChangelogEntry, RoadmapItem } from "./changelog";
  */
 export const CHANGELOG: readonly ChangelogEntry[] = [
   {
+    id: "2026-10-26-splits-receipts",
+    date: "2026-10-26",
+    kind: "new",
+    platforms: ["web"],
+    fr: {
+      title: "Un paiement en plusieurs parts, et le ticket derrière",
+      body: "Depuis une opération : « Partager en plusieurs » place son montant dans deux catégories ou plus, chaque part devenant une opération, les parts restant un seul paiement — et « Réunir les parts » les rassemble. « Joindre un justificatif » garde la photo ou le PDF du ticket avec l’opération.",
+      detail:
+        "« Lire le ticket » demande à votre propre compte IA d’y relever le commerce, le jour et le total ; vous les appliquez, ou pas. Le fichier est à vous seul, et n’est lu que quand vous le demandez.",
+    },
+    en: {
+      title: "One payment in several parts, and the receipt behind it",
+      body: "From an entry: “Split into parts” places its amount in two categories or more, each part becoming an entry, the parts staying one payment — and “Put the parts back together” rejoins them. “Attach a receipt” keeps the picture or the PDF with the entry.",
+      detail:
+        "“Read the receipt” asks your own AI account to copy the shop, the day and the total off it; you apply them, or not. The file is yours alone, and is read only when you ask.",
+    },
+  },
+  {
     id: "2026-10-26-space-balance",
     date: "2026-10-26",
     kind: "new",

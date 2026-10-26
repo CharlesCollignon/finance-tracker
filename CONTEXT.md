@@ -257,6 +257,26 @@ because the account received or paid it on its own day. A row that has one
 says so: "Reçu le 22 sept." for money in, "Payé le 22 sept." for money out.
 _Avoid_: value date, booking date, real date
 
+**Split**:
+_En français_ : paiement partagé en plusieurs (« Partager en plusieurs », « Réunir les parts »)
+One payment in several parts: the row it was made from, kept with its id,
+its day and the bank line that may point at it, as the first part, and the
+others written beside it, each a transaction of its own in its own
+category, all carrying one `split_group` (migration 079). Every figure
+counts rows, so each part counts where it belongs; the Journal marks the
+parts. « Réunir » puts the amounts back into the first row and takes the
+others away.
+_Avoid_: itemised, line items, sub-transactions
+
+**Receipt**:
+_En français_ : justificatif (« Joindre un justificatif », « Lire le ticket »)
+The picture or the PDF behind a row: a private file in the `receipts`
+bucket under the owner's folder, its path on the row
+(`transactions.receipt_path`, migration 079). Read, when the person asks,
+by their own AI account — the shop, the day, the total — and applied to
+the row by them or not; never read by anything else, and never on its own.
+_Avoid_: attachment, document, proof, invoice (the thing, not the file)
+
 ### Closing the books
 
 **Closing balance**:

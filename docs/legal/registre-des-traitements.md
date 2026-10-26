@@ -70,7 +70,11 @@ auprès desquels l'utilisateur a lui-même ouvert un compte.
   la trace de l'import (période, nombre de lignes), qui permet de l'annuler
   pendant 30 jours. Le fichier lui-même n'est jamais gardé (migration 074).
   Une image ou un PDF scanné n'est lu qu'à la demande, par le compte IA de
-  l'utilisateur (traitement 5). S'il crée son adresse de relevés
+  l'utilisateur (traitement 5). Un justificatif (la photo ou le PDF d'un ticket)
+  joint à une opération est conservé dans le bucket `receipts`, sous le
+  dossier de son propriétaire, jusqu'à son retrait ou la suppression de
+  l'opération (migration 079) ; il n'est lu qu'à la demande, par le compte IA
+  de l'utilisateur (traitement 5). S'il crée son adresse de relevés
   (`statement_inboxes`, migration 075), les e-mails que sa messagerie y fait
   suivre sont lus à leur arrivée : un relevé joint est importé, une alerte
   de sa banque devient une opération provisoire ; ce qui attend qu'il
@@ -137,7 +141,7 @@ application tierce. Ce qui suit vaut pour ce seul compte, et si elle rouvre.
 
 - **Finalité** : rédiger les courtes lectures du mois, d'une catégorie ou d'un
   portefeuille, répondre aux questions posées dans « Questions », et lire un
-  relevé scanné ou une capture d'écran que l'utilisateur demande de faire
+  relevé scanné, une capture d'écran ou un justificatif que l'utilisateur demande de faire
   lire, fichier par fichier.
 - **Seulement avec un compte IA connecté** (migration 053) : Pluclair n'a pas
   de modèle à lui depuis le 9 octobre 2026. Les lectures et les réponses sont
