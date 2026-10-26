@@ -6,7 +6,6 @@ import {
   MIN_MEANINGFUL_MOVE,
   SUGGESTION_ROLES,
   WEIGHT_CLASSES,
-  buildArbitrage,
   buildTargetAllocation,
   defaultAssignments,
   type RoleAssignment,
@@ -306,115 +305,5 @@ describe("defaultAssignments", () => {
   it("proposes nothing when nothing held is catalogued", () => {
     const positions = [{ isin: null, walletId: "pea" as const }];
     expect(defaultAssignments(lookThroughOf(positions), positions)).toEqual([]);
-  });
-});
-
-describe("buildArbitrage", () => {
-  const target = buildTargetAllocation([
-    assign(WORLD, "lead"),
-    assign(EMERGING, "support", { role: "emerging" }),
-  ]);
-
-  const held = [
-    { isin: WORLD, name: "World", walletId: "pea" as const, marketValue: 2000 },
-    {
-      isin: EMERGING,
-      name: "Emerging",
-      walletId: "pea" as const,
-      marketValue: 8000,
-    },
-  ];
-
-  /**
-   * A rebalance moves money between holdings, so the moves have to net to
-   * nothing. A plan whose buys exceed its sells is a plan that quietly
-   * assumes a deposit.
-   */
-  it("nets to zero", () => {
-    const moves = buildArbitrage(target, held, 10000);
-    expect(sum(moves.map((move) => move.delta))).toBeCloseTo(0, 6);
-  });
-
-  it("buys the underweight and sells the overweight", () => {
-    const moves = buildArbitrage(target, held, 10000);
-    const world = moves.find((move) => move.isin === WORLD)!;
-    const emerging = moves.find((move) => move.isin === EMERGING)!;
-
-    expect(world.delta).toBeGreaterThan(0);
-    expect(emerging.delta).toBeLessThan(0);
-    expect(world.currentValue).toBe(2000);
-  });
-
-  it("sells to zero anything the target does not mention", () => {
-    const moves = buildArbitrage(
-      target,
-      [
-        ...held,
-        {
-          isin: SMALL,
-          name: "Small caps",
-          walletId: "pea" as const,
-          marketValue: 3000,
-        },
-      ],
-      13000,
-    );
-
-    const small = moves.find((move) => move.isin === SMALL)!;
-    expect(small.targetValue).toBe(0);
-    expect(small.delta).toBe(-3000);
-  });
-
-  it("mentions an untracked holding even with no identifier", () => {
-    const moves = buildArbitrage(
-      target,
-      [
-        ...held,
-        {
-          isin: null,
-          name: "Mystery",
-          walletId: "cto" as const,
-          marketValue: 3000,
-        },
-      ],
-      13000,
-    );
-    expect(moves.some((move) => move.name === "Mystery")).toBe(true);
-  });
-
-  it("stays quiet about a move too small to place", () => {
-    // Sitting just inside the target, by less than the threshold. Derived
-    // from the target rather than assumed: the class ratios are this
-    // module's business and a test that hardcodes them tests the wrong thing.
-    const total = 10000;
-    const drift = MIN_MEANINGFUL_MOVE / 2;
-    const moves = buildArbitrage(
-      target,
-      target.rows.map((row, index) => ({
-        isin: row.isin,
-        name: row.name,
-        walletId: "pea" as const,
-        marketValue: row.weight * total + (index === 0 ? drift : -drift),
-      })),
-      total,
-    );
-    expect(moves).toEqual([]);
-  });
-
-  it("puts the largest move first", () => {
-    const moves = buildArbitrage(target, held, 10000);
-    const sizes = moves.map((move) => Math.abs(move.delta));
-    expect(sizes).toEqual([...sizes].sort((a, b) => b - a));
-  });
-
-  it("says nothing about a portfolio worth nothing", () => {
-    expect(buildArbitrage(target, [], 0)).toEqual([]);
-  });
-
-  it("buys the whole target from an empty portfolio", () => {
-    const moves = buildArbitrage(target, [], 10000);
-    // Nothing held, so every move is a purchase and they sum to the total.
-    expect(moves.every((move) => move.delta > 0)).toBe(true);
-    expect(sum(moves.map((move) => move.delta))).toBeCloseTo(10000, 6);
   });
 });

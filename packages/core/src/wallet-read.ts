@@ -10,9 +10,10 @@
  * stops there. A wallet read has to name an instrument and say how much of
  * the portfolio it should be — and "how much" is the one thing a model is
  * never allowed to write. So a suggestion carries prose *and* two closed
- * vocabulary fields: a role and a weight class. The prose explains, the
- * fields drive `buildTargetAllocation`, and every percentage on screen is
- * arithmetic this app did.
+ * vocabulary fields: a role and a weight class. The prose explains; the
+ * fields drove `buildTargetAllocation` for « Une cible à viser » until the
+ * owner had that section removed (2026-10-26), and are still checked so a
+ * read cannot name a fund in a wrapper it cannot sit in.
  *
  * ## What is fatal and what is merely dropped
  *
@@ -47,9 +48,7 @@ import type { LookThroughFacts } from "./look-through-facts";
 import {
   SUGGESTION_ROLES,
   WEIGHT_CLASSES,
-  buildTargetAllocation,
   type RoleAssignment,
-  type TargetAllocation,
 } from "./look-through-target";
 
 export const MAX_WALLET_HEADLINE_LENGTH = 90;
@@ -685,25 +684,6 @@ export function renderWalletRead(
   }
 
   return { headline, observations, suggestions };
-}
-
-/**
- * The target a read implies.
- *
- * The read supplies roles and weight classes; every weight comes from
- * `buildTargetAllocation`. A read with no usable suggestions yields no target
- * and the caller falls back to `defaultAssignments`, which is why the surface
- * always has one to show.
- */
-export function targetFromWalletRead(read: WalletRead): TargetAllocation {
-  return buildTargetAllocation(
-    read.suggestions.map((row) => ({
-      isin: row.isin,
-      role: row.role,
-      wallet: row.wallet,
-      weightClass: row.weightClass,
-    })),
-  );
 }
 
 /**

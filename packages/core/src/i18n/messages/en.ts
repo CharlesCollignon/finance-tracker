@@ -2748,7 +2748,6 @@ export const en = {
     charges: "What it costs",
     doublingUp: "Where you are doubling up",
     wrappers: "Where things sit",
-    target: "A target to aim at",
 
     /**
      * The pooled row at the foot of a weighting, and what pressing it does.
@@ -2836,15 +2835,6 @@ export const en = {
     /* Wrappers. */
     cannotSitHere: "{name} cannot be held in a {wallet}",
     couldSitIn: "It could go in a {wallets}",
-
-    /* The target. */
-    targetWeight: "{weight}",
-    currentWeight: "now {weight}",
-    buy: "Buy {amount}",
-    sell: "Sell {amount}",
-    noMoveNeeded: "Already where it should be",
-    rebalanceNote:
-      "These are moves between holdings, not new money. Redirecting a monthly transfer gets to the same place without selling anything.",
 
     /* What the app could not see. */
     readCoverage: "{share} of what you hold has been read",

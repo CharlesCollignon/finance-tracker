@@ -8,7 +8,6 @@ import {
   createFakeWalletReadSource,
   renderWalletRead,
   shortenHeadline,
-  targetFromWalletRead,
   verifyWalletRead,
   walletReadFooting,
 } from "./wallet-read";
@@ -738,27 +737,6 @@ describe("renderWalletRead", () => {
 
     const emptied = { ...facts, facts: [] };
     expect(renderWalletRead(verdict.read, emptied, money, "en")).toBeNull();
-  });
-});
-
-describe("targetFromWalletRead", () => {
-  it("turns the read's classes into weights that add up", () => {
-    const verdict = verifyWalletRead(answer(), pack().facts, "en");
-    if (!verdict.ok) return;
-
-    const target = targetFromWalletRead(verdict.read);
-    expect(target.rows).toHaveLength(1);
-    expect(target.coverage).toBeCloseTo(1, 6);
-  });
-
-  it("yields nothing when the read suggested nothing", () => {
-    const verdict = verifyWalletRead(
-      answer({ suggestions: [] }),
-      pack().facts,
-      "en",
-    );
-    if (!verdict.ok) return;
-    expect(targetFromWalletRead(verdict.read).rows).toEqual([]);
   });
 });
 

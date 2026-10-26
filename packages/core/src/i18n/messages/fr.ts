@@ -2075,7 +2075,6 @@ export const fr: Messages = {
     charges: "Ce que cela coûte",
     doublingUp: "Où vous faites doublon",
     wrappers: "Où les choses sont placées",
-    target: "Une cible à viser",
 
     sectorLabels: {
       energy: "Énergie",
@@ -2143,14 +2142,6 @@ export const fr: Messages = {
 
     cannotSitHere: "{name} ne peut pas être détenu dans un {wallet}",
     couldSitIn: "Il pourrait aller dans un {wallets}",
-
-    targetWeight: "{weight}",
-    currentWeight: "actuellement {weight}",
-    buy: "Acheter {amount}",
-    sell: "Vendre {amount}",
-    noMoveNeeded: "Déjà à sa place",
-    rebalanceNote:
-      "Ce sont des mouvements entre lignes, pas de l'argent frais. Réorienter un virement mensuel mène au même endroit sans rien vendre.",
 
     readCoverage: "{share} de ce que vous détenez a été lu",
     notRead: "Pas encore lu",
