@@ -276,7 +276,7 @@ export async function saveLoanForProperty(
  * How much a year a property is expected to gain, for the homes' line in the
  * Plan's trajectory. Kept quietly: a redraw would put the whole Plan back
  * behind its placeholders while the investments' prices are read again, so
- * the line takes the new rate on the next visit.
+ * the Plan hands the kept rate to its own line instead (`PlanView`).
  */
 export async function setGrowth(
   propertyId: string,
