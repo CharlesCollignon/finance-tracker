@@ -17,6 +17,24 @@ import type { ChangelogEntry, RoadmapItem } from "./changelog";
  */
 export const CHANGELOG: readonly ChangelogEntry[] = [
   {
+    id: "2026-10-26-by-shop",
+    date: "2026-10-26",
+    kind: "new",
+    platforms: ["web"],
+    fr: {
+      title: "Le Journal, par commerce",
+      body: "Une quatrième vue du Journal : chaque endroit où votre argent est allé ces douze derniers mois, du plus gros au plus petit — combien de fois, combien à chaque fois, ce que ça fait un mois normal, et la dernière fois. Un commerce s'ouvre sur ses douze mois et ses opérations.",
+      detail:
+        "La recherche trouve un commerce par ses mots ou sa catégorie. Un commerce est reconnu à ses deux premiers mots, quelle que soit la façon dont la banque l'écrit.",
+    },
+    en: {
+      title: "The Ledger, by shop",
+      body: "A fourth Ledger view: every place your money went in the last twelve months, biggest first — how many times, how much a time, what a normal month comes to, and when last. A shop opens on its twelve months and its entries.",
+      detail:
+        "The search finds a shop by its words or its category. A shop is known by its first two words, however the bank spells it.",
+    },
+  },
+  {
     id: "2026-10-26-filing-rules",
     date: "2026-10-26",
     kind: "new",

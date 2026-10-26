@@ -29,7 +29,8 @@ Vocabulary is fixed by `CONTEXT.md`; product commitments by
 | Bearing                | `/bearing`                               | `(tabs)/index`                                                           |
 | Ledger — list          | `/transactions`                          | `(tabs)/transactions`                                                    |
 | Ledger — calendar      | `/calendar`                              | `(tabs)/calendar`                                                        |
-| Ledger — by category   | `/history`                               | none                                                                     |
+| Ledger — by category   | `/history`                               | `(tabs)/history`                                                         |
+| Ledger — by shop       | `/merchants`                             | `(tabs)/merchants`                                                       |
 | Charges                | `/recurring`                             | `(tabs)/recurring`                                                       |
 | Plan                   | `/plan`                                  | `(tabs)/planning`                                                        |
 | Wallets — positions    | `/investments`                           | `(tabs)/investments`                                                     |
@@ -201,6 +202,7 @@ today's prices) leaves it unmarked, so the Plan still shows it as new.
 | Fund costs, look-through, target trades                                                                     | `fund-costs.ts`, `look-through.ts`, `look-through-target.ts`                                                   |
 | Money-weighted return                                                                                       | `xirr.ts`, `investment-returns.ts`                                                                             |
 | « Fiabilité du mois »: the lines' reach, the occurrences arrived and awaited, the review, the close         | `month-trust.ts` (read by `@finance/data/bearing-month`, the coverage from `@finance/data/statements`)        |
+| « Par commerce »: a shop's visits, its normal month, its twelve months (`merchantKeyOf`, two meaningful words) | `merchant-screen.ts` (read by `@finance/data/merchant-screen`)                                                |
 
 ## AI features
 
@@ -818,7 +820,7 @@ assertion script:
 - The Wallets page's fund-cost card and the look-through page can show different annual costs: only the look-through falls back to the shortlist's charge hints.
 - Dead schema: `user_preferences.bearing_pins` and the `bearing_arrangements` table have no readers.
 - The `delete-account` edge function deletes a fixed list of older tables and relies on `on delete cascade` for the rest.
-- The phone has no By category view, no look-through and no wallet read.
+- The phone has no wallet read.
 - The phone's Immobilier screens were run in the Expo web build (adding a
   property with its loan, the list, a property's screen, the chip in
   Récurrents), not on a device. That build needs three local changes to

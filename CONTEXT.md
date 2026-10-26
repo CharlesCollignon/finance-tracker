@@ -49,6 +49,18 @@ the shop's words, or on its own screen; the most specific rule wins; each
 counts the lines it filed (`filing-rules.ts`, migration 077).
 _Avoid_: filter, automation, learned rule (that is the matcher's memory)
 
+**By shop**:
+_En français_ : par commerce (la vue du Journal : Par commerce)
+The Journal's fourth view: every place the money went over the last twelve
+months, one card a shop — how often, how much a time, what a normal month
+comes to (the median of the months it was visited), when last, its usual
+category, its twelve months and its rows. A shop is the first two words
+that mean something in a row's note, the card noise and the town dropped
+(`merchant-screen.ts`), so « Carrefour Market » stays apart from
+« Carrefour City » and a bakery from the next. A fact about what was
+recorded, never a judgement on it.
+_Avoid_: merchant page, vendor, payee, brand
+
 **Bank connection**:
 _En français_ : connexion bancaire
 One user's link to their own bank, through their own open-banking.io account:
