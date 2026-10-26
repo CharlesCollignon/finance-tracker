@@ -546,6 +546,7 @@ function HomeRow({ read, today }: { read: PropertyRead; today: string }) {
 /** Where the history comes from and on what terms, folded. */
 function SourcesFold() {
   const t = useT();
+  const locale = useLocale();
   const [open, setOpen] = useState(false);
   return (
     <div className="border-t border-border pt-2">
@@ -574,19 +575,19 @@ function SourcesFold() {
           </div>
           <ul className="flex flex-col gap-1.5">
             {HISTORY_SOURCES.map((source) => (
-              <li key={source.title}>
+              <li key={source.url}>
                 <a
                   href={source.url}
                   target="_blank"
                   rel="noreferrer"
                   className="font-medium text-foreground underline-offset-4 hover:underline"
                 >
-                  {source.publisher}
+                  {source.publisher[locale]}
                 </a>
                 {" — "}
-                {source.title}
+                {source.title[locale]}
                 {" · "}
-                {source.terms}
+                {source.terms[locale]}
               </li>
             ))}
           </ul>
