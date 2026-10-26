@@ -29,10 +29,6 @@ import {
   type HoldingKind,
   type LookThrough,
 } from "@finance/core/look-through";
-import type {
-  ArbitrageMove,
-  TargetAllocation,
-} from "@finance/core/look-through-target";
 import type { RenderedWalletRead } from "@finance/core/wallet-read";
 import type { Key } from "@finance/core/i18n/t";
 import { Badge } from "@/components/ui/Badge";
@@ -83,7 +79,6 @@ const HALT_MESSAGES: Record<Exclude<DrainHalt, "done">, Key> = {
 
 export interface LookThroughViewProps {
   lookThrough: LookThrough;
-  target: TargetAllocation;
   read: RenderedWalletRead | null;
   footing: string[];
   /** Null when nothing has been read. */
@@ -108,14 +103,6 @@ export interface LookThroughViewProps {
   readModel: string | null;
   /** How many instruments are waiting to be read. */
   queueLength: number;
-  /**
-   * What would have to move to reach the target.
-   *
-   * Computed on the server, because it needs every position's market value —
-   * which `LookThrough` deliberately does not carry, since its own figures
-   * are shares of the classified part rather than per-position amounts.
-   */
-  arbitrage: ArbitrageMove[];
 }
 
 /**
@@ -134,7 +121,6 @@ export interface LookThroughViewProps {
  */
 export function LookThroughView({
   lookThrough,
-  target,
   read,
   footing,
   readAt,
@@ -145,7 +131,6 @@ export function LookThroughView({
   writerBrand,
   readModel,
   queueLength,
-  arbitrage,
 }: LookThroughViewProps) {
   const t = useT();
   const locale = useLocale();
@@ -790,64 +775,6 @@ export function LookThroughView({
                 </li>
               ))}
             </ul>
-          </Section>
-        </FadeInItem>
-      ) : null}
-
-      {/* The target. */}
-      {target.rows.length > 0 ? (
-        <FadeInItem className="w-full min-w-0">
-          <Section
-            icon={<Target size={ICON.md} weight="light" />}
-            title={t("lookThrough.target")}
-          >
-            <ul className="flex flex-col gap-2">
-              {target.rows.map((row) => {
-                const move = arbitrage.find((entry) => entry.isin === row.isin);
-                return (
-                  <li
-                    key={row.isin}
-                    className="flex min-w-0 items-baseline justify-between gap-3"
-                  >
-                    <span className="min-w-0">
-                      <span className="truncate text-sm">{row.name}</span>
-                      <span className={cn(MICRO, "ml-2 text-muted-foreground")}>
-                        {INVESTMENT_WALLET_LABELS[row.wallet]}
-                      </span>
-                    </span>
-                    <span className="shrink-0 text-right">
-                      <span className="text-sm font-semibold tabular-nums">
-                        {Math.round(row.weight * 100)}%
-                      </span>
-                      {move ? (
-                        // "Buy 240 €" — the figure is inside the phrase,
-                        // so the phrase is what carries the marker.
-                        <span
-                          className={cn(
-                            MICRO,
-                            "privacy-sensitive ml-2",
-                            move.delta > 0
-                              ? "text-[var(--success)]"
-                              : "text-[var(--destructive)]",
-                          )}
-                        >
-                          {move.delta > 0
-                            ? t("lookThrough.buy", {
-                                amount: formatEuro(Math.abs(move.delta)),
-                              })
-                            : t("lookThrough.sell", {
-                                amount: formatEuro(Math.abs(move.delta)),
-                              })}
-                        </span>
-                      ) : null}
-                    </span>
-                  </li>
-                );
-              })}
-            </ul>
-            <p className={cn(MICRO, "mt-3 text-muted-foreground")}>
-              {t("lookThrough.rebalanceNote")}
-            </p>
           </Section>
         </FadeInItem>
       ) : null}

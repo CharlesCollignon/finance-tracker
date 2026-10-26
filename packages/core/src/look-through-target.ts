@@ -120,17 +120,6 @@ export interface TargetAllocation {
   }[];
 }
 
-/** One move that takes the portfolio towards its target. */
-export interface ArbitrageMove {
-  isin: string | null;
-  name: string;
-  wallet: InvestmentWalletId;
-  currentValue: number;
-  targetValue: number;
-  /** Positive means buy, negative means sell. */
-  delta: number;
-}
-
 function normalise(units: Map<string, number>): Map<string, number> {
   const total = [...units.values()].reduce((sum, unit) => sum + unit, 0);
   if (total <= 0) {
@@ -371,76 +360,4 @@ export function defaultAssignments(
           ? "support"
           : "satellite",
   }));
-}
-
-/**
- * What would have to move to reach the target.
- *
- * The moves sum to zero by construction — this is a rebalance, not a
- * contribution plan. `suggestContributionSplit` in `allocation.ts` is the
- * tool for new money, and is the better answer for a PEA holder, where
- * selling realises a tax event that redirecting next month's transfer does
- * not.
- */
-export function buildArbitrage(
-  target: TargetAllocation,
-  positions: {
-    isin: string | null;
-    name: string;
-    walletId: InvestmentWalletId;
-    marketValue: number;
-  }[],
-  totalValue: number,
-): ArbitrageMove[] {
-  if (totalValue <= 0) {
-    return [];
-  }
-
-  const heldByIsin = new Map<string, number>();
-  for (const position of positions) {
-    if (position.isin && position.marketValue > 0) {
-      const isin = position.isin.trim().toUpperCase();
-      heldByIsin.set(isin, (heldByIsin.get(isin) ?? 0) + position.marketValue);
-    }
-  }
-
-  const moves: ArbitrageMove[] = [];
-
-  for (const row of target.rows) {
-    const currentValue = heldByIsin.get(row.isin) ?? 0;
-    const targetValue = row.weight * totalValue;
-    moves.push({
-      isin: row.isin,
-      name: row.name,
-      wallet: row.wallet,
-      currentValue,
-      targetValue,
-      delta: targetValue - currentValue,
-    });
-  }
-
-  // Anything held that the target does not mention goes to zero. Saying so is
-  // the whole point of a target — a plan that only ever adds is not a plan.
-  const targeted = new Set(target.rows.map((row) => row.isin));
-  for (const position of positions) {
-    const isin = position.isin?.trim().toUpperCase() ?? null;
-    if (position.marketValue <= 0) {
-      continue;
-    }
-    if (isin !== null && targeted.has(isin)) {
-      continue;
-    }
-    moves.push({
-      isin,
-      name: position.name,
-      wallet: position.walletId,
-      currentValue: position.marketValue,
-      targetValue: 0,
-      delta: -position.marketValue,
-    });
-  }
-
-  return moves
-    .filter((move) => Math.abs(move.delta) >= MIN_MEANINGFUL_MOVE)
-    .sort((left, right) => Math.abs(right.delta) - Math.abs(left.delta));
 }

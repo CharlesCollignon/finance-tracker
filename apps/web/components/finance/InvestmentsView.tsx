@@ -15,7 +15,9 @@ import {
   isSavingsKind,
   type AccountId,
 } from "@/components/finance/accounts/account-format";
-import { removeWallet } from "@/lib/actions/accounts";
+import { AccountChips } from "@/components/finance/accounts/AccountChips";
+import { removeWallet, saveAccountOrder } from "@/lib/actions/accounts";
+import { useToast } from "@/components/layout/ToastProvider";
 import type { SavingsAccountsRead } from "@/lib/queries/savings-accounts";
 import { SAVINGS_KINDS } from "@finance/core/savings-accounts";
 import type { InstrumentPriceSeries } from "@finance/core/instrument-price-series";
@@ -53,6 +55,8 @@ interface InvestmentsViewProps {
   savings: SavingsAccountsRead;
   /** The wallets the user keeps: those with holdings, and those added. */
   keptWallets: InvestmentWalletId[];
+  /** Every account kept, in the reader's order (`account-order.ts`). */
+  accounts: AccountId[];
   /** What the recurring entries put into each savings account a month. */
   savingsMonthly: Partial<Record<SavingsAccountKind, number>>;
   /** Each wallet's plan row: the PEA's opening date and ceiling live there. */
@@ -60,8 +64,9 @@ interface InvestmentsViewProps {
 }
 
 /**
- * Placements: every account the user keeps — savings accounts first, then the
- * investment wallets — one at a time, and the way to add or remove one.
+ * Placements: every account the user keeps — the CTO, the PEA and crypto
+ * first, then the rest, or in the order the reader dragged them into — one
+ * at a time, and the way to add, remove or move one.
  *
  * The list is the user's own. It used to be all five wallets for everyone,
  * an assurance vie offered to a reader who will never open one and no place
@@ -74,16 +79,14 @@ export function InvestmentsView({
   priceSeries,
   savings,
   keptWallets,
+  accounts,
   savingsMonthly,
   plans,
 }: InvestmentsViewProps) {
   const t = useT();
   const locale = useLocale();
   const formatEuro = useFormatCurrency();
-  const accounts: AccountId[] = [
-    ...savings.accounts.map((account) => account.kind),
-    ...keptWallets,
-  ];
+  const { toast } = useToast();
   const [chosen, setChosen] = useState<AccountId | null>(null);
   const [addOpen, setAddOpen] = useState(false);
   // The account chosen, while it is still there; else the first one.
@@ -250,56 +253,35 @@ export function InvestmentsView({
         ) : null}
 
         <FadeInItem className="w-full min-w-0">
-          {/* A group of toggles, not tabs. `role="tablist"` over
-                `role="tab"` was a promise the markup did not keep: the panel
-                below is not a `tabpanel`, nothing carries `aria-controls`,
-                and there was neither a roving `tabIndex` nor a key handler —
-                so a screen reader announced a tab set and then the arrow keys
-                did nothing. `aria-pressed` on plain buttons says which wallet
-                is in force and claims no keys the control does not handle. */}
           {accounts.length > 0 ? (
-            <div
-              className="flex w-full min-w-0 flex-wrap justify-center gap-2"
-              role="group"
-              aria-label={t("accounts.yourAccounts")}
-            >
-              {accounts.map((id) => {
-                const active = selected === id;
-
-                return (
+            <AccountChips
+              accounts={accounts}
+              selected={selected}
+              onSelect={setChosen}
+              onReorder={(order) => {
+                void saveAccountOrder(order).then((result) => {
+                  if (!result.success) {
+                    toast(result.error, "error");
+                  }
+                });
+              }}
+              trailing={
+                missingSavings.length + missingWallets.length > 0 ? (
                   <button
-                    key={id}
                     type="button"
-                    aria-pressed={active}
-                    onClick={() => setChosen(id)}
+                    onClick={() => setAddOpen(true)}
                     className={cn(
-                      "min-h-11 shrink-0 rounded-full border px-4 py-2 text-sm font-semibold lg:min-h-0",
-                      "transition-colors duration-hover",
+                      "flex min-h-11 shrink-0 items-center gap-1.5 rounded-full border border-border px-4 py-2 text-sm text-muted-foreground lg:min-h-0",
+                      "transition-colors duration-hover hover:bg-muted hover:text-foreground",
                       "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-                      active
-                        ? "border-foreground bg-foreground text-background"
-                        : "border-border text-muted-foreground hover:text-foreground",
                     )}
                   >
-                    {accountShortName(id, locale)}
+                    <Plus size={ICON.sm} weight="bold" aria-hidden />
+                    {t("accounts.add")}
                   </button>
-                );
-              })}
-              {missingSavings.length + missingWallets.length > 0 ? (
-                <button
-                  type="button"
-                  onClick={() => setAddOpen(true)}
-                  className={cn(
-                    "flex min-h-11 shrink-0 items-center gap-1.5 rounded-full border border-border px-4 py-2 text-sm text-muted-foreground lg:min-h-0",
-                    "transition-colors duration-hover hover:bg-muted hover:text-foreground",
-                    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-                  )}
-                >
-                  <Plus size={ICON.sm} weight="bold" aria-hidden />
-                  {t("accounts.add")}
-                </button>
-              ) : null}
-            </div>
+                ) : null
+              }
+            />
           ) : null}
         </FadeInItem>
 

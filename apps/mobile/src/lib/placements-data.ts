@@ -1,3 +1,5 @@
+import { orderAccounts } from "@finance/core/account-order";
+import type { AccountId } from "@finance/core/allocation";
 import { getCurrentMonth, todayIsoLocal } from "@finance/core/constants";
 import {
   monthlyContributions,
@@ -39,6 +41,8 @@ import {
   savingsCategoryKinds,
   type SavingsState,
 } from "@/lib/savings-accounts";
+import { supabase } from "@/lib/supabase";
+import * as preferences from "@finance/data/preferences";
 
 /**
  * What Placements' two own views read — the accounts, and their analysis —
@@ -54,6 +58,8 @@ export interface PlacementsData {
   savings: SavingsState;
   /** Months running with money put into the placements. */
   streak: number;
+  /** The order the reader dragged the accounts into, or null (migration 076). */
+  accountOrder: AccountId[] | null;
 }
 
 export async function getPlacementsData(
@@ -62,13 +68,14 @@ export async function getPlacementsData(
   { includeHistory = false }: { includeHistory?: boolean } = {},
 ): Promise<PlacementsData> {
   const { year, month } = getCurrentMonth();
-  const [portfolio, templates, transactions, plans, savings] =
+  const [portfolio, templates, transactions, plans, savings, accountOrder] =
     await Promise.all([
       getWalletPortfolio(userId, locale, { includeHistory }),
       getRecurringTemplates(userId),
       getInvestmentTransactions(userId),
       getWalletPlans(userId),
       getSavingsState(userId),
+      preferences.readAccountOrder(supabase, userId),
     ]);
   const allTemplates = templates as RecurringTemplateWithCategory[];
   const investmentTemplates = allTemplates.filter(
@@ -92,6 +99,7 @@ export async function getPlacementsData(
     templates: allTemplates,
     savings,
     streak: contributionStreak(transactions, todayIsoLocal()),
+    accountOrder,
   };
 }
 
@@ -100,6 +108,11 @@ export interface KeptAccounts {
   wallets: InvestmentWalletId[];
   /** The savings accounts declared, in `SAVINGS_KINDS` order. */
   savingsKinds: SavingsAccountKind[];
+  /**
+   * Every account kept, in the reader's order: the one they dragged them
+   * into, else the CTO, the PEA and crypto first (`account-order.ts`).
+   */
+  accounts: AccountId[];
   /** The portfolio, cut down to the wallets kept. */
   keptPortfolio: InvestmentPortfolioSummary;
   /** What each savings account has planned for it each month. */
@@ -120,6 +133,7 @@ export function keptAccounts(data: PlacementsData): KeptAccounts {
   return {
     wallets,
     savingsKinds,
+    accounts: orderAccounts([...savingsKinds, ...wallets], data.accountOrder),
     keptPortfolio: {
       ...data.portfolio,
       columns: data.portfolio.columns.filter((column) =>

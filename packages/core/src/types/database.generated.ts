@@ -2466,6 +2466,7 @@ export type Database = {
       };
       user_preferences: {
         Row: {
+          account_order: string[] | null;
           bearing_pins: Json | null;
           changelog_seen: string | null;
           dismissed_prompts: string[];
@@ -2478,6 +2479,7 @@ export type Database = {
           user_id: string;
         };
         Insert: {
+          account_order?: string[] | null;
           bearing_pins?: Json | null;
           changelog_seen?: string | null;
           dismissed_prompts?: string[];
@@ -2490,6 +2492,7 @@ export type Database = {
           user_id: string;
         };
         Update: {
+          account_order?: string[] | null;
           bearing_pins?: Json | null;
           changelog_seen?: string | null;
           dismissed_prompts?: string[];

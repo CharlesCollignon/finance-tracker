@@ -245,8 +245,8 @@ const KNOWN_DEAD_KEYS: readonly string[] = [
   "common.unrealisedProfitLoss",
   "common.needsYou",
 
-  // Copy for a look-through view with country/sector weights, target
-  // comparison and reading freshness. `LookThroughView.tsx` uses the rest of
+  // Copy for a look-through view with country/sector weights and reading
+  // freshness. `LookThroughView.tsx` uses the rest of
   // the `lookThrough` group; these particular strings it never asks for.
   "lookThrough.subtitle",
   "lookThrough.countryShare",
@@ -254,9 +254,6 @@ const KNOWN_DEAD_KEYS: readonly string[] = [
   "lookThrough.overYears",
   "lookThrough.noChargeRecorded",
   "lookThrough.overlapAtLeast",
-  "lookThrough.targetWeight",
-  "lookThrough.currentWeight",
-  "lookThrough.noMoveNeeded",
   "lookThrough.notRead",
   "lookThrough.notReadBody",
   "lookThrough.readOne",

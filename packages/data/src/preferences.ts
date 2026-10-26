@@ -1,3 +1,5 @@
+import { parseAccountOrder } from "@finance/core/account-order";
+import type { AccountId } from "@finance/core/allocation";
 import { isLaterEntry } from "@finance/core/changelog";
 import { todayIsoLocal } from "@finance/core/constants";
 import { MILESTONE_TIERS } from "@finance/core/future-plan";
@@ -123,6 +125,7 @@ async function writePreferences(
   userId: string,
   locale: Locale,
   change: {
+    account_order?: string[];
     changelog_seen?: string;
     dismissed_prompts?: string[];
     milestone_seen?: number;
@@ -353,4 +356,41 @@ export async function markChangelogSeen(
     return { success: true };
   }
   return writePreferences(db, userId, locale, { changelog_seen: entryId });
+}
+
+/**
+ * The order this person keeps their accounts in on Placements, on any device
+ * (migration 076): null when they have never moved one, and on a database
+ * behind 076, where the default order stands in.
+ */
+export async function readAccountOrder(
+  db: Db,
+  userId: string,
+): Promise<AccountId[] | null> {
+  const { data, error } = await db
+    .from("user_preferences")
+    .select("account_order")
+    .eq("user_id", userId)
+    .maybeSingle();
+  if (error) {
+    if (isMissingSchema(error)) {
+      return null;
+    }
+    throw error;
+  }
+  return parseAccountOrder(data?.account_order ?? null);
+}
+
+/** Keep the accounts in this order, here and on the person's other devices. */
+export async function setAccountOrder(
+  db: Db,
+  userId: string,
+  order: readonly string[],
+  locale: Locale,
+): Promise<ActionResult> {
+  const parsed = parseAccountOrder(order);
+  if (!parsed || parsed.length !== order.length) {
+    return { error: "errors.invalidInput" };
+  }
+  return writePreferences(db, userId, locale, { account_order: parsed });
 }

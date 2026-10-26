@@ -18,6 +18,7 @@ import {
   AddAccountSheet,
   type AccountKey,
 } from "@/components/accounts/AddAccountSheet";
+import { AccountChipRow } from "@/components/accounts/AccountChipRow";
 import { NewPositionSheet } from "@/components/accounts/NewPositionSheet";
 import { PeaCard } from "@/components/PeaCard";
 import { SavingsAccountCard } from "@/components/accounts/SavingsAccountCard";
@@ -25,7 +26,6 @@ import { InvestmentPositionRow } from "@/components/InvestmentPositionRow";
 import { InvestmentPositionSheet } from "@/components/InvestmentPositionSheet";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
-import { ChipRow } from "@/components/ui/ChipRow";
 import { ConfirmSheet } from "@/components/ui/ConfirmSheet";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { PrivateAmount } from "@/components/PrivateAmount";
@@ -38,6 +38,7 @@ import { useRefreshable } from "@/hooks/useRefreshable";
 import { cn } from "@/lib/cn";
 import { hapticSuccess } from "@/lib/haptics";
 import { getPlacementsData, keptAccounts } from "@/lib/placements-data";
+import { saveAccountOrder } from "@/lib/mutations";
 import { linkableBankAccounts, removeWallet } from "@/lib/savings-accounts";
 import { useAuth } from "@/providers/AuthProvider";
 import { useFormatCurrency } from "@/providers/CurrencyProvider";
@@ -47,8 +48,6 @@ import { useLocale, useT } from "@/providers/LocaleProvider";
 import { useToast } from "@/providers/ToastProvider";
 import { resolveMessage } from "@finance/core/i18n/t";
 import { formatSigned } from "@finance/core/amount-sign";
-
-const ADD = "add" as const;
 
 function isSavingsKey(key: AccountKey): key is SavingsAccountKind {
   return !INVESTMENT_WALLET_IDS.includes(key as InvestmentWalletId);
@@ -109,13 +108,14 @@ export default function InvestmentsScreen() {
     (need) => need.monthlyTotal > 0,
   );
 
-  // The accounts the user keeps: their savings accounts, then the wallets
-  // with positions or that they added.
+  // The accounts the user keeps — their savings accounts, and the wallets
+  // with positions or that they added — in their order: the CTO, the PEA and
+  // crypto first, or the one they dragged them into.
   const kept = data ? keptAccounts(data) : null;
   const savings = data?.savings ?? { accounts: [], bankAccounts: [] };
   const wallets = kept?.wallets ?? [];
   const savingsKinds = kept?.savingsKinds ?? [];
-  const accounts: AccountKey[] = [...savingsKinds, ...wallets];
+  const accounts: AccountKey[] = kept?.accounts ?? [];
   const active: AccountKey | null =
     chosen && accounts.includes(chosen) ? chosen : (accounts[0] ?? null);
   const activeWallet =
@@ -153,13 +153,10 @@ export default function InvestmentsScreen() {
     }),
   ];
 
-  const accountOptions = [
-    ...accounts.map((id) => ({
-      value: id as AccountKey | typeof ADD,
-      label: t(ENVELOPE_SHORT_KEYS[id]),
-    })),
-    { value: ADD as AccountKey | typeof ADD, label: `+ ${t("accounts.add")}` },
-  ];
+  const accountOptions = accounts.map((id) => ({
+    value: id,
+    label: t(ENVELOPE_SHORT_KEYS[id]),
+  }));
 
   async function confirmRemoveWallet() {
     if (!removingWallet) {
@@ -230,16 +227,21 @@ export default function InvestmentsScreen() {
             </View>
           ) : (
             <View className="gap-2">
-              <ChipRow
+              <AccountChipRow
                 label={t("accounts.yourAccounts")}
                 options={accountOptions}
-                value={active ?? ADD}
-                onChange={(next) => {
-                  if (next === ADD) {
-                    setAdding(true);
-                    return;
-                  }
-                  setChosen(next);
+                value={active}
+                onChange={setChosen}
+                onReorder={(order) => {
+                  void saveAccountOrder(order, locale).then((result) => {
+                    if (!result.success) {
+                      toast(resolveMessage(t, result.error), "error");
+                    }
+                  });
+                }}
+                trailing={{
+                  label: `+ ${t("accounts.add")}`,
+                  onPress: () => setAdding(true),
                 }}
               />
               {/* The acronym spelled out, once, under the chip that uses it. */}

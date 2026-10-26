@@ -17,6 +17,24 @@ import type { ChangelogEntry, RoadmapItem } from "./changelog";
  */
 export const CHANGELOG: readonly ChangelogEntry[] = [
   {
+    id: "2026-10-26-accounts-order",
+    date: "2026-10-26",
+    kind: "better",
+    platforms: ["web"],
+    fr: {
+      title: "Vos comptes dans votre ordre",
+      body: "Dans Placements, le CTO, le PEA et la crypto passent en premier, puis le reste. Faites glisser un compte pour les ranger comme vous voulez : l’ordre est gardé avec votre compte.",
+      detail:
+        "Sur un écran tactile, restez appuyé sur un compte avant de le faire glisser ; au clavier, Alt et les flèches le déplacent. Dans Composition, la section « Une cible à viser » disparaît.",
+    },
+    en: {
+      title: "Your accounts in your order",
+      body: "In Investments, the CTO, the PEA and crypto now come first, then the rest. Drag an account to arrange them as you like: the order is kept with your account.",
+      detail:
+        "On a touch screen, press and hold an account before dragging it; on a keyboard, Alt and the arrow keys move it. In “What's inside”, the “A target to aim at” section is gone.",
+    },
+  },
+  {
     id: "2026-10-26-orange-orb",
     date: "2026-10-26",
     kind: "better",

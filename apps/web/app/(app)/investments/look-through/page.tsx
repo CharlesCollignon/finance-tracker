@@ -3,12 +3,7 @@ import { redirect } from "next/navigation";
 import { formatCurrency } from "@finance/core/constants";
 import { describePullAge } from "@finance/core/bank-pull";
 import { factsDigest } from "@finance/core/month-facts";
-import {
-  renderWalletRead,
-  targetFromWalletRead,
-  walletReadFooting,
-} from "@finance/core/wallet-read";
-import { buildArbitrage } from "@finance/core/look-through-target";
+import { renderWalletRead, walletReadFooting } from "@finance/core/wallet-read";
 import { walletReadsRemaining } from "@finance/core/wallet-read-budget";
 
 import { getAuthUser } from "@/lib/auth/get-user";
@@ -48,14 +43,7 @@ export default async function LookThroughPage() {
     writerStateFor(user.id, await createClient()),
   ]);
 
-  const { lookThrough, facts, defaultTarget } = bundle;
-
-  // The read's own target when it proposed one, the app's own otherwise. The
-  // surface always has a target to show, including before anything has ever
-  // been read and when there is no key at all.
-  const readTarget = stored?.read ? targetFromWalletRead(stored.read) : null;
-  const target =
-    readTarget && readTarget.rows.length > 0 ? readTarget : defaultTarget;
+  const { lookThrough, facts } = bundle;
 
   const rendered = stored?.read
     ? renderWalletRead(
@@ -75,21 +63,9 @@ export default async function LookThroughPage() {
   const storedDigest = stored?.read ? stored.factsDigest : null;
   const stale = storedDigest !== null && storedDigest !== factsDigest(facts);
 
-  const arbitrage = buildArbitrage(
-    target,
-    bundle.positions.map((position) => ({
-      isin: position.isin,
-      name: position.name,
-      walletId: position.walletId,
-      marketValue: position.marketValue,
-    })),
-    lookThrough.totalValue,
-  );
-
   return (
     <LookThroughView
       lookThrough={lookThrough}
-      target={target}
       read={rendered}
       footing={walletReadFooting(facts, locale)}
       readAt={
@@ -107,7 +83,6 @@ export default async function LookThroughPage() {
       writerBrand={writer.name}
       readModel={stored?.read ? stored.model : null}
       queueLength={bundle.queue.length}
-      arbitrage={arbitrage}
     />
   );
 }

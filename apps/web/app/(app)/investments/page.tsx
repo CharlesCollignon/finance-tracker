@@ -5,7 +5,8 @@ import { getCachedPriceSeries } from "@/lib/queries/market-quotes";
 import { InvestmentsView } from "@/components/finance/InvestmentsView";
 
 /**
- * Placements, Comptes: every account the user keeps, one at a time. What is
+ * Placements, Comptes: every account the user keeps, one at a time, in their
+ * order. What is
  * asked of all of them at once — returns, the split, the fees — is the
  * Analyse tab's.
  */
@@ -37,6 +38,7 @@ export default async function InvestmentsPage() {
       priceSeries={priceSeries}
       savings={base.savings}
       keptWallets={base.keptWallets}
+      accounts={base.accounts}
       savingsMonthly={base.savingsMonthly}
       plans={base.plans}
     />

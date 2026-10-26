@@ -15,15 +15,10 @@ import {
   holdingsWorthShowing,
   type HoldingKind,
 } from "@finance/core/look-through";
-import { buildArbitrage } from "@finance/core/look-through-target";
 import { factsDigest } from "@finance/core/month-facts";
 import { exactModelLabel } from "@finance/core/model-name";
 import { BylineMark, WriterMark } from "@/components/AiMark";
-import {
-  renderWalletRead,
-  targetFromWalletRead,
-  walletReadFooting,
-} from "@finance/core/wallet-read";
+import { renderWalletRead, walletReadFooting } from "@finance/core/wallet-read";
 import { walletReadsRemaining } from "@finance/core/wallet-read-budget";
 import type { Key } from "@finance/core/i18n/t";
 import { ConnectAiInvite } from "@/components/ConnectAiInvite";
@@ -34,7 +29,6 @@ import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Text } from "@/components/ui/Text";
-import { cn } from "@/lib/cn";
 import { hapticSuccess } from "@/lib/haptics";
 import {
   readInstrumentThroughWeb,
@@ -80,8 +74,9 @@ const HALT_MESSAGES: Record<Exclude<DrainHalt, "done">, Key> = {
  * then what the app could not see (before anything it can, since a reader who
  * does not know that two fifths of their money is unclassified will read every
  * figure below as the whole), the wallet read, where the money is, what it is
- * in, where it doubles up, the charges, what sits in the wrong wrapper, and a
- * target to aim at.
+ * in, where it doubles up, the charges, and what sits in the wrong wrapper.
+ * « Une cible à viser » closed it until 2026-10-26, when the owner found it
+ * unclear and had it removed.
  */
 export function LookThroughView({ data }: { data: LookThroughData }) {
   const t = useT();
@@ -109,13 +104,6 @@ export function LookThroughView({ data }: { data: LookThroughData }) {
   const account = data.writer.account;
   const canReview = data.writer.writable && data.readsTracked;
 
-  // The read's own target when it proposed one, the app's otherwise — the
-  // web page's rule, so the surface always has a target to show.
-  const target = useMemo(() => {
-    const fromRead = stored?.read ? targetFromWalletRead(stored.read) : null;
-    return fromRead && fromRead.rows.length > 0 ? fromRead : data.defaultTarget;
-  }, [stored, data.defaultTarget]);
-
   // Re-rendered against today's figures, in the language it was written in.
   const rendered = useMemo(
     () =>
@@ -133,21 +121,6 @@ export function LookThroughView({ data }: { data: LookThroughData }) {
     : null;
   const readsLeft = walletReadsRemaining(stored?.tally ?? null);
   const footing = walletReadFooting(data.facts, locale);
-
-  const arbitrage = useMemo(
-    () =>
-      buildArbitrage(
-        target,
-        data.positions.map((position) => ({
-          isin: position.isin,
-          name: position.name,
-          walletId: position.walletId,
-          marketValue: position.marketValue,
-        })),
-        lookThrough.totalValue,
-      ),
-    [target, data.positions, lookThrough.totalValue],
-  );
 
   const unclassified = lookThrough.caveats.find(
     (caveat) => caveat.kind === "unclassified",
@@ -684,57 +657,6 @@ export function LookThroughView({ data }: { data: LookThroughData }) {
                 </Text>
               ))}
             </View>
-          </Section>
-        </FadeIn>
-      ) : null}
-
-      {target.rows.length > 0 ? (
-        <FadeIn>
-          <Section icon="locate-outline" title={t("lookThrough.target")}>
-            <View className="gap-3">
-              {target.rows.map((row) => {
-                const move = arbitrage.find((entry) => entry.isin === row.isin);
-                return (
-                  <View
-                    key={row.isin}
-                    className="flex-row items-baseline justify-between gap-3"
-                  >
-                    <View className="min-w-0 flex-1">
-                      <Text numberOfLines={1} className="text-sm">
-                        {row.name}
-                      </Text>
-                      <Text variant="micro">
-                        {INVESTMENT_WALLET_LABELS[row.wallet]}
-                      </Text>
-                    </View>
-                    <View className="shrink-0 items-end">
-                      <Text className="font-sans tabular-nums text-sm font-semibold">
-                        {share(row.weight, locale)}
-                      </Text>
-                      {move ? (
-                        <PrivateAmount
-                          className={cn(
-                            "text-xs",
-                            move.delta > 0
-                              ? "text-success"
-                              : "text-destructive",
-                          )}
-                        >
-                          {move.delta > 0
-                            ? t("lookThrough.buy", {
-                                amount: formatEuro(Math.abs(move.delta)),
-                              })
-                            : t("lookThrough.sell", {
-                                amount: formatEuro(Math.abs(move.delta)),
-                              })}
-                        </PrivateAmount>
-                      ) : null}
-                    </View>
-                  </View>
-                );
-              })}
-            </View>
-            <Text variant="micro">{t("lookThrough.rebalanceNote")}</Text>
           </Section>
         </FadeIn>
       ) : null}
