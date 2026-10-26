@@ -19,6 +19,7 @@ import { cn } from "@/lib/utils";
 import { BalanceCard } from "@/components/finance/bearing/BalanceCard";
 import { MomentumCard } from "@/components/finance/bearing/MomentumCard";
 import { SpentCard } from "@/components/finance/bearing/SpentCard";
+import { TrustCard } from "@/components/finance/bearing/TrustCard";
 import { UpcomingCard } from "@/components/finance/bearing/UpcomingCard";
 import { WhereItWentCard } from "@/components/finance/bearing/WhereItWentCard";
 
@@ -164,6 +165,14 @@ export function BearingMonthView({
           {hasMomentum ? (
             <FadeInItem>
               <MomentumCard data={data} askClose={askClose} />
+            </FadeInItem>
+          ) : null}
+
+          {/* What the figures above rest on: the lines, the charges, the
+              review, the close. Not on a first visit, which has none yet. */}
+          {!data.empty && data.trust.length > 0 ? (
+            <FadeInItem>
+              <TrustCard signals={data.trust} />
             </FadeInItem>
           ) : null}
 

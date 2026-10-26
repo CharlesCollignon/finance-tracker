@@ -3425,6 +3425,36 @@ export const en = {
     bestRun: "Best: {count}",
     noRunYet: "Close a month under your allowance to start a run.",
     invested: "Your investments today",
+    /**
+     * « Fiabilité du mois »: what backs the month's figures, each line a
+     * fact (`@finance/core/month-trust`). An amount and a day are formatted
+     * by the client before `t()`.
+     */
+    trust: {
+      title: "Month check",
+      typedByHand: "Typed by hand, no statement",
+      noLines: "No bank line this month yet",
+      coveredUntil: "Statement through {date}",
+      chargesArrived: {
+        one: "{count} charge arrived",
+        other: "{count} charges arrived",
+      },
+      chargesAwaited: {
+        one: "{count} charge still awaited",
+        other: "{count} charges still awaited",
+      },
+      inboxPending: {
+        one: "{count} transaction to review",
+        other: "{count} transactions to review",
+      },
+      inboxClear: "Everything filed",
+      closed: "Closed: {amount} unrecorded",
+      closedClear: "Closed, nothing unrecorded",
+      closedBaseline: "Starting balance set",
+      closeDue: "Close on {date}",
+      closeReady: "Ready to close",
+      notClosed: "Not closed",
+    },
   },
 
   /**

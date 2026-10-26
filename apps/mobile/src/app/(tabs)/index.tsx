@@ -16,6 +16,7 @@ import { YearReadyCard } from "@/components/bearing/YearReadyCard";
 import { BalanceCard } from "@/components/bearing/BalanceCard";
 import { MomentumCard } from "@/components/bearing/MomentumCard";
 import { SpentCard } from "@/components/bearing/SpentCard";
+import { TrustCard } from "@/components/bearing/TrustCard";
 import { UpcomingCard } from "@/components/bearing/UpcomingCard";
 import { WhereItWentCard } from "@/components/bearing/WhereItWentCard";
 import { WeeklyRecapCard } from "@/components/bearing/WeeklyRecapCard";
@@ -238,6 +239,14 @@ export default function HomeScreen() {
               (data.close?.overview.next ?? null) !== null) ? (
               <FadeIn>
                 <MomentumCard data={data} askedAt={closeAskedAt} />
+              </FadeIn>
+            ) : null}
+
+            {/* What the figures above rest on: the lines, the charges, the
+                review, the close. Not on a first visit, which has none. */}
+            {!data.empty && data.trust.length > 0 ? (
+              <FadeIn>
+                <TrustCard signals={data.trust} />
               </FadeIn>
             ) : null}
 

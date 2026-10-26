@@ -2663,6 +2663,31 @@ export const fr: Messages = {
     noRunYet:
       "Faites le bilan d'un mois sous votre marge pour lancer une série.",
     invested: "Valeur de vos placements",
+    trust: {
+      title: "Fiabilité du mois",
+      typedByHand: "Noté à la main, sans relevé",
+      noLines: "Aucune ligne de la banque ce mois-ci",
+      coveredUntil: "Relevé jusqu'au {date}",
+      chargesArrived: {
+        one: "{count} opération récurrente passée",
+        other: "{count} opérations récurrentes passées",
+      },
+      chargesAwaited: {
+        one: "{count} opération récurrente encore attendue",
+        other: "{count} opérations récurrentes encore attendues",
+      },
+      inboxPending: {
+        one: "{count} opération à vérifier",
+        other: "{count} opérations à vérifier",
+      },
+      inboxClear: "Tout est rangé",
+      closed: "Bilan fait : {amount} non notés",
+      closedClear: "Bilan fait, rien de non noté",
+      closedBaseline: "Solde de départ saisi",
+      closeDue: "Bilan le {date}",
+      closeReady: "Bilan à faire",
+      notClosed: "Pas de bilan",
+    },
   },
 
   bearing: {

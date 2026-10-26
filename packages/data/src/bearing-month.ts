@@ -14,6 +14,7 @@ import {
   type DayOutflows,
   type MonthBalance,
 } from "@finance/core/month-balance";
+import { buildMonthTrust, type TrustSignal } from "@finance/core/month-trust";
 import { withMyShare } from "@finance/core/my-share";
 import { buildRunway } from "@finance/core/projection";
 import type { PurchaseToConfirm } from "@finance/core/purchases-to-confirm";
@@ -48,6 +49,7 @@ import { getMonthCloseOverview, type MonthCloseOverview } from "./month-close";
 import { readDismissedPrompts } from "./preferences";
 import { getPurchasesToConfirm } from "./purchases-to-confirm";
 import { readMyShare } from "./spaces";
+import { hasFeedLines, NO_COVERAGE, readFeedCoverage } from "./statements";
 import { getRecurringTemplates } from "./templates";
 
 /**
@@ -119,6 +121,12 @@ export interface BearingMonth {
   } | null;
   invested: number | null;
   attention: AttentionItem[];
+  /**
+   * « Fiabilité du mois »: what backs the month's figures — how far the
+   * lines reach, the charges arrived and awaited, what waits in the review,
+   * and the close. Empty for a month ahead.
+   */
+  trust: TrustSignal[];
   /**
    * Movements that look like a charge that has arrived, waiting for a yes or
    * a no. The month in progress only: it is the one whose forecast a salary
@@ -212,12 +220,20 @@ export async function readBearingMonth(
   const isCurrent = period === "current";
   const previousMonth = shiftMonth(year, month, -1);
 
-  const [templates, fulfilledKeys, closes, bankFed] = await Promise.all([
-    known ?? getRecurringTemplates(db, userId),
-    getFulfilledKeys(db, userId),
-    getMonthCloseOverview(db, userId, today, locale),
-    hasBankFeed(db, userId),
-  ]);
+  const [templates, fulfilledKeys, closes, bankFed, feeds, coverage] =
+    await Promise.all([
+      known ?? getRecurringTemplates(db, userId),
+      getFulfilledKeys(db, userId),
+      getMonthCloseOverview(db, userId, today, locale),
+      hasBankFeed(db, userId),
+      // Any line at all, the bank's or a statement's: what decides whether
+      // there is a review to count and a repeat to notice.
+      hasFeedLines(db, userId),
+      // The lines dated in this month, for « Fiabilité du mois ».
+      period === "future"
+        ? Promise.resolve(NO_COVERAGE)
+        : readFeedCoverage(db, userId, first, last),
+    ]);
 
   /* ----------------------------------------------- the balance and rows */
 
@@ -338,11 +354,11 @@ export async function readBearingMonth(
           month,
         ).catch(() => null),
         investedValue(),
-        bankFed ? countPendingFeedItems(db, userId) : Promise.resolve(0),
+        // Lines wait for a category, and charges repeat, wherever lines
+        // have come in — a statement's as much as the bank's.
+        feeds ? countPendingFeedItems(db, userId) : Promise.resolve(0),
         bankFed ? countSwallowedFeedItems(db, userId) : Promise.resolve(0),
-        bankFed
-          ? getRecurringProposals(db, userId, today)
-          : Promise.resolve([]),
+        feeds ? getRecurringProposals(db, userId, today) : Promise.resolve([]),
         bankFed
           ? getPurchasesToConfirm(db, userId, {
               templates,
@@ -389,6 +405,42 @@ export async function readBearingMonth(
     });
   }
 
+  /* ---------------------------------------------- what backs the month */
+
+  const monthKey = monthKeyOf(year, month);
+  const closed = closes.history.find((row) => row.monthKey === monthKey);
+  // Charges due by now: today in the month in progress, the whole of a
+  // month that has ended.
+  const dueBy = isCurrent ? today : last;
+  const trust = buildMonthTrust({
+    period,
+    today,
+    close: closed
+      ? { unrecorded: closed.unrecorded, kept: closed.kept }
+      : null,
+    closeDue: isCurrent ? firstCloseDay(today, closes.settings.closeDay) : null,
+    closable:
+      closes.next !== null &&
+      closes.next.year === year &&
+      closes.next.month === month,
+    feeds,
+    coverage,
+    charges: {
+      // Rows a charge wrote, or the bank brought for one, due by now.
+      arrived: rows.filter(
+        (tx) =>
+          tx.recurring_template_id !== null &&
+          tx.occurred_on >= first &&
+          tx.occurred_on <= dueBy,
+      ).length,
+      // Due, and not brought yet (`awaited occurrence`).
+      awaited:
+        shownUpcoming?.charges.filter(
+          (charge) => charge.awaited === true && !charge.recorded,
+        ).length ?? 0,
+    },
+  });
+
   const income = inMonth
     .filter((tx) => tx.categories.type === "income" && tx.occurred_on <= today)
     .reduce((sum, tx) => sum + Number(tx.amount), 0);
@@ -425,6 +477,7 @@ export async function readBearingMonth(
     close,
     invested,
     attention,
+    trust,
     arrived: arrived && arrived.proposals.length > 0 ? arrived : null,
     purchases,
     dca,

@@ -82,9 +82,10 @@ export function AttentionRow({
  * twice, `/recurring`). `transactions.tsx` and `recurring.tsx` are real tabs
  * and answer three of them unchanged; Le point is `index.tsx` here, where the
  * close lives on the momentum card. The review and the close are asked for
- * with a fresh stamp, so each opens even after it was closed once.
+ * with a fresh stamp, so each opens even after it was closed once. The
+ * « Fiabilité du mois » card's lines lead to the same places.
  */
-function attentionHref(href: string): Href {
+export function attentionHref(href: string): Href {
   if (href === "/transactions?review=inbox") {
     return { pathname: "/transactions", params: reviewAsk() } as Href;
   }
