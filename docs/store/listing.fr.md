@@ -61,8 +61,13 @@ l'argent de l'autre.
 
 ET AUSSI
 
-- « Votre année » : votre année en chiffres, à garder ou partager.
-- Import de relevés CSV et OFX.
+- « Votre année » : votre année en chiffres, à garder ou partager.
+- « Partager ce mois » : le mois en image, avec ou sans les montants.
+- Import de relevés CSV, Excel, OFX, PDF, et vos règles de rangement.
+- Le Journal par commerce ; un paiement en plusieurs parts, et le ticket
+  derrière.
+- Dans chaque placement : ventes, dividendes, frais, et les plus-values par
+  année.
 - Recherche dans tous vos mois.
 - Le récap du lundi et une alerte avant un découvert.
 - Questions et lectures écrites par l'IA de votre choix (Mistral, ChatGPT ou

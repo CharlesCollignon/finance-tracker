@@ -17,6 +17,24 @@ import type { ChangelogEntry, RoadmapItem } from "./changelog";
  */
 export const CHANGELOG: readonly ChangelogEntry[] = [
   {
+    id: "2026-10-26-site",
+    date: "2026-10-26",
+    kind: "better",
+    platforms: ["web"],
+    fr: {
+      title: "Le site dit ce qui est nouveau",
+      body: "Sur pluclair.com, « Et tout ce qu’il y a autour » compte six cartes de plus — les règles de rangement, la vue par commerce, les parts et le ticket, « Partager ce mois », les opérations d’un compte de placement, Cmd+K —, les pages Le point, Journal, Placements et Espace commun disent ce qu’elles ont gagné, deux questions rejoignent « Vos questions », et « Bientôt » annonce les notifications de la banque.",
+      detail:
+        "Rien n’y est promis qui ne soit déjà dans l’application ; ce qui ne l’est pas encore reste au futur, sous « Bientôt ».",
+    },
+    en: {
+      title: "The site says what is new",
+      body: "On pluclair.com, “And everything around it” has six more cards — filing rules, the view by shop, parts and the receipt, “Share this month”, an investment account’s operations, Cmd+K —, the Overview, Ledger, Investments and Shared space pages say what they gained, two questions join “Your questions”, and “Coming soon” announces the bank’s notifications.",
+      detail:
+        "Nothing is promised there that is not already in the app; what is not yet stays in the future tense, under “Coming soon”.",
+    },
+  },
+  {
     id: "2026-10-26-demo",
     date: "2026-10-26",
     kind: "new",
@@ -1685,6 +1703,17 @@ export const CHANGELOG_STATS = {
  * and nowhere else. An item leaves this list the day its entry is written.
  */
 export const ROADMAP: readonly RoadmapItem[] = [
+  {
+    id: "listener",
+    fr: {
+      title: "Les notifications de votre banque",
+      body: "Sur Android, avec l’« Accès aux notifications », chaque paiement que votre banque annonce deviendra une ligne à vérifier au moment où il s’affiche — lu sur le téléphone seulement, et pour les applications bancaires que vous choisissez. Construit ; ouvert quand une version de l’application l’aura fait tourner.",
+    },
+    en: {
+      title: "Your bank’s notifications",
+      body: "On Android, with “Notification access”, each payment your bank announces will become a line to check the moment it shows — read on the phone only, and for the bank apps you choose. Built; open once a build of the app has run it.",
+    },
+  },
   {
     id: "stores",
     fr: {

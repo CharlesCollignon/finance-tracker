@@ -56,7 +56,12 @@ never the other's own money.
 AND ALSO
 
 - "Your year": your year in figures, to keep or share.
-- CSV and OFX statement import.
+- "Share this month": the month as an image, with or without the amounts.
+- CSV, Excel, OFX and PDF statement import, and your filing rules.
+- The Ledger by shop; one payment in several parts, and the receipt behind
+  it.
+- In each investment account: sales, dividends, fees, and the realised gains
+  by year.
 - Search across all your months.
 - The Monday recap and a warning before an overdraft.
 - Questions and written reads by the AI of your choice (Mistral, ChatGPT or

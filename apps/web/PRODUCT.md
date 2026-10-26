@@ -136,7 +136,8 @@ see `LEGAL_DRAFT` in `components/marketing/legal-copy.ts`).
   launch, no public surface may describe connecting a bank in the present
   tense: the marketing site lists it under « Bientôt » with the other things
   built and not open to everyone — property, the AI of your choice, the mobile
-  app (the owner's call, October 2026) — and its answers on data and money
+  app (the owner's call, October 2026), the bank apps' notifications on
+  Android — and its answers on data and money
   stay true of the app as a visitor can have it. Launching changes both, with the
   owner's sign-off on the brand promises.
 - Pluclair asks a bank for new data only when the user presses Refresh. The

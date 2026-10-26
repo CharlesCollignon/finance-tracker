@@ -154,6 +154,42 @@ export const landingCopy = {
         body: "Every amount hidden at once — on the train, at the office.",
         link: "",
       },
+      {
+        id: "rules",
+        title: "Your filing rules",
+        body: "A line with these words goes here, every time: your rules come before anything Pluclair learned.",
+        link: "",
+      },
+      {
+        id: "merchants",
+        title: "By shop",
+        body: "Each shop’s visits, its usual month and its twelve months, in one view of the Ledger.",
+        link: "",
+      },
+      {
+        id: "receipts",
+        title: "Parts and receipts",
+        body: "One payment in several categories, and the receipt kept behind it — read by your AI if you wish.",
+        link: "",
+      },
+      {
+        id: "share",
+        title: "Share this month",
+        body: "The month as an image to send or a page to print, with the amounts or with the shares only.",
+        link: "",
+      },
+      {
+        id: "operations",
+        title: "Inside each account",
+        body: "A line sold, a dividend, a fee — typed or read off the broker’s export, and the gains by year.",
+        link: "",
+      },
+      {
+        id: "palette",
+        title: "Cmd+K",
+        body: "On the desktop, one shortcut to add, ask, or go anywhere — an amount typed arrives already filled in.",
+        link: "",
+      },
     ],
   },
 
@@ -225,6 +261,16 @@ export const landingCopy = {
         answer:
           "Yes: one tap blurs every amount on screen. Handy on the train.",
       },
+      {
+        question: "Can I look round before creating an account?",
+        answer:
+          "Yes: “Try the demo” on this page opens Pluclair on a sample account — nine months of a made-up budget, its recurring entries, its investments, its closes. Everything reads, nothing writes, and it is rebuilt every night for the current month.",
+      },
+      {
+        question: "Can I bring my broker’s statement too?",
+        answer:
+          "Yes. On each investment account, “Operations” reads the broker’s export (a CSV or a spreadsheet): a line bought or sold, a dividend received, a fee taken — shown before they are added, never added twice. Analyse then gives the dividends and the realised gains by year, first in first out.",
+      },
     ],
   },
 
@@ -239,7 +285,7 @@ export const landingCopy = {
       title: "Overview",
       body: "Where you stand today, and where the month will end.",
       utility:
-        "Two figures at the top: what is in your account now, and where it will stand at the end of the month. Under them, the month as a curve, then a few cards — what you have spent, what is still to go out, where it went — each leading to the screen that holds its figures.",
+        "Two figures at the top: what is in your account now, and where it will stand at the end of the month. Under them, the month as a curve, then a few cards — what you have spent, what is still to go out, where it went — each leading to the screen that holds its figures. A strip under the month says what waits for you — a balance to copy, a line to confirm, lines to review — and a line says how far the month can be trusted: what came from your bank’s files, what you typed, what the close found.",
       steps: [
         {
           title: "Read the two figures",
@@ -268,7 +314,7 @@ export const landingCopy = {
         },
         {
           title: "It suggests, you decide",
-          body: "Put a shop in the same category twice and Pluclair suggests it the next time. You confirm, and the suggestions get better — the filing stays yours.",
+          body: "Put a shop in the same category twice and Pluclair suggests it the next time. You confirm, and the suggestions get better — the filing stays yours. Say “Always file here” and a rule is written: a line with those words goes there every time, before anything learned. A fourth view, by shop, shows each shop’s visits and its usual month.",
         },
         {
           title: "Or bring your statement",
@@ -294,6 +340,10 @@ export const landingCopy = {
         {
           title: "Change it once for every month ahead",
           body: "Edit a recurring item and every coming month follows. This month’s lines change only if you say so.",
+        },
+        {
+          title: "Parts and receipts",
+          body: "One payment in several categories — the groceries and the gift in one go — and the receipt kept behind it, read by your AI account if you wish. The Ledger marks a part with a fork and a receipt with a clip.",
         },
       ],
     },
@@ -336,6 +386,10 @@ export const landingCopy = {
         {
           title: "Ask for a review",
           body: "An AI reads what is inside and says what it notices. It only names funds from a fixed list, and writes no figure of its own.",
+        },
+        {
+          title: "What happens inside",
+          body: "On each account, “Operations”: a line sold, a dividend received, a fee taken — typed, or read off the broker’s export, shown before they are added and never added twice. Analyse adds them up by year: dividends, and realised gains first in first out.",
         },
       ],
     },
@@ -440,7 +494,7 @@ export const landingCopy = {
         },
         {
           title: "Your share",
-          body: "Set how the joint spending splits — half each, or otherwise — and see your spending with your part of the joint one.",
+          body: "Set how the joint spending splits — half each, or otherwise — and see your spending with your part of the joint one. The Overview then says who owes whom: what each of you paid of the joint account against your share, month by month.",
         },
       ],
     },

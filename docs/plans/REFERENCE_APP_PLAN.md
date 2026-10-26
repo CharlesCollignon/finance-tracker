@@ -219,6 +219,15 @@ This plan sits beside `EVERYDAY_PLAN.md` (daily use), `STATEMENTS_PLAN.md`
 - The story, « Et tout ce qu'il y a autour », the feature pages and their
   mocks for what the phases built; « Bientôt » for what is not open; FAQ,
   store listing, `how-pluclair-works.md`, `PRODUCT.md`.
+  Done: six more bento cards (rules, by shop, parts and receipt, share the
+  month, operations, Cmd+K; an icon each, no new mock), the Overview's
+  « À faire » and trust line, the Ledger's rules, by-shop view and a fourth
+  step for parts and receipts, Placements' fourth step for operations,
+  the shared space's balance, two FAQ entries (the demo, the broker's
+  export), « Essayer la démo » in the hero (Phase 10), « Bientôt » naming
+  the bank's notifications, the store listings' « Et aussi ». The story's
+  five chapters and the feature mocks are unchanged: they draw screens
+  that still exist as drawn.
 
 ## The owner's part
 
