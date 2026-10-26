@@ -40,7 +40,8 @@ export function InstrumentLogo({
   return (
     <View className="h-8 w-8 items-center justify-center overflow-hidden rounded-full border border-border bg-white">
       <Image
-        source={{ uri: instrumentLogoUrl(symbol) }}
+        // A PNG: the CDN's default SVG is something `Image` cannot draw.
+        source={{ uri: instrumentLogoUrl(symbol, { size: 128 }) }}
         // A touch larger than the disc, as on the web: most marks carry a
         // margin of their own.
         style={{ width: 40, height: 40 }}
