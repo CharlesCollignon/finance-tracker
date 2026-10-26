@@ -17,6 +17,24 @@ import type { ChangelogEntry, RoadmapItem } from "./changelog";
  */
 export const CHANGELOG: readonly ChangelogEntry[] = [
   {
+    id: "2026-10-26-wallet-events",
+    date: "2026-10-26",
+    kind: "new",
+    platforms: ["web"],
+    fr: {
+      title: "Ce qui se passe dans un compte de placement",
+      body: "Sur chaque compte de Placements, « Opérations » : une ligne achetée ou vendue, un dividende reçu, des frais prélevés — saisis à la main, ou lus dans l’export du courtier (un CSV ou un tableur), montrés avant d’être ajoutés, jamais ajoutés deux fois. Sur Analyse, une carte « Dividendes et plus-values réalisées » les additionne par année et par compte.",
+      detail:
+        "Chaque vente est rapprochée des achats les plus anciens de la même ligne encore détenus, premier entré premier sorti, comme le fisc les lit ; une vente dont les achats manquent le dit. La lecture des exports repose sur les noms des colonnes et les mots de chaque ligne, en français ou en anglais, et a été mise au point sur des exemples : vérifiez le premier fichier lu.",
+    },
+    en: {
+      title: "What happens inside an investment account",
+      body: "On each account under Placements, “Operations”: a line bought or sold, a dividend received, a fee taken — typed by hand, or read off the broker’s export (a CSV or a spreadsheet), shown before they are added, never added twice. On Analyse, a “Dividends and realised gains” card adds them up by year and account.",
+      detail:
+        "Each sale is set against the oldest purchases of the same line still held, first in first out, as the tax office reads them; a sale whose purchases are missing says so. The reading of exports rests on the names of the columns and the words of each line, in French or English, and was built on samples: check the first file read.",
+    },
+  },
+  {
     id: "2026-10-26-month-share",
     date: "2026-10-26",
     kind: "new",

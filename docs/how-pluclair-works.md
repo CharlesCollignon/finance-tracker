@@ -201,6 +201,7 @@ today's prices) leaves it unmarked, so the Plan still shows it as new.
 | The Notaires–INSEE index, and which series carries a place                                                  | `price-index.ts` (series in `seriesFor`)                                                                       |
 | Fund costs, look-through, target trades                                                                     | `fund-costs.ts`, `look-through.ts`, `look-through-target.ts`                                                   |
 | Money-weighted return                                                                                       | `xirr.ts`, `investment-returns.ts`                                                                             |
+| « Dividendes et plus-values réalisées »: realised gains per wallet and year (first in, first out), dividends and fees by year| `investment-events.ts` (rows read by `@finance/data/investment-events`)                                        |
 | « Fiabilité du mois »: the lines' reach, the occurrences arrived and awaited, the review, the close         | `month-trust.ts` (read by `@finance/data/bearing-month`, the coverage from `@finance/data/statements`)        |
 | « Par commerce »: a shop's visits, its normal month, its twelve months (`merchantKeyOf`, two meaningful words) | `merchant-screen.ts` (read by `@finance/data/merchant-screen`)                                                |
 | « Équilibre entre vous »: each partner's part of the joint spending against what they put in                | `space-balance.ts` (read by `@finance/data/space-balance`, `space_contributions`)                             |
@@ -801,6 +802,24 @@ cookie session or the phone's bearer with `?owner=` for a space), and
 under them when the amounts are in, for the browser's print dialog. The
 phone downloads the image and hands it to its share sheet
 (`lib/month-share.ts`), as « Votre année » does.
+
+## Inside a wallet
+
+« Opérations » (`WalletEventsSheet`, both apps, one sheet per wallet): what
+happened inside the account — a buy, a sell, a dividend, a fee
+(`investment_events`, migration 080, a person's own). Typed by hand, or read
+off the broker's export in the browser or on the phone: `tableRows`
+(`@finance/core/statement`) gives a CSV, a spreadsheet or a web page's table
+as rows, `readBrokerRows` (`@finance/core/investment-events`) finds the
+columns by their names in French or English and each line's kind by its
+words, else by the sign of its amount beside a quantity; the lines are
+shown before `importInvestmentEvents` stores them, each with a fingerprint
+(day, kind, amount, instrument, rank) the unique index knows again, so a
+file read twice adds nothing twice. On Analyse, `EventsCard` adds them up
+with `summariseEvents`: each sell against the oldest buys of the same line
+in the same wallet still held, first in first out; a sell with buys missing
+is counted and said. The reader was built on synthetic exports: a real one,
+anonymised, is the owner's part (`REFERENCE_APP_PLAN.md`).
 
 ## Search
 

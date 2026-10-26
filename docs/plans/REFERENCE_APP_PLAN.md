@@ -163,10 +163,19 @@ This plan sits beside `EVERYDAY_PLAN.md` (daily use), `STATEMENTS_PLAN.md`
 
 ## Phase 9 — Broker imports, dividends, realised gains (branch `reference-9-broker`)
 
-- Migration 080: `investment_events` (buy, sell, dividend, fee) per wallet.
-- Readers for broker and exchange exports (positions and events), the
-  Placements import, dividends as income inside the wallet, realised gains
-  per wrapper and year; both apps.
+- Migration 080: `investment_events` (buy, sell, dividend, fee) per wallet,
+  a person's own, with a fingerprint per line read from a file.
+- `@finance/core/investment-events`: the events, realised gains per wrapper
+  and year (first in, first out, uncovered sells said), dividends and fees
+  by year, and `readBrokerRows`, a broker's CSV or spreadsheet read by its
+  column names and each line's words (FR/EN); `tableRows` in
+  `@finance/core/statement` gives any table file its rows.
+- Both apps: « Opérations » on each wallet (list, hand entry, file import
+  shown before it is stored), « Dividendes et plus-values réalisées » on
+  Analyse. Built on synthetic exports (`investment-events.test.ts`).
+- Not built: positions read off a broker's file (a position stays typed or
+  searched), dividends as income in the ledger (they stay inside the
+  wallet, as the card shows them).
 
 ## Phase 10 — The demo (branch `reference-10-demo`)
 

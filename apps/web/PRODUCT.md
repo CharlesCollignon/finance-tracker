@@ -110,8 +110,9 @@ the owner's account alone, so anything written for a general audience
 describes the first three.
 
 Surfaces in this app: the Bearing, the Ledger (list, calendar, by category),
-transactions, the Plan (`/plan`), recurring, categories, investments and
-look-through, properties (`/property` and each one's page; the
+transactions, the Plan (`/plan`), recurring, categories, investments (each
+wallet's « Opérations » and the Analyse tab's dividends and realised gains)
+and look-through, properties (`/property` and each one's page; the
 `property.track` flag, on for everyone since migration 063, stays as a
 switch),
 history, import, Questions (`/ask`), welcome, profile and its Bank page (`/bank`: connect, the

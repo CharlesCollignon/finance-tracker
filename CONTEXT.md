@@ -452,6 +452,21 @@ wallets the user keeps: those with a position and those they added
 (`wallet_plans.shown`); removing one removes its positions.
 _Avoid_: account, portfolio, broker
 
+**Wallet event**:
+_En français_ : opération du compte (l'écran : Opérations)
+What happened inside a wallet, one row each (`investment_events`,
+migration 080): a buy, a sell, a dividend, a fee — the day, the line, its
+ISIN, the shares moved, the cash that moved, never signed. Typed by hand
+on the wallet's « Opérations » sheet, or read off the broker's export (a
+CSV or a spreadsheet, `readBrokerRows`), each line known again by its
+fingerprint so the same file read twice adds nothing twice. From them,
+on Analyse, the realised gains per wallet and year — each sell against
+the oldest buys of the same line still held, first in first out — the
+dividends received and the fees taken (`investment-events.ts`). A
+person's own, never a space's; apart from the ledger, which records what
+was sent to the broker, and from the position, which says what is held.
+_Avoid_: transaction (that is the ledger's), trade, movement
+
 **Savings account**:
 _En français_ : compte d'épargne (Livret A, LDDS, LEP, CEL, PEL, autre livret)
 One of the user's savings accounts, declared on Placements, with its own
