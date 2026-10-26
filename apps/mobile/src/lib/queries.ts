@@ -11,6 +11,8 @@ import { readYearReview } from "@finance/data/year-review";
 import * as fulfilment from "@finance/data/fulfilment";
 import * as filingRules from "@finance/data/filing-rules";
 import { readMerchantScreen } from "@finance/data/merchant-screen";
+import { readSpaceBalance } from "@finance/data/space-balance";
+import type { Space } from "@finance/data/spaces";
 import * as statements from "@finance/data/statements";
 import * as closes from "@finance/data/month-close";
 import { isMissingSchema } from "@finance/data/schema";
@@ -609,6 +611,15 @@ export function getFilingRules(
   userId: string,
 ): ReturnType<typeof filingRules.readFilingRules> {
   return filingRules.readFilingRules(supabase, userId);
+}
+
+/** « Équilibre »: what each partner put in against their part (078). */
+export function getSpaceBalance(
+  space: Space,
+  from: string,
+  to: string,
+): ReturnType<typeof readSpaceBalance> {
+  return readSpaceBalance(supabase, space, from, to);
 }
 
 /** « Par commerce »: the last twelve months, one card a shop. */

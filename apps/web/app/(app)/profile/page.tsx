@@ -1,4 +1,6 @@
 import { redirect } from "next/navigation";
+import { todayIsoLocal } from "@finance/core/constants";
+import { readSpaceBalance } from "@finance/data/space-balance";
 import { getAuthUser } from "@/lib/auth/get-user";
 import { getOwner } from "@/lib/owner";
 import { ProfileView } from "@/components/profile/ProfileView";
@@ -85,6 +87,16 @@ export default async function ProfilePage({ searchParams }: ProfilePageProps) {
       }
     : null;
 
+  // « Équilibre » since the space began, for its row in the section (078).
+  const spaceBalance = owner?.space
+    ? await readSpaceBalance(
+        await createClient(),
+        owner.space,
+        "1970-01-01",
+        todayIsoLocal(),
+      ).catch(() => null)
+    : null;
+
   let initialPasskeys: PasskeyItem[] = [];
   try {
     const supabase = await createClient();
@@ -109,6 +121,7 @@ export default async function ProfilePage({ searchParams }: ProfilePageProps) {
       showCommunity={entraideRulesVisible()}
       aiAccount={aiAccount}
       space={owner?.space ?? null}
+      spaceBalance={spaceBalance}
       userId={user.id}
       feedbackEmail={process.env.FEEDBACK_EMAIL?.trim() || null}
       // From an invitation to connect an AI account: that row, open.

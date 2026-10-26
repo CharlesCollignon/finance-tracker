@@ -42,6 +42,7 @@ import {
 } from "@/components/profile/AiAccountSection";
 import type { AiModel } from "@finance/core/ai-models";
 import type { Space } from "@finance/data/spaces";
+import type { SpaceBalance } from "@finance/core/space-balance";
 import { SpaceSection } from "@/components/profile/SpaceSection";
 import { setCurrencyPreference, useCurrency } from "@/lib/use-currency";
 import { CURRENCY_LABELS } from "@finance/core/constants";
@@ -86,6 +87,8 @@ interface ProfileViewProps {
   } | null;
   /** The shared space this person is in, or null. */
   space: Space | null;
+  /** « Équilibre » since the space began; null without one (078). */
+  spaceBalance?: SpaceBalance | null;
   userId: string;
   /** A row to open on arrival: the AI connection, from an invitation. */
   initialOpen?: "aiConnect" | null;
@@ -120,6 +123,7 @@ export function ProfileView({
   showCommunity,
   aiAccount,
   space,
+  spaceBalance = null,
   userId,
   initialOpen = null,
   feedbackEmail,
@@ -308,6 +312,7 @@ export function ProfileView({
           space={space}
           userId={userId}
           selfName={fullName || email}
+          balance={spaceBalance ?? null}
         />
 
         {/* Beside the money it reads: the written reads are what an AI

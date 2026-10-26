@@ -4,7 +4,9 @@ import type { ReactNode } from "react";
 import { nextSetupStep } from "@finance/core/setup-steps";
 import type { BankAttention } from "@finance/core/bank-attention";
 import { bankAttentionItems, sortAttention } from "@finance/core/attention";
+import type { SpaceBalance } from "@finance/core/space-balance";
 import type { BearingMonth } from "@/lib/bearing/month";
+import { BalanceBetweenCard } from "@/components/finance/bearing/BalanceBetweenCard";
 import { MyShareProvider } from "@/components/finance/bearing/MyShareToggle";
 import { TodoStrip } from "@/components/finance/bearing/TodoStrip";
 import { ArrivedCharges } from "@/components/finance/ArrivedCharges";
@@ -43,9 +45,12 @@ export function BearingMonthView({
   bankInvite = false,
   bankAttention = null,
   awaitingAccounts = 0,
+  spaceBalance = null,
   askClose = false,
 }: {
   data: BearingMonth;
+  /** « Équilibre » between the partners, under « Commun »; null elsewhere. */
+  spaceBalance?: SpaceBalance | null;
   /** Open the month close at once: asked for from the attention row. */
   askClose?: boolean;
   /** Whether to invite this reader to connect a bank: the first setup card. */
@@ -154,6 +159,12 @@ export function BearingMonthView({
           {hasSpentBefore && data.balance.period !== "future" ? (
             <FadeInItem>
               <SpentCard data={data} />
+            </FadeInItem>
+          ) : null}
+
+          {spaceBalance ? (
+            <FadeInItem>
+              <BalanceBetweenCard balance={spaceBalance} />
             </FadeInItem>
           ) : null}
 

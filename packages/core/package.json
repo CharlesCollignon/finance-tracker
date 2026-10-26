@@ -107,6 +107,7 @@
     "./month-trust": "./src/month-trust.ts",
     "./filing-rules": "./src/filing-rules.ts",
     "./merchant-screen": "./src/merchant-screen.ts",
+    "./space-balance": "./src/space-balance.ts",
     "./validations/filing-rules": "./src/validations/filing-rules.ts",
     "./motion": "./src/motion.ts",
     "./outbox": "./src/outbox.ts",

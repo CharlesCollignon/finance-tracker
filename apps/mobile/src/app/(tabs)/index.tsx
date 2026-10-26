@@ -9,6 +9,7 @@ import { ArrivedCharges } from "@/components/ArrivedCharges";
 import { MonthPicker } from "@/components/MonthPicker";
 import { MonthRead } from "@/components/MonthRead";
 import { PurchasesToConfirm } from "@/components/PurchasesToConfirm";
+import { BalanceBetweenCard } from "@/components/bearing/BalanceBetweenCard";
 import { TodoStrip } from "@/components/bearing/TodoStrip";
 import { SetupCard } from "@/components/bearing/SetupCard";
 import { YearReadyCard } from "@/components/bearing/YearReadyCard";
@@ -25,7 +26,7 @@ import { ScreenSkeleton } from "@/components/ui/Skeleton";
 import { ScreenError } from "@/components/ScreenError";
 import { useBankState } from "@/hooks/useBankState";
 import { useRefreshable } from "@/hooks/useRefreshable";
-import { getBankAccounts } from "@/lib/queries";
+import { getBankAccounts, getSpaceBalance } from "@/lib/queries";
 import { shouldInvite } from "@/lib/bank-connect";
 import { nextSetupStep } from "@finance/core/setup-steps";
 import {
@@ -101,6 +102,22 @@ export default function HomeScreen() {
     async () => (ownerId ? await gatherHomeRecap(ownerId, locale) : null),
     [ownerId, locale],
     { reads: ["transactions", "templates", "bank", "preferences"] },
+  );
+
+  // « Équilibre », under « Commun »: what each partner put into the joint
+  // account this month, against their part of what it spent (078). Read
+  // apart, like the recap: the balance should not wait on it.
+  const { data: spaceBalance } = useRefreshable(
+    async () =>
+      joint && space
+        ? await getSpaceBalance(
+            space,
+            getMonthBounds(year, month).start,
+            getMonthBounds(year, month).end,
+          ).catch(() => null)
+        : null,
+    [joint, space?.id, year, month],
+    { reads: ["transactions", "preferences"] },
   );
 
   // Whether a bank can be connected here at all is the deployment's to say.
@@ -225,6 +242,12 @@ export default function HomeScreen() {
             {hasSpentBefore && period !== "future" ? (
               <FadeIn>
                 <SpentCard data={data} />
+              </FadeIn>
+            ) : null}
+
+            {joint && spaceBalance ? (
+              <FadeIn>
+                <BalanceBetweenCard balance={spaceBalance} />
               </FadeIn>
             ) : null}
 
