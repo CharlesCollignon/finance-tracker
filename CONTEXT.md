@@ -38,6 +38,17 @@ rather than hundreds of rows, and one answer files a whole group, with the
 category its history suggests already picked.
 _Avoid_: pending, unfiled, queue, triage
 
+**Filing rule**:
+_En français_ : règle de rangement (l'écran : Règles de rangement)
+A rule the user wrote for filing a line: words to find in it, whole and
+without case or accents, the category it goes to, and the way the money
+went. Asked before anything the matcher learned, so a line it files is
+filed on a rule the user wrote (commitment 2) — money coming in included,
+since they asked. Written from the review's « Toujours ranger ici » with
+the shop's words, or on its own screen; the most specific rule wins; each
+counts the lines it filed (`filing-rules.ts`, migration 077).
+_Avoid_: filter, automation, learned rule (that is the matcher's memory)
+
 **Bank connection**:
 _En français_ : connexion bancaire
 One user's link to their own bank, through their own open-banking.io account:

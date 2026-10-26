@@ -37,6 +37,7 @@ Vocabulary is fixed by `CONTEXT.md`; product commitments by
 | Property — list        | `/property` (flag `property.track`)      | `(tabs)/property` (same flag)                                            |
 | Property — one         | `/property/[id]` (flag `property.track`) | `property/[id]`, pushed over the tabs                                    |
 | Categories             | `/categories`                            | `categories`                                                             |
+| Filing rules           | `/rules`                                 | `rules`                                                                  |
 | Import (CSV, OFX)      | `/import`                                | `import`                                                                 |
 | Welcome                | `/welcome`                               | `onboarding`                                                             |
 | Profile                | `/profile`                               | `(tabs)/profile`                                                         |
@@ -574,6 +575,16 @@ account from 12 to 13 October 2026, until open-banking.io answered that its
 customers may not give their access to an app reading on their behalf.
 Everyone else enters balances and transactions by hand or imports a CSV. Rows the matcher
 would not file wait in the review inbox at `?review=inbox`.
+
+**Filing rules** (migration 077, `@finance/core/filing-rules`,
+`@finance/data/filing-rules`): the rules a person writes — words to find,
+whole and without case or accents, a category, the money's way. `decide`
+asks them before the learned matcher and the MCC, and a line one files is
+`decided_by = 'auto:rule'`; `writePlan` counts what each filed
+(`bump_filing_rule`). Written from the review's « Toujours ranger ici »
+(`importFeedItems` on the web, `/api/bank/feed` for the phone, with the
+group's `suggestRuleWords`) or on `/rules` (the phone's `rules`), reached
+from Catégories; the owner on screen's, so a joint account has the space's.
 
 Connecting is a four-step wizard on both apps (`ConnectBankSheet`): the
 account at open-banking.io with its price, the bank connected there, the

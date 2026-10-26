@@ -78,9 +78,11 @@ Three commitments stated on the marketing site and binding on all future work
   no transfer, no payment and no standing order in it, and the bank connection
   is read-only, with no version of it that could initiate a payment.
 - **It does not act on a rule the user did not write.** A statement row files
-  itself only where the user has put that shop in the same place twice;
-  everything else waits in the review inbox, and a recurring template writes
-  into each month exactly what the user set it up to write, and nothing else.
+  itself only where the user wrote a filing rule for its words (since
+  October 2026, `CONTEXT.md` « Filing rule ») or has put that shop in the
+  same place twice; everything else waits in the review inbox, and a
+  recurring template writes into each month exactly what the user set it up
+  to write, and nothing else.
 - **It does not tell the user what to do.** No advice, no score, no nudge to
   switch products. This binds Pluclair's own voice: the app, the guides, and
   the owner's answers in Entraide, marked « Pluclair ». What members write in

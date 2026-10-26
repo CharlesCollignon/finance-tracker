@@ -17,6 +17,24 @@ import type { ChangelogEntry, RoadmapItem } from "./changelog";
  */
 export const CHANGELOG: readonly ChangelogEntry[] = [
   {
+    id: "2026-10-26-filing-rules",
+    date: "2026-10-26",
+    kind: "new",
+    platforms: ["web"],
+    fr: {
+      title: "Des règles de rangement, écrites par vous",
+      body: "Dans « À vérifier », cochez « Toujours ranger ici » en classant un commerce : une règle est écrite avec ses mots, et la prochaine ligne qui les contient se range toute seule. Vos règles se lisent, se modifient et se suppriment depuis Catégories.",
+      detail:
+        "Une règle passe avant ce que l’application a appris seule, et vaut aussi pour l’argent qui rentre — un salaire, un loyer perçu. La plus précise l’emporte, et chacune compte les lignes qu’elle a rangées.",
+    },
+    en: {
+      title: "Filing rules, written by you",
+      body: "In the review, tick “Always file here” as you file a shop: a rule is written with its words, and the next line that contains them files itself. Your rules can be read, changed and deleted from Categories.",
+      detail:
+        "A rule comes before anything the app learned on its own, and holds for money coming in too — a salary, a rent received. The most specific wins, and each counts the lines it filed.",
+    },
+  },
+  {
     id: "2026-10-26-todo-strip",
     date: "2026-10-26",
     kind: "better",
