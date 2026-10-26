@@ -115,7 +115,9 @@ export function TrajectoryChart({
       onLayout={(event) => setWidth(event.nativeEvent.layout.width)}
       onStartShouldSetResponder={() => true}
       onMoveShouldSetResponder={() => true}
-      onResponderTerminationRequest={() => false}
+      // A vertical swipe that starts on the chart still scrolls the screen:
+      // the scroll view may take the finger back, as it could from the
+      // long view's chart.
       onResponderGrant={scrub}
       onResponderMove={scrub}
       onResponderRelease={release}
