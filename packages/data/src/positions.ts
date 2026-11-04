@@ -35,6 +35,9 @@ function toPositionRow(row: InvestmentPosition): InvestmentPositionRow {
     // save wrote an empty ISIN over a good one.
     isin: row.isin ?? null,
     value_pinned: row.value_pinned ?? false,
+    // Absent until migration 083 has run: then nothing is added to the
+    // typed figures, as before it.
+    balance_as_of: row.balance_as_of ?? null,
     ongoing_charge:
       row.ongoing_charge === null ? null : Number(row.ongoing_charge),
   };

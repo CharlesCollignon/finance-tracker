@@ -58,7 +58,7 @@ export function InvestmentPositionSheet({
   // In the reader's own shape — "1500,5" in French — so `parseTypedAmount`
   // reads back exactly what was put in.
   const [initialBalance, setInitialBalance] = useState(() =>
-    toTypedAmount(item.initialBalance, locale),
+    toTypedAmount(item.totalInvested, locale),
   );
   const [currentValue, setCurrentValue] = useState(() =>
     item.currentValue != null ? toTypedAmount(item.currentValue, locale) : "",

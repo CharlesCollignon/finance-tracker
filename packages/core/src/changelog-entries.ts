@@ -17,6 +17,24 @@ import type { ChangelogEntry, RoadmapItem } from "./changelog";
  */
 export const CHANGELOG: readonly ChangelogEntry[] = [
   {
+    id: "2026-11-04-positions-follow-purchases",
+    date: "2026-11-04",
+    kind: "fixed",
+    platforms: ["web"],
+    fr: {
+      title: "Placements suit vos achats",
+      body: "Un achat confirmé — « C'est passé » sur Le point — ou un achat Bitstack apporté par la banque allait dans le Journal, jamais dans Placements : le « Total versé » et les parts restaient ceux que vous aviez tapés. Désormais chaque achat fait après le jour où vous les avez tapés s'y ajoute — son montant au total versé, ses parts aux parts détenues — et la valeur suit.",
+      detail:
+        "Les parts d'un DCA en parts sont les siennes ; celles d'un achat en montant (Bitstack) sont son montant divisé par le cours du mois. Retaper un chiffre de votre courtier repart de là, sans rien compter deux fois. Sur le téléphone, avec la prochaine version.",
+    },
+    en: {
+      title: "Investments follow your purchases",
+      body: "A confirmed purchase — “It went through” on the Overview — or a Bitstack purchase the bank brought went into the Ledger, never into Investments: the “Total paid in” and the shares stayed as you had typed them. Now every purchase made after the day you typed them adds to them — its amount to the total paid in, its shares to the shares held — and the value follows.",
+      detail:
+        "A DCA bought in shares adds its own shares; one bought as an amount (Bitstack) adds its amount divided by the month's price. Typing your broker's figure again starts over from there, counting nothing twice. On the phone, with the next version.",
+    },
+  },
+  {
     id: "2026-11-04-journal-tabs",
     date: "2026-11-04",
     kind: "better",
