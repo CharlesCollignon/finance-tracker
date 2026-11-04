@@ -1,7 +1,7 @@
 import type { ActionResult } from "@finance/core/action-result";
 import { cashDateOf } from "@finance/core/cash-date";
 import {
-  formatEuro,
+  formatCurrency,
   formatShortDate,
   todayIsoLocal,
 } from "@finance/core/constants";
@@ -186,7 +186,7 @@ export async function fulfilOccurrence(
   const month = countsFor
     ? monthLong(Number(countsFor.slice(5, 7)), locale)
     : null;
-  const amount = bonus ? formatEuro(bonus, locale) : null;
+  const amount = bonus ? formatCurrency(bonus, "EUR", locale) : null;
   return {
     success: true,
     message:
