@@ -38,6 +38,12 @@ export interface InvestmentPositionRow {
   isin?: string | null;
   /** Whether `current_value` should outrank a live quote. See `034`. */
   value_pinned?: boolean | null;
+  /**
+   * The day the three typed figures — « Total versé », the shares, the
+   * value — were true (`083`). Purchases made after it add to them. Null
+   * before the migration has run: nothing is added, as before.
+   */
+  balance_as_of?: string | null;
 }
 
 export interface PositionChartPoint {
@@ -183,6 +189,70 @@ function resolveSharesHeld(
   return buyCount * template.share_count;
 }
 
+/**
+ * A purchase made after a position's figures were typed, as it adds to
+ * them: its cost, and its shares when they are known.
+ */
+interface LaterPurchase {
+  amount: number;
+  /** Null when no price says how many shares it bought. */
+  shares: number | null;
+}
+
+/**
+ * The purchases a position has had since its figures were typed
+ * (`balance_as_of`), up to the day it is read.
+ *
+ * A purchase is the position's when it was written by the position's DCA,
+ * or — for one the bank brought, a Bitstack debit, which no template wrote —
+ * when it sits in the position's category and no other position shares that
+ * category, so nothing is guessed between two lines of one wallet. Its
+ * shares are the DCA's own count when the DCA buys shares, else its cost
+ * over that month's close, else unknown: then it adds at cost.
+ */
+function purchasesAfterBalance(
+  row: InvestmentPositionRow,
+  template: RecurringTemplateWithCategory | undefined,
+  categoryId: string | null,
+  soleCategories: ReadonlySet<string>,
+  transactions: TransactionWithCategory[],
+  history: Record<string, number> | undefined,
+  asOfDate: string,
+): LaterPurchase[] {
+  const since = row.balance_as_of;
+  if (!since) {
+    return [];
+  }
+  const sharesEach =
+    template?.pricing_type === "shares" && template.share_count
+      ? Number(template.share_count)
+      : null;
+  return transactions
+    .filter(
+      (tx) =>
+        tx.occurred_on > since &&
+        tx.occurred_on <= asOfDate &&
+        Number(tx.amount) > 0 &&
+        ((row.recurring_template_id !== null &&
+          tx.recurring_template_id === row.recurring_template_id) ||
+          (tx.recurring_template_id === null &&
+            categoryId !== null &&
+            tx.category_id === categoryId &&
+            soleCategories.has(categoryId))),
+    )
+    .map((tx) => {
+      const amount = Number(tx.amount);
+      if (sharesEach !== null) {
+        return { amount, shares: sharesEach };
+      }
+      const close = lastCloseOnOrBefore(
+        history,
+        monthKeyFromIso(tx.occurred_on),
+      );
+      return { amount, shares: close ? amount / close : null };
+    });
+}
+
 function monthKeyFromIso(isoDate: string): string {
   return isoDate.slice(0, 7);
 }
@@ -246,6 +316,7 @@ function buildPositionChartPoints(
   position: InvestmentPositionRow,
   transactions: TransactionWithCategory[],
   template: RecurringTemplateWithCategory | undefined,
+  totalInvested: number,
   marketValue: number,
   instrumentSymbol: string | null,
   historicalQuotes: Record<string, Record<string, number>>,
@@ -329,13 +400,10 @@ function buildPositionChartPoints(
     });
   }
 
-  // If contributions never reached the stored balance, pin the last
-  // invested point to the position's canonical total.
+  // The last point is the position's own total, whichever way the
+  // contributions summed: the card's figure and its chart's end agree.
   if (points.length > 0 && linked.length > 0) {
-    const last = points[points.length - 1]!;
-    if (last.invested < position.initial_balance) {
-      last.invested = position.initial_balance;
-    }
+    points[points.length - 1]!.invested = totalInvested;
   }
 
   return points;
@@ -386,6 +454,7 @@ function buildPositionItem(
   transactions: TransactionWithCategory[],
   recurringById: Map<string, RecurringTemplateWithCategory>,
   categoriesById: Map<string, Category>,
+  soleCategories: ReadonlySet<string>,
   liveQuotes: Record<string, number>,
   historicalQuotes: Record<string, Record<string, number>>,
   asOfDate: string,
@@ -410,8 +479,43 @@ function buildPositionItem(
       template?.instrument_name ??
       BITCOIN_INSTRUMENT.name)
     : (row.instrument_name ?? template?.instrument_name ?? null);
-  const shareCount = resolveSharesHeld(row, template, transactions, asOfDate);
-  const totalInvested = row.initial_balance;
+  // What was bought since the figures were typed adds to them (`083`):
+  // to « Total versé » always, to the shares when the shares were typed —
+  // a count derived from the buys already has them — and to a typed value.
+  const later = purchasesAfterBalance(
+    row,
+    template,
+    row.category_id ?? template?.category_id ?? null,
+    soleCategories,
+    transactions,
+    instrumentSymbol ? historicalQuotes[instrumentSymbol] : undefined,
+    asOfDate,
+  );
+  const laterCost = later.reduce((sum, purchase) => sum + purchase.amount, 0);
+  const typedShares = row.share_count !== null && row.share_count > 0;
+  const laterShares = typedShares
+    ? later.reduce((sum, purchase) => sum + (purchase.shares ?? 0), 0)
+    : 0;
+  // Bought at a price nobody knows: worth what it cost until it is typed.
+  const laterAtCost = typedShares
+    ? later.reduce(
+        (sum, purchase) =>
+          sum + (purchase.shares === null ? purchase.amount : 0),
+        0,
+      )
+    : 0;
+  const resolvedShares = resolveSharesHeld(
+    row,
+    template,
+    transactions,
+    asOfDate,
+  );
+  const shareCount =
+    resolvedShares !== null && laterShares > 0
+      ? Math.round((resolvedShares + laterShares) * 1e6) / 1e6
+      : resolvedShares;
+  const totalInvested =
+    Math.round((row.initial_balance + laterCost) * 100) / 100;
   /*
    * A stored zero is not a valuation.
    *
@@ -428,13 +532,17 @@ function buildPositionItem(
     row.current_value !== null &&
     row.current_value !== undefined &&
     Number(row.current_value) > 0;
+  // A typed value, carried forward by what was bought since it was typed.
+  const typedValue = hasManualValue
+    ? Math.round((Number(row.current_value) + laterCost) * 100) / 100
+    : null;
   const quotedPrice = instrumentSymbol
     ? liveQuotes[instrumentSymbol]
     : undefined;
   const hasMarketQuote =
     quotedPrice !== undefined && shareCount !== null && shareCount > 0;
   const autoMarketValue = hasMarketQuote
-    ? Math.round(shareCount! * quotedPrice! * 100) / 100
+    ? Math.round((shareCount! * quotedPrice! + laterAtCost) * 100) / 100
     : null;
   const valuePinned = row.value_pinned === true;
 
@@ -460,7 +568,7 @@ function buildPositionItem(
 
   const marketValue =
     valuationSource === "pinned" || valuationSource === "manual"
-      ? Number(row.current_value)
+      ? typedValue!
       : valuationSource === "live"
         ? autoMarketValue!
         : totalInvested;
@@ -480,7 +588,7 @@ function buildPositionItem(
     icon: category?.icon ?? template?.categories.icon ?? null,
     categoryId: row.category_id ?? template?.category_id ?? null,
     initialBalance: row.initial_balance,
-    currentValue: hasManualValue ? Number(row.current_value) : null,
+    currentValue: typedValue,
     shareCount,
     instrumentSymbol,
     instrumentName,
@@ -501,6 +609,7 @@ function buildPositionItem(
       row,
       transactions,
       template,
+      totalInvested,
       marketValue,
       instrumentSymbol,
       historicalQuotes,
@@ -526,12 +635,35 @@ export function buildInvestmentPortfolio(
   const recurringById = new Map(
     recurringTemplates.map((template) => [template.id, template]),
   );
+  // The categories exactly one position draws on: only there can a purchase
+  // no template wrote — a Bitstack debit — be said to be that position's.
+  const positionsPerCategory = new Map<string, number>();
+  for (const row of positionRows) {
+    const categoryId =
+      row.category_id ??
+      (row.recurring_template_id
+        ? recurringById.get(row.recurring_template_id)?.category_id
+        : undefined);
+    if (categoryId) {
+      positionsPerCategory.set(
+        categoryId,
+        (positionsPerCategory.get(categoryId) ?? 0) + 1,
+      );
+    }
+  }
+  const soleCategories = new Set(
+    [...positionsPerCategory]
+      .filter(([, count]) => count === 1)
+      .map(([categoryId]) => categoryId),
+  );
+
   const items = positionRows.map((row) =>
     buildPositionItem(
       row,
       transactions,
       recurringById,
       categoriesById,
+      soleCategories,
       liveQuotes,
       historicalQuotes,
       asOfDate,

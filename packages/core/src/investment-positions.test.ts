@@ -345,3 +345,193 @@ describe("sortPositions", () => {
     expect(rows).toEqual(original);
   });
 });
+
+/**
+ * « C'est passé » used to reach the ledger and never Placements: the typed
+ * « Total versé » and shares stayed as typed whatever was bought after.
+ * Purchases made after the day they were typed (`balance_as_of`) now add.
+ */
+describe("purchases after the figures were typed", () => {
+  const PEA = "cat-pea";
+  const BITSTACK = "cat-bitstack";
+  const categories = [
+    {
+      id: PEA,
+      name: "PEA",
+      type: "investment",
+      icon: null,
+      counts_toward_summary: false,
+    },
+    {
+      id: BITSTACK,
+      name: "Bitstack",
+      type: "investment",
+      icon: null,
+      counts_toward_summary: false,
+    },
+  ] as unknown as Category[];
+
+  const dca = {
+    id: "tpl-dca",
+    category_id: PEA,
+    pricing_type: "shares",
+    share_count: 2,
+    instrument_symbol: "CW8.PA",
+    instrument_name: "MSCI World",
+    categories: {
+      name: "PEA",
+      type: "investment",
+      icon: null,
+      counts_toward_summary: false,
+    },
+  } as unknown as RecurringTemplateWithCategory;
+
+  function buy(
+    occurredOn: string,
+    amount: number,
+    templateId: string | null = "tpl-dca",
+    categoryId = PEA,
+  ): TransactionWithCategory {
+    return {
+      id: `tx-${occurredOn}-${amount}`,
+      occurred_on: occurredOn,
+      amount,
+      category_id: categoryId,
+      recurring_template_id: templateId,
+    } as unknown as TransactionWithCategory;
+  }
+
+  function build(
+    rows: InvestmentPositionRow[],
+    transactions: TransactionWithCategory[],
+    quotes: Record<string, number>,
+    history: Record<string, Record<string, number>> = {},
+  ) {
+    return buildInvestmentPortfolio(
+      categories,
+      transactions,
+      rows,
+      [dca],
+      quotes,
+      "fr",
+      TODAY,
+      history,
+    ).columns.flatMap((column) => column.items);
+  }
+
+  const pea = row({
+    id: "pos-pea",
+    wallet: "pea",
+    recurring_template_id: "tpl-dca",
+    category_id: PEA,
+    initial_balance: 5000,
+    share_count: 10,
+    instrument_symbol: "CW8.PA",
+    balance_as_of: "2026-09-04",
+  });
+
+  it("adds what was bought after the day, not on or before it", () => {
+    const [item] = build(
+      [pea],
+      [
+        buy("2026-09-01", 1000),
+        buy("2026-09-04", 1000),
+        buy("2026-09-08", 1020),
+      ],
+      { "CW8.PA": 510 },
+    );
+    expect(item!.totalInvested).toBe(6020);
+    expect(item!.shareCount).toBe(12);
+    expect(item!.marketValue).toBe(6120);
+  });
+
+  it("counts nothing ahead of today, and nothing at all before 083", () => {
+    const [ahead] = build([pea], [buy("2026-09-20", 1000)], { "CW8.PA": 510 });
+    expect(ahead!.totalInvested).toBe(5000);
+    const [before] = build(
+      [{ ...pea, balance_as_of: null }],
+      [buy("2026-09-08", 1020)],
+      { "CW8.PA": 510 },
+    );
+    expect(before!.totalInvested).toBe(5000);
+    expect(before!.shareCount).toBe(10);
+  });
+
+  it("carries a typed value forward by what was bought since", () => {
+    const [item] = build(
+      [{ ...pea, current_value: 5600, value_pinned: true }],
+      [buy("2026-09-08", 1020)],
+      {},
+    );
+    expect(item!.valuationSource).toBe("pinned");
+    expect(item!.marketValue).toBe(6620);
+    expect(item!.currentValue).toBe(6620);
+  });
+
+  it("gives a Bitstack debit to the one position of its wallet, its BTC from the month's close", () => {
+    const bitstack = row({
+      id: "pos-btc",
+      wallet: "crypto",
+      category_id: BITSTACK,
+      initial_balance: 800,
+      share_count: 0.01,
+      instrument_symbol: "BTC-EUR",
+      balance_as_of: "2026-09-04",
+    });
+    const [item] = build(
+      [bitstack],
+      [
+        buy("2026-09-08", 20, null, BITSTACK),
+        buy("2026-09-10", 20, null, BITSTACK),
+      ],
+      { "BTC-EUR": 100000 },
+      { "BTC-EUR": { "2026-09": 80000 } },
+    );
+    expect(item!.totalInvested).toBe(840);
+    expect(item!.shareCount).toBe(0.0105);
+    expect(item!.marketValue).toBe(1050);
+  });
+
+  it("adds at cost what no price can turn into shares", () => {
+    const bitstack = row({
+      id: "pos-btc",
+      wallet: "crypto",
+      category_id: BITSTACK,
+      initial_balance: 800,
+      share_count: 0.01,
+      instrument_symbol: "BTC-EUR",
+      balance_as_of: "2026-09-04",
+    });
+    const [item] = build([bitstack], [buy("2026-09-08", 20, null, BITSTACK)], {
+      "BTC-EUR": 100000,
+    });
+    expect(item!.shareCount).toBe(0.01);
+    expect(item!.marketValue).toBe(1020);
+  });
+
+  it("guesses nothing between two lines of one wallet", () => {
+    const other = row({
+      id: "pos-other",
+      wallet: "pea",
+      category_id: PEA,
+      initial_balance: 300,
+      balance_as_of: "2026-09-04",
+    });
+    const items = build(
+      [pea, other],
+      [buy("2026-09-08", 50, null, PEA), buy("2026-09-08", 1020)],
+      { "CW8.PA": 510 },
+    );
+    expect(items.find((item) => item.id === "pos-pea")!.totalInvested).toBe(
+      6020,
+    );
+    expect(items.find((item) => item.id === "pos-other")!.totalInvested).toBe(
+      300,
+    );
+  });
+
+  it("ends the chart on the card's own total", () => {
+    const [item] = build([pea], [buy("2026-09-08", 1020)], { "CW8.PA": 510 });
+    expect(item!.chartPoints.at(-1)!.invested).toBe(6020);
+  });
+});

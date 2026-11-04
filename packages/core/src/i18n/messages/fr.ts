@@ -1265,7 +1265,7 @@ export const fr: Messages = {
     namePlaceholder: "ex. ETF MSCI World",
     costBasis: "Total versé (ce que ça vous a coûté)",
     costBasisHint:
-      "Le total versé que votre courtier indique pour cette ligne. Sert à calculer le gain ou la perte\u00A0; il n'est pas mis à jour par les opérations récurrentes.",
+      "Le total versé que votre courtier indique pour cette ligne. Sert à calculer le gain ou la perte. Les achats confirmés ensuite s'y ajoutent d'eux-mêmes\u00A0; retapez-le pour repartir du chiffre de votre courtier.",
     changeFundPrefix: "Changez le fonds sur la page",
     changeFundLink: "Récurrents",
     changeFundSuffix: ".",

@@ -1212,6 +1212,7 @@ export type Database = {
       };
       investment_positions: {
         Row: {
+          balance_as_of: string;
           category_id: string | null;
           current_value: number | null;
           id: string;
@@ -1229,6 +1230,7 @@ export type Database = {
           wallet: Database["public"]["Enums"]["investment_wallet"];
         };
         Insert: {
+          balance_as_of?: string;
           category_id?: string | null;
           current_value?: number | null;
           id?: string;
@@ -1246,6 +1248,7 @@ export type Database = {
           wallet: Database["public"]["Enums"]["investment_wallet"];
         };
         Update: {
+          balance_as_of?: string;
           category_id?: string | null;
           current_value?: number | null;
           id?: string;

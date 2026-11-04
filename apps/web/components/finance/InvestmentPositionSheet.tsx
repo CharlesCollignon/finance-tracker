@@ -320,7 +320,9 @@ function InvestmentPositionForm({
             min="0"
             required
             className="text-base"
-            defaultValue={item?.initialBalance || ""}
+            // The total as it stands, purchases since it was typed included
+            // (`083`): saving it unchanged then starts from the same figure.
+            defaultValue={item?.totalInvested || ""}
           />
         </div>
 

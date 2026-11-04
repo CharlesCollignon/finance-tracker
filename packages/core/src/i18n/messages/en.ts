@@ -1630,7 +1630,7 @@ export const en = {
     namePlaceholder: "e.g. MSCI World ETF",
     costBasis: "Total paid in (what it cost you)",
     costBasisHint:
-      "The total your broker shows as paid in for this position. Used to work out the gain or loss — not updated from recurring entries.",
+      "The total your broker shows as paid in for this position. Used to work out the gain or loss. Purchases confirmed after it add to it on their own; type it again to start over from your broker's figure.",
     /**
      * The link is the surface's own name, not the route's: the path is still
      * `/recurring` but the tab has been called Charges for two releases, and
