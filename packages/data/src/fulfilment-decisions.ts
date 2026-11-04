@@ -1,15 +1,20 @@
 import type { ActionResult } from "@finance/core/action-result";
 import { cashDateOf } from "@finance/core/cash-date";
-import { formatShortDate, todayIsoLocal } from "@finance/core/constants";
+import {
+  formatEuro,
+  formatShortDate,
+  todayIsoLocal,
+} from "@finance/core/constants";
 import { monthLong } from "@finance/core/i18n/calendar-names";
 import type { Locale } from "@finance/core/i18n/locale";
 import { translator } from "@finance/core/i18n/t";
-import { countsForMonthOf } from "@finance/core/recurring-fulfilment";
+import { bonusOf, countsForMonthOf } from "@finance/core/recurring-fulfilment";
 import { z } from "zod";
 
 import type { Db } from "./client";
 import { followPurchases } from "./dca-transfer";
 import { isMissingSchema } from "./schema";
+import { readSplitParts, splitTransaction, unsplitTransaction } from "./splits";
 import { dbError } from "./errors";
 
 /**
@@ -60,7 +65,7 @@ export async function fulfilOccurrence(
   const [{ data: template }, { data: transaction }] = await Promise.all([
     db
       .from("recurring_templates")
-      .select("id")
+      .select("id, amount, recurrence, pricing_type, categories(type)")
       .eq("id", parsed.data.templateId)
       .eq("user_id", userId)
       .maybeSingle(),
@@ -127,30 +132,105 @@ export async function fulfilOccurrence(
     movedOn,
   );
 
-  if (!countsFor) {
-    return { success: true, message: "actions.counted" };
+  if (countsFor) {
+    const { error: moveError } = await db
+      .from("transactions")
+      .update({ occurred_on: parsed.data.occurredOn, cash_on: movedOn })
+      .eq("id", parsed.data.transactionId)
+      .eq("user_id", userId);
+
+    if (moveError) {
+      return {
+        error: isMissingSchema(moveError)
+          ? "actions.cashDateSetup"
+          : dbError(moveError),
+      };
+    }
   }
 
-  const { error: moveError } = await db
-    .from("transactions")
-    .update({ occurred_on: parsed.data.occurredOn, cash_on: movedOn })
-    .eq("id", parsed.data.transactionId)
-    .eq("user_id", userId);
-
-  if (moveError) {
-    return {
-      error: isMissingSchema(moveError)
-        ? "actions.cashDateSetup"
-        : dbError(moveError),
-    };
+  // A pay that came in well above its figure carried a bonus: the salary
+  // part keeps the row, the bank line and the pairing, and the rest becomes
+  // its own row beside it — same day, same month, named « Prime » — so the
+  // month shows the salary it expected and the bonus as a bonus. After the
+  // move, so the bonus row counts for the same month the salary does.
+  const t = translator(locale);
+  const bonus = bonusOf(
+    {
+      amount: Number(template.amount),
+      categoryType: template.categories?.type ?? "expense",
+      recurrence: template.recurrence ?? "monthly",
+      anyAmount: template.pricing_type === "purchases",
+    },
+    Number(transaction.amount),
+  );
+  if (bonus) {
+    const split = await splitTransaction(db, userId, {
+      id: parsed.data.transactionId,
+      parts: [
+        {
+          amount: Math.round((Number(transaction.amount) - bonus) * 100) / 100,
+          categoryId: transaction.category_id,
+        },
+        {
+          amount: bonus,
+          categoryId: transaction.category_id,
+          note: t("fulfilment.bonusNote"),
+        },
+      ],
+    });
+    if (split.error) {
+      return { error: split.error };
+    }
   }
 
+  const month = countsFor
+    ? monthLong(Number(countsFor.slice(5, 7)), locale)
+    : null;
+  const amount = bonus ? formatEuro(bonus, locale) : null;
   return {
     success: true,
-    message: translator(locale)("actions.countedForMonth", {
-      month: monthLong(Number(countsFor.slice(5, 7)), locale),
-    }),
+    message:
+      month && amount
+        ? t("actions.countedForMonthWithBonus", { month, amount })
+        : month
+          ? t("actions.countedForMonth", { month })
+          : amount
+            ? t("actions.countedWithBonus", { amount })
+            : "actions.counted",
   };
+}
+
+/**
+ * Put back together a bonus the confirmation set apart, when the pairing is
+ * taken back: two parts, the second the « Prime » it wrote. A split the
+ * person made themselves has other words or more parts, and is left alone.
+ */
+async function rejoinBonus(
+  db: Db,
+  userId: string,
+  transactionId: string,
+): Promise<void> {
+  const { data: row } = await db
+    .from("transactions")
+    .select("split_group")
+    .eq("id", transactionId)
+    .eq("user_id", userId)
+    .maybeSingle();
+  if (!row?.split_group) {
+    return;
+  }
+  const parts = await readSplitParts(db, userId, row.split_group);
+  const bonusNotes = new Set([
+    translator("fr")("fulfilment.bonusNote"),
+    translator("en")("fulfilment.bonusNote"),
+  ]);
+  if (
+    parts.length === 2 &&
+    parts[0]!.id === transactionId &&
+    bonusNotes.has(parts[1]!.note ?? "")
+  ) {
+    await unsplitTransaction(db, userId, transactionId);
+  }
 }
 
 /**
@@ -188,6 +268,7 @@ export async function moveBackEarlyIncome(
   if (unlinkError && !isMissingSchema(unlinkError)) {
     return { error: dbError(unlinkError) };
   }
+  await rejoinBonus(db, userId, transactionId);
 
   const { error } = await db
     .from("transactions")
@@ -279,6 +360,7 @@ export async function undoFulfilment(
   }
 
   if (fulfilment?.transaction_id) {
+    await rejoinBonus(db, userId, fulfilment.transaction_id);
     const { data: moved } = await db
       .from("transactions")
       .select("*")

@@ -17,6 +17,24 @@ import type { ChangelogEntry, RoadmapItem } from "./changelog";
  */
 export const CHANGELOG: readonly ChangelogEntry[] = [
   {
+    id: "2026-11-04-salary-bonus",
+    date: "2026-11-04",
+    kind: "fixed",
+    platforms: ["web"],
+    fr: {
+      title: "Un salaire avec une prime reste votre salaire",
+      body: "Un salaire arrivé bien au-dessus de son montant habituel — une prime, un treizième mois — n’était plus reconnu : il restait dans le mois où l’argent est arrivé, et le mois qu’il payait n’avait pas de salaire. Il vous est maintenant proposé comme les autres, au jour de paie, et en le confirmant la différence est mise à part sur sa propre ligne, « Prime », dans le même mois que le salaire.",
+      detail:
+        "Seulement pour les revenus mensuels ou annuels, et seulement au-dessus : un salaire nettement plus bas que prévu n’est toujours pas proposé. Annuler la confirmation remet la prime avec le salaire.",
+    },
+    en: {
+      title: "A salary with a bonus is still your salary",
+      body: "A salary that came in well above its usual amount — a bonus, a thirteenth month — was no longer recognised: it stayed in the month the money arrived, and the month it paid for had no salary. It is now offered like the others, on payday, and confirming it sets the difference apart on its own line, “Bonus”, in the same month as the salary.",
+      detail:
+        "Only for monthly or yearly income, and only above: a salary well below what was expected is still not offered. Undoing the confirmation puts the bonus back with the salary.",
+    },
+  },
+  {
     id: "2026-10-26-le-point-layout",
     date: "2026-10-26",
     kind: "fixed",

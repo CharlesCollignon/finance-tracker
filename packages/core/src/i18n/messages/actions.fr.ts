@@ -49,6 +49,8 @@ export const actionsFr: typeof actionsEn = {
   pairingDismissed: "Ce rapprochement ne sera plus proposé",
   backInForecast: "De retour dans les prévisions",
   countedForMonth: "Compté pour {month}",
+  countedWithBonus: "Compté, prime de {amount} à part",
+  countedForMonthWithBonus: "Compté pour {month}, prime de {amount} à part",
   movedBack: "Remis au {date}",
   cashDateSetup:
     "Compter un revenu pour le mois suivant demande la migration 045 — lancez-la et cela fonctionnera.",

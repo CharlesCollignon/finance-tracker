@@ -62,6 +62,8 @@ export const actionsEn = {
   pairingDismissed: "Won't suggest that pairing again",
   backInForecast: "Back in the forecast",
   countedForMonth: "Counted for {month}",
+  countedWithBonus: "Counted, {amount} bonus set apart",
+  countedForMonthWithBonus: "Counted for {month}, {amount} bonus set apart",
   movedBack: "Moved back to {date}",
   cashDateSetup:
     "Counting an income for next month needs migration 045 — run it and this will work.",
