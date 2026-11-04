@@ -14,7 +14,9 @@
  */
 
 import { recurringOccurrenceKey } from "./apply-recurring";
+import { merchantWords } from "./bank-merchant";
 import {
+  formatCurrency,
   formatDayMonth,
   formatEuro,
   formatFullDate,
@@ -731,5 +733,107 @@ export function forSpace(
     ...(notification.covers
       ? { covers: notification.covers.map((key) => `${prefix}${key}`) }
       : {}),
+  };
+}
+
+/** A debit the bank has just brought, as « Nouvelles dépenses » names it. */
+export interface NewSpending {
+  amount: number;
+  /** The creditor's name, when the bank gives one. */
+  counterparty: string | null;
+  /** The bank's own words. */
+  note: string;
+}
+
+/** A bank statement's way: whole amounts whole, cents always two digits. */
+function money(amount: number, locale: Locale): string {
+  return formatCurrency(amount, "EUR", locale);
+}
+
+/** How many debits the push names before saying « et N autres ». */
+const SPENDING_NAMED = 3;
+
+/**
+ * What a debit is called in a push: the creditor the bank names, else the
+ * words of its description that could name the shop (`merchantWords`), card
+ * noise and dates gone, else the description cut short.
+ */
+export function spendingName(
+  row: Pick<NewSpending, "counterparty" | "note">,
+): string {
+  const named = row.counterparty?.trim();
+  if (named) {
+    return named;
+  }
+  const words = merchantWords(row.note).slice(0, 3);
+  if (words.length > 0) {
+    return words
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(" ");
+  }
+  const plain = row.note.trim();
+  return plain.length > 32 ? `${plain.slice(0, 31)}…` : plain;
+}
+
+/**
+ * « Nouvelles dépenses »: the debits the bank brought since the person was
+ * last told, the biggest named with their amounts.
+ *
+ * One push for a whole sync, never one per row: a refresh can bring a day
+ * of card payments at once. When some of them, or anything else the bank
+ * brought, wait for a category, it says so and opens the inbox — and the
+ * caller makes it cover that day's « À vérifier », so the same rows do not
+ * buzz twice.
+ */
+export function newSpendingNotification({
+  rows,
+  toSort,
+  key,
+  covers,
+  t,
+  locale,
+}: Voice & {
+  rows: readonly NewSpending[];
+  /** Bank rows waiting for a category, the debits' and any others. */
+  toSort: number;
+  key: string;
+  /** The review push this one says as well, when `toSort` is above zero. */
+  covers?: string;
+}): PendingNotification | null {
+  if (rows.length === 0) {
+    return null;
+  }
+  const biggestFirst = [...rows].sort((a, b) => b.amount - a.amount);
+  const total =
+    Math.round(rows.reduce((sum, row) => sum + row.amount, 0) * 100) / 100;
+
+  const sortLine =
+    toSort > 0 ? t("push.spending.toSort", { count: toSort }) : "";
+  let title: string;
+  let body: string;
+  if (rows.length === 1) {
+    title = t("push.spending.titleOne", { amount: money(total, locale) });
+    body = spendingName(biggestFirst[0]!);
+  } else {
+    title = t("push.spending.title", {
+      count: rows.length,
+      amount: money(total, locale),
+    });
+    const named = biggestFirst
+      .slice(0, SPENDING_NAMED)
+      .map((row) => `${spendingName(row)} ${money(row.amount, locale)}`)
+      .join(", ");
+    const rest = rows.length - SPENDING_NAMED;
+    body =
+      rest > 0 ? `${named} ${t("push.spending.more", { count: rest })}` : named;
+  }
+
+  return {
+    kind: "spending",
+    key,
+    title,
+    body: sortLine ? `${body}. ${sortLine}` : body,
+    url: toSort > 0 ? "/transactions?review=inbox" : "/transactions",
+    ...(toSort > 0 && covers ? { covers: [covers] } : {}),
   };
 }

@@ -6,6 +6,7 @@ import { monthClosedByBank } from "@finance/core/push-messages";
 import { defaultRecipient, readRecipients } from "@finance/data/preferences";
 import { deliver } from "@/lib/push/deliver";
 import { reviewNotificationFor } from "@/lib/push/review";
+import { spendingNotificationFor } from "@/lib/push/spending";
 import { transferFor } from "@/lib/push/transfer";
 import { configureWebPush } from "@/lib/push/send";
 import { getBankConnection, syncableUserIds } from "@/lib/bank/client";
@@ -224,6 +225,18 @@ export async function GET(request: NextRequest) {
         today,
         translator(recipient.locale),
       );
+      // The payments this sync brought, by shop and amount. When the review
+      // is due too, this one says it and covers it: one buzz, not two.
+      const spending = await spendingNotificationFor(
+        supabase,
+        userId,
+        today,
+        { t: translator(recipient.locale), locale: recipient.locale },
+        review,
+      );
+      if (spending) {
+        notices.push(spending);
+      }
       if (review) {
         notices.push(review);
       }

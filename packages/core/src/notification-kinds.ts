@@ -26,6 +26,11 @@ export const NOTIFICATION_KINDS = [
    * the morning after one's day, whether it went through.
    */
   "dca",
+  /**
+   * Debits the bank has just brought, named with their amounts — one push
+   * per sync, whatever it brought (`newSpendingNotification`).
+   */
+  "spending",
   /** Bank rows waiting for a category. */
   "review",
   /** A new round amount of savings and investments reached. */
