@@ -64,6 +64,7 @@ const KIND_ICONS: Record<
   bigCharge: "receipt-outline",
   arrived: "cash-outline",
   dca: "trending-up-outline",
+  spending: "card-outline",
   review: "file-tray-outline",
   milestone: "flag-outline",
   year: "sparkles-outline",

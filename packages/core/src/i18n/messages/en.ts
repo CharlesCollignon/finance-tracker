@@ -2341,6 +2341,10 @@ export const en = {
       label: "Your DCAs",
       hint: "When your pay comes in and two days before the 1st, what to send to the broker; the day after a purchase inside your investment accounts, to say whether it went through.",
     },
+    spending: {
+      label: "New spending",
+      hint: "When your bank brings in a payment: the shop and the amount.",
+    },
     review: {
       label: "Transactions to sort",
       hint: "When your bank brought in transactions without a category.",
@@ -2563,6 +2567,18 @@ export const en = {
       body: "Pluclair can no longer read your open-banking.io account. Upload a new credentials file to bring your figures up to date.",
     },
     /** Rows the sync could not file on its own, waiting in the review inbox. */
+    spending: {
+      titleOne: "New spending: {amount}",
+      title: "{count} new payments: {amount}",
+      more: {
+        one: "and {count} more",
+        other: "and {count} more",
+      },
+      toSort: {
+        one: "One transaction needs a category.",
+        other: "{count} transactions need a category.",
+      },
+    },
     review: {
       title: "To review",
       body: {

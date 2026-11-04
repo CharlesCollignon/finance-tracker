@@ -5,6 +5,8 @@ import type { MonthBalance } from "./month-balance";
 import type { CloseableMonth, MonthCloseResult } from "./month-close";
 import type { RecurringTemplateWithCategory } from "./types/database";
 import {
+  newSpendingNotification,
+  spendingName,
   bigChargeHeadsUp,
   bigCharges,
   closeReminder,
@@ -610,5 +612,76 @@ describe("Entraide's moderation pushes", () => {
     });
     expect(kept.key).toBe("community:settled:4");
     expect(kept.body).toContain("reste visible");
+  });
+});
+
+describe("newSpendingNotification", () => {
+  const en = { t: translator("en"), locale: "en" as const };
+  const carrefour = {
+    amount: 32.1,
+    counterparty: null,
+    note: "CB CARREFOUR MARKET 03/11 PARIS",
+  };
+  const sncf = {
+    amount: 45,
+    counterparty: "SNCF Voyageurs",
+    note: "PRLV SNCF",
+  };
+  const uber = { amount: 12, counterparty: null, note: "UBER *TRIP" };
+  const boulangerie = { amount: 3.2, counterparty: null, note: "BOULANGERIE" };
+
+  it("says nothing when the bank brought no debit", () => {
+    expect(
+      newSpendingNotification({ rows: [], toSort: 2, key: "k", ...fr }),
+    ).toBeNull();
+  });
+
+  it("names one payment by its shop, with the amount in the title", () => {
+    const push = newSpendingNotification({
+      rows: [carrefour],
+      toSort: 0,
+      key: "spending:1",
+      ...fr,
+    })!;
+    expect(push.kind).toBe("spending");
+    expect(push.title).toBe("Nouvelle dépense\u00A0: 32,10\u00A0€");
+    expect(push.body).toMatch(/^Carrefour Market/);
+    expect(push.url).toBe("/transactions");
+    expect(push.covers).toBeUndefined();
+  });
+
+  it("adds them up, biggest first, and says how many more", () => {
+    const push = newSpendingNotification({
+      rows: [boulangerie, carrefour, uber, sncf],
+      toSort: 0,
+      key: "spending:2",
+      ...fr,
+    })!;
+    expect(push.title).toBe("4 nouvelles dépenses\u00A0: 92,30\u00A0€");
+    expect(push.body.startsWith("SNCF Voyageurs 45\u00A0€, Carrefour")).toBe(
+      true,
+    );
+    expect(push.body.endsWith("et 1 autre")).toBe(true);
+  });
+
+  it("says what waits for a category, opens the inbox and covers the review", () => {
+    const push = newSpendingNotification({
+      rows: [carrefour, sncf],
+      toSort: 3,
+      key: "spending:3",
+      covers: "bank-review:2026-11-04",
+      ...en,
+    })!;
+    expect(push.title).toBe("2 new payments: €77.10");
+    expect(push.body.endsWith(". 3 transactions need a category.")).toBe(true);
+    expect(push.url).toBe("/transactions?review=inbox");
+    expect(push.covers).toEqual(["bank-review:2026-11-04"]);
+  });
+
+  it("prefers the creditor the bank names, and cuts a bare description short", () => {
+    expect(spendingName(sncf)).toBe("SNCF Voyageurs");
+    expect(spendingName({ counterparty: " ", note: "1234 5678" })).toBe(
+      "1234 5678",
+    );
   });
 });

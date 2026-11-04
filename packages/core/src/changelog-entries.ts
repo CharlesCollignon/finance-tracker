@@ -17,6 +17,24 @@ import type { ChangelogEntry, RoadmapItem } from "./changelog";
  */
 export const CHANGELOG: readonly ChangelogEntry[] = [
   {
+    id: "2026-11-04-spending-push",
+    date: "2026-11-04",
+    kind: "new",
+    platforms: ["web", "phone"],
+    fr: {
+      title: "Une notification pour chaque nouvelle dépense",
+      body: "Quand votre banque apporte un paiement, Pluclair vous le dit : « Nouvelle dépense : 32,10 € — Carrefour Market », ou, s’il y en a plusieurs, leur total et les plus grosses avec leur montant. Une seule notification par mise à jour, jamais une par ligne, et rien entre 21 h et 8 h : ce qui arrive la nuit est dit le matin.",
+      detail:
+        "Seulement les paiements des trois derniers jours : un relevé ancien ou un premier branchement n’en déclenche pas. Un virement vers votre épargne ou un courtier n’est pas une dépense et n’est pas compté. Quand des opérations attendent leur catégorie, la même notification le dit et ouvre la liste à classer, au lieu d’en envoyer une seconde. Elle se coupe dans Profil, « Nouvelles dépenses » ; l’interrupteur arrive sur le téléphone avec la prochaine version.",
+    },
+    en: {
+      title: "A notification for each new payment",
+      body: "When your bank brings in a payment, Pluclair tells you: “New spending: €32.10 — Carrefour Market”, or, when there are several, their total and the biggest with their amounts. One notification per update, never one per line, and nothing between 9 pm and 8 am: what comes in at night is said in the morning.",
+      detail:
+        "Only payments from the last three days: an old statement or a first connection does not set it off. A transfer to your savings or a broker is not spending and is not counted. When transactions wait for a category, the same notification says so and opens the list to sort, instead of sending a second one. It is turned off in Profile, “New spending”; the switch reaches the phone with the next version.",
+    },
+  },
+  {
     id: "2026-10-26-le-point-layout",
     date: "2026-10-26",
     kind: "fixed",

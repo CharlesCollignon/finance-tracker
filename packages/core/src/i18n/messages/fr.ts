@@ -1754,6 +1754,10 @@ export const fr: Messages = {
       label: "Vos DCA",
       hint: "Quand la paie arrive et deux jours avant le 1er, ce qu'il faut envoyer au courtier\u00A0; le lendemain d'un achat dans vos placements, pour dire s'il est passé.",
     },
+    spending: {
+      label: "Nouvelles dépenses",
+      hint: "Quand votre banque apporte un paiement\u00A0: le commerce et le montant.",
+    },
     review: {
       label: "Opérations à classer",
       hint: "Quand votre banque a apporté des opérations sans catégorie.",
@@ -1982,6 +1986,18 @@ export const fr: Messages = {
     bankExpired: {
       title: "Votre banque ne se synchronise plus",
       body: "Pluclair ne peut plus lire votre compte open-banking.io. Déposez un nouveau fichier d'identifiants pour remettre vos chiffres à jour.",
+    },
+    spending: {
+      titleOne: "Nouvelle dépense\u00A0: {amount}",
+      title: "{count} nouvelles dépenses\u00A0: {amount}",
+      more: {
+        one: "et {count} autre",
+        other: "et {count} autres",
+      },
+      toSort: {
+        one: "Une opération attend sa catégorie.",
+        other: "{count} opérations attendent leur catégorie.",
+      },
     },
     review: {
       title: "À vérifier",
