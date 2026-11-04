@@ -17,6 +17,20 @@ import type { ChangelogEntry, RoadmapItem } from "./changelog";
  */
 export const CHANGELOG: readonly ChangelogEntry[] = [
   {
+    id: "2026-11-04-journal-tabs",
+    date: "2026-11-04",
+    kind: "better",
+    platforms: ["web"],
+    fr: {
+      title: "Les vues du Journal, au centre",
+      body: "En haut du Journal, Liste, Calendrier, Par catégorie et Par commerce sont maintenant centrés sur leur propre ligne, le mois juste en dessous, au milieu, et « Ajouter » à droite.",
+    },
+    en: {
+      title: "The Ledger's views, centred",
+      body: "At the top of the Ledger, List, Calendar, By category and By shop are now centred on a row of their own, the month just under them, in the middle, and “Add” on the right.",
+    },
+  },
+  {
     id: "2026-11-04-spending-push",
     date: "2026-11-04",
     kind: "new",
