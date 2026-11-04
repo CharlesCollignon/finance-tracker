@@ -11,11 +11,12 @@ import { ICON } from "@/lib/icon-scale";
 import { useT } from "@/lib/locale-context";
 
 /**
- * The Ledger's toolbar, drawn once by the views' layout: the views, the
- * month and Add in one row from `lg`, the month in the middle, because it is
- * what everything below is about. Narrower, the month takes a row of its own
- * under the views — under rather than over, so the views stay where they are
- * on the one view that has no month, By category.
+ * The Ledger's toolbar, drawn once by the views' layout: the four views
+ * centred at the top, on a row of their own at every width (the owner's
+ * call, November 2026), then the month in the middle under them, because it
+ * is what everything below is about, with Add at the end of that row. The
+ * views come first so they stay where they are on the views that have no
+ * month, By category and By shop.
  *
  * In the layout rather than in each view, so that switching views leaves it
  * where it is while the view under it loads. What differs between the views
@@ -40,16 +41,19 @@ export function LedgerToolbar() {
     : firstDay;
 
   return (
-    <div className="mb-4 grid grid-cols-[1fr_auto] items-center gap-x-3 gap-y-2 lg:grid-cols-[1fr_auto_1fr]">
-      <SurfaceTabs tabs={LEDGER_TABS} className="min-w-0" />
+    <div className="mb-4 grid grid-cols-[1fr_auto_1fr] items-center gap-x-3 gap-y-2">
+      <SurfaceTabs
+        tabs={LEDGER_TABS}
+        className="col-span-3 min-w-0 max-w-full justify-self-center"
+      />
       {dated ? (
         <MonthPicker
           basePath={pathname}
-          className="col-span-2 row-start-2 justify-self-center lg:col-span-1 lg:col-start-2 lg:row-start-1"
+          className="col-start-2 row-start-2 justify-self-center"
         />
       ) : null}
       {pathname === "/transactions" ? (
-        <div className="flex shrink-0 items-center gap-2 justify-self-end lg:col-start-3 lg:row-start-1">
+        <div className="col-start-3 row-start-2 flex shrink-0 items-center gap-2 justify-self-end">
           {/* A phone has the floating add button; this is the desktop's.
               The same sheet as the notch's "+", opened on the month being
               read when that is not this one. On the list only: the
