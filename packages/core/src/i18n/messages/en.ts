@@ -2583,6 +2583,8 @@ export const en = {
     early: { one: "{count} day early", other: "{count} days early" },
     exact: "The same to the cent, {when}",
     more: "{amount} more than expected, {when}",
+    bonus: "{amount} more than expected, set apart as a bonus, {when}",
+    bonusNote: "Bonus",
     less: "{amount} less than expected, {when}",
     /** Plural on how many are being asked about, which the words do not name. */
     askTitle: { one: "Did this arrive?", other: "Did these arrive?" },

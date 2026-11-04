@@ -2002,6 +2002,8 @@ export const fr: Messages = {
     early: { one: "{count} jour d'avance", other: "{count} jours d'avance" },
     exact: "Au centime près, {when}",
     more: "{amount} de plus que prévu, {when}",
+    bonus: "{amount} de plus que prévu, mis à part comme prime, {when}",
+    bonusNote: "Prime",
     less: "{amount} de moins que prévu, {when}",
     askTitle: {
       one: "Est-ce bien arrivé\u00A0?",

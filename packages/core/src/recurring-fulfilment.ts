@@ -53,6 +53,63 @@ export const MAX_AMOUNT_DRIFT = 0.05;
 export const MIN_AMOUNT_TOLERANCE = 1.5;
 
 /**
+ * Whether a movement's amount may be an occurrence's.
+ *
+ * Within the tolerance either way, for everything. And for a pay — income on
+ * a monthly or yearly rhythm — anything above it too: a bonus, a thirteenth
+ * month or a summer premium is paid with the salary, in the same transfer,
+ * and a salary that came in €480 higher is still the salary. Before this the
+ * pay simply went missing that month: too far from its figure to be offered,
+ * so it stayed in the month its money moved and the month it was for showed
+ * no salary at all. Less than expected keeps the tolerance — a smaller
+ * income on payday is likelier something else than a pay cut.
+ */
+export function amountFits(
+  occurrence: Pick<
+    FulfilmentOccurrence,
+    "amount" | "categoryType" | "recurrence" | "anyAmount"
+  >,
+  amount: number,
+): boolean {
+  return (
+    occurrence.anyAmount === true ||
+    amountsMatch(occurrence.amount, amount) ||
+    (isPay(occurrence) && amount > occurrence.amount)
+  );
+}
+
+/**
+ * The part of a pay above what was expected, beyond the tolerance — what to
+ * call a bonus and set apart on confirming — or null when there is none.
+ */
+export function bonusOf(
+  occurrence: Pick<
+    FulfilmentOccurrence,
+    "amount" | "categoryType" | "recurrence" | "anyAmount"
+  >,
+  amount: number,
+): number | null {
+  if (
+    !isPay(occurrence) ||
+    occurrence.anyAmount === true ||
+    amount <= occurrence.amount ||
+    amountsMatch(occurrence.amount, amount)
+  ) {
+    return null;
+  }
+  return roundMoney(amount - occurrence.amount);
+}
+
+/** Income on payday: monthly or yearly, never weekly. */
+function isPay(
+  occurrence: Pick<FulfilmentOccurrence, "categoryType" | "recurrence">,
+): boolean {
+  return (
+    occurrence.categoryType === "income" && occurrence.recurrence !== "weekly"
+  );
+}
+
+/**
  * How many days either side of the occurrence to look.
  *
  * A charge due on the 5th lands on the 3rd when the 5th is a Sunday, and a
@@ -140,6 +197,13 @@ export interface FulfilmentProposal {
    * cash date (`cash_on`). Null when both are in the same month.
    */
   countsForMonth: string | null;
+  /**
+   * The part of a pay above what was expected, beyond the tolerance: a
+   * bonus paid with the salary (`bonusOf`). Confirming sets it apart as its
+   * own row, so the salary stays the salary and the bonus is seen as one.
+   * Null for everything else.
+   */
+  bonus: number | null;
 }
 
 /**
@@ -341,6 +405,9 @@ function cost(occurrence: FulfilmentOccurrence, movement: FulfilmentMovement) {
   return days * 1000 + drift;
 }
 
+/** Larger than any `cost` a pairing inside the window can have. */
+const BONUS_PENALTY = 1_000_000_000;
+
 export interface ProposeOptions {
   /**
    * Today, ISO. Required, because the question this asks is "did this
@@ -432,10 +499,7 @@ export function proposeFulfilments(
       ) {
         continue;
       }
-      if (
-        !occurrence.anyAmount &&
-        !amountsMatch(occurrence.amount, movement.amount)
-      ) {
+      if (!amountFits(occurrence, movement.amount)) {
         continue;
       }
       if (
@@ -453,7 +517,13 @@ export function proposeFulfilments(
       pairs.push({
         occurrence,
         movement,
-        score: cost(occurrence, movement),
+        // A movement at the expected figure beats one carrying a bonus,
+        // whatever the days: a bonus paid as its own transfer beside the
+        // salary must not be taken for the salary because it came a day
+        // nearer.
+        score:
+          cost(occurrence, movement) +
+          (bonusOf(occurrence, movement.amount) === null ? 0 : BONUS_PENALTY),
       });
     }
   }
@@ -489,6 +559,7 @@ export function proposeFulfilments(
       difference: roundMoney(movement.amount - occurrence.amount),
       daysApart: daysBetween(occurrence.occurredOn, movement.occurredOn),
       countsForMonth: countsForMonthOf(occurrence, movement.occurredOn),
+      bonus: bonusOf(occurrence, movement.amount),
     });
   }
 
@@ -662,8 +733,14 @@ export function describeFulfilment(
           { count: proposal.daysApart },
         );
 
-  const line =
-    Math.abs(proposal.difference) < 0.005
+  // A bonus is named as one, because confirming sets it apart: the person
+  // should know before pressing that the €480 will be its own row.
+  const line = proposal.bonus
+    ? t("fulfilment.bonus", {
+        amount: formatMoney(proposal.bonus),
+        when,
+      })
+    : Math.abs(proposal.difference) < 0.005
       ? t("fulfilment.exact", { when })
       : t(proposal.difference > 0 ? "fulfilment.more" : "fulfilment.less", {
           amount: formatMoney(Math.abs(proposal.difference)),
@@ -815,8 +892,7 @@ export function explainFulfilmentMisses(
       ? "refused"
       : nearest.occurredOn > today
         ? "not-arrived"
-        : !occurrence.anyAmount &&
-            !amountsMatch(occurrence.amount, nearest.amount)
+        : !amountFits(occurrence, nearest.amount)
           ? "amount"
           : daysApart > windowFor(occurrence, nearest.occurredOn)
             ? "date"

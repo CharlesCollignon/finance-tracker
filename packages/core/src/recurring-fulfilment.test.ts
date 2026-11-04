@@ -1,8 +1,10 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  amountFits,
   amountsMatch,
   bankForecast,
+  bonusOf,
   confirmLabel,
   countsForMonthOf,
   describeFulfilment,
@@ -720,6 +722,97 @@ describe("money that moves on payday, early or late", () => {
     expect(
       countsForMonthOf({ occurredOn: "2026-09-28" }, "2026-09-22"),
     ).toBeNull();
+  });
+});
+
+describe("a bonus paid with the salary", () => {
+  // The case that prompted this: the November salary paid on 30 October
+  // with a summer bonus on top, ~€480 more than its figure — too far to be
+  // offered, so November showed no salary at all.
+  const salary = occurrence({
+    templateId: "tpl-salary",
+    occurredOn: "2026-11-01",
+    amount: 3400,
+    categoryId: SALARY_CATEGORY,
+    categoryType: "income",
+    label: "Salaire",
+    recurrence: "monthly",
+  });
+  const paid = movement({
+    transactionId: "tx-salary",
+    occurredOn: "2026-10-30",
+    amount: 3880,
+    categoryId: SALARY_CATEGORY,
+    note: "VIR SALAIRE",
+  });
+
+  it("still offers the salary, for the month it pays, with the bonus named", () => {
+    const [proposal] = proposeFulfilments([salary], [paid], {
+      today: "2026-11-04",
+    });
+    expect(proposal).toMatchObject({
+      transactionId: "tx-salary",
+      countsForMonth: "2026-11",
+      difference: 480,
+      bonus: 480,
+    });
+    expect(describeFulfilment(proposal!, money, "fr")).toBe(
+      "480.00 € de plus que prévu, mis à part comme prime, 2 jours d'avance — à compter pour novembre",
+    );
+    expect(describeFulfilment(proposal!, money, "en")).toBe(
+      "480.00 € more than expected, set apart as a bonus, 2 days early — counts for November",
+    );
+  });
+
+  it("calls overtime inside the tolerance no bonus", () => {
+    expect(bonusOf(salary, 3500)).toBeNull();
+    const [proposal] = proposeFulfilments(
+      [salary],
+      [{ ...paid, amount: 3500 }],
+      { today: "2026-11-04" },
+    );
+    expect(proposal).toMatchObject({ difference: 100, bonus: null });
+  });
+
+  it("keeps the tolerance for a pay that came in lower", () => {
+    expect(amountFits(salary, 2900)).toBe(false);
+    expect(
+      proposeFulfilments([salary], [{ ...paid, amount: 2900 }], {
+        today: "2026-11-04",
+      }),
+    ).toEqual([]);
+  });
+
+  it("is for pay only: a refund above a charge is not a bonus", () => {
+    expect(amountFits(occurrence(), 980)).toBe(false);
+    expect(bonusOf(occurrence(), 980)).toBeNull();
+    expect(amountFits({ ...salary, recurrence: "weekly" }, 3880)).toBe(false);
+  });
+
+  it("prefers the salary at its figure over a bonus paid on its own beside it", () => {
+    // Paid as two transfers, the bonus a day nearer the 1st: the salary is
+    // still the one offered.
+    const [proposal] = proposeFulfilments(
+      [salary],
+      [
+        { ...paid, amount: 3400 },
+        {
+          ...paid,
+          transactionId: "tx-both",
+          occurredOn: "2026-10-31",
+          amount: 3880,
+        },
+      ],
+      { today: "2026-11-04" },
+    );
+    expect(proposal).toMatchObject({ transactionId: "tx-salary", bonus: null });
+  });
+
+  it("no longer blames the amount for a pay that came in higher", () => {
+    const misses = explainFulfilmentMisses([salary], [paid], [], {
+      today: "2026-11-04",
+    });
+    expect(misses[0]?.reason).not.toBe("amount");
   });
 });
 
