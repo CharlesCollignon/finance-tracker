@@ -215,16 +215,19 @@ January–October; a grant paid September–June).
       The DCA transfer stays tied to a pay that comes every month.
 - [x] Changelog entry.
 
-## Phase 6 — Pluclair finds the rhythm (branch `cadence-detection`)
+## Phase 6 — Pluclair finds the rhythm (branch `cadence-detection`) — done
 
-- [ ] `recurring-detection.ts` learns gaps of about 2, 3 and 6 months (55–67,
+- [x] `recurring-detection.ts` learns gaps of about 2, 3 and 6 months (55–67,
       85–97 and 175–190 days) and proposes a template with the months it
-      saw. A monthly run with the same months missing two years running is
-      proposed as « certains mois ». Below three sightings, nothing is
-      proposed. How long a proposal stays open scales with its gap.
-- [ ] Matching in `recurring-fulfilment.ts`: an excluded month expects
+      saw. A monthly run that skips the same months is proposed as
+      « certains mois », once every month it keeps was seen in two different
+      years (two full years would make the tax taken January–October wait
+      until the third January). Below three sightings, nothing is proposed.
+      How long a proposal stays open scales with its longest gap. Income is
+      still never proposed: a salary is the employer's schedule.
+- [x] Matching in `recurring-fulfilment.ts`: an excluded month expects
       nothing, so its silence is never « Est-ce bien arrivé ? ».
-- [ ] Changelog entry.
+- [x] Changelog entry.
 
 ## Not in this plan
 

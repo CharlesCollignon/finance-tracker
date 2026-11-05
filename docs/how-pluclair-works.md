@@ -312,7 +312,9 @@ counts a third of itself), looked for up to twelve months ahead; with none,
 the month's end. A monthly template can be kept to some months
 (`recurring_templates.months`, migration 084); an expense kept that way is
 spread over the year like a yearly one (`isSpreadExpense`, shared by the
-budget, the projection and `still-to-come`). It is the Android widget's
+budget, the projection and `still-to-come`). Suggestions
+(`recurring-detection.ts`) find gaps of about 2, 3 and 6 months, and monthly
+runs that skip the same months, and propose them with those months. It is the Android widget's
 figure and one of Questions' readings (`read.left`); the balance card has
 not shown it since October 2026, when it left the card with « Puis-je me
 permettre ? » and « Comment c'est calculé ? » at the owner's ask. Under the
