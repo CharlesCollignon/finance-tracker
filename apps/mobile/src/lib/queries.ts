@@ -9,6 +9,7 @@ import {
 } from "@finance/data/ledger-search";
 import { readYearReview } from "@finance/data/year-review";
 import * as fulfilment from "@finance/data/fulfilment";
+import * as cards from "@finance/data/cards";
 import * as filingRules from "@finance/data/filing-rules";
 import * as investmentEvents from "@finance/data/investment-events";
 import { readMerchantScreen } from "@finance/data/merchant-screen";
@@ -355,6 +356,11 @@ export function getRecordedCashFlows(
 /* --------------------------------------------------------- the bank feed */
 
 /** Every account the connection has ever shown, ticked or not. */
+/** The person's cards, asked about or not (`cards`, migration 087). */
+export function getCards(userId: string): Promise<cards.CardRow[]> {
+  return cards.getCards(supabase, userId);
+}
+
 export function getBankAccounts(userId: string): Promise<BankAccount[]> {
   return bankBalance.getBankAccounts(supabase, userId);
 }

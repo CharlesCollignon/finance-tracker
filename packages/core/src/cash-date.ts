@@ -56,16 +56,18 @@ export function isMovedRow(row: DatedRow): boolean {
 
 /**
  * The dates a transaction written from a bank line takes: the day it was
- * made, and the day the bank booked it as the day its money moved when the
- * two differ (migration 085).
+ * made, and the day its money moved when the two differ — the booking day
+ * (migration 085), or a deferred card's debit day (migration 087).
  */
 export function ledgerDatesOf(line: {
   occurred_on: string;
   purchased_on?: string | null;
+  /** A deferred card's debit day (migration 087): when its money leaves. */
+  debited_on?: string | null;
 }): { occurred_on: string; cash_on: string | null } {
-  return line.purchased_on && line.purchased_on !== line.occurred_on
-    ? { occurred_on: line.purchased_on, cash_on: line.occurred_on }
-    : { occurred_on: line.occurred_on, cash_on: null };
+  const madeOn = line.purchased_on ?? line.occurred_on;
+  const movedOn = line.debited_on ?? line.occurred_on;
+  return { occurred_on: madeOn, cash_on: movedOn !== madeOn ? movedOn : null };
 }
 
 /**

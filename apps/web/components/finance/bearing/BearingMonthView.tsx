@@ -46,6 +46,7 @@ export function BearingMonthView({
   bankInvite = false,
   bankAttention = null,
   awaitingAccounts = 0,
+  awaitingCards = 0,
   spaceBalance = null,
   askClose = false,
 }: {
@@ -60,6 +61,8 @@ export function BearingMonthView({
   bankAttention?: BankAttention | null;
   /** Accounts the bank shows that wait to be told what they are. */
   awaitingAccounts?: number;
+  /** Cards waiting to be told how they are debited (`cards`). */
+  awaitingCards?: number;
   /**
    * The week's recap, early in the week: streamed in like the read, and
    * nothing at all on the days it has nothing to show.
@@ -92,7 +95,11 @@ export function BearingMonthView({
   // bank is the person's whatever owner is on screen.
   const todo = sortAttention([
     ...data.attention,
-    ...bankAttentionItems({ bank: bankAttention, awaitingAccounts }),
+    ...bankAttentionItems({
+      bank: bankAttention,
+      awaitingAccounts,
+      awaitingCards,
+    }),
   ]);
 
   return (

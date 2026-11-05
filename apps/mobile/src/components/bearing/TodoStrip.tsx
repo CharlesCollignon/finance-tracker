@@ -169,6 +169,10 @@ export function attentionHref(href: string): Href | null {
   if (href === "/transactions?review=inbox") {
     return { pathname: "/transactions", params: reviewAsk() } as Href;
   }
+  // The web's anchor to « Vos cartes »; the phone's bank screen shows them.
+  if (href.startsWith("/bank#")) {
+    return "/bank" as Href;
+  }
   if (href === CLOSE_HREF) {
     return {
       pathname: "/",

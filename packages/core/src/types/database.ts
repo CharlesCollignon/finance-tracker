@@ -71,7 +71,13 @@ export type BankConnectionStatus =
  * What a bank account is to the user: Courant, Épargne or Ne pas suivre.
  * Null on a row means not decided yet, which is followed as nothing.
  */
-export type BankAccountRole = "spending" | "savings" | "ignored" | "joint";
+/**
+ * What a bank account is to the user (migrations 056, 061, 087). `card`: a
+ * deferred-debit card the bank shows as its own account, its payments in the
+ * ledger and its balance never cash.
+ */
+export type BankAccountRole =
+  "spending" | "savings" | "ignored" | "joint" | "card";
 
 export type { Json } from "./database.generated";
 

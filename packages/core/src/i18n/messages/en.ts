@@ -3201,6 +3201,26 @@ export const en = {
     },
   },
 
+  cards: {
+    heading: "Your cards",
+    body: "A deferred-debit card is debited once a month: each payment counts on the day you pay, and the money leaves your account on the debit day.",
+    name: "Card ••{last4}",
+    question: "Immediate or deferred debit?",
+    immediate: "Immediate debit",
+    deferred: "Deferred debit",
+    debitDay: "Debited on",
+    lastDay: "Last day of the month",
+    day: "The {day}",
+    deferredOn: "Deferred debit, on the {day}",
+    deferredLast: "Deferred debit, at month end",
+    change: "Change",
+    bearingLine: {
+      one: "A card is waiting for you to say how it is debited.",
+      other: "{count} cards are waiting for you to say how they are debited.",
+    },
+    bearingCta: "Answer",
+  },
+
   bankAccounts: {
     heading: "Your accounts",
     body: "Current: its movements come into your ledger and its balance is your money to spend. Savings: its balance is a savings account's on Placements. Don't follow: nothing comes in from it.",
@@ -3209,6 +3229,9 @@ export const en = {
     roleJoint: "Shared",
     roleSavings: "Savings",
     roleIgnored: "Don't follow",
+    roleCard: "Deferred card",
+    cardHint:
+      "Its payments come into your ledger on their day, and leave your account on the debit day.",
     livretLabel: "Its savings account",
     livretPanel: "Which savings account is it?",
     livretTaken: {

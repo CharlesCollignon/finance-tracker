@@ -14,11 +14,10 @@
  * the day it was made.
  */
 
+import { isCardLine, isCardSettlement } from "./cards";
+
 /** Further back than this, a date in the text is not the purchase's. */
 const MAX_LAG_DAYS = 45;
-
-/** A card line, by the words banks print on one. */
-const CARD_LINE = /\b(CARTE|CB|CARD)\b/i;
 
 /** `DD/MM`, or `DD/MM/YY(YY)`, ending the text. */
 const TRAILING_DATE = /(\d{2})\/(\d{2})(?:\/(\d{2}|\d{4}))?\s*$/;
@@ -54,7 +53,9 @@ export function purchaseDayInText(
   text: string | null | undefined,
   bookedOn: string,
 ): string | null {
-  if (!text || !CARD_LINE.test(text)) {
+  // A month's combined card debit ends with the period it covers, not a day
+  // anything was bought.
+  if (!text || !isCardLine(text) || isCardSettlement(text)) {
     return null;
   }
   const found = text.match(TRAILING_DATE);

@@ -84,6 +84,7 @@ export const actionsEn = {
   },
   suggestionGone: "That one is no longer being suggested",
   suggestionDismissed: "Won't suggest that again",
+  cardAnswered: "Noted for this card",
   proposalAdded: "{name} added",
 
   /* What a press of Refresh brought, joined with commas. */

@@ -355,10 +355,12 @@ export type Database = {
         Row: {
           amount: number;
           balance_after: number | null;
+          card_key: string | null;
           confirmed_by: string | null;
           counterparty: string | null;
           created_at: string;
           currency: string;
+          debited_on: string | null;
           decided_by: string | null;
           direction: string;
           id: string;
@@ -378,10 +380,12 @@ export type Database = {
         Insert: {
           amount: number;
           balance_after?: number | null;
+          card_key?: string | null;
           confirmed_by?: string | null;
           counterparty?: string | null;
           created_at?: string;
           currency: string;
+          debited_on?: string | null;
           decided_by?: string | null;
           direction: string;
           id?: string;
@@ -401,10 +405,12 @@ export type Database = {
         Update: {
           amount?: number;
           balance_after?: number | null;
+          card_key?: string | null;
           confirmed_by?: string | null;
           counterparty?: string | null;
           created_at?: string;
           currency?: string;
+          debited_on?: string | null;
           decided_by?: string | null;
           direction?: string;
           id?: string;
@@ -548,6 +554,50 @@ export type Database = {
             columns: ["category_id"];
             isOneToOne: false;
             referencedRelation: "categories";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      cards: {
+        Row: {
+          answered_at: string | null;
+          created_at: string;
+          debit: string | null;
+          debit_day: number | null;
+          first_seen_on: string;
+          id: string;
+          key: string;
+          label: string | null;
+          user_id: string;
+        };
+        Insert: {
+          answered_at?: string | null;
+          created_at?: string;
+          debit?: string | null;
+          debit_day?: number | null;
+          first_seen_on?: string;
+          id?: string;
+          key: string;
+          label?: string | null;
+          user_id: string;
+        };
+        Update: {
+          answered_at?: string | null;
+          created_at?: string;
+          debit?: string | null;
+          debit_day?: number | null;
+          first_seen_on?: string;
+          id?: string;
+          key?: string;
+          label?: string | null;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "cards_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "owners";
             referencedColumns: ["id"];
           },
         ];

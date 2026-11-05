@@ -4,12 +4,14 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { ActionResult } from "@finance/core/action-result";
 import { ownTransferIbans } from "@finance/core/bank-accounts";
 import { intradayIndexes } from "@finance/core/bank-balance";
+import { cardAccountKey } from "@finance/core/cards";
+import { cardCycles, cardRules, getCards } from "@finance/data/cards";
 import {
   planFeed,
   reviewEverything,
   type BankTransaction,
 } from "@finance/core/bank-feed";
-import { shiftIsoDate } from "@finance/core/constants";
+import { shiftIsoDate, todayIsoLocal } from "@finance/core/constants";
 import { DEFAULT_LOCALE } from "@finance/core/i18n/locale";
 import {
   confirmProvisional,
@@ -163,7 +165,10 @@ async function linesAround(
     .eq("provider_account_id", providerAccountId)
     .in("source", sources)
     .gte("occurred_on", shiftIsoDate(days[0]!, -PROVISIONAL_WINDOW_DAYS))
-    .lte("occurred_on", shiftIsoDate(days[days.length - 1]!, PROVISIONAL_WINDOW_DAYS))
+    .lte(
+      "occurred_on",
+      shiftIsoDate(days[days.length - 1]!, PROVISIONAL_WINDOW_DAYS),
+    )
     .limit(5000);
   // Before migration 075 there is nothing provisional to meet.
   if (error) {
@@ -174,7 +179,9 @@ async function linesAround(
     amount: String(row.amount),
     direction: row.direction === "in" ? "in" : "out",
     day: row.occurred_on,
-    confirmedBy: row.confirmed_by ? (row.confirmed_by.split("|").pop() ?? null) : null,
+    confirmedBy: row.confirmed_by
+      ? (row.confirmed_by.split("|").pop() ?? null)
+      : null,
   }));
 }
 
@@ -211,7 +218,12 @@ export async function planStatement(
     id: `${account.providerAccountId}:${line.id}`,
     balanceAfterTransaction: line.balanceAfterTransaction ?? null,
   }));
-  const kept = account.role === "spending" || account.role === "joint";
+  // A card's own statement is kept too: its payments, debited later
+  // (`role = 'card'`, migration 087).
+  const kept =
+    account.role === "spending" ||
+    account.role === "joint" ||
+    account.role === "card";
 
   if (input.closing && write) {
     await db
@@ -273,9 +285,11 @@ export async function planStatement(
     confirmedBefore = met.alreadyConfirmed;
   }
 
-  const [context, ownIbans] = await Promise.all([
+  const [context, ownIbans, cards, cycles] = await Promise.all([
     ownerContext(db, who.ownerId),
     ownIbansOf(db, who),
+    getCards(db, who.ownerId),
+    cardCycles(db, who.ownerId, todayIsoLocal()),
   ]);
   const planned = planFeed(fresh, {
     locale: DEFAULT_LOCALE,
@@ -286,6 +300,12 @@ export async function planStatement(
     seenProviderIds: context.seenProviderIds,
     rules: context.rules,
     ownIbans,
+    cards: cardRules(cards),
+    cardCycles: cycles,
+    provisional,
+    ...(account.role === "card"
+      ? { cardAccountKey: cardAccountKey(account.providerAccountId) }
+      : {}),
   });
   // Lines an AI read off a picture are each looked at once, filed by no one.
   const plan = input.readByAi ? reviewEverything(planned) : planned;

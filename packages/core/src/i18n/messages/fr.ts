@@ -2444,6 +2444,26 @@ export const fr: Messages = {
     },
   },
 
+  cards: {
+    heading: "Vos cartes",
+    body: "Une carte à débit différé est débitée une fois par mois\u00A0: chaque paiement compte le jour où vous payez, et l'argent quitte votre compte le jour du débit.",
+    name: "Carte ••{last4}",
+    question: "Débit immédiat ou différé\u00A0?",
+    immediate: "Débit immédiat",
+    deferred: "Débit différé",
+    debitDay: "Débitée le",
+    lastDay: "Dernier jour du mois",
+    day: "Le {day}",
+    deferredOn: "Débit différé, le {day}",
+    deferredLast: "Débit différé, en fin de mois",
+    change: "Changer",
+    bearingLine: {
+      one: "Une carte attend que vous disiez comment elle est débitée.",
+      other: "{count} cartes attendent que vous disiez comment elles sont débitées.",
+    },
+    bearingCta: "Répondre",
+  },
+
   bankAccounts: {
     heading: "Vos comptes",
     body: "Courant\u00A0: ses opérations arrivent dans votre journal et son solde est votre argent pour dépenser. Épargne\u00A0: son solde est celui d'un livret sur Placements. Ne pas suivre\u00A0: rien n'en est importé.",
@@ -2452,6 +2472,9 @@ export const fr: Messages = {
     roleJoint: "Commun",
     roleSavings: "Épargne",
     roleIgnored: "Ne pas suivre",
+    roleCard: "Carte différée",
+    cardHint:
+      "Ses paiements arrivent dans votre journal à leur date, et quittent votre compte le jour du débit.",
     livretLabel: "Son livret",
     livretPanel: "Quel livret est-ce\u00A0?",
     livretTaken: {

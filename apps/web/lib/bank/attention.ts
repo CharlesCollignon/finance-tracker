@@ -6,6 +6,7 @@ import { awaitingRole } from "@finance/core/bank-accounts";
 import { todayIsoLocal } from "@finance/core/constants";
 import { getBankAccounts } from "@/lib/queries/bank-balance";
 import { createClient } from "@/lib/supabase/server";
+import { getCards, unansweredCards } from "@finance/data/cards";
 
 /**
  * What this user's bank connection asks of them today, read through their
@@ -33,4 +34,12 @@ export async function countAccountsAwaitingRole(
   userId: string,
 ): Promise<number> {
   return awaitingRole(await getBankAccounts(userId)).length;
+}
+
+/** Cards seen in the person's lines that wait to be told how they are debited. */
+export async function countCardsAwaitingAnswer(
+  userId: string,
+): Promise<number> {
+  const db = await createClient();
+  return unansweredCards(await getCards(db, userId)).length;
 }

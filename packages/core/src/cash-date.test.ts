@@ -44,6 +44,14 @@ describe("a transaction's two dates", () => {
     expect(
       ledgerDatesOf({ occurred_on: "2026-11-03", purchased_on: null }),
     ).toEqual({ occurred_on: "2026-11-03", cash_on: null });
+    // A deferred card's payment: made on the 12th, debited at month end.
+    expect(
+      ledgerDatesOf({
+        occurred_on: "2026-10-13",
+        purchased_on: "2026-10-12",
+        debited_on: "2026-10-31",
+      }),
+    ).toEqual({ occurred_on: "2026-10-12", cash_on: "2026-10-31" });
   });
 
   it("asks the database for either date in the range", () => {

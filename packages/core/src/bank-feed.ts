@@ -26,6 +26,16 @@ import { lookupBankMerchant, type BankMerchantIndex } from "./bank-merchant";
 import { findFilingRule, type FilingRule } from "./filing-rules";
 import { purchaseDayOf } from "./purchase-day";
 import {
+  cardNumberOf,
+  DEFAULT_DEBIT_DAY,
+  debitDateFor,
+  isCardLine,
+  isCardSettlement,
+  settledCycle,
+  type CardCycle,
+  type CardRule,
+} from "./cards";
+import {
   lookupMerchant,
   normalizeMerchant,
   type MerchantIndex,
@@ -70,6 +80,15 @@ export interface BankFeedCandidate {
    * written from it counts for. Absent or null when it is the same day.
    */
   purchasedOn?: string | null;
+  /** The card it is from, where the line says (`cards.key`). */
+  cardKey?: string | null;
+  /**
+   * For a deferred card's payment, the day its money leaves the current
+   * account — the transaction's `cash_on`. Absent when that is the booking.
+   */
+  debitedOn?: string | null;
+  /** A month's combined card debit (`isCardSettlement`). */
+  settlement?: boolean;
   /**
    * Positive decimal string, exactly as the bank stated it. Kept as a string
    * all the way to the numeric column: the provider is deliberate about never
@@ -139,6 +158,76 @@ export interface ToCandidateOptions {
   ownIbans?: ReadonlySet<string>;
   /** The language the fallback description is written in. */
   locale: Locale;
+  /** The user's cards, as asked (`cards`, migration 087). */
+  cards?: readonly CardRule[];
+  /**
+   * The key of the card these lines come from, when the account is a card
+   * the bank shows on its own (`role = 'card'`): a deferred card's, by the
+   * user's answer, its payments leaving the current account on its day.
+   */
+  cardAccountKey?: string;
+  /**
+   * Lines that arrive before the statement — an alert e-mail's, a
+   * notification's: made on their day, booked later. A deferred card's leave
+   * the account on its debit day.
+   */
+  provisional?: boolean;
+}
+
+/** Days from `earlier` to `later`. */
+function daysAfter(earlier: string, later: string): number {
+  return Math.round(
+    (Date.parse(`${later}T00:00:00Z`) - Date.parse(`${earlier}T00:00:00Z`)) /
+      86_400_000,
+  );
+}
+
+/**
+ * Which card a line is from, whether it is a month's combined debit, and the
+ * day a deferred card's payment leaves the account:
+ *
+ *  - from a card account, always its debit day — the account is the card's;
+ *  - an alert's or a notification's for a card said to be deferred, too;
+ *  - on the current account, the value date the bank gives a card line when
+ *    it is well after the booking — the bank saying when it will debit it.
+ */
+function cardFacts(
+  tx: BankTransaction,
+  occurredOn: string,
+  purchasedOn: string | null,
+  options: ToCandidateOptions,
+): Pick<BankFeedCandidate, "cardKey" | "debitedOn" | "settlement"> {
+  const text = tx.remittanceInformation;
+  const cardKey = options.cardAccountKey ?? cardNumberOf(text);
+  const settlement = !options.cardAccountKey && isCardSettlement(text);
+  if (settlement) {
+    return { cardKey, debitedOn: null, settlement: true };
+  }
+  const rule = cardKey
+    ? options.cards?.find((card) => card.key === cardKey)
+    : undefined;
+  const madeOn = purchasedOn ?? occurredOn;
+  if (options.cardAccountKey) {
+    return {
+      cardKey,
+      debitedOn: debitDateFor(madeOn, rule?.debitDay ?? DEFAULT_DEBIT_DAY),
+    };
+  }
+  if (options.provisional && rule?.debit === "deferred") {
+    return {
+      cardKey,
+      debitedOn: debitDateFor(madeOn, rule.debitDay ?? DEFAULT_DEBIT_DAY),
+    };
+  }
+  if (
+    isCardLine(text) &&
+    tx.valueDate &&
+    /^\d{4}-\d{2}-\d{2}$/.test(tx.valueDate) &&
+    daysAfter(occurredOn, tx.valueDate) > 3
+  ) {
+    return { cardKey, debitedOn: tx.valueDate };
+  }
+  return { cardKey };
 }
 
 function cleanIban(iban: string | null): string | null {
@@ -180,10 +269,12 @@ export function toCandidate(
     tx.remittanceInformation?.trim() ??
     translator(locale)("fallback.bankTransaction");
 
+  const purchasedOn = purchaseDayOf(tx, occurredOn);
   return {
     providerId: tx.id,
     occurredOn,
-    purchasedOn: purchaseDayOf(tx, occurredOn),
+    purchasedOn,
+    ...cardFacts(tx, occurredOn, purchasedOn, options),
     amount: money.amount,
     currency: tx.currency,
     direction,
@@ -314,6 +405,11 @@ export type FeedDecision =
    * row is filed against the transaction that is already there.
    */
   | { kind: "match"; transactionId: string }
+  /**
+   * A month's combined card debit whose payments are already in: nothing is
+   * written, and the payments it paid for take its day as theirs.
+   */
+  | { kind: "settled"; cardKey: string; debitOn: string }
   /** Waits to be looked at, with a starting point where there is one. */
   | {
       kind: "review";
@@ -551,6 +647,8 @@ export interface PlannedFeedRow {
 }
 
 export interface FeedPlan {
+  /** Combined card debits whose payments are already in (`settled`). */
+  settled?: PlannedFeedRow[];
   automatic: PlannedFeedRow[];
   /** Already in the ledger; filed against the row that is there. */
   matched: PlannedFeedRow[];
@@ -572,7 +670,15 @@ export interface FeedPlan {
 export function planFeed(
   transactions: readonly BankTransaction[],
   options: DecideOptions &
-    ToCandidateOptions & { seenProviderIds?: ReadonlySet<string> },
+    ToCandidateOptions & {
+      seenProviderIds?: ReadonlySet<string>;
+      /**
+       * What each deferred card has already spent towards a debit, from the
+       * lines brought before (`cardCycles` in the data layer). This batch's
+       * own card lines are added to it.
+       */
+      cardCycles?: readonly CardCycle[];
+    },
 ): FeedPlan {
   const seen = options.seenProviderIds ?? new Set<string>();
   // Grows as the pass goes on: one ledger row can only answer for one bank row.
@@ -584,19 +690,69 @@ export function planFeed(
   const automatic: PlannedFeedRow[] = [];
   const matched: PlannedFeedRow[] = [];
   const review: PlannedFeedRow[] = [];
+  const settled: PlannedFeedRow[] = [];
   let discarded = 0;
   let duplicates = 0;
 
+  const candidates: BankFeedCandidate[] = [];
   for (const tx of transactions) {
     if (seen.has(tx.id)) {
       duplicates += 1;
       continue;
     }
-
     const candidate = toCandidate(tx, options);
     if (!candidate) {
       discarded += 1;
       continue;
+    }
+    candidates.push(candidate);
+  }
+
+  // What each deferred card owes towards each debit: the lines brought
+  // before, and this batch's — a card statement and the debit it details can
+  // come in one file.
+  const cycles = new Map<string, CardCycle>();
+  for (const cycle of options.cardCycles ?? []) {
+    cycles.set(`${cycle.key}|${cycle.debitOn}`, { ...cycle });
+  }
+  for (const candidate of candidates) {
+    if (!candidate.cardKey || !candidate.debitedOn) {
+      continue;
+    }
+    const id = `${candidate.cardKey}|${candidate.debitedOn}`;
+    const cycle = cycles.get(id) ?? {
+      key: candidate.cardKey,
+      debitOn: candidate.debitedOn,
+      total: 0,
+    };
+    const amount = Number(candidate.amount);
+    cycle.total += candidate.direction === "out" ? amount : -amount;
+    cycles.set(id, cycle);
+  }
+  const owed = [...cycles.values()].filter((cycle) => cycle.total > 0);
+
+  for (const candidate of candidates) {
+    if (candidate.settlement && candidate.direction === "out") {
+      const cycle = settledCycle(
+        {
+          amount: Number(candidate.amount),
+          bookedOn: candidate.occurredOn,
+          key: candidate.cardKey ?? null,
+        },
+        owed,
+      );
+      if (cycle) {
+        settled.push({
+          candidate,
+          decision: {
+            kind: "settled",
+            cardKey: cycle.key,
+            debitOn: cycle.debitOn,
+          },
+        });
+        owed.splice(owed.indexOf(cycle), 1);
+        continue;
+      }
     }
 
     const decision = decide(candidate, { ...options, existing: unclaimed() });
@@ -614,7 +770,7 @@ export function planFeed(
     }
   }
 
-  return { automatic, matched, review, discarded, duplicates };
+  return { settled, automatic, matched, review, discarded, duplicates };
 }
 
 /**

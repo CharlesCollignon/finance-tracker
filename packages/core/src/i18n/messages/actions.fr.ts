@@ -71,6 +71,7 @@ export const actionsFr: typeof actionsEn = {
   },
   suggestionGone: "Cette suggestion n'est plus proposée",
   suggestionDismissed: "Ce ne sera plus proposé",
+  cardAnswered: "C'est noté pour cette carte",
   proposalAdded: "Opération récurrente ajoutée\u00A0: {name}",
 
   nothingNew: "Rien de nouveau",

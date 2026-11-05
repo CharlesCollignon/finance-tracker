@@ -172,3 +172,19 @@ describe("sortAttention", () => {
     ]);
   });
 });
+
+describe("bankAttentionItems, cards", () => {
+  it("asks about the cards waiting for an answer, after the accounts", () => {
+    const items = bankAttentionItems({
+      bank: null,
+      awaitingAccounts: 1,
+      awaitingCards: 2,
+    });
+    expect(items.map((item) => item.id)).toEqual(["accounts", "cards"]);
+    expect(items[1]).toMatchObject({
+      messageKey: "cards.bearingLine",
+      params: { count: 2 },
+      href: "/bank#cards",
+    });
+  });
+});
