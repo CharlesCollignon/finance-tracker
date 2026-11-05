@@ -1959,6 +1959,11 @@ export const en = {
     weekly: "Weekly · {day}",
     yearly: "Yearly · {month} {day}",
     monthly: "Monthly · day {day}",
+    everyTwoMonths: "Every 2 months · day {day} ({months})",
+    quarterly: "Quarterly · day {day} ({months})",
+    twiceYearly: "Twice a year · day {day} ({months})",
+    someMonths: "Some months · day {day} ({months})",
+    monthlyExcept: "Monthly except {months} · day {day}",
   },
 
   /**
@@ -3713,6 +3718,7 @@ export const en = {
     nameTooLong100: "Name must be 100 characters or less",
     nameRequiredCustom: "Name is required for custom holdings",
     shareCountRequired: "Share count is required",
+    invalidMonths: "Choose months between January and December",
     followsPurchasesMonthly: "A transfer that follows your DCAs is monthly",
     followsPurchasesCategory: "Only a broker transfer can follow your DCAs",
     noDcaToFollow: "No DCA next month: give this transfer an amount",

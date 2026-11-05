@@ -15,7 +15,7 @@
 
 import { cents, loanSchedule, monthlyOutlay } from "./loan-schedule";
 import { loanTermsFromRow } from "./property";
-import type { Recurrence } from "./recurrence";
+import { timesPerYear, type MonthSet, type Recurrence } from "./recurrence";
 import type {
   CategoryType,
   EnergyClass,
@@ -69,14 +69,9 @@ export function offersPropertyLink(
 export function monthlyEquivalent(
   amount: number,
   recurrence: Recurrence,
+  months?: MonthSet,
 ): number {
-  if (recurrence === "weekly") {
-    return (amount * 52) / 12;
-  }
-  if (recurrence === "yearly") {
-    return amount / 12;
-  }
-  return amount;
+  return (amount * timesPerYear({ recurrence, months })) / 12;
 }
 
 /** What a property's figures need of a recurring template. */
@@ -84,6 +79,8 @@ export interface PropertyTemplate {
   id: string;
   amount: number;
   recurrence: Recurrence;
+  /** The months it falls in, absent or null for every month. */
+  months?: MonthSet;
   active: boolean;
   endsOn: string | null;
   /** On the property, not only paying one of its loans. */
@@ -138,7 +135,12 @@ export function rentalFigures(
       )
       .reduce(
         (total, template) =>
-          total + monthlyEquivalent(template.amount, template.recurrence),
+          total +
+          monthlyEquivalent(
+            template.amount,
+            template.recurrence,
+            template.months,
+          ),
         0,
       );
 

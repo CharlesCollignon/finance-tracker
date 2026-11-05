@@ -30,3 +30,44 @@ describe("recurringTemplateSchema's property", () => {
     ).toBe(false);
   });
 });
+
+describe("recurringTemplateSchema's months", () => {
+  it("is absent when the form does not send it", () => {
+    expect(recurringTemplateSchema.parse(TEMPLATE)).not.toHaveProperty(
+      "months",
+    );
+  });
+
+  it("reads the form's list into its one shape", () => {
+    const parsed = recurringTemplateSchema.parse({
+      ...TEMPLATE,
+      months: "10,1,7,4",
+    });
+    expect(parsed.recurrence === "monthly" && parsed.months).toEqual([
+      1, 4, 7, 10,
+    ]);
+  });
+
+  it("is every month, null, when empty or all twelve", () => {
+    for (const months of ["", [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]]) {
+      const parsed = recurringTemplateSchema.parse({ ...TEMPLATE, months });
+      expect(parsed.recurrence === "monthly" && parsed.months).toBeNull();
+    }
+  });
+
+  it("refuses what is not a month", () => {
+    expect(
+      recurringTemplateSchema.safeParse({ ...TEMPLATE, months: "0,13" })
+        .success,
+    ).toBe(false);
+  });
+
+  it("refuses some months on a transfer that follows the DCAs", () => {
+    const result = recurringTemplateSchema.safeParse({
+      ...TEMPLATE,
+      pricingType: "purchases",
+      months: [1, 4, 7, 10],
+    });
+    expect(result.success).toBe(false);
+  });
+});

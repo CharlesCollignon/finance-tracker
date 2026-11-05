@@ -1516,6 +1516,11 @@ export const fr: Messages = {
     weekly: "Hebdomadaire · {day}",
     yearly: "Annuel · {day} {month}",
     monthly: "Mensuel · le {day}",
+    everyTwoMonths: "Tous les 2 mois · le {day} ({months})",
+    quarterly: "Trimestriel · le {day} ({months})",
+    twiceYearly: "Semestriel · le {day} ({months})",
+    someMonths: "Certains mois · le {day} ({months})",
+    monthlyExcept: "Mensuel sauf {months} · le {day}",
   },
 
   pullAge: {
@@ -2877,6 +2882,7 @@ export const fr: Messages = {
     nameTooLong100: "Le nom doit faire 100 caractères ou moins",
     nameRequiredCustom: "Le nom est obligatoire pour une ligne personnalisée",
     shareCountRequired: "Le nombre de parts est obligatoire",
+    invalidMonths: "Choisissez des mois entre janvier et décembre",
     followsPurchasesMonthly: "Un virement qui suit vos DCA est mensuel",
     followsPurchasesCategory:
       "Seul un virement vers le courtier peut suivre vos DCA",

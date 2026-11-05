@@ -7,6 +7,39 @@
  * for why that is safe for the ordinary errors sharing the same field.
  */
 import { z } from "zod";
+import { normaliseMonths } from "../recurrence";
+
+/**
+ * The months a monthly template falls in, as a form sends them ("1,4,7,10")
+ * or as an app passes them (an array): put in their one shape, null for
+ * every month.
+ */
+const monthSetSchema = z.preprocess(
+  (value) => {
+    if (value === undefined || value === null || value === "") {
+      return null;
+    }
+    const list = Array.isArray(value)
+      ? value.map(Number)
+      : String(value)
+          .split(",")
+          .map((part) => Number(part.trim()));
+    return list.some(
+      (month) => !Number.isInteger(month) || month < 1 || month > 12,
+    )
+      ? list
+      : normaliseMonths(list);
+  },
+  z
+    .array(
+      z
+        .number()
+        .int()
+        .min(1, "errors.invalidMonths")
+        .max(12, "errors.invalidMonths"),
+    )
+    .nullable(),
+);
 
 export const transactionSchema = z.object({
   categoryId: z.string().uuid(),
@@ -103,13 +136,14 @@ const recurringCommonSchema = z.object({
 
 type RecurringRulesInput = z.infer<typeof recurringCommonSchema> & {
   recurrence: "monthly" | "weekly" | "yearly";
+  months?: number[] | null;
 };
 
 function applyPricingRules(data: RecurringRulesInput, ctx: z.RefinementCtx) {
   if (data.pricingType === "purchases") {
     // Next month's DCAs are the month after the transfer's own, which only
-    // a monthly transfer has.
-    if (data.recurrence !== "monthly") {
+    // a transfer made every month has.
+    if (data.recurrence !== "monthly" || data.months) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         message: "errors.followsPurchasesMonthly",
@@ -178,6 +212,7 @@ export const recurringTemplateSchema = z.discriminatedUnion("recurrence", [
     .extend({
       recurrence: z.literal("monthly"),
       dayOfMonth: z.coerce.number().int().min(1).max(31),
+      months: monthSetSchema.optional(),
     })
     .superRefine(applyRecurringRules),
   recurringCommonSchema

@@ -21,6 +21,7 @@ function template(
     recurrence?: "monthly" | "weekly" | "yearly";
     startsOn?: string;
     endsOn?: string;
+    months?: number[];
   } = {},
 ): RecurringTemplateWithCategory {
   return {
@@ -32,6 +33,7 @@ function template(
     day_of_week: null,
     month_of_year: options.recurrence === "yearly" ? 12 : null,
     recurrence: options.recurrence ?? "monthly",
+    months: options.months ?? null,
     active: options.active ?? true,
     description: null,
     pricing_type: "fixed",
@@ -83,6 +85,47 @@ describe("payTemplate", () => {
 
   it("is null with no recurring income", () => {
     expect(payTemplate([template("rent", 5, 900, "expense")])).toBeNull();
+  });
+
+  it("compares by what each brings a month, so a quarterly bonus does not outrank the salary", () => {
+    const salary = template("salary", 28, 2500, "income");
+    expect(
+      payTemplate([
+        template("quarterly", 15, 3000, "income", { months: [3, 6, 9, 12] }),
+        salary,
+      ]),
+    ).toBe(salary);
+  });
+
+  it("runs to a pay that only comes every quarter", () => {
+    const quarterly = template("quarterly", 15, 9000, "income", {
+      months: [1, 4, 7, 10],
+    });
+    expect(payTemplate([quarterly])).toBe(quarterly);
+  });
+});
+
+describe("nextPayDay, paid every quarter", () => {
+  it("finds the next quarter's day, months ahead", () => {
+    expect(
+      nextPayDay({
+        template: template("quarterly", 15, 9000, "income", {
+          months: [1, 4, 7, 10],
+        }),
+        today: "2026-11-05",
+        owed: [],
+      }),
+    ).toBe("2027-01-15");
+  });
+
+  it("finds a pay that comes twice a year", () => {
+    expect(
+      nextPayDay({
+        template: template("half", 30, 9000, "income", { months: [6, 12] }),
+        today: "2027-01-10",
+        owed: [],
+      }),
+    ).toBe("2027-06-30");
   });
 });
 

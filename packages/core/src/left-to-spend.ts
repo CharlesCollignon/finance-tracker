@@ -3,6 +3,7 @@ import { upcomingDay, type MonthBalancePoint } from "./month-balance";
 import {
   filterDatesBySchedule,
   getRecurringOccurrenceDates,
+  timesPerYear,
 } from "./recurrence";
 import type { UpcomingCharge } from "./still-to-come";
 import type { RecurringTemplateWithCategory } from "./types/database";
@@ -40,14 +41,25 @@ function roundMoney(value: number): number {
   return Math.round(value * 100) / 100;
 }
 
-/** How many months ahead a pay day is looked for: a monthly salary is in the next. */
-const PAY_DAY_HORIZON = 3;
+/**
+ * How many months ahead a pay day is looked for: a monthly salary is in the
+ * next, a quarterly one within three, one paid twice a year within six.
+ */
+const PAY_DAY_HORIZON = 12;
+
+/** What a template brings or takes in an average month. */
+function monthlyShare(template: RecurringTemplateWithCategory): number {
+  return (Number(template.amount) * timesPerYear(template)) / 12;
+}
 
 /**
- * The income the figure runs to: the largest active recurring one, which for
- * a salaried user is the salary. A yearly one — a bonus — is not what a
- * month is lived on, and is left out. Ties go to the earlier template, so the
- * answer does not change from one read to the next.
+ * The income the figure runs to: the largest active recurring one by what it
+ * brings a month, which for a salaried user is the salary. Compared by monthly
+ * equivalent so a quarterly bonus larger than a month's pay does not take the
+ * salary's place, while someone paid only every quarter still has a pay day.
+ * A yearly one — a bonus — is not what a month is lived on, and is left out.
+ * Ties go to the earlier template, so the answer does not change from one
+ * read to the next.
  */
 export function payTemplate(
   templates: readonly RecurringTemplateWithCategory[],
@@ -61,7 +73,7 @@ export function payTemplate(
     ) {
       continue;
     }
-    if (best === null || Number(template.amount) > Number(best.amount)) {
+    if (best === null || monthlyShare(template) > monthlyShare(best)) {
       best = template;
     }
   }
@@ -107,6 +119,7 @@ export function nextPayDay({
           day_of_month: template.day_of_month,
           day_of_week: template.day_of_week,
           month_of_year: template.month_of_year,
+          months: template.months,
         },
         at.year,
         at.month,

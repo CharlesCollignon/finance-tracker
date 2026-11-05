@@ -46,6 +46,7 @@ import {
   templateOccurrenceDates,
 } from "./budget";
 import { formatMonthLabel, lastDayIsoOfMonth } from "./constants";
+import { isSpreadExpense } from "./recurrence";
 import { type Locale } from "./i18n/locale";
 import { translator } from "./i18n/t";
 import { MIN_CLOSES_FOR_CAP, type CloseHistorySummary } from "./month-close";
@@ -400,14 +401,13 @@ function collectCharges(
     const type = template.categories.type;
     const counts = template.categories.counts_toward_summary !== false;
 
-    /* A yearly expense is amortised rather than dated, so it contributes to
-       every month of the window regardless of which month it falls in — the
-       same rule `computeMonthlyBudget` applies. Everything else has to
-       actually land. */
-    const contributes =
-      type === "expense" && template.recurrence === "yearly"
-        ? true
-        : templateOccurrenceDates(template, year, month, monthEnd).length > 0;
+    /* A spread expense (yearly, or kept to some months) is amortised rather
+       than dated, so it contributes to every month of the window regardless
+       of which month it falls in — the same rule `computeMonthlyBudget`
+       applies. Everything else has to actually land. */
+    const contributes = isSpreadExpense(template)
+      ? true
+      : templateOccurrenceDates(template, year, month, monthEnd).length > 0;
 
     if (!contributes) {
       continue;

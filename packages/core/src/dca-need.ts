@@ -254,7 +254,10 @@ export function paydayKeyOf(
       (template) =>
         template.active &&
         template.categories.type === "income" &&
-        (template.recurrence ?? "monthly") === "monthly",
+        (template.recurrence ?? "monthly") === "monthly" &&
+        // A monthly transfer is sent from a pay that comes every month, not
+        // from a quarterly bonus that happens to be larger.
+        !template.months,
     )
     .sort((a, b) => Number(b.amount) - Number(a.amount))[0];
   if (!salary) {
@@ -576,6 +579,7 @@ function occurrencesIn(
     | "day_of_month"
     | "day_of_week"
     | "month_of_year"
+    | "months"
     | "starts_on"
     | "ends_on"
   >,
@@ -589,6 +593,7 @@ function occurrencesIn(
         day_of_month: template.day_of_month,
         day_of_week: template.day_of_week,
         month_of_year: template.month_of_year,
+        months: template.months,
       },
       year,
       month,

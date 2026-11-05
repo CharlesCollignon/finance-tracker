@@ -5,9 +5,9 @@ import {
   buildBudgetExpenseBreakdownWithProjection,
   computeMonthlyBudget,
   computeMonthlyBudgetWithProjection,
-  getActiveYearlyExpenseTemplates,
+  getActiveSpreadExpenseTemplates,
   resolveBudgetAsOfDate,
-  yearlyExpenseTemplateIds,
+  spreadExpenseTemplateIds,
 } from "./budget";
 import type {
   CategoryType,
@@ -64,6 +64,7 @@ function template({
   startsOn = null,
   endsOn = null,
   categoryId = "cat-rent",
+  months = null,
 }: {
   id: string;
   amount: number;
@@ -78,6 +79,7 @@ function template({
   startsOn?: string | null;
   endsOn?: string | null;
   categoryId?: string;
+  months?: number[] | null;
 }): RecurringTemplateWithCategory {
   return {
     id,
@@ -87,6 +89,7 @@ function template({
     day_of_month: dayOfMonth,
     day_of_week: dayOfWeek,
     month_of_year: monthOfYear,
+    months,
     recurrence,
     active,
     description: null,
@@ -147,7 +150,7 @@ describe("yearly expense templates", () => {
   });
 
   it("picks only active yearly expense templates", () => {
-    const found = getActiveYearlyExpenseTemplates([
+    const found = getActiveSpreadExpenseTemplates([
       yearly,
       monthly,
       inactive,
@@ -157,9 +160,53 @@ describe("yearly expense templates", () => {
   });
 
   it("exposes their ids as a set", () => {
-    expect(yearlyExpenseTemplateIds([yearly, monthly])).toEqual(
+    expect(spreadExpenseTemplateIds([yearly, monthly])).toEqual(
       new Set(["t-insurance"]),
     );
+  });
+});
+
+describe("expenses kept to some months", () => {
+  const water = template({
+    id: "t-water",
+    amount: 90,
+    months: [1, 4, 7, 10],
+    name: "Water",
+  });
+  const salary = template({
+    id: "t-pay",
+    amount: 9000,
+    type: "income",
+    months: [1, 4, 7, 10],
+  });
+
+  it("are spread like a yearly one, income is not", () => {
+    expect(
+      getActiveSpreadExpenseTemplates([water, salary]).map((t) => t.id),
+    ).toEqual(["t-water"]);
+  });
+
+  it("count a share of the year every month, even one they skip", () => {
+    const totals = computeMonthlyBudget([], [water]);
+    expect(totals.expense).toBeCloseTo(30);
+  });
+
+  it("do not count again the month they are paid", () => {
+    const totals = computeMonthlyBudget(
+      [
+        {
+          ...tx({
+            on: "2026-04-01",
+            amount: 90,
+            type: "expense",
+            name: "Water",
+          }),
+          recurring_template_id: "t-water",
+        },
+      ],
+      [water],
+    );
+    expect(totals.expense).toBeCloseTo(30);
   });
 });
 
