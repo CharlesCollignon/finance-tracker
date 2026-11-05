@@ -13,6 +13,7 @@ import {
   type FulfilmentProposal,
   describeMiss,
   explainFulfilmentMisses,
+  fulfilmentOccurrences,
   proposeFulfilments,
   refusalKey,
   type FulfilmentMovement,
@@ -951,5 +952,50 @@ describe("bankForecast", () => {
       "2026-10-06",
     );
     expect(result.awaited.size).toBe(0);
+  });
+});
+
+describe("fulfilmentOccurrences, kept to some months", () => {
+  it("expects nothing in a month the template skips", () => {
+    const water = {
+      id: "tpl-water",
+      user_id: "u",
+      category_id: "cat-water",
+      amount: 87.4,
+      recurrence: "monthly" as const,
+      day_of_month: 12,
+      day_of_week: null,
+      month_of_year: null,
+      months: [1, 4, 7, 10],
+      active: true,
+      description: "Eau",
+      pricing_type: "fixed" as const,
+      share_count: null,
+      instrument_symbol: null,
+      instrument_name: null,
+      last_quote_price: null,
+      last_quote_at: null,
+      starts_on: null,
+      ends_on: null,
+      property_id: null,
+      funded_by_transfer: false,
+      created_at: "2026-01-01T00:00:00Z",
+      categories: {
+        name: "Eau",
+        type: "expense" as const,
+        icon: null,
+        counts_toward_summary: true,
+      },
+    };
+    const found = fulfilmentOccurrences(
+      [water],
+      [{ id: "cat-water", type: "expense", name: "Eau" }],
+      [
+        { year: 2026, month: 3 },
+        { year: 2026, month: 4 },
+        { year: 2026, month: 5 },
+      ],
+    );
+    expect(found.map((o) => o.occurredOn)).toEqual(["2026-04-12"]);
   });
 });

@@ -2,7 +2,7 @@ import { useState } from "react";
 import { View } from "react-native";
 
 import {
-  PROPOSAL_CADENCE_KEYS,
+  proposalCadence,
   proposalDisplayName,
   type RecurringProposal,
 } from "@finance/core/recurring-detection";
@@ -16,7 +16,7 @@ import {
   dismissRecurringProposal,
 } from "@/lib/mutations";
 import { useFormatCurrency } from "@/providers/CurrencyProvider";
-import { useT } from "@/providers/LocaleProvider";
+import { useLocale, useT } from "@/providers/LocaleProvider";
 import { useToast } from "@/providers/ToastProvider";
 import { useThemeColors } from "@/theme/useThemeColors";
 
@@ -36,6 +36,7 @@ export function RecurringProposals({
   proposals: readonly RecurringProposal[];
 }) {
   const t = useT();
+  const locale = useLocale();
   const { toast } = useToast();
   const formatMoney = useFormatCurrency();
   const colors = useThemeColors();
@@ -105,7 +106,7 @@ export function RecurringProposals({
             </PrivateAmount>
           </View>
           <Text variant="muted" className="text-xs">
-            {`${t(PROPOSAL_CADENCE_KEYS[proposal.recurrence])} · ${t(
+            {`${proposalCadence(proposal, locale)} · ${t(
               "recurringProposals.seenTimes",
               { count: proposal.count },
             )}`}

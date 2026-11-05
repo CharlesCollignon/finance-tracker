@@ -39,6 +39,7 @@ export async function acceptRecurringProposal(
     recurrence: proposal.recurrence,
     day_of_month: proposal.dayOfMonth,
     day_of_week: proposal.dayOfWeek,
+    months: proposal.months,
     month_of_year:
       proposal.recurrence === "yearly"
         ? Number(proposal.lastSeenOn.slice(5, 7))

@@ -4,13 +4,13 @@ import { useState, useTransition } from "react";
 import { Button } from "@/components/ui/Button";
 import { useToast } from "@/components/layout/ToastProvider";
 import { useFormatCurrency } from "@/lib/use-currency";
-import { useT } from "@/lib/locale-context";
+import { useLocale, useT } from "@/lib/locale-context";
 import {
   acceptRecurringProposal,
   dismissRecurringProposal,
 } from "@/lib/actions/bank";
 import {
-  PROPOSAL_CADENCE_KEYS,
+  proposalCadence,
   proposalDisplayName,
   type RecurringProposal,
 } from "@finance/core/recurring-detection";
@@ -34,6 +34,7 @@ interface RecurringProposalsProps {
  */
 export function RecurringProposals({ proposals }: RecurringProposalsProps) {
   const t = useT();
+  const locale = useLocale();
   const { toast } = useToast();
   const formatMoney = useFormatCurrency();
   const [pending, startTransition] = useTransition();
@@ -97,7 +98,7 @@ export function RecurringProposals({ proposals }: RecurringProposalsProps) {
               </span>
             </div>
             <p className="text-xs text-muted-foreground">
-              {t(PROPOSAL_CADENCE_KEYS[proposal.recurrence])}
+              {proposalCadence(proposal, locale)}
               {" · "}
               {t("recurringProposals.seenTimes", { count: proposal.count })}
             </p>
