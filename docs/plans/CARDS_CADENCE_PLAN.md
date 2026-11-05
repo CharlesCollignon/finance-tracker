@@ -74,12 +74,12 @@ From the survey of 2026-11-05:
 - Onboarding asks for the income as a label, an amount and a day: monthly
   only (`onboarding.tsx:87-89`, web `WelcomeFlow.tsx`).
 
-## Phase 0 — Look at real deferred-card data (no branch)
+## Phase 0 — Look at real deferred-card data (no branch) — done 2026-11-05
 
 The code depends on what banks actually send, and that varies. Before any
 code:
 
-- [ ] With the owner's approval for this question (see the
+- [x] With the owner's approval for this question (see the
       owner-data-read-only rule): select-only reads of the owner's
       `bank_accounts` (any `CARD` account?) and a sample of card movements:
       which of `transactionDate / bookingDate / valueDate` are filled, how
@@ -88,11 +88,50 @@ code:
 - [ ] Ask the owner for one statement (PDF or CSV) from a bank with a
       deferred card, if they or someone close has one. Anonymised fixtures
       go into `packages/core/src/statement/__fixtures__`.
-- [ ] Write down, in this file, which of the three shapes each source shows:
+- [x] Write down, in this file, which of the three shapes each source shows:
       **(a)** a separate `CARD` account listing the purchases;
       **(b)** the purchases on the current account, booked on the debit day
       or with a later value date;
       **(c)** only one combined line a month.
+
+### What the owner's bank showed (2026-11-05)
+
+Read-only, approved by the owner: open-banking.io's stored copy
+(`getAccounts`, `getTransactions` since 2026-05-01, never `syncAll`) and
+the owner's `bank_accounts`. One bank, Crédit Agricole Paris IdF.
+
+- **One account**, `CACC` « Compte de Dépôt », role Courant. **No `CARD`
+  account.** The owner's card is **immediate debit**: shape (a) cannot be
+  seen here, and neither can (b) or (c). There is no combined monthly card
+  line in six months.
+- 450 movements, all `status: BOOK`, none pending. `bankTransactionCode` is
+  always null.
+- **`transactionDate` is never filled.** `valueDate` equals `bookingDate`
+  on 284 of 287 card lines. The purchase day exists **only in the text**:
+  every card line ends with it, `PAIEMENT PAR CARTE X7322 SYMPA LILLE
+  30/10` (DD/MM, no year), 284 of 284.
+- **Booking lags the purchase** by 0–9 days: 0 d ×8, 1 d ×145, 2 d ×71,
+  3 d ×45, 4 d ×10, 5–9 d ×6. **38 of 284 card lines (13 %) are booked in
+  the month after the purchase** (30–31 October bought, 2–3 November
+  booked), so today they count in the wrong month even on an
+  immediate-debit card.
+- 21 of 284 lag more than the 4-day provisional window
+  (`statement/provisional.ts`): an alert or notification for those would
+  not be matched and would count twice.
+- The card number is in the text (`X7322`; a refund `AVOIR CARTE X0767`
+  once, a second card number). Refunds read `AVOIR CARTE`.
+
+What follows for the plan:
+
+- Crédit Agricole gives the purchase day only as `DD/MM` at the end of the
+  text, so the re-dating in Phases 1–2 has to read it there; the year
+  comes from the booking date, one year back when the month is later.
+- That same re-dating would fix the 13 % of immediate-card lines booked
+  in the next month, for every card, deferred or not. Proposed to the
+  owner as a phase of its own before Phase 1.
+- A deferred card is still unseen. Phases 1, 2 and 4 need a statement or
+  feed sample from someone who has one, or are built on the fixtures
+  alone.
 
 ## Phase 1 — « Votre carte » (branch `cards-deferred`)
 
