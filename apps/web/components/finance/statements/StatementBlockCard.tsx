@@ -393,6 +393,8 @@ export function StatementBlockCard({
                       label: t("bankAccounts.roleSpending"),
                     },
                     { value: "savings", label: t("bankAccounts.roleSavings") },
+                    // A deferred-debit card's own statement (migration 087).
+                    { value: "card", label: t("bankAccounts.roleCard") },
                     { value: "ignored", label: t("bankAccounts.roleIgnored") },
                   ]}
                   value={choice.account.role}

@@ -45,7 +45,11 @@ export function withDirection(
 /** Which of the person's accounts a block of lines goes to. */
 export type AccountChoice =
   | { kind: "existing"; providerAccountId: string }
-  | { kind: "new"; label: string; role: "spending" | "savings" | "ignored" };
+  | {
+      kind: "new";
+      label: string;
+      role: "spending" | "savings" | "ignored" | "card";
+    };
 
 /**
  * The account to start from: the one the file names, if it is known
@@ -72,8 +76,15 @@ export function initialAccountChoice(
   if (known) {
     return { kind: "existing", providerAccountId: known.providerAccountId };
   }
-  const sameBank = bank ? accounts.filter((account) => account.bank === bank) : [];
-  const only = accounts.length === 1 ? accounts[0] : sameBank.length === 1 ? sameBank[0] : undefined;
+  const sameBank = bank
+    ? accounts.filter((account) => account.bank === bank)
+    : [];
+  const only =
+    accounts.length === 1
+      ? accounts[0]
+      : sameBank.length === 1
+        ? sameBank[0]
+        : undefined;
   if (!key && only) {
     return { kind: "existing", providerAccountId: only.providerAccountId };
   }

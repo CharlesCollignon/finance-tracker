@@ -4,7 +4,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { ActionResult } from "@finance/core/action-result";
 import { ownTransferIbans } from "@finance/core/bank-accounts";
 import { intradayIndexes } from "@finance/core/bank-balance";
-import { cardAccountKey } from "@finance/core/cards";
+import { cardAccountKey, DEFAULT_DEBIT_DAY } from "@finance/core/cards";
 import { cardCycles, cardRules, getCards } from "@finance/data/cards";
 import {
   planFeed,
@@ -117,6 +117,21 @@ async function accountFor(
     });
     if (error) {
       return { error: "errors.couldNotSave" };
+    }
+    // A card's own statement: the person has said it is deferred by choosing
+    // it, debited at month end until « Vos cartes » says another day.
+    if (role === "card") {
+      await db.from("cards").upsert(
+        {
+          user_id: who.ownerId,
+          key: cardAccountKey(providerAccountId),
+          label: fresh.label,
+          debit: "deferred",
+          debit_day: DEFAULT_DEBIT_DAY,
+          answered_at: new Date().toISOString(),
+        },
+        { onConflict: "user_id,key", ignoreDuplicates: true },
+      );
     }
   }
   return { providerAccountId, role, isNew: true };
