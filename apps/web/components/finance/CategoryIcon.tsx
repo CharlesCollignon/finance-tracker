@@ -75,3 +75,30 @@ export function CategoryIcon({ icon, className }: CategoryIconProps) {
     </span>
   );
 }
+
+/**
+ * The glyph alone, without the tile around it, in the current text colour:
+ * the Add sheet draws its own disc, filled in the kind's colour once chosen.
+ */
+export function CategoryGlyph({
+  icon,
+  size = ICON.xl,
+}: {
+  icon: string | null;
+  size?: number;
+}) {
+  if (icon === "currency-btc") {
+    return (
+      // eslint-disable-next-line @next/next/no-img-element -- a 9 KB local mark
+      <img
+        src="/logos/bitcoin.png"
+        alt=""
+        width={size}
+        height={size}
+        className="rounded-full"
+      />
+    );
+  }
+  const IconComponent = (icon && CATEGORY_ICONS[icon]) || DotsThree;
+  return <IconComponent size={size} weight="regular" aria-hidden />;
+}

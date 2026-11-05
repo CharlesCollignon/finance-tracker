@@ -977,11 +977,6 @@ export const en = {
     title: "Add",
     /** The "+" buttons' accessible name and tooltip. */
     open: "Add an entry",
-    kind: "What you are adding",
-    transaction: "One-off",
-    charge: "Recurring",
-    transactionHint: "Something that happened once.",
-    chargeHint: "Something that repeats — rent, pay, a subscription.",
   },
   /** The Add sheet, since November 2026: the kind of money first. */
   entry: {
@@ -1069,30 +1064,18 @@ export const en = {
     close: "Close",
     deleteLastDigit: "Delete last digit",
     date: "Date",
-    category: "Category",
-    searchCategories: "Search categories",
-    searchCategoriesPlaceholder: "Search categories…",
-    changeCategory: "{name} — change",
     notePlaceholder: "Carrefour, bakery…",
     saving: "Saving…",
     save: "Save",
-    saveAndAnother: "Save & add another",
     saved: "Transaction saved",
     savedOffline:
       "Saved on this device — it will sync when you are back online",
     /* The three field names, one of which is only ever heard. */
     amount: "Amount",
-    note: "Shop or note",
-    allCategories: "All categories",
-    noCategoryMatch: "No category matches “{query}”.",
     /**
      * The running tally while saving several in a row. Both forms are the
      * same in English and differ in French, which agrees the participle.
      */
-    savedKeepGoing: {
-      one: "{count} saved — keep going.",
-      other: "{count} saved — keep going.",
-    },
   },
 
   /** First run: the two minutes that put real numbers on the Bearing. */

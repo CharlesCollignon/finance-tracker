@@ -760,11 +760,6 @@ export const fr: Messages = {
   add: {
     title: "Ajouter",
     open: "Ajouter une opération",
-    kind: "Ce que vous ajoutez",
-    transaction: "Une fois",
-    charge: "Récurrente",
-    transactionHint: "Quelque chose qui s'est passé une fois.",
-    chargeHint: "Quelque chose qui revient — loyer, salaire, abonnement.",
   },
 
   entry: {
@@ -848,25 +843,13 @@ export const fr: Messages = {
     close: "Fermer",
     deleteLastDigit: "Effacer le dernier chiffre",
     date: "Date",
-    category: "Catégorie",
-    searchCategories: "Chercher une catégorie",
-    searchCategoriesPlaceholder: "Chercher une catégorie…",
-    changeCategory: "{name} — changer",
     notePlaceholder: "Carrefour, boulangerie…",
     saving: "Enregistrement…",
     save: "Enregistrer",
-    saveAndAnother: "Enregistrer et en ajouter une autre",
     saved: "Opération enregistrée",
     savedOffline:
       "Enregistrée sur cet appareil — elle sera synchronisée dès le retour en ligne",
     amount: "Montant",
-    note: "Commerce ou note",
-    allCategories: "Toutes les catégories",
-    noCategoryMatch: "Aucune catégorie ne correspond à «\u00A0{query}\u00A0».",
-    savedKeepGoing: {
-      one: "{count} enregistrée — continuez.",
-      other: "{count} enregistrées — continuez.",
-    },
   },
 
   onboarding: {
