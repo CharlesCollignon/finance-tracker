@@ -17,6 +17,7 @@ import {
 } from "@finance/core/recurring-detection";
 import type { BankFeedItem, CategoryType } from "@finance/core/types/database";
 
+import { detectInstalmentPlans } from "@finance/core/instalments";
 import type { Db } from "./client";
 import { isMissingSchema } from "./schema";
 
@@ -295,7 +296,7 @@ export async function getRecurringProposals(
     ).catch(() => null),
     db
       .from("recurring_templates")
-      .select("description, instrument_name")
+      .select("description, instrument_name, category_id, amount, ends_on")
       .eq("user_id", userId),
     db
       .from("recurring_proposal_dismissals")
@@ -318,20 +319,38 @@ export async function getRecurringProposals(
     ),
     ...(refused.data ?? []).map((row) => row.merchant_key),
   ]);
-
-  const proposals = detectRecurring(
-    transactions.map((row) => {
-      const category = row.categories;
-      return {
-        occurredOn: row.occurred_on,
-        amount: Number(row.amount),
-        note: row.note,
-        categoryId: row.category_id,
-        categoryName: category.name,
-        categoryType: category.type,
-      };
-    }),
+  const refusedKeys = new Set(
+    (refused.data ?? []).map((row) => row.merchant_key),
   );
 
-  return filterLiveProposals(proposals, today, covered);
+  const inputs = transactions.map((row) => {
+    const category = row.categories;
+    return {
+      occurredOn: row.occurred_on,
+      amount: Number(row.amount),
+      note: row.note,
+      categoryId: row.category_id,
+      categoryName: category.name,
+      categoryType: category.type,
+    };
+  });
+
+  // A purchase paid in several times, proposed from its first instalment
+  // with its end — unless an entry already stands for it (same category and
+  // amount, ending after its latest instalment) or it was refused.
+  const plans = detectInstalmentPlans(inputs, today).filter(
+    (plan) =>
+      !refusedKeys.has(plan.key) &&
+      !(templates.data ?? []).some(
+        (row) =>
+          row.category_id === plan.categoryId &&
+          Math.abs(Number(row.amount) - plan.amount) < 0.01 &&
+          row.ends_on !== null &&
+          row.ends_on >= plan.lastSeenOn,
+      ),
+  );
+
+  const proposals = detectRecurring(inputs);
+
+  return [...plans, ...filterLiveProposals(proposals, today, covered)];
 }

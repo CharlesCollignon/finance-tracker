@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/Button";
 import { useToast } from "@/components/layout/ToastProvider";
 import { useFormatCurrency } from "@/lib/use-currency";
 import { useLocale, useT } from "@/lib/locale-context";
+import { cn } from "@/lib/utils";
 import {
   acceptRecurringProposal,
   dismissRecurringProposal,
@@ -39,6 +40,9 @@ export function RecurringProposals({ proposals }: RecurringProposalsProps) {
   const formatMoney = useFormatCurrency();
   const [pending, startTransition] = useTransition();
   const [gone, setGone] = useState<ReadonlySet<string>>(new Set());
+  // For a purchase paid in several times whose line did not say: the count
+  // chosen, by proposal.
+  const [times, setTimes] = useState<Record<string, number>>({});
 
   const visible = proposals.filter((proposal) => !gone.has(proposal.key));
   if (visible.length === 0) {
@@ -51,7 +55,7 @@ export function RecurringProposals({ proposals }: RecurringProposalsProps) {
 
   function accept(key: string) {
     startTransition(async () => {
-      const result = await acceptRecurringProposal(key);
+      const result = await acceptRecurringProposal(key, times[key]);
       if (result.error) {
         toast(result.error, "error");
         return;
@@ -91,7 +95,11 @@ export function RecurringProposals({ proposals }: RecurringProposalsProps) {
                 className="min-w-0 truncate text-sm font-medium"
                 title={proposal.label}
               >
-                {proposalDisplayName(proposal.key)}
+                {proposal.instalments
+                  ? proposal.instalments.provider === "plusieurs-fois"
+                    ? t("recurringProposals.severalTimesName")
+                    : proposal.instalments.provider
+                  : proposalDisplayName(proposal.key)}
               </p>
               <span className="privacy-amount shrink-0 tabular-nums text-sm font-semibold">
                 {formatMoney(proposal.amount)}
@@ -100,14 +108,51 @@ export function RecurringProposals({ proposals }: RecurringProposalsProps) {
             <p className="text-xs text-muted-foreground">
               {proposalCadence(proposal, locale)}
               {" · "}
-              {t("recurringProposals.seenTimes", { count: proposal.count })}
+              {proposal.instalments
+                ? t("recurringProposals.paidSoFar", {
+                    count: proposal.instalments.paid,
+                  })
+                : t("recurringProposals.seenTimes", { count: proposal.count })}
             </p>
+            {proposal.instalments && proposal.instalments.count === null ? (
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-xs text-muted-foreground">
+                  {t("recurringProposals.howManyTimes")}
+                </span>
+                {[2, 3, 4, 10, 12]
+                  .filter((count) => count > proposal.instalments!.paid)
+                  .map((count) => (
+                    <button
+                      key={count}
+                      type="button"
+                      aria-pressed={times[proposal.key] === count}
+                      onClick={() =>
+                        setTimes((current) => ({
+                          ...current,
+                          [proposal.key]: count,
+                        }))
+                      }
+                      className={cn(
+                        "rounded-full border px-2.5 py-1 text-xs font-medium",
+                        times[proposal.key] === count
+                          ? "border-foreground bg-secondary text-foreground"
+                          : "border-border text-muted-foreground hover:bg-accent",
+                      )}
+                    >
+                      {t("recurringProposals.times", { count })}
+                    </button>
+                  ))}
+              </div>
+            ) : null}
             <div className="flex items-center gap-2">
               <Button
                 type="button"
                 size="sm"
                 className="flex-1"
-                disabled={pending}
+                disabled={
+                  pending ||
+                  (proposal.instalments?.count === null && !times[proposal.key])
+                }
                 onClick={() => accept(proposal.key)}
               >
                 {t("recurringProposals.accept")}

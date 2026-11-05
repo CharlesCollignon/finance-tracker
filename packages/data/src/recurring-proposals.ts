@@ -1,5 +1,7 @@
 import type { ActionResult } from "@finance/core/action-result";
 
+import { lastInstalmentOn } from "@finance/core/instalments";
+
 import { getRecurringProposals } from "./bank-inbox";
 import type { Db } from "./client";
 import { dbError } from "./errors";
@@ -25,11 +27,47 @@ export async function acceptRecurringProposal(
   userId: string,
   key: string,
   today: string,
+  /** For a purchase paid in several times whose line did not say: in how many. */
+  times?: number,
 ): Promise<ActionResult<{ name?: string }>> {
   const proposals = await getRecurringProposals(db, userId, today);
   const proposal = proposals.find((candidate) => candidate.key === key);
   if (!proposal) {
     return { error: "actions.suggestionGone" };
+  }
+
+  // Paid in several times: an entry that ends after its last instalment, from
+  // the first one seen — those already paid are behind it, never written.
+  if (proposal.instalments) {
+    const count = proposal.instalments.count ?? times;
+    if (
+      !count ||
+      !Number.isInteger(count) ||
+      count < 2 ||
+      count > 12 ||
+      count <= proposal.instalments.paid - 1
+    ) {
+      return { error: "errors.invalidInput" };
+    }
+    const name =
+      proposal.instalments.provider === "plusieurs-fois"
+        ? proposal.label
+        : proposal.instalments.provider;
+    const { error } = await db.from("recurring_templates").insert({
+      user_id: userId,
+      category_id: proposal.categoryId,
+      amount: proposal.amount,
+      recurrence: "monthly",
+      day_of_month: proposal.dayOfMonth,
+      description: `${name} · ${count}×`,
+      starts_on: proposal.instalments.firstOn,
+      ends_on: lastInstalmentOn(proposal.instalments.firstOn, count),
+      active: true,
+    });
+    if (error) {
+      return { error: dbError(error) };
+    }
+    return { success: true, name };
   }
 
   const { error } = await db.from("recurring_templates").insert({

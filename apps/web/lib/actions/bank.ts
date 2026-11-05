@@ -378,6 +378,8 @@ export async function reopenSwallowedFeedItems(): Promise<
  */
 export async function acceptRecurringProposal(
   key: string,
+  /** In how many times, for a purchase paid in several. */
+  times?: number,
 ): Promise<ActionResult> {
   const owner = await getOwner();
   const user = owner ? { id: owner.ownerId } : null;
@@ -390,6 +392,7 @@ export async function acceptRecurringProposal(
     user.id,
     key,
     todayIsoLocal(),
+    times,
   );
   if (result.error) {
     return { error: result.error };
