@@ -17,6 +17,24 @@ import type { ChangelogEntry, RoadmapItem } from "./changelog";
  */
 export const CHANGELOG: readonly ChangelogEntry[] = [
   {
+    id: "2026-11-05-amount-varies",
+    date: "2026-11-05",
+    kind: "new",
+    platforms: ["web"],
+    fr: {
+      title: "Un montant qui varie",
+      body: "Une opération récurrente peut maintenant dire « Le montant varie » : un salaire qui dépend des heures, une allocation — celle de France Travail est plus basse en février —, une facture d’énergie. Pluclair la reconnaît dès la moitié du montant prévu, au lieu de la compter encore à venir quand elle arrive plus de 5 % en dessous.",
+      detail:
+        "Le montant que vous tapez sert d’estimation pour les jours à venir. Au-dessus, rien n’est mis à part comme prime : c’est le montant qui varie. Une dépense, elle, s’arrête à une fois et demie le montant. Sur le téléphone, avec la prochaine version.",
+    },
+    en: {
+      title: "An amount that varies",
+      body: "A recurring entry can now say “The amount varies”: pay that depends on hours, a benefit — France Travail's is lower in February —, an energy bill. Pluclair recognises it from half the expected amount up, instead of still counting it as to come when it arrives more than 5 % lower.",
+      detail:
+        "The amount you type is the estimate for the days ahead. Above it, nothing is set apart as a bonus: it is the amount varying. An expense stops at one and a half times the amount. On the phone, with the next version.",
+    },
+  },
+  {
     id: "2026-11-05-bills-before-payday",
     date: "2026-11-05",
     kind: "fixed",
