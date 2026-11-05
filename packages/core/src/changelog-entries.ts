@@ -17,6 +17,20 @@ import type { ChangelogEntry, RoadmapItem } from "./changelog";
  */
 export const CHANGELOG: readonly ChangelogEntry[] = [
   {
+    id: "2026-11-06-web-planned-categories",
+    date: "2026-11-06",
+    kind: "better",
+    platforms: ["web"],
+    fr: {
+      title: "Une opération prévue, une catégorie, au même format",
+      body: "Une opération encore à venir s’ouvre sur son montant, en grand et dans sa couleur, avec « L’enregistrer maintenant » en premier. Créer ou modifier une catégorie montre son icône et son nom tels qu’ils apparaîtront, dans la couleur de son type, pendant que vous les choisissez.",
+    },
+    en: {
+      title: "A planned entry, a category, in the same style",
+      body: "An entry still to come opens on its amount, large and in its colour, with “Record it now” first. Creating or editing a category shows its icon and name as they will appear, in its kind's colour, while you choose them.",
+    },
+  },
+  {
     id: "2026-11-06-web-month-close",
     date: "2026-11-06",
     kind: "better",

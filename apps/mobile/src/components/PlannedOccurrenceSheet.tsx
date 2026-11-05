@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Modal, Pressable, View } from "react-native";
+import { Pressable, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 
@@ -10,14 +10,16 @@ import {
 } from "@finance/core/recurring-fulfilment";
 import type { PlannedOccurrence } from "@finance/core/apply-recurring";
 import { formatShortDate, todayIsoLocal } from "@finance/core/constants";
-import { TYPE_AMOUNT_CLASS } from "@finance/core/category-styles";
 
-import { CategoryIcon } from "@/components/CategoryIcon";
-import { PrivateAmount } from "@/components/PrivateAmount";
+import { KIND_INK, withAlpha } from "@/components/add/kind-ink";
+import { CategoryGlyph } from "@/components/CategoryIcon";
+import {
+  EntrySheet,
+  FigureValue,
+  SaveButton,
+} from "@/components/sheet/EntrySheet";
 import { Button } from "@/components/ui/Button";
-import { SheetGrabber } from "@/components/ui/SheetGrabber";
 import { Text } from "@/components/ui/Text";
-import { cn } from "@/lib/cn";
 import { hapticLight, hapticSuccess } from "@/lib/haptics";
 import {
   explainAwaitedOccurrence,
@@ -181,140 +183,122 @@ export function PlannedOccurrenceSheet({
     router.push(`/(tabs)/recurring?edit=${current.templateId}` as never);
   }
 
+  const ink = colors[KIND_INK[current.categoryType]];
+  const offersRecord = inThisMonth && !current.awaited;
+
   return (
-    <Modal
-      visible
-      transparent
-      animationType="fade"
-      statusBarTranslucent
-      onRequestClose={close}
+    <EntrySheet
+      onClose={close}
+      title={current.name}
+      closeLabel={t("common.close")}
+      ink={ink}
+      footer={
+        outcome ? (
+          <Button
+            label={t("common.close")}
+            variant="outline"
+            size="lg"
+            disabled={pending}
+            onPress={close}
+          />
+        ) : offersRecord ? (
+          <SaveButton
+            label={t("planned.recordNow")}
+            disabled={pending}
+            onPress={() => void record()}
+          />
+        ) : undefined
+      }
     >
-      <View className="flex-1 justify-end bg-black/50">
-        <Pressable
-          accessibilityLabel={t("common.close")}
-          className="flex-1"
-          onPress={close}
-        />
-        <View className="rounded-t-card border border-border bg-card px-card pb-10 pt-3">
-          <SheetGrabber />
-          <Text
-            accessibilityRole="header"
-            numberOfLines={2}
-            className="mb-4 font-semibold"
-            style={{ fontSize: 18 }}
-          >
-            {current.name}
-          </Text>
-
-          <View className="flex-row items-center gap-3">
-            {/* Dashed, as on the web: a thing expected, not a thing done. */}
-            <View
-              className="rounded-control border border-dashed"
-              style={{ borderColor: colors.hairlineStrong, opacity: 0.8 }}
-            >
-              <CategoryIcon icon={current.categoryIcon} />
-            </View>
-            <View className="min-w-0 flex-1">
-              <Text numberOfLines={1} className="text-sm font-medium">
-                {current.categoryName}
-              </Text>
-              <Text variant="muted" className="text-sm">
-                {t(
-                  current.awaited ? "planned.awaitedBody" : "planned.body",
-                  { date },
-                )}
-              </Text>
-              {why && why.key === awaitedKey && why.miss ? (
-                <Text variant="muted" className="mt-1 text-xs">
-                  {t("planned.why", {
-                    reason: describeMiss(why.miss, formatEuro, locale),
-                  })}
-                </Text>
-              ) : null}
-            </View>
-            <PrivateAmount
-              className={cn(
-                "text-base font-semibold",
-                TYPE_AMOUNT_CLASS[current.categoryType],
-              )}
-            >
-              {`${amountSign(current.categoryType)}${formatEuro(current.amount)}`}
-            </PrivateAmount>
+      <FigureValue
+        value={`${amountSign(current.categoryType)}${formatEuro(current.amount)}`}
+        ink={ink}
+        caption={t(current.awaited ? "planned.awaitedBody" : "planned.body", {
+          date,
+        })}
+      >
+        {/* Dashed, as on the web: a thing expected, not a thing done. */}
+        <View
+          className="mt-2 flex-row items-center gap-2 rounded-full border border-dashed py-1 pl-1 pr-3"
+          style={{ borderColor: colors.hairlineStrong }}
+        >
+          <View className="h-7 w-7 items-center justify-center rounded-full bg-foreground/5">
+            <CategoryGlyph
+              icon={current.categoryIcon}
+              color={colors.foreground}
+              size={ICON.md}
+            />
           </View>
-
-          {outcome ? (
-            <View className="mt-6 gap-3">
-              <View className="flex-row items-center gap-2 rounded-control border border-border px-3 py-3">
-                <Ionicons
-                  name="checkmark-circle"
-                  size={ICON.md}
-                  color={colors.success}
-                />
-                <Text className="min-w-0 flex-1 text-sm">
-                  {outcome.kind === "recorded"
-                    ? t("planned.recorded")
-                    : t("planned.skipped", { date })}
-                </Text>
-                <Pressable
-                  accessibilityRole="button"
-                  accessibilityState={{ disabled: pending }}
-                  disabled={pending}
-                  hitSlop={8}
-                  onPress={() => void undo()}
-                  className="min-h-11 flex-row items-center gap-1 px-1"
-                >
-                  <Ionicons
-                    name="arrow-undo-outline"
-                    size={ICON.sm}
-                    color={colors.foreground}
-                  />
-                  <Text className="text-sm font-medium">
-                    {t("planned.undo")}
-                  </Text>
-                </Pressable>
-              </View>
-              <Button
-                label={t("common.close")}
-                variant="outline"
-                size="lg"
-                disabled={pending}
-                onPress={close}
-              />
-            </View>
-          ) : (
-            <View className="mt-6 gap-2">
-              {/* One the bank still owes is recorded by the bank. */}
-              {inThisMonth && !current.awaited ? (
-                <View className="gap-1">
-                  <Button
-                    label={t("planned.recordNow")}
-                    size="lg"
-                    disabled={pending}
-                    onPress={() => void record()}
-                  />
-                  <Text variant="muted" className="text-center text-xs">
-                    {t("planned.recordNowHint")}
-                  </Text>
-                </View>
-              ) : null}
-              <Button
-                label={t("planned.skip")}
-                variant="outline"
-                size="lg"
-                disabled={pending}
-                onPress={() => void skip()}
-              />
-              <Button
-                label={t("planned.editCharge")}
-                variant="ghost"
-                size="lg"
-                disabled={pending}
-                onPress={editCharge}
-              />
-            </View>
-          )}
+          <Text numberOfLines={1} className="text-sm font-medium">
+            {current.categoryName}
+          </Text>
         </View>
-      </View>
-    </Modal>
+        {why && why.key === awaitedKey && why.miss ? (
+          <Text variant="muted" className="mt-2 px-4 text-center text-xs">
+            {t("planned.why", {
+              reason: describeMiss(why.miss, formatEuro, locale),
+            })}
+          </Text>
+        ) : null}
+      </FigureValue>
+
+      {outcome ? (
+        <View
+          className="mt-6 flex-row items-center gap-2 rounded-2xl border px-3 py-3"
+          style={{
+            borderColor: withAlpha(colors.success, 0.4),
+            backgroundColor: withAlpha(colors.success, 0.06),
+          }}
+        >
+          <Ionicons
+            name="checkmark-circle"
+            size={ICON.md}
+            color={colors.success}
+          />
+          <Text className="min-w-0 flex-1 text-sm">
+            {outcome.kind === "recorded"
+              ? t("planned.recorded")
+              : t("planned.skipped", { date })}
+          </Text>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityState={{ disabled: pending }}
+            disabled={pending}
+            hitSlop={8}
+            onPress={() => void undo()}
+            className="min-h-11 flex-row items-center gap-1 px-1"
+          >
+            <Ionicons
+              name="arrow-undo-outline"
+              size={ICON.sm}
+              color={colors.foreground}
+            />
+            <Text className="text-sm font-medium">{t("planned.undo")}</Text>
+          </Pressable>
+        </View>
+      ) : (
+        <View className="mt-6 gap-2">
+          {offersRecord ? (
+            <Text variant="muted" className="text-center text-xs">
+              {t("planned.recordNowHint")}
+            </Text>
+          ) : null}
+          <Button
+            label={t("planned.skip")}
+            variant="outline"
+            size="lg"
+            disabled={pending}
+            onPress={() => void skip()}
+          />
+          <Button
+            label={t("planned.editCharge")}
+            variant="ghost"
+            size="lg"
+            disabled={pending}
+            onPress={editCharge}
+          />
+        </View>
+      )}
+    </EntrySheet>
   );
 }

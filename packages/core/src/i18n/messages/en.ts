@@ -1024,6 +1024,7 @@ export const en = {
     moreOptions: "More options",
     fewerOptions: "Fewer options",
     gap: {
+      name: "Give it a name",
       amount: "Enter an amount",
       category: "Choose a category",
     },
