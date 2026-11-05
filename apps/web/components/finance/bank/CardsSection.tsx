@@ -136,6 +136,12 @@ function CardItem({ card }: { card: CardRow }) {
       ) : null}
       {editing && choosingDay ? (
         <div className="flex flex-col gap-2">
+          <label
+            htmlFor={`card-day-${card.key}`}
+            className="text-xs text-muted-foreground"
+          >
+            {t("cards.debitDay")}
+          </label>
           <OptionPicker
             id={`card-day-${card.key}`}
             panelLabel={t("cards.debitDay")}

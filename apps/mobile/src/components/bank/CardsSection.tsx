@@ -135,6 +135,9 @@ function CardItem({
       ) : null}
       {editing && choosingDay ? (
         <View className="gap-2">
+          <Text variant="muted" className="text-xs">
+            {t("cards.debitDay")}
+          </Text>
           <OptionPicker
             label={t("cards.debitDay")}
             options={dayOptions}
