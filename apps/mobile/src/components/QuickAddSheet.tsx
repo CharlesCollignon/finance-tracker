@@ -9,7 +9,6 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import Animated from "react-native-reanimated";
-import Svg, { Defs, RadialGradient, Rect, Stop } from "react-native-svg";
 
 import {
   amountInputToNumber,
@@ -50,6 +49,7 @@ import { KindSwitch } from "@/components/add/KindSwitch";
 import { Keypad } from "@/components/add/Keypad";
 import { NotePanel } from "@/components/add/NotePanel";
 import { WhenPanel, type WhenState } from "@/components/add/WhenPanel";
+import { KindGlow } from "@/components/sheet/EntrySheet";
 import { FADE_IN } from "@/components/motion/fade";
 import { Text } from "@/components/ui/Text";
 import { cn } from "@/lib/cn";
@@ -610,23 +610,6 @@ function AddPanel({
           onPress={() => void save(false)}
         />
       </View>
-    </View>
-  );
-}
-
-/** The kind's colour, faint, behind the figure: the light the sheet is lit by. */
-function KindGlow({ color }: { color: string }) {
-  return (
-    <View pointerEvents="none" className="absolute inset-x-0 top-0 h-64">
-      <Svg width="100%" height="100%">
-        <Defs>
-          <RadialGradient id="kind-glow" cx="50%" cy="38%" rx="62%" ry="62%">
-            <Stop offset="0" stopColor={color} stopOpacity={0.14} />
-            <Stop offset="1" stopColor={color} stopOpacity={0} />
-          </RadialGradient>
-        </Defs>
-        <Rect width="100%" height="100%" fill="url(#kind-glow)" />
-      </Svg>
     </View>
   );
 }

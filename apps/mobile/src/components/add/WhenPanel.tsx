@@ -231,7 +231,7 @@ function Recurring({
                   keyboardType="decimal-pad"
                   placeholder={t("recurring.advanceAmount")}
                   accessibilityLabel={t("recurring.advanceAmount")}
-                  className="rounded-2xl bg-foreground/5"
+                  tone="sheet"
                 />
                 <Stepper
                   label={t("recurring.advanceDay")}

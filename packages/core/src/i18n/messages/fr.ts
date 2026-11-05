@@ -811,6 +811,7 @@ export const fr: Messages = {
       amount: "Saisissez un montant",
       category: "Choisissez une catégorie",
     },
+    noChange: "Rien n'a changé",
     saved: "Enregistrée",
     saveAnother: "Enregistrer et en ajouter une autre",
     savedCount: { one: "{count} enregistrée", other: "{count} enregistrées" },

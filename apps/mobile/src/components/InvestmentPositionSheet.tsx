@@ -1,11 +1,18 @@
 import { useState } from "react";
-import { Linking, Modal, Pressable, ScrollView, View } from "react-native";
+import { Linking, Pressable, Text as RNText, View } from "react-native";
 
 import type { InvestmentPositionItem } from "@finance/core/investment-positions";
 import { isCryptoWallet } from "@finance/core/crypto-holdings";
 import { parseTypedAmount } from "@finance/core/amount-input";
 
-import { Button } from "@/components/ui/Button";
+import { formatSigned } from "@finance/core/amount-sign";
+
+import {
+  DangerAction,
+  EntrySheet,
+  Field,
+  SaveButton,
+} from "@/components/sheet/EntrySheet";
 import { Input } from "@/components/ui/Input";
 import {
   chargeLookupUrl,
@@ -13,9 +20,10 @@ import {
   parseChargeInput,
 } from "@finance/core/fund-costs";
 import { Text } from "@/components/ui/Text";
-import { SheetGrabber } from "@/components/ui/SheetGrabber";
 import { toTypedAmount } from "@/lib/typed-amount";
+import { useFormatCurrency } from "@/providers/CurrencyProvider";
 import { useLocale, useT } from "@/providers/LocaleProvider";
+import { useThemeColors } from "@/theme/useThemeColors";
 import { resolveMessage } from "@finance/core/i18n/t";
 import {
   removeInvestmentPosition,
@@ -48,7 +56,13 @@ function parseShareCount(value: string): number | null {
   return Number.isFinite(parsed) ? parsed : null;
 }
 
-/** Edits a wallet position's figures, mirroring the web position sheet. */
+/**
+ * Edits a wallet position's figures, mirroring the web position sheet. In
+ * the entry sheets' language since November 2026: what the line is worth
+ * today as the figure at the top, in the investment colour, with what was
+ * put in and the gain under it; the four figures a person can correct
+ * below; removing it at the bottom, in words.
+ */
 export function InvestmentPositionSheet({
   item,
   onClose,
@@ -75,7 +89,6 @@ export function InvestmentPositionSheet({
   );
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
-  const [confirmDelete, setConfirmDelete] = useState(false);
 
   const isCrypto = isCryptoWallet(item.walletId);
 
@@ -110,171 +123,136 @@ export function InvestmentPositionSheet({
     onClose();
   }
 
+  const colors = useThemeColors();
+  const formatEuro = useFormatCurrency();
+  const ink = colors.info;
+  const gain =
+    item.totalInvested > 0
+      ? formatSigned(item.gainLoss, formatEuro)
+      : null;
+
   return (
-    <Modal
-      visible
-      animationType="fade"
-      transparent
-      statusBarTranslucent
-      onRequestClose={onClose}
-    >
-      <View className="flex-1 justify-end bg-black/50">
-        <Pressable
-          className="flex-1"
-          accessibilityLabel={t("position.close")}
-          onPress={onClose}
+    <EntrySheet
+      onClose={onClose}
+      title={item.name}
+      closeLabel={t("position.close")}
+      ink={ink}
+      footer={
+        <SaveButton
+          label={pending ? t("position.saving") : t("position.savePosition")}
+          disabled={pending}
+          onPress={() => void handleSave()}
         />
-        <View className="max-h-[90%] rounded-t-card border border-border bg-card">
-          <View className="items-center pt-3">
-            <SheetGrabber />
-          </View>
-          <View className="flex-row items-center justify-between px-5 pb-2 pt-3">
-            <Text className="font-semibold" style={{ fontSize: 18 }}>
-              {item.name}
-            </Text>
-            <Pressable
-              onPress={onClose}
-              accessibilityLabel={t("position.close")}
-              hitSlop={8}
-            >
-              <Text variant="muted">{t("position.close")}</Text>
-            </Pressable>
-          </View>
-
-          <ScrollView
-            className="px-5"
-            keyboardShouldPersistTaps="handled"
-            showsVerticalScrollIndicator={false}
-          >
-            <Text className="mb-2 text-sm font-medium">
-              {t("position.costBasis")}
-            </Text>
-            <Text variant="muted" className="mb-2 text-xs">
-              {t("position.costBasisHint")}
-            </Text>
-            <Input
-              value={initialBalance}
-              onChangeText={setInitialBalance}
-              keyboardType="decimal-pad"
-              placeholder="0"
-              className="mb-4"
-            />
-
-            <Text className="mb-2 text-sm font-medium">
-              {isCrypto ? t("position.totalBtc") : t("position.totalShares")}
-            </Text>
-            <Text variant="muted" className="mb-2 text-xs">
-              {isCrypto ? t("position.btcHint") : t("position.sharesHint")}
-            </Text>
-            <Input
-              value={shareCount}
-              onChangeText={setShareCount}
-              keyboardType="decimal-pad"
-              placeholder="0"
-              className="mb-4"
-            />
-
-            <Text className="mb-2 text-sm font-medium">
-              {t("position.brokerValue")}
-            </Text>
-            <Text variant="muted" className="mb-2 text-xs">
-              {t("position.manualValueHint")}
-            </Text>
-            <Input
-              value={currentValue}
-              onChangeText={setCurrentValue}
-              keyboardType="decimal-pad"
-              placeholder={t("position.marketValuePlaceholder")}
-              className="mb-4"
-            />
-
-            <Text className="mb-2 text-sm font-medium">
-              {t("position.ongoingChargeLabel")}
-            </Text>
-            <Text variant="muted" className="mb-2 text-xs">
-              {t("position.ongoingChargeHint")}
-            </Text>
-            <Input
-              value={ongoingCharge}
-              onChangeText={setOngoingCharge}
-              keyboardType="decimal-pad"
-              placeholder={t("position.chargePlaceholder")}
-              className="mb-2"
-            />
-            {lookupUrl ? (
-              <Pressable
-                accessibilityRole="link"
-                accessibilityLabel={t("position.lookUpCharge")}
-                onPress={() => {
-                  void Linking.openURL(lookupUrl);
-                }}
-                className="mb-4 self-start"
-              >
-                <Text className="text-xs text-primary-ink underline">
-                  {t("position.lookUpCharge")}
-                </Text>
-              </Pressable>
-            ) : (
-              <View className="mb-4" />
-            )}
-
-            {error ? (
-              <Text className="mb-3 text-sm text-destructive">
-                {resolveMessage(t, error)}
-              </Text>
-            ) : null}
-
-            <Button
-              label={
-                pending ? t("position.saving") : t("position.savePosition")
-              }
-              size="lg"
-              disabled={pending}
-              onPress={handleSave}
-            />
-
-            <View className="mt-6 gap-3 border-t border-border pt-4">
-              {confirmDelete ? (
-                <View className="gap-2">
-                  <Text variant="muted" className="text-sm">
-                    {t("position.removeConfirmBody")}
-                  </Text>
-                  <View className="flex-row gap-2">
-                    <Button
-                      label={
-                        pending
-                          ? t("position.removing")
-                          : t("position.confirmRemove")
-                      }
-                      variant="outline"
-                      className="flex-1 border-destructive"
-                      disabled={pending}
-                      onPress={handleDelete}
-                    />
-                    <Button
-                      label={t("position.cancel")}
-                      variant="outline"
-                      className="flex-1"
-                      disabled={pending}
-                      onPress={() => setConfirmDelete(false)}
-                    />
-                  </View>
-                </View>
-              ) : (
-                <Button
-                  label={t("position.removePosition")}
-                  variant="outline"
-                  className="border-destructive"
-                  disabled={pending}
-                  onPress={() => setConfirmDelete(true)}
-                />
-              )}
-            </View>
-
-            <View className="h-10" />
-          </ScrollView>
-        </View>
+      }
+    >
+      <View className="items-center pb-1 pt-4">
+        <RNText
+          numberOfLines={1}
+          adjustsFontSizeToFit
+          minimumFontScale={0.5}
+          style={{
+            fontFamily: "Fraunces-SemiBold",
+            fontSize: 48,
+            letterSpacing: -1.6,
+            color: ink,
+            fontVariant: ["tabular-nums"],
+          }}
+        >
+          {formatEuro(item.marketValue)}
+        </RNText>
+        <Text variant="muted" className="mt-1 text-center text-[13px]">
+          {[
+            `${formatEuro(item.totalInvested)} ${t("position.amountIn")}`,
+            gain,
+          ]
+            .filter(Boolean)
+            .join(" · ")}
+        </Text>
       </View>
-    </Modal>
+
+      <View className="mt-5 gap-4">
+        <Field label={t("position.costBasis")} hint={t("position.costBasisHint")}>
+          <Input
+            value={initialBalance}
+            onChangeText={setInitialBalance}
+            keyboardType="decimal-pad"
+            placeholder="0"
+            tone="sheet"
+          />
+        </Field>
+
+        <Field
+          label={isCrypto ? t("position.totalBtc") : t("position.totalShares")}
+          hint={isCrypto ? t("position.btcHint") : t("position.sharesHint")}
+        >
+          <Input
+            value={shareCount}
+            onChangeText={setShareCount}
+            keyboardType="decimal-pad"
+            placeholder="0"
+            tone="sheet"
+          />
+        </Field>
+
+        <Field
+          label={t("position.brokerValue")}
+          hint={t("position.manualValueHint")}
+        >
+          <Input
+            value={currentValue}
+            onChangeText={setCurrentValue}
+            keyboardType="decimal-pad"
+            placeholder={t("position.marketValuePlaceholder")}
+            tone="sheet"
+          />
+        </Field>
+
+        <Field
+          label={t("position.ongoingChargeLabel")}
+          hint={t("position.ongoingChargeHint")}
+        >
+          <Input
+            value={ongoingCharge}
+            onChangeText={setOngoingCharge}
+            keyboardType="decimal-pad"
+            placeholder={t("position.chargePlaceholder")}
+            tone="sheet"
+          />
+          {lookupUrl ? (
+            <Pressable
+              accessibilityRole="link"
+              accessibilityLabel={t("position.lookUpCharge")}
+              onPress={() => {
+                void Linking.openURL(lookupUrl);
+              }}
+              className="mt-1 self-start"
+            >
+              <Text className="text-xs text-primary-ink underline">
+                {t("position.lookUpCharge")}
+              </Text>
+            </Pressable>
+          ) : null}
+        </Field>
+
+        {error ? (
+          <Text className="text-sm text-destructive">
+            {resolveMessage(t, error)}
+          </Text>
+        ) : null}
+      </View>
+
+      <View className="mt-6 border-t border-border pt-4">
+        <DangerAction
+          label={t("position.removePosition")}
+          explanation={t("position.removeConfirmBody")}
+          confirmLabel={
+            pending ? t("position.removing") : t("position.confirmRemove")
+          }
+          cancelLabel={t("position.cancel")}
+          pending={pending}
+          onConfirm={() => void handleDelete()}
+        />
+      </View>
+    </EntrySheet>
   );
 }
