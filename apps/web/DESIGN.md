@@ -365,7 +365,12 @@ and inline links — and every one outside the four above was taken off. What
 replaced them is the token that already carried the meaning: foreground against
 muted for an active state, a hairline or a surface step for a selection, a chart
 colour for a chart. Two decorative glows that ringed every card on the Bearing
-went to foreground for the same reason. Read the homes as a description of
+went to foreground for the same reason. One surface marks its selections in
+colour, and it is not the accent: the Add sheet (November 2026, see Add Sheet
+under Components) lends the kind of money being entered — its semantic amount
+colour — to the chosen category, the open field and the chosen day, so what
+has been decided reads as belonging to that entry. Everywhere else a selection
+is still a hairline or a surface step. Read the homes as a description of
 the code, not a wish about it, and add another only by changing this paragraph
 first.
 
@@ -769,6 +774,35 @@ all; changing one alone breaks the frame.
 - **Focus:** 2px Lamplit Orange ring; the border itself does not shift.
 - **Error:** Border and text both turn Destructive, driven by `aria-invalid`
   rather than by a separate visual prop.
+
+### Add Sheet
+
+The one sheet behind every « + » (November 2026, at the owner's ask for entry
+that is "minimalist and professional" and "helps the user in the inputs"). It
+asks in the order a person knows things: the **kind of money** first
+(Dépense · Revenu · Épargne · Placement, a segmented track whose raised pill
+follows the finger), then the **amount**, set in Fraunces at 60, signed the
+way the ledger signs it and inked in the kind's semantic colour, with a faint
+radial light of the same colour behind it; then **three tiles** — Catégorie,
+Commerce (Libellé for money that is not an expense), Quand — and under them
+**one panel** that becomes whatever the open tile asks: the keypad, the
+kind's categories four to a row, the remembered shops, the month or the
+schedule. The whole entry fits on one screen; nothing scrolls past the
+figure. A recurring entry is « Régulièrement » under Quand, not a form of its
+own.
+
+- **Kind colour, not accent:** the figure, the chosen category's disc, the
+  open tile's rim and the chosen chip or day take the kind's colour
+  (`KIND_INK`). The save button stays Lamplit Orange: it is the primary
+  action, and it reads the same whichever kind is open.
+- **The button says what is missing:** « Saisissez un montant », then
+  « Choisissez une catégorie », then « Enregistrer −42,50 € » with the figure
+  in the serif, and « Enregistrée » with a check for a beat before the sheet
+  goes. The missing field also carries a dot in the kind's colour.
+- **Press feedback, named:** a key that lands nudges the figure 3 % and back
+  on **press**; a key the entry cannot take (a third decimal, a tenth digit)
+  shakes it ±6px on **press**. Both answer a finger, so both sit inside the
+  Motion list's "a press giving a little". Panels swap with a fade.
 
 ### List Rows
 
