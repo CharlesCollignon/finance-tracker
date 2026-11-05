@@ -1389,7 +1389,6 @@ export const en = {
       other: "New record: {count} months in a row",
     },
     closeMonth: "Close {month}",
-    balance: "Balance",
     balancePrompt:
       "What did your account hold on {date}? Add up the accounts your day-to-day spending leaves from — one number is all this needs.",
     baselineNote:

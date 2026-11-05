@@ -1074,7 +1074,6 @@ export const fr: Messages = {
       other: "Nouveau record\u00A0: {count} mois d'affilée",
     },
     closeMonth: "Faire le bilan de {month}",
-    balance: "Solde",
     balancePrompt:
       "Combien votre compte contenait-il le {date}\u00A0? Additionnez les comptes d'où partent vos dépenses courantes — un seul chiffre suffit.",
     baselineNote:

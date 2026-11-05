@@ -17,6 +17,20 @@ import type { ChangelogEntry, RoadmapItem } from "./changelog";
  */
 export const CHANGELOG: readonly ChangelogEntry[] = [
   {
+    id: "2026-11-06-web-month-close",
+    date: "2026-11-06",
+    kind: "better",
+    platforms: ["web"],
+    fr: {
+      title: "Le bilan du mois, au même format",
+      body: "Faire le bilan du mois s’ouvre sur le solde à saisir, en grand, comme un montant qu’on ajoute. Le bouton reste en bas à chaque étape : « Voir ce que cela donne », puis « Faire le bilan » du mois, puis « Terminé ».",
+    },
+    en: {
+      title: "The month's close, in the same style",
+      body: "Closing the month opens on the balance to type, large, like an amount you add. The button stays at the bottom at each step: “See what that means”, then “Close” for the month, then “Done”.",
+    },
+  },
+  {
     id: "2026-11-06-web-edit-sheets",
     date: "2026-11-06",
     kind: "better",

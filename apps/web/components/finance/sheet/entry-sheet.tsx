@@ -89,7 +89,7 @@ export function SheetFigure({
           autoComplete="off"
           value={value}
           onChange={(event) =>
-            onChange(event.target.value.replace(/[^\d.,\s]/g, ""))
+            onChange(event.target.value.replace(/[^\d.,\s-]/g, ""))
           }
           className="absolute inset-0 h-full w-full cursor-text opacity-0"
         />

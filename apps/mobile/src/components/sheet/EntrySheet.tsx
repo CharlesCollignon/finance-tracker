@@ -197,7 +197,7 @@ export function FigureInput({
         <TextInput
           ref={input}
           value={value}
-          onChangeText={(next) => onChange(next.replace(/[^\d.,\s]/g, ""))}
+          onChangeText={(next) => onChange(next.replace(/[^\d.,\s-]/g, ""))}
           keyboardType="decimal-pad"
           accessibilityLabel={label}
           caretHidden

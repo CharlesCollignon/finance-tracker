@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Modal, Pressable, ScrollView, View } from "react-native";
+import { View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import Animated, { useReducedMotion, ZoomIn } from "react-native-reanimated";
 
@@ -15,9 +15,12 @@ import {
 import { AnimatedAmount } from "@/components/AnimatedAmount";
 import { PrivateAmount } from "@/components/PrivateAmount";
 import { Button } from "@/components/ui/Button";
-import { Input } from "@/components/ui/Input";
+import {
+  EntrySheet,
+  FigureInput,
+  SaveButton,
+} from "@/components/sheet/EntrySheet";
 import { Text } from "@/components/ui/Text";
-import { SheetGrabber } from "@/components/ui/SheetGrabber";
 import { hapticSuccess } from "@/lib/haptics";
 import {
   deleteMonthClose,
@@ -212,87 +215,98 @@ export function MonthCloseSheet({
     result.unrecorded > unrecordedCap;
 
   return (
-    <Modal
+    <EntrySheet
       visible={open}
-      transparent
-      animationType="fade"
-      statusBarTranslucent
-      onRequestClose={dismiss}
+      onClose={dismiss}
+      title={
+        stage === "closed"
+          ? monthLabel
+          : t("monthClose.closeMonth", { month: monthLabel })
+      }
+      closeLabel={t("monthClose.close")}
+      footer={
+        stage === "entering" ? (
+          <SaveButton
+            label={
+              pending
+                ? t("monthClose.working")
+                : t("monthClose.seeWhatThatMeans")
+            }
+            disabled={pending || !balanceIsUsable}
+            onPress={() => void check()}
+          />
+        ) : stage === "checked" ? (
+          <View className="gap-2">
+            <SaveButton
+              label={
+                pending
+                  ? t("monthClose.closing")
+                  : t("monthClose.closeMonth", { month: monthLabel })
+              }
+              disabled={pending}
+              onPress={() => void confirm()}
+            />
+            <Button
+              label={t("monthClose.changeTheBalance")}
+              variant="ghost"
+              disabled={pending}
+              onPress={() => setStage("entering")}
+            />
+          </View>
+        ) : (
+          <View className="gap-2">
+            <SaveButton label={t("monthClose.done")} onPress={dismiss} />
+            <Button
+              label={t("monthClose.reopenShort")}
+              variant="ghost"
+              disabled={pending}
+              onPress={() => void undo()}
+            />
+          </View>
+        )
+      }
     >
-      <View className="flex-1 justify-end bg-black/50">
-        <Pressable
-          accessibilityLabel={t("monthClose.close")}
-          className="flex-1"
-          onPress={dismiss}
-        />
-        <View className="max-h-[85%] rounded-t-card p-card border border-border bg-card">
-          <SheetGrabber />
-          <Text className="mb-2 font-semibold" style={{ fontSize: 18 }}>
-            {stage === "closed"
-              ? monthLabel
-              : t("monthClose.closeMonth", { month: monthLabel })}
-          </Text>
-
-          <ScrollView showsVerticalScrollIndicator={false}>
             {stage === "entering" ? (
-              <View className="gap-4">
-                <Text variant="muted" className="text-sm">
+              <View className="gap-3">
+                <FigureInput
+                  value={balance}
+                  onChange={(value) => {
+                    typed.current = true;
+                    setBalance(value);
+                    setFromStatement(false);
+                  }}
+                  ink={colors.foreground}
+                  label={t("monthClose.balanceOn", {
+                    date: formatShortDate(observeOn, locale),
+                  })}
+                />
+                <Text variant="muted" className="text-center text-sm">
                   {t("monthClose.balancePrompt", {
                     date: formatShortDate(observeOn, locale),
                   })}
                 </Text>
-                <Text variant="muted" className="text-sm">
+                {fromStatement ? (
+                  <Text variant="muted" className="text-center text-xs">
+                    {t("planScreen.filledFromStatement", {
+                      date: formatShortDate(observeOn, locale),
+                    })}
+                  </Text>
+                ) : null}
+                {balanceIsUnreadable ? (
+                  <Text
+                    accessibilityLiveRegion="polite"
+                    className="text-center text-sm text-destructive"
+                  >
+                    {t("monthClose.balanceUnreadable", {
+                      example: t("monthClose.balancePlaceholder"),
+                    })}
+                  </Text>
+                ) : null}
+                <Text variant="muted" className="mt-2 text-sm">
                   {isBaseline
                     ? t("monthClose.baselineNote")
                     : t("monthClose.sameDayNote")}
                 </Text>
-
-                <View className="gap-1.5">
-                  <Text className="text-sm font-medium">
-                    {t("monthClose.balance")}
-                  </Text>
-                  {fromStatement ? (
-                    <Text variant="muted" className="text-xs">
-                      {t("planScreen.filledFromStatement", {
-                        date: formatShortDate(observeOn, locale),
-                      })}
-                    </Text>
-                  ) : null}
-                  <Input
-                    keyboardType="decimal-pad"
-                    placeholder={t("monthClose.balancePlaceholder")}
-                    value={balance}
-                    onChangeText={(value) => {
-                      typed.current = true;
-                      setBalance(value);
-                      setFromStatement(false);
-                    }}
-                    invalid={balanceIsUnreadable}
-                    accessibilityLabel={t("monthClose.balanceOn", {
-                      date: formatShortDate(observeOn, locale),
-                    })}
-                  />
-                  {balanceIsUnreadable ? (
-                    <Text
-                      accessibilityLiveRegion="polite"
-                      className="text-sm text-destructive"
-                    >
-                      {t("monthClose.balanceUnreadable", {
-                        example: t("monthClose.balancePlaceholder"),
-                      })}
-                    </Text>
-                  ) : null}
-                </View>
-
-                <Button
-                  label={
-                    pending
-                      ? t("monthClose.working")
-                      : t("monthClose.seeWhatThatMeans")
-                  }
-                  disabled={pending || !balanceIsUsable}
-                  onPress={() => void check()}
-                />
               </View>
             ) : null}
 
@@ -394,7 +408,7 @@ export function MonthCloseSheet({
                 </View>
                 )}
 
-                <View className="rounded-control border border-border p-3">
+                <View className="rounded-2xl border border-border bg-foreground/[0.03] px-3.5 py-2.5">
                   <Figure
                     label={t("monthClose.cameIn")}
                     value={formatEuro(result.flows.income)}
@@ -455,40 +469,8 @@ export function MonthCloseSheet({
                   </Text>
                 ) : null}
 
-                {stage === "checked" ? (
-                  <View className="gap-2">
-                    <Button
-                      label={
-                        pending
-                          ? t("monthClose.closing")
-                          : t("monthClose.closeMonth", { month: monthLabel })
-                      }
-                      disabled={pending}
-                      onPress={() => void confirm()}
-                    />
-                    <Button
-                      label={t("monthClose.changeTheBalance")}
-                      variant="outline"
-                      disabled={pending}
-                      onPress={() => setStage("entering")}
-                    />
-                  </View>
-                ) : (
-                  <View className="gap-2">
-                    <Button label={t("monthClose.done")} onPress={dismiss} />
-                    <Button
-                      label={t("monthClose.reopenShort")}
-                      variant="ghost"
-                      disabled={pending}
-                      onPress={() => void undo()}
-                    />
-                  </View>
-                )}
               </View>
             ) : null}
-          </ScrollView>
-        </View>
-      </View>
-    </Modal>
+    </EntrySheet>
   );
 }
