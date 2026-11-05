@@ -603,6 +603,12 @@ day as its `cash_on` (`ledgerDatesOf` in `cash-date.ts`), whether the sync,
 a statement or the review inbox writes it. Matching a typed or template row
 and pairing an alert go by the purchase day too.
 
+An occurrence the bank still owes reads « Pas encore passé ». Its sheet asks
+`explainAwaited` (`@finance/data/fulfilment`) why: the same months and rules
+as the forecast, through `explainFulfilmentMisses`, which also names a
+movement of the right size filed under another category and a bank line still
+waiting in « À vérifier ».
+
 Built and reachable by one account per deployment: the one whose id is
 `OPEN_BANKING_OWNER_USER_ID` (`apps/web/lib/bank/client.ts`, `bankOpenTo`),
 whatever the `bank.connect` flag or a stored file says. It was open to every
