@@ -692,6 +692,9 @@ export const en = {
     convertedFrom: "({amount} converted)",
     descriptionOptional: "Description (optional)",
     monthOfYear: "Month",
+    amountVaries: "The amount varies",
+    amountVariesHint:
+      "Pluclair recognises it from half the expected amount up: pay that depends on hours, a benefit, an energy bill. The amount is an estimate.",
     rhythm: "How often",
     rhythmEvery: {
       "1": "Every month",

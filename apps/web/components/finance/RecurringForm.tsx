@@ -10,6 +10,7 @@ import {
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { FormLabel } from "@/components/ui/FormLabel";
+import { Switch } from "@/components/ui/Switch";
 import { Text } from "@/components/ui/Text";
 import { useToast } from "@/components/layout/ToastProvider";
 import { MobileSheet } from "@/components/ui/MobileSheet";
@@ -170,6 +171,9 @@ export function RecurringFormBody({
   const [firstMonth, setFirstMonth] = useState(String(initialRhythm.first));
   const [pickedMonths, setPickedMonths] = useState<number[]>(
     template?.months ?? [],
+  );
+  const [amountVaries, setAmountVaries] = useState(
+    template?.amount_varies ?? false,
   );
   const [startsOn, setStartsOn] = useState(template?.starts_on ?? "");
   const [endsOn, setEndsOn] = useState(template?.ends_on ?? "");
@@ -393,6 +397,11 @@ export function RecurringFormBody({
     <form action={action} className="flex flex-col gap-4">
       {template && <input type="hidden" name="id" value={template.id} />}
       <input type="hidden" name="recurrence" value={recurrence} />
+      <input
+        type="hidden"
+        name="amountVaries"
+        value={String(effectivePricingType === "fixed" && amountVaries)}
+      />
       {recurrence === "monthly" && (
         <input type="hidden" name="months" value={months?.join(",") ?? ""} />
       )}
@@ -555,6 +564,23 @@ export function RecurringFormBody({
               defaultValue={template?.amount ?? ""}
             />
           </div>
+          {effectivePricingType === "fixed" && (
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <p className="text-sm font-medium">
+                  {t("recurring.amountVaries")}
+                </p>
+                <Text className="text-xs text-muted-foreground">
+                  {t("recurring.amountVariesHint")}
+                </Text>
+              </div>
+              <Switch
+                label={t("recurring.amountVaries")}
+                checked={amountVaries}
+                onChange={setAmountVaries}
+              />
+            </div>
+          )}
           {supportsShares && !isCryptoCategory && (
             <div className="flex flex-col gap-2 rounded-control border border-border bg-muted/20 p-3">
               <FormLabel>{t("recurring.trackedFund")}</FormLabel>

@@ -554,6 +554,9 @@ export const fr: Messages = {
     convertedFrom: "({amount} converti)",
     descriptionOptional: "Libellé (facultatif)",
     monthOfYear: "Mois",
+    amountVaries: "Le montant varie",
+    amountVariesHint:
+      "Pluclair le reconnaît dès la moitié du montant prévu\u00A0: un salaire selon les heures, une allocation, une facture d'énergie. Le montant sert d'estimation.",
     rhythm: "Rythme",
     rhythmEvery: {
       "1": "Tous les mois",

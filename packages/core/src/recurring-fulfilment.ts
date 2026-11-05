@@ -53,6 +53,17 @@ export const MAX_AMOUNT_DRIFT = 0.05;
 export const MIN_AMOUNT_TOLERANCE = 1.5;
 
 /**
+ * For an entry whose amount varies (`amount_varies`, migration 086), how far
+ * below its figure a movement may be and still be it: half. Pay that moves
+ * with hours, commission or the days in the month — unemployment benefit is
+ * about 7 % lower in February — and a bill that moves with the season are
+ * still themselves well past 5 %; the category and the day are what say so.
+ * Above the figure, a pay is open-ended as always, and anything else stops
+ * at one and a half times it.
+ */
+export const VARYING_AMOUNT_BAND = 0.5;
+
+/**
  * Whether a movement's amount may be an occurrence's.
  *
  * Within the tolerance either way, for everything. And for a pay — income on
@@ -67,14 +78,18 @@ export const MIN_AMOUNT_TOLERANCE = 1.5;
 export function amountFits(
   occurrence: Pick<
     FulfilmentOccurrence,
-    "amount" | "categoryType" | "recurrence" | "anyAmount"
+    "amount" | "categoryType" | "recurrence" | "anyAmount" | "amountVaries"
   >,
   amount: number,
 ): boolean {
   return (
     occurrence.anyAmount === true ||
     amountsMatch(occurrence.amount, amount) ||
-    (isPay(occurrence) && amount > occurrence.amount)
+    (isPay(occurrence) && amount > occurrence.amount) ||
+    (occurrence.amountVaries === true &&
+      amount >= occurrence.amount * (1 - VARYING_AMOUNT_BAND) &&
+      (isPay(occurrence) ||
+        amount <= occurrence.amount * (1 + VARYING_AMOUNT_BAND)))
   );
 }
 
@@ -85,13 +100,14 @@ export function amountFits(
 export function bonusOf(
   occurrence: Pick<
     FulfilmentOccurrence,
-    "amount" | "categoryType" | "recurrence" | "anyAmount"
+    "amount" | "categoryType" | "recurrence" | "anyAmount" | "amountVaries"
   >,
   amount: number,
 ): number | null {
   if (
     !isPay(occurrence) ||
     occurrence.anyAmount === true ||
+    occurrence.amountVaries === true ||
     amount <= occurrence.amount ||
     amountsMatch(occurrence.amount, amount)
   ) {
@@ -161,6 +177,12 @@ export interface FulfilmentOccurrence {
    * and the day say so.
    */
   anyAmount?: boolean;
+  /**
+   * The entry's amount varies (`amount_varies`): its figure is an estimate,
+   * a movement from half of it up is it (`VARYING_AMOUNT_BAND`), and no
+   * bonus is set apart from a pay above it.
+   */
+  amountVaries?: boolean;
 }
 
 export interface FulfilmentMovement {
@@ -364,6 +386,7 @@ function occurrencesOf(
         label: template.description?.trim() || category.name,
         recurrence: template.recurrence ?? "monthly",
         ...(template.pricing_type === "purchases" ? { anyAmount: true } : {}),
+        ...(template.amount_varies ? { amountVaries: true } : {}),
       });
     }
   }

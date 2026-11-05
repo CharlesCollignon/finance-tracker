@@ -999,3 +999,53 @@ describe("fulfilmentOccurrences, kept to some months", () => {
     expect(found.map((o) => o.occurredOn)).toEqual(["2026-04-12"]);
   });
 });
+
+describe("an entry whose amount varies", () => {
+  const benefit = occurrence({
+    templateId: "tpl-are",
+    occurredOn: "2026-02-05",
+    amount: 1240,
+    categoryId: SALARY_CATEGORY,
+    categoryType: "income",
+    label: "France Travail",
+    recurrence: "monthly",
+    amountVaries: true,
+  });
+
+  it("takes February's lower benefit, which a fixed one would refuse", () => {
+    // Paid per day: 28 days in February against 30 or 31.
+    expect(amountFits(benefit, 1150)).toBe(true);
+    expect(amountFits({ ...benefit, amountVaries: false }, 1150)).toBe(false);
+
+    const [proposal] = proposeFulfilments(
+      [benefit],
+      [
+        movement({
+          occurredOn: "2026-02-05",
+          amount: 1150,
+          categoryId: SALARY_CATEGORY,
+          note: "VIREMENT FRANCE TRAVAIL",
+        }),
+      ],
+      { today: "2026-02-10" },
+    );
+    expect(proposal).toMatchObject({ actualAmount: 1150, bonus: null });
+  });
+
+  it("stops below half its figure", () => {
+    expect(amountFits(benefit, 619)).toBe(false);
+    expect(amountFits(benefit, 620)).toBe(true);
+  });
+
+  it("sets no bonus apart from a pay above its figure", () => {
+    expect(bonusOf(benefit, 1600)).toBeNull();
+    expect(bonusOf({ ...benefit, amountVaries: false }, 1600)).toBe(360);
+  });
+
+  it("keeps a bill within half either way", () => {
+    const energy = occurrence({ amount: 80, amountVaries: true });
+    expect(amountFits(energy, 118)).toBe(true);
+    expect(amountFits(energy, 125)).toBe(false);
+    expect(amountFits(energy, 41)).toBe(true);
+  });
+});

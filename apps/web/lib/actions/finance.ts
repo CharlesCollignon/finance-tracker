@@ -280,6 +280,7 @@ export async function upsertRecurringTemplate(
     dayOfWeek: formData.get("dayOfWeek") || undefined,
     monthOfYear: formData.get("monthOfYear") || undefined,
     months: formData.get("months") ?? undefined,
+    amountVaries: formData.get("amountVaries") ?? undefined,
     startsOn: formData.get("startsOn") || undefined,
     endsOn: formData.get("endsOn") || undefined,
     active: formData.get("active") === "true",

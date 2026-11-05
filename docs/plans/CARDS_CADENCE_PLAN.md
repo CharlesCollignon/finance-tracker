@@ -24,7 +24,7 @@ carries them. Each migration also has to be run on the hosted database.
 The two halves do not depend on each other. Cards come first because that
 is where today's main figure is wrong. If Phase 0 waits on the owner's
 approval, Phases 5–6 can go first; the migration numbers then swap.
-They did: Phase 5 went first (2026-11-05) and took 084; Phase 0b took 085, so cards take 086.
+They did: Phase 5 went first (2026-11-05) and took 084; Phase 0b took 085 and « le montant varie » 086, so cards take 087.
 
 ## What is there today
 
@@ -155,7 +155,7 @@ immediate or not, before Phase 1.
 
 Covers shape (a), the cleanest: the bank lists the card as its own account.
 
-- [ ] Migration 086 `cards`: `id`, `user_id`, `bank_account_id` (its `CARD`
+- [ ] Migration 087 `cards`: `id`, `user_id`, `bank_account_id` (its `CARD`
       account, if any), `spending_account_id` (the account it is debited
       from), `last4` (nullable), `label`, `debit` (`immediate | deferred`,
       null = not asked yet), `debit_day` (nullable: learned from the
@@ -294,8 +294,9 @@ one in:
 - **Freelancers and irregular income**: an income averaged over what came
   in (the owner's call: later).
 - Pay twice a month (an advance and the balance) and pay every two weeks.
-- A tolerance per template for income that varies (temp work, commission,
-  unemployment benefit, which is about 7 % lower in February).
+- ~~A tolerance per template for income that varies~~ — done
+  2026-11-05 as « Le montant varie » (migration 086, branch `pay-varies`):
+  from half the figure up, no bonus split.
 - Pay days moved for weekends and public holidays.
 - Deferred-card purchases typed by hand (no bank, no statement).
 - Pay in 3x/4x, expense-report refunds, pay in CHF.

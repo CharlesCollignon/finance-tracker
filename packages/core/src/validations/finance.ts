@@ -116,6 +116,16 @@ const recurringCommonSchema = z.object({
    * (migration 055). Absent leaves it as it is, or on for a new one.
    */
   fundedByTransfer: z.boolean().optional(),
+  /**
+   * « Le montant varie » (migration 086): the figure is an estimate. A form
+   * sends "true" or "false"; absent leaves it as it is.
+   */
+  amountVaries: z
+    .preprocess(
+      (value) => (value === "true" ? true : value === "false" ? false : value),
+      z.boolean(),
+    )
+    .optional(),
   amount: z.coerce.number().positive("errors.amountPositive").optional(),
   shareCount: z.coerce.number().int().positive().optional(),
   instrumentSymbol: z.string().min(1).max(32).optional(),

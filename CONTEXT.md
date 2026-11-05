@@ -146,6 +146,14 @@ is a _spread expense_: the budget counts it as an even share of the year each
 month, as it does a yearly one.
 _Avoid_: frequency, cadence (in the interface), period
 
+**Varying amount**:
+_En français_ : « Le montant varie »
+A recurring template whose figure is an estimate: a pay that moves with
+hours or days, a benefit, an energy bill. A bank movement in its category on
+the right days is its occurrence from half the figure up (and, for anything
+but a pay, up to one and a half times it); no bonus is set apart from it.
+_Avoid_: variable amount, approximate
+
 **Occurrence**:
 _En français_ : échéance
 One dated instance a recurring template calls for. An occurrence is not a

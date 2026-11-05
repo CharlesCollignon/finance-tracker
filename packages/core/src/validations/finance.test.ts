@@ -71,3 +71,22 @@ describe("recurringTemplateSchema's months", () => {
     expect(result.success).toBe(false);
   });
 });
+
+describe("recurringTemplateSchema's amountVaries", () => {
+  it("reads the form's switch", () => {
+    expect(
+      recurringTemplateSchema.parse({ ...TEMPLATE, amountVaries: "true" })
+        .amountVaries,
+    ).toBe(true);
+    expect(
+      recurringTemplateSchema.parse({ ...TEMPLATE, amountVaries: false })
+        .amountVaries,
+    ).toBe(false);
+  });
+
+  it("leaves it alone when absent", () => {
+    expect(
+      recurringTemplateSchema.parse(TEMPLATE).amountVaries,
+    ).toBeUndefined();
+  });
+});
