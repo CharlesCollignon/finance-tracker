@@ -7,7 +7,16 @@ import {
   scheduleDatesBefore,
 } from "@finance/core/apply-recurring";
 import { getCurrentMonth, todayIsoLocal } from "@finance/core/constants";
-import { dayOfWeekLabels, monthLabels } from "@finance/core/recurrence";
+import {
+  dayOfWeekLabels,
+  monthLabels,
+  MONTH_STEPS,
+  monthsEvery,
+  normaliseMonths,
+  rhythmOfMonths,
+  type MonthRhythm,
+} from "@finance/core/recurrence";
+import { monthShort } from "@finance/core/i18n/calendar-names";
 import type {
   Category,
   CategoryType,
@@ -23,7 +32,11 @@ import { DateField } from "@/components/ui/DateField";
 import { Input } from "@/components/ui/Input";
 import { Text } from "@/components/ui/Text";
 import { SheetGrabber } from "@/components/ui/SheetGrabber";
-import { hapticSuccess, hapticWarning } from "@/lib/haptics";
+import {
+  hapticSelection,
+  hapticSuccess,
+  hapticWarning,
+} from "@/lib/haptics";
 import { useToast } from "@/providers/ToastProvider";
 import {
   deleteRecurringTemplate,
@@ -203,6 +216,58 @@ export function RecurringFormBody({
   // The app's transfer to the broker, kept from the ticked DCAs, as on the
   // web: opened here through a link, it says so and keeps its pricing.
   const follows = template?.pricing_type === "purchases";
+  // How often a monthly one comes round: every month, every 2, 3 or 6 from
+  // a first month, or the months picked one by one (migration 084).
+  const initialRhythm = rhythmOfMonths(template?.months ?? null);
+  const [rhythm, setRhythm] = useState<MonthRhythm>(initialRhythm.rhythm);
+  const [firstMonth, setFirstMonth] = useState(String(initialRhythm.first));
+  const [pickedMonths, setPickedMonths] = useState<number[]>(
+    template?.months ?? [],
+  );
+  // A transfer that follows the DCAs goes every month, so it has no rhythm.
+  const offersRhythm = recurrence === "monthly" && !follows;
+  const months = !offersRhythm
+    ? null
+    : rhythm === "some"
+      ? normaliseMonths(pickedMonths)
+      : monthsEvery(rhythm, Number(firstMonth));
+  const isSpreadMonthlyExpense =
+    months !== null && selectedCategory?.type === "expense";
+  const rhythmOptions = useMemo(
+    () =>
+      [...MONTH_STEPS, "some" as const].map((value) => ({
+        value: String(value),
+        label: t(`recurring.rhythmEvery.${value}`),
+      })),
+    [t],
+  );
+
+  function chooseRhythm(value: string) {
+    const next: MonthRhythm =
+      value === "some" ? "some" : (Number(value) as MonthRhythm);
+    if (next === "some" && pickedMonths.length === 0) {
+      // Open on what was showing, so « Certains mois » starts from the
+      // months already chosen rather than from none.
+      setPickedMonths(
+        rhythm === "some" || rhythm === 1
+          ? [Number(firstMonth)]
+          : (monthsEvery(rhythm, Number(firstMonth)) ?? []),
+      );
+    }
+    setRhythm(next);
+  }
+
+  function togglePickedMonth(month: number) {
+    void hapticSelection();
+    setPickedMonths((current) =>
+      current.includes(month)
+        ? current.length > 1
+          ? current.filter((m) => m !== month)
+          : current
+        : [...current, month],
+    );
+  }
+
   const [startsOn, setStartsOn] = useState(template?.starts_on ?? "");
   const [endsOn, setEndsOn] = useState(template?.ends_on ?? "");
   const [error, setError] = useState<string | null>(null);
@@ -247,6 +312,7 @@ export function RecurringFormBody({
         day_of_month: recurrence === "weekly" ? null : day,
         day_of_week: recurrence === "weekly" ? weekday : null,
         month_of_year: recurrence === "yearly" ? monthNumber : null,
+        months,
         starts_on: startsOn.trim() || null,
         ends_on: endsOn.trim() || null,
       },
@@ -260,6 +326,7 @@ export function RecurringFormBody({
     dayOfMonth,
     dayOfWeek,
     monthOfYear,
+    months,
     startsOn,
     endsOn,
   ]);
@@ -322,6 +389,7 @@ export function RecurringFormBody({
     };
     if (recurrence === "monthly") {
       payload.dayOfMonth = dayOfMonth;
+      payload.months = months;
     } else if (recurrence === "weekly") {
       payload.dayOfWeek = dayOfWeek;
     } else {
@@ -523,6 +591,79 @@ export function RecurringFormBody({
                 className="mb-4"
               />
             </>
+          ) : null}
+          {offersRhythm ? (
+            <>
+              <Text className="mb-2 text-sm font-medium">
+                {t("recurring.rhythm")}
+              </Text>
+              <OptionPicker
+                label={t("recurring.rhythm")}
+                options={rhythmOptions}
+                value={String(rhythm)}
+                onChange={chooseRhythm}
+                columns={1}
+                searchable={false}
+                className="mb-4"
+              />
+            </>
+          ) : null}
+          {offersRhythm && rhythm !== 1 && rhythm !== "some" ? (
+            <>
+              <Text className="mb-2 text-sm font-medium">
+                {t("recurring.firstMonth")}
+              </Text>
+              <OptionPicker
+                label={t("recurring.firstMonth")}
+                options={monthOptions}
+                value={firstMonth}
+                onChange={setFirstMonth}
+                columns={3}
+                searchable={false}
+                className="mb-4"
+              />
+            </>
+          ) : null}
+          {offersRhythm && rhythm === "some" ? (
+            <>
+              <Text className="mb-2 text-sm font-medium">
+                {t("recurring.whichMonths")}
+              </Text>
+              <View className="mb-4 flex-row flex-wrap gap-2">
+                {Array.from({ length: 12 }, (_, index) => index + 1).map(
+                  (month) => {
+                    const on = pickedMonths.includes(month);
+                    return (
+                      <Pressable
+                        key={month}
+                        accessibilityRole="checkbox"
+                        accessibilityState={{ checked: on }}
+                        accessibilityLabel={monthShort(month, locale)}
+                        onPress={() => togglePickedMonth(month)}
+                        className={cn(
+                          "min-h-11 w-[22%] items-center justify-center rounded-full border",
+                          on ? "border-foreground bg-secondary" : "border-border",
+                        )}
+                      >
+                        <Text
+                          className={cn(
+                            "text-sm font-medium",
+                            on ? "text-foreground" : "text-muted-foreground",
+                          )}
+                        >
+                          {monthShort(month, locale)}
+                        </Text>
+                      </Pressable>
+                    );
+                  },
+                )}
+              </View>
+            </>
+          ) : null}
+          {isSpreadMonthlyExpense ? (
+            <Text variant="muted" className="mb-4 text-xs">
+              {t("recurring.monthsSpreadNote")}
+            </Text>
           ) : null}
           <Text className="mb-2 text-sm font-medium">
             {t("recurring.dayOfMonth")}

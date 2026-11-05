@@ -26,12 +26,21 @@ import {
   BITCOIN_INSTRUMENT,
   isCryptoCategoryName,
 } from "@finance/core/crypto-holdings";
-import { dayOfWeekLabels, monthLabels } from "@finance/core/recurrence";
+import {
+  dayOfWeekLabels,
+  monthLabels,
+  MONTH_STEPS,
+  monthsEvery,
+  normaliseMonths,
+  rhythmOfMonths,
+  type MonthRhythm,
+} from "@finance/core/recurrence";
 import {
   formatOccurrenceDates,
   scheduleDatesBefore,
 } from "@finance/core/apply-recurring";
 import { getCurrentMonth, todayIsoLocal } from "@finance/core/constants";
+import { monthShort } from "@finance/core/i18n/calendar-names";
 import { cn } from "@/lib/utils";
 import { useFormatCurrency } from "@/lib/use-currency";
 import type {
@@ -154,6 +163,14 @@ export function RecurringFormBody({
   const [monthOfYear, setMonthOfYear] = useState(
     String(template?.month_of_year ?? 10),
   );
+  // How often a monthly one comes round: every month, every 2, 3 or 6 from
+  // a first month, or the months picked one by one (migration 084).
+  const initialRhythm = rhythmOfMonths(template?.months ?? null);
+  const [rhythm, setRhythm] = useState<MonthRhythm>(initialRhythm.rhythm);
+  const [firstMonth, setFirstMonth] = useState(String(initialRhythm.first));
+  const [pickedMonths, setPickedMonths] = useState<number[]>(
+    template?.months ?? [],
+  );
   const [startsOn, setStartsOn] = useState(template?.starts_on ?? "");
   const [endsOn, setEndsOn] = useState(template?.ends_on ?? "");
   const [applyToThisMonth, setApplyToThisMonth] = useState("false");
@@ -273,6 +290,42 @@ export function RecurringFormBody({
       ? pricingType
       : "fixed";
 
+  // A transfer that follows the DCAs goes every month, so it has no rhythm.
+  const offersRhythm =
+    recurrence === "monthly" && effectivePricingType !== "purchases";
+  const months = !offersRhythm
+    ? null
+    : rhythm === "some"
+      ? normaliseMonths(pickedMonths)
+      : monthsEvery(rhythm, Number(firstMonth));
+  const isSpreadMonthlyExpense =
+    months !== null && selectedCategory?.type === "expense";
+
+  function chooseRhythm(value: string) {
+    const next: MonthRhythm =
+      value === "some" ? "some" : (Number(value) as MonthRhythm);
+    if (next === "some" && pickedMonths.length === 0) {
+      // Open on what was showing, so switching to « Certains mois » starts
+      // from the months already chosen rather than from none.
+      setPickedMonths(
+        rhythm === "some" || rhythm === 1
+          ? [Number(firstMonth)]
+          : (monthsEvery(rhythm, Number(firstMonth)) ?? []),
+      );
+    }
+    setRhythm(next);
+  }
+
+  function togglePickedMonth(month: number) {
+    setPickedMonths((current) =>
+      current.includes(month)
+        ? current.length > 1
+          ? current.filter((m) => m !== month)
+          : current
+        : [...current, month],
+    );
+  }
+
   const parsedShares = Number(shareCount);
   const sharesValid = Number.isInteger(parsedShares) && parsedShares > 0;
   const estimateActive =
@@ -327,6 +380,7 @@ export function RecurringFormBody({
             recurrence === "weekly" ? null : Number(dayOfMonth) || null,
           day_of_week: recurrence === "weekly" ? Number(dayOfWeek) : null,
           month_of_year: recurrence === "yearly" ? Number(monthOfYear) : null,
+          months,
           starts_on: startsOn || null,
           ends_on: endsOn || null,
         },
@@ -339,6 +393,9 @@ export function RecurringFormBody({
     <form action={action} className="flex flex-col gap-4">
       {template && <input type="hidden" name="id" value={template.id} />}
       <input type="hidden" name="recurrence" value={recurrence} />
+      {recurrence === "monthly" && (
+        <input type="hidden" name="months" value={months?.join(",") ?? ""} />
+      )}
       <input type="hidden" name="pricingType" value={effectivePricingType} />
       <input
         type="hidden"
@@ -600,22 +657,96 @@ export function RecurringFormBody({
         )}
       </div>
       {recurrence === "monthly" ? (
-        <div className="flex flex-col gap-2">
-          <FormLabel htmlFor="dayOfMonth">
-            {t("recurring.dayOfMonth")}
-          </FormLabel>
-          <Input
-            id="dayOfMonth"
-            name="dayOfMonth"
-            type="number"
-            min="1"
-            max="31"
-            required
-            className="text-base"
-            value={dayOfMonth}
-            onChange={(event) => setDayOfMonth(event.target.value)}
-          />
-        </div>
+        <>
+          {offersRhythm && (
+            <div className="flex flex-col gap-2">
+              <FormLabel htmlFor="rhythm">{t("recurring.rhythm")}</FormLabel>
+              <OptionPicker
+                id="rhythm"
+                panelLabel={t("recurring.rhythm")}
+                label={t("recurring.rhythm")}
+                options={[...MONTH_STEPS, "some" as const].map((value) => ({
+                  value: String(value),
+                  label: t(`recurring.rhythmEvery.${value}`),
+                }))}
+                value={String(rhythm)}
+                onValueChange={chooseRhythm}
+                columns={1}
+                searchable={false}
+              />
+            </div>
+          )}
+          {offersRhythm && rhythm !== 1 && rhythm !== "some" && (
+            <div className="flex flex-col gap-2">
+              <FormLabel htmlFor="firstMonth">
+                {t("recurring.firstMonth")}
+              </FormLabel>
+              <OptionPicker
+                id="firstMonth"
+                panelLabel={t("recurring.firstMonth")}
+                label={t("recurring.firstMonth")}
+                options={Object.entries(monthLabels(locale)).map(
+                  ([value, label]) => ({ value, label }),
+                )}
+                value={firstMonth}
+                onValueChange={setFirstMonth}
+                columns={3}
+                searchable={false}
+              />
+            </div>
+          )}
+          {offersRhythm && rhythm === "some" && (
+            <fieldset className="flex flex-col gap-2">
+              <legend className="mb-2 text-sm font-medium">
+                {t("recurring.whichMonths")}
+              </legend>
+              <div className="grid grid-cols-4 gap-2 sm:grid-cols-6">
+                {Array.from({ length: 12 }, (_, index) => index + 1).map(
+                  (month) => {
+                    const on = pickedMonths.includes(month);
+                    return (
+                      <button
+                        key={month}
+                        type="button"
+                        aria-pressed={on}
+                        onClick={() => togglePickedMonth(month)}
+                        className={cn(
+                          "rounded-full border px-2 py-2 text-sm font-medium",
+                          on
+                            ? "border-foreground bg-secondary text-foreground"
+                            : "border-border text-muted-foreground hover:bg-accent",
+                        )}
+                      >
+                        {monthShort(month, locale)}
+                      </button>
+                    );
+                  },
+                )}
+              </div>
+            </fieldset>
+          )}
+          {isSpreadMonthlyExpense && (
+            <Text className="text-xs text-muted-foreground">
+              {t("recurring.monthsSpreadNote")}
+            </Text>
+          )}
+          <div className="flex flex-col gap-2">
+            <FormLabel htmlFor="dayOfMonth">
+              {t("recurring.dayOfMonth")}
+            </FormLabel>
+            <Input
+              id="dayOfMonth"
+              name="dayOfMonth"
+              type="number"
+              min="1"
+              max="31"
+              required
+              className="text-base"
+              value={dayOfMonth}
+              onChange={(event) => setDayOfMonth(event.target.value)}
+            />
+          </div>
+        </>
       ) : recurrence === "weekly" ? (
         <div className="flex flex-col gap-2">
           <FormLabel htmlFor="dayOfWeek">{t("recurring.dayOfWeek")}</FormLabel>

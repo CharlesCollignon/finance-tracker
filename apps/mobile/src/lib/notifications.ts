@@ -375,6 +375,7 @@ function boundedDatesFor(
         day_of_month: template.day_of_month,
         day_of_week: template.day_of_week,
         month_of_year: template.month_of_year,
+        months: template.months,
       },
       cursor.getFullYear(),
       cursor.getMonth() + 1,
@@ -403,6 +404,11 @@ function boundedDatesFor(
 
 /** True when the template will still be running a year from now. */
 function isOpenEnded(template: RecurringTemplateWithCategory): boolean {
+  // One kept to some months has no repeating trigger that skips the others,
+  // so it takes the one-off dates, renewed each time the app schedules.
+  if (template.months) {
+    return false;
+  }
   if (!template.ends_on) {
     return true;
   }

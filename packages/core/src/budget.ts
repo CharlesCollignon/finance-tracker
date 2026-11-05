@@ -9,41 +9,47 @@ import { lastDayIsoOfMonth, todayIsoLocal } from "./constants";
 import {
   filterDatesBySchedule,
   getRecurringOccurrenceDates,
+  isSpreadExpense,
+  timesPerYear,
 } from "./recurrence";
 
 export const MONTHS_IN_YEAR = 12;
 
-export function getActiveYearlyExpenseTemplates(
+/**
+ * Expenses that do not fall every month — yearly ones, and monthly ones kept
+ * to some months (a quarterly water bill, the tax taken from January to
+ * October) — count in the budget as an even share each month rather than as
+ * a spike in the months they land.
+ */
+export function getActiveSpreadExpenseTemplates(
   templates: RecurringTemplateWithCategory[],
 ): RecurringTemplateWithCategory[] {
   return templates.filter(
-    (template) =>
-      template.active &&
-      template.recurrence === "yearly" &&
-      template.categories.type === "expense",
+    (template) => template.active && isSpreadExpense(template),
   );
 }
 
-export function yearlyExpenseTemplateIds(
+export function spreadExpenseTemplateIds(
   templates: RecurringTemplateWithCategory[],
 ): Set<string> {
   return new Set(
-    getActiveYearlyExpenseTemplates(templates).map((template) => template.id),
+    getActiveSpreadExpenseTemplates(templates).map((template) => template.id),
   );
 }
 
-export function amortizedMonthlyAmount(amount: number): number {
-  return amount / MONTHS_IN_YEAR;
+/** A year of a template's payments as one month's share. */
+export function amortizedMonthlyAmount(amount: number, perYear = 1): number {
+  return (amount * perYear) / MONTHS_IN_YEAR;
 }
 
-function isYearlyCashExpense(
+function isSpreadCashExpense(
   tx: TransactionWithCategory,
-  yearlyIds: Set<string>,
+  spreadIds: Set<string>,
 ): boolean {
   return (
     tx.categories.type === "expense" &&
     tx.recurring_template_id !== null &&
-    yearlyIds.has(tx.recurring_template_id)
+    spreadIds.has(tx.recurring_template_id)
   );
 }
 
@@ -65,8 +71,8 @@ export function computeMonthlyBudget(
   transactions: TransactionWithCategory[],
   recurringTemplates: RecurringTemplateWithCategory[],
 ): MonthlyBudgetTotals {
-  const yearlyIds = yearlyExpenseTemplateIds(recurringTemplates);
-  const yearlyTemplates = getActiveYearlyExpenseTemplates(recurringTemplates);
+  const spreadIds = spreadExpenseTemplateIds(recurringTemplates);
+  const spreadTemplates = getActiveSpreadExpenseTemplates(recurringTemplates);
 
   const totals = {
     income: 0,
@@ -96,7 +102,7 @@ export function computeMonthlyBudget(
       continue;
     }
 
-    if (isYearlyCashExpense(tx, yearlyIds)) {
+    if (isSpreadCashExpense(tx, spreadIds)) {
       continue;
     }
 
@@ -119,8 +125,11 @@ export function computeMonthlyBudget(
     }
   }
 
-  for (const template of yearlyTemplates) {
-    totals.expense += amortizedMonthlyAmount(Number(template.amount));
+  for (const template of spreadTemplates) {
+    totals.expense += amortizedMonthlyAmount(
+      Number(template.amount),
+      timesPerYear(template),
+    );
   }
 
   // Subtracted from spending rather than added to income, because that is
@@ -143,14 +152,6 @@ function templateCountsTowardSummary(
   template: RecurringTemplateWithCategory,
 ): boolean {
   return template.categories.counts_toward_summary !== false;
-}
-
-function isYearlyExpenseTemplate(
-  template: RecurringTemplateWithCategory,
-): boolean {
-  return (
-    template.recurrence === "yearly" && template.categories.type === "expense"
-  );
 }
 
 export function resolveBudgetAsOfDate(
@@ -223,6 +224,7 @@ export function templateOccurrenceDates(
         day_of_month: template.day_of_month,
         day_of_week: template.day_of_week,
         month_of_year: template.month_of_year,
+        months: template.months,
       },
       year,
       month,
@@ -242,7 +244,7 @@ function addProjectedOccurrences(
   skippedKeys: Set<string> = new Set(),
 ): void {
   for (const template of recurringTemplates) {
-    if (!template.active || isYearlyExpenseTemplate(template)) {
+    if (!template.active || isSpreadExpense(template)) {
       continue;
     }
 
@@ -323,8 +325,9 @@ export function computeMonthlyBudgetWithProjection(
  * resolves its date by reading the clock and would make the projection
  * impure. The day is the caller's to supply.
  *
- * The amortised twelfth of a yearly expense is left out, because a twelfth is
- * an accounting convention rather than a payment: there is no day in the
+ * The amortised share of a spread expense (yearly, or kept to some months)
+ * is left out, because that share is an accounting convention rather than a
+ * payment: there is no day in the
  * month by which part of it has already happened.
  */
 export function computeScheduledSoFar(
@@ -415,10 +418,10 @@ function buildProjectedBreakdown(
   );
   const applied = appliedRecurringKeys(transactions);
   const map = new Map<string, CategoryBreakdown>();
-  const yearlyIds = yearlyExpenseTemplateIds(recurringTemplates);
+  const spreadIds = spreadExpenseTemplateIds(recurringTemplates);
 
   for (const tx of monthTxs) {
-    if (!matches(tx) || isYearlyCashExpense(tx, yearlyIds)) {
+    if (!matches(tx) || isSpreadCashExpense(tx, spreadIds)) {
       continue;
     }
 
@@ -430,12 +433,15 @@ function buildProjectedBreakdown(
       continue;
     }
 
-    if (isYearlyExpenseTemplate(template)) {
+    if (isSpreadExpense(template)) {
       if (matchesTemplate(template)) {
         addTemplateBreakdownAmount(
           map,
           template,
-          amortizedMonthlyAmount(Number(template.amount)),
+          amortizedMonthlyAmount(
+            Number(template.amount),
+            timesPerYear(template),
+          ),
         );
       }
       continue;
@@ -449,6 +455,7 @@ function buildProjectedBreakdown(
           day_of_month: template.day_of_month,
           day_of_week: template.day_of_week,
           month_of_year: template.month_of_year,
+          months: template.months,
         },
         year,
         month,
@@ -541,14 +548,14 @@ export function buildBudgetExpenseBreakdown(
   transactions: TransactionWithCategory[],
   recurringTemplates: RecurringTemplateWithCategory[],
 ): CategoryBreakdown[] {
-  const yearlyIds = yearlyExpenseTemplateIds(recurringTemplates);
-  const yearlyTemplates = getActiveYearlyExpenseTemplates(recurringTemplates);
+  const spreadIds = spreadExpenseTemplateIds(recurringTemplates);
+  const spreadTemplates = getActiveSpreadExpenseTemplates(recurringTemplates);
   const map = new Map<string, CategoryBreakdown>();
 
   for (const tx of transactions) {
     if (
       tx.categories.type !== "expense" ||
-      isYearlyCashExpense(tx, yearlyIds)
+      isSpreadCashExpense(tx, spreadIds)
     ) {
       continue;
     }
@@ -567,8 +574,11 @@ export function buildBudgetExpenseBreakdown(
     }
   }
 
-  for (const template of yearlyTemplates) {
-    const share = amortizedMonthlyAmount(Number(template.amount));
+  for (const template of spreadTemplates) {
+    const share = amortizedMonthlyAmount(
+      Number(template.amount),
+      timesPerYear(template),
+    );
     const existing = map.get(template.category_id);
 
     if (existing) {

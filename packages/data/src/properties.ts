@@ -62,6 +62,8 @@ export interface AttachedTemplate {
   dayOfMonth: number | null;
   dayOfWeek: number | null;
   monthOfYear: number | null;
+  /** The months it falls in, null for every month. */
+  months: number[] | null;
   startsOn: string | null;
   endsOn: string | null;
   active: boolean;
@@ -267,6 +269,7 @@ interface TemplateRow {
   day_of_month: number | null;
   day_of_week: number | null;
   month_of_year: number | null;
+  months: number[] | null;
   starts_on: string | null;
   ends_on: string | null;
   active: boolean;
@@ -285,6 +288,7 @@ function templateFromRow(
     dayOfMonth: template.day_of_month,
     dayOfWeek: template.day_of_week,
     monthOfYear: template.month_of_year,
+    months: template.months,
     startsOn: template.starts_on,
     endsOn: template.ends_on,
     active: template.active,
@@ -338,7 +342,7 @@ export async function getProperties(
   const query = db
     .from("recurring_templates")
     .select(
-      "id, property_id, description, amount, recurrence, day_of_month, day_of_week, month_of_year, starts_on, ends_on, active, categories(name, type)",
+      "id, property_id, description, amount, recurrence, day_of_month, day_of_week, month_of_year, months, starts_on, ends_on, active, categories(name, type)",
     )
     .eq("user_id", userId);
   const { data: templateRows, error: templatesError } = await (
@@ -363,7 +367,7 @@ export async function getProperties(
   const { data: looseRows, error: looseError } = await db
     .from("recurring_templates")
     .select(
-      "id, property_id, description, amount, recurrence, day_of_month, day_of_week, month_of_year, starts_on, ends_on, active, categories(name, type)",
+      "id, property_id, description, amount, recurrence, day_of_month, day_of_week, month_of_year, months, starts_on, ends_on, active, categories(name, type)",
     )
     .eq("user_id", userId)
     .eq("active", true)

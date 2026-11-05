@@ -3,6 +3,7 @@ import type { BankForecast } from "./recurring-fulfilment";
 import {
   filterDatesBySchedule,
   getRecurringOccurrenceDates,
+  isSpreadExpense,
 } from "./recurrence";
 import type {
   CategoryType,
@@ -76,7 +77,8 @@ function countsTowardSummary(template: RecurringTemplateWithCategory): boolean {
  * total here is exactly the difference between the two views. Anything else
  * would put two numbers on the same screen that disagree:
  *
- *   - inactive templates are ignored, as are yearly expenses, which are held
+ *   - inactive templates are ignored, as are spread expenses (yearly, or kept
+ *     to some months: `isSpreadExpense`), which are held
  *     at face value in the cash view rather than spread across the month;
  *   - an occurrence already written into the ledger is not owed twice;
  *   - a skipped occurrence is not owed at all;
@@ -178,11 +180,7 @@ export function buildStillToCome(
   }
 
   for (const template of templates) {
-    if (
-      !template.active ||
-      (template.recurrence === "yearly" &&
-        template.categories.type === "expense")
-    ) {
+    if (!template.active || isSpreadExpense(template)) {
       continue;
     }
 
@@ -193,6 +191,7 @@ export function buildStillToCome(
           day_of_month: template.day_of_month,
           day_of_week: template.day_of_week,
           month_of_year: template.month_of_year,
+          months: template.months,
         },
         year,
         month,

@@ -345,6 +345,7 @@ function occurrencesOf(
           day_of_month: template.day_of_month,
           day_of_week: template.day_of_week,
           month_of_year: template.month_of_year,
+          months: template.months,
         },
         year,
         month,

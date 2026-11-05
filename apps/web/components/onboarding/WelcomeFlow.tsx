@@ -11,6 +11,12 @@ import {
 import { useRouter } from "next/navigation";
 import { CaretLeft } from "@phosphor-icons/react";
 import { CURRENCY_LABELS, type CurrencyCode } from "@finance/core/constants";
+import {
+  monthLabels,
+  MONTH_STEPS,
+  monthsEvery,
+} from "@finance/core/recurrence";
+import { OptionPicker } from "@/components/ui/Picker";
 import type { Category } from "@finance/core/types/database";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
@@ -29,7 +35,7 @@ import { upsertRecurringTemplate } from "@/lib/actions/finance";
 import { setCurrencyPreference, useCurrency } from "@/lib/use-currency";
 import { cn } from "@/lib/utils";
 import { ICON } from "@/lib/icon-scale";
-import { useT } from "@/lib/locale-context";
+import { useLocale, useT } from "@/lib/locale-context";
 
 const CURRENCIES: CurrencyCode[] = ["EUR", "USD"];
 
@@ -121,6 +127,7 @@ export function WelcomeFlow({
   startAt,
 }: WelcomeFlowProps) {
   const t = useT();
+  const locale = useLocale();
   const router = useRouter();
   const { toast } = useToast();
   const currency = useCurrency();
@@ -145,6 +152,18 @@ export function WelcomeFlow({
   const [incomeLabel, setIncomeLabel] = useState("");
   const [incomeAmount, setIncomeAmount] = useState("");
   const [incomeDay, setIncomeDay] = useState("1");
+  // Every month unless the reader says otherwise: « Pas tous les mois ? »
+  // opens the rhythm, from every 2 months to every 6, and its first month.
+  // Months picked one by one stay in Récurrents' own form.
+  const [incomeRhythmOpen, setIncomeRhythmOpen] = useState(false);
+  const [incomeStep, setIncomeStep] = useState("1");
+  const [incomeFirstMonth, setIncomeFirstMonth] = useState(
+    String(new Date().getMonth() + 1),
+  );
+  const incomeMonths = monthsEvery(
+    Number(incomeStep),
+    Number(incomeFirstMonth),
+  );
   const [expenseCategory, setExpenseCategory] = useState<string | null>(null);
   const [expenseLabel, setExpenseLabel] = useState("");
   const [expenseAmount, setExpenseAmount] = useState("");
@@ -245,6 +264,7 @@ export function WelcomeFlow({
     amount: string,
     dayOfMonth: string,
     label: string,
+    months: number[] | null = null,
   ): Promise<boolean> {
     const form = new FormData();
     form.set("categoryId", categoryId);
@@ -257,6 +277,9 @@ export function WelcomeFlow({
     form.set("amount", amount);
     form.set("recurrence", "monthly");
     form.set("dayOfMonth", dayOfMonth);
+    if (months) {
+      form.set("months", months.join(","));
+    }
     form.set("pricingType", "fixed");
     form.set("active", "on");
 
@@ -281,6 +304,7 @@ export function WelcomeFlow({
           incomeAmount,
           incomeDay,
           incomeLabel,
+          incomeMonths,
         )
       ) {
         toast(t("onboarding.incomeAdded"), "success");
@@ -455,7 +479,9 @@ export function WelcomeFlow({
               onChange={(event) => setIncomeLabel(event.target.value)}
             />
             <FormLabel htmlFor="income-amount">
-              {t("onboarding.monthlyAmount")}
+              {incomeMonths
+                ? t("onboarding.paymentAmount")
+                : t("onboarding.monthlyAmount")}
             </FormLabel>
             {/* `0.00` rather than a translated `0,00`: these are
                 `type="number"` inputs, which accept the dot form whatever the
@@ -483,6 +509,53 @@ export function WelcomeFlow({
               value={incomeDay}
               onChange={(event) => setIncomeDay(event.target.value)}
             />
+            {incomeRhythmOpen ? (
+              <>
+                <FormLabel htmlFor="income-rhythm">
+                  {t("recurring.rhythm")}
+                </FormLabel>
+                <OptionPicker
+                  id="income-rhythm"
+                  panelLabel={t("recurring.rhythm")}
+                  label={t("recurring.rhythm")}
+                  options={MONTH_STEPS.map((step) => ({
+                    value: String(step),
+                    label: t(`recurring.rhythmEvery.${step}`),
+                  }))}
+                  value={incomeStep}
+                  onValueChange={setIncomeStep}
+                  columns={1}
+                  searchable={false}
+                />
+                {incomeMonths ? (
+                  <>
+                    <FormLabel htmlFor="income-first-month">
+                      {t("recurring.firstMonth")}
+                    </FormLabel>
+                    <OptionPicker
+                      id="income-first-month"
+                      panelLabel={t("recurring.firstMonth")}
+                      label={t("recurring.firstMonth")}
+                      options={Object.entries(monthLabels(locale)).map(
+                        ([value, label]) => ({ value, label }),
+                      )}
+                      value={incomeFirstMonth}
+                      onValueChange={setIncomeFirstMonth}
+                      columns={3}
+                      searchable={false}
+                    />
+                  </>
+                ) : null}
+              </>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setIncomeRhythmOpen(true)}
+                className="self-start text-sm font-medium text-muted-foreground underline underline-offset-4 hover:text-foreground"
+              >
+                {t("onboarding.otherRhythm")}
+              </button>
+            )}
           </Card.Bezel>
 
           <div className="flex flex-col gap-2">

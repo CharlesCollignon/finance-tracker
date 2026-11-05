@@ -169,7 +169,7 @@ export async function saveRecurringTemplate(
 
   const schedule: Pick<
     TemplateInsert,
-    "recurrence" | "day_of_month" | "day_of_week" | "month_of_year"
+    "recurrence" | "day_of_month" | "day_of_week" | "month_of_year" | "months"
   > =
     data.recurrence === "monthly"
       ? {
@@ -177,6 +177,9 @@ export async function saveRecurringTemplate(
           day_of_month: data.dayOfMonth,
           day_of_week: null,
           month_of_year: null,
+          // Only when the form sent it: an app from before migration 084
+          // editing a quarterly charge does not make it monthly again.
+          ...(data.months !== undefined ? { months: data.months } : {}),
         }
       : data.recurrence === "weekly"
         ? {
@@ -184,12 +187,14 @@ export async function saveRecurringTemplate(
             day_of_month: null,
             day_of_week: data.dayOfWeek,
             month_of_year: null,
+            months: null,
           }
         : {
             recurrence: "yearly",
             month_of_year: data.monthOfYear,
             day_of_month: data.dayOfMonth,
             day_of_week: null,
+            months: null,
           };
 
   // Ticked by default on a DCA bought at the broker: the transfer pays for
@@ -228,7 +233,7 @@ export async function saveRecurringTemplate(
     ? await db
         .from("recurring_templates")
         .select(
-          "recurrence, day_of_month, day_of_week, month_of_year, starts_on, ends_on, active, created_at",
+          "recurrence, day_of_month, day_of_week, month_of_year, months, starts_on, ends_on, active, created_at",
         )
         .eq("id", data.id)
         .eq("user_id", userId)
@@ -316,6 +321,7 @@ export async function saveRecurringTemplate(
                 day_of_month: schedule.day_of_month ?? null,
                 day_of_week: schedule.day_of_week ?? null,
                 month_of_year: schedule.month_of_year ?? null,
+                months: schedule.months ?? null,
                 starts_on: fields.starts_on,
                 ends_on: fields.ends_on,
               },
@@ -332,6 +338,9 @@ export async function saveRecurringTemplate(
         previous.day_of_month !== (schedule.day_of_month ?? null) ||
         previous.day_of_week !== (schedule.day_of_week ?? null) ||
         previous.month_of_year !== (schedule.month_of_year ?? null) ||
+        (schedule.months !== undefined &&
+          (previous.months ?? []).join(",") !==
+            (schedule.months ?? []).join(",")) ||
         previous.starts_on !== fields.starts_on ||
         previous.ends_on !== fields.ends_on ||
         previous.active !== fields.active;

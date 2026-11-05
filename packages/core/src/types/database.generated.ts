@@ -2015,6 +2015,7 @@ export type Database = {
           last_quote_at: string | null;
           last_quote_price: number | null;
           month_of_year: number | null;
+          months: number[] | null;
           pricing_type: Database["public"]["Enums"]["pricing_type"];
           property_id: string | null;
           recurrence: Database["public"]["Enums"]["recurrence_type"];
@@ -2039,6 +2040,7 @@ export type Database = {
           last_quote_at?: string | null;
           last_quote_price?: number | null;
           month_of_year?: number | null;
+          months?: number[] | null;
           pricing_type?: Database["public"]["Enums"]["pricing_type"];
           property_id?: string | null;
           recurrence?: Database["public"]["Enums"]["recurrence_type"];
@@ -2063,6 +2065,7 @@ export type Database = {
           last_quote_at?: string | null;
           last_quote_price?: number | null;
           month_of_year?: number | null;
+          months?: number[] | null;
           pricing_type?: Database["public"]["Enums"]["pricing_type"];
           property_id?: string | null;
           recurrence?: Database["public"]["Enums"]["recurrence_type"];
@@ -2832,6 +2835,7 @@ export type Database = {
         }[];
       };
       is_demo_user: { Args: { uid: string }; Returns: boolean };
+      is_month_set: { Args: { months: number[] }; Returns: boolean };
       join_space: { Args: { invite_token: string }; Returns: string };
       leave_space: { Args: { target_space: string }; Returns: undefined };
       merge_tags: {

@@ -523,7 +523,11 @@ async function recurring(ctx: AskToolContext): Promise<AskToolResult> {
     amount: money(Number(template.amount)),
     rhythm: formatRecurrenceSchedule(template, ctx.locale),
     perMonth: money(
-      monthlyEquivalent(Number(template.amount), template.recurrence),
+      monthlyEquivalent(
+        Number(template.amount),
+        template.recurrence,
+        template.months,
+      ),
     ),
     next: nextDate(template, ctx.today),
   }));
@@ -559,7 +563,12 @@ async function savings(ctx: AskToolContext): Promise<AskToolResult> {
     )
     .reduce(
       (sum, template) =>
-        sum + monthlyEquivalent(Number(template.amount), template.recurrence),
+        sum +
+        monthlyEquivalent(
+          Number(template.amount),
+          template.recurrence,
+          template.months,
+        ),
       0,
     );
 

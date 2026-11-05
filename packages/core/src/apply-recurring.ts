@@ -193,6 +193,7 @@ function* monthOccurrences(
           day_of_month: template.day_of_month,
           day_of_week: template.day_of_week,
           month_of_year: template.month_of_year,
+          months: template.months,
         },
         year,
         month,
@@ -600,6 +601,8 @@ export function scheduleDatesBefore(
     day_of_month: number | null;
     day_of_week: number | null;
     month_of_year: number | null;
+    /** The months it falls in, null or absent for every month. */
+    months?: readonly number[] | null;
     starts_on: string | null;
     ends_on: string | null;
   },
@@ -614,6 +617,7 @@ export function scheduleDatesBefore(
         day_of_month: schedule.day_of_month,
         day_of_week: schedule.day_of_week,
         month_of_year: schedule.month_of_year,
+        months: schedule.months,
       },
       year,
       month,

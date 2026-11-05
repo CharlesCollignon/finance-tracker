@@ -132,8 +132,19 @@ _Avoid_: mode, forecast
 **Recurring template**:
 _En français_ : opération récurrente (l'onglet : Récurrents)
 A standing instruction that transactions should exist on a repeating schedule —
-monthly, weekly or yearly, optionally bounded by a start and end date.
+monthly, weekly or yearly, optionally bounded by a start and end date. A
+monthly one can be kept to some months: every 2, 3 or 6 months, or months
+chosen one by one (its _rhythm_).
 _Avoid_: subscription, schedule, rule
+
+**Rhythm**:
+_En français_ : rythme
+How often a monthly recurring template comes round: every month, every 2
+months, every quarter, every 6 months, or some months (« Certains mois »). Held
+as the months it falls in, none for every month. An expense that skips months
+is a _spread expense_: the budget counts it as an even share of the year each
+month, as it does a yearly one.
+_Avoid_: frequency, cadence (in the interface), period
 
 **Occurrence**:
 _En français_ : échéance
@@ -329,8 +340,10 @@ _En français_ : « Il vous reste »
 What the day-to-day accounts can still give before the next pay day without
 going below zero: the balance, less what the recurring templates take out
 before then, taken at its lowest point, less the unrecorded allowance's share
-of those days. It runs to the eve of the largest recurring income's next
-payment, or to the month's end when there is none. Only ever on a balance —
+of those days. It runs to the eve of the next payment of the recurring income
+that brings the most in an average month (so a quarterly bonus does not
+outrank the salary), up to a year ahead, or to the month's end when there is
+none. Only ever on a balance —
 read from the bank or carried from a close — never on a month counted from
 zero.
 _Avoid_: safe to spend, budget, reste à vivre (a bank's word for income less

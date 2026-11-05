@@ -959,6 +959,7 @@ function TemplateRow({ template }: { template: AttachedTemplate }) {
                 day_of_month: template.dayOfMonth,
                 day_of_week: template.dayOfWeek,
                 month_of_year: template.monthOfYear,
+                months: template.months,
                 starts_on: template.startsOn,
                 ends_on: template.endsOn,
               },
