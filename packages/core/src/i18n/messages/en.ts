@@ -983,6 +983,63 @@ export const en = {
     transactionHint: "Something that happened once.",
     chargeHint: "Something that repeats — rent, pay, a subscription.",
   },
+  /** The Add sheet, since November 2026: the kind of money first. */
+  entry: {
+    kinds: "Kind of money",
+    kind: {
+      expense: "Expense",
+      income: "Income",
+      savings: "Savings",
+      investment: "Investment",
+    },
+    category: "Category",
+    choose: "Choose",
+    shop: "Shop",
+    label: "Label",
+    optional: "Optional",
+    when: "When",
+    labelPlaceholder: {
+      income: "Pay, bonus, refund…",
+      savings: "Transfer to savings…",
+      investment: "Monthly ETF purchase…",
+    },
+    whereFrom: {
+      expense: "Where did the money go?",
+      income: "Where did the money come from?",
+      savings: "Where is the money going?",
+      investment: "Where is the money going?",
+    },
+    noCategory: "No category of this kind yet.",
+    manage: "Manage",
+    knownShopHint: "A shop you have used before fills in its category.",
+    newShop: "New. Pluclair will remember its category next time.",
+    lastTime: "{category} · last time",
+    once: "Once",
+    repeats: "Regularly",
+    dayBefore: "The day before yesterday",
+    rhythm: {
+      monthly: "Every month",
+      weekly: "Every week",
+      quarterly: "Every quarter",
+      yearly: "Every year",
+    },
+    dayOfMonth: "Day of the month",
+    whichDay: "Which day?",
+    whichMonth: "Which month?",
+    startsMonth: "Starting in",
+    moreOptions: "More options",
+    fewerOptions: "Fewer options",
+    gap: {
+      amount: "Enter an amount",
+      category: "Choose a category",
+    },
+    saved: "Saved",
+    saveAnother: "Save and add another",
+    savedCount: { one: "{count} saved", other: "{count} saved" },
+    amountLabel: "Amount: {amount}",
+    amountEmpty: "Amount: none yet",
+    decimal: "Decimal separator",
+  },
 
   /** A planned row, opened: what can be done about one occurrence to come. */
   planned: {
@@ -1026,7 +1083,6 @@ export const en = {
     /* The three field names, one of which is only ever heard. */
     amount: "Amount",
     note: "Shop or note",
-    anotherDay: "Another day",
     allCategories: "All categories",
     noCategoryMatch: "No category matches “{query}”.",
     /**

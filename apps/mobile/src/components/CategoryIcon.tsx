@@ -60,3 +60,29 @@ export function CategoryIcon({ icon, className }: CategoryIconProps) {
     </View>
   );
 }
+
+/**
+ * The glyph alone, without the tile around it, in an ink the caller picks:
+ * the Add sheet draws its own disc, filled in the kind's colour once chosen.
+ */
+export function CategoryGlyph({
+  icon,
+  color,
+  size = ICON.xl,
+}: {
+  icon: string | null;
+  color: string;
+  size?: number;
+}) {
+  if (icon === "currency-btc") {
+    return (
+      <Image
+        source={BITCOIN_MARK}
+        style={{ width: size, height: size, borderRadius: size / 2 }}
+        accessibilityIgnoresInvertColors
+      />
+    );
+  }
+  const name = (icon && CATEGORY_ICONS[icon]) || "ellipsis-horizontal";
+  return <Ionicons name={name} size={size} color={color} />;
+}
