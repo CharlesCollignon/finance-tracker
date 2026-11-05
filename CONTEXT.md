@@ -146,6 +146,14 @@ is a _spread expense_: the budget counts it as an even share of the year each
 month, as it does a yearly one.
 _Avoid_: frequency, cadence (in the interface), period
 
+**Refund**:
+_En français_ : remboursement (la catégorie : « Remboursements »)
+Money that comes back rather than in: an expense report repaid, a shop's
+refund, a friend's share. Filed under an income category that does not count,
+it is taken off the month's spending, never added to income. A default
+category since November 2026.
+_Avoid_: reimbursement income, credit
+
 **Deferred-debit card**:
 _En français_ : carte à débit différé
 A card debited once a month for all its payments. Each payment counts for

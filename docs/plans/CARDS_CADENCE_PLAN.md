@@ -322,7 +322,11 @@ one in:
 - ~~Pay in 3x/4x~~ — done 2026-11-05 (branch `instalments`): proposed from
   the first instalment as a monthly entry ending after the last
   (`instalments.ts`), count read from « 3X »/« 4X » or asked once.
-- Expense-report refunds, pay in CHF.
+- ~~Expense-report refunds~~ — done 2026-11-05 (branch `refunds`): a
+  default « Remboursements » category (income, not counted: taken off
+  spending), offered for money coming back (`looksLikeRefund`), and money in
+  only filed where it can go (`categoriesFor`).
+- Pay in CHF.
 
 ## Questions for the owner
 
