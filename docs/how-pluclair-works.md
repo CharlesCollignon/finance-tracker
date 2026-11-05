@@ -591,6 +591,15 @@ occurrences is one call too (`reprice_occurrences`). Before 067, and when the
 database refuses a batch, both go a row at a time, so one bad row costs only
 itself.
 
+A feed row keeps the day the bank booked it (`occurred_on`), which is the
+order its running balance is in, and the day a card payment was made when
+that is earlier (`purchased_on`, migration 085, `purchase-day.ts`: the bank's
+`transactionDate`, else the `DD/MM` ending a card line's text). The
+transaction written from it counts for the purchase day and keeps the booking
+day as its `cash_on` (`ledgerDatesOf` in `cash-date.ts`), whether the sync,
+a statement or the review inbox writes it. Matching a typed or template row
+and pairing an alert go by the purchase day too.
+
 Built and reachable by one account per deployment: the one whose id is
 `OPEN_BANKING_OWNER_USER_ID` (`apps/web/lib/bank/client.ts`, `bankOpenTo`),
 whatever the `bank.connect` flag or a stored file says. It was open to every

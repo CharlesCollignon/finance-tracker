@@ -40,9 +40,32 @@ export function budgetOrCashDateFilter(from: string, to: string): string {
   );
 }
 
-/** Whether a row was moved to count for another day than its money moved. */
+/**
+ * Whether a row counts for another month than the one its money moved in —
+ * the salary paid on 22 September for October, the card payment made on
+ * 31 October and debited on 3 November. What the Journal says « Débité le »
+ * or « Reçu le » for. A card payment debited two days later in the same
+ * month is not worth a line.
+ */
 export function isMovedRow(row: DatedRow): boolean {
-  return Boolean(row.cash_on) && row.cash_on !== row.occurred_on;
+  return (
+    Boolean(row.cash_on) &&
+    row.cash_on!.slice(0, 7) !== row.occurred_on.slice(0, 7)
+  );
+}
+
+/**
+ * The dates a transaction written from a bank line takes: the day it was
+ * made, and the day the bank booked it as the day its money moved when the
+ * two differ (migration 085).
+ */
+export function ledgerDatesOf(line: {
+  occurred_on: string;
+  purchased_on?: string | null;
+}): { occurred_on: string; cash_on: string | null } {
+  return line.purchased_on && line.purchased_on !== line.occurred_on
+    ? { occurred_on: line.purchased_on, cash_on: line.occurred_on }
+    : { occurred_on: line.occurred_on, cash_on: null };
 }
 
 /**

@@ -1,3 +1,4 @@
+import { ledgerDatesOf } from "@finance/core/cash-date";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { allRows } from "@finance/core/paging";
 import {
@@ -319,6 +320,7 @@ function feedItemRow(
     provider_id: candidate.providerId,
     provider_account_id: providerAccountId,
     occurred_on: candidate.occurredOn,
+    purchased_on: candidate.purchasedOn ?? null,
     amount: candidate.amount,
     currency: candidate.currency,
     direction: candidate.direction,
@@ -402,7 +404,12 @@ async function insertTransactions(
               id: crypto.randomUUID(),
               user_id: userId,
               category_id: row.decision.suggestion.categoryId,
-              occurred_on: row.candidate.occurredOn,
+              // The day it was made; the booking day as the day its money
+              // moved, when later (migration 085).
+              ...ledgerDatesOf({
+                occurred_on: row.candidate.occurredOn,
+                purchased_on: row.candidate.purchasedOn,
+              }),
               amount: row.candidate.amount,
               note: row.candidate.note,
             },

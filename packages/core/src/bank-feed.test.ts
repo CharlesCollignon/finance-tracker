@@ -67,6 +67,19 @@ const CATEGORIES = indexCategoriesByName([
 const NO_MERCHANTS = buildMerchantIndex([]);
 
 describe("toCandidate", () => {
+  it("keeps the booking day and reads the day a card payment was made", () => {
+    expect(
+      toCandidate(
+        bank({
+          bookingDate: "2026-11-03",
+          valueDate: "2026-11-03",
+          remittanceInformation: "PAIEMENT PAR CARTE X7322 SYMPA LILLE 31/10",
+        }),
+        { locale: "en" },
+      ),
+    ).toMatchObject({ occurredOn: "2026-11-03", purchasedOn: "2026-10-31" });
+  });
+
   it("reads a card payment as money going out", () => {
     expect(toCandidate(bank(), { locale: "en" })).toMatchObject({
       providerId: "prov-1",
@@ -515,6 +528,25 @@ describe("not recording the same movement twice", () => {
     });
 
     expect(decision).not.toMatchObject({ why: "possible-duplicate" });
+  });
+
+  it("pairs a card payment with the row typed on the day it was made", () => {
+    // Bought on the 10th, booked on the 16th: six days, past the window from
+    // the booking, two from the purchase it names.
+    const candidate = toCandidate(
+      bank({
+        bookingDate: "2026-09-16",
+        valueDate: "2026-09-16",
+        remittanceInformation: "PAIEMENT PAR CARTE X7322 CARREFOUR 10/09",
+      }),
+      { locale: "en" },
+    )!;
+    expect(candidate.purchasedOn).toBe("2026-09-10");
+    expect(
+      findLedgerMatch(candidate, [
+        ledger({ occurredOn: "2026-09-11", fromRecurringTemplate: false }),
+      ]),
+    ).not.toBeNull();
   });
 
   it("files under a category only against a row in that category", () => {

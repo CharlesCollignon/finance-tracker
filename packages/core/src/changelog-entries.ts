@@ -17,6 +17,24 @@ import type { ChangelogEntry, RoadmapItem } from "./changelog";
  */
 export const CHANGELOG: readonly ChangelogEntry[] = [
   {
+    id: "2026-11-05-card-purchase-day",
+    date: "2026-11-05",
+    kind: "fixed",
+    platforms: ["web", "phone"],
+    fr: {
+      title: "Un paiement par carte compte le jour où vous avez payé",
+      body: "La banque enregistre un paiement par carte un à neuf jours après l’achat. Une course du 31 octobre enregistrée le 3 novembre comptait pour novembre. Désormais chaque paiement par carte que la banque apporte compte le jour de l’achat, celui qu’elle écrit au bout de la ligne (« … 31/10 »), et le Journal dit « Débité le 3 nov. » quand le débit tombe le mois suivant.",
+      detail:
+        "Le bilan du mois suit toujours votre banque : l’argent quitte le compte le jour où elle l’a débité. Une notification ou un e-mail d’alerte se rapproche du paiement par le jour de l’achat, et ne le compte plus deux fois quand la banque l’enregistre plus de quatre jours après. Les paiements déjà dans le Journal gardent leur date. Sur le téléphone, « Débité le » et la règle du mois suivant arrivent avec la prochaine version : d’ici là, il affiche « Payé le » sous les paiements par carte redatés.",
+    },
+    en: {
+      title: "A card payment counts on the day you paid",
+      body: "The bank books a card payment one to nine days after the purchase. Shopping on 31 October booked on 3 November counted for November. Now each card payment the bank brings counts on the day of the purchase, the one it writes at the end of the line (“… 31/10”), and the Ledger says “Debited on 3 Nov” when the debit falls in the next month.",
+      detail:
+        "The month close still follows your bank: the money leaves the account on the day it was debited. A notification or alert e-mail is paired with the payment by the day of the purchase, and is no longer counted twice when the bank books it more than four days later. Payments already in the Ledger keep their date. On the phone, “Debited on” and the next-month rule come with the next version: until then it shows “Paid on” under re-dated card payments.",
+    },
+  },
+  {
     id: "2026-11-05-cadence-detection",
     date: "2026-11-05",
     kind: "better",

@@ -4,6 +4,7 @@ import {
   budgetOrCashDateFilter,
   cashDateOf,
   isMovedRow,
+  ledgerDatesOf,
   movedBetween,
 } from "./cash-date";
 
@@ -25,6 +26,24 @@ describe("a transaction's two dates", () => {
   it("knows which rows were moved", () => {
     expect(isMovedRow(early)).toBe(true);
     expect(isMovedRow(plain)).toBe(false);
+  });
+
+  it("says nothing of a card payment debited later in the same month", () => {
+    expect(
+      isMovedRow({ occurred_on: "2026-11-02", cash_on: "2026-11-04" }),
+    ).toBe(false);
+    expect(
+      isMovedRow({ occurred_on: "2026-10-31", cash_on: "2026-11-03" }),
+    ).toBe(true);
+  });
+
+  it("dates a transaction from a bank line on the day it was made", () => {
+    expect(
+      ledgerDatesOf({ occurred_on: "2026-11-03", purchased_on: "2026-10-31" }),
+    ).toEqual({ occurred_on: "2026-10-31", cash_on: "2026-11-03" });
+    expect(
+      ledgerDatesOf({ occurred_on: "2026-11-03", purchased_on: null }),
+    ).toEqual({ occurred_on: "2026-11-03", cash_on: null });
   });
 
   it("asks the database for either date in the range", () => {

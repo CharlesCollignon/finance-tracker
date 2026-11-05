@@ -427,7 +427,7 @@ export const en = {
       other: "{count} movements to confirm on Overview",
     },
     receivedOn: "Received on {date}",
-    paidOn: "Paid on {date}",
+    paidOn: "Debited on {date}",
     recurringEntry: "Recurring entry",
     /** The strip above the list: the month, then each of its weeks. */
     sortNewest: "Newest first",
@@ -876,7 +876,7 @@ export const en = {
     deleted: "Transaction deleted",
     moveBack: "Move it back to {date}",
     countsForReceived: "Counts for {month} — received on {date}.",
-    countsForPaid: "Counts for {month} — paid on {date}.",
+    countsForPaid: "Counts for {month} — debited on {date}.",
     deleteExplanation: "Delete this transaction permanently?",
     /**
      * The same button on a row a charge wrote. Deleting it also takes that

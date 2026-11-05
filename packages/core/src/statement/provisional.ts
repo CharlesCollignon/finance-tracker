@@ -1,4 +1,5 @@
 import type { BankTransaction } from "../bank-feed";
+import { purchaseDayOf } from "../purchase-day";
 
 /**
  * Lines that arrive before the statement does — a bank's alert e-mail the
@@ -64,7 +65,10 @@ export function confirmProvisional(
       alreadyConfirmed += 1;
       continue;
     }
-    const day = line.bookingDate ?? line.valueDate ?? line.transactionDate;
+    // Alerts and notifications come the day a card payment was made; the
+    // statement books it days later and still says which day it was.
+    const booked = line.bookingDate ?? line.valueDate ?? line.transactionDate;
+    const day = booked ? (purchaseDayOf(line, booked) ?? booked) : null;
     const direction = line.creditDebitIndicator === "DBIT" ? "out" : "in";
     const amount = cents(line.amount);
     let best: ProvisionalLine | null = null;

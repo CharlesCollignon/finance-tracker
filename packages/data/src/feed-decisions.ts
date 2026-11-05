@@ -1,3 +1,4 @@
+import { ledgerDatesOf } from "@finance/core/cash-date";
 import type { ActionResult } from "@finance/core/action-result";
 import { findLedgerMatch } from "@finance/core/bank-feed";
 import { z } from "zod";
@@ -81,7 +82,7 @@ export async function fileFeedItems(
 
   const { data: items } = await db
     .from("bank_feed_items")
-    .select("id, occurred_on, amount, note, status, direction")
+    .select("id, occurred_on, purchased_on, amount, note, status, direction")
     .eq("user_id", userId)
     .in("id", parsed.data);
 
@@ -93,12 +94,13 @@ export async function fileFeedItems(
 
   for (const item of waiting) {
     const existing = (
-      await ledgerRowsAround(db, userId, item.occurred_on)
+      await ledgerRowsAround(db, userId, item.purchased_on ?? item.occurred_on)
     ).filter((row) => !written.has(row.transactionId));
     const already = findLedgerMatch(
       {
         providerId: "",
         occurredOn: item.occurred_on,
+        purchasedOn: item.purchased_on,
         amount: String(item.amount),
         currency: "EUR",
         direction: item.direction,
@@ -137,7 +139,7 @@ export async function fileFeedItems(
       .insert({
         user_id: userId,
         category_id: category.data,
-        occurred_on: item.occurred_on,
+        ...ledgerDatesOf(item),
         amount: item.amount,
         note: item.note,
       })
@@ -342,7 +344,7 @@ export async function importFeedItem(
 
   const { data: item } = await db
     .from("bank_feed_items")
-    .select("id, occurred_on, amount, note, status, direction")
+    .select("id, occurred_on, purchased_on, amount, note, status, direction")
     .eq("id", itemId)
     .eq("user_id", userId)
     .maybeSingle();
@@ -355,11 +357,16 @@ export async function importFeedItem(
   }
 
   if (!force) {
-    const existing = await ledgerRowsAround(db, userId, item.occurred_on);
+    const existing = await ledgerRowsAround(
+      db,
+      userId,
+      item.purchased_on ?? item.occurred_on,
+    );
     const already = findLedgerMatch(
       {
         providerId: "",
         occurredOn: item.occurred_on,
+        purchasedOn: item.purchased_on,
         amount: String(item.amount),
         currency: "EUR",
         direction: item.direction,
@@ -400,7 +407,7 @@ export async function importFeedItem(
     .insert({
       user_id: userId,
       category_id: categoryId,
-      occurred_on: item.occurred_on,
+      ...ledgerDatesOf(item),
       amount: item.amount,
       note: item.note,
     })

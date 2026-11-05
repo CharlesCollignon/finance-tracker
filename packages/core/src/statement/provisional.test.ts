@@ -68,3 +68,15 @@ describe("confirmProvisional", () => {
     expect(result.confirmed).toEqual([{ provisionalId: "a2", lineId: "s1" }]);
   });
 });
+
+describe("confirmProvisional, a card payment booked days later", () => {
+  it("pairs the alert with the line by the day the line says it was made", () => {
+    const booked = {
+      ...line("s1", "2026-11-04", "259.00"),
+      remittanceInformation: "PAIEMENT PAR CARTE X7322 SP FANTAIL.BE 28/10",
+    };
+    const result = confirmProvisional([booked], [early("p1", "2026-10-28", "259.00")]);
+    expect(result.confirmed).toEqual([{ provisionalId: "p1", lineId: "s1" }]);
+    expect(result.fresh).toEqual([]);
+  });
+});

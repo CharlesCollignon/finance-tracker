@@ -24,6 +24,7 @@ import { categoryNameForMcc, mccNeedsReview } from "./bank-mcc";
 import { categoryNameVariants } from "./constants";
 import { lookupBankMerchant, type BankMerchantIndex } from "./bank-merchant";
 import { findFilingRule, type FilingRule } from "./filing-rules";
+import { purchaseDayOf } from "./purchase-day";
 import {
   lookupMerchant,
   normalizeMerchant,
@@ -61,7 +62,14 @@ export type FeedDirection = "in" | "out";
 export interface BankFeedCandidate {
   /** The provider's id for this transaction — the only safe dedupe key. */
   providerId: string;
+  /** The day the bank booked it: the day the money moved. */
   occurredOn: string;
+  /**
+   * The day it was made, when that is earlier than the booking: a card
+   * payment booked days later (`purchase-day.ts`). What the transaction
+   * written from it counts for. Absent or null when it is the same day.
+   */
+  purchasedOn?: string | null;
   /**
    * Positive decimal string, exactly as the bank stated it. Kept as a string
    * all the way to the numeric column: the provider is deliberate about never
@@ -175,6 +183,7 @@ export function toCandidate(
   return {
     providerId: tx.id,
     occurredOn,
+    purchasedOn: purchaseDayOf(tx, occurredOn),
     amount: money.amount,
     currency: tx.currency,
     direction,
@@ -268,7 +277,12 @@ export function findLedgerMatch(
     if (Math.abs(row.amount - amount) > 0.009) {
       continue;
     }
-    const distance = daysBetween(row.occurredOn, candidate.occurredOn);
+    // From the day it was made: the coffee typed by hand, or the charge a
+    // template wrote, is on that day, not on the day the bank booked it.
+    const distance = daysBetween(
+      row.occurredOn,
+      candidate.purchasedOn ?? candidate.occurredOn,
+    );
     if (distance > MATCH_WINDOW_DAYS) {
       continue;
     }
