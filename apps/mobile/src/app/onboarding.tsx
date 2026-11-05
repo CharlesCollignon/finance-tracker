@@ -5,6 +5,11 @@ import { Ionicons } from "@expo/vector-icons";
 
 import { CURRENCY_LABELS, type CurrencyCode } from "@finance/core/constants";
 import { groupCategoriesByType } from "@finance/core/categories";
+import {
+  monthLabels,
+  MONTH_STEPS,
+  monthsEvery,
+} from "@finance/core/recurrence";
 import type { Category } from "@finance/core/types/database";
 
 import { ConnectBankSheet } from "@/components/bank/ConnectBankSheet";
@@ -15,6 +20,7 @@ import { FadeIn } from "@/components/motion/FadeIn";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
+import { OptionPicker } from "@/components/pickers/OptionPicker";
 import { Screen } from "@/components/ui/Screen";
 import { Text } from "@/components/ui/Text";
 import { useBankState } from "@/hooks/useBankState";
@@ -87,6 +93,17 @@ export default function OnboardingScreen() {
   const [incomeLabel, setIncomeLabel] = useState("");
   const [incomeAmount, setIncomeAmount] = useState("");
   const [incomeDay, setIncomeDay] = useState("1");
+  // Every month unless the reader says otherwise, as on the web: « Pas tous
+  // les mois ? » opens the rhythm and its first month.
+  const [incomeRhythmOpen, setIncomeRhythmOpen] = useState(false);
+  const [incomeStep, setIncomeStep] = useState("1");
+  const [incomeFirstMonth, setIncomeFirstMonth] = useState(
+    String(new Date().getMonth() + 1),
+  );
+  const incomeMonths = monthsEvery(
+    Number(incomeStep),
+    Number(incomeFirstMonth),
+  );
   const [expenseName, setExpenseName] = useState<string | null>(null);
   const [expenseLabel, setExpenseLabel] = useState("");
   const [expenseAmount, setExpenseAmount] = useState("");
@@ -175,12 +192,14 @@ export default function OnboardingScreen() {
     amount: string,
     dayOfMonth: string,
     description?: string,
+    months: number[] | null = null,
   ): Promise<boolean> {
     const result = await upsertRecurringTemplate({
       categoryId,
       amount,
       recurrence: "monthly",
       dayOfMonth,
+      ...(months ? { months } : {}),
       pricingType: "fixed",
       active: true,
       ...(description?.trim() ? { description: description.trim() } : {}),
@@ -204,6 +223,7 @@ export default function OnboardingScreen() {
       incomeAmount,
       incomeDay,
       incomeLabel,
+      incomeMonths,
     );
     setPending(false);
     if (ok) {
@@ -411,7 +431,9 @@ export default function OnboardingScreen() {
                 placeholder={t("onboarding.incomeLabelPlaceholder")}
               />
               <Text className="mt-1 text-sm font-medium">
-                {t("onboarding.monthlyAmount")}
+                {incomeMonths
+                  ? t("onboarding.paymentAmount")
+                  : t("onboarding.monthlyAmount")}
               </Text>
               <Input
                 value={incomeAmount}
@@ -428,6 +450,51 @@ export default function OnboardingScreen() {
                 keyboardType="number-pad"
                 placeholder="1"
               />
+              {incomeRhythmOpen ? (
+                <>
+                  <Text className="mt-1 text-sm font-medium">
+                    {t("recurring.rhythm")}
+                  </Text>
+                  <OptionPicker
+                    label={t("recurring.rhythm")}
+                    options={MONTH_STEPS.map((step) => ({
+                      value: String(step),
+                      label: t(`recurring.rhythmEvery.${step}`),
+                    }))}
+                    value={incomeStep}
+                    onChange={setIncomeStep}
+                    columns={1}
+                    searchable={false}
+                  />
+                  {incomeMonths ? (
+                    <>
+                      <Text className="mt-1 text-sm font-medium">
+                        {t("recurring.firstMonth")}
+                      </Text>
+                      <OptionPicker
+                        label={t("recurring.firstMonth")}
+                        options={Object.entries(monthLabels(locale)).map(
+                          ([value, label]) => ({ value, label }),
+                        )}
+                        value={incomeFirstMonth}
+                        onChange={setIncomeFirstMonth}
+                        columns={3}
+                        searchable={false}
+                      />
+                    </>
+                  ) : null}
+                </>
+              ) : (
+                <Pressable
+                  accessibilityRole="button"
+                  onPress={() => setIncomeRhythmOpen(true)}
+                  className="mt-1 min-h-11 justify-center self-start"
+                >
+                  <Text variant="muted" className="text-sm font-medium underline">
+                    {t("onboarding.otherRhythm")}
+                  </Text>
+                </Pressable>
+              )}
             </Card>
 
             <View className="gap-2">
