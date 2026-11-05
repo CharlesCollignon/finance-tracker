@@ -24,6 +24,7 @@ carries them. Each migration also has to be run on the hosted database.
 The two halves do not depend on each other. Cards come first because that
 is where today's main figure is wrong. If Phase 0 waits on the owner's
 approval, Phases 5–6 can go first; the migration numbers then swap.
+They did: Phase 5 went first (2026-11-05) and took 084, so cards take 085.
 
 ## What is there today
 
@@ -97,7 +98,7 @@ code:
 
 Covers shape (a), the cleanest: the bank lists the card as its own account.
 
-- [ ] Migration 084 `cards`: `id`, `user_id`, `bank_account_id` (its `CARD`
+- [ ] Migration 085 `cards`: `id`, `user_id`, `bank_account_id` (its `CARD`
       account, if any), `spending_account_id` (the account it is debited
       from), `last4` (nullable), `label`, `debit` (`immediate | deferred`,
       null = not asked yet), `debit_day` (nullable: learned from the
@@ -179,39 +180,40 @@ else the cards come in through statements, e-mails and notifications.
       matched on the purchase day.
 - [ ] Changelog entry.
 
-## Phase 5 — « Tous les N mois » (branch `cadence-months`)
+## Phase 5 — « Tous les N mois » (branch `cadence-months`) — done
 
 One addition covers quarterly pay and bills, every two months, every six
 months, and anything taken only in some months (tax over ten months,
 January–October; a grant paid September–June).
 
-- [ ] Migration 085: `recurring_templates.months smallint[]`, where null
+- [x] Migration 084: `recurring_templates.months smallint[]`, where null
       means every month. Values 1–12, distinct, non-empty, only on monthly
       templates. `recurring_schedule_check` is extended to match. Yearly
       stays as it is: one rule fewer to migrate, and « Une fois par an » in
       the form keeps writing it.
-- [ ] `recurrence.ts`: occurrences skip months outside `months`, and
+- [x] `recurrence.ts`: occurrences skip months outside `months`, and
       `estimateMonthlyAmount` spreads as `amount × months / 12` (as yearly
       does with `/12`). Schedule labels: « tous les trimestres, le 15
       (janv., avr., juil., oct.) », « chaque mois sauf nov. et déc., le
       15 ». Validation in `validations/finance.ts`, regenerated types,
       `packages/data/src/recurring-templates.ts`.
-- [ ] Budget: an expense that doesn't fall every month is spread like a
+- [x] Budget: an expense that doesn't fall every month is spread like a
       yearly one (`budget.ts`), under one rule rather than a second copy.
-- [ ] « Il vous reste »: `payTemplate` picks the largest income **by monthly
+- [x] « Il vous reste »: `payTemplate` picks the largest income **by monthly
       equivalent**, so a 3 000 € quarterly bonus doesn't outrank a
       2 500 € salary. The pay-day horizon goes from 3 to 12 months.
-- [ ] Forms, web and phone: « Rythme » offers « Tous les mois », « Tous les
+- [x] Forms, web and phone: « Rythme » offers « Tous les mois », « Tous les
       2 mois », « Tous les trimestres », « Tous les 6 mois », « Une fois par
       an », « Certains mois ». The every-N choices ask for the first month;
       « Certains mois » shows twelve month chips. Onboarding's income step
       keeps « tous les mois » with an « Autre rythme » link to the same
       choice.
-- [ ] The other places that read a template: Ask's tools
+- [x] The other places that read a template: Ask's tools
       (`apps/web/lib/ask/tools.ts`), phone reminders
       (`apps/mobile/src/lib/notifications.ts`), `push-messages.ts`, the
-      demo account.
-- [ ] Changelog entry.
+      demo account. The demo needed nothing: its templates are every month.
+      The DCA transfer stays tied to a pay that comes every month.
+- [x] Changelog entry.
 
 ## Phase 6 — Pluclair finds the rhythm (branch `cadence-detection`)
 

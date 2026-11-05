@@ -306,8 +306,13 @@ momentum card and says what the month's figures rest on.
 
 « Il vous reste » is what the Courant accounts hold, less the charges due
 before the next pay day, at the lowest point until then, less the marge's
-share of those days. The pay day is the next payment of the largest
-recurring income; with none, the month's end. It is the Android widget's
+share of those days. The pay day is the next payment of the recurring income
+that brings the most in an average month (`timesPerYear`: a quarterly one
+counts a third of itself), looked for up to twelve months ahead; with none,
+the month's end. A monthly template can be kept to some months
+(`recurring_templates.months`, migration 084); an expense kept that way is
+spread over the year like a yearly one (`isSpreadExpense`, shared by the
+budget, the projection and `still-to-come`). It is the Android widget's
 figure and one of Questions' readings (`read.left`); the balance card has
 not shown it since October 2026, when it left the card with « Puis-je me
 permettre ? » and « Comment c'est calculé ? » at the owner's ask. Under the

@@ -17,6 +17,24 @@ import type { ChangelogEntry, RoadmapItem } from "./changelog";
  */
 export const CHANGELOG: readonly ChangelogEntry[] = [
   {
+    id: "2026-11-05-cadence-months",
+    date: "2026-11-05",
+    kind: "new",
+    platforms: ["web"],
+    fr: {
+      title: "Ce qui ne tombe pas tous les mois",
+      body: "Une opération récurrente mensuelle a maintenant un « Rythme » : tous les mois, tous les 2 mois, tous les trimestres, tous les 6 mois, ou certains mois que vous cochez. Un salaire versé chaque trimestre, une facture d’eau trimestrielle, un impôt prélevé de janvier à octobre : chacun tombe seulement dans ses mois.",
+      detail:
+        "Une dépense qui saute des mois compte dans votre budget pour une part de l’année chaque mois, comme une dépense annuelle. « Il vous reste » court jusqu’à votre prochaine paie, même si elle est dans plusieurs mois, et une prime trimestrielle ne prend pas la place de votre salaire. À la création du compte, « Pas tous les mois ? » sous le salaire. Sur le téléphone, avec la prochaine version.",
+    },
+    en: {
+      title: "What doesn't come every month",
+      body: "A monthly recurring entry now has a “How often”: every month, every 2 months, every quarter, every 6 months, or some months you tick. A salary paid each quarter, a quarterly water bill, a tax taken from January to October: each falls in its own months only.",
+      detail:
+        "An expense that skips months counts in your budget as a share of the year each month, like a yearly one. “You have” runs to your next pay, even when it is months away, and a quarterly bonus does not take your salary's place. When you set up your account, “Not every month?” sits under the salary. On the phone, with the next version.",
+    },
+  },
+  {
     id: "2026-11-04-positions-follow-purchases",
     date: "2026-11-04",
     kind: "fixed",
@@ -1774,10 +1792,10 @@ export const CHANGELOG: readonly ChangelogEntry[] = [
  */
 export const CHANGELOG_STATS = {
   /** `git rev-list --count HEAD` on the branch that wrote the newest entry. */
-  commits: 1124,
+  commits: 1186,
   /** The repository's first commit. */
   since: "2026-06-15",
-  asOf: "2026-10-26",
+  asOf: "2026-11-05",
 } as const;
 
 /**
