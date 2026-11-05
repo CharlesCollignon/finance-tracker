@@ -17,6 +17,24 @@ import type { ChangelogEntry, RoadmapItem } from "./changelog";
  */
 export const CHANGELOG: readonly ChangelogEntry[] = [
   {
+    id: "2026-11-05-instalments",
+    date: "2026-11-05",
+    kind: "new",
+    platforms: ["web"],
+    fr: {
+      title: "Un achat payé en 3 ou 4 fois",
+      body: "Quand une ligne de votre banque vient d’Alma, Oney, Klarna, Floa, Scalapay ou d’un « paiement en 4 fois » PayPal, Récurrents le propose dès le premier prélèvement : vous dites en combien de fois, et les prélèvements restants comptent dans « Encore à venir » et « Il vous reste », jusqu’au dernier.",
+      detail:
+        "Quand la ligne dit déjà « 3X » ou « 4X », rien n’est demandé. Deux achats chez le même prestataire restent deux. Faute de vraies lignes sous la main, cela a été essayé sur des exemples : un prélèvement mal reconnu, signalez-le. Sur le téléphone, avec la prochaine version.",
+    },
+    en: {
+      title: "A purchase paid in 3 or 4 instalments",
+      body: "When a line from your bank comes from Alma, Oney, Klarna, Floa, Scalapay or a PayPal “pay in 4”, Recurring suggests it from the first instalment: you say in how many, and the instalments left count in “Still to come” and “You have”, until the last one.",
+      detail:
+        "When the line already says “3X” or “4X”, nothing is asked. Two purchases with the same provider stay two. Without real lines at hand, this was tried on samples: if an instalment is misread, report it. On the phone, with the next version.",
+    },
+  },
+  {
     id: "2026-11-05-card-statements",
     date: "2026-11-05",
     kind: "new",

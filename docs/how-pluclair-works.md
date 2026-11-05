@@ -317,7 +317,11 @@ day, like any payment, so the balance line and « Il vous reste » keep it back
 before it lands; only its `budgetedOutflow`, which reconciles with the budget,
 leaves it out. Suggestions
 (`recurring-detection.ts`) find gaps of about 2, 3 and 6 months, and monthly
-runs that skip the same months, and propose them with those months. It is the Android widget's
+runs that skip the same months, and propose them with those months. A purchase
+paid in several times (Alma, Oney, Klarna, Floa, Scalapay, PayPal « 4X »:
+`instalments.ts`) is proposed from its first instalment instead, as a monthly
+entry from that day to the last instalment (`starts_on`/`ends_on`), its count
+read from the line or asked once. It is the Android widget's
 figure and one of Questions' readings (`read.left`); the balance card has
 not shown it since October 2026, when it left the card with « Puis-je me
 permettre ? » and « Comment c'est calculé ? » at the owner's ask. Under the

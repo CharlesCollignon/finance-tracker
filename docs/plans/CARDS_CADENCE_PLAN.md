@@ -319,7 +319,10 @@ one in:
   from half the figure up, no bonus split.
 - Pay days moved for weekends and public holidays.
 - Deferred-card purchases typed by hand (no bank, no statement).
-- Pay in 3x/4x, expense-report refunds, pay in CHF.
+- ~~Pay in 3x/4x~~ — done 2026-11-05 (branch `instalments`): proposed from
+  the first instalment as a monthly entry ending after the last
+  (`instalments.ts`), count read from « 3X »/« 4X » or asked once.
+- Expense-report refunds, pay in CHF.
 
 ## Questions for the owner
 
