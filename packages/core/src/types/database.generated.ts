@@ -369,6 +369,7 @@ export type Database = {
           occurred_on: string;
           provider_account_id: string;
           provider_id: string;
+          purchased_on: string | null;
           source: string;
           status: string;
           transaction_id: string | null;
@@ -391,6 +392,7 @@ export type Database = {
           occurred_on: string;
           provider_account_id: string;
           provider_id: string;
+          purchased_on?: string | null;
           source?: string;
           status?: string;
           transaction_id?: string | null;
@@ -413,6 +415,7 @@ export type Database = {
           occurred_on?: string;
           provider_account_id?: string;
           provider_id?: string;
+          purchased_on?: string | null;
           source?: string;
           status?: string;
           transaction_id?: string | null;

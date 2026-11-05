@@ -318,7 +318,7 @@ export const fr: Messages = {
       other: "{count} mouvements à confirmer sur Le point",
     },
     receivedOn: "Reçu le {date}",
-    paidOn: "Payé le {date}",
+    paidOn: "Débité le {date}",
     recurringEntry: "Opération récurrente",
     sortNewest: "Récentes d'abord",
     sortOldest: "Anciennes d'abord",
@@ -698,7 +698,7 @@ export const fr: Messages = {
     deleted: "Opération supprimée",
     moveBack: "Le remettre au {date}",
     countsForReceived: "Compte pour {month} — reçu le {date}.",
-    countsForPaid: "Compte pour {month} — payé le {date}.",
+    countsForPaid: "Compte pour {month} — débité le {date}.",
     deleteExplanation: "Supprimer définitivement cette opération\u00A0?",
     deleteChargeExplanation:
       "Supprimer cette ligne\u00A0? Elle vient d'une opération récurrente et ne sera pas rajoutée ce mois-ci. L'opération récurrente continue les mois suivants.",
