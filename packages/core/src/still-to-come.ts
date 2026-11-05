@@ -77,9 +77,14 @@ function countsTowardSummary(template: RecurringTemplateWithCategory): boolean {
  * total here is exactly the difference between the two views. Anything else
  * would put two numbers on the same screen that disagree:
  *
- *   - inactive templates are ignored, as are spread expenses (yearly, or kept
- *     to some months: `isSpreadExpense`), which are held
- *     at face value in the cash view rather than spread across the month;
+ *   - inactive templates are ignored. A spread expense (yearly, or kept to
+ *     some months: `isSpreadExpense`) is money that leaves on its day like
+ *     any other, so it is in `outgoing` and `leaving` — the taxe foncière
+ *     due on the 15th is what « Il vous reste » has to keep back — but not
+ *     in `budgetedOutflow`, because the budget counts it as a share of the
+ *     year every month rather than on its day. Until November 2026 it was
+ *     left out altogether, which let a large bill due before payday go
+ *     unseen;
  *   - an occurrence already written into the ledger is not owed twice;
  *   - a skipped occurrence is not owed at all;
  *   - nor is a fulfilled one: the bank has already delivered it, and the
@@ -129,6 +134,8 @@ export function buildStillToCome(
     charge: UpcomingCharge,
     counts: boolean,
     categoryId: string,
+    /** Counted by the budget as a share of the year, not on its day. */
+    spread = false,
   ): void {
     // Moves nothing on the account, unless its wallet is bought from it.
     if (
@@ -147,7 +154,7 @@ export function buildStillToCome(
     outgoing.push(charge);
     leaving += charge.amount;
 
-    if (charge.type !== "investment" || counts) {
+    if (!spread && (charge.type !== "investment" || counts)) {
       budgetedOutflow += charge.amount;
     }
   }
@@ -158,6 +165,12 @@ export function buildStillToCome(
       .map((tx) =>
         recurringOccurrenceKey(tx.recurring_template_id!, tx.occurred_on),
       ),
+  );
+
+  const spreadIds = new Set(
+    templates
+      .filter((template) => template.active && isSpreadExpense(template))
+      .map((template) => template.id),
   );
 
   for (const tx of transactions) {
@@ -176,11 +189,14 @@ export function buildStillToCome(
       },
       tx.categories.counts_toward_summary !== false,
       tx.category_id,
+      tx.categories.type === "expense" &&
+        tx.recurring_template_id !== null &&
+        spreadIds.has(tx.recurring_template_id),
     );
   }
 
   for (const template of templates) {
-    if (!template.active || isSpreadExpense(template)) {
+    if (!template.active) {
       continue;
     }
 
@@ -226,6 +242,7 @@ export function buildStillToCome(
         },
         countsTowardSummary(template),
         template.category_id,
+        isSpreadExpense(template),
       );
     }
   }

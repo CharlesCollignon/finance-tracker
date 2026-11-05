@@ -311,8 +311,11 @@ that brings the most in an average month (`timesPerYear`: a quarterly one
 counts a third of itself), looked for up to twelve months ahead; with none,
 the month's end. A monthly template can be kept to some months
 (`recurring_templates.months`, migration 084); an expense kept that way is
-spread over the year like a yearly one (`isSpreadExpense`, shared by the
-budget, the projection and `still-to-come`). Suggestions
+spread over the year like a yearly one (`isSpreadExpense`) by the budget
+and the projection. What is still to come (`still-to-come.ts`) owes it on its
+day, like any payment, so the balance line and « Il vous reste » keep it back
+before it lands; only its `budgetedOutflow`, which reconciles with the budget,
+leaves it out. Suggestions
 (`recurring-detection.ts`) find gaps of about 2, 3 and 6 months, and monthly
 runs that skip the same months, and propose them with those months. It is the Android widget's
 figure and one of Questions' readings (`read.left`); the balance card has

@@ -49,6 +49,8 @@ function template(
     counts?: boolean;
     recurrence?: "monthly" | "weekly" | "yearly";
     name?: string;
+    monthOfYear?: number;
+    months?: number[];
   } = {},
 ): RecurringTemplateWithCategory {
   return {
@@ -58,7 +60,8 @@ function template(
     amount,
     day_of_month: day,
     day_of_week: null,
-    month_of_year: null,
+    month_of_year: options.monthOfYear ?? null,
+    months: options.months ?? null,
     recurrence: options.recurrence ?? "monthly",
     active: options.active ?? true,
     description: null,
@@ -212,19 +215,65 @@ describe("buildStillToCome", () => {
     expect(result.budgetedOutflow).toBe(0);
   });
 
-  it("ignores inactive templates and yearly expenses", () => {
+  it("ignores inactive templates", () => {
     const result = buildStillToCome(
       [],
-      [
-        template("r1", 20, 400, "expense", { active: false }),
-        template("r2", 20, 300, "expense", { recurrence: "yearly" }),
-      ],
+      [template("r1", 20, 400, "expense", { active: false })],
       2026,
       9,
       TODAY,
     );
 
     expect(result.outgoing).toEqual([]);
+  });
+
+  it("owes a yearly bill on its day, though the budget spreads it", () => {
+    // The taxe foncière due on the 15th leaves the account on the 15th.
+    const result = buildStillToCome(
+      [],
+      [
+        template("r2", 15, 1200, "expense", {
+          recurrence: "yearly",
+          monthOfYear: 9,
+          name: "Taxe foncière",
+        }),
+      ],
+      2026,
+      9,
+      TODAY,
+    );
+
+    expect(result.outgoing.map((c) => [c.occurredOn, c.amount])).toEqual([
+      ["2026-09-15", 1200],
+    ]);
+    expect(result.leaving).toBe(1200);
+    expect(result.budgetedOutflow).toBe(0);
+  });
+
+  it("owes a quarterly bill only in its months", () => {
+    const water = template("r3", 20, 90, "expense", { months: [3, 6, 9, 12] });
+    expect(buildStillToCome([], [water], 2026, 9, TODAY).leaving).toBe(90);
+    expect(buildStillToCome([], [water], 2026, 10, "2026-10-01").leaving).toBe(
+      0,
+    );
+  });
+
+  it("keeps a spread bill already written for later out of the budget's figure", () => {
+    const result = buildStillToCome(
+      [tx("t9", "2026-09-15", 1200, "expense", { templateId: "r2" })],
+      [
+        template("r2", 15, 1200, "expense", {
+          recurrence: "yearly",
+          monthOfYear: 9,
+        }),
+      ],
+      2026,
+      9,
+      TODAY,
+    );
+
+    expect(result.leaving).toBe(1200);
+    expect(result.budgetedOutflow).toBe(0);
   });
 
   /**
@@ -245,6 +294,12 @@ describe("buildStillToCome", () => {
       template("r1", 25, 400, "expense"),
       template("r2", 15, 90, "savings"),
       template("r3", 18, 300, "investment", { counts: false }),
+      // Spread by the budget: owed on its day, never in the budget's gap.
+      template("r4", 22, 1200, "expense", {
+        recurrence: "yearly",
+        monthOfYear: 9,
+      }),
+      template("r5", 26, 90, "expense", { months: [3, 6, 9, 12] }),
     ];
 
     const current = buildMonthlySummary(
