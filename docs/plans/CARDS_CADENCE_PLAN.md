@@ -293,7 +293,9 @@ one in:
 
 - **Freelancers and irregular income**: an income averaged over what came
   in (the owner's call: later).
-- Pay twice a month (an advance and the balance) and pay every two weeks.
+- ~~Pay twice a month (an advance and the balance)~~ — done 2026-11-05 as
+  « Avec un acompte » (branch `pay-advance`): saved as two monthly incomes.
+  Pay every two weeks: still later.
 - ~~A tolerance per template for income that varies~~ — done
   2026-11-05 as « Le montant varie » (migration 086, branch `pay-varies`):
   from half the figure up, no bonus split.

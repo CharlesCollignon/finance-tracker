@@ -271,6 +271,16 @@ export function RecurringFormBody({
   const [amountVaries, setAmountVaries] = useState(
     template?.amount_varies ?? false,
   );
+  // « Avec un acompte », for a new monthly pay, as on the web.
+  const [withAdvance, setWithAdvance] = useState(false);
+  const [advanceDay, setAdvanceDay] = useState("15");
+  const [advanceAmount, setAdvanceAmount] = useState("");
+  const offersAdvance =
+    !isEditing &&
+    recurrence === "monthly" &&
+    !sharePriced &&
+    !follows &&
+    selectedCategory?.type === "income";
   const [startsOn, setStartsOn] = useState(template?.starts_on ?? "");
   const [endsOn, setEndsOn] = useState(template?.ends_on ?? "");
   const [error, setError] = useState<string | null>(null);
@@ -367,6 +377,15 @@ export function RecurringFormBody({
       // Only a typed amount can vary; a share-priced or DCA-following one
       // has its own rule.
       amountVaries: !sharePriced && !follows && amountVaries,
+      ...(offersAdvance && withAdvance && advanceAmount.trim()
+        ? {
+            advance: {
+              day: advanceDay,
+              amount: parseTypedAmount(advanceAmount) ?? 0,
+              description: t("recurring.advanceWord"),
+            },
+          }
+        : {}),
       ...(sharePriced
         ? {
             pricingType: "shares",
@@ -527,6 +546,50 @@ export function RecurringFormBody({
               onValueChange={setAmountVaries}
             />
           </View>
+          {offersAdvance ? (
+            <>
+              <View className="mb-3 flex-row items-center justify-between gap-3">
+                <View className="min-w-0 flex-1">
+                  <Text className="text-sm font-medium">
+                    {t("recurring.advance")}
+                  </Text>
+                  <Text variant="muted" className="text-xs">
+                    {t("recurring.advanceHint")}
+                  </Text>
+                </View>
+                <Switch
+                  accessibilityLabel={t("recurring.advance")}
+                  value={withAdvance}
+                  onValueChange={setWithAdvance}
+                />
+              </View>
+              {withAdvance ? (
+                <View className="mb-4 flex-row gap-3">
+                  <View className="flex-1">
+                    <Text className="mb-2 text-sm font-medium">
+                      {t("recurring.advanceAmount")}
+                    </Text>
+                    <Input
+                      value={advanceAmount}
+                      onChangeText={setAdvanceAmount}
+                      keyboardType="decimal-pad"
+                    />
+                  </View>
+                  <View className="flex-1">
+                    <Text className="mb-2 text-sm font-medium">
+                      {t("recurring.advanceDay")}
+                    </Text>
+                    <Input
+                      value={advanceDay}
+                      onChangeText={setAdvanceDay}
+                      keyboardType="number-pad"
+                      maxLength={2}
+                    />
+                  </View>
+                </View>
+              ) : null}
+            </>
+          ) : null}
         </>
       )}
 

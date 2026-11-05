@@ -692,6 +692,12 @@ export const en = {
     convertedFrom: "({amount} converted)",
     descriptionOptional: "Description (optional)",
     monthOfYear: "Month",
+    advance: "With an advance",
+    advanceHint:
+      "Type the whole pay above: the advance is saved on its day and the rest on payday, each as a recurring entry.",
+    advanceDay: "Day of the advance",
+    advanceAmount: "Amount of the advance",
+    advanceWord: "Advance",
     amountVaries: "The amount varies",
     amountVariesHint:
       "Pluclair recognises it from half the expected amount up: pay that depends on hours, a benefit, an energy bill. The amount is an estimate.",
@@ -3744,6 +3750,8 @@ export const en = {
     nameTooLong100: "Name must be 100 characters or less",
     nameRequiredCustom: "Name is required for custom holdings",
     shareCountRequired: "Share count is required",
+    advanceAboveTotal: "The advance must be smaller than the whole pay",
+    advanceSameDay: "The advance comes on another day than the rest of the pay",
     invalidMonths: "Choose months between January and December",
     followsPurchasesMonthly: "A transfer that follows your DCAs is monthly",
     followsPurchasesCategory: "Only a broker transfer can follow your DCAs",

@@ -17,6 +17,24 @@ import type { ChangelogEntry, RoadmapItem } from "./changelog";
  */
 export const CHANGELOG: readonly ChangelogEntry[] = [
   {
+    id: "2026-11-05-pay-advance",
+    date: "2026-11-05",
+    kind: "new",
+    platforms: ["web"],
+    fr: {
+      title: "Un salaire avec un acompte",
+      body: "En ajoutant un salaire mensuel, « Avec un acompte » demande le montant et le jour de l’acompte. Vous tapez le salaire entier : Pluclair enregistre l’acompte à son jour et le reste le jour de paie, chacun comme une opération récurrente que la banque vient confirmer.",
+      detail:
+        "« Il vous reste » court toujours jusqu’au jour de paie, le plus gros des deux versements. Sur le téléphone, avec la prochaine version.",
+    },
+    en: {
+      title: "A pay with an advance",
+      body: "When you add a monthly pay, “With an advance” asks for the advance's amount and day. You type the whole pay: Pluclair saves the advance on its day and the rest on payday, each as a recurring entry the bank comes to confirm.",
+      detail:
+        "“You have” still runs to payday, the larger of the two payments. On the phone, with the next version.",
+    },
+  },
+  {
     id: "2026-11-05-why-not-passed",
     date: "2026-11-05",
     kind: "better",

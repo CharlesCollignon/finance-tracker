@@ -554,6 +554,12 @@ export const fr: Messages = {
     convertedFrom: "({amount} converti)",
     descriptionOptional: "Libellé (facultatif)",
     monthOfYear: "Mois",
+    advance: "Avec un acompte",
+    advanceHint:
+      "Tapez le salaire entier au-dessus\u00A0: l'acompte est enregistré à son jour, le reste le jour de paie, chacun comme une opération récurrente.",
+    advanceDay: "Jour de l'acompte",
+    advanceAmount: "Montant de l'acompte",
+    advanceWord: "Acompte",
     amountVaries: "Le montant varie",
     amountVariesHint:
       "Pluclair le reconnaît dès la moitié du montant prévu\u00A0: un salaire selon les heures, une allocation, une facture d'énergie. Le montant sert d'estimation.",
@@ -2908,6 +2914,8 @@ export const fr: Messages = {
     nameTooLong100: "Le nom doit faire 100 caractères ou moins",
     nameRequiredCustom: "Le nom est obligatoire pour une ligne personnalisée",
     shareCountRequired: "Le nombre de parts est obligatoire",
+    advanceAboveTotal: "L'acompte doit être plus petit que le salaire entier",
+    advanceSameDay: "L'acompte tombe un autre jour que le reste du salaire",
     invalidMonths: "Choisissez des mois entre janvier et décembre",
     followsPurchasesMonthly: "Un virement qui suit vos DCA est mensuel",
     followsPurchasesCategory:

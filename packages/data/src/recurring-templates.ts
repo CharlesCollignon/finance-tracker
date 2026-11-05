@@ -80,6 +80,41 @@ export async function saveRecurringTemplate(
   data: RecurringTemplateInput,
   options: SaveTemplateOptions = {},
 ): Promise<{ templateId: string } | { error: string }> {
+  // « Avec un acompte »: the pay is saved as two monthly incomes, the advance
+  // on its day and the rest on payday — two entries the matcher, the
+  // forecast and « Il vous reste » already read as two payments. Each is then
+  // an ordinary entry, edited on its own.
+  if (data.recurrence === "monthly" && data.advance) {
+    const { advance, ...pay } = data;
+    const rest = await saveRecurringTemplate(
+      db,
+      userId,
+      {
+        ...pay,
+        amount: Math.round(((pay.amount ?? 0) - advance.amount) * 100) / 100,
+      },
+      options,
+    );
+    if ("error" in rest) {
+      return rest;
+    }
+    const early = await saveRecurringTemplate(
+      db,
+      userId,
+      {
+        ...pay,
+        amount: advance.amount,
+        dayOfMonth: advance.day,
+        // « Acompte », in the user's language, before the pay's own label.
+        description: [advance.description, pay.description?.trim()]
+          .filter(Boolean)
+          .join(" · "),
+      },
+      options,
+    );
+    return "error" in early ? early : rest;
+  }
+
   let amount = data.amount ?? 0;
   let pricing: Pick<
     TemplateInsert,

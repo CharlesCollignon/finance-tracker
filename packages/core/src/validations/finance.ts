@@ -223,8 +223,48 @@ export const recurringTemplateSchema = z.discriminatedUnion("recurrence", [
       recurrence: z.literal("monthly"),
       dayOfMonth: z.coerce.number().int().min(1).max(31),
       months: monthSetSchema.optional(),
+      /**
+       * « Avec un acompte »: part of a new monthly pay comes earlier in the
+       * month. `amount` is the whole pay; saving writes the advance as its
+       * own monthly income on its day and the rest on payday.
+       */
+      advance: z
+        .object({
+          day: z.coerce.number().int().min(1).max(31),
+          amount: z.coerce.number().positive("errors.amountPositive"),
+          /** What to call it: « Acompte », put before the pay's label. */
+          description: z.string().max(60).optional(),
+        })
+        .optional(),
     })
-    .superRefine(applyRecurringRules),
+    .superRefine(applyRecurringRules)
+    .superRefine((data, ctx) => {
+      if (!data.advance) {
+        return;
+      }
+      if (data.id || data.pricingType !== "fixed") {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "errors.invalidInput",
+          path: ["advance"],
+        });
+        return;
+      }
+      if (!data.amount || data.advance.amount >= data.amount) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "errors.advanceAboveTotal",
+          path: ["advance", "amount"],
+        });
+      }
+      if (data.advance.day === data.dayOfMonth) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "errors.advanceSameDay",
+          path: ["advance", "day"],
+        });
+      }
+    }),
   recurringCommonSchema
     .extend({
       recurrence: z.literal("weekly"),
