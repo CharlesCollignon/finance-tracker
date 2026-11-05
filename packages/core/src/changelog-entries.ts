@@ -17,6 +17,24 @@ import type { ChangelogEntry, RoadmapItem } from "./changelog";
  */
 export const CHANGELOG: readonly ChangelogEntry[] = [
   {
+    id: "2026-11-05-card-statements",
+    date: "2026-11-05",
+    kind: "new",
+    platforms: ["web"],
+    fr: {
+      title: "Le relevé d’une carte à débit différé",
+      body: "En important un relevé, un nouveau compte peut maintenant être une « Carte différée » : ses paiements arrivent dans votre journal à leur date, et quittent votre compte le jour du débit — la fin du mois, ou le jour choisi dans « Vos cartes ». La ligne de votre compte courant qui les débite tous ensemble est alors comptée une seule fois.",
+      detail:
+        "Les e-mails d’alerte et les notifications d’une carte à débit différé attendent, eux aussi, le jour du débit. Sur le téléphone, avec la prochaine version.",
+    },
+    en: {
+      title: "A deferred-debit card's statement",
+      body: "When you import a statement, a new account can now be a “Deferred card”: its payments come into your ledger on their day, and leave your account on the debit day — month end, or the day chosen in “Your cards”. The line on your current account that debits them all together is then counted once.",
+      detail:
+        "Alert e-mails and notifications for a deferred-debit card wait for the debit day too. On the phone, with the next version.",
+    },
+  },
+  {
     id: "2026-11-05-card-owed",
     date: "2026-11-05",
     kind: "better",
