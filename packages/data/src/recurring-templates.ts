@@ -225,6 +225,10 @@ export async function saveRecurringTemplate(
     ...pricing,
     ...schedule,
     ...funded,
+    // Only when the form sent it, like the months: an older app leaves it be.
+    ...(data.amountVaries !== undefined
+      ? { amount_varies: data.amountVaries }
+      : {}),
   };
 
   // What the template said before this save, so the rows it already wrote

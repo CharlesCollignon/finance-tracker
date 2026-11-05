@@ -65,7 +65,9 @@ export async function fulfilOccurrence(
   const [{ data: template }, { data: transaction }] = await Promise.all([
     db
       .from("recurring_templates")
-      .select("id, amount, recurrence, pricing_type, categories(type)")
+      .select(
+        "id, amount, recurrence, pricing_type, amount_varies, categories(type)",
+      )
       .eq("id", parsed.data.templateId)
       .eq("user_id", userId)
       .maybeSingle(),
@@ -160,6 +162,7 @@ export async function fulfilOccurrence(
       categoryType: template.categories?.type ?? "expense",
       recurrence: template.recurrence ?? "monthly",
       anyAmount: template.pricing_type === "purchases",
+      amountVaries: template.amount_varies,
     },
     Number(transaction.amount),
   );

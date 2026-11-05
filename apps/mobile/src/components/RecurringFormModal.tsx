@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Modal, Pressable, ScrollView, View } from "react-native";
+import { Modal, Pressable, ScrollView, Switch, View } from "react-native";
 
 import { parseTypedAmount } from "@finance/core/amount-input";
 import {
@@ -268,6 +268,9 @@ export function RecurringFormBody({
     );
   }
 
+  const [amountVaries, setAmountVaries] = useState(
+    template?.amount_varies ?? false,
+  );
   const [startsOn, setStartsOn] = useState(template?.starts_on ?? "");
   const [endsOn, setEndsOn] = useState(template?.ends_on ?? "");
   const [error, setError] = useState<string | null>(null);
@@ -361,6 +364,9 @@ export function RecurringFormBody({
       description: description || undefined,
       recurrence,
       active: template?.active !== false,
+      // Only a typed amount can vary; a share-priced or DCA-following one
+      // has its own rule.
+      amountVaries: !sharePriced && !follows && amountVaries,
       ...(sharePriced
         ? {
             pricingType: "shares",
@@ -506,6 +512,21 @@ export function RecurringFormBody({
             keyboardType="decimal-pad"
             className="mb-4"
           />
+          <View className="mb-4 flex-row items-center justify-between gap-3">
+            <View className="min-w-0 flex-1">
+              <Text className="text-sm font-medium">
+                {t("recurring.amountVaries")}
+              </Text>
+              <Text variant="muted" className="text-xs">
+                {t("recurring.amountVariesHint")}
+              </Text>
+            </View>
+            <Switch
+              accessibilityLabel={t("recurring.amountVaries")}
+              value={amountVaries}
+              onValueChange={setAmountVaries}
+            />
+          </View>
         </>
       )}
 

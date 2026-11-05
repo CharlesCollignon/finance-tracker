@@ -271,13 +271,14 @@ type WithOptionalAuthor<Row extends { created_by: string | null }> = Omit<
  * The months a template falls in (migration 084) are optional on a row as
  * the apps hold it, for the same reason the author is: a fixture or a select
  * without them is a template that falls every month, which is what null says.
+ * Whether its amount varies (migration 086) likewise: absent is a fixed one.
  */
 export type RecurringTemplate = Omit<
   WithOptionalAuthor<
     Database["public"]["Tables"]["recurring_templates"]["Row"]
   >,
-  "months"
-> & { months?: number[] | null };
+  "months" | "amount_varies"
+> & { months?: number[] | null; amount_varies?: boolean };
 export type RecurringSkip =
   Database["public"]["Tables"]["recurring_skips"]["Row"];
 /**
