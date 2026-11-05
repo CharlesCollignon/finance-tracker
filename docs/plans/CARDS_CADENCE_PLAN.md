@@ -24,7 +24,7 @@ carries them. Each migration also has to be run on the hosted database.
 The two halves do not depend on each other. Cards come first because that
 is where today's main figure is wrong. If Phase 0 waits on the owner's
 approval, Phases 5–6 can go first; the migration numbers then swap.
-They did: Phase 5 went first (2026-11-05) and took 084, so cards take 085.
+They did: Phase 5 went first (2026-11-05) and took 084; Phase 0b took 085, so cards take 086.
 
 ## What is there today
 
@@ -133,11 +133,29 @@ What follows for the plan:
   feed sample from someone who has one, or are built on the fixtures
   alone.
 
+## Phase 0b — The day a card payment was made (branch `card-purchase-day`) — done
+
+The owner's call on 2026-11-05, from Phase 0: re-date every card payment,
+immediate or not, before Phase 1.
+
+- [x] Migration 085: `bank_feed_items.purchased_on`. The bank row keeps its
+      booking day in `occurred_on` (the running balance is in that order).
+- [x] `purchase-day.ts`: the bank's `transactionDate`, else the `DD/MM`
+      ending a card line's text, year from the booking; kept only when
+      1–45 days before the booking.
+- [x] The transaction written from a bank row (sync, statements, the review
+      inbox) counts for the purchase day, with the booking day as its
+      `cash_on` (`ledgerDatesOf`). Matching a typed or template row, and
+      pairing an alert or notification, go by the purchase day.
+- [x] The Journal says « Débité le » only when the debit is in another month
+      (`isMovedRow`). Rows already in the ledger keep their dates.
+- [x] Changelog entry.
+
 ## Phase 1 — « Votre carte » (branch `cards-deferred`)
 
 Covers shape (a), the cleanest: the bank lists the card as its own account.
 
-- [ ] Migration 085 `cards`: `id`, `user_id`, `bank_account_id` (its `CARD`
+- [ ] Migration 086 `cards`: `id`, `user_id`, `bank_account_id` (its `CARD`
       account, if any), `spending_account_id` (the account it is debited
       from), `last4` (nullable), `label`, `debit` (`immediate | deferred`,
       null = not asked yet), `debit_day` (nullable: learned from the
