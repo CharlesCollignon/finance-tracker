@@ -17,6 +17,24 @@ import type { ChangelogEntry, RoadmapItem } from "./changelog";
  */
 export const CHANGELOG: readonly ChangelogEntry[] = [
   {
+    id: "2026-11-05-cadence-detection",
+    date: "2026-11-05",
+    kind: "better",
+    platforms: ["web"],
+    fr: {
+      title: "Récurrents repère ce qui revient tous les trimestres",
+      body: "En haut de Récurrents, les opérations de votre relevé qui ont l’air de se répéter comptent maintenant aussi celles qui reviennent tous les 2 mois, tous les trimestres ou tous les 6 mois, et un prélèvement qui saute les mêmes mois chaque année, comme un impôt prélevé de janvier à octobre. L’ajouter crée l’opération avec ses mois.",
+      detail:
+        "Un mois ne compte comme sauté que si chacun des autres a été vu deux années différentes : un paiement oublié une fois ne devient pas une habitude. Sur le téléphone, avec la prochaine version.",
+    },
+    en: {
+      title: "Recurring spots what comes every quarter",
+      body: "At the top of Recurring, the charges in your statement that look like they repeat now include those that come every 2 months, every quarter or every 6 months, and a debit that skips the same months each year, like a tax taken from January to October. Adding it creates the entry with its months.",
+      detail:
+        "A month only counts as skipped when each of the others was seen in two different years: a payment missed once does not become a habit. On the phone, with the next version.",
+    },
+  },
+  {
     id: "2026-11-05-cadence-months",
     date: "2026-11-05",
     kind: "new",
