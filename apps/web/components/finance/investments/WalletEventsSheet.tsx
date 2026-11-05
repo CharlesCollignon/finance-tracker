@@ -1,5 +1,6 @@
 "use client";
 
+import { SHEET_LABEL } from "@/components/finance/sheet/entry-sheet";
 import { useRef, useState, useTransition } from "react";
 import { Trash, UploadSimple } from "@phosphor-icons/react";
 import { parseTypedAmount } from "@finance/core/amount-input";
@@ -306,7 +307,9 @@ export function WalletEventsSheet({
           >
             <h3 className="text-sm font-medium">{t("events.new")}</h3>
             <div className="flex flex-col gap-1">
-              <FormLabel id="event-kind">{t("events.kind")}</FormLabel>
+              <FormLabel className={SHEET_LABEL} id="event-kind">
+                {t("events.kind")}
+              </FormLabel>
               <ChoiceChips
                 options={kindOptions}
                 value={draft.kind}
@@ -316,7 +319,9 @@ export function WalletEventsSheet({
             </div>
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <div className="flex flex-col gap-1">
-                <FormLabel htmlFor="event-date">{t("events.date")}</FormLabel>
+                <FormLabel className={SHEET_LABEL} htmlFor="event-date">
+                  {t("events.date")}
+                </FormLabel>
                 <Input
                   id="event-date"
                   type="date"
@@ -328,7 +333,7 @@ export function WalletEventsSheet({
                 />
               </div>
               <div className="flex flex-col gap-1">
-                <FormLabel htmlFor="event-amount">
+                <FormLabel className={SHEET_LABEL} htmlFor="event-amount">
                   {t("events.amount")}
                 </FormLabel>
                 <Input
@@ -347,7 +352,7 @@ export function WalletEventsSheet({
               </div>
             </div>
             <div className="flex flex-col gap-1">
-              <FormLabel htmlFor="event-instrument">
+              <FormLabel className={SHEET_LABEL} htmlFor="event-instrument">
                 {t("events.instrument")}
               </FormLabel>
               <Input
@@ -362,7 +367,9 @@ export function WalletEventsSheet({
             </div>
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <div className="flex flex-col gap-1">
-                <FormLabel htmlFor="event-isin">{t("events.isin")}</FormLabel>
+                <FormLabel className={SHEET_LABEL} htmlFor="event-isin">
+                  {t("events.isin")}
+                </FormLabel>
                 <Input
                   id="event-isin"
                   maxLength={12}
@@ -378,7 +385,7 @@ export function WalletEventsSheet({
               </div>
               {draft.kind === "buy" || draft.kind === "sell" ? (
                 <div className="flex flex-col gap-1">
-                  <FormLabel htmlFor="event-quantity">
+                  <FormLabel className={SHEET_LABEL} htmlFor="event-quantity">
                     {t("events.quantity")}
                   </FormLabel>
                   <Input
@@ -393,7 +400,9 @@ export function WalletEventsSheet({
               ) : null}
             </div>
             <div className="flex flex-col gap-1">
-              <FormLabel htmlFor="event-note">{t("events.note")}</FormLabel>
+              <FormLabel className={SHEET_LABEL} htmlFor="event-note">
+                {t("events.note")}
+              </FormLabel>
               <Input
                 id="event-note"
                 maxLength={500}

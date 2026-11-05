@@ -1,14 +1,14 @@
 import { useState } from "react";
-import { Modal, Pressable, ScrollView, View } from "react-native";
+import { View } from "react-native";
 
 import { ENVELOPE_SHORT_KEYS } from "@finance/core/future-plan";
 import { resolveMessage } from "@finance/core/i18n/t";
 import type { WalletId } from "@finance/core/types/database";
 
 import { NumberField } from "@/components/plan/Fields";
-import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
-import { SheetGrabber } from "@/components/ui/SheetGrabber";
+import { EntrySheet, SaveButton } from "@/components/sheet/EntrySheet";
+import { useThemeColors } from "@/theme/useThemeColors";
 import { Text } from "@/components/ui/Text";
 import { hapticSuccess } from "@/lib/haptics";
 import { createInvestmentPosition } from "@/lib/savings-accounts";
@@ -28,6 +28,7 @@ export function NewPositionSheet({
   wallet: WalletId | null;
   onClose: () => void;
 }) {
+  const colors = useThemeColors();
   const t = useT();
   const [name, setName] = useState("");
   const [invested, setInvested] = useState(0);
@@ -69,53 +70,32 @@ export function NewPositionSheet({
   }
 
   return (
-    <Modal
-      visible
-      animationType="fade"
-      transparent
-      statusBarTranslucent
-      onRequestClose={close}
-    >
-      <View className="flex-1 justify-end bg-black/50">
-        <Pressable
-          className="flex-1"
-          accessibilityLabel={t("position.close")}
-          onPress={close}
+    <EntrySheet
+      onClose={close}
+      title={`${t("position.addItem")} · ${t(ENVELOPE_SHORT_KEYS[wallet])}`}
+      closeLabel={t("position.close")}
+      ink={colors.info}
+      footer={
+        <SaveButton
+          label={
+            pending
+              ? t("position.saving")
+              : name.trim() === ""
+                ? t("entry.gap.name")
+                : t("position.savePosition")
+          }
+          disabled={pending || name.trim() === ""}
+          onPress={() => void save()}
         />
-        <View className="max-h-[90%] rounded-t-card border border-border bg-card">
-          <View className="items-center pt-3">
-            <SheetGrabber />
-          </View>
-          <View className="flex-row items-center justify-between px-5 pb-2 pt-3">
-            <Text
-              accessibilityRole="header"
-              className="font-semibold"
-              style={{ fontSize: 18 }}
-            >
-              {t("position.addItem")} · {t(ENVELOPE_SHORT_KEYS[wallet])}
-            </Text>
-            <Pressable
-              onPress={close}
-              accessibilityRole="button"
-              accessibilityLabel={t("position.close")}
-              className="h-11 justify-center"
-            >
-              <Text variant="muted">{t("position.close")}</Text>
-            </Pressable>
-          </View>
-
-          <ScrollView
-            className="px-5"
-            keyboardShouldPersistTaps="handled"
-            automaticallyAdjustKeyboardInsets
-            showsVerticalScrollIndicator={false}
-          >
+      }
+    >
             <View className="gap-4">
               <View className="gap-1">
-                <Text className="text-sm font-medium">
+                <Text className="text-xs font-semibold text-muted-foreground">
                   {t("position.nameLabel")}
                 </Text>
                 <Input
+                  tone="sheet"
                   value={name}
                   onChangeText={setName}
                   placeholder={t("position.namePlaceholder")}
@@ -158,19 +138,7 @@ export function NewPositionSheet({
                 </Text>
               ) : null}
 
-              <Button
-                label={
-                  pending ? t("position.saving") : t("position.savePosition")
-                }
-                size="lg"
-                disabled={pending || name.trim() === ""}
-                onPress={() => void save()}
-              />
             </View>
-            <View className="h-10" />
-          </ScrollView>
-        </View>
-      </View>
-    </Modal>
+    </EntrySheet>
   );
 }

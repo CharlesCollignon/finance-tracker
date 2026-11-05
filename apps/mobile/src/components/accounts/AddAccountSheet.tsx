@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Modal, Pressable, ScrollView, View } from "react-native";
+import { Pressable, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 
 import {
@@ -20,9 +20,8 @@ import type {
 } from "@finance/core/types/database";
 
 import { NumberField } from "@/components/plan/Fields";
-import { Button } from "@/components/ui/Button";
 import { SegmentedControl } from "@/components/ui/SegmentedControl";
-import { SheetGrabber } from "@/components/ui/SheetGrabber";
+import { EntrySheet, SaveButton } from "@/components/sheet/EntrySheet";
 import { Text } from "@/components/ui/Text";
 import { cn } from "@/lib/cn";
 import { hapticLight, hapticSuccess } from "@/lib/haptics";
@@ -151,63 +150,24 @@ export function AddAccountSheet({
   }
 
   return (
-    <Modal
+    <EntrySheet
       visible={open}
-      animationType="fade"
-      transparent
-      statusBarTranslucent
-      onRequestClose={close}
+      onClose={close}
+      title={kind ? t(ENVELOPE_SHORT_KEYS[kind]) : t("accounts.addTitle")}
+      closeLabel={t("position.close")}
+      onBack={kind ? () => setKind(null) : undefined}
+      backLabel={t("accounts.addTitle")}
+      ink={kind ? colors.primary : undefined}
+      footer={
+        kind ? (
+          <SaveButton
+            label={pending ? t("common.working") : t("accounts.addConfirm")}
+            disabled={pending || (source === "bank" && !bankId)}
+            onPress={() => void confirmSavings()}
+          />
+        ) : undefined
+      }
     >
-      <View className="flex-1 justify-end bg-black/50">
-        <Pressable
-          className="flex-1"
-          accessibilityLabel={t("position.close")}
-          onPress={close}
-        />
-        <View className="max-h-[90%] rounded-t-card border border-border bg-card">
-          <View className="items-center pt-3">
-            <SheetGrabber />
-          </View>
-          <View className="flex-row items-center justify-between px-5 pb-2 pt-3">
-            <View className="flex-row items-center gap-2">
-              {kind ? (
-                <Pressable
-                  accessibilityRole="button"
-                  accessibilityLabel={t("accounts.addTitle")}
-                  onPress={() => setKind(null)}
-                  className="-ml-2 h-11 w-11 items-center justify-center"
-                >
-                  <Ionicons
-                    name="chevron-back"
-                    size={ICON.lg}
-                    color={colors.foreground}
-                  />
-                </Pressable>
-              ) : null}
-              <Text
-                accessibilityRole="header"
-                className="font-semibold"
-                style={{ fontSize: 18 }}
-              >
-                {kind ? t(ENVELOPE_SHORT_KEYS[kind]) : t("accounts.addTitle")}
-              </Text>
-            </View>
-            <Pressable
-              onPress={close}
-              accessibilityRole="button"
-              accessibilityLabel={t("position.close")}
-              className="h-11 justify-center"
-            >
-              <Text variant="muted">{t("position.close")}</Text>
-            </Pressable>
-          </View>
-
-          <ScrollView
-            className="px-5"
-            keyboardShouldPersistTaps="handled"
-            automaticallyAdjustKeyboardInsets
-            showsVerticalScrollIndicator={false}
-          >
             {kind ? (
               <View className="gap-4 pb-2">
                 <Text variant="muted" className="text-sm">
@@ -234,7 +194,7 @@ export function AddAccountSheet({
                   />
                 ) : (
                   <View className="gap-1">
-                    <Text className="text-sm font-medium">
+                    <Text className="text-xs font-semibold text-muted-foreground">
                       {t("accounts.addBalance")}
                     </Text>
                     <View className="flex-row">
@@ -271,15 +231,6 @@ export function AddAccountSheet({
                   </Text>
                 ) : null}
 
-                <Button
-                  label={
-                    pending ? t("common.working") : t("accounts.addConfirm")
-                  }
-                  size="lg"
-                  variant="default"
-                  disabled={pending || (source === "bank" && !bankId)}
-                  onPress={() => void confirmSavings()}
-                />
               </View>
             ) : (
               <View className="gap-5 pb-2">
@@ -314,11 +265,7 @@ export function AddAccountSheet({
                 ) : null}
               </View>
             )}
-            <View className="h-10" />
-          </ScrollView>
-        </View>
-      </View>
-    </Modal>
+    </EntrySheet>
   );
 }
 

@@ -20,6 +20,7 @@ import {
   SheetGlow,
   SheetSave,
   typedAmount,
+  SHEET_LABEL,
 } from "@/components/finance/sheet/entry-sheet";
 import { KIND_INK } from "@/components/finance/add/parts";
 import { amountSign } from "@finance/core/amount-sign";
@@ -477,10 +478,7 @@ function RecurringFormBody({
         value={template?.active === false ? "false" : "true"}
       />
       <div className="flex flex-col gap-2">
-        <FormLabel
-          className="text-xs font-semibold tracking-[0.015em] text-muted-foreground"
-          htmlFor="recurring-category"
-        >
+        <FormLabel className={SHEET_LABEL} htmlFor="recurring-category">
           {t("recurring.category")}
         </FormLabel>
         <CategoryPicker
@@ -505,9 +503,7 @@ function RecurringFormBody({
       </div>
       {supportsShares && !appsTransfer && (
         <div className="flex flex-col gap-2">
-          <span className="text-xs font-semibold tracking-[0.015em] text-muted-foreground">
-            {t("recurring.amountType")}
-          </span>
+          <span className={SHEET_LABEL}>{t("recurring.amountType")}</span>
           <div className="grid grid-cols-2 gap-2">
             {(["fixed", "shares"] as const).map((value) => (
               <button
@@ -551,10 +547,7 @@ function RecurringFormBody({
             required
           />
           <div className="flex flex-col gap-2">
-            <FormLabel
-              className="text-xs font-semibold tracking-[0.015em] text-muted-foreground"
-              htmlFor="shareCount"
-            >
+            <FormLabel className={SHEET_LABEL} htmlFor="shareCount">
               {t("recurring.shareCount")}
             </FormLabel>
             <Input
@@ -655,10 +648,7 @@ function RecurringFormBody({
               {withAdvance && (
                 <div className="grid grid-cols-2 gap-3">
                   <div className="flex flex-col gap-2">
-                    <FormLabel
-                      className="text-xs font-semibold tracking-[0.015em] text-muted-foreground"
-                      htmlFor="advance-amount"
-                    >
+                    <FormLabel className={SHEET_LABEL} htmlFor="advance-amount">
                       {t("recurring.advanceAmount")}
                     </FormLabel>
                     <Input
@@ -673,10 +663,7 @@ function RecurringFormBody({
                     />
                   </div>
                   <div className="flex flex-col gap-2">
-                    <FormLabel
-                      className="text-xs font-semibold tracking-[0.015em] text-muted-foreground"
-                      htmlFor="advance-day"
-                    >
+                    <FormLabel className={SHEET_LABEL} htmlFor="advance-day">
                       {t("recurring.advanceDay")}
                     </FormLabel>
                     <Input
@@ -695,7 +682,7 @@ function RecurringFormBody({
           )}
           {supportsShares && !isCryptoCategory && (
             <div className="flex flex-col gap-2 rounded-control border border-border bg-muted/20 p-3">
-              <FormLabel className="text-xs font-semibold tracking-[0.015em] text-muted-foreground">
+              <FormLabel className={SHEET_LABEL}>
                 {t("recurring.trackedFund")}
               </FormLabel>
               <Text className="text-xs text-muted-foreground">
@@ -739,10 +726,7 @@ function RecurringFormBody({
       )}
       {offerProperty ? (
         <div className="flex flex-col gap-2">
-          <span
-            id="recurring-property"
-            className="text-xs font-semibold tracking-[0.015em] text-muted-foreground"
-          >
+          <span id="recurring-property" className={SHEET_LABEL}>
             {t("property.attachLabel")}
           </span>
           <input type="hidden" name="propertyId" value={propertyId} />
@@ -761,10 +745,7 @@ function RecurringFormBody({
         </div>
       ) : null}
       <div className="flex flex-col gap-2">
-        <FormLabel
-          className="text-xs font-semibold tracking-[0.015em] text-muted-foreground"
-          htmlFor="recurring-description"
-        >
+        <FormLabel className={SHEET_LABEL} htmlFor="recurring-description">
           {t("recurring.descriptionOptional")}
         </FormLabel>
         <Input
@@ -779,9 +760,7 @@ function RecurringFormBody({
         />
       </div>
       <div className="flex flex-col gap-2">
-        <span className="text-xs font-semibold tracking-[0.015em] text-muted-foreground">
-          {t("recurring.schedule")}
-        </span>
+        <span className={SHEET_LABEL}>{t("recurring.schedule")}</span>
         <div className="grid grid-cols-3 gap-2">
           {(["monthly", "weekly", "yearly"] as const).map((value) => (
             <button
@@ -809,10 +788,7 @@ function RecurringFormBody({
         <>
           {offersRhythm && (
             <div className="flex flex-col gap-2">
-              <FormLabel
-                className="text-xs font-semibold tracking-[0.015em] text-muted-foreground"
-                htmlFor="rhythm"
-              >
+              <FormLabel className={SHEET_LABEL} htmlFor="rhythm">
                 {t("recurring.rhythm")}
               </FormLabel>
               <OptionPicker
@@ -832,10 +808,7 @@ function RecurringFormBody({
           )}
           {offersRhythm && rhythm !== 1 && rhythm !== "some" && (
             <div className="flex flex-col gap-2">
-              <FormLabel
-                className="text-xs font-semibold tracking-[0.015em] text-muted-foreground"
-                htmlFor="firstMonth"
-              >
+              <FormLabel className={SHEET_LABEL} htmlFor="firstMonth">
                 {t("recurring.firstMonth")}
               </FormLabel>
               <OptionPicker
@@ -854,7 +827,7 @@ function RecurringFormBody({
           )}
           {offersRhythm && rhythm === "some" && (
             <fieldset className="flex flex-col gap-2">
-              <legend className="mb-2 text-xs font-semibold tracking-[0.015em] text-muted-foreground">
+              <legend className={cn("mb-2", SHEET_LABEL)}>
                 {t("recurring.whichMonths")}
               </legend>
               <div className="grid grid-cols-4 gap-2 sm:grid-cols-6">
@@ -888,10 +861,7 @@ function RecurringFormBody({
             </Text>
           )}
           <div className="flex flex-col gap-2">
-            <FormLabel
-              className="text-xs font-semibold tracking-[0.015em] text-muted-foreground"
-              htmlFor="dayOfMonth"
-            >
+            <FormLabel className={SHEET_LABEL} htmlFor="dayOfMonth">
               {t("recurring.dayOfMonth")}
             </FormLabel>
             <Input
@@ -909,10 +879,7 @@ function RecurringFormBody({
         </>
       ) : recurrence === "weekly" ? (
         <div className="flex flex-col gap-2">
-          <FormLabel
-            className="text-xs font-semibold tracking-[0.015em] text-muted-foreground"
-            htmlFor="dayOfWeek"
-          >
+          <FormLabel className={SHEET_LABEL} htmlFor="dayOfWeek">
             {t("recurring.dayOfWeek")}
           </FormLabel>
           <OptionPicker
@@ -933,10 +900,7 @@ function RecurringFormBody({
       ) : (
         <>
           <div className="flex flex-col gap-2">
-            <FormLabel
-              className="text-xs font-semibold tracking-[0.015em] text-muted-foreground"
-              htmlFor="monthOfYear"
-            >
+            <FormLabel className={SHEET_LABEL} htmlFor="monthOfYear">
               {t("recurring.monthOfYear")}
             </FormLabel>
             <OptionPicker
@@ -955,10 +919,7 @@ function RecurringFormBody({
             />
           </div>
           <div className="flex flex-col gap-2">
-            <FormLabel
-              className="text-xs font-semibold tracking-[0.015em] text-muted-foreground"
-              htmlFor="dayOfMonth"
-            >
+            <FormLabel className={SHEET_LABEL} htmlFor="dayOfMonth">
               {t("recurring.dayOfMonth")}
             </FormLabel>
             <Input
@@ -976,18 +937,13 @@ function RecurringFormBody({
         </>
       )}
       <div className="flex flex-col gap-2">
-        <span className="text-xs font-semibold tracking-[0.015em] text-muted-foreground">
-          {t("recurring.activePeriod")}
-        </span>
+        <span className={SHEET_LABEL}>{t("recurring.activePeriod")}</span>
         <Text className="text-xs text-muted-foreground">
           {t("recurring.activePeriodNote")}
         </Text>
         <div className="grid gap-3 sm:grid-cols-2">
           <div className="flex flex-col gap-2">
-            <FormLabel
-              className="text-xs font-semibold tracking-[0.015em] text-muted-foreground"
-              htmlFor="startsOn"
-            >
+            <FormLabel className={SHEET_LABEL} htmlFor="startsOn">
               {t("recurring.startsOn")}
             </FormLabel>
             <Input
@@ -1000,10 +956,7 @@ function RecurringFormBody({
             />
           </div>
           <div className="flex flex-col gap-2">
-            <FormLabel
-              className="text-xs font-semibold tracking-[0.015em] text-muted-foreground"
-              htmlFor="endsOn"
-            >
+            <FormLabel className={SHEET_LABEL} htmlFor="endsOn">
               {t("recurring.endsOn")}
             </FormLabel>
             <Input
@@ -1121,9 +1074,7 @@ function ChoiceGroup({
 }) {
   return (
     <fieldset className="flex flex-col gap-2">
-      <legend className="mb-2 text-xs font-semibold tracking-[0.015em] text-muted-foreground">
-        {legend}
-      </legend>
+      <legend className={cn("mb-2", SHEET_LABEL)}>{legend}</legend>
       <div className="grid gap-2 sm:grid-cols-2">
         {options.map((option) => (
           <label

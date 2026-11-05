@@ -17,6 +17,20 @@ import type { ChangelogEntry, RoadmapItem } from "./changelog";
  */
 export const CHANGELOG: readonly ChangelogEntry[] = [
   {
+    id: "2026-11-06-web-other-sheets",
+    date: "2026-11-06",
+    kind: "better",
+    platforms: ["web"],
+    fr: {
+      title: "Les autres fenêtres de saisie, alignées",
+      body: "Ajouter un compte d’épargne, un bien ou un prêt finit sur le même bouton orange que le reste, en pleine largeur. Leurs champs, et ceux des mouvements d’un compte-titres, portent le même petit intitulé.",
+    },
+    en: {
+      title: "The other entry sheets, in line",
+      body: "Adding a savings account, a property or a loan ends on the same orange button as the rest, full width. Their fields, and a brokerage account's movements, carry the same small label.",
+    },
+  },
+  {
     id: "2026-11-06-web-planned-categories",
     date: "2026-11-06",
     kind: "better",

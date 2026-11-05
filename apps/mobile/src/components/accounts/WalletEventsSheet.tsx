@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Modal, Pressable, ScrollView, View } from "react-native";
+import { Pressable, View } from "react-native";
 import * as DocumentPicker from "expo-document-picker";
 import { File } from "expo-file-system";
 import { Ionicons } from "@expo/vector-icons";
@@ -26,7 +26,7 @@ import { Button } from "@/components/ui/Button";
 import { ConfirmSheet } from "@/components/ui/ConfirmSheet";
 import { DateField } from "@/components/ui/DateField";
 import { Input } from "@/components/ui/Input";
-import { SheetGrabber } from "@/components/ui/SheetGrabber";
+import { EntrySheet } from "@/components/sheet/EntrySheet";
 import { Text } from "@/components/ui/Text";
 import { cn } from "@/lib/cn";
 import { hapticSuccess, hapticWarning } from "@/lib/haptics";
@@ -245,48 +245,12 @@ export function WalletEventsSheet({
   }));
 
   return (
-    <Modal
-      visible
-      animationType="fade"
-      transparent
-      statusBarTranslucent
-      onRequestClose={close}
+    <EntrySheet
+      onClose={close}
+      title={`${t("events.open")} · ${t(ENVELOPE_SHORT_KEYS[wallet])}`}
+      closeLabel={t("events.close")}
     >
-      <View className="flex-1 justify-end bg-black/50">
-        <Pressable
-          className="flex-1"
-          accessibilityLabel={t("events.close")}
-          onPress={close}
-        />
-        <View className="max-h-[92%] rounded-t-card border border-border bg-card">
-          <View className="items-center pt-3">
-            <SheetGrabber />
-          </View>
-          <View className="flex-row items-center justify-between px-5 pb-2 pt-3">
-            <Text
-              accessibilityRole="header"
-              className="font-semibold"
-              style={{ fontSize: 18 }}
-            >
-              {t("events.open")} · {t(ENVELOPE_SHORT_KEYS[wallet])}
-            </Text>
-            <Pressable
-              onPress={close}
-              accessibilityRole="button"
-              accessibilityLabel={t("events.close")}
-              className="h-11 justify-center"
-            >
-              <Text variant="muted">{t("events.close")}</Text>
-            </Pressable>
-          </View>
-
-          <ScrollView
-            className="px-5"
-            keyboardShouldPersistTaps="handled"
-            automaticallyAdjustKeyboardInsets
-            showsVerticalScrollIndicator={false}
-            contentContainerClassName="gap-5 pb-8"
-          >
+      <View className="gap-5 pb-4 pt-2">
             <Text variant="muted" className="text-sm">
               {t("events.intro")}
             </Text>
@@ -361,7 +325,7 @@ export function WalletEventsSheet({
               <View className="gap-3 rounded-card border border-border p-4">
                 <Text className="text-sm font-medium">{t("events.new")}</Text>
                 <View className="gap-1">
-                  <Text className="text-sm font-medium">{t("events.kind")}</Text>
+                  <Text className="text-xs font-semibold text-muted-foreground">{t("events.kind")}</Text>
                   <ChoiceChips
                     options={kindOptions}
                     value={draft.kind}
@@ -370,7 +334,7 @@ export function WalletEventsSheet({
                   />
                 </View>
                 <View className="gap-1">
-                  <Text className="text-sm font-medium">{t("events.date")}</Text>
+                  <Text className="text-xs font-semibold text-muted-foreground">{t("events.date")}</Text>
                   <DateField
                     value={draft.occurredOn}
                     onChange={(occurredOn) => setDraft({ ...draft, occurredOn })}
@@ -391,7 +355,7 @@ export function WalletEventsSheet({
                   </Text>
                 </View>
                 <View className="gap-1">
-                  <Text className="text-sm font-medium">{t("events.instrument")}</Text>
+                  <Text className="text-xs font-semibold text-muted-foreground">{t("events.instrument")}</Text>
                   <Input
                     value={draft.instrumentName}
                     onChangeText={(instrumentName) =>
@@ -403,7 +367,7 @@ export function WalletEventsSheet({
                   />
                 </View>
                 <View className="gap-1">
-                  <Text className="text-sm font-medium">{t("events.isin")}</Text>
+                  <Text className="text-xs font-semibold text-muted-foreground">{t("events.isin")}</Text>
                   <Input
                     value={draft.isin}
                     onChangeText={(isin) => setDraft({ ...draft, isin })}
@@ -417,7 +381,7 @@ export function WalletEventsSheet({
                 </View>
                 {draft.kind === "buy" || draft.kind === "sell" ? (
                   <View className="gap-1">
-                    <Text className="text-sm font-medium">{t("events.quantity")}</Text>
+                    <Text className="text-xs font-semibold text-muted-foreground">{t("events.quantity")}</Text>
                     <Input
                       value={draft.quantity}
                       onChangeText={(quantity) => setDraft({ ...draft, quantity })}
@@ -427,7 +391,7 @@ export function WalletEventsSheet({
                   </View>
                 ) : null}
                 <View className="gap-1">
-                  <Text className="text-sm font-medium">{t("events.note")}</Text>
+                  <Text className="text-xs font-semibold text-muted-foreground">{t("events.note")}</Text>
                   <Input
                     value={draft.note}
                     onChangeText={(note) => setDraft({ ...draft, note })}
@@ -518,8 +482,6 @@ export function WalletEventsSheet({
                 ))}
               </View>
             )}
-          </ScrollView>
-        </View>
       </View>
 
       <ConfirmSheet
@@ -536,6 +498,6 @@ export function WalletEventsSheet({
         onConfirm={() => void remove()}
         onCancel={() => setConfirming(null)}
       />
-    </Modal>
+    </EntrySheet>
   );
 }

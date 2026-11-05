@@ -1,5 +1,6 @@
 "use client";
 
+import { SheetSave } from "@/components/finance/sheet/entry-sheet";
 import { useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import {
@@ -280,7 +281,7 @@ function AddPropertyForm({ onDone }: { onDone: () => void }) {
         ) : null}
       </div>
 
-      <div className="flex justify-between gap-2 border-t border-border pt-4">
+      <div className="flex items-center justify-between gap-2 border-t border-border pt-4">
         {step > 1 ? (
           <Button
             type="button"
@@ -295,9 +296,12 @@ function AddPropertyForm({ onDone }: { onDone: () => void }) {
         ) : (
           <span />
         )}
-        <Button type="submit" disabled={pending}>
-          {step === 3 ? t("property.save") : t("property.next")}
-        </Button>
+        <div className="min-w-0 flex-1">
+          <SheetSave
+            label={step === 3 ? t("property.save") : t("property.next")}
+            disabled={pending}
+          />
+        </div>
       </div>
     </form>
   );
