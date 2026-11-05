@@ -7,6 +7,7 @@ import { MY_SHARE_COOKIE } from "@/lib/owner-cookie";
 import { gatherBearingMonth } from "@/lib/bearing/month";
 import {
   countAccountsAwaitingRole,
+  countCardsAwaitingAnswer,
   readBankAttention,
 } from "@/lib/bank/attention";
 import { shouldInviteToConnect } from "@/lib/bank/invite";
@@ -56,35 +57,43 @@ export default async function BearingPage({ searchParams }: BearingPageProps) {
       ? parseMonthParams(params.y, params.m)
       : getCurrentMonth();
   const space = owner?.space ?? null;
-  const [data, bankInvite, bankAttention, awaitingAccounts, spaceBalance] =
-    await Promise.all([
-      gatherBearingMonth(
-        ownerId,
-        year,
-        month,
-        // « Avec ma part du commun »: for someone in a space, under « Moi ».
-        owner?.space && !joint
-          ? (await cookies()).get(MY_SHARE_COOKIE)?.value === "1"
-          : null,
-      ),
-      // The bank is the person's: never offered from the joint space.
-      joint ? false : shouldInviteToConnect(user.id, "bearing"),
-      readBankAttention(user.id),
-      countAccountsAwaitingRole(user.id),
-      // « Équilibre », under « Commun »: what each partner put into the
-      // joint account this month, against their part of what it spent
-      // (migration 078). A read that fails costs the card and nothing else.
-      joint && space
-        ? createClient().then((db) =>
-            readSpaceBalance(
-              db,
-              space,
-              getMonthBounds(year, month).start,
-              getMonthBounds(year, month).end,
-            ).catch(() => null),
-          )
+  const [
+    data,
+    bankInvite,
+    bankAttention,
+    awaitingAccounts,
+    spaceBalance,
+    awaitingCards,
+  ] = await Promise.all([
+    gatherBearingMonth(
+      ownerId,
+      year,
+      month,
+      // « Avec ma part du commun »: for someone in a space, under « Moi ».
+      owner?.space && !joint
+        ? (await cookies()).get(MY_SHARE_COOKIE)?.value === "1"
         : null,
-    ]);
+    ),
+    // The bank is the person's: never offered from the joint space.
+    joint ? false : shouldInviteToConnect(user.id, "bearing"),
+    readBankAttention(user.id),
+    countAccountsAwaitingRole(user.id),
+    // « Équilibre », under « Commun »: what each partner put into the
+    // joint account this month, against their part of what it spent
+    // (migration 078). A read that fails costs the card and nothing else.
+    joint && space
+      ? createClient().then((db) =>
+          readSpaceBalance(
+            db,
+            space,
+            getMonthBounds(year, month).start,
+            getMonthBounds(year, month).end,
+          ).catch(() => null),
+        )
+      : null,
+    // Cards seen in the person's lines, waiting to be asked about once.
+    joint ? 0 : countCardsAwaitingAnswer(user.id),
+  ]);
 
   return (
     <>
@@ -95,6 +104,7 @@ export default async function BearingPage({ searchParams }: BearingPageProps) {
           bankInvite={bankInvite}
           bankAttention={bankAttention}
           awaitingAccounts={awaitingAccounts}
+          awaitingCards={awaitingCards}
           spaceBalance={spaceBalance}
           // « Faire le bilan » from the attention row, here or anywhere.
           askClose={params.close === "1"}

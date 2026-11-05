@@ -699,3 +699,162 @@ describe("decide with filing rules", () => {
     expect(decision.kind).toBe("review");
   });
 });
+
+describe("deferred-debit cards", () => {
+  const deferred = [{ key: "1234", debit: "deferred" as const, debitDay: 31 }];
+
+  it("dates a card account's payment on its day and debits it at month end", () => {
+    const candidate = toCandidate(
+      bank({
+        bookingDate: "2026-10-13",
+        valueDate: "2026-10-13",
+        remittanceInformation: "CARREFOUR MARKET 12/10",
+        creditorName: null,
+      }),
+      { locale: "en", cardAccountKey: "acct:card-1", cards: deferred },
+    )!;
+    expect(candidate).toMatchObject({
+      cardKey: "acct:card-1",
+      debitedOn: "2026-10-31",
+    });
+  });
+
+  it("debits an alert's payment on a deferred card's day", () => {
+    const candidate = toCandidate(
+      bank({
+        bookingDate: "2026-10-12",
+        valueDate: "2026-10-12",
+        remittanceInformation: "PAIEMENT CARTE X1234 FNAC",
+        creditorName: null,
+      }),
+      { locale: "en", cards: deferred, provisional: true },
+    )!;
+    expect(candidate).toMatchObject({
+      cardKey: "1234",
+      debitedOn: "2026-10-31",
+    });
+  });
+
+  it("leaves an immediate card's payment on its booking", () => {
+    const candidate = toCandidate(
+      bank({
+        bookingDate: "2026-10-12",
+        remittanceInformation: "PAIEMENT PAR CARTE X7322 FNAC 11/10",
+        creditorName: null,
+      }),
+      {
+        locale: "en",
+        cards: [{ key: "7322", debit: "immediate", debitDay: null }],
+        provisional: true,
+      },
+    )!;
+    expect(candidate.cardKey).toBe("7322");
+    expect(candidate.debitedOn).toBeUndefined();
+  });
+
+  it("takes a card line's late value date as its debit", () => {
+    const candidate = toCandidate(
+      bank({
+        bookingDate: "2026-10-12",
+        valueDate: "2026-10-31",
+        remittanceInformation: "CB FNAC 11/10 CARTE 4974XXXXXXXX5555",
+        creditorName: null,
+      }),
+      { locale: "en" },
+    )!;
+    expect(candidate).toMatchObject({
+      cardKey: "5555",
+      debitedOn: "2026-10-31",
+    });
+  });
+
+  it("counts a month's combined debit once against the payments it pays", () => {
+    const plan = planFeed(
+      [
+        bank({
+          id: "settle",
+          bookingDate: "2026-10-31",
+          amount: "-612.40",
+          creditorName: null,
+          remittanceInformation: "FACTURE CARTE DU 311026 CARTE X1234",
+        }),
+      ],
+      {
+        locale: "en",
+        merchants: NO_MERCHANTS,
+        categoryIdsByName: CATEGORIES,
+        cards: deferred,
+        cardCycles: [{ key: "1234", debitOn: "2026-10-31", total: 612.4 }],
+      },
+    );
+    expect(plan.settled).toHaveLength(1);
+    expect(plan.settled![0]!.decision).toEqual({
+      kind: "settled",
+      cardKey: "1234",
+      debitOn: "2026-10-31",
+    });
+    expect([...plan.automatic, ...plan.review, ...plan.matched]).toHaveLength(
+      0,
+    );
+  });
+
+  it("keeps a combined debit an expense when its payments are not known", () => {
+    const plan = planFeed(
+      [
+        bank({
+          id: "settle",
+          bookingDate: "2026-10-31",
+          amount: "-612.40",
+          creditorName: null,
+          remittanceInformation: "FACTURE CARTE DU 311026 CARTE X1234",
+        }),
+      ],
+      {
+        locale: "en",
+        merchants: NO_MERCHANTS,
+        categoryIdsByName: CATEGORIES,
+        cards: deferred,
+      },
+    );
+    expect(plan.settled).toHaveLength(0);
+    expect(plan.review.length + plan.automatic.length).toBe(1);
+  });
+
+  it("settles against a card statement brought in the same file", () => {
+    const plan = planFeed(
+      [
+        bank({
+          id: "p1",
+          bookingDate: "2026-10-05",
+          amount: "-400.00",
+          creditorName: null,
+          remittanceInformation: "PAIEMENT CARTE X1234 IKEA",
+        }),
+        bank({
+          id: "p2",
+          bookingDate: "2026-10-20",
+          amount: "-212.40",
+          creditorName: null,
+          remittanceInformation: "PAIEMENT CARTE X1234 FNAC",
+        }),
+        bank({
+          id: "settle",
+          bookingDate: "2026-10-31",
+          amount: "-612.40",
+          creditorName: null,
+          remittanceInformation: "RELEVE DIFFERE CARTE X1234",
+        }),
+      ],
+      {
+        locale: "en",
+        merchants: NO_MERCHANTS,
+        categoryIdsByName: CATEGORIES,
+        cards: deferred,
+        provisional: true,
+      },
+    );
+    expect(plan.settled?.map((row) => row.candidate.providerId)).toEqual([
+      "settle",
+    ]);
+  });
+});

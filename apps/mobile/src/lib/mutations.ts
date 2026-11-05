@@ -29,6 +29,7 @@ import type { SplitInput } from "@finance/core/validations/splits";
 import * as proposals from "@finance/data/recurring-proposals";
 import * as decisions from "@finance/data/fulfilment-decisions";
 import { explainAwaited } from "@finance/data/fulfilment";
+import { answerCard } from "@finance/data/cards";
 import type { FulfilmentMiss } from "@finance/core/recurring-fulfilment";
 import * as deletions from "@finance/data/deletions";
 import * as dcaTransfer from "@finance/data/dca-transfer";
@@ -834,4 +835,20 @@ export async function importInvestmentEvents(
   return asUser((userId) =>
     investmentEvents.importInvestmentEvents(supabase, userId, read),
   );
+}
+
+/**
+ * Say how a card is debited, once (`cards`, migration 087): the person's
+ * cards, as the bank page lists them.
+ */
+export async function answerCardDebit(input: {
+  key: string;
+  debit: "immediate" | "deferred";
+  debitDay?: number;
+}): Promise<ActionResult> {
+  const userId = await requireUserId();
+  if (!userId) {
+    return { error: "errors.notAuthenticated" };
+  }
+  return answerCard(supabase, userId, input);
 }

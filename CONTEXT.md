@@ -146,6 +146,15 @@ is a _spread expense_: the budget counts it as an even share of the year each
 month, as it does a yearly one.
 _Avoid_: frequency, cadence (in the interface), period
 
+**Deferred-debit card**:
+_En français_ : carte à débit différé
+A card debited once a month for all its payments. Each payment counts for
+the day it was made; its money leaves the current account on the card's
+debit day (`debited_on` → the transaction's `cash_on`). Asked once per card
+(`cards`, migration 087), never guessed. The month's _combined debit_
+(« FACTURE CARTE… ») is counted once: settled against the payments it pays.
+_Avoid_: credit card (in French, « carte de crédit » is something else)
+
 **Varying amount**:
 _En français_ : « Le montant varie »
 A recurring template whose figure is an estimate: a pay that moves with

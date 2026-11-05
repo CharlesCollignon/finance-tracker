@@ -64,6 +64,7 @@ export type AttentionId =
   | "purchases"
   | "inbox"
   | "accounts"
+  | "cards"
   | "statement"
   | "bankRenew"
   | "proposals";
@@ -84,6 +85,7 @@ const ORDER: readonly AttentionId[] = [
   "purchases",
   "inbox",
   "accounts",
+  "cards",
   "statement",
   "bankRenew",
   "proposals",
@@ -120,6 +122,12 @@ export interface BankAttentionInput {
   bank: BankAttention | null;
   /** Accounts the bank shows that nobody has said anything about yet. */
   awaitingAccounts: number;
+  /**
+   * Cards seen in the lines brought that wait to be told how they are
+   * debited (`cards`, migration 087): until then a deferred card's payments
+   * leave the account on the wrong day.
+   */
+  awaitingCards?: number;
 }
 
 export interface AttentionItem {
@@ -309,6 +317,17 @@ export function bankAttentionItems(input: BankAttentionInput): AttentionItem[] {
     });
   }
 
+  if ((input.awaitingCards ?? 0) > 0) {
+    items.push({
+      id: "cards",
+      tone: "waiting",
+      messageKey: "cards.bearingLine",
+      params: { count: input.awaitingCards! },
+      href: "/bank#cards",
+      actionKey: "cards.bearingCta",
+    });
+  }
+
   return sortAttention(items);
 }
 
@@ -316,8 +335,8 @@ export function bankAttentionItems(input: BankAttentionInput): AttentionItem[] {
  * The strip's order, whatever the items came from: `buildAttention`'s and
  * `bankAttentionItems`'s put together read as one list.
  */
-export function sortAttention(items: readonly AttentionItem[]): AttentionItem[] {
-  return [...items].sort(
-    (a, b) => ORDER.indexOf(a.id) - ORDER.indexOf(b.id),
-  );
+export function sortAttention(
+  items: readonly AttentionItem[],
+): AttentionItem[] {
+  return [...items].sort((a, b) => ORDER.indexOf(a.id) - ORDER.indexOf(b.id));
 }

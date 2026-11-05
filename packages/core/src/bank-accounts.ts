@@ -128,14 +128,19 @@ export function followsMovements(
  * consent reminder and its lapsed count are about.
  */
 export function isFollowed(role: BankAccountRole | null | undefined): boolean {
-  return role === "spending" || role === "savings" || role === "joint";
+  return (
+    role === "spending" ||
+    role === "savings" ||
+    role === "joint" ||
+    role === "card"
+  );
 }
 
 /** Whether an account's movements come into a ledger, a person's or a space's. */
 export function importsMovements(
   role: BankAccountRole | null | undefined,
 ): boolean {
-  return role === "spending" || role === "joint";
+  return role === "spending" || role === "joint" || role === "card";
 }
 
 /**
@@ -172,7 +177,9 @@ export function movementsOwner(
   account: Pick<BankAccount, "role" | "space_id">,
   personId: string,
 ): string | null {
-  if (account.role === "spending") {
+  // A deferred card's payments are the person's, debited later from their
+  // current account (`cards.ts`).
+  if (account.role === "spending" || account.role === "card") {
     return personId;
   }
   return account.role === "joint" ? account.space_id : null;
@@ -286,8 +293,9 @@ export interface BankGroup<A> {
 const ROLE_ORDER: Record<BankAccountRole, number> = {
   spending: 0,
   joint: 1,
-  savings: 2,
-  ignored: 3,
+  card: 2,
+  savings: 3,
+  ignored: 4,
 };
 
 /**

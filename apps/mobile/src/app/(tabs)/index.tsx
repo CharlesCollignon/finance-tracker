@@ -27,7 +27,7 @@ import { ScreenSkeleton } from "@/components/ui/Skeleton";
 import { ScreenError } from "@/components/ScreenError";
 import { useBankState } from "@/hooks/useBankState";
 import { useRefreshable } from "@/hooks/useRefreshable";
-import { getBankAccounts, getSpaceBalance } from "@/lib/queries";
+import { getBankAccounts, getCards, getSpaceBalance } from "@/lib/queries";
 import { shouldInvite } from "@/lib/bank-connect";
 import { nextSetupStep } from "@finance/core/setup-steps";
 import {
@@ -132,6 +132,16 @@ export default function HomeScreen() {
     [user?.id],
     { reads: ["bank"] },
   );
+  // Cards seen in the lines brought, waiting to be asked about once.
+  const { data: awaitingCards } = useRefreshable(
+    async () =>
+      user
+        ? (await getCards(user.id)).filter((card) => card.debit === null)
+            .length
+        : 0,
+    [user?.id],
+    { reads: ["bank"] },
+  );
 
   // Kept on screen while the next month loads, dimmed, so the picker does not
   // flash the screen empty on every step.
@@ -160,6 +170,7 @@ export default function HomeScreen() {
         ...bankAttentionItems({
           bank: bank?.attention ?? null,
           awaitingAccounts: awaitingAccounts ?? 0,
+          awaitingCards: awaitingCards ?? 0,
         }),
       ])
     : [];

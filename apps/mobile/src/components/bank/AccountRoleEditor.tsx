@@ -61,6 +61,11 @@ export function AccountRoleEditor({
             ? [{ value: "joint" as const, label: t("bankAccounts.roleJoint") }]
             : []),
           { value: "savings", label: t("bankAccounts.roleSavings") },
+          // A deferred-debit card shown as its own account, once said so in
+          // « Vos cartes » (migration 087).
+          ...(value.role === "card"
+            ? [{ value: "card" as const, label: t("bankAccounts.roleCard") }]
+            : []),
           { value: "ignored", label: t("bankAccounts.roleIgnored") },
         ]}
       />
@@ -84,6 +89,10 @@ export function AccountRoleEditor({
       ) : value.role === "ignored" ? (
         <Text variant="muted" className="text-xs">
           {t("bankAccounts.ignoredBilled")}
+        </Text>
+      ) : value.role === "card" ? (
+        <Text variant="muted" className="text-xs">
+          {t("bankAccounts.cardHint")}
         </Text>
       ) : value.role === "joint" && space ? (
         <Text variant="muted" className="text-xs">

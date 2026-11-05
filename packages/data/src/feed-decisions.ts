@@ -82,7 +82,9 @@ export async function fileFeedItems(
 
   const { data: items } = await db
     .from("bank_feed_items")
-    .select("id, occurred_on, purchased_on, amount, note, status, direction")
+    .select(
+      "id, occurred_on, purchased_on, debited_on, amount, note, status, direction",
+    )
     .eq("user_id", userId)
     .in("id", parsed.data);
 
@@ -344,7 +346,9 @@ export async function importFeedItem(
 
   const { data: item } = await db
     .from("bank_feed_items")
-    .select("id, occurred_on, purchased_on, amount, note, status, direction")
+    .select(
+      "id, occurred_on, purchased_on, debited_on, amount, note, status, direction",
+    )
     .eq("id", itemId)
     .eq("user_id", userId)
     .maybeSingle();

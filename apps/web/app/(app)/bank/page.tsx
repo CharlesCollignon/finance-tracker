@@ -9,6 +9,8 @@ import { createClient } from "@/lib/supabase/server";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { BankView } from "@/components/finance/bank/BankView";
+import { CardsSection } from "@/components/finance/bank/CardsSection";
+import { getCards } from "@finance/data/cards";
 
 interface BankPageProps {
   /** `?setup=1` opens the upload straight away — where the phone sends people. */
@@ -29,7 +31,7 @@ export default async function BankPage({ searchParams }: BankPageProps) {
   }
 
   const supabase = await createClient();
-  const [{ data: row }, accounts, status, params, offered, savings] =
+  const [{ data: row }, accounts, status, params, offered, savings, cards] =
     await Promise.all([
       supabase
         .from("bank_connections")
@@ -43,6 +45,7 @@ export default async function BankPage({ searchParams }: BankPageProps) {
       searchParams,
       bankSetupOffered(),
       getSavingsAccounts(user.id),
+      getCards(supabase, user.id),
     ]);
 
   const connection = row
@@ -72,6 +75,7 @@ export default async function BankPage({ searchParams }: BankPageProps) {
           }))}
           startWithSetup={offered && params.setup === "1"}
         />
+        <CardsSection cards={cards} />
       </PageContainer>
     </>
   );

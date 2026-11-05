@@ -17,7 +17,7 @@ export interface FileAccount {
   bank: string | null;
   /** IBAN or number, as the next file of this account will give it. */
   key: string | null;
-  role: "spending" | "savings" | "ignored" | "joint" | null;
+  role: "spending" | "savings" | "ignored" | "joint" | "card" | null;
 }
 
 export async function readFileAccounts(

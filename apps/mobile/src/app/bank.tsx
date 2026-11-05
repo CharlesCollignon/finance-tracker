@@ -10,6 +10,7 @@ import {
 } from "@finance/core/bank-accounts";
 import { AddBankSheet } from "@/components/bank/AddBankSheet";
 import { BankAccountsSection } from "@/components/bank/BankAccountsSection";
+import { CardsSection } from "@/components/bank/CardsSection";
 import { BankImport } from "@/components/bank/BankImport";
 import { ConnectBankSheet } from "@/components/bank/ConnectBankSheet";
 import { NewAccountsCard } from "@/components/bank/NewAccountsCard";
@@ -20,7 +21,7 @@ import { ScreenSkeleton } from "@/components/ui/Skeleton";
 import { useBankState } from "@/hooks/useBankState";
 import { useRefreshable } from "@/hooks/useRefreshable";
 import { readBankServerFacts } from "@/lib/bank-connect";
-import { getBankAccounts } from "@/lib/queries";
+import { getBankAccounts, getCards } from "@/lib/queries";
 import { getSavingsState } from "@/lib/savings-accounts";
 import { useAuth } from "@/providers/AuthProvider";
 import { useT } from "@/providers/LocaleProvider";
@@ -53,14 +54,16 @@ export default function BankScreen() {
   const { data, error, loading, refreshing, onRefresh } = useRefreshable(
     async () => {
       if (!user) {
-        return { accounts: [], livrets: [] };
+        return { accounts: [], livrets: [], cards: [] };
       }
-      const [accounts, savings] = await Promise.all([
+      const [accounts, savings, cards] = await Promise.all([
         getBankAccounts(user.id),
         getSavingsState(user.id),
+        getCards(user.id),
       ]);
       return {
         accounts,
+        cards,
         livrets: savings.accounts.map(({ account }) => ({
           kind: account.kind,
           bankAccountId: account.bank_account_id,
@@ -215,6 +218,8 @@ export default function BankScreen() {
             livrets={data?.livrets ?? []}
             onAddBank={syncing ? () => setAddOpen(true) : null}
           />
+
+          <CardsSection cards={data?.cards ?? []} onAnswered={onRefresh} />
 
           {live ? (
             <Button

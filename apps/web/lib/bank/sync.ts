@@ -24,6 +24,13 @@ import {
   writePlan,
 } from "@/lib/bank/feed-write";
 import { pullFromBank } from "@/lib/bank/pull";
+import { cardAccountKey } from "@finance/core/cards";
+import {
+  cardCycles,
+  cardRules,
+  getCards,
+  rememberCards,
+} from "@finance/data/cards";
 import { DEFAULT_LOCALE } from "@finance/core/i18n/locale";
 import { translator } from "@finance/core/i18n/t";
 import { shiftIsoDate, todayIsoLocal } from "@finance/core/constants";
@@ -155,6 +162,20 @@ export async function syncBankFeed(
   const roleOf = (account: { id: string }) =>
     remembered.get(account.id)?.role ?? null;
 
+  // A card the bank shows as its own account is asked about once, like a
+  // card a line names (`cards`, migration 087): only a deferred one is
+  // followed, its payments leaving the current account on its debit day.
+  await rememberCards(
+    supabase,
+    userId,
+    allAccounts
+      .filter((account) => account.accountType?.trim().toUpperCase() === "CARD")
+      .map((account) => ({
+        key: cardAccountKey(account.id),
+        label: accountLabel(account),
+      })),
+  );
+
   // Whose rows each account's movements become: the person's for a current
   // account, their shared space's for a joint one (migration 061), nobody's
   // for a Livret or an account with no role yet — a Livret's movements are
@@ -231,6 +252,10 @@ export async function syncBankFeed(
         .map((account) => ({ iban: account.iban, role: "spending" as const })),
     );
     const context = await ownerContext(supabase, ownerId);
+    const [cards, cycles] = await Promise.all([
+      getCards(supabase, ownerId),
+      cardCycles(supabase, ownerId, todayIsoLocal()),
+    ]);
     // The person's money sent to their space's joint account, whoever's
     // connection reads that account: « Versement au compte commun ».
     const jointTransfer =
@@ -286,6 +311,11 @@ export async function syncBankFeed(
         rules: context.rules,
         ownIbans,
         jointTransfer,
+        cards: cardRules(cards),
+        cardCycles: cycles,
+        ...(roleOf(account) === "card"
+          ? { cardAccountKey: cardAccountKey(account.id) }
+          : {}),
       });
 
       // A row the database already holds is skipped by the planner, which is

@@ -10,7 +10,7 @@ import type { Db } from "./client";
 import { dbError } from "./errors";
 import { addSavingsAccount, linkSavingsBank } from "./savings-accounts";
 
-const roleSchema = z.enum(["spending", "savings", "ignored", "joint"]);
+const roleSchema = z.enum(["spending", "savings", "ignored", "joint", "card"]);
 const accountIdSchema = z.string().min(1).max(200);
 
 /**

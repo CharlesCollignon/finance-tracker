@@ -1,4 +1,5 @@
 import { ledgerDatesOf } from "@finance/core/cash-date";
+import { rememberCards } from "@finance/data/cards";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { allRows } from "@finance/core/paging";
 import {
@@ -245,15 +246,47 @@ export async function writePlan(
     feedItemRow(userId, providerAccountId, row, positions, origin);
 
   const inserted = await insertFeedItems(supabase, [
+    ...(plan.settled ?? []).map(feedRow),
     ...plan.matched.map(feedRow),
     ...plan.review.map(feedRow),
     ...plan.automatic.map(feedRow),
   ]);
   const isNew = (row: PlannedFeedRow) => inserted.has(row.candidate.providerId);
 
-  const matched = plan.matched.filter(
-    (row) => row.decision.kind === "match" && isNew(row),
-  ).length;
+  // The cards these lines named, the first time each is seen, so the
+  // question can be asked once (`cards`, migration 087).
+  await rememberCards(
+    supabase,
+    userId,
+    [
+      ...(plan.settled ?? []),
+      ...plan.matched,
+      ...plan.review,
+      ...plan.automatic,
+    ]
+      .map((row) => row.candidate.cardKey)
+      .filter((key): key is string => Boolean(key) && !key!.startsWith("acct:"))
+      .map((key) => ({ key })),
+  );
+
+  // A combined card debit paying for payments already in: they leave the
+  // account on the day the bank actually debited, which may not be the day
+  // worked out for them. Counted with the matches, as known.
+  const settled = (plan.settled ?? []).filter(isNew);
+  for (const row of settled) {
+    if (row.decision.kind === "settled") {
+      await settleCardCycle(
+        supabase,
+        userId,
+        row.decision,
+        row.candidate.occurredOn,
+      );
+    }
+  }
+  const matched =
+    settled.length +
+    plan.matched.filter((row) => row.decision.kind === "match" && isNew(row))
+      .length;
   const pending = plan.review.filter(isNew).length;
 
   const automatic = plan.automatic.filter(
@@ -299,6 +332,39 @@ export async function writePlan(
   return { imported, pending, matched };
 }
 
+/**
+ * The payments one combined card debit paid for take its day as theirs: the
+ * feed rows say so (`debited_on`), and the transactions written from them
+ * have it as their `cash_on`.
+ */
+async function settleCardCycle(
+  supabase: Client,
+  userId: string,
+  cycle: { cardKey: string; debitOn: string },
+  debitedOn: string,
+): Promise<void> {
+  if (cycle.debitOn === debitedOn) {
+    return;
+  }
+  const { data: rows } = await supabase
+    .from("bank_feed_items")
+    .update({ debited_on: debitedOn })
+    .eq("user_id", userId)
+    .eq("card_key", cycle.cardKey)
+    .eq("debited_on", cycle.debitOn)
+    .select("transaction_id");
+  const ids = (rows ?? [])
+    .map((row) => row.transaction_id)
+    .filter((id): id is string => Boolean(id));
+  if (ids.length > 0) {
+    await supabase
+      .from("transactions")
+      .update({ cash_on: debitedOn })
+      .eq("user_id", userId)
+      .in("id", ids);
+  }
+}
+
 /** A feed row as the table takes it, filed already when it is a match. */
 function feedItemRow(
   userId: string,
@@ -313,7 +379,9 @@ function feedItemRow(
       ? `auto:${decision.suggestion.reason}`
       : decision.kind === "match"
         ? "match:recurring"
-        : `review:${decision.why}`;
+        : decision.kind === "settled"
+          ? `card:settled:${decision.cardKey}`
+          : `review:${decision.why}`;
 
   return {
     user_id: userId,
@@ -321,6 +389,8 @@ function feedItemRow(
     provider_account_id: providerAccountId,
     occurred_on: candidate.occurredOn,
     purchased_on: candidate.purchasedOn ?? null,
+    card_key: candidate.cardKey ?? null,
+    debited_on: candidate.debitedOn ?? null,
     amount: candidate.amount,
     currency: candidate.currency,
     direction: candidate.direction,
@@ -330,8 +400,13 @@ function feedItemRow(
     balance_after: candidate.balanceAfter,
     intraday_index: positions.get(candidate.providerId) ?? 0,
     // Recorded, but nothing new is written: the transaction is already there.
+    // A settled card debit is known and never in the ledger: its payments are.
     status:
-      decision.kind === "match" ? ("imported" as const) : ("pending" as const),
+      decision.kind === "match"
+        ? ("imported" as const)
+        : decision.kind === "settled"
+          ? ("ignored" as const)
+          : ("pending" as const),
     transaction_id: decision.kind === "match" ? decision.transactionId : null,
     decided_by: decidedBy,
     source: origin.source,
@@ -409,6 +484,7 @@ async function insertTransactions(
               ...ledgerDatesOf({
                 occurred_on: row.candidate.occurredOn,
                 purchased_on: row.candidate.purchasedOn,
+                debited_on: row.candidate.debitedOn,
               }),
               amount: row.candidate.amount,
               note: row.candidate.note,

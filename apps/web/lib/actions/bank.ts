@@ -16,7 +16,8 @@ import {
 } from "@finance/data/feed-decisions";
 import * as feed from "@finance/data/feed-decisions";
 import { addFilingRule } from "@finance/data/filing-rules";
-import { asOwner } from "@/lib/actions/as-user";
+import { asOwner, asUser } from "@/lib/actions/as-user";
+import { answerCard } from "@finance/data/cards";
 import { autoCloseMonths } from "@/lib/bank/auto-close";
 import { syncBankFeed, type SyncOutcome } from "@/lib/bank/sync";
 import * as proposals from "@finance/data/recurring-proposals";
@@ -427,7 +428,7 @@ const filingSchema = z
   .array(
     z.object({
       accountId: z.string().min(1).max(200),
-      role: z.enum(["spending", "savings", "ignored", "joint"]),
+      role: z.enum(["spending", "savings", "ignored", "joint", "card"]),
       savingsKind: z
         .enum(SAVINGS_KINDS as [SavingsAccountKind, ...SavingsAccountKind[]])
         .nullish(),
@@ -494,4 +495,16 @@ export async function fileBankAccounts(
 
   revalidateApp();
   return { success: true, taken };
+}
+
+/**
+ * Say how a card is debited, once: at once, or later on a day of the month
+ * (`cards`, migration 087).
+ */
+export async function answerCardAction(input: {
+  key: string;
+  debit: "immediate" | "deferred";
+  debitDay?: number;
+}): Promise<ActionResult> {
+  return asUser((db, userId) => answerCard(db, userId, input));
 }
