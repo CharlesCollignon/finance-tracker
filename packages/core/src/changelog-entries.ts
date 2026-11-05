@@ -17,6 +17,96 @@ import type { ChangelogEntry, RoadmapItem } from "./changelog";
  */
 export const CHANGELOG: readonly ChangelogEntry[] = [
   {
+    id: "2026-11-05-phone-recurring",
+    date: "2026-11-05",
+    kind: "new",
+    platforms: ["phone"],
+    fr: {
+      title: "Récurrents, pour tous les rythmes",
+      body: "Une opération mensuelle a son « Rythme » : tous les 2 mois, tous les trimestres, tous les 6 mois ou certains mois. « Le montant varie » pour un salaire ou une facture qui bouge, « Avec un acompte » pour un salaire versé en deux fois. Et un achat payé en 3 ou 4 fois chez Alma, Oney, Klarna ou PayPal est proposé dès le premier prélèvement, avec sa fin.",
+      detail:
+        "Récurrents repère aussi ce qui revient tous les trimestres ou saute les mêmes mois chaque année, dans tous vos relevés. À la prise en main, « Pas tous les mois ? » sous le salaire. Une opération qui ne tombe pas chaque mois compte pour une part de l’année dans le budget, et les rappels sautent les mois sans.",
+    },
+    en: {
+      title: "Recurring, for every rhythm",
+      body: "A monthly entry has its “How often”: every 2 months, every quarter, every 6 months or some months. “The amount varies” for pay or a bill that moves, “With an advance” for pay that comes in two parts. And a purchase paid in 3 or 4 instalments with Alma, Oney, Klarna or PayPal is suggested from the first instalment, with its end.",
+      detail:
+        "Recurring also spots what comes every quarter or skips the same months each year, in all your statements. At setup, “Not every month?” sits under the salary. An entry that does not come every month counts as a share of the year in the budget, and reminders skip the months without it.",
+    },
+  },
+  {
+    id: "2026-11-05-phone-cards",
+    date: "2026-11-05",
+    kind: "new",
+    platforms: ["phone"],
+    fr: {
+      title: "Les cartes à débit différé",
+      body: "Pluclair demande, une fois par carte, si elle est débitée tout de suite ou une fois par mois — sur Le point, puis dans Banque, « Vos cartes ». Pour une carte à débit différé, chaque paiement compte le jour où vous payez, « Encore à venir » montre le « Débit carte » le jour du débit, et « Il vous reste » le met de côté, même après votre paie.",
+      detail:
+        "Un relevé de carte s’importe comme « Carte différée ». Un paiement par carte compte le jour de l’achat ; le Journal dit « Débité le » quand le débit tombe le mois suivant. Le widget dit aussi ce que la carte doit encore.",
+    },
+    en: {
+      title: "Deferred-debit cards",
+      body: "Pluclair asks, once per card, whether it is debited at once or once a month — on the Overview, then in Bank, “Your cards”. For a deferred-debit card, each payment counts on the day you pay, “Still to come” shows the “Card debit” on its day, and “You have” keeps it aside, even past your pay.",
+      detail:
+        "A card's statement imports as a “Deferred card”. A card payment counts on the day of the purchase; the Ledger says “Debited on” when the debit falls in the next month. The widget also says what the card still owes.",
+    },
+  },
+  {
+    id: "2026-11-05-phone-left-to-spend",
+    date: "2026-11-05",
+    kind: "better",
+    platforms: ["phone"],
+    fr: {
+      title: "« Il vous reste », plus juste",
+      body: "Une grosse facture annuelle ou trimestrielle est gardée de côté avant de tomber, et un salaire prévu un samedi arrive le vendredi, un prélèvement prévu un dimanche ou un jour férié part le lundi. Quand un paiement prévu reste « Pas encore passé », sa fiche dit pourquoi.",
+      detail:
+        "Une note de frais remboursée se classe dans « Remboursements » et ne compte plus deux fois ; À vérifier ne propose pour l’argent qui arrive que des catégories qui peuvent le recevoir. « Nouvelles dépenses » envoie une notification par mise à jour de la banque, et se coupe dans le Profil.",
+    },
+    en: {
+      title: "“You have”, more accurate",
+      body: "A large yearly or quarterly bill is kept aside before it lands, and pay due on a Saturday arrives on the Friday, a debit due on a Sunday or a public holiday leaves on the Monday. When an expected payment stays “Not through yet”, its sheet says why.",
+      detail:
+        "A repaid expense report is filed under “Refunds” and no longer counts twice; Review only offers money coming in the categories that can receive it. “New spending” sends one notification per bank update, and can be turned off in Profile.",
+    },
+  },
+  {
+    id: "2026-11-05-phone-le-point",
+    date: "2026-11-05",
+    kind: "better",
+    platforms: ["phone"],
+    fr: {
+      title: "Le point, plus clair",
+      body: "Le bilan du mois et « Vos mois » sont sur Le point, avec « À faire » en une bande, « Fiabilité du mois » et « encore à sortir » sous le solde. « Partager ce mois » en fait une image ou une page. Tout apparaît en fondu, et Pluclair passe à l’orange.",
+      detail:
+        "À deux, « Équilibre entre vous » dit ce que chacun a mis sur le compte commun face à sa part.",
+    },
+    en: {
+      title: "The Overview, clearer",
+      body: "The month close and “Your months” are on the Overview, with “To do” in one strip, “Month check” and “still to go out” under the balance. “Share this month” makes it an image or a page. Everything fades in, and Pluclair turns orange.",
+      detail:
+        "As a couple, “Balance between you” says what each put into the joint account against their share.",
+    },
+  },
+  {
+    id: "2026-11-05-phone-journal-placements",
+    date: "2026-11-05",
+    kind: "better",
+    platforms: ["phone"],
+    fr: {
+      title: "Le Journal, Placements et Plan",
+      body: "Le Journal passe à « Passé · À venir », ajoute « Par commerce », un paiement en plusieurs parts et le ticket derrière une ligne, et des règles de rangement écrites par vous. Placements suit vos achats confirmés, montre les opérations de chaque compte — dividendes et plus-values comprises — et se range d’un appui long.",
+      detail:
+        "Plan rejoue vos comptes sur l’histoire des marchés, « Vos comptes » sous le graphique, et passe en dernier dans la barre. Une position s’ouvre d’un geste, les logos des ETF reviennent et le Bitcoin a le sien.",
+    },
+    en: {
+      title: "The Ledger, Investments and Plan",
+      body: "The Ledger moves to “Past · Upcoming”, adds “By shop”, a payment in several parts and the receipt behind a row, and filing rules you write. Investments follows your confirmed purchases, shows each account's transactions — dividends and realised gains included — and reorders with a long press.",
+      detail:
+        "Plan replays your accounts on market history, “Your accounts” under the chart, and moves last in the bar. A position opens in one tap, ETF logos are back and Bitcoin has its own.",
+    },
+  },
+  {
     id: "2026-11-05-business-days",
     date: "2026-11-05",
     kind: "better",
