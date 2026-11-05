@@ -59,7 +59,9 @@ export function UpcomingCard({ data }: { data: BearingMonth }) {
               </span>
               <span className="min-w-0 flex-1">
                 <span className="block truncate text-sm">
-                  {charge.description?.trim() || charge.name}
+                  {charge.cardDebit
+                    ? t("cards.debitCharge")
+                    : charge.description?.trim() || charge.name}
                 </span>
                 {/* Its day is behind it and the bank has not brought it: it
                     is still to leave, but not coming up, and the date alone

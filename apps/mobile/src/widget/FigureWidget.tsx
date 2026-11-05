@@ -101,6 +101,14 @@ export function FigureWidget({ face }: { face: WidgetFace }) {
             truncate="END"
             style={{ fontSize: 12, color: ink(COLORS.mutedForeground) }}
           />
+          {face.card ? (
+            <TextWidget
+              text={face.card}
+              maxLines={1}
+              truncate="END"
+              style={{ fontSize: 12, color: ink(COLORS.mutedForeground) }}
+            />
+          ) : null}
         </FlexWidget>
       ) : (
         <TextWidget

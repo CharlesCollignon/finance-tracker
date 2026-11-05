@@ -4,6 +4,7 @@ import {
   leftToSpendThrough,
   nextPayDay,
   payTemplate,
+  type LaterDebit,
   type LeftToSpend,
 } from "@finance/core/left-to-spend";
 import type { RecurringTemplateWithCategory } from "@finance/core/types/database";
@@ -80,5 +81,37 @@ export async function readLeftToSpend(
     payDay,
     points,
     monthlyMarge: closes.settings.unrecordedCap,
+    laterDebits: await readLaterDebits(db, userId, today),
   });
+}
+
+/**
+ * Money already spent that leaves the account after today — a deferred
+ * card's payments, by their debit day (`cash_on`, migration 087). A failed
+ * read is none: the figure is then what it was before cards.
+ */
+async function readLaterDebits(
+  db: Db,
+  userId: string,
+  today: string,
+): Promise<LaterDebit[]> {
+  const { data, error } = await db
+    .from("transactions")
+    .select("amount, cash_on, categories(type)")
+    .eq("user_id", userId)
+    .lte("occurred_on", today)
+    .gt("cash_on", today);
+  if (error || !data) {
+    return [];
+  }
+  const byDay = new Map<string, number>();
+  for (const row of data) {
+    if (!row.cash_on) {
+      continue;
+    }
+    const amount = Number(row.amount);
+    const signed = row.categories?.type === "income" ? -amount : amount;
+    byDay.set(row.cash_on, (byDay.get(row.cash_on) ?? 0) + signed);
+  }
+  return [...byDay].map(([date, amount]) => ({ date, amount }));
 }

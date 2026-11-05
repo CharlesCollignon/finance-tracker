@@ -2457,6 +2457,7 @@ export const fr: Messages = {
     deferredOn: "Débit différé, le {day}",
     deferredLast: "Débit différé, en fin de mois",
     change: "Changer",
+    debitCharge: "Débit carte",
     bearingLine: {
       one: "Une carte attend que vous disiez comment elle est débitée.",
       other: "{count} cartes attendent que vous disiez comment elles sont débitées.",
@@ -2752,6 +2753,7 @@ export const fr: Messages = {
     byPayDay: "d'ici le {date}",
     byMonthEnd: "d'ici la fin du mois",
     perDay: "soit {amount} par jour",
+    card: "dont {amount} de carte, débités le {date}",
   },
   bearingMonth: {
     onAccount: "Sur votre compte",

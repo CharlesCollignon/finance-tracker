@@ -484,3 +484,29 @@ describe("with a bank feeding the ledger", () => {
     expect(at(new Set(), new Set(["tpl-loan:2026-10-05"]))).toBe(0);
   });
 });
+
+describe("buildStillToCome, a deferred card", () => {
+  it("owes the card's payments on its debit day, outside the budget's figure", () => {
+    const paid = (id: string, on: string, amount: number) => ({
+      ...tx(id, on, amount, "expense"),
+      cash_on: "2026-09-30",
+    });
+    const result = buildStillToCome(
+      [paid("c1", "2026-09-03", 40), paid("c2", "2026-09-08", 60)],
+      [],
+      2026,
+      9,
+      TODAY,
+    );
+    expect(result.outgoing).toEqual([
+      expect.objectContaining({
+        key: "debit:2026-09-30",
+        occurredOn: "2026-09-30",
+        amount: 100,
+        cardDebit: true,
+      }),
+    ]);
+    expect(result.leaving).toBe(100);
+    expect(result.budgetedOutflow).toBe(0);
+  });
+});

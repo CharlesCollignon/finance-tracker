@@ -3214,6 +3214,7 @@ export const en = {
     deferredOn: "Deferred debit, on the {day}",
     deferredLast: "Deferred debit, at month end",
     change: "Change",
+    debitCharge: "Card debit",
     bearingLine: {
       one: "A card is waiting for you to say how it is debited.",
       other: "{count} cards are waiting for you to say how they are debited.",
@@ -3517,6 +3518,7 @@ export const en = {
     byPayDay: "by {date}",
     byMonthEnd: "by the end of the month",
     perDay: "that is {amount} a day",
+    card: "of which {amount} on the card, debited on {date}",
   },
   bearingMonth: {
     onAccount: "On your account",
