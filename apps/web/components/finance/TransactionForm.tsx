@@ -9,7 +9,19 @@ import {
 } from "react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
-import { FormLabel } from "@/components/ui/FormLabel";
+import {
+  SHEET_FIELD,
+  SheetDanger,
+  SheetField,
+  SheetFigure,
+  SheetGlow,
+  SheetSave,
+  typedAmount,
+} from "@/components/finance/sheet/entry-sheet";
+import { KIND_INK } from "@/components/finance/add/parts";
+import { parseTypedAmount } from "@finance/core/amount-input";
+import { amountSign } from "@finance/core/amount-sign";
+import { useFormatCurrency } from "@/lib/use-currency";
 import { Text } from "@/components/ui/Text";
 import { useToast } from "@/components/layout/ToastProvider";
 import { useDeletedToast } from "@/lib/use-deleted-toast";
@@ -22,7 +34,11 @@ import {
   saveQuickTransaction,
   updateTransaction,
 } from "@/lib/actions/finance";
-import { formatShortDate, todayIsoLocal } from "@finance/core/constants";
+import {
+  formatShortDate,
+  relativeDayLabel,
+  todayIsoLocal,
+} from "@finance/core/constants";
 import { bringsMoneyIn, isMovedRow } from "@finance/core/cash-date";
 import { monthLong } from "@finance/core/i18n/calendar-names";
 import { moveBackEarlyIncome } from "@/lib/actions/fulfilment";
@@ -98,7 +114,6 @@ function TransactionFormFields({
   const toastDeleted = useDeletedToast();
   const t = useT();
   const locale = useLocale();
-  const [confirmDelete, setConfirmDelete] = useState(false);
   const [deletePending, startDelete] = useTransition();
   const [duplicatePending, startDuplicate] = useTransition();
   const [state, action, pending] = useActionState<FormState, FormData>(
@@ -182,113 +197,136 @@ function TransactionFormFields({
     });
   }
 
+  const formatEuro = useFormatCurrency();
+  const startAmount = typedAmount(Number(transaction.amount), locale);
+  const [amount, setAmount] = useState(startAmount);
+  const [categoryId, setCategoryId] = useState(transaction.category_id);
+  const [occurredOn, setOccurredOn] = useState(transaction.occurred_on);
+  const [note, setNote] = useState(transaction.note ?? "");
+  const category = categories.find((c) => c.id === categoryId) ?? null;
+  const kind = category?.type ?? "expense";
+  const ink = KIND_INK[kind];
+  const parsed = parseTypedAmount(amount);
+  const changed =
+    categoryId !== transaction.category_id ||
+    parsed !== Number(transaction.amount) ||
+    occurredOn !== transaction.occurred_on ||
+    note !== (transaction.note ?? "");
+  const caption = [
+    category?.name,
+    note.trim(),
+    occurredOn ? relativeDayLabel(occurredOn, formatShortDate, locale) : null,
+  ]
+    .filter(Boolean)
+    .join(" · ");
+
   return (
     <MobileSheet
       open={open}
       onOpenChange={onOpenChange}
       title={t("transaction.editTitle")}
     >
-      <form action={action} className="flex flex-col gap-4">
-        <input type="hidden" name="id" value={transaction.id} />
-        <div className="flex flex-col gap-2">
-          <FormLabel htmlFor="categoryId">
-            {t("transaction.category")}
-          </FormLabel>
-          <CategoryPicker
-            id="categoryId"
-            categories={categories}
-            label={t("transaction.category")}
-            required
-            defaultValue={transaction.category_id}
-          />
+      <div className="relative">
+        <div className="relative -mx-4 -mt-4 h-0 md:-mx-5 md:-mt-5">
+          <SheetGlow ink={ink} />
         </div>
-        <div className="flex flex-col gap-2">
-          <FormLabel htmlFor="amount">{t("transaction.amount")}</FormLabel>
-          <Input
+        <form action={action} className="relative flex flex-col gap-4">
+          <input type="hidden" name="id" value={transaction.id} />
+          <SheetFigure
             id="amount"
             name="amount"
-            type="number"
-            step="0.01"
-            min="0.01"
-            required
-            className="text-base"
-            placeholder="0.00"
-            defaultValue={String(Number(transaction.amount))}
+            value={amount}
+            onChange={setAmount}
+            ink={ink}
+            sign={amountSign(kind)}
+            label={t("transaction.amount")}
+            caption={caption}
           />
-        </div>
-        <div className="flex flex-col gap-2">
-          <FormLabel htmlFor="occurredOn">{t("transaction.date")}</FormLabel>
-          <Input
-            id="occurredOn"
-            name="occurredOn"
-            type="date"
-            required
-            defaultValue={transaction.occurred_on}
-            className="text-base"
-          />
-          {arrivedOn ? (
-            <div className="flex flex-col items-start gap-2 rounded-control border border-border px-3 py-2.5">
-              <p className="text-xs text-muted-foreground">
-                {t(
-                  bringsMoneyIn(
-                    categories.find(
-                      (c) => c.id === transaction.category_id,
-                    ) ?? {
-                      type: "expense",
+          <SheetField label={t("transaction.category")} htmlFor="categoryId">
+            <CategoryPicker
+              id="categoryId"
+              categories={categories}
+              label={t("transaction.category")}
+              required
+              value={categoryId}
+              onValueChange={setCategoryId}
+            />
+          </SheetField>
+          <SheetField label={t("transaction.date")} htmlFor="occurredOn">
+            <Input
+              id="occurredOn"
+              name="occurredOn"
+              type="date"
+              required
+              value={occurredOn}
+              onChange={(event) => setOccurredOn(event.target.value)}
+              className={SHEET_FIELD}
+            />
+            {arrivedOn ? (
+              <div className="mt-1 flex flex-col items-start gap-2 rounded-2xl border border-border px-3 py-2.5">
+                <p className="text-xs text-muted-foreground">
+                  {t(
+                    bringsMoneyIn(category ?? { type: "expense" })
+                      ? "transaction.countsForReceived"
+                      : "transaction.countsForPaid",
+                    {
+                      month: monthLong(
+                        Number(transaction.occurred_on.slice(5, 7)),
+                        locale,
+                      ),
+                      date: formatShortDate(arrivedOn, locale),
                     },
-                  )
-                    ? "transaction.countsForReceived"
-                    : "transaction.countsForPaid",
-                  {
-                    month: monthLong(
-                      Number(transaction.occurred_on.slice(5, 7)),
-                      locale,
-                    ),
+                  )}
+                </p>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  disabled={moveBackPending}
+                  onClick={handleMoveBack}
+                >
+                  {t("transaction.moveBack", {
                     date: formatShortDate(arrivedOn, locale),
-                  },
-                )}
-              </p>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                disabled={moveBackPending}
-                onClick={handleMoveBack}
-              >
-                {t("transaction.moveBack", {
-                  date: formatShortDate(arrivedOn, locale),
-                })}
-              </Button>
-            </div>
-          ) : null}
-        </div>
-        <div className="flex flex-col gap-2">
-          <FormLabel htmlFor="note">{t("transaction.note")}</FormLabel>
-          <Input
-            id="note"
-            name="note"
-            type="text"
-            className="text-base"
-            placeholder={t("transaction.notePlaceholder")}
-            defaultValue={transaction.note ?? undefined}
+                  })}
+                </Button>
+              </div>
+            ) : null}
+          </SheetField>
+          <SheetField label={t("transaction.note")} htmlFor="note">
+            <Input
+              id="note"
+              name="note"
+              type="text"
+              className={SHEET_FIELD}
+              placeholder={t("transaction.notePlaceholder")}
+              value={note}
+              onChange={(event) => setNote(event.target.value)}
+            />
+          </SheetField>
+          {state.error && (
+            <Text className="text-sm text-destructive">
+              {resolveMessage(t, state.error)}
+            </Text>
+          )}
+          <SheetSave
+            label={
+              pending
+                ? t("transaction.saving")
+                : changed
+                  ? t("quickAdd.save")
+                  : t("entry.noChange")
+            }
+            figure={
+              changed && !pending && parsed
+                ? `${amountSign(kind)}${formatEuro(parsed)}`
+                : undefined
+            }
+            disabled={pending || deletePending || !changed || !parsed}
           />
-        </div>
-        {state.error && (
-          <Text className="text-sm text-destructive">
-            {resolveMessage(t, state.error)}
-          </Text>
-        )}
-        <Button
-          type="submit"
-          size="lg"
-          className="w-full"
-          disabled={pending || deletePending}
-        >
-          {pending ? t("transaction.saving") : t("transaction.saveTransaction")}
-        </Button>
-      </form>
+        </form>
+      </div>
 
-      <div className="mt-6 space-y-3 border-t border-border pt-4">
+      <div className="mt-6 flex flex-col gap-3 border-t border-border pt-4">
         {/* The picture behind the row, and one payment in several parts
             (migration 079): each closes the sheet once the row has changed
             under it. */}
@@ -314,46 +352,22 @@ function TransactionFormFields({
             : t("transaction.duplicateToToday")}
         </Button>
 
-        {confirmDelete ? (
-          <div className="flex flex-col gap-2">
-            <p className="text-sm text-muted-foreground">
-              {fromCharge
-                ? t("transaction.deleteChargeExplanation")
-                : t("transaction.deleteExplanation")}
-            </p>
-            <div className="flex gap-2">
-              <Button
-                type="button"
-                variant="outline"
-                className="flex-1 border-destructive text-destructive"
-                disabled={deletePending}
-                onClick={handleDelete}
-              >
-                {deletePending
-                  ? t("transaction.deleting")
-                  : t("transaction.confirmDelete")}
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                className="flex-1"
-                disabled={deletePending}
-                onClick={() => setConfirmDelete(false)}
-              >
-                {t("transaction.cancel")}
-              </Button>
-            </div>
-          </div>
-        ) : (
-          <Button
-            type="button"
-            variant="outline"
-            className="w-full border-destructive text-destructive"
-            onClick={() => setConfirmDelete(true)}
-          >
-            {t("transaction.deleteTransaction")}
-          </Button>
-        )}
+        <SheetDanger
+          label={t("transaction.deleteTransaction")}
+          explanation={
+            fromCharge
+              ? t("transaction.deleteChargeExplanation")
+              : t("transaction.deleteExplanation")
+          }
+          confirmLabel={
+            deletePending
+              ? t("transaction.deleting")
+              : t("transaction.confirmDelete")
+          }
+          cancelLabel={t("transaction.cancel")}
+          pending={deletePending}
+          onConfirm={handleDelete}
+        />
       </div>
     </MobileSheet>
   );

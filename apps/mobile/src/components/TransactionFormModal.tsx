@@ -93,7 +93,7 @@ export function TransactionFormModal({
   const parsed = parseTypedAmount(amount);
   const changed =
     categoryId !== transaction.category_id ||
-    amount !== startAmount ||
+    parsed !== Number(transaction.amount) ||
     occurredOn !== transaction.occurred_on ||
     note !== (transaction.note ?? "");
 

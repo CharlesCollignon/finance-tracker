@@ -840,7 +840,6 @@ export const en = {
     /** The disabled first option of every category picker. */
     selectCategory: "Select category",
     saving: "Saving…",
-    saveTransaction: "Save transaction",
     saved: "Transaction saved",
     duplicating: "Duplicating…",
     duplicateToToday: "Duplicate to today",

@@ -7,13 +7,23 @@ import {
   useState,
   useTransition,
 } from "react";
-import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { FormLabel } from "@/components/ui/FormLabel";
 import { Switch } from "@/components/ui/Switch";
 import { Text } from "@/components/ui/Text";
 import { useToast } from "@/components/layout/ToastProvider";
 import { MobileSheet } from "@/components/ui/MobileSheet";
+import {
+  SHEET_FIELD,
+  SheetDanger,
+  SheetFigure,
+  SheetGlow,
+  SheetSave,
+  typedAmount,
+} from "@/components/finance/sheet/entry-sheet";
+import { KIND_INK } from "@/components/finance/add/parts";
+import { amountSign } from "@finance/core/amount-sign";
+import { parseTypedAmount } from "@finance/core/amount-input";
 import {
   deleteRecurringTemplate,
   upsertRecurringTemplate,
@@ -130,7 +140,7 @@ interface RecurringFormBodyProps {
 }
 
 /** The charge's fields, without a sheet around them. */
-export function RecurringFormBody({
+function RecurringFormBody({
   categories,
   properties = [],
   template,
@@ -146,7 +156,10 @@ export function RecurringFormBody({
     upsertRecurringTemplate,
     {},
   );
-  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [description, setDescription] = useState(template?.description ?? "");
+  const [amountText, setAmountText] = useState(() =>
+    template ? typedAmount(Number(template.amount), locale) : "",
+  );
   const [deletePending, startDeleteTransition] = useTransition();
   const [recurrence, setRecurrence] = useState<Recurrence>(
     template?.recurrence ?? "monthly",
@@ -405,8 +418,37 @@ export function RecurringFormBody({
         today,
       );
 
+  // The amount, as the figure at the top of the sheet (November 2026): in
+  // the reader's shape while typed, posted as a plain number.
+  const typesAmount =
+    effectivePricingType !== "shares" && !(appsTransfer && template);
+  const kind = selectedCategory?.type ?? initialType ?? "expense";
+  const ink = KIND_INK[kind];
+  const parsedAmount = parseTypedAmount(amountText);
+
   return (
-    <form action={action} className="flex flex-col gap-4">
+    <form action={action} className="relative flex flex-col gap-4">
+      <div className="relative -mx-4 -mt-4 h-0 md:-mx-5 md:-mt-5">
+        <SheetGlow ink={ink} />
+      </div>
+      {typesAmount ? (
+        <SheetFigure
+          id="recurring-amount"
+          name="amount"
+          value={amountText}
+          onChange={setAmountText}
+          ink={ink}
+          sign={amountSign(kind)}
+          label={
+            recurrence === "yearly"
+              ? t("recurring.annualAmount")
+              : t("recurring.amount")
+          }
+          caption={[selectedCategory?.name, description.trim()]
+            .filter(Boolean)
+            .join(" · ")}
+        />
+      ) : null}
       {template && <input type="hidden" name="id" value={template.id} />}
       <input type="hidden" name="recurrence" value={recurrence} />
       {sendsAdvance ? (
@@ -435,7 +477,10 @@ export function RecurringFormBody({
         value={template?.active === false ? "false" : "true"}
       />
       <div className="flex flex-col gap-2">
-        <FormLabel htmlFor="recurring-category">
+        <FormLabel
+          className="text-xs font-semibold tracking-[0.015em] text-muted-foreground"
+          htmlFor="recurring-category"
+        >
           {t("recurring.category")}
         </FormLabel>
         <CategoryPicker
@@ -506,7 +551,10 @@ export function RecurringFormBody({
             required
           />
           <div className="flex flex-col gap-2">
-            <FormLabel htmlFor="shareCount">
+            <FormLabel
+              className="text-xs font-semibold tracking-[0.015em] text-muted-foreground"
+              htmlFor="shareCount"
+            >
               {t("recurring.shareCount")}
             </FormLabel>
             <Input
@@ -516,7 +564,7 @@ export function RecurringFormBody({
               step="1"
               min="1"
               required
-              className="text-base"
+              className={SHEET_FIELD}
               value={shareCount}
               onChange={(event) => setShareCount(event.target.value)}
             />
@@ -570,23 +618,6 @@ export function RecurringFormBody({
         </div>
       ) : (
         <>
-          <div className="flex flex-col gap-2">
-            <FormLabel htmlFor="recurring-amount">
-              {recurrence === "yearly"
-                ? t("recurring.annualAmount")
-                : t("recurring.amount")}
-            </FormLabel>
-            <Input
-              id="recurring-amount"
-              name="amount"
-              type="number"
-              step="0.01"
-              min="0.01"
-              required
-              className="text-base"
-              defaultValue={template?.amount ?? ""}
-            />
-          </div>
           {effectivePricingType === "fixed" && (
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
@@ -624,7 +655,10 @@ export function RecurringFormBody({
               {withAdvance && (
                 <div className="grid grid-cols-2 gap-3">
                   <div className="flex flex-col gap-2">
-                    <FormLabel htmlFor="advance-amount">
+                    <FormLabel
+                      className="text-xs font-semibold tracking-[0.015em] text-muted-foreground"
+                      htmlFor="advance-amount"
+                    >
                       {t("recurring.advanceAmount")}
                     </FormLabel>
                     <Input
@@ -633,13 +667,16 @@ export function RecurringFormBody({
                       step="0.01"
                       min="0.01"
                       inputMode="decimal"
-                      className="text-base"
+                      className={SHEET_FIELD}
                       value={advanceAmount}
                       onChange={(event) => setAdvanceAmount(event.target.value)}
                     />
                   </div>
                   <div className="flex flex-col gap-2">
-                    <FormLabel htmlFor="advance-day">
+                    <FormLabel
+                      className="text-xs font-semibold tracking-[0.015em] text-muted-foreground"
+                      htmlFor="advance-day"
+                    >
                       {t("recurring.advanceDay")}
                     </FormLabel>
                     <Input
@@ -647,7 +684,7 @@ export function RecurringFormBody({
                       type="number"
                       min="1"
                       max="31"
-                      className="text-base"
+                      className={SHEET_FIELD}
                       value={advanceDay}
                       onChange={(event) => setAdvanceDay(event.target.value)}
                     />
@@ -658,7 +695,9 @@ export function RecurringFormBody({
           )}
           {supportsShares && !isCryptoCategory && (
             <div className="flex flex-col gap-2 rounded-control border border-border bg-muted/20 p-3">
-              <FormLabel>{t("recurring.trackedFund")}</FormLabel>
+              <FormLabel className="text-xs font-semibold tracking-[0.015em] text-muted-foreground">
+                {t("recurring.trackedFund")}
+              </FormLabel>
               <Text className="text-xs text-muted-foreground">
                 {t("recurring.trackedFundNote")}
               </Text>
@@ -719,7 +758,10 @@ export function RecurringFormBody({
         </div>
       ) : null}
       <div className="flex flex-col gap-2">
-        <FormLabel htmlFor="recurring-description">
+        <FormLabel
+          className="text-xs font-semibold tracking-[0.015em] text-muted-foreground"
+          htmlFor="recurring-description"
+        >
           {t("recurring.descriptionOptional")}
         </FormLabel>
         <Input
@@ -727,8 +769,9 @@ export function RecurringFormBody({
           name="description"
           type="text"
           maxLength={500}
-          className="text-base"
-          defaultValue={template?.description ?? ""}
+          className={SHEET_FIELD}
+          value={description}
+          onChange={(event) => setDescription(event.target.value)}
           placeholder={t("recurring.descriptionPlaceholder")}
         />
       </div>
@@ -761,7 +804,12 @@ export function RecurringFormBody({
         <>
           {offersRhythm && (
             <div className="flex flex-col gap-2">
-              <FormLabel htmlFor="rhythm">{t("recurring.rhythm")}</FormLabel>
+              <FormLabel
+                className="text-xs font-semibold tracking-[0.015em] text-muted-foreground"
+                htmlFor="rhythm"
+              >
+                {t("recurring.rhythm")}
+              </FormLabel>
               <OptionPicker
                 id="rhythm"
                 panelLabel={t("recurring.rhythm")}
@@ -779,7 +827,10 @@ export function RecurringFormBody({
           )}
           {offersRhythm && rhythm !== 1 && rhythm !== "some" && (
             <div className="flex flex-col gap-2">
-              <FormLabel htmlFor="firstMonth">
+              <FormLabel
+                className="text-xs font-semibold tracking-[0.015em] text-muted-foreground"
+                htmlFor="firstMonth"
+              >
                 {t("recurring.firstMonth")}
               </FormLabel>
               <OptionPicker
@@ -832,7 +883,10 @@ export function RecurringFormBody({
             </Text>
           )}
           <div className="flex flex-col gap-2">
-            <FormLabel htmlFor="dayOfMonth">
+            <FormLabel
+              className="text-xs font-semibold tracking-[0.015em] text-muted-foreground"
+              htmlFor="dayOfMonth"
+            >
               {t("recurring.dayOfMonth")}
             </FormLabel>
             <Input
@@ -842,7 +896,7 @@ export function RecurringFormBody({
               min="1"
               max="31"
               required
-              className="text-base"
+              className={SHEET_FIELD}
               value={dayOfMonth}
               onChange={(event) => setDayOfMonth(event.target.value)}
             />
@@ -850,7 +904,12 @@ export function RecurringFormBody({
         </>
       ) : recurrence === "weekly" ? (
         <div className="flex flex-col gap-2">
-          <FormLabel htmlFor="dayOfWeek">{t("recurring.dayOfWeek")}</FormLabel>
+          <FormLabel
+            className="text-xs font-semibold tracking-[0.015em] text-muted-foreground"
+            htmlFor="dayOfWeek"
+          >
+            {t("recurring.dayOfWeek")}
+          </FormLabel>
           <OptionPicker
             id="dayOfWeek"
             name="dayOfWeek"
@@ -869,7 +928,10 @@ export function RecurringFormBody({
       ) : (
         <>
           <div className="flex flex-col gap-2">
-            <FormLabel htmlFor="monthOfYear">
+            <FormLabel
+              className="text-xs font-semibold tracking-[0.015em] text-muted-foreground"
+              htmlFor="monthOfYear"
+            >
               {t("recurring.monthOfYear")}
             </FormLabel>
             <OptionPicker
@@ -888,7 +950,10 @@ export function RecurringFormBody({
             />
           </div>
           <div className="flex flex-col gap-2">
-            <FormLabel htmlFor="dayOfMonth">
+            <FormLabel
+              className="text-xs font-semibold tracking-[0.015em] text-muted-foreground"
+              htmlFor="dayOfMonth"
+            >
               {t("recurring.dayOfMonth")}
             </FormLabel>
             <Input
@@ -898,7 +963,7 @@ export function RecurringFormBody({
               min="1"
               max="31"
               required
-              className="text-base"
+              className={SHEET_FIELD}
               value={dayOfMonth}
               onChange={(event) => setDayOfMonth(event.target.value)}
             />
@@ -914,23 +979,33 @@ export function RecurringFormBody({
         </Text>
         <div className="grid gap-3 sm:grid-cols-2">
           <div className="flex flex-col gap-2">
-            <FormLabel htmlFor="startsOn">{t("recurring.startsOn")}</FormLabel>
+            <FormLabel
+              className="text-xs font-semibold tracking-[0.015em] text-muted-foreground"
+              htmlFor="startsOn"
+            >
+              {t("recurring.startsOn")}
+            </FormLabel>
             <Input
               id="startsOn"
               name="startsOn"
               type="date"
-              className="text-base"
+              className={SHEET_FIELD}
               value={startsOn}
               onChange={(event) => setStartsOn(event.target.value)}
             />
           </div>
           <div className="flex flex-col gap-2">
-            <FormLabel htmlFor="endsOn">{t("recurring.endsOn")}</FormLabel>
+            <FormLabel
+              className="text-xs font-semibold tracking-[0.015em] text-muted-foreground"
+              htmlFor="endsOn"
+            >
+              {t("recurring.endsOn")}
+            </FormLabel>
             <Input
               id="endsOn"
               name="endsOn"
               type="date"
-              className="text-base"
+              className={SHEET_FIELD}
               value={endsOn}
               onChange={(event) => setEndsOn(event.target.value)}
             />
@@ -986,53 +1061,30 @@ export function RecurringFormBody({
           {resolveMessage(t, state.error)}
         </Text>
       )}
-      <Button type="submit" size="lg" className="w-full" disabled={pending}>
-        {pending ? t("recurring.saving") : t("recurring.save")}
-      </Button>
+      <SheetSave
+        label={pending ? t("recurring.saving") : t("recurring.save")}
+        figure={
+          !pending && typesAmount && parsedAmount
+            ? `${amountSign(kind)}${formatEuro(parsedAmount)}`
+            : undefined
+        }
+        disabled={pending}
+      />
 
       {template && (
-        <div className="border-t border-border pt-4">
-          {confirmDelete ? (
-            <div className="flex flex-col gap-2">
-              <Text className="text-sm text-muted-foreground">
-                {t("recurring.deleteExplanation")}
-              </Text>
-              <div className="flex gap-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="lg"
-                  className="flex-1 border-destructive text-destructive"
-                  onClick={handleDelete}
-                  disabled={deletePending}
-                >
-                  {deletePending
-                    ? t("recurring.deleting")
-                    : t("recurring.confirmDelete")}
-                </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="lg"
-                  className="flex-1"
-                  onClick={() => setConfirmDelete(false)}
-                  disabled={deletePending}
-                >
-                  {t("common.cancel")}
-                </Button>
-              </div>
-            </div>
-          ) : (
-            <Button
-              type="button"
-              variant="outline"
-              size="lg"
-              className="w-full border-destructive text-destructive"
-              onClick={() => setConfirmDelete(true)}
-            >
-              {t("recurring.deleteItem")}
-            </Button>
-          )}
+        <div className="mt-2 border-t border-border pt-4">
+          <SheetDanger
+            label={t("recurring.deleteItem")}
+            explanation={t("recurring.deleteExplanation")}
+            confirmLabel={
+              deletePending
+                ? t("recurring.deleting")
+                : t("recurring.confirmDelete")
+            }
+            cancelLabel={t("common.cancel")}
+            pending={deletePending}
+            onConfirm={handleDelete}
+          />
         </div>
       )}
     </form>

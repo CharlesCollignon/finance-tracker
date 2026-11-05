@@ -663,7 +663,6 @@ export const fr: Messages = {
     notePlaceholder: "Libellé",
     selectCategory: "Choisir une catégorie",
     saving: "Enregistrement…",
-    saveTransaction: "Enregistrer l'opération",
     saved: "Opération enregistrée",
     duplicating: "Duplication…",
     duplicateToToday: "Dupliquer à aujourd'hui",
