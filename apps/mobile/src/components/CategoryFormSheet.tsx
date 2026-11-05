@@ -1,20 +1,22 @@
 import { useState } from "react";
-import { Modal, Pressable, ScrollView, View } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
+import { Pressable, Switch, View } from "react-native";
 
-import { categoryTypeLabels } from "@finance/core/category-styles";
 import type { Category, CategoryType } from "@finance/core/types/database";
 
-import { CATEGORY_ICONS, CategoryIcon } from "@/components/CategoryIcon";
-import { ChoiceChips } from "@/components/pickers/ChoiceChips";
-import { Button } from "@/components/ui/Button";
+import { KIND_INK } from "@/components/add/kind-ink";
+import { KindSwitch } from "@/components/add/KindSwitch";
+import { CATEGORY_ICONS, CategoryGlyph } from "@/components/CategoryIcon";
+import {
+  EntrySheet,
+  Field,
+  SaveButton,
+} from "@/components/sheet/EntrySheet";
 import { Input } from "@/components/ui/Input";
 import { Text } from "@/components/ui/Text";
-import { SheetGrabber } from "@/components/ui/SheetGrabber";
-import { cn } from "@/lib/cn";
+import { hapticSelection } from "@/lib/haptics";
 import { upsertCategory } from "@/lib/mutations";
 import { useToast } from "@/providers/ToastProvider";
-import { useLocale, useT } from "@/providers/LocaleProvider";
+import { useT } from "@/providers/LocaleProvider";
 import { ICON } from "@/theme/tokens";
 import { useThemeColors } from "@/theme/useThemeColors";
 
@@ -23,8 +25,6 @@ interface CategoryFormSheetProps {
   category: Category | null;
   onClose: () => void;
 }
-
-const TYPES: CategoryType[] = ["income", "expense", "savings", "investment"];
 
 const ICON_KEYS = Object.keys(CATEGORY_ICONS);
 
@@ -70,7 +70,6 @@ export function CategoryFormSheet({
   onClose,
 }: CategoryFormSheetProps) {
   const t = useT();
-  const locale = useLocale();
   const { toast } = useToast();
   const colors = useThemeColors();
   const isEditing = category !== null;
@@ -103,138 +102,113 @@ export function CategoryFormSheet({
     onClose();
   }
 
+  const ink = colors[KIND_INK[type]];
+
   return (
-    <Modal
+    <EntrySheet
       visible={open}
-      animationType="fade"
-      transparent
-      statusBarTranslucent
-      onRequestClose={onClose}
-    >
-      <View className="flex-1 justify-end bg-black/50">
-        <Pressable
-          className="flex-1"
-          accessibilityLabel={t("categories.close")}
-          onPress={onClose}
+      onClose={onClose}
+      title={
+        isEditing ? t("categories.editCategory") : t("categories.newCategory")
+      }
+      closeLabel={t("categories.close")}
+      ink={ink}
+      footer={
+        <SaveButton
+          label={
+            pending
+              ? t("categories.saving")
+              : name.trim()
+                ? t("categories.saveCategory")
+                : t("entry.gap.name")
+          }
+          disabled={pending || !name.trim()}
+          onPress={() => void handleSave()}
         />
-        <View className="max-h-[90%] rounded-t-card border border-border bg-card">
-          <View className="items-center pt-3">
-            <SheetGrabber />
-          </View>
-          <View className="flex-row items-center justify-between px-5 pb-2 pt-3">
-            <Text className="font-semibold" style={{ fontSize: 18 }}>
-              {isEditing
-                ? t("categories.editCategory")
-                : t("categories.newCategory")}
-            </Text>
-            <Pressable
-              onPress={onClose}
-              accessibilityLabel={t("categories.close")}
-              hitSlop={8}
-            >
-              <Text variant="muted">{t("categories.close")}</Text>
-            </Pressable>
-          </View>
+      }
+    >
+      {/* What the category will look like wherever it is listed, as it is
+          being made: its glyph on a disc in its kind's colour, its name. */}
+      <View className="items-center gap-2.5 pb-2 pt-5">
+        <View
+          className="h-16 w-16 items-center justify-center rounded-[22px]"
+          style={{ backgroundColor: ink }}
+        >
+          <CategoryGlyph icon={icon} color={colors.background} size={ICON.hero} />
+        </View>
+        <Text
+          numberOfLines={1}
+          className={name.trim() ? "font-semibold" : "font-semibold text-muted-foreground"}
+          style={{ fontSize: 20 }}
+        >
+          {name.trim() || t("categories.namePlaceholder")}
+        </Text>
+      </View>
 
-          <ScrollView
-            className="px-5"
-            keyboardShouldPersistTaps="handled"
-            showsVerticalScrollIndicator={false}
-          >
-            <Text className="mb-2 text-sm font-medium">
-              {t("categories.name")}
-            </Text>
-            <Input
-              value={name}
-              onChangeText={setName}
-              placeholder={t("categories.namePlaceholder")}
-              className="mb-4"
-            />
+      <View className="mt-4 gap-4">
+        <Field label={t("categories.name")}>
+          <Input
+            tone="sheet"
+            value={name}
+            onChangeText={setName}
+            placeholder={t("categories.namePlaceholder")}
+          />
+        </Field>
 
-            <Text className="mb-2 text-sm font-medium">
-              {t("categories.type")}
-            </Text>
-            <ChoiceChips
-              label={t("categories.type")}
-              className="mb-4"
-              options={TYPES.map((value) => ({
-                value,
-                label: categoryTypeLabels(locale)[value],
-              }))}
-              value={type}
-              onChange={setType}
-            />
+        <Field label={t("categories.type")}>
+          <KindSwitch value={type} onChange={setType} />
+        </Field>
 
-            <Text className="mb-2 text-sm font-medium">
-              {t("categories.icon")}
-            </Text>
-            <View className="mb-4 flex-row flex-wrap gap-2">
-              {ICON_KEYS.map((key) => {
-                const selected = icon === key;
-                return (
-                  <Pressable
-                    key={key}
-                    accessibilityRole="radio"
-                    accessibilityLabel={t(iconLabelKey(key))}
-                    accessibilityState={{ selected }}
-                    onPress={() => setIcon(selected ? null : key)}
-                    className={cn(
-                      "h-12 w-12 items-center justify-center rounded-control border",
-                      selected
-                        ? "border-foreground bg-secondary"
-                        : "border-transparent",
-                    )}
-                  >
-                    <CategoryIcon icon={key} />
-                  </Pressable>
-                );
-              })}
-            </View>
-
-            <Pressable
-              accessibilityRole="checkbox"
-              accessibilityState={{ checked: countsToward }}
-              onPress={() => setCountsToward((value) => !value)}
-              className="mb-4 min-h-12 flex-row items-center gap-3 rounded-control border border-border px-3 py-3"
-            >
-              <View
-                className={cn(
-                  "h-6 w-6 items-center justify-center rounded-control border",
-                  countsToward
-                    ? "border-foreground bg-foreground"
-                    : "border-border bg-background",
-                )}
-              >
-                {countsToward ? (
-                  <Ionicons
-                    name="checkmark"
-                    size={ICON.sm}
-                    color={colors.background}
+        <Field label={t("categories.icon")}>
+          <View className="flex-row flex-wrap gap-2">
+            {ICON_KEYS.map((key) => {
+              const selected = icon === key;
+              return (
+                <Pressable
+                  key={key}
+                  accessibilityRole="radio"
+                  accessibilityLabel={t(iconLabelKey(key))}
+                  accessibilityState={{ selected }}
+                  onPress={() => {
+                    void hapticSelection();
+                    setIcon(selected ? null : key);
+                  }}
+                  style={{
+                    backgroundColor: selected ? ink : "rgba(236,236,241,0.06)",
+                  }}
+                  className="h-12 w-12 items-center justify-center rounded-2xl active:opacity-70"
+                >
+                  <CategoryGlyph
+                    icon={key}
+                    color={selected ? colors.background : colors.foreground}
                   />
-                ) : null}
-              </View>
-              <View className="flex-1">
-                <Text className="text-sm font-medium">
-                  {t("categories.countsTowardBudget")}
-                </Text>
-                <Text variant="muted" className="text-xs">
-                  {t(COUNTS_HINT[type])}
-                </Text>
-              </View>
-            </Pressable>
+                </Pressable>
+              );
+            })}
+          </View>
+        </Field>
 
-            <Button
-              label={
-                pending ? t("categories.saving") : t("categories.saveCategory")
-              }
-              size="lg"
-              disabled={pending || !name.trim()}
-              onPress={handleSave}
-            />
-            <View className="h-10" />
-          </ScrollView>
+        <View className="flex-row items-start gap-3 border-t border-border pt-3">
+          <View className="flex-1">
+            <Text className="font-medium">
+              {t("categories.countsTowardBudget")}
+            </Text>
+            <Text variant="muted" className="mt-0.5 text-xs">
+              {t(COUNTS_HINT[type])}
+            </Text>
+          </View>
+          <Switch
+            accessibilityLabel={t("categories.countsTowardBudget")}
+            value={countsToward}
+            onValueChange={(next) => {
+              void hapticSelection();
+              setCountsToward(next);
+            }}
+            trackColor={{ false: colors.secondary, true: ink }}
+            thumbColor={countsToward ? colors.background : colors.foreground}
+          />
         </View>
       </View>
-    </Modal>
+    </EntrySheet>
   );
 }

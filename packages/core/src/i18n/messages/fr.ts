@@ -807,6 +807,7 @@ export const fr: Messages = {
     moreOptions: "Plus d'options",
     fewerOptions: "Moins d'options",
     gap: {
+      name: "Donnez-lui un nom",
       amount: "Saisissez un montant",
       category: "Choisissez une catégorie",
     },
@@ -820,7 +821,7 @@ export const fr: Messages = {
   },
 
   planned: {
-    body: "Prévu le {date}. Il sera enregistré le jour même.",
+    body: "Prévu le {date}, et enregistré le jour même.",
     awaitedBody: "Prévu le {date}, pas encore passé à la banque.",
     why: "Pourquoi\u00A0: {reason}.",
     recordNow: "L'enregistrer maintenant",
@@ -1136,7 +1137,7 @@ export const fr: Messages = {
     balancePlaceholder: "2400,50",
     reopened: "{month} réouvert",
     baselineSet:
-      "{amount} au {date}. Faites le bilan du mois prochain et l'application pourra commencer à vous dire ce qu'elle n'a jamais vu.",
+      "{amount} au {date}\u00A0: faites le bilan du mois prochain et l'application pourra commencer à vous dire ce qu'elle n'a jamais vu.",
   },
 
   inbox: {

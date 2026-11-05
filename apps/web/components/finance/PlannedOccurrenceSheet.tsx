@@ -4,10 +4,16 @@ import Link from "next/link";
 import { useEffect, useState, useTransition } from "react";
 import type { PlannedOccurrence } from "@finance/core/apply-recurring";
 import { formatShortDate } from "@finance/core/constants";
-import { TYPE_AMOUNT_CLASS } from "@finance/core/category-styles";
 import { resolveMessage } from "@finance/core/i18n/t";
 import { Button, buttonVariants } from "@/components/ui/Button";
-import { CategoryIcon } from "@/components/finance/CategoryIcon";
+import { CategoryGlyph } from "@/components/finance/CategoryIcon";
+import { KIND_INK } from "@/components/finance/add/parts";
+import {
+  SheetGlow,
+  SheetSave,
+  SheetValue,
+} from "@/components/finance/sheet/entry-sheet";
+import { ICON } from "@/lib/icon-scale";
 import { amountSign } from "@finance/core/amount-sign";
 import {
   describeMiss,
@@ -141,56 +147,47 @@ export function PlannedOccurrenceSheet({
 
   return (
     <MobileSheet open onOpenChange={onOpenChange} title={occurrence.name}>
-      <div className="flex flex-col gap-5">
-        <div className="flex items-center justify-between gap-3">
-          <span className="flex min-w-0 items-center gap-3">
-            <CategoryIcon
-              icon={occurrence.categoryIcon}
-              className="size-9 shrink-0 rounded-control border border-dashed border-hairline-strong bg-transparent"
-            />
-            <span className="min-w-0">
-              <span className="block truncate text-sm font-medium">
-                {occurrence.categoryName}
-              </span>
-              <span className="block text-sm text-muted-foreground">
-                {t(
-                  occurrence.awaited ? "planned.awaitedBody" : "planned.body",
-                  { date },
-                )}
-              </span>
-              {miss ? (
-                <span className="mt-1 block text-xs text-muted-foreground">
-                  {t("planned.why", {
-                    reason: describeMiss(miss, formatEuro, locale),
-                  })}
-                </span>
-              ) : null}
+      <div className="relative -mx-4 -mt-4 h-0 md:-mx-5 md:-mt-5">
+        <SheetGlow ink={KIND_INK[occurrence.categoryType]} />
+      </div>
+      <div className="relative flex flex-col gap-5">
+        <SheetValue
+          value={`${amountSign(occurrence.categoryType)}${formatEuro(occurrence.amount)}`}
+          ink={KIND_INK[occurrence.categoryType]}
+          caption={t(
+            occurrence.awaited ? "planned.awaitedBody" : "planned.body",
+            { date },
+          )}
+        />
+        {/* Dashed, as on the phone: a thing expected, not a thing done. */}
+        <div className="-mt-3 flex flex-col items-center gap-2">
+          <span className="flex items-center gap-2 rounded-full border border-dashed border-hairline-strong py-1 pl-1 pr-3">
+            <span className="flex size-7 items-center justify-center rounded-full bg-foreground/5">
+              <CategoryGlyph icon={occurrence.categoryIcon} size={ICON.md} />
+            </span>
+            <span className="truncate text-sm font-medium">
+              {occurrence.categoryName}
             </span>
           </span>
-          <span
-            className={cn(
-              "privacy-amount shrink-0 text-base font-semibold tabular-nums",
-              TYPE_AMOUNT_CLASS[occurrence.categoryType],
-            )}
-          >
-            {amountSign(occurrence.categoryType)}
-            {formatEuro(occurrence.amount)}
-          </span>
+          {miss ? (
+            <p className="text-center text-xs text-muted-foreground">
+              {t("planned.why", {
+                reason: describeMiss(miss, formatEuro, locale),
+              })}
+            </p>
+          ) : null}
         </div>
 
         <div className="flex flex-col gap-2">
           {/* One the bank still owes is recorded by the bank. */}
           {inCurrentMonth && !occurrence.awaited ? (
-            <div className="flex flex-col gap-1">
-              <Button
+            <div className="flex flex-col gap-1.5">
+              <SheetSave
                 type="button"
-                size="lg"
-                className="w-full"
+                label={t("planned.recordNow")}
                 disabled={pending}
                 onClick={recordNow}
-              >
-                {t("planned.recordNow")}
-              </Button>
+              />
               <p className="text-center text-xs text-muted-foreground">
                 {t("planned.recordNowHint")}
               </p>

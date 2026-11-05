@@ -16,14 +16,21 @@ import { Button, ButtonNub } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
 import { Text } from "@/components/ui/Text";
-import { FormLabel } from "@/components/ui/FormLabel";
-import { ChoiceChips } from "@/components/ui/Picker";
 import { MobileSheet } from "@/components/ui/MobileSheet";
+import { Switch } from "@/components/ui/Switch";
+import { KIND_INK, KindSwitch } from "@/components/finance/add/parts";
+import {
+  SHEET_FIELD,
+  SheetField,
+  SheetGlow,
+  SheetSave,
+} from "@/components/finance/sheet/entry-sheet";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { useToast } from "@/components/layout/ToastProvider";
 import { useDeletedToast } from "@/lib/use-deleted-toast";
 import {
+  CategoryGlyph,
   CategoryIcon,
   CATEGORY_ICONS,
 } from "@/components/finance/CategoryIcon";
@@ -325,7 +332,6 @@ function CategoryFormSheet({
   category,
 }: CategoryFormSheetProps) {
   const t = useT();
-  const locale = useLocale();
   const { toast } = useToast();
   const isEditing = category !== null;
   const [state, action, pending] = useActionState<FormState, FormData>(
@@ -333,6 +339,7 @@ function CategoryFormSheet({
     {},
   );
   const [type, setType] = useState<CategoryType>(category?.type ?? "expense");
+  const [name, setName] = useState(category?.name ?? "");
   const [icon, setIcon] = useState<string>(category?.icon ?? "dots-three");
   const [countsTowardSummary, setCountsTowardSummary] = useState(
     category?.counts_toward_summary !== false,
@@ -355,81 +362,65 @@ function CategoryFormSheet({
         isEditing ? t("categories.editCategory") : t("categories.addCategory")
       }
     >
-      <form action={action} className="flex flex-col gap-4">
+      <div className="relative -mx-4 -mt-4 h-0 md:-mx-5 md:-mt-5">
+        <SheetGlow ink={KIND_INK[type]} />
+      </div>
+      <form action={action} className="relative flex flex-col gap-4">
         {isEditing && <input type="hidden" name="id" value={category.id} />}
         <input type="hidden" name="icon" value={icon} />
+        <input type="hidden" name="type" value={type} />
         <input
           type="hidden"
           name="countsTowardSummary"
           value={type !== "expense" && !countsTowardSummary ? "false" : "true"}
         />
 
-        <div className="flex flex-col gap-2">
-          <FormLabel htmlFor="category-name">{t("categories.name")}</FormLabel>
+        {/* What the category will look like wherever it is listed, as it
+            is being made: its glyph on a disc in its kind's colour. */}
+        <div className="flex flex-col items-center gap-2.5 pb-1 pt-4">
+          <span
+            className="flex size-16 items-center justify-center rounded-[22px] text-background transition-colors duration-hover"
+            style={{ background: KIND_INK[type] }}
+          >
+            <CategoryGlyph icon={icon} size={ICON.hero} />
+          </span>
+          <span
+            className={cn(
+              "max-w-full truncate text-xl font-semibold",
+              !name.trim() && "text-muted-foreground",
+            )}
+          >
+            {name.trim() || t("categories.namePlaceholder")}
+          </span>
+        </div>
+
+        <SheetField label={t("categories.name")} htmlFor="category-name">
           <Input
             id="category-name"
             name="name"
             type="text"
             required
             maxLength={100}
-            defaultValue={category?.name ?? ""}
-            className="text-base"
+            value={name}
+            onChange={(event) => setName(event.target.value)}
+            className={SHEET_FIELD}
             placeholder={t("categories.namePlaceholder")}
           />
-        </div>
+        </SheetField>
 
-        <div className="flex flex-col gap-2">
-          <FormLabel id="category-type-label">{t("categories.type")}</FormLabel>
-          {/* Four kinds, so chips rather than a menu. The labels follow the
-              reader's language; they were always English here. */}
-          <ChoiceChips
-            labelledBy="category-type-label"
-            name="type"
-            options={CATEGORY_TYPE_ORDER.map((option) => ({
-              value: option,
-              label: categoryTypeLabels(locale)[option],
-            }))}
-            value={type}
-            onValueChange={setType}
-          />
-        </div>
+        <SheetField label={t("categories.type")}>
+          <KindSwitch value={type} onChange={setType} />
+        </SheetField>
 
-        {type !== "expense" && (
-          <label className="flex items-start gap-2 text-sm">
-            <input
-              type="checkbox"
-              checked={countsTowardSummary}
-              onChange={(event) => setCountsTowardSummary(event.target.checked)}
-              className="mt-0.5 h-4 w-4 accent-foreground"
-            />
-            <span>
-              {t("categories.countsTowardBudget")}
-              <span className="block text-muted-foreground">
-                {type === "income"
-                  ? t("categories.countsHintIncome")
-                  : type === "savings"
-                    ? t("categories.countsHintSavings")
-                    : t("categories.countsHintInvestment")}
-              </span>
-            </span>
-          </label>
-        )}
-
-        <div className="flex flex-col gap-2">
-          <FormLabel htmlFor="category-icon">{t("categories.icon")}</FormLabel>
-          {/* A group of toggles, not a radio group. `role="radiogroup"` over
-              `role="radio"` was a promise the markup did not keep: a radio
-              group is a single tab stop whose members are moved between with
-              the arrow keys, and there was no roving `tabIndex` and no key
-              handler — so a screen reader announced "1 of 36" and then Down
-              did nothing. Each icon is its own tab stop, which is what these
-              have always been, and `aria-pressed` says which one is chosen
-              without claiming keys the control does not handle. */}
+        <SheetField label={t("categories.icon")}>
+          {/* A group of toggles, not a radio group: each icon is its own
+              tab stop, and `aria-pressed` says which one is chosen without
+              claiming arrow keys the control does not handle. */}
           <div
             id="category-icon"
             role="group"
             aria-label={t("categories.iconPicker")}
-            className="grid grid-cols-6 gap-2"
+            className="grid grid-cols-6 gap-2 sm:grid-cols-9"
           >
             {ICON_KEYS.map((key) => (
               <button
@@ -438,24 +429,44 @@ function CategoryFormSheet({
                 aria-pressed={icon === key}
                 aria-label={key}
                 onClick={() => setIcon(key)}
+                style={
+                  icon === key ? { background: KIND_INK[type] } : undefined
+                }
                 className={cn(
-                  "flex h-11 items-center justify-center rounded-control border",
-                  // The full-strength rim was always doing the work here; the
-                  // gold fill under it was the accent repeated across a
-                  // thirty-six cell grid.
+                  "flex h-12 items-center justify-center rounded-2xl transition-[background-color,transform] duration-press active:scale-95",
                   icon === key
-                    ? "border-foreground bg-secondary text-foreground"
-                    : "border-border bg-background hover:bg-accent",
+                    ? "text-background"
+                    : "bg-foreground/[0.06] text-foreground hover:bg-foreground/10",
                 )}
               >
-                <CategoryIcon
-                  icon={key}
-                  className="h-7 w-7 border-0 bg-transparent"
-                />
+                <CategoryGlyph icon={key} />
               </button>
             ))}
           </div>
-        </div>
+        </SheetField>
+
+        {type !== "expense" && (
+          <div className="flex items-start gap-3 border-t border-border pt-3">
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-medium">
+                {t("categories.countsTowardBudget")}
+              </p>
+              <p className="mt-0.5 text-xs text-muted-foreground">
+                {type === "income"
+                  ? t("categories.countsHintIncome")
+                  : type === "savings"
+                    ? t("categories.countsHintSavings")
+                    : t("categories.countsHintInvestment")}
+              </p>
+            </div>
+            <Switch
+              checked={countsTowardSummary}
+              onChange={setCountsTowardSummary}
+              label={t("categories.countsTowardBudget")}
+              className="mt-0.5"
+            />
+          </div>
+        )}
 
         {state.error && (
           <Text className="text-sm text-destructive">
@@ -463,9 +474,16 @@ function CategoryFormSheet({
           </Text>
         )}
 
-        <Button type="submit" size="lg" className="w-full" disabled={pending}>
-          {pending ? t("categories.saving") : t("categories.saveCategory")}
-        </Button>
+        <SheetSave
+          label={
+            pending
+              ? t("categories.saving")
+              : name.trim()
+                ? t("categories.saveCategory")
+                : t("entry.gap.name")
+          }
+          disabled={pending || !name.trim()}
+        />
       </form>
     </MobileSheet>
   );

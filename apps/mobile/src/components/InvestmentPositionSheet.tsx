@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Linking, Pressable, Text as RNText, View } from "react-native";
+import { Linking, Pressable, View } from "react-native";
 
 import type { InvestmentPositionItem } from "@finance/core/investment-positions";
 import { isCryptoWallet } from "@finance/core/crypto-holdings";
@@ -11,6 +11,7 @@ import {
   DangerAction,
   EntrySheet,
   Field,
+  FigureValue,
   SaveButton,
 } from "@/components/sheet/EntrySheet";
 import { Input } from "@/components/ui/Input";
@@ -22,6 +23,7 @@ import {
 import { Text } from "@/components/ui/Text";
 import { toTypedAmount } from "@/lib/typed-amount";
 import { useFormatCurrency } from "@/providers/CurrencyProvider";
+import { usePrivacy } from "@/providers/PrivacyProvider";
 import { useLocale, useT } from "@/providers/LocaleProvider";
 import { useThemeColors } from "@/theme/useThemeColors";
 import { resolveMessage } from "@finance/core/i18n/t";
@@ -125,6 +127,7 @@ export function InvestmentPositionSheet({
 
   const colors = useThemeColors();
   const formatEuro = useFormatCurrency();
+  const { hidden } = usePrivacy();
   const ink = colors.info;
   const gain =
     item.totalInvested > 0
@@ -145,30 +148,17 @@ export function InvestmentPositionSheet({
         />
       }
     >
-      <View className="items-center pb-1 pt-4">
-        <RNText
-          numberOfLines={1}
-          adjustsFontSizeToFit
-          minimumFontScale={0.5}
-          style={{
-            fontFamily: "Fraunces-SemiBold",
-            fontSize: 48,
-            letterSpacing: -1.6,
-            color: ink,
-            fontVariant: ["tabular-nums"],
-          }}
-        >
-          {formatEuro(item.marketValue)}
-        </RNText>
-        <Text variant="muted" className="mt-1 text-center text-[13px]">
-          {[
-            `${formatEuro(item.totalInvested)} ${t("position.amountIn")}`,
-            gain,
-          ]
-            .filter(Boolean)
-            .join(" · ")}
-        </Text>
-      </View>
+      <FigureValue
+        value={formatEuro(item.marketValue)}
+        ink={ink}
+        caption={
+          hidden
+            ? undefined
+            : [`${formatEuro(item.totalInvested)} ${t("position.amountIn")}`, gain]
+                .filter(Boolean)
+                .join(" · ")
+        }
+      />
 
       <View className="mt-5 gap-4">
         <Field label={t("position.costBasis")} hint={t("position.costBasisHint")}>

@@ -14,6 +14,7 @@ import Svg, { Defs, RadialGradient, Rect, Stop } from "react-native-svg";
 
 import { Text } from "@/components/ui/Text";
 import { cn } from "@/lib/cn";
+import { usePrivacy } from "@/providers/PrivacyProvider";
 import { hapticWarning } from "@/lib/haptics";
 import { ICON } from "@/theme/tokens";
 import { useThemeColors } from "@/theme/useThemeColors";
@@ -222,6 +223,51 @@ export function FigureInput({
           {caption}
         </Text>
       ) : null}
+    </View>
+  );
+}
+
+/**
+ * A figure that is read rather than typed — a payment still to come, a
+ * position's value today — set like `FigureInput`, so a sheet that only
+ * shows its money still opens on it.
+ */
+export function FigureValue({
+  value,
+  ink,
+  caption,
+  children,
+}: {
+  value: string;
+  ink: string;
+  caption?: string;
+  /** Under the caption: a reason, a note. */
+  children?: ReactNode;
+}) {
+  // Privacy mode masks a figure that is only shown, as `PrivateAmount` does.
+  const { hidden } = usePrivacy();
+  return (
+    <View className="items-center gap-1 pb-1 pt-4">
+      <RNText
+        numberOfLines={1}
+        adjustsFontSizeToFit
+        minimumFontScale={0.5}
+        style={{
+          fontFamily: "Fraunces-SemiBold",
+          fontSize: 48,
+          letterSpacing: -1.6,
+          color: ink,
+          fontVariant: ["tabular-nums"],
+        }}
+      >
+        {hidden ? "••••••" : value}
+      </RNText>
+      {caption ? (
+        <Text variant="muted" className="px-4 text-center text-[13px]">
+          {caption}
+        </Text>
+      ) : null}
+      {children}
     </View>
   );
 }

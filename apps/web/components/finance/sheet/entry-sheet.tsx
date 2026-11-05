@@ -146,13 +146,13 @@ export function SheetValue({
   return (
     <div className="relative pb-1 pt-5 text-center">
       <p
-        className="font-serif text-[3rem] font-semibold leading-none tabular-nums tracking-[-0.035em]"
+        className="privacy-sensitive font-serif text-[3rem] font-semibold leading-none tabular-nums tracking-[-0.035em]"
         style={{ color: ink }}
       >
         {value}
       </p>
       {caption ? (
-        <p className="mt-2.5 truncate text-[13px] text-muted-foreground">
+        <p className="privacy-sensitive mt-2.5 truncate text-[13px] text-muted-foreground">
           {caption}
         </p>
       ) : null}
