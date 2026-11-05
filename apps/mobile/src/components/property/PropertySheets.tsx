@@ -1,7 +1,6 @@
 import { useState, type ReactNode } from "react";
-import { Modal, Pressable, ScrollView, View } from "react-native";
+import { Pressable, View } from "react-native";
 import { useRouter } from "expo-router";
-import { Ionicons } from "@expo/vector-icons";
 
 import { formatEuro } from "@finance/core/constants";
 import { resolveMessage, type Key } from "@finance/core/i18n/t";
@@ -18,7 +17,7 @@ import { propertySchema } from "@finance/core/validations/property";
 import { FadeIn } from "@/components/motion/FadeIn";
 import { Button } from "@/components/ui/Button";
 import { ChipRow } from "@/components/ui/ChipRow";
-import { SheetGrabber } from "@/components/ui/SheetGrabber";
+import { EntrySheet } from "@/components/sheet/EntrySheet";
 import { Text } from "@/components/ui/Text";
 import { hapticLight, hapticSuccess, hapticWarning } from "@/lib/haptics";
 import {
@@ -29,7 +28,6 @@ import {
 } from "@/lib/properties";
 import { useLocale, useT } from "@/providers/LocaleProvider";
 import { useToast } from "@/providers/ToastProvider";
-import { ICON } from "@/theme/tokens";
 import { useThemeColors } from "@/theme/useThemeColors";
 
 import {
@@ -65,67 +63,18 @@ function SheetFrame({
   children: ReactNode;
 }) {
   const t = useT();
-  const colors = useThemeColors();
   return (
-    <Modal
+    <EntrySheet
       visible={open}
-      animationType="fade"
-      transparent
-      statusBarTranslucent
-      onRequestClose={onClose}
+      onClose={onClose}
+      title={title}
+      closeLabel={t("position.close")}
+      onBack={onBack}
+      backLabel={t("property.back")}
+      scrollKey={scrollKey}
     >
-      <View className="flex-1 justify-end bg-black/50">
-        <Pressable
-          className="flex-1"
-          accessibilityLabel={t("position.close")}
-          onPress={onClose}
-        />
-        <View className="max-h-[92%] rounded-t-card border border-border bg-card">
-          <View className="items-center pt-3">
-            <SheetGrabber />
-          </View>
-          <View className="flex-row items-center justify-between px-5 pb-2 pt-3">
-            <View className="min-w-0 flex-1 flex-row items-center gap-2">
-              {onBack ? (
-                <Pressable
-                  accessibilityRole="button"
-                  accessibilityLabel={t("property.back")}
-                  onPress={onBack}
-                  className="-ml-2 h-11 w-11 items-center justify-center"
-                >
-                  <Ionicons name="chevron-back" size={ICON.lg} color={colors.foreground} />
-                </Pressable>
-              ) : null}
-              <Text
-                accessibilityRole="header"
-                numberOfLines={1}
-                className="min-w-0 flex-1 font-semibold"
-                style={{ fontSize: 18 }}
-              >
-                {title}
-              </Text>
-            </View>
-            <Pressable
-              onPress={onClose}
-              accessibilityRole="button"
-              accessibilityLabel={t("position.close")}
-              className="h-11 justify-center pl-3"
-            >
-              <Text variant="muted">{t("position.close")}</Text>
-            </Pressable>
-          </View>
-          <ScrollView
-            key={scrollKey}
-            className="px-5"
-            keyboardShouldPersistTaps="handled"
-            automaticallyAdjustKeyboardInsets
-            showsVerticalScrollIndicator={false}
-          >
-            <View className="gap-5 pb-8">{children}</View>
-          </ScrollView>
-        </View>
-      </View>
-    </Modal>
+      <View className="gap-5 pb-4 pt-2">{children}</View>
+    </EntrySheet>
   );
 }
 

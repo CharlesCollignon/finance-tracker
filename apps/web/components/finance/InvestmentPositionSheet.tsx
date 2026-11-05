@@ -13,6 +13,7 @@ import {
   SheetGlow,
   SheetSave,
   SheetValue,
+  SHEET_LABEL,
 } from "@/components/finance/sheet/entry-sheet";
 import { KIND_INK, Segmented } from "@/components/finance/add/parts";
 import { formatSigned } from "@finance/core/amount-sign";
@@ -248,7 +249,7 @@ function InvestmentPositionForm({
 
         {!isEdit && (
           <div className="flex flex-col gap-2">
-            <FormLabel className="text-xs font-semibold tracking-[0.015em] text-muted-foreground">
+            <FormLabel className={SHEET_LABEL}>
               {t("position.itemType")}
             </FormLabel>
             <Segmented
@@ -265,10 +266,7 @@ function InvestmentPositionForm({
 
         {!isEdit && sourceType === "recurring" && (
           <div className="flex flex-col gap-2">
-            <FormLabel
-              className="text-xs font-semibold tracking-[0.015em] text-muted-foreground"
-              htmlFor="recurringTemplateId"
-            >
+            <FormLabel className={SHEET_LABEL} htmlFor="recurringTemplateId">
               {t("position.recurringItem")}
             </FormLabel>
             {recurringOptions.length > 0 ? (
@@ -313,10 +311,7 @@ function InvestmentPositionForm({
         {(!isEdit && sourceType === "custom") ||
         (isEdit && !item.recurringTemplateId) ? (
           <div className="flex flex-col gap-2">
-            <FormLabel
-              className="text-xs font-semibold tracking-[0.015em] text-muted-foreground"
-              htmlFor="name"
-            >
+            <FormLabel className={SHEET_LABEL} htmlFor="name">
               {t("position.nameLabel")}
             </FormLabel>
             <Input
@@ -334,10 +329,7 @@ function InvestmentPositionForm({
         )}
 
         <div className="flex flex-col gap-2">
-          <FormLabel
-            className="text-xs font-semibold tracking-[0.015em] text-muted-foreground"
-            htmlFor="initialBalance"
-          >
+          <FormLabel className={SHEET_LABEL} htmlFor="initialBalance">
             {t("position.costBasis")}
           </FormLabel>
           <Text className="text-xs text-muted-foreground">
@@ -459,10 +451,7 @@ function InvestmentPositionForm({
           <input type="hidden" name="isin" value={isin} />
         ) : (
           <div className="flex flex-col gap-2">
-            <FormLabel
-              className="text-xs font-semibold tracking-[0.015em] text-muted-foreground"
-              htmlFor="isin"
-            >
+            <FormLabel className={SHEET_LABEL} htmlFor="isin">
               {t("position.isinLabel")}
             </FormLabel>
             <Input
@@ -485,10 +474,7 @@ function InvestmentPositionForm({
         )}
 
         <div className="flex flex-col gap-2">
-          <FormLabel
-            className="text-xs font-semibold tracking-[0.015em] text-muted-foreground"
-            htmlFor="shareCount"
-          >
+          <FormLabel className={SHEET_LABEL} htmlFor="shareCount">
             {isCrypto
               ? t("position.totalBtcHeld")
               : instrumentSymbol
@@ -513,10 +499,7 @@ function InvestmentPositionForm({
         </div>
 
         <div className="flex flex-col gap-2">
-          <FormLabel
-            className="text-xs font-semibold tracking-[0.015em] text-muted-foreground"
-            htmlFor="ongoingCharge"
-          >
+          <FormLabel className={SHEET_LABEL} htmlFor="ongoingCharge">
             {t("position.ongoingChargeLabel")}
           </FormLabel>
           <Text className="text-xs text-muted-foreground">
@@ -575,10 +558,7 @@ function InvestmentPositionForm({
         )}
 
         <div className="flex flex-col gap-2">
-          <FormLabel
-            className="text-xs font-semibold tracking-[0.015em] text-muted-foreground"
-            htmlFor="currentValue"
-          >
+          <FormLabel className={SHEET_LABEL} htmlFor="currentValue">
             {t("position.brokerValue")}
           </FormLabel>
           <Text className="text-xs text-muted-foreground">

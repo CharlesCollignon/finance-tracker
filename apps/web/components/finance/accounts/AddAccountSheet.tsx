@@ -1,5 +1,6 @@
 "use client";
 
+import { SheetSave, SHEET_LABEL } from "@/components/finance/sheet/entry-sheet";
 import { useId, useState, useTransition, type ReactNode } from "react";
 import { ArrowLeft, CaretRight } from "@phosphor-icons/react";
 import { parseTypedAmount } from "@finance/core/amount-input";
@@ -308,7 +309,7 @@ function SavingsDetails({
 
       {fromBank ? (
         <fieldset className="flex flex-col gap-2">
-          <legend className="mb-1 text-sm font-medium">
+          <legend className={cn("mb-1", SHEET_LABEL)}>
             {t("placementsWeb.bankPick")}
           </legend>
           {linkable.map((account) => (
@@ -328,7 +329,7 @@ function SavingsDetails({
         </fieldset>
       ) : (
         <div className="flex flex-col gap-1.5">
-          <label htmlFor={balanceId} className="text-sm font-medium">
+          <label htmlFor={balanceId} className={SHEET_LABEL}>
             {t("accounts.addBalance")}
           </label>
           <div className="relative">
@@ -354,7 +355,7 @@ function SavingsDetails({
 
       {ownRate ? (
         <div className="flex flex-col gap-1.5">
-          <label htmlFor={rateId} className="text-sm font-medium">
+          <label htmlFor={rateId} className={SHEET_LABEL}>
             {t("accounts.addRate")}
           </label>
           <div className="relative w-32">
@@ -386,9 +387,12 @@ function SavingsDetails({
           <ArrowLeft size={ICON.sm} aria-hidden className="mr-1" />
           {t("placementsWeb.back")}
         </Button>
-        <Button type="submit" disabled={!valid || pending}>
-          {t("accounts.addConfirm")}
-        </Button>
+        <div className="min-w-0 flex-1">
+          <SheetSave
+            label={t("accounts.addConfirm")}
+            disabled={!valid || pending}
+          />
+        </div>
       </div>
     </form>
   );

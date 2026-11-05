@@ -1,12 +1,12 @@
 "use client";
 
+import { SheetSave } from "@/components/finance/sheet/entry-sheet";
 import { useState, useTransition } from "react";
 import { errorsByField } from "@finance/core/property-form";
 import { resolveMessage } from "@finance/core/i18n/t";
 import type { Property } from "@finance/core/types/database";
 import { propertySchema } from "@finance/core/validations/property";
 import { useToast } from "@/components/layout/ToastProvider";
-import { Button } from "@/components/ui/Button";
 import { MobileSheet } from "@/components/ui/MobileSheet";
 import { updateProperty } from "@/lib/actions/property";
 import { useT } from "@/lib/locale-context";
@@ -95,10 +95,8 @@ function EditPropertyForm({
     >
       <HomeFields draft={draft} error={error} />
       <PurchaseFields draft={draft} error={error} />
-      <div className="flex justify-end border-t border-border pt-4">
-        <Button type="submit" disabled={pending}>
-          {t("property.saveValue")}
-        </Button>
+      <div className="border-t border-border pt-4">
+        <SheetSave label={t("property.saveValue")} disabled={pending} />
       </div>
     </form>
   );

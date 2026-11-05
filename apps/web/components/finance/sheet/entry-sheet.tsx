@@ -25,6 +25,10 @@ export function typedAmount(amount: number, locale: Locale): string {
   }).format(amount);
 }
 
+/** The class a field's name takes inside an entry sheet: small, muted. */
+export const SHEET_LABEL =
+  "text-xs font-semibold tracking-[0.015em] text-muted-foreground";
+
 /** The class a text field takes inside an entry sheet. */
 export const SHEET_FIELD =
   "min-h-11 rounded-2xl bg-foreground/5 px-3.5 text-base";
@@ -176,10 +180,7 @@ export function SheetField({
 }) {
   return (
     <div className={cn("flex flex-col gap-1.5", className)}>
-      <label
-        htmlFor={htmlFor}
-        className="text-xs font-semibold tracking-[0.015em] text-muted-foreground"
-      >
+      <label htmlFor={htmlFor} className={SHEET_LABEL}>
         {label}
       </label>
       {hint ? (

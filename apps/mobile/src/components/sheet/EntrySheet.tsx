@@ -35,12 +35,20 @@ export function EntrySheet({
   closeLabel,
   ink,
   footer,
+  onBack,
+  backLabel,
+  scrollKey,
   children,
 }: {
   visible?: boolean;
   onClose: () => void;
   title: string;
   closeLabel: string;
+  /** A step back inside the sheet, drawn as a chevron before the title. */
+  onBack?: () => void;
+  backLabel?: string;
+  /** Changing it starts the body again at the top: a new step. */
+  scrollKey?: string;
   /** The colour of the money on the sheet, for the light behind its figure. */
   ink?: string;
   footer?: ReactNode;
@@ -76,7 +84,26 @@ export function EntrySheet({
           <View className="items-center pt-2.5">
             <View className="h-1 w-9 rounded-full bg-hairline-strong" />
           </View>
-          <View className="flex-row items-center justify-between pl-5 pr-2 pt-1.5">
+          <View
+            className={cn(
+              "flex-row items-center justify-between pr-2 pt-1.5",
+              onBack ? "pl-2" : "pl-5",
+            )}
+          >
+            {onBack ? (
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={backLabel ?? title}
+                onPress={onBack}
+                className="h-11 w-11 items-center justify-center rounded-full"
+              >
+                <Ionicons
+                  name="chevron-back"
+                  size={ICON.lg}
+                  color={colors.foreground}
+                />
+              </Pressable>
+            ) : null}
             <Text
               accessibilityRole="header"
               numberOfLines={1}
@@ -99,6 +126,7 @@ export function EntrySheet({
             </Pressable>
           </View>
           <ScrollView
+            key={scrollKey}
             keyboardShouldPersistTaps="handled"
             showsVerticalScrollIndicator={false}
             contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 20 }}
