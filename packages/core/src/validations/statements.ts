@@ -44,7 +44,8 @@ export const statementAccountSchema = z.discriminatedUnion("kind", [
     label: z.string().trim().min(1).max(80),
     bank: z.string().max(40).nullable(),
     currency: z.string().regex(/^[A-Z]{3}$/),
-    role: z.enum(["spending", "savings", "ignored"]),
+    /** `card`: a deferred-debit card's own statement (migration 087). */
+    role: z.enum(["spending", "savings", "ignored", "card"]),
   }),
 ]);
 

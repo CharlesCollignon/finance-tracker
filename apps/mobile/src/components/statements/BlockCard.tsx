@@ -293,6 +293,8 @@ export function BlockCard({
                   options={[
                     { value: "spending" as const, label: t("bankAccounts.roleSpending") },
                     { value: "savings" as const, label: t("bankAccounts.roleSavings") },
+                    // A deferred-debit card's own statement (migration 087).
+                    { value: "card" as const, label: t("bankAccounts.roleCard") },
                     { value: "ignored" as const, label: t("bankAccounts.roleIgnored") },
                   ]}
                   value={choice.account.role}

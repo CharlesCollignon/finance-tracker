@@ -236,21 +236,24 @@ Shapes (b) and (c), for a bank connection that has no `CARD` account.
       next pay day.
 - [x] Changelog entry.
 
-## Phase 4 — Without a bank connection (branch `cards-statements`)
+## Phase 4 — Without a bank connection (branch `cards-statements`) — done
 
 The bank connection is the owner's alone (`bankOpenTo`), so for everyone
 else the cards come in through statements, e-mails and notifications.
 
-- [ ] Import review recognises a combined card line (« FACTURE CARTE »,
-      « RELEVE DIFFERE », « CARTE X1234 DEPENSES DU … »; the list comes
-      from Phase 0 and the fixtures) and asks the same question.
-- [ ] A card statement (« relevé d'opérations carte ») is imported as that
-      card's purchases. The combined line it details is then the card's
-      debit, counted once.
-- [ ] E-mail alerts and Android notifications for a deferred card stay
+- [x] Import review recognises a combined card line (« FACTURE CARTE »,
+      « RELEVE DIFFERE », « CARTE X1234 DEPENSES DU … »; from what French
+      banks are known to print, no real sample) and asks the same question
+      — through the shared engine (`planStatement` → `planFeed`).
+- [x] A card statement (« relevé d'opérations carte ») is imported as that
+      card's purchases: a new statement account can be « Carte différée »
+      (role `card`), which creates its card, deferred, debited at month
+      end. The combined line it details is then the card's debit, counted
+      once.
+- [x] E-mail alerts and Android notifications for a deferred card stay
       provisional until the card's statement or debit arrives, and are
       matched on the purchase day.
-- [ ] Changelog entry.
+- [x] Changelog entry.
 
 ## Phase 5 — « Tous les N mois » (branch `cadence-months`) — done
 
