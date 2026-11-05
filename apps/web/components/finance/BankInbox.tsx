@@ -16,6 +16,7 @@ import {
 import { Button } from "@/components/ui/Button";
 import { MobileSheet } from "@/components/ui/MobileSheet";
 import { CategoryPicker } from "@/components/finance/CategoryPicker";
+import { categoriesFor } from "@finance/core/categories";
 import { useToast } from "@/components/layout/ToastProvider";
 import { cn } from "@/lib/utils";
 import { useFormatCurrency } from "@/lib/use-currency";
@@ -732,7 +733,7 @@ export function BankInbox({
                     <div className="flex flex-wrap items-center gap-2">
                       <CategoryPicker
                         id={`feed-group-${group.key}`}
-                        categories={categories}
+                        categories={categoriesFor(group.direction, categories)}
                         value={groupCategory(group)}
                         onValueChange={(categoryId) =>
                           setChoices((current) => ({
@@ -816,7 +817,10 @@ export function BankInbox({
                             <div className="flex flex-wrap items-center gap-2">
                               <CategoryPicker
                                 id={`feed-category-${row.id}`}
-                                categories={categories}
+                                categories={categoriesFor(
+                                  row.direction,
+                                  categories,
+                                )}
                                 value={rowCategory(row)}
                                 onValueChange={(categoryId) =>
                                   setChoices((current) => ({

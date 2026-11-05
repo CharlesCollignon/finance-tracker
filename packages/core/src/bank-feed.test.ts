@@ -4,6 +4,7 @@ import {
   AUTO_MERCHANT_THRESHOLD,
   decide,
   findLedgerMatch,
+  looksLikeRefund,
   indexCategoriesByName,
   planFeed,
   reviewEverything,
@@ -856,5 +857,77 @@ describe("deferred-debit cards", () => {
     expect(plan.settled?.map((row) => row.candidate.providerId)).toEqual([
       "settle",
     ]);
+  });
+});
+
+describe("money coming back", () => {
+  const WITH_REFUNDS = indexCategoriesByName([
+    { id: "cat-groceries", name: "Groceries" },
+    { id: "cat-salary", name: "Salary" },
+    { id: "cat-refunds", name: "Refunds" },
+  ]);
+
+  it("reads an expense report or a refund as money coming back", () => {
+    expect(looksLikeRefund("VIR ACME SAS NOTE DE FRAIS OCTOBRE")).toBe(true);
+    expect(looksLikeRefund("VIREMENT RECU REMB FRAIS DE DEPLACEMENT")).toBe(
+      true,
+    );
+    expect(looksLikeRefund("AVOIR CARTE X0767 Google One 13/07")).toBe(true);
+    expect(looksLikeRefund("Remboursement Amazon")).toBe(true);
+    expect(looksLikeRefund("VIR ACME SAS SALAIRE OCTOBRE")).toBe(false);
+  });
+
+  it("offers an expense report as a refund, never as income", () => {
+    const decision = decide(
+      toCandidate(
+        bank({
+          amount: "84.20",
+          creditDebitIndicator: "CRDT",
+          creditorName: null,
+          debtorName: "ACME SAS",
+          remittanceInformation: "NOTE DE FRAIS OCTOBRE",
+        }),
+        { locale: "en" },
+      )!,
+      { merchants: NO_MERCHANTS, categoryIdsByName: WITH_REFUNDS },
+    );
+    expect(decision).toMatchObject({
+      kind: "review",
+      why: "possible-refund",
+      suggestion: { categoryId: "cat-refunds", reason: "refund" },
+    });
+  });
+
+  it("never suggests a spending category for money in", () => {
+    const decision = decide(
+      toCandidate(
+        bank({
+          amount: "12.00",
+          creditDebitIndicator: "CRDT",
+          creditorName: null,
+          debtorName: "CARREFOUR MARKET",
+        }),
+        { locale: "en" },
+      )!,
+      {
+        merchants: buildMerchantIndex([
+          tx(
+            "Carrefour Market",
+            "cat-groceries",
+            "Groceries",
+            "expense",
+            "2026-07-02",
+          ),
+        ]),
+        categoryIdsByName: indexCategoriesByName([
+          { id: "cat-groceries", name: "Groceries" },
+        ]),
+      },
+    );
+    expect(decision).toMatchObject({
+      kind: "review",
+      why: "possible-refund",
+      suggestion: null,
+    });
   });
 });

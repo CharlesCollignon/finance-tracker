@@ -19,6 +19,16 @@ export const DEFAULT_CATEGORIES = [
     type: "income" as const,
     icon: "wallet",
   },
+  // Money that comes back rather than in — an expense report repaid, a shop
+  // refunding, a friend settling their half. Not income: the budget takes it
+  // off spending (`computeMonthlyBudget`), so a meal paid for work and
+  // repaid nets to nothing instead of counting twice.
+  {
+    names: { fr: "Remboursements", en: "Refunds" },
+    type: "income" as const,
+    icon: "wallet",
+    countsTowardSummary: false,
+  },
   {
     names: { fr: "Électricité", en: "Electricity" },
     type: "expense" as const,

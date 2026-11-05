@@ -63,3 +63,39 @@ export function formatCategoryOptionLabel(
 
   return category.name;
 }
+
+/**
+ * The categories a bank line can be filed under, by which way its money
+ * went. Money in is income — or a refund, or savings coming back, both
+ * categories that do not count; money out is anything but income. Filing a
+ * refund under « Restaurants » used to record it as more spending.
+ */
+export function categoriesFor<
+  C extends {
+    type: CategoryType;
+    counts_toward_summary?: boolean | null;
+  },
+>(direction: "in" | "out", categories: readonly C[]): C[] {
+  return categories.filter((category) =>
+    direction === "in"
+      ? category.type === "income" ||
+        (category.type === "savings" &&
+          category.counts_toward_summary === false)
+      : category.type !== "income",
+  );
+}
+
+/** The refund category, by either of its names, when the user has it. */
+export function refundCategoryOf<C extends { name: string; type: string }>(
+  categories: readonly C[],
+): C | null {
+  return (
+    categories.find(
+      (category) =>
+        category.type === "income" &&
+        ["remboursements", "refunds"].includes(
+          category.name.trim().toLowerCase(),
+        ),
+    ) ?? null
+  );
+}
