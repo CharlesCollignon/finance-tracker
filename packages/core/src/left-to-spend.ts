@@ -1,4 +1,5 @@
 import { getMonthBounds, shiftIsoDate, shiftMonth } from "./constants";
+import { moneyDay } from "./business-days";
 import { upcomingDay, type MonthBalancePoint } from "./month-balance";
 import {
   filterDatesBySchedule,
@@ -144,7 +145,8 @@ export function nextPayDay({
       template.ends_on,
     ).sort();
     if (dates.length > 0) {
-      return dates[0]!;
+      // Paid the working day before when its day is not one.
+      return moneyDay(dates[0]!, "in");
     }
   }
   return null;

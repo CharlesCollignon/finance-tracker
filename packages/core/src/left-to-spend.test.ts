@@ -155,7 +155,8 @@ describe("nextPayDay", () => {
   it("is next month's once this month's has come", () => {
     expect(
       nextPayDay({ template: salary, today: "2026-10-29", owed: [] }),
-    ).toBe("2026-11-28");
+      // The 28th is a Saturday: paid on the Friday.
+    ).toBe("2026-11-27");
   });
 
   it("ignores what other templates still owe", () => {
@@ -165,7 +166,7 @@ describe("nextPayDay", () => {
         today: "2026-10-08",
         owed: [{ key: "caf:2026-10-10", occurredOn: "2026-10-10" }],
       }),
-    ).toBe("2026-11-28");
+    ).toBe("2026-11-27");
   });
 
   it("is null once the income has ended", () => {

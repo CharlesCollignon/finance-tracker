@@ -510,3 +510,35 @@ describe("buildStillToCome, a deferred card", () => {
     expect(result.budgetedOutflow).toBe(0);
   });
 });
+
+describe("buildStillToCome, working days", () => {
+  it("expects a charge due on a Sunday on the Monday, keyed by its own day", () => {
+    // Sunday 20 September 2026.
+    const result = buildStillToCome(
+      [],
+      [template("rent", 20, 780, "expense")],
+      2026,
+      9,
+      TODAY,
+    );
+    expect(result.outgoing[0]).toMatchObject({
+      key: "rent:2026-09-20",
+      occurredOn: "2026-09-21",
+    });
+  });
+
+  it("expects a pay due on a Saturday on the Friday", () => {
+    // Saturday 26 September 2026.
+    const result = buildStillToCome(
+      [],
+      [template("pay", 26, 2400, "income")],
+      2026,
+      9,
+      TODAY,
+    );
+    expect(result.incoming[0]).toMatchObject({
+      key: "pay:2026-09-26",
+      occurredOn: "2026-09-25",
+    });
+  });
+});
