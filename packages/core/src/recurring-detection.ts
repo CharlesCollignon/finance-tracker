@@ -24,6 +24,7 @@ import {
   type Recurrence,
 } from "./recurrence";
 import type { CategoryType } from "./types/database";
+import { isInstalmentLine, type InstalmentPlan } from "./instalments";
 
 export interface DetectionInput {
   occurredOn: string;
@@ -60,6 +61,11 @@ export interface RecurringProposal {
   lastSeenOn: string;
   /** How much the amounts move, as a fraction of the typical one. */
   variability: number;
+  /**
+   * A purchase paid in several times (`instalments.ts`): an entry with an
+   * end date, its count said by the line or asked once.
+   */
+  instalments?: InstalmentPlan;
 }
 
 /**
@@ -84,10 +90,15 @@ export function proposalDisplayName(key: string): string {
  * trimestre », « chaque mois sauf nov., déc. ».
  */
 export function proposalCadence(
-  proposal: Pick<RecurringProposal, "recurrence" | "months">,
+  proposal: Pick<RecurringProposal, "recurrence" | "months" | "instalments">,
   locale: Locale,
 ): string {
   const t = translator(locale);
+  if (proposal.instalments) {
+    return proposal.instalments.count
+      ? t("recurringProposals.inTimes", { count: proposal.instalments.count })
+      : t("recurringProposals.inSeveralTimes");
+  }
   if (proposal.recurrence === "weekly") {
     return t("recurringProposals.everyWeek");
   }
@@ -301,6 +312,11 @@ export function detectRecurring(
     // standing instruction the user issues; proposing one would put an
     // employer's payroll run into their own forecast.
     if (tx.categoryType === "income") {
+      continue;
+    }
+    // A purchase paid in several times is not a monthly charge: it ends.
+    // `detectInstalmentPlans` proposes it, with its end.
+    if (isInstalmentLine(tx.note)) {
       continue;
     }
     const key = bankMerchantKey(tx.note);

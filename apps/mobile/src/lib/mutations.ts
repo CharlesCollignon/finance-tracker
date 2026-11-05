@@ -643,9 +643,17 @@ export async function deleteFilingRule(id: string): Promise<ActionResult> {
 
 export async function acceptRecurringProposal(
   key: string,
+  /** In how many times, for a purchase paid in several. */
+  times?: number,
 ): Promise<ActionResult<{ name?: string }>> {
   return asOwner((userId) =>
-    proposals.acceptRecurringProposal(supabase, userId, key, todayIsoLocal()),
+    proposals.acceptRecurringProposal(
+      supabase,
+      userId,
+      key,
+      todayIsoLocal(),
+      times,
+    ),
   );
 }
 

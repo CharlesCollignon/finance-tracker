@@ -127,6 +127,7 @@
     "./push-routes": "./src/push-routes.ts",
     "./purchases-to-confirm": "./src/purchases-to-confirm.ts",
     "./recurrence": "./src/recurrence.ts",
+    "./instalments": "./src/instalments.ts",
     "./recurring-detection": "./src/recurring-detection.ts",
     "./recurring-fulfilment": "./src/recurring-fulfilment.ts",
     "./recurring-rollup": "./src/recurring-rollup.ts",
