@@ -17,6 +17,24 @@ import type { ChangelogEntry, RoadmapItem } from "./changelog";
  */
 export const CHANGELOG: readonly ChangelogEntry[] = [
   {
+    id: "2026-11-05-bills-before-payday",
+    date: "2026-11-05",
+    kind: "fixed",
+    platforms: ["web"],
+    fr: {
+      title: "Une grosse facture compte avant de tomber",
+      body: "Une dépense annuelle, ou qui ne tombe pas tous les mois — la taxe foncière, une facture d’eau trimestrielle —, est étalée sur l’année dans votre budget, et Pluclair ne la voyait pas venir avant le jour où elle tombait. Désormais la courbe de votre solde et ce que le mois retire encore la comptent le jour où elle part, et « Il vous reste » la garde de côté quand elle tombe avant votre paie.",
+      detail:
+        "Le budget la compte toujours comme une part de l’année chaque mois. Sur le téléphone, avec la prochaine version.",
+    },
+    en: {
+      title: "A big bill counts before it lands",
+      body: "A yearly expense, or one that does not come every month — property tax, a quarterly water bill — is spread over the year in your budget, and Pluclair did not see it coming until the day it landed. Now your balance line and what the month still takes out count it on the day it leaves, and “You have” keeps it aside when it lands before your pay.",
+      detail:
+        "The budget still counts it as a share of the year each month. On the phone, with the next version.",
+    },
+  },
+  {
     id: "2026-11-05-card-purchase-day",
     date: "2026-11-05",
     kind: "fixed",
