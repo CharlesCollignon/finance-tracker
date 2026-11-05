@@ -90,3 +90,46 @@ describe("recurringTemplateSchema's amountVaries", () => {
     ).toBeUndefined();
   });
 });
+
+describe("recurringTemplateSchema's advance", () => {
+  const pay = { ...TEMPLATE, amount: "2200", dayOfMonth: "30" };
+
+  it("takes an advance on a new monthly pay", () => {
+    const parsed = recurringTemplateSchema.parse({
+      ...pay,
+      advance: { day: "15", amount: "500", description: "Acompte" },
+    });
+    expect(parsed.recurrence === "monthly" && parsed.advance).toEqual({
+      day: 15,
+      amount: 500,
+      description: "Acompte",
+    });
+  });
+
+  it("refuses an advance as large as the pay", () => {
+    const result = recurringTemplateSchema.safeParse({
+      ...pay,
+      advance: { day: "15", amount: "2200" },
+    });
+    expect(result.success).toBe(false);
+    expect(result.error?.issues[0]?.message).toBe("errors.advanceAboveTotal");
+  });
+
+  it("refuses an advance on payday itself", () => {
+    const result = recurringTemplateSchema.safeParse({
+      ...pay,
+      advance: { day: "30", amount: "500" },
+    });
+    expect(result.error?.issues[0]?.message).toBe("errors.advanceSameDay");
+  });
+
+  it("refuses one on an entry being edited", () => {
+    expect(
+      recurringTemplateSchema.safeParse({
+        ...pay,
+        id: "0b9b4e36-3f1c-4d43-9d4f-6a2a8f7d9e10",
+        advance: { day: "15", amount: "500" },
+      }).success,
+    ).toBe(false);
+  });
+});

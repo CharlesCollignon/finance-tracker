@@ -175,6 +175,11 @@ export function RecurringFormBody({
   const [amountVaries, setAmountVaries] = useState(
     template?.amount_varies ?? false,
   );
+  // « Avec un acompte », for a new monthly pay: part of it earlier in the
+  // month. Saved as two entries, so an existing one never offers it.
+  const [withAdvance, setWithAdvance] = useState(false);
+  const [advanceDay, setAdvanceDay] = useState("15");
+  const [advanceAmount, setAdvanceAmount] = useState("");
   const [startsOn, setStartsOn] = useState(template?.starts_on ?? "");
   const [endsOn, setEndsOn] = useState(template?.ends_on ?? "");
   const [applyToThisMonth, setApplyToThisMonth] = useState("false");
@@ -294,6 +299,13 @@ export function RecurringFormBody({
       ? pricingType
       : "fixed";
 
+  const offersAdvance =
+    !template &&
+    recurrence === "monthly" &&
+    selectedCategory?.type === "income" &&
+    effectivePricingType === "fixed";
+  const sendsAdvance = offersAdvance && withAdvance && advanceAmount.trim();
+
   // A transfer that follows the DCAs goes every month, so it has no rhythm.
   const offersRhythm =
     recurrence === "monthly" && effectivePricingType !== "purchases";
@@ -397,6 +409,17 @@ export function RecurringFormBody({
     <form action={action} className="flex flex-col gap-4">
       {template && <input type="hidden" name="id" value={template.id} />}
       <input type="hidden" name="recurrence" value={recurrence} />
+      {sendsAdvance ? (
+        <>
+          <input type="hidden" name="advanceDay" value={advanceDay} />
+          <input type="hidden" name="advanceAmount" value={advanceAmount} />
+          <input
+            type="hidden"
+            name="advanceDescription"
+            value={t("recurring.advanceWord")}
+          />
+        </>
+      ) : null}
       <input
         type="hidden"
         name="amountVaries"
@@ -579,6 +602,58 @@ export function RecurringFormBody({
                 checked={amountVaries}
                 onChange={setAmountVaries}
               />
+            </div>
+          )}
+          {offersAdvance && (
+            <div className="flex flex-col gap-3">
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="text-sm font-medium">
+                    {t("recurring.advance")}
+                  </p>
+                  <Text className="text-xs text-muted-foreground">
+                    {t("recurring.advanceHint")}
+                  </Text>
+                </div>
+                <Switch
+                  label={t("recurring.advance")}
+                  checked={withAdvance}
+                  onChange={setWithAdvance}
+                />
+              </div>
+              {withAdvance && (
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="flex flex-col gap-2">
+                    <FormLabel htmlFor="advance-amount">
+                      {t("recurring.advanceAmount")}
+                    </FormLabel>
+                    <Input
+                      id="advance-amount"
+                      type="number"
+                      step="0.01"
+                      min="0.01"
+                      inputMode="decimal"
+                      className="text-base"
+                      value={advanceAmount}
+                      onChange={(event) => setAdvanceAmount(event.target.value)}
+                    />
+                  </div>
+                  <div className="flex flex-col gap-2">
+                    <FormLabel htmlFor="advance-day">
+                      {t("recurring.advanceDay")}
+                    </FormLabel>
+                    <Input
+                      id="advance-day"
+                      type="number"
+                      min="1"
+                      max="31"
+                      className="text-base"
+                      value={advanceDay}
+                      onChange={(event) => setAdvanceDay(event.target.value)}
+                    />
+                  </div>
+                </div>
+              )}
             </div>
           )}
           {supportsShares && !isCryptoCategory && (
