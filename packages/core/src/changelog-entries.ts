@@ -17,6 +17,24 @@ import type { ChangelogEntry, RoadmapItem } from "./changelog";
  */
 export const CHANGELOG: readonly ChangelogEntry[] = [
   {
+    id: "2026-11-06-web-edit-sheets",
+    date: "2026-11-06",
+    kind: "better",
+    platforms: ["web"],
+    fr: {
+      title: "Modifier, comme on ajoute",
+      body: "Modifier une opération, une opération récurrente ou une ligne de Placements s’ouvre sur son montant, en grand et dans sa couleur, modifiable là où il est. Le bouton dit « Enregistrer −42,50 € », ou « Rien n’a changé » tant que rien n’a changé.",
+      detail:
+        "Une ligne de Placements s’ouvre sur ce qu’elle vaut aujourd’hui, avec ce que vous avez versé et le gain. Supprimer est en bas, et demande une confirmation sur place avant de le faire.",
+    },
+    en: {
+      title: "Edit, the way you add",
+      body: "Editing an entry, a recurring entry or a holding in Investments opens on its amount, large and in its colour, editable where it stands. The button says “Save −€42.50”, or “Nothing has changed” while nothing has.",
+      detail:
+        "A holding opens on what it is worth today, with what you put in and the gain. Delete sits at the bottom, and asks you to confirm in place before it does anything.",
+    },
+  },
+  {
     id: "2026-11-06-web-add-sheet",
     date: "2026-11-06",
     kind: "better",

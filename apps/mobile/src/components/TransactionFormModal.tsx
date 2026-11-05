@@ -1,21 +1,28 @@
 import { useState } from "react";
-import { Modal, Pressable, ScrollView, View } from "react-native";
+import { View } from "react-native";
 
 import { parseTypedAmount } from "@finance/core/amount-input";
-import { INTL_LOCALES } from "@finance/core/i18n/locale";
+import { amountSign } from "@finance/core/amount-sign";
 import type {
   Category,
   TransactionWithCategory,
 } from "@finance/core/types/database";
 
+import { KIND_INK } from "@/components/add/kind-ink";
 import { CategoryPicker } from "@/components/pickers/CategoryPicker";
 import { PartsEditor } from "@/components/PartsEditor";
 import { ReceiptRow } from "@/components/ReceiptRow";
+import {
+  DangerAction,
+  EntrySheet,
+  Field,
+  FigureInput,
+  SaveButton,
+} from "@/components/sheet/EntrySheet";
 import { Button } from "@/components/ui/Button";
 import { DateField } from "@/components/ui/DateField";
 import { Input } from "@/components/ui/Input";
 import { Text } from "@/components/ui/Text";
-import { SheetGrabber } from "@/components/ui/SheetGrabber";
 import { toTypedAmount } from "@/lib/typed-amount";
 import {
   deleteTransaction,
@@ -24,11 +31,13 @@ import {
 } from "@/lib/mutations";
 import { useDeletedToast } from "@/hooks/useDeletedToast";
 import { hapticSuccess, hapticWarning } from "@/lib/haptics";
+import { useFormatCurrency } from "@/providers/CurrencyProvider";
 import { useLocale, useT } from "@/providers/LocaleProvider";
 import { useToast } from "@/providers/ToastProvider";
+import { useThemeColors } from "@/theme/useThemeColors";
 import { resolveMessage } from "@finance/core/i18n/t";
 import { bringsMoneyIn, isMovedRow } from "@finance/core/cash-date";
-import { formatShortDate } from "@finance/core/constants";
+import { formatShortDate, relativeDayLabel } from "@finance/core/constants";
 import { monthLong } from "@finance/core/i18n/calendar-names";
 
 interface TransactionFormModalProps {
@@ -42,13 +51,13 @@ interface TransactionFormModalProps {
 }
 
 /**
- * Editing one transaction, mirroring the web TransactionForm: category,
- * amount, date and note, then the delete action behind an inline
- * confirmation rather than a system alert.
+ * Editing one transaction, in the Add sheet's language (November 2026): the
+ * amount as the figure at the top, in its kind's colour and editable where
+ * it stands, the category, day and note under it, and the save button
+ * saying what it will save — or that nothing has changed yet. The receipt,
+ * the parts and removing it sit below, out of the way.
  *
- * Adding one happens in the shared Add sheet behind the "+"; this sheet used
- * to do both, which is how the Ledger's Add and the "+" came to ask for the
- * same thing in two different ways.
+ * Adding one happens in the shared Add sheet behind the "+".
  */
 export function TransactionFormModal({
   open,
@@ -59,27 +68,34 @@ export function TransactionFormModal({
 }: TransactionFormModalProps) {
   const locale = useLocale();
   const t = useT();
+  const colors = useThemeColors();
+  const formatEuro = useFormatCurrency();
   const { toast } = useToast();
   const toastDeleted = useDeletedToast();
+  const startAmount = toTypedAmount(Number(transaction.amount), locale);
   const [categoryId, setCategoryId] = useState(transaction.category_id);
   // In the reader's own shape — "12,5" in French — so the field reads back
   // exactly what it was given.
-  const [amount, setAmount] = useState(() =>
-    toTypedAmount(Number(transaction.amount), locale),
-  );
+  const [amount, setAmount] = useState(startAmount);
   const [occurredOn, setOccurredOn] = useState(transaction.occurred_on);
   const [note, setNote] = useState(transaction.note ?? "");
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
-  const [confirmDelete, setConfirmDelete] = useState(false);
-  // "0,00" in French: the placeholder shows the separator to type.
-  const amountPlaceholder = new Intl.NumberFormat(INTL_LOCALES[locale], {
-    minimumFractionDigits: 2,
-  }).format(0);
   // A charge's row. Deleting it takes that occurrence out of its month —
   // which is what skipping used to be a separate button for — so the month
   // filling itself does not write it straight back.
   const fromCharge = Boolean(transaction.recurring_template_id);
+
+  const category =
+    categories.find((candidate) => candidate.id === categoryId) ?? null;
+  const kind = category?.type ?? transaction.categories?.type ?? "expense";
+  const ink = colors[KIND_INK[kind]];
+  const parsed = parseTypedAmount(amount);
+  const changed =
+    categoryId !== transaction.category_id ||
+    parsed !== Number(transaction.amount) ||
+    occurredOn !== transaction.occurred_on ||
+    note !== (transaction.note ?? "");
 
   async function handleSave() {
     setPending(true);
@@ -89,7 +105,7 @@ export function TransactionFormModal({
       categoryId,
       // Whichever shape it was typed in, « 1 234,56 » included. Unreadable
       // is sent as nothing, which the schema answers with its own message.
-      amount: parseTypedAmount(amount) ?? 0,
+      amount: parsed ?? 0,
       occurredOn,
       note: note || undefined,
     });
@@ -133,184 +149,131 @@ export function TransactionFormModal({
     onClose();
   }
 
+  const caption = [
+    category?.name,
+    note.trim(),
+    relativeDayLabel(occurredOn, formatShortDate, locale),
+  ]
+    .filter(Boolean)
+    .join(" · ");
+
   return (
-    <Modal
+    <EntrySheet
       visible={open}
-      animationType="fade"
-      transparent
-      statusBarTranslucent
-      onRequestClose={onClose}
-    >
-      <View className="flex-1 justify-end bg-black/50">
-        <Pressable
-          className="flex-1"
-          accessibilityLabel={t("transaction.close")}
-          onPress={onClose}
+      onClose={onClose}
+      title={t("transaction.editTitle")}
+      closeLabel={t("transaction.close")}
+      ink={ink}
+      footer={
+        <SaveButton
+          label={
+            pending
+              ? t("transaction.saving")
+              : changed
+                ? t("quickAdd.save")
+                : t("entry.noChange")
+          }
+          figure={
+            changed && !pending && parsed
+              ? `${amountSign(kind)}${formatEuro(parsed)}`
+              : undefined
+          }
+          disabled={pending || !changed || !parsed}
+          onPress={() => void handleSave()}
         />
-        <View className="max-h-[90%] rounded-t-card border border-border bg-card">
-          <View className="items-center pt-3">
-            <SheetGrabber />
-          </View>
-          <View className="flex-row items-center justify-between px-5 pb-2 pt-3">
-            <Text className="font-semibold" style={{ fontSize: 18 }}>
-              {t("transaction.editTitle")}
-            </Text>
-            <Pressable
-              onPress={onClose}
-              accessibilityLabel={t("transaction.close")}
-              hitSlop={8}
-            >
-              <Text variant="muted">{t("transaction.close")}</Text>
-            </Pressable>
-          </View>
+      }
+    >
+      <FigureInput
+        value={amount}
+        onChange={setAmount}
+        ink={ink}
+        sign={amountSign(kind)}
+        label={t("transaction.amount")}
+        caption={caption}
+      />
 
-          <ScrollView
-            className="px-5"
-            keyboardShouldPersistTaps="handled"
-            showsVerticalScrollIndicator={false}
-          >
-            {/* The web's picker, a sheet over this one. It used to be the
-                whole category list drawn above the amount, with a search box
-                and a row of recent ones on top of that; the recent ones now
-                head the picker instead. */}
-            <Text className="mb-2 text-sm font-medium">
-              {t("transaction.category")}
-            </Text>
-            <CategoryPicker
-              label={t("transaction.category")}
-              categories={categories}
-              value={categoryId}
-              onChange={setCategoryId}
-              recentIds={recentCategoryIds}
-              className="mb-4"
-            />
+      <View className="mt-5 gap-4">
+        {/* The web's picker, a sheet over this one; the recent ones head it. */}
+        <Field label={t("transaction.category")}>
+          <CategoryPicker
+            label={t("transaction.category")}
+            categories={categories}
+            value={categoryId}
+            onChange={setCategoryId}
+            recentIds={recentCategoryIds}
+          />
+        </Field>
 
-            <Text className="mb-2 text-sm font-medium">
-              {t("transaction.amount")}
-            </Text>
-            <Input
-              value={amount}
-              onChangeText={setAmount}
-              keyboardType="decimal-pad"
-              placeholder={amountPlaceholder}
-              className="mb-4"
-            />
-
-            <Text className="mb-2 text-sm font-medium">
-              {t("transaction.date")}
-            </Text>
-            <DateField
-              value={occurredOn}
-              onChange={setOccurredOn}
-              className={arrivedOn ? "mb-2" : "mb-4"}
-            />
-            {arrivedOn ? (
-              <View className="mb-4 gap-2 rounded-control border border-border px-3 py-2.5">
-                <Text variant="muted" className="text-xs">
-                  {t(
-                    bringsMoneyIn(transaction.categories)
-                      ? "transaction.countsForReceived"
-                      : "transaction.countsForPaid",
-                    {
-                      month: monthLong(Number(occurredOn.slice(5, 7)), locale),
-                      date: formatShortDate(arrivedOn, locale),
-                    },
-                  )}
-                </Text>
-                <Button
-                  label={t("transaction.moveBack", {
+        <Field label={t("transaction.date")}>
+          <DateField value={occurredOn} onChange={setOccurredOn} />
+          {arrivedOn ? (
+            <View className="mt-1 gap-2 rounded-2xl border border-border px-3 py-2.5">
+              <Text variant="muted" className="text-xs">
+                {t(
+                  bringsMoneyIn(transaction.categories)
+                    ? "transaction.countsForReceived"
+                    : "transaction.countsForPaid",
+                  {
+                    month: monthLong(Number(occurredOn.slice(5, 7)), locale),
                     date: formatShortDate(arrivedOn, locale),
-                  })}
-                  variant="outline"
-                  size="sm"
-                  className="self-start"
-                  disabled={pending}
-                  onPress={() => void handleMoveBack()}
-                />
-              </View>
-            ) : null}
-
-            <Text className="mb-2 text-sm font-medium">
-              {t("transaction.note")}
-            </Text>
-            <Input
-              value={note}
-              onChangeText={setNote}
-              placeholder={t("transaction.notePlaceholder")}
-              className="mb-4"
-            />
-
-            {error ? (
-              <Text className="mb-3 text-sm text-destructive">
-                {resolveMessage(t, error)}
+                  },
+                )}
               </Text>
-            ) : null}
-
-            <Button
-              label={
-                pending
-                  ? t("transaction.saving")
-                  : t("transaction.saveTransaction")
-              }
-              size="lg"
-              disabled={pending}
-              onPress={handleSave}
-            />
-
-            <View className="mt-6 gap-3 border-t border-border pt-4">
-              {/* The picture behind the row, and one payment in several
-                  parts (migration 079): each closes the sheet once the row
-                  has changed under it. */}
-              <ReceiptRow transaction={transaction} onApplied={onClose} />
-              <PartsEditor
-                transaction={transaction}
-                categories={categories}
-                onDone={onClose}
+              <Button
+                label={t("transaction.moveBack", {
+                  date: formatShortDate(arrivedOn, locale),
+                })}
+                variant="outline"
+                size="sm"
+                className="self-start"
+                disabled={pending}
+                onPress={() => void handleMoveBack()}
               />
-
-              {confirmDelete ? (
-                <View className="gap-2">
-                  <Text variant="muted" className="text-sm">
-                    {fromCharge
-                      ? t("transaction.deleteChargeExplanation")
-                      : t("transaction.deleteExplanation")}
-                  </Text>
-                  <View className="flex-row gap-2">
-                    <Button
-                      label={
-                        pending
-                          ? t("transaction.deleting")
-                          : t("transaction.confirmDelete")
-                      }
-                      variant="outline"
-                      className="flex-1 border-destructive"
-                      disabled={pending}
-                      onPress={handleDelete}
-                    />
-                    <Button
-                      label={t("transaction.cancel")}
-                      variant="outline"
-                      className="flex-1"
-                      disabled={pending}
-                      onPress={() => setConfirmDelete(false)}
-                    />
-                  </View>
-                </View>
-              ) : (
-                <Button
-                  label={t("transaction.deleteTransaction")}
-                  variant="outline"
-                  className="border-destructive"
-                  disabled={pending}
-                  onPress={() => setConfirmDelete(true)}
-                />
-              )}
             </View>
+          ) : null}
+        </Field>
 
-            <View className="h-10" />
-          </ScrollView>
-        </View>
+        <Field label={t("transaction.note")}>
+          <Input
+            value={note}
+            onChangeText={setNote}
+            placeholder={t("transaction.notePlaceholder")}
+            tone="sheet"
+          />
+        </Field>
+
+        {error ? (
+          <Text className="text-sm text-destructive">
+            {resolveMessage(t, error)}
+          </Text>
+        ) : null}
       </View>
-    </Modal>
+
+      <View className="mt-6 gap-3 border-t border-border pt-4">
+        {/* The picture behind the row, and one payment in several parts
+            (migration 079): each closes the sheet once the row has changed
+            under it. */}
+        <ReceiptRow transaction={transaction} onApplied={onClose} />
+        <PartsEditor
+          transaction={transaction}
+          categories={categories}
+          onDone={onClose}
+        />
+        <DangerAction
+          label={t("transaction.deleteTransaction")}
+          explanation={
+            fromCharge
+              ? t("transaction.deleteChargeExplanation")
+              : t("transaction.deleteExplanation")
+          }
+          confirmLabel={
+            pending ? t("transaction.deleting") : t("transaction.confirmDelete")
+          }
+          cancelLabel={t("transaction.cancel")}
+          pending={pending}
+          onConfirm={() => void handleDelete()}
+        />
+      </View>
+    </EntrySheet>
   );
 }

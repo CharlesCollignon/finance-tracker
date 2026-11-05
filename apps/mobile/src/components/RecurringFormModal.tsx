@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Modal, Pressable, ScrollView, Switch, View } from "react-native";
+import { Pressable, Switch, View } from "react-native";
 
 import { parseTypedAmount } from "@finance/core/amount-input";
 import {
@@ -27,11 +27,18 @@ import type {
 import { CategoryPicker } from "@/components/pickers/CategoryPicker";
 import { ChoiceChips } from "@/components/pickers/ChoiceChips";
 import { OptionPicker } from "@/components/pickers/OptionPicker";
-import { Button } from "@/components/ui/Button";
 import { DateField } from "@/components/ui/DateField";
 import { Input } from "@/components/ui/Input";
 import { Text } from "@/components/ui/Text";
-import { SheetGrabber } from "@/components/ui/SheetGrabber";
+import { KIND_INK } from "@/components/add/kind-ink";
+import {
+  DangerAction,
+  EntrySheet,
+  FigureInput,
+  SaveButton,
+} from "@/components/sheet/EntrySheet";
+import { useThemeColors } from "@/theme/useThemeColors";
+import { amountSign } from "@finance/core/amount-sign";
 import {
   hapticSelection,
   hapticSuccess,
@@ -77,60 +84,20 @@ export function RecurringFormModal({
   recordedThisMonth = [],
   properties = [],
 }: RecurringFormModalProps) {
-  const t = useT();
-
   return (
-    <Modal
-      visible={open}
-      animationType="fade"
-      transparent
-      statusBarTranslucent
-      onRequestClose={onClose}
-    >
-      <View className="flex-1 justify-end bg-black/50">
-        <Pressable
-          className="flex-1"
-          accessibilityLabel={t("recurring.close")}
-          onPress={onClose}
-        />
-        <View className="max-h-[90%] rounded-t-card border border-border bg-card">
-          <View className="items-center pt-3">
-            <SheetGrabber />
-          </View>
-          <View className="flex-row items-center justify-between px-5 pb-2 pt-3">
-            <Text className="font-semibold" style={{ fontSize: 18 }}>
-              {template
-                ? t("recurring.editTitleMobile")
-                : t("recurring.addTitleMobile")}
-            </Text>
-            <Pressable
-              onPress={onClose}
-              accessibilityLabel={t("recurring.close")}
-              hitSlop={8}
-            >
-              <Text variant="muted">{t("recurring.close")}</Text>
-            </Pressable>
-          </View>
-          <ScrollView
-            className="px-5"
-            keyboardShouldPersistTaps="handled"
-            showsVerticalScrollIndicator={false}
-          >
-            <RecurringFormBody
-              categories={categories}
-              template={template}
-              recordedThisMonth={recordedThisMonth}
-              properties={properties}
-              onDone={onClose}
-            />
-          </ScrollView>
-        </View>
-      </View>
-    </Modal>
+    <RecurringFormBody
+      open={open}
+      categories={categories}
+      template={template}
+      recordedThisMonth={recordedThisMonth}
+      properties={properties}
+      onDone={onClose}
+    />
   );
 }
 
 interface RecurringFormBodyProps {
+  open: boolean;
   categories: Category[];
   template?: RecurringTemplateWithCategory | null;
   /**
@@ -158,7 +125,8 @@ interface RecurringFormBodyProps {
  * view the caller owns: this modal's when editing, the Add sheet's when
  * adding.
  */
-export function RecurringFormBody({
+function RecurringFormBody({
+  open,
   categories,
   template = null,
   recordedThisMonth = [],
@@ -168,6 +136,7 @@ export function RecurringFormBody({
 }: RecurringFormBodyProps) {
   const locale = useLocale();
   const formatEuro = useFormatCurrency();
+  const colors = useThemeColors();
   const t = useT();
   const { toast } = useToast();
   const isEditing = template !== null;
@@ -285,7 +254,6 @@ export function RecurringFormBody({
   const [endsOn, setEndsOn] = useState(template?.ends_on ?? "");
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
-  const [confirmDelete, setConfirmDelete] = useState(false);
   // Both default to leaving this month alone: what was recorded at the old
   // amount was paid at the old amount, and a charge set up today did not
   // happen on the 5th unless the user says it did.
@@ -470,8 +438,55 @@ export function RecurringFormBody({
     onDone();
   }
 
+  const kind = selectedCategory?.type ?? "expense";
+  const ink = colors[KIND_INK[kind]];
+  const parsedAmount = parseTypedAmount(amount);
+  const caption = [
+    selectedCategory?.name,
+    description.trim(),
+  ]
+    .filter(Boolean)
+    .join(" · ");
+
   return (
-    <>
+    <EntrySheet
+      visible={open}
+      onClose={onDone}
+      title={
+        isEditing
+          ? t("recurring.editTitleMobile")
+          : t("recurring.addTitleMobile")
+      }
+      closeLabel={t("recurring.close")}
+      ink={ink}
+      footer={
+        <SaveButton
+          label={pending ? t("recurring.saving") : t("recurring.save")}
+          figure={
+            !pending && !follows && !sharePriced && parsedAmount
+              ? `${amountSign(kind)}${formatEuro(parsedAmount)}`
+              : undefined
+          }
+          disabled={pending}
+          onPress={() => void handleSave()}
+        />
+      }
+    >
+      {!follows && !sharePriced ? (
+        <FigureInput
+          value={amount}
+          onChange={setAmount}
+          ink={ink}
+          sign={amountSign(kind)}
+          label={
+            recurrence === "yearly"
+              ? t("recurring.annualAmount")
+              : t("recurring.amount")
+          }
+          caption={caption}
+        />
+      ) : null}
+      <View className="h-4" />
       {/* Income included, as on the web: a salary is a recurring entry
           too, and one opened from the Income group has to find its
           category here. */}
@@ -504,6 +519,7 @@ export function RecurringFormBody({
             {t("recurring.shareCount")}
           </Text>
           <Input
+            tone="sheet"
             value={shareCount}
             onChangeText={setShareCount}
             keyboardType="number-pad"
@@ -520,17 +536,6 @@ export function RecurringFormBody({
         </>
       ) : (
         <>
-          <Text className="mb-2 text-sm font-medium">
-            {recurrence === "yearly"
-              ? t("recurring.annualAmount")
-              : t("recurring.amount")}
-          </Text>
-          <Input
-            value={amount}
-            onChangeText={setAmount}
-            keyboardType="decimal-pad"
-            className="mb-4"
-          />
           <View className="mb-4 flex-row items-center justify-between gap-3">
             <View className="min-w-0 flex-1">
               <Text className="text-sm font-medium">
@@ -570,6 +575,7 @@ export function RecurringFormBody({
                       {t("recurring.advanceAmount")}
                     </Text>
                     <Input
+                      tone="sheet"
                       value={advanceAmount}
                       onChangeText={setAdvanceAmount}
                       keyboardType="decimal-pad"
@@ -580,6 +586,7 @@ export function RecurringFormBody({
                       {t("recurring.advanceDay")}
                     </Text>
                     <Input
+                      tone="sheet"
                       value={advanceDay}
                       onChangeText={setAdvanceDay}
                       keyboardType="number-pad"
@@ -618,6 +625,7 @@ export function RecurringFormBody({
         {t("recurring.description")}
       </Text>
       <Input
+        tone="sheet"
         value={description}
         onChangeText={setDescription}
         className="mb-4"
@@ -753,6 +761,7 @@ export function RecurringFormBody({
             {t("recurring.dayOfMonth")}
           </Text>
           <Input
+            tone="sheet"
             value={dayOfMonth}
             onChangeText={setDayOfMonth}
             keyboardType="number-pad"
@@ -833,56 +842,23 @@ export function RecurringFormBody({
         </Text>
       ) : null}
 
-      <Button
-        label={pending ? t("recurring.saving") : t("recurring.save")}
-        size="lg"
-        disabled={pending}
-        onPress={handleSave}
-      />
       {isEditing ? (
         // Behind a second press, as on the web: deleting a recurring entry
         // also takes away what it had written ahead of today.
-        <View className="mb-8 mt-6 border-t border-border pt-4">
-          {confirmDelete ? (
-            <View className="gap-2">
-              <Text variant="muted" className="text-sm">
-                {t("recurring.deleteExplanation")}
-              </Text>
-              <View className="flex-row gap-2">
-                <Button
-                  label={
-                    pending
-                      ? t("recurring.deleting")
-                      : t("recurring.confirmDelete")
-                  }
-                  variant="outline"
-                  className="flex-1 border-destructive"
-                  disabled={pending}
-                  onPress={handleDelete}
-                />
-                <Button
-                  label={t("common.cancel")}
-                  variant="outline"
-                  className="flex-1"
-                  disabled={pending}
-                  onPress={() => setConfirmDelete(false)}
-                />
-              </View>
-            </View>
-          ) : (
-            <Button
-              label={t("recurring.delete")}
-              variant="outline"
-              className="border-destructive"
-              disabled={pending}
-              onPress={() => setConfirmDelete(true)}
-            />
-          )}
+        <View className="mt-2 border-t border-border pt-4">
+          <DangerAction
+            label={t("recurring.delete")}
+            explanation={t("recurring.deleteExplanation")}
+            confirmLabel={
+              pending ? t("recurring.deleting") : t("recurring.confirmDelete")
+            }
+            cancelLabel={t("common.cancel")}
+            pending={pending}
+            onConfirm={() => void handleDelete()}
+          />
         </View>
-      ) : (
-        <View className="mb-8" />
-      )}
-    </>
+      ) : null}
+    </EntrySheet>
   );
 }
 

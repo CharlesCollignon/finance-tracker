@@ -2,13 +2,20 @@
 
 import Link from "next/link";
 import { useActionState, useEffect, useState, useTransition } from "react";
-import { Trash } from "@phosphor-icons/react";
 import { OptionPicker } from "@/components/ui/Picker";
-import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { FormLabel } from "@/components/ui/FormLabel";
 import { Text } from "@/components/ui/Text";
 import { MobileSheet } from "@/components/ui/MobileSheet";
+import {
+  SHEET_FIELD,
+  SheetDanger,
+  SheetGlow,
+  SheetSave,
+  SheetValue,
+} from "@/components/finance/sheet/entry-sheet";
+import { KIND_INK, Segmented } from "@/components/finance/add/parts";
+import { formatSigned } from "@finance/core/amount-sign";
 import { useToast } from "@/components/layout/ToastProvider";
 import { InstrumentSearch } from "@/components/finance/InstrumentSearch";
 import { InstrumentLogo } from "@/components/finance/InstrumentLogo";
@@ -31,7 +38,6 @@ import {
 } from "@finance/core/investment-positions";
 import type { InvestmentWalletId } from "@finance/core/investments";
 import type { RecurringTemplateWithCategory } from "@finance/core/types/database";
-import { ICON } from "@/lib/icon-scale";
 import { useLocale, useT } from "@/lib/locale-context";
 import { resolveMessage } from "@finance/core/i18n/t";
 import type { Key } from "@finance/core/i18n/t";
@@ -209,7 +215,26 @@ function InvestmentPositionForm({
 
   return (
     <MobileSheet open={open} onOpenChange={onOpenChange} title={title}>
-      <form action={action} className="flex flex-col gap-4">
+      {isEdit ? (
+        <div className="relative -mx-4 -mt-4 h-0 md:-mx-5 md:-mt-5">
+          <SheetGlow ink={KIND_INK.investment} />
+        </div>
+      ) : null}
+      <form action={action} className="relative flex flex-col gap-4">
+        {isEdit ? (
+          <SheetValue
+            value={formatEuro(item.marketValue)}
+            ink={KIND_INK.investment}
+            caption={[
+              `${formatEuro(item.totalInvested)} ${t("position.amountIn")}`,
+              item.totalInvested > 0
+                ? formatSigned(item.gainLoss, formatEuro)
+                : null,
+            ]
+              .filter(Boolean)
+              .join(" · ")}
+          />
+        ) : null}
         {isEdit && <input type="hidden" name="positionId" value={item.id} />}
         <input type="hidden" name="wallet" value={walletId} />
         <input type="hidden" name="sourceType" value={sourceType} />
@@ -223,29 +248,27 @@ function InvestmentPositionForm({
 
         {!isEdit && (
           <div className="flex flex-col gap-2">
-            <FormLabel>{t("position.itemType")}</FormLabel>
-            <div className="grid grid-cols-2 gap-2">
-              <Button
-                type="button"
-                variant={sourceType === "recurring" ? "default" : "outline"}
-                onClick={() => setSourceType("recurring")}
-              >
-                {t("position.fromRecurring")}
-              </Button>
-              <Button
-                type="button"
-                variant={sourceType === "custom" ? "default" : "outline"}
-                onClick={() => setSourceType("custom")}
-              >
-                {t("position.customHolding")}
-              </Button>
-            </div>
+            <FormLabel className="text-xs font-semibold tracking-[0.015em] text-muted-foreground">
+              {t("position.itemType")}
+            </FormLabel>
+            <Segmented
+              label={t("position.itemType")}
+              value={sourceType}
+              onChange={setSourceType}
+              options={[
+                { value: "recurring", label: t("position.fromRecurring") },
+                { value: "custom", label: t("position.customHolding") },
+              ]}
+            />
           </div>
         )}
 
         {!isEdit && sourceType === "recurring" && (
           <div className="flex flex-col gap-2">
-            <FormLabel htmlFor="recurringTemplateId">
+            <FormLabel
+              className="text-xs font-semibold tracking-[0.015em] text-muted-foreground"
+              htmlFor="recurringTemplateId"
+            >
               {t("position.recurringItem")}
             </FormLabel>
             {recurringOptions.length > 0 ? (
@@ -290,12 +313,17 @@ function InvestmentPositionForm({
         {(!isEdit && sourceType === "custom") ||
         (isEdit && !item.recurringTemplateId) ? (
           <div className="flex flex-col gap-2">
-            <FormLabel htmlFor="name">{t("position.nameLabel")}</FormLabel>
+            <FormLabel
+              className="text-xs font-semibold tracking-[0.015em] text-muted-foreground"
+              htmlFor="name"
+            >
+              {t("position.nameLabel")}
+            </FormLabel>
             <Input
               id="name"
               name="name"
               required={!isEdit}
-              className="text-base"
+              className={SHEET_FIELD}
               value={name}
               onChange={(event) => setName(event.target.value)}
               placeholder={t("position.namePlaceholder")}
@@ -306,7 +334,10 @@ function InvestmentPositionForm({
         )}
 
         <div className="flex flex-col gap-2">
-          <FormLabel htmlFor="initialBalance">
+          <FormLabel
+            className="text-xs font-semibold tracking-[0.015em] text-muted-foreground"
+            htmlFor="initialBalance"
+          >
             {t("position.costBasis")}
           </FormLabel>
           <Text className="text-xs text-muted-foreground">
@@ -319,7 +350,7 @@ function InvestmentPositionForm({
             step="0.01"
             min="0"
             required
-            className="text-base"
+            className={SHEET_FIELD}
             // The total as it stands, purchases since it was typed included
             // (`083`): saving it unchanged then starts from the same figure.
             defaultValue={item?.totalInvested || ""}
@@ -428,7 +459,12 @@ function InvestmentPositionForm({
           <input type="hidden" name="isin" value={isin} />
         ) : (
           <div className="flex flex-col gap-2">
-            <FormLabel htmlFor="isin">{t("position.isinLabel")}</FormLabel>
+            <FormLabel
+              className="text-xs font-semibold tracking-[0.015em] text-muted-foreground"
+              htmlFor="isin"
+            >
+              {t("position.isinLabel")}
+            </FormLabel>
             <Input
               id="isin"
               name="isin"
@@ -449,7 +485,10 @@ function InvestmentPositionForm({
         )}
 
         <div className="flex flex-col gap-2">
-          <FormLabel htmlFor="shareCount">
+          <FormLabel
+            className="text-xs font-semibold tracking-[0.015em] text-muted-foreground"
+            htmlFor="shareCount"
+          >
             {isCrypto
               ? t("position.totalBtcHeld")
               : instrumentSymbol
@@ -466,7 +505,7 @@ function InvestmentPositionForm({
             name="shareCount"
             type="text"
             inputMode="decimal"
-            className="text-base"
+            className={SHEET_FIELD}
             value={shareCount}
             onChange={(event) => setShareCount(event.target.value)}
             placeholder={isCrypto ? "e.g. 0,01234" : "e.g. 42 or 1,1465"}
@@ -474,7 +513,10 @@ function InvestmentPositionForm({
         </div>
 
         <div className="flex flex-col gap-2">
-          <FormLabel htmlFor="ongoingCharge">
+          <FormLabel
+            className="text-xs font-semibold tracking-[0.015em] text-muted-foreground"
+            htmlFor="ongoingCharge"
+          >
             {t("position.ongoingChargeLabel")}
           </FormLabel>
           <Text className="text-xs text-muted-foreground">
@@ -486,7 +528,7 @@ function InvestmentPositionForm({
               name="ongoingCharge"
               type="text"
               inputMode="decimal"
-              className="text-base"
+              className={SHEET_FIELD}
               value={ongoingCharge}
               onChange={(event) => setOngoingCharge(event.target.value)}
               placeholder={t("position.chargePlaceholder")}
@@ -533,7 +575,10 @@ function InvestmentPositionForm({
         )}
 
         <div className="flex flex-col gap-2">
-          <FormLabel htmlFor="currentValue">
+          <FormLabel
+            className="text-xs font-semibold tracking-[0.015em] text-muted-foreground"
+            htmlFor="currentValue"
+          >
             {t("position.brokerValue")}
           </FormLabel>
           <Text className="text-xs text-muted-foreground">
@@ -545,7 +590,7 @@ function InvestmentPositionForm({
             type="number"
             step="0.01"
             min="0"
-            className="text-base"
+            className={SHEET_FIELD}
             value={brokerValue}
             onChange={(event) => setBrokerValue(event.target.value)}
             placeholder={t("position.manualValuePlaceholder")}
@@ -585,38 +630,37 @@ function InvestmentPositionForm({
           </Text>
         )}
 
-        <Button
-          type="submit"
-          size="lg"
-          className="w-full"
+        <SheetSave
+          label={
+            pending
+              ? t("position.saving")
+              : isEdit
+                ? t("position.saveItem")
+                : t("position.addItem")
+          }
           disabled={
             pending ||
             (!isEdit &&
               sourceType === "recurring" &&
               recurringOptions.length === 0)
           }
-        >
-          {pending
-            ? t("position.saving")
-            : isEdit
-              ? t("position.saveItem")
-              : t("position.addItem")}
-        </Button>
+        />
 
         {isEdit && (
-          <Button
-            type="button"
-            variant="outline"
-            size="lg"
-            className="w-full text-destructive"
-            disabled={deletePending}
-            onClick={handleDelete}
-          >
-            <Trash size={ICON.md} weight="light" />
-            {deletePending
-              ? t("position.removing")
-              : t("position.removeFromPortfolio")}
-          </Button>
+          <div className="mt-2 border-t border-border pt-4">
+            <SheetDanger
+              label={t("position.removeFromPortfolio")}
+              explanation={t("position.removeConfirmBody")}
+              confirmLabel={
+                deletePending
+                  ? t("position.removing")
+                  : t("position.confirmRemove")
+              }
+              cancelLabel={t("position.cancel")}
+              pending={deletePending}
+              onConfirm={handleDelete}
+            />
+          </div>
         )}
       </form>
     </MobileSheet>

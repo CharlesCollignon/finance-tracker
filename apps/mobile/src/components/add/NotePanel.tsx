@@ -76,7 +76,7 @@ export function NotePanel({
         accessibilityLabel={label}
         returnKeyType="done"
         onSubmitEditing={onSubmit}
-        className="rounded-2xl bg-foreground/5"
+        tone="sheet"
       />
 
       {value.trim() === "" && suggestions.length > 0 ? (
