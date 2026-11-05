@@ -17,6 +17,24 @@ import type { ChangelogEntry, RoadmapItem } from "./changelog";
  */
 export const CHANGELOG: readonly ChangelogEntry[] = [
   {
+    id: "2026-11-06-web-add-sheet",
+    date: "2026-11-06",
+    kind: "better",
+    platforms: ["web"],
+    fr: {
+      title: "Ajouter, en un seul écran",
+      body: "« Ajouter » commence par ce que vous savez déjà : une dépense, un revenu, de l’épargne ou un placement. Le montant s’affiche en grand, dans la couleur de ce type, puis Catégorie, Commerce et Quand se remplissent en dessous, sans défiler. Le bouton dit ce qui manque encore, puis « Enregistrer −42,50 € ».",
+      detail:
+        "Une opération qui revient se règle dans « Quand », « Régulièrement » : chaque mois, semaine, trimestre ou année, le jour, « Le montant varie », et l’acompte d’un salaire. Un commerce déjà utilisé propose sa catégorie et son dernier montant.",
+    },
+    en: {
+      title: "Add, on one screen",
+      body: "“Add” starts with what you already know: an expense, income, savings or an investment. The amount shows large, in that kind's colour, then Category, Shop and When fill in below it, with no scrolling. The button says what is still missing, then “Save −€42.50”.",
+      detail:
+        "Something that repeats is set under “When”, “Regularly”: every month, week, quarter or year, the day, “The amount varies”, and a salary's advance. A shop you have used before suggests its category and its last amount.",
+    },
+  },
+  {
     id: "2026-11-05-phone-recurring",
     date: "2026-11-05",
     kind: "new",
