@@ -17,6 +17,24 @@ import type { ChangelogEntry, RoadmapItem } from "./changelog";
  */
 export const CHANGELOG: readonly ChangelogEntry[] = [
   {
+    id: "2026-11-05-card-owed",
+    date: "2026-11-05",
+    kind: "better",
+    platforms: ["web"],
+    fr: {
+      title: "Ce que la carte doit encore",
+      body: "Avec une carte à débit différé, votre banque montre un solde qui contient encore ce que la carte a dépensé. Désormais la courbe de votre solde et « Encore à venir » sur Le point comptent un « Débit carte » le jour du débit, et « Il vous reste » le met de côté : « dont 450 € de carte, débités le 31 oct. », même quand le débit tombe après votre paie.",
+      detail:
+        "Le budget, lui, compte chaque paiement le jour où vous l’avez fait. Le widget Android dit la même ligne, avec la prochaine version du téléphone.",
+    },
+    en: {
+      title: "What the card still owes",
+      body: "With a deferred-debit card, your bank shows a balance that still holds what the card has spent. Now your balance line and “Still to come” on the Overview count a “Card debit” on the debit day, and “You have” keeps it aside: “of which €450 on the card, debited on 31 Oct”, even when the debit falls after your pay.",
+      detail:
+        "The budget still counts each payment on the day you made it. The Android widget says the same line, with the phone's next version.",
+    },
+  },
+  {
     id: "2026-11-05-deferred-cards",
     date: "2026-11-05",
     kind: "new",

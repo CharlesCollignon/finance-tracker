@@ -211,6 +211,7 @@ describe("buildLeftToSpend", () => {
       days: 20,
       perDay: 35,
       marge: 0,
+      card: null,
     });
   });
 
@@ -309,5 +310,38 @@ describe("buildLeftToSpend", () => {
         monthlyMarge: null,
       }),
     ).toBeNull();
+  });
+});
+
+describe("buildLeftToSpend, a deferred card", () => {
+  // 1,000 today, the balance line already lower by 300 on the 25th: the
+  // card's October payments debited then, before the pay on the 28th.
+  const points = line("2026-10-01", "2026-10-31", (date) =>
+    date < "2026-10-25" ? 1000 : 700,
+  );
+
+  it("names a debit before the pay day, already in the balance's line", () => {
+    const figure = buildLeftToSpend({
+      today: "2026-10-08",
+      payDay: "2026-10-28",
+      points,
+      monthlyMarge: null,
+      laterDebits: [{ date: "2026-10-25", amount: 300 }],
+    })!;
+    expect(figure.amount).toBe(700);
+    expect(figure.card).toEqual({ amount: 300, debitOn: "2026-10-25" });
+  });
+
+  it("still takes off a debit that falls after the pay day", () => {
+    const flat = line("2026-10-01", "2026-10-31", () => 1000);
+    const figure = buildLeftToSpend({
+      today: "2026-10-08",
+      payDay: "2026-10-28",
+      points: flat,
+      monthlyMarge: null,
+      laterDebits: [{ date: "2026-10-31", amount: 450 }],
+    })!;
+    expect(figure.amount).toBe(550);
+    expect(figure.card).toEqual({ amount: 450, debitOn: "2026-10-31" });
   });
 });

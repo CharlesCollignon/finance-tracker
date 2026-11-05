@@ -283,8 +283,19 @@ export async function readMonthBalance(
         cursor.year,
         cursor.month,
       );
+      // The month's rows, and those whose money moves in it — a deferred
+      // card's payments made last month and debited in this one.
+      const inMonth = new Map(
+        [...rows, ...moved]
+          .filter(
+            (tx) =>
+              tx.occurred_on.startsWith(key) ||
+              (tx.cash_on ?? "").startsWith(key),
+          )
+          .map((tx) => [tx.id, tx] as const),
+      );
       const still = buildStillToCome(
-        rows.filter((tx) => tx.occurred_on.startsWith(key)),
+        [...inMonth.values()],
         templates,
         cursor.year,
         cursor.month,
@@ -293,7 +304,16 @@ export async function readMonthBalance(
         fulfilledKeys,
         bank,
       );
-      const charges = [...still.outgoing, ...still.incoming];
+      // A deferred card's debit moves the account only against a balance
+      // the bank reported: a curve that is the month's own net already took
+      // its payments off on the days they were made.
+      const moves = (charge: UpcomingCharge) =>
+        anchor !== null || !charge.cardDebit;
+      const charges = [...still.outgoing, ...still.incoming].filter(moves);
+      const notMoving = (list: StillToCome | null) =>
+        (list?.outgoing ?? [])
+          .filter((charge) => !moves(charge))
+          .reduce((sum, charge) => sum + charge.amount, 0);
       for (const charge of charges) {
         planned.push({
           date: upcomingDay(charge, today),
@@ -311,10 +331,16 @@ export async function readMonthBalance(
             : null;
         upcoming = {
           charges: [
-            ...(before ? [...before.outgoing, ...before.incoming] : []),
+            ...(before
+              ? [...before.outgoing, ...before.incoming].filter(moves)
+              : []),
             ...charges,
           ].sort((a, b) => a.occurredOn.localeCompare(b.occurredOn)),
-          leaving: still.leaving + (before?.leaving ?? 0),
+          leaving:
+            still.leaving -
+            notMoving(still) +
+            (before?.leaving ?? 0) -
+            notMoving(before),
           arriving: still.arriving + (before?.arriving ?? 0),
         };
       }

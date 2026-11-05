@@ -220,19 +220,21 @@ Shapes (b) and (c), for a bank connection that has no `CARD` account.
       doesn't send a month of payments in one push.
 - [x] Changelog entry.
 
-## Phase 3 — What the card still owes (branch `cards-left-to-spend`)
+## Phase 3 — What the card still owes (branch `cards-left-to-spend`) — done
 
-- [ ] « Il vous reste » takes off what the deferred card has spent and not
-      yet been debited: the `CARD` account's balance where the bank gives
-      it, otherwise the cycle's purchases. The explanation gets its own
-      line: « dont 612 € de carte, débités le 30 ».
-- [ ] « À venir » and the Calendar show the coming debit on its day, with
-      the amount so far.
+- [x] « Il vous reste » takes off what the deferred card has spent and not
+      yet been debited — every recorded row made by today whose `cash_on` is
+      later (`laterDebits`), the ones after the pay day on top of the
+      balance's line. Its own line, on the widget and in Ask: « dont 612 €
+      de carte, débités le 30 ». The card account's own balance is not read.
+- [x] « À venir » on Le point and the balance line show the coming debit on
+      its day (`cardDebit` charges in `still-to-come.ts`, against an anchored
+      balance only). The Calendar does not yet.
 - [ ] The DCA transfer reminder counts the debit if it falls before the
-      transfer.
-- [ ] Tests on `left-to-spend.ts` with a card debited before and after the
+      transfer. Not done.
+- [x] Tests on `left-to-spend.ts` with a card debited before and after the
       next pay day.
-- [ ] Changelog entry.
+- [x] Changelog entry.
 
 ## Phase 4 — Without a bank connection (branch `cards-statements`)
 

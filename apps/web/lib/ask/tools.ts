@@ -252,6 +252,14 @@ async function month(
             through: read.left.through,
             nextPayDay: read.left.payDay,
             perDay: read.left.perDay === null ? null : money(read.left.perDay),
+            // A deferred card's spending not yet debited, taken off the
+            // figure even when debited after the pay day.
+            cardOwed: read.left.card
+              ? {
+                  amount: money(read.left.card.amount),
+                  debitOn: read.left.card.debitOn,
+                }
+              : null,
           }
         : null,
       stillToCome: read.upcoming

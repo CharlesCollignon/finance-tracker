@@ -34,6 +34,22 @@ export interface LeftToSpend {
   perDay: number | null;
   /** What the marge took off, for the explanation. Zero without one. */
   marge: number;
+  /**
+   * What a deferred-debit card has spent and not yet been debited, and its
+   * next debit day: « dont 612 € de carte, débités le 30 ». Taken off even
+   * when debited after the pay day — the money is already spent. Absent or
+   * null when there is none (and on a figure stored before it existed).
+   */
+  card?: { amount: number; debitOn: string } | null;
+}
+
+/**
+ * Money already spent that leaves the account later: a deferred card's
+ * payments, by the day they are debited (`debited_on` → `cash_on`).
+ */
+export interface LaterDebit {
+  date: string;
+  amount: number;
 }
 
 /** Sub-cent differences are rounding. */
@@ -171,6 +187,7 @@ export function buildLeftToSpend({
   payDay,
   points,
   monthlyMarge,
+  laterDebits,
 }: {
   today: string;
   payDay: string | null;
@@ -181,6 +198,11 @@ export function buildLeftToSpend({
   points: readonly Pick<MonthBalancePoint, "date" | "value">[];
   /** The unrecorded allowance, per month, or null when none is set. */
   monthlyMarge: number | null;
+  /**
+   * A deferred card's debits still to come. Those by `through` are already in
+   * the balance's line; those after it are taken off on top.
+   */
+  laterDebits?: readonly LaterDebit[];
 }): LeftToSpend | null {
   const through = leftToSpendThrough(today, payDay);
   const window = points.filter(
@@ -202,7 +224,16 @@ export function buildLeftToSpend({
       ? roundMoney((monthlyMarge * Math.min(days, monthDays)) / monthDays)
       : 0;
 
-  const amount = roundMoney(lowest - marge);
+  const debits = (laterDebits ?? []).filter(
+    (debit) => debit.date > today && debit.amount > 0,
+  );
+  const afterPay = debits
+    .filter((debit) => debit.date > through)
+    .reduce((sum, debit) => sum + debit.amount, 0);
+  const owed = roundMoney(debits.reduce((sum, debit) => sum + debit.amount, 0));
+  const nextDebit = debits.map((debit) => debit.date).sort()[0];
+
+  const amount = roundMoney(lowest - marge - afterPay);
   return {
     amount,
     through,
@@ -210,5 +241,6 @@ export function buildLeftToSpend({
     days,
     perDay: amount > 0 ? Math.floor((amount / days) * 100) / 100 : null,
     marge,
+    card: owed > 0 && nextDebit ? { amount: owed, debitOn: nextDebit } : null,
   };
 }

@@ -43,6 +43,8 @@ export type WidgetFace =
       amount: string;
       until: string;
       perDay: string | null;
+      /** « dont 612 € de carte, débités le 30 », for a deferred card. */
+      card?: string | null;
     } & WidgetWays)
   | ({ kind: "bare" } & WidgetWays);
 
@@ -88,6 +90,14 @@ export function widgetFace({
         : t("leftToSpend.perDay", {
             amount: formatCurrency(left.perDay, currency, locale),
           }),
+    ...(left.card
+      ? {
+          card: t("leftToSpend.card", {
+            amount: formatCurrency(left.card.amount, currency, locale),
+            date: formatDayMonth(left.card.debitOn, locale),
+          }),
+        }
+      : {}),
     ...ways,
   };
 }

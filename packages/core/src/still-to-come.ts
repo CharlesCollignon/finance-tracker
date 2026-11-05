@@ -33,6 +33,12 @@ export interface UpcomingCharge {
    * wallet the bank debits (`BankForecast.debited`): that money leaves.
    */
   tracked?: boolean;
+  /**
+   * A deferred card's debit: payments already made and recorded, their money
+   * leaving on this day (`cash_on` after today). One per day, its amount
+   * theirs together. Shown as « Débit carte ».
+   */
+  cardDebit?: boolean;
 }
 
 export interface StillToCome {
@@ -134,7 +140,10 @@ export function buildStillToCome(
     charge: UpcomingCharge,
     counts: boolean,
     categoryId: string,
-    /** Counted by the budget as a share of the year, not on its day. */
+    /**
+     * Not in the budget's figure: spread over the year, or already counted
+     * on the day it was made (a deferred card's debit).
+     */
     spread = false,
   ): void {
     // Moves nothing on the account, unless its wallet is bought from it.
@@ -172,6 +181,47 @@ export function buildStillToCome(
       .filter((template) => template.active && isSpreadExpense(template))
       .map((template) => template.id),
   );
+
+  // Payments already made whose money leaves later this month — a deferred
+  // card's, debited on its day: one charge per debit day, so the account is
+  // seen to lose them then. Already in the budget on the day they were made,
+  // so never in `budgetedOutflow`.
+  const debits = new Map<string, number>();
+  for (const tx of transactions) {
+    if (
+      tx.occurred_on <= today &&
+      tx.cash_on &&
+      tx.cash_on > today &&
+      tx.cash_on.startsWith(monthPrefix)
+    ) {
+      const amount = Number(tx.amount);
+      debits.set(
+        tx.cash_on,
+        (debits.get(tx.cash_on) ?? 0) +
+          (tx.categories.type === "income" ? -amount : amount),
+      );
+    }
+  }
+  for (const [date, amount] of debits) {
+    if (Math.round(amount * 100) <= 0) {
+      continue;
+    }
+    file(
+      {
+        key: `debit:${date}`,
+        name: "",
+        description: null,
+        occurredOn: date,
+        amount: Math.round(amount * 100) / 100,
+        type: "expense",
+        recorded: true,
+        cardDebit: true,
+      },
+      true,
+      "",
+      true,
+    );
+  }
 
   for (const tx of transactions) {
     if (!tx.occurred_on.startsWith(monthPrefix) || tx.occurred_on <= today) {

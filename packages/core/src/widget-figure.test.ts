@@ -124,3 +124,29 @@ describe("parseWidgetFigure", () => {
     ).toBeNull();
   });
 });
+
+describe("widgetFace, a deferred card", () => {
+  it("says what the card has spent and when it is debited", () => {
+    const face = widgetFace({
+      figure: {
+        readOn: "2026-10-08",
+        left: {
+          amount: 550,
+          through: "2026-10-27",
+          payDay: "2026-10-28",
+          days: 20,
+          perDay: 27.5,
+          marge: 0,
+          card: { amount: 450, debitOn: "2026-10-31" },
+        },
+      },
+      today: "2026-10-08",
+      hidden: false,
+      locale: "fr",
+      currency: "EUR",
+    });
+    expect(face.kind === "figure" && face.card).toBe(
+      "dont 450 € de carte, débités le 31 oct.",
+    );
+  });
+});
