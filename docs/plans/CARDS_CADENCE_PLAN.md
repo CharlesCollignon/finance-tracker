@@ -317,7 +317,9 @@ one in:
 - ~~A tolerance per template for income that varies~~ — done
   2026-11-05 as « Le montant varie » (migration 086, branch `pay-varies`):
   from half the figure up, no bonus split.
-- Pay days moved for weekends and public holidays.
+- ~~Pay days moved for weekends and public holidays~~ — done 2026-11-05
+  (branch `business-days`): the money day only (`moneyDay`), the
+  occurrence keeping its own day as its key.
 - Deferred-card purchases typed by hand (no bank, no statement).
 - ~~Pay in 3x/4x~~ — done 2026-11-05 (branch `instalments`): proposed from
   the first instalment as a monthly entry ending after the last

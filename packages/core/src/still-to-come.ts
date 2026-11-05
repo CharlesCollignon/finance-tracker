@@ -1,4 +1,5 @@
 import { recurringOccurrenceKey } from "./apply-recurring";
+import { moneyDay } from "./business-days";
 import type { BankForecast } from "./recurring-fulfilment";
 import {
   filterDatesBySchedule,
@@ -284,7 +285,12 @@ export function buildStillToCome(
           key,
           name: template.categories.name,
           description: template.description,
-          occurredOn: date,
+          // Its own day is its key; the money moves on a working day — pay
+          // the one before, a charge the one after (`moneyDay`).
+          occurredOn: moneyDay(
+            date,
+            template.categories.type === "income" ? "in" : "out",
+          ),
           amount: Number(template.amount),
           type: template.categories.type,
           recorded: false,
