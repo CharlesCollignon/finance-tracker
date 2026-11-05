@@ -17,6 +17,24 @@ import type { ChangelogEntry, RoadmapItem } from "./changelog";
  */
 export const CHANGELOG: readonly ChangelogEntry[] = [
   {
+    id: "2026-11-05-why-not-passed",
+    date: "2026-11-05",
+    kind: "better",
+    platforms: ["web"],
+    fr: {
+      title: "Pourquoi ce n’est pas encore passé",
+      body: "Quand un paiement prévu reste « Pas encore passé », sa fiche dit maintenant pourquoi Pluclair ne l’a rapproché d’aucune ligne de votre banque : un mouvement du bon montant classé dans une autre catégorie, une ligne qui attend sa catégorie dans « À vérifier », le plus proche trop loin en montant ou en jours, ou rien de semblable.",
+      detail:
+        "Le plus souvent, il suffit de reclasser le mouvement, ou de cocher « Le montant varie » sur l’opération récurrente. Sur le téléphone, avec la prochaine version.",
+    },
+    en: {
+      title: "Why it hasn't gone through yet",
+      body: "When an expected payment stays “Not through yet”, its sheet now says why Pluclair has not paired it with a line from your bank: a movement of the right amount filed under another category, a line waiting for its category in “Review”, the nearest too far off in amount or days, or nothing like it.",
+      detail:
+        "Most often, refiling the movement is enough, or ticking “The amount varies” on the recurring entry. On the phone, with the next version.",
+    },
+  },
+  {
     id: "2026-11-05-amount-varies",
     date: "2026-11-05",
     kind: "new",

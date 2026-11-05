@@ -1,7 +1,10 @@
 "use server";
 
 import type { ActionResult } from "@finance/core/action-result";
+import { todayIsoLocal } from "@finance/core/constants";
+import type { FulfilmentMiss } from "@finance/core/recurring-fulfilment";
 import * as decisions from "@finance/data/fulfilment-decisions";
+import { explainAwaited } from "@finance/data/fulfilment";
 import { asOwner } from "@/lib/actions/as-user";
 import { getLocale } from "@/lib/locale";
 
@@ -63,5 +66,31 @@ export async function undoFulfilment(
 ): Promise<ActionResult> {
   return asOwner((db, userId) =>
     decisions.undoFulfilment(db, userId, templateId, occurredOn),
+  );
+}
+
+/**
+ * Why the bank has not brought an occurrence yet — what the « Pas encore
+ * passé » sheet says under its date. A read: nothing is redrawn.
+ */
+export async function explainAwaitedOccurrence(
+  templateId: string,
+  occurredOn: string,
+): Promise<ActionResult<{ miss: FulfilmentMiss | null }>> {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(occurredOn)) {
+    return { error: "errors.invalidInput" };
+  }
+  return asOwner(
+    async (db, userId) => ({
+      success: true,
+      miss: await explainAwaited(
+        db,
+        userId,
+        templateId,
+        occurredOn,
+        todayIsoLocal(),
+      ),
+    }),
+    { redraw: "never" },
   );
 }

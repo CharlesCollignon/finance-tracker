@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import type { PlannedOccurrence } from "@finance/core/apply-recurring";
 import { formatShortDate } from "@finance/core/constants";
 import { TYPE_AMOUNT_CLASS } from "@finance/core/category-styles";
@@ -9,6 +9,11 @@ import { resolveMessage } from "@finance/core/i18n/t";
 import { Button, buttonVariants } from "@/components/ui/Button";
 import { CategoryIcon } from "@/components/finance/CategoryIcon";
 import { amountSign } from "@finance/core/amount-sign";
+import {
+  describeMiss,
+  type FulfilmentMiss,
+} from "@finance/core/recurring-fulfilment";
+import { explainAwaitedOccurrence } from "@/lib/actions/fulfilment";
 import { MobileSheet } from "@/components/ui/MobileSheet";
 import { useToast } from "@/components/layout/ToastProvider";
 import {
@@ -52,10 +57,41 @@ export function PlannedOccurrenceSheet({
   const formatEuro = useFormatCurrency();
   const { toast } = useToast();
   const [pending, startTransition] = useTransition();
+  // Why the bank has not brought it, asked when the sheet opens on one it
+  // still owes. Kept with the occurrence it answers, so another one opened
+  // next never shows the last one's reason.
+  const [why, setWhy] = useState<{
+    key: string;
+    miss: FulfilmentMiss | null;
+  } | null>(null);
+  const awaitedKey = occurrence?.awaited
+    ? `${occurrence.templateId}:${occurrence.occurredOn}`
+    : null;
+
+  useEffect(() => {
+    if (!awaitedKey || !occurrence) {
+      return;
+    }
+    let live = true;
+    void explainAwaitedOccurrence(
+      occurrence.templateId,
+      occurrence.occurredOn,
+    ).then((result) => {
+      if (live && result.success) {
+        setWhy({ key: awaitedKey, miss: result.miss });
+      }
+    });
+    return () => {
+      live = false;
+    };
+    // The key names the occurrence; the object is rebuilt on every render.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [awaitedKey]);
 
   if (!occurrence) {
     return null;
   }
+  const miss = why && why.key === awaitedKey ? why.miss : null;
 
   const date = formatShortDate(occurrence.occurredOn, locale);
   const { templateId, occurredOn } = occurrence;
@@ -122,6 +158,13 @@ export function PlannedOccurrenceSheet({
                   { date },
                 )}
               </span>
+              {miss ? (
+                <span className="mt-1 block text-xs text-muted-foreground">
+                  {t("planned.why", {
+                    reason: describeMiss(miss, formatEuro, locale),
+                  })}
+                </span>
+              ) : null}
             </span>
           </span>
           <span

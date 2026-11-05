@@ -1,9 +1,13 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Modal, Pressable, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 
 import { amountSign } from "@finance/core/amount-sign";
+import {
+  describeMiss,
+  type FulfilmentMiss,
+} from "@finance/core/recurring-fulfilment";
 import type { PlannedOccurrence } from "@finance/core/apply-recurring";
 import { formatShortDate, todayIsoLocal } from "@finance/core/constants";
 import { TYPE_AMOUNT_CLASS } from "@finance/core/category-styles";
@@ -16,6 +20,7 @@ import { Text } from "@/components/ui/Text";
 import { cn } from "@/lib/cn";
 import { hapticLight, hapticSuccess } from "@/lib/haptics";
 import {
+  explainAwaitedOccurrence,
   recordPlannedNow,
   skipPlannedOccurrence,
   undoRecordPlanned,
@@ -67,6 +72,33 @@ export function PlannedOccurrenceSheet({
   // Keyed by occurrence, so opening another one starts fresh by derivation
   // rather than through an effect that resets state.
   const [done, setDone] = useState<{ key: string; done: Done } | null>(null);
+  // Why the bank has not brought it, asked when the sheet opens on one it
+  // still owes; kept with the occurrence it answers, as `done` is.
+  const [why, setWhy] = useState<{
+    key: string;
+    miss: FulfilmentMiss | null;
+  } | null>(null);
+  const awaitedKey = occurrence?.awaited ? occurrence.key : null;
+
+  useEffect(() => {
+    if (!awaitedKey || !occurrence) {
+      return;
+    }
+    let live = true;
+    void explainAwaitedOccurrence(
+      occurrence.templateId,
+      occurrence.occurredOn,
+    ).then((result) => {
+      if (live && result.success) {
+        setWhy({ key: awaitedKey, miss: result.miss });
+      }
+    });
+    return () => {
+      live = false;
+    };
+    // The key names the occurrence; the object is rebuilt on every render.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [awaitedKey]);
 
   if (!occurrence) {
     return null;
@@ -192,6 +224,13 @@ export function PlannedOccurrenceSheet({
                   { date },
                 )}
               </Text>
+              {why && why.key === awaitedKey && why.miss ? (
+                <Text variant="muted" className="mt-1 text-xs">
+                  {t("planned.why", {
+                    reason: describeMiss(why.miss, formatEuro, locale),
+                  })}
+                </Text>
+              ) : null}
             </View>
             <PrivateAmount
               className={cn(

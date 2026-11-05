@@ -1,3 +1,4 @@
+import { formatShortDate } from "./constants";
 import { monthLong } from "./i18n/calendar-names";
 import { type Locale } from "./i18n/locale";
 import { translator } from "./i18n/t";
@@ -192,6 +193,13 @@ export interface FulfilmentMovement {
   categoryId: string;
   /** The bank's own words, for a row the user has to recognise. */
   note: string | null;
+  /** The category's name, for saying where a movement was filed. */
+  categoryName?: string;
+  /**
+   * The category's kind, so money in is never offered as money out: a
+   * salary of the rent's amount is not the rent filed under the wrong name.
+   */
+  categoryType?: CategoryType;
 }
 
 export interface FulfilmentProposal {
@@ -829,7 +837,17 @@ export type MissReason =
   /** A match in every respect except that it has not happened yet. */
   | "not-arrived"
   /** The user said this pairing was wrong. */
-  | "refused";
+  | "refused"
+  /**
+   * Nothing in its category, but a movement of the right size on the right
+   * days is filed under another one: the likeliest reason of all.
+   */
+  | "other-category"
+  /**
+   * Nothing in its category, but a bank line of the right size on the right
+   * days still waits for its category in « À vérifier ».
+   */
+  | "waiting";
 
 export interface FulfilmentMiss {
   key: string;
@@ -846,6 +864,8 @@ export interface FulfilmentMiss {
     daysApart: number;
     /** The window that applied to it, which an early income widens. */
     window: number;
+    /** Where it is filed, for `other-category`. */
+    categoryName?: string;
   } | null;
 }
 
@@ -866,9 +886,16 @@ export function explainFulfilmentMisses(
     today,
     fulfilledKeys = new Set(),
     refusedPairs = new Set(),
+    claimedTransactionIds = new Set(),
   }: ProposeOptions,
+  /**
+   * Bank lines still waiting for a category (« À vérifier »), which are not
+   * movements yet but may well be the one expected.
+   */
+  waiting: readonly FulfilmentMovement[] = [],
 ): FulfilmentMiss[] {
   const offered = new Set(proposals.map((proposal) => proposal.key));
+  const taken = new Set(proposals.map((proposal) => proposal.transactionId));
   const misses: FulfilmentMiss[] = [];
 
   for (const occurrence of occurrences) {
@@ -887,14 +914,60 @@ export function explainFulfilmentMisses(
     );
 
     if (alike.length === 0) {
+      // Nothing in its category: say where a movement that fits every other
+      // rule went instead, when one did — filed elsewhere, or not filed yet.
+      const fits = (movement: FulfilmentMovement) =>
+        movement.occurredOn <= today &&
+        !claimedTransactionIds.has(movement.transactionId) &&
+        !taken.has(movement.transactionId) &&
+        amountFits(occurrence, movement.amount) &&
+        daysBetween(occurrence.occurredOn, movement.occurredOn) <=
+          windowFor(occurrence, movement.occurredOn);
+      const closest = (list: readonly FulfilmentMovement[]) =>
+        list
+          .filter(fits)
+          .reduce<FulfilmentMovement | null>(
+            (best, movement) =>
+              best === null ||
+              cost(occurrence, movement) < cost(occurrence, best)
+                ? movement
+                : best,
+            null,
+          );
+      const wantsIn = occurrence.categoryType === "income";
+      const elsewhere = closest(
+        movements.filter(
+          (movement) =>
+            movement.categoryId !== occurrence.categoryId &&
+            movement.categoryType !== undefined &&
+            (movement.categoryType === "income") === wantsIn,
+        ),
+      );
+      const unfiled = elsewhere ? null : closest(waiting);
+      const found = elsewhere ?? unfiled;
       misses.push({
         key,
         label: occurrence.label,
         occurredOn: occurrence.occurredOn,
         expectedAmount: occurrence.amount,
         categoryType: occurrence.categoryType,
-        reason: "nothing-alike",
-        nearest: null,
+        reason: elsewhere
+          ? "other-category"
+          : unfiled
+            ? "waiting"
+            : "nothing-alike",
+        nearest: found
+          ? {
+              amount: found.amount,
+              occurredOn: found.occurredOn,
+              note: found.note,
+              daysApart: daysBetween(occurrence.occurredOn, found.occurredOn),
+              window: windowFor(occurrence, found.occurredOn),
+              ...(found.categoryName
+                ? { categoryName: found.categoryName }
+                : {}),
+            }
+          : null,
       });
       continue;
     }
@@ -962,6 +1035,21 @@ export function describeMiss(
   const t = translator(locale);
 
   switch (miss.reason) {
+    case "other-category":
+      return miss.nearest
+        ? t("fulfilment.misses.otherCategory", {
+            amount: formatMoney(miss.nearest.amount),
+            date: formatShortDate(miss.nearest.occurredOn, locale),
+            category: miss.nearest.categoryName ?? "",
+          })
+        : t("fulfilment.misses.nothingAlike");
+    case "waiting":
+      return miss.nearest
+        ? t("fulfilment.misses.waiting", {
+            amount: formatMoney(miss.nearest.amount),
+            date: formatShortDate(miss.nearest.occurredOn, locale),
+          })
+        : t("fulfilment.misses.nothingAlike");
     case "nothing-alike":
       return t("fulfilment.misses.nothingAlike");
     case "refused":

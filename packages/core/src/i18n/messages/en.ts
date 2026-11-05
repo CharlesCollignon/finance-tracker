@@ -977,6 +977,7 @@ export const en = {
     body: "Planned for {date}. It is recorded on the day.",
     /** Its day has come and the bank has not brought it yet. */
     awaitedBody: "Due on {date}, not through the bank yet.",
+    why: "Why: {reason}.",
     recordNow: "Record it now",
     recordNowHint: "It already happened — adds it dated today.",
     skip: "Skip this date",
@@ -2680,6 +2681,9 @@ export const en = {
      */
     misses: {
       nothingAlike: "nothing in its category to match",
+      otherCategory: "a {amount} movement on {date} is filed under {category}",
+      waiting:
+        "a {amount} line from {date} is waiting for its category in “Review”",
       refused: "you said the nearest movement was not it",
       notArrived: "the nearest movement has not happened yet",
       amountNear: "nearest was {amount}, too far from {expected}",
