@@ -151,61 +151,74 @@ immediate or not, before Phase 1.
       (`isMovedRow`). Rows already in the ledger keep their dates.
 - [x] Changelog entry.
 
-## Phase 1 — « Votre carte » (branch `cards-deferred`)
+## Phase 1 — « Votre carte » (branch `cards-deferred`) — done, with Phase 2
 
 Covers shape (a), the cleanest: the bank lists the card as its own account.
 
-- [ ] Migration 087 `cards`: `id`, `user_id`, `bank_account_id` (its `CARD`
+Built 2026-11-05 on made-up fixtures, at the owner's call: no real
+deferred card was available. One engine for every source (`cards.ts`, wired
+into `toCandidate`/`planFeed`): the card a line names (`X1234`,
+`4974XXXXXXXX1234`, `CB*1234`, `****1234`) or a card account
+(`acct:<id>`, role `card`); the debit day a deferred card's alert,
+notification or card-account payment leaves on (`debited_on`, migration
+087); a card line's late value date taken as its debit; the month's
+combined line (`isCardSettlement`) settled against the cycle's total
+(`settledCycle`, ±1 % or 1 €, ±6 days). The question: an attention row on
+Le point (`cards`) leading to « Vos cartes » on the bank page, web and phone.
+
+
+- [x] Migration 087 `cards`: `id`, `user_id`, `bank_account_id` (its `CARD`
       account, if any), `spending_account_id` (the account it is debited
       from), `last4` (nullable), `label`, `debit` (`immediate | deferred`,
       null = not asked yet), `debit_day` (nullable: learned from the
       debits), `asked_at`. RLS as on `bank_accounts`.
-- [ ] `packages/core/src/cards.ts`: the card a movement belongs to,
+- [x] `packages/core/src/cards.ts`: the card a movement belongs to,
       whether a movement is a card's monthly debit, and the card's next
       debit day (the stated day, else the one its past debits agree on).
       Tests for each.
-- [ ] **The question, once per card.** A `CARD` account appears on Banque →
+- [x] **The question, once per card.** A `CARD` account appears on Banque →
       « Vos comptes » with a fourth choice: **« Carte à débit différé »**,
       with the line « ses paiements dans votre journal, à leur date ; débités
       ensemble le … ». Its first sight also puts one attention row on
       Le point: « Votre carte ••1234 : débit immédiat ou différé ? », two
       buttons, answered once. Before an answer, today's behaviour stays.
-- [ ] **Its purchases on their day.** A deferred card's movements are
+- [x] **Its purchases on their day.** A deferred card's movements are
       followed: `occurred_on = transactionDate ?? bookingDate`, and
       `cash_on` = the debit day. The month views count the purchase in its
       own month; the balance curve and the month close see the money leave
       on the debit day.
-- [ ] **The debit counted once.** The current account's monthly debit for
+- [x] **The debit counted once.** The current account's monthly debit for
       that card is recognised: the card account's matching credit, or the
       cycle's total within a few days. It is treated like a transfer
-      between own accounts (`ownIbans` in `bank-feed.ts`), not spending. The
-      Journal shows it as one quiet line « Débit carte — 42 paiements »
-      that opens the list.
-- [ ] Answering « différé » re-reads that account's history, as a newly
-      connected bank does (`history_imported_at`), so past months are
-      re-dated too.
-- [ ] Changelog entry.
+      between own accounts (`ownIbans` in `bank-feed.ts`), not spending:
+      written as a known feed row (`status = 'ignored'`, `decided_by =
+      'card:settled:<key>'`), its payments taking its day as `cash_on`. The
+      quiet Journal line « Débit carte — 42 paiements » is not built.
+- [x] Answering « différé » re-dates what is already there instead of
+      re-reading history: the card's alert, notification and card-account
+      lines take its debit day (`redateCard` in `@finance/data/cards`).
+- [x] Changelog entry.
 
-## Phase 2 — Débit différé on the current account (branch `cards-on-account`)
+## Phase 2 — Débit différé on the current account — done in `cards-deferred`
 
 Shapes (b) and (c), for a bank connection that has no `CARD` account.
 
-- [ ] Cards found from the remittance text (`last4`), with the patterns
+- [x] Cards found from the remittance text (`last4`), with the patterns
       Phase 0 found. Where none is readable, the card is « la carte de ce
       compte ».
-- [ ] The same once-per-card question, raised the first time Pluclair sees
+- [x] The same once-per-card question, raised the first time Pluclair sees
       a combined debit or card lines whose booking is a week or more after
       the purchase.
-- [ ] Shape (b): the same re-dating as Phase 1 (purchase day, `cash_on` =
+- [x] Shape (b): the same re-dating as Phase 1 (purchase day, `cash_on` =
       debit day). Shape (c): the combined line stays one expense until its
       details arrive (Phase 4), and is marked « Débit carte » rather than
       left uncategorised.
-- [ ] **Provisional lines** match on the purchase day (`transactionDate`)
+- [x] **Provisional lines** match on the purchase day (`transactionDate`)
       when the line has one. Only when it has none does the window widen to
       the card's cycle.
-- [ ] « Nouvelles dépenses » reads the purchase day, so a deferred card
+- [x] « Nouvelles dépenses » reads the purchase day, so a deferred card
       doesn't send a month of payments in one push.
-- [ ] Changelog entry.
+- [x] Changelog entry.
 
 ## Phase 3 — What the card still owes (branch `cards-left-to-spend`)
 

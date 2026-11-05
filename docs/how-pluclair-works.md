@@ -603,6 +603,18 @@ day as its `cash_on` (`ledgerDatesOf` in `cash-date.ts`), whether the sync,
 a statement or the review inbox writes it. Matching a typed or template row
 and pairing an alert go by the purchase day too.
 
+Cards (migration 087, `cards.ts`): a line names its card (`card_key`: the
+last four digits, or `acct:<id>` for a card the bank shows as its own account,
+role `card`). Each card is asked about once — an attention row on Le point,
+then « Vos cartes » on the bank page. For a deferred one, an alert's, a
+notification's or a card account's payment leaves the account on the card's
+debit day (`debited_on`, the transaction's `cash_on`); a card line's late
+value date is taken as its debit either way. The month's combined debit
+(`isCardSettlement`) is matched against what the card's payments add up to
+(`settledCycle`, from `cardCycles` and the batch itself) and, when it pays for
+them, written as a known row (`status = 'ignored'`, `card:settled:<key>`)
+whose day the payments take.
+
 An occurrence the bank still owes reads « Pas encore passé ». Its sheet asks
 `explainAwaited` (`@finance/data/fulfilment`) why: the same months and rules
 as the forecast, through `explainFulfilmentMisses`, which also names a

@@ -17,6 +17,24 @@ import type { ChangelogEntry, RoadmapItem } from "./changelog";
  */
 export const CHANGELOG: readonly ChangelogEntry[] = [
   {
+    id: "2026-11-05-deferred-cards",
+    date: "2026-11-05",
+    kind: "new",
+    platforms: ["web"],
+    fr: {
+      title: "Les cartes à débit différé",
+      body: "Pluclair demande maintenant, une fois par carte, si elle est débitée tout de suite ou une fois par mois — sur Le point, puis dans Banque, « Vos cartes ». Pour une carte à débit différé, chaque paiement compte le jour où vous payez et l’argent quitte votre compte le jour du débit. La ligne de fin de mois qui les débite tous ensemble (« FACTURE CARTE… », « RELEVE DIFFERE… ») n’est plus comptée une seconde fois quand ses paiements sont déjà là.",
+      detail:
+        "Les paiements arrivent par la banque, un relevé, un e-mail d’alerte ou une notification. Une banque qui montre la carte comme un compte à part la fait suivre aussi. Faute d’une vraie carte à débit différé sous la main, tout cela a été essayé sur des relevés d’exemple : une ligne de votre banque mal reconnue, signalez-la. Sur le téléphone, avec la prochaine version.",
+    },
+    en: {
+      title: "Deferred-debit cards",
+      body: "Pluclair now asks, once per card, whether it is debited at once or once a month — on the Overview, then in Bank, “Your cards”. For a deferred-debit card, each payment counts on the day you pay and the money leaves your account on the debit day. The month-end line that debits them all together (“FACTURE CARTE…”, “RELEVE DIFFERE…”) is no longer counted a second time when its payments are already in.",
+      detail:
+        "Payments come through the bank, a statement, an alert e-mail or a notification. A bank that shows the card as an account of its own has it followed too. Without a real deferred-debit card at hand, all of this was tried on sample statements: if a line from your bank is misread, report it. On the phone, with the next version.",
+    },
+  },
+  {
     id: "2026-11-05-pay-advance",
     date: "2026-11-05",
     kind: "new",
