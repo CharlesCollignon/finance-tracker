@@ -309,7 +309,11 @@ before the next pay day, at the lowest point until then, less the marge's
 share of those days. The pay day is the next payment of the recurring income
 that brings the most in an average month (`timesPerYear`: a quarterly one
 counts a third of itself), looked for up to twelve months ahead; with none,
-the month's end. A monthly template can be kept to some months
+the month's end. A pay or charge due on a weekend or a French public holiday
+is expected on the working day before (pay) or after (a charge) —
+`moneyDay` in `business-days.ts` — by « Encore à venir », the balance line
+and the pay day; its occurrence keeps its own day as its key. A monthly
+template can be kept to some months
 (`recurring_templates.months`, migration 084); an expense kept that way is
 spread over the year like a yearly one (`isSpreadExpense`) by the budget
 and the projection. What is still to come (`still-to-come.ts`) owes it on its

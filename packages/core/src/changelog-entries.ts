@@ -17,6 +17,24 @@ import type { ChangelogEntry, RoadmapItem } from "./changelog";
  */
 export const CHANGELOG: readonly ChangelogEntry[] = [
   {
+    id: "2026-11-05-business-days",
+    date: "2026-11-05",
+    kind: "better",
+    platforms: ["web"],
+    fr: {
+      title: "Le week-end et les jours fériés",
+      body: "Un salaire prévu un samedi arrive le vendredi ; un prélèvement prévu un dimanche ou un jour férié part le jour ouvré suivant. « Encore à venir », la courbe de votre solde et « Il vous reste » attendent désormais l’argent ce jour-là, jours fériés français compris — Pâques, l’Ascension et la Pentecôte aussi.",
+      detail:
+        "L’opération récurrente garde son propre jour : seul le jour où l’argent bouge change. Sur le téléphone, avec la prochaine version.",
+    },
+    en: {
+      title: "Weekends and public holidays",
+      body: "A salary due on a Saturday arrives on the Friday; a direct debit due on a Sunday or a public holiday leaves on the next working day. “Still to come”, your balance line and “You have” now expect the money on that day, French public holidays included — Easter, Ascension and Whit Monday too.",
+      detail:
+        "The recurring entry keeps its own day: only the day the money moves changes. On the phone, with the next version.",
+    },
+  },
+  {
     id: "2026-11-05-refunds",
     date: "2026-11-05",
     kind: "fixed",
