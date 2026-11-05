@@ -554,6 +554,18 @@ export const fr: Messages = {
     convertedFrom: "({amount} converti)",
     descriptionOptional: "Libellé (facultatif)",
     monthOfYear: "Mois",
+    rhythm: "Rythme",
+    rhythmEvery: {
+      "1": "Tous les mois",
+      "2": "Tous les 2 mois",
+      "3": "Tous les trimestres",
+      "6": "Tous les 6 mois",
+      some: "Certains mois",
+    },
+    firstMonth: "À partir de",
+    whichMonths: "Les mois où il tombe",
+    monthsSpreadNote:
+      "Compté comme une part mensuelle dans votre budget, étalé sur l'année. Le paiement complet est enregistré les mois où il tombe.",
     activePeriod: "Période d'activité (facultative)",
     activePeriodNote:
       "Laissez les deux vides pour que ça tourne jusqu'à ce que vous l'arrêtiez. Renseignez les deux pour un échéancier fixe\u00A0: une taxe foncière étalée sur plusieurs mois, par exemple.",
@@ -797,6 +809,8 @@ export const fr: Messages = {
     incomeLabelPlaceholder: "ex. Salaire, pension",
     expenseLabelPlaceholder: "ex. Loyer, Netflix, électricité",
     monthlyAmount: "Montant mensuel",
+    paymentAmount: "Montant de chaque versement",
+    otherRhythm: "Pas tous les mois\u00A0?",
     dayOfMonth: "Jour du mois",
     category: "Catégorie",
     continue: "Continuer",

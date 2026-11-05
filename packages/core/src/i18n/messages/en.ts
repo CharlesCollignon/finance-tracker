@@ -692,6 +692,18 @@ export const en = {
     convertedFrom: "({amount} converted)",
     descriptionOptional: "Description (optional)",
     monthOfYear: "Month",
+    rhythm: "How often",
+    rhythmEvery: {
+      "1": "Every month",
+      "2": "Every 2 months",
+      "3": "Every quarter",
+      "6": "Every 6 months",
+      some: "Some months",
+    },
+    firstMonth: "Starting in",
+    whichMonths: "The months it falls in",
+    monthsSpreadNote:
+      "Counts as a monthly share in your budget, spread over the year. The full payment is recorded in the months it falls in.",
     /** Same reasoning as `dayOfWeekNumeric`, for the phone's month field. */
     activePeriod: "Active period (optional)",
     activePeriodNote:
@@ -1024,6 +1036,8 @@ export const en = {
     incomeLabelPlaceholder: "e.g. Salary, pension",
     expenseLabelPlaceholder: "e.g. Rent, Netflix, electricity",
     monthlyAmount: "Monthly amount",
+    paymentAmount: "Amount of each payment",
+    otherRhythm: "Not every month?",
     dayOfMonth: "Day of the month",
     category: "Category",
     continue: "Continue",
