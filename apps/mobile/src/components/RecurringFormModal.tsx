@@ -490,7 +490,7 @@ function RecurringFormBody({
       {/* Income included, as on the web: a salary is a recurring entry
           too, and one opened from the Income group has to find its
           category here. */}
-      <Text className="mb-2 text-sm font-medium">
+      <Text className="mb-2 text-xs font-semibold text-muted-foreground">
         {t("recurring.category")}
       </Text>
       <CategoryPicker
@@ -515,7 +515,7 @@ function RecurringFormBody({
         </View>
       ) : sharePriced ? (
         <>
-          <Text className="mb-2 text-sm font-medium">
+          <Text className="mb-2 text-xs font-semibold text-muted-foreground">
             {t("recurring.shareCount")}
           </Text>
           <Input
@@ -571,7 +571,7 @@ function RecurringFormBody({
               {withAdvance ? (
                 <View className="mb-4 flex-row gap-3">
                   <View className="flex-1">
-                    <Text className="mb-2 text-sm font-medium">
+                    <Text className="mb-2 text-xs font-semibold text-muted-foreground">
                       {t("recurring.advanceAmount")}
                     </Text>
                     <Input
@@ -582,7 +582,7 @@ function RecurringFormBody({
                     />
                   </View>
                   <View className="flex-1">
-                    <Text className="mb-2 text-sm font-medium">
+                    <Text className="mb-2 text-xs font-semibold text-muted-foreground">
                       {t("recurring.advanceDay")}
                     </Text>
                     <Input
@@ -602,7 +602,7 @@ function RecurringFormBody({
 
       {offerProperty ? (
         <>
-          <Text className="mb-2 text-sm font-medium">
+          <Text className="mb-2 text-xs font-semibold text-muted-foreground">
             {t("property.attachLabel")}
           </Text>
           <ChoiceChips
@@ -621,7 +621,7 @@ function RecurringFormBody({
         </>
       ) : null}
 
-      <Text className="mb-2 text-sm font-medium">
+      <Text className="mb-2 text-xs font-semibold text-muted-foreground">
         {t("recurring.description")}
       </Text>
       <Input
@@ -631,7 +631,7 @@ function RecurringFormBody({
         className="mb-4"
       />
 
-      <Text className="mb-2 text-sm font-medium">
+      <Text className="mb-2 text-xs font-semibold text-muted-foreground">
         {t("recurring.schedule")}
       </Text>
       <ChoiceChips
@@ -653,7 +653,7 @@ function RecurringFormBody({
 
       {recurrence === "weekly" ? (
         <>
-          <Text className="mb-2 text-sm font-medium">
+          <Text className="mb-2 text-xs font-semibold text-muted-foreground">
             {t("recurring.dayOfWeek")}
           </Text>
           <OptionPicker
@@ -670,7 +670,7 @@ function RecurringFormBody({
         <>
           {recurrence === "yearly" ? (
             <>
-              <Text className="mb-2 text-sm font-medium">
+              <Text className="mb-2 text-xs font-semibold text-muted-foreground">
                 {t("recurring.monthOfYear")}
               </Text>
               <OptionPicker
@@ -686,7 +686,7 @@ function RecurringFormBody({
           ) : null}
           {offersRhythm ? (
             <>
-              <Text className="mb-2 text-sm font-medium">
+              <Text className="mb-2 text-xs font-semibold text-muted-foreground">
                 {t("recurring.rhythm")}
               </Text>
               <OptionPicker
@@ -702,7 +702,7 @@ function RecurringFormBody({
           ) : null}
           {offersRhythm && rhythm !== 1 && rhythm !== "some" ? (
             <>
-              <Text className="mb-2 text-sm font-medium">
+              <Text className="mb-2 text-xs font-semibold text-muted-foreground">
                 {t("recurring.firstMonth")}
               </Text>
               <OptionPicker
@@ -718,7 +718,7 @@ function RecurringFormBody({
           ) : null}
           {offersRhythm && rhythm === "some" ? (
             <>
-              <Text className="mb-2 text-sm font-medium">
+              <Text className="mb-2 text-xs font-semibold text-muted-foreground">
                 {t("recurring.whichMonths")}
               </Text>
               <View className="mb-4 flex-row flex-wrap gap-2">
@@ -757,7 +757,7 @@ function RecurringFormBody({
               {t("recurring.monthsSpreadNote")}
             </Text>
           ) : null}
-          <Text className="mb-2 text-sm font-medium">
+          <Text className="mb-2 text-xs font-semibold text-muted-foreground">
             {t("recurring.dayOfMonth")}
           </Text>
           <Input
@@ -771,13 +771,13 @@ function RecurringFormBody({
         </>
       )}
 
-      <Text className="mb-1 text-sm font-medium">
+      <Text className="mb-1 text-xs font-semibold text-muted-foreground">
         {t("recurring.activePeriod")}
       </Text>
       <Text variant="muted" className="mb-3 text-xs">
         {t("recurring.activePeriodNote")}
       </Text>
-      <Text className="mb-2 text-sm font-medium">
+      <Text className="mb-2 text-xs font-semibold text-muted-foreground">
         {t("recurring.startsOn")}
       </Text>
       <DateField
@@ -787,7 +787,7 @@ function RecurringFormBody({
         clearable
         className="mb-4"
       />
-      <Text className="mb-2 text-sm font-medium">{t("recurring.endsOn")}</Text>
+      <Text className="mb-2 text-xs font-semibold text-muted-foreground">{t("recurring.endsOn")}</Text>
       <DateField
         value={endsOn}
         onChange={setEndsOn}
@@ -894,7 +894,7 @@ function ThisMonthChoice({
 }) {
   return (
     <View className="mb-4">
-      <Text className="mb-2 text-sm font-medium">{title}</Text>
+      <Text className="mb-2 text-xs font-semibold text-muted-foreground">{title}</Text>
       <View
         accessibilityRole="radiogroup"
         accessibilityLabel={title}

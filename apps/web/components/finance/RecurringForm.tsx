@@ -505,7 +505,7 @@ function RecurringFormBody({
       </div>
       {supportsShares && !appsTransfer && (
         <div className="flex flex-col gap-2">
-          <span className="text-sm font-medium">
+          <span className="text-xs font-semibold tracking-[0.015em] text-muted-foreground">
             {t("recurring.amountType")}
           </span>
           <div className="grid grid-cols-2 gap-2">
@@ -739,7 +739,10 @@ function RecurringFormBody({
       )}
       {offerProperty ? (
         <div className="flex flex-col gap-2">
-          <span id="recurring-property" className="text-sm font-medium">
+          <span
+            id="recurring-property"
+            className="text-xs font-semibold tracking-[0.015em] text-muted-foreground"
+          >
             {t("property.attachLabel")}
           </span>
           <input type="hidden" name="propertyId" value={propertyId} />
@@ -776,7 +779,9 @@ function RecurringFormBody({
         />
       </div>
       <div className="flex flex-col gap-2">
-        <span className="text-sm font-medium">{t("recurring.schedule")}</span>
+        <span className="text-xs font-semibold tracking-[0.015em] text-muted-foreground">
+          {t("recurring.schedule")}
+        </span>
         <div className="grid grid-cols-3 gap-2">
           {(["monthly", "weekly", "yearly"] as const).map((value) => (
             <button
@@ -849,7 +854,7 @@ function RecurringFormBody({
           )}
           {offersRhythm && rhythm === "some" && (
             <fieldset className="flex flex-col gap-2">
-              <legend className="mb-2 text-sm font-medium">
+              <legend className="mb-2 text-xs font-semibold tracking-[0.015em] text-muted-foreground">
                 {t("recurring.whichMonths")}
               </legend>
               <div className="grid grid-cols-4 gap-2 sm:grid-cols-6">
@@ -971,7 +976,7 @@ function RecurringFormBody({
         </>
       )}
       <div className="flex flex-col gap-2">
-        <span className="text-sm font-medium">
+        <span className="text-xs font-semibold tracking-[0.015em] text-muted-foreground">
           {t("recurring.activePeriod")}
         </span>
         <Text className="text-xs text-muted-foreground">
@@ -1116,7 +1121,9 @@ function ChoiceGroup({
 }) {
   return (
     <fieldset className="flex flex-col gap-2">
-      <legend className="mb-2 text-sm font-medium">{legend}</legend>
+      <legend className="mb-2 text-xs font-semibold tracking-[0.015em] text-muted-foreground">
+        {legend}
+      </legend>
       <div className="grid gap-2 sm:grid-cols-2">
         {options.map((option) => (
           <label

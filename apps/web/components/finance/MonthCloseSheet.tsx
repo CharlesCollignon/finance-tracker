@@ -12,9 +12,9 @@ import type { MonthCloseResult, RunMoment } from "@finance/core/month-close";
 import { runwayDaysAdded } from "@finance/core/month-close";
 import { formatShortDate } from "@finance/core/constants";
 import { Button } from "@/components/ui/Button";
-import { Input } from "@/components/ui/Input";
 import { Text } from "@/components/ui/Text";
 import { MobileSheet } from "@/components/ui/MobileSheet";
+import { SheetFigure, SheetSave } from "@/components/finance/sheet/entry-sheet";
 import { AnimatedAmount } from "@/components/finance/AnimatedAmount";
 import { PrivateAmount } from "@/components/layout/PrivateAmount";
 import moments from "@/components/motion/moments.module.css";
@@ -242,69 +242,52 @@ export function MonthCloseSheet({
       <div className="flex flex-col gap-4">
         {stage === "entering" && (
           <>
-            <Text className="text-sm text-muted-foreground">
+            <SheetFigure
+              id="month-close-balance"
+              value={balance}
+              onChange={setBalance}
+              ink="var(--foreground)"
+              label={t("monthClose.balanceOn", {
+                date: formatShortDate(observeOn, locale),
+              })}
+            />
+            <p className="-mt-1 text-balance text-center text-sm text-muted-foreground">
               {t("monthClose.balancePrompt", {
                 date: formatShortDate(observeOn, locale),
               })}
-            </Text>
-            {isBaseline ? (
-              <Text className="text-sm text-muted-foreground">
-                {t("monthClose.baselineNote")}
-              </Text>
-            ) : (
-              <Text className="text-sm text-muted-foreground">
-                {t("monthClose.sameDayNote")}
-              </Text>
-            )}
-
-            <label className="flex flex-col gap-1.5">
-              <span className="text-sm font-medium">
-                {t("monthClose.balance")}
-              </span>
-              {fromBank ? (
-                <span className="text-xs text-muted-foreground">
-                  {t("monthClose.filledFromBank")}
-                </span>
-              ) : null}
-              <Input
-                type="text"
-                inputMode="decimal"
-                autoComplete="off"
-                placeholder={t("monthClose.balancePlaceholder")}
-                value={balance}
-                onChange={(event) => setBalance(event.target.value)}
-                aria-label={t("monthClose.balanceOn", {
-                  date: formatShortDate(observeOn, locale),
+            </p>
+            {fromBank ? (
+              <p className="-mt-2 text-center text-xs text-muted-foreground">
+                {t("monthClose.filledFromBank")}
+              </p>
+            ) : null}
+            {balanceIsUnreadable ? (
+              <p
+                id={balanceErrorId}
+                role="alert"
+                className="text-center text-sm text-destructive"
+              >
+                {t("monthClose.balanceUnreadable", {
+                  example: t("monthClose.balancePlaceholder"),
                 })}
-                aria-invalid={balanceIsUnreadable || undefined}
-                aria-describedby={
-                  balanceIsUnreadable ? balanceErrorId : undefined
-                }
-              />
-              {balanceIsUnreadable ? (
-                <span
-                  id={balanceErrorId}
-                  role="alert"
-                  className="text-sm text-destructive"
-                >
-                  {t("monthClose.balanceUnreadable", {
-                    example: t("monthClose.balancePlaceholder"),
-                  })}
-                </span>
-              ) : null}
-            </label>
+              </p>
+            ) : null}
+            <Text className="text-sm text-muted-foreground">
+              {isBaseline
+                ? t("monthClose.baselineNote")
+                : t("monthClose.sameDayNote")}
+            </Text>
 
-            <Button
+            <SheetSave
               type="button"
-              size="lg"
-              className="w-full"
+              label={
+                pending
+                  ? t("monthClose.working")
+                  : t("monthClose.seeWhatThatMeans")
+              }
               disabled={pending || !balanceIsUsable}
               onClick={check}
-            >
-              {pending
-                ? t("monthClose.working")
-                : t("monthClose.seeWhatThatMeans")}
-            </Button>
+            />
           </>
         )}
 
@@ -423,7 +406,7 @@ export function MonthCloseSheet({
               </div>
             )}
 
-            <div className="rounded-control border border-border p-3">
+            <div className="rounded-2xl border border-border bg-foreground/[0.03] px-3.5 py-2.5">
               <Figure
                 label={t("monthClose.cameIn")}
                 value={formatMoney(result.flows.income)}
@@ -478,20 +461,19 @@ export function MonthCloseSheet({
 
             {stage === "checked" ? (
               <div className="flex flex-col gap-2">
-                <Button
+                <SheetSave
                   type="button"
-                  size="lg"
-                  className="w-full"
+                  label={
+                    pending
+                      ? t("monthClose.closing")
+                      : t("monthClose.closeMonth", { month: monthLabel })
+                  }
                   disabled={pending}
                   onClick={confirm}
-                >
-                  {pending
-                    ? t("monthClose.closing")
-                    : t("monthClose.closeMonth", { month: monthLabel })}
-                </Button>
+                />
                 <Button
                   type="button"
-                  variant="outline"
+                  variant="ghost"
                   size="lg"
                   className="w-full"
                   disabled={pending}
@@ -502,14 +484,11 @@ export function MonthCloseSheet({
               </div>
             ) : (
               <div className="flex flex-col gap-2">
-                <Button
+                <SheetSave
                   type="button"
-                  size="lg"
-                  className="w-full"
+                  label={t("monthClose.done")}
                   onClick={close}
-                >
-                  {t("monthClose.done")}
-                </Button>
+                />
                 <Button
                   type="button"
                   variant="ghost"
