@@ -28,6 +28,8 @@ import type { InvestmentEventInput } from "@finance/core/validations/investment-
 import type { SplitInput } from "@finance/core/validations/splits";
 import * as proposals from "@finance/data/recurring-proposals";
 import * as decisions from "@finance/data/fulfilment-decisions";
+import { explainAwaited } from "@finance/data/fulfilment";
+import type { FulfilmentMiss } from "@finance/core/recurring-fulfilment";
 import * as deletions from "@finance/data/deletions";
 import * as dcaTransfer from "@finance/data/dca-transfer";
 import * as ledger from "@finance/data/ledger";
@@ -294,6 +296,26 @@ export async function undoRecordPlanned(
       occurredOn,
     ),
   );
+}
+
+/**
+ * Why the bank has not brought an occurrence yet, for the « Pas encore
+ * passé » sheet. A read, kept beside the sheet's writes.
+ */
+export async function explainAwaitedOccurrence(
+  templateId: string,
+  occurredOn: string,
+): Promise<ActionResult<{ miss: FulfilmentMiss | null }>> {
+  return asOwner(async (userId) => ({
+    success: true,
+    miss: await explainAwaited(
+      supabase,
+      userId,
+      templateId,
+      occurredOn,
+      todayIsoLocal(),
+    ),
+  }));
 }
 
 export async function skipPlannedOccurrence(

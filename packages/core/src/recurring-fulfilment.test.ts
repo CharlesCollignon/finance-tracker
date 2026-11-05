@@ -1049,3 +1049,77 @@ describe("an entry whose amount varies", () => {
     expect(amountFits(energy, 41)).toBe(true);
   });
 });
+
+describe("explainFulfilmentMisses, where it went instead", () => {
+  const TODAY_HERE = "2026-09-10";
+
+  it("names the category a payment of the right size was filed under", () => {
+    const misfiled = movement({
+      transactionId: "tx-misfiled",
+      categoryId: "cat-other",
+      categoryName: "Divers",
+      categoryType: "expense",
+    });
+    const [miss] = explainFulfilmentMisses([occurrence()], [misfiled], [], {
+      today: TODAY_HERE,
+    });
+    expect(miss).toMatchObject({
+      reason: "other-category",
+      nearest: { amount: 780, categoryName: "Divers" },
+    });
+    expect(describeMiss(miss!, money, "fr")).toBe(
+      "un mouvement de 780.00 € le ven. 4 sept. est classé dans Divers",
+    );
+  });
+
+  it("never offers money in as the money out it was expecting", () => {
+    const [miss] = explainFulfilmentMisses(
+      [occurrence()],
+      [
+        movement({
+          categoryId: SALARY_CATEGORY,
+          categoryName: "Salaire",
+          categoryType: "income",
+        }),
+      ],
+      [],
+      { today: TODAY_HERE },
+    );
+    expect(miss!.reason).toBe("nothing-alike");
+  });
+
+  it("points at a bank line still waiting for its category", () => {
+    const [miss] = explainFulfilmentMisses(
+      [occurrence()],
+      [],
+      [],
+      { today: TODAY_HERE },
+      [movement({ transactionId: "feed:1", categoryId: "" })],
+    );
+    expect(miss!.reason).toBe("waiting");
+    expect(describeMiss(miss!, money, "fr")).toBe(
+      "une ligne de 780.00 € du ven. 4 sept. attend sa catégorie dans « À vérifier »",
+    );
+  });
+
+  it("does not name a payment another entry was matched to", () => {
+    const rent = movement({
+      transactionId: "tx-rent",
+      categoryId: "cat-other",
+      categoryName: "Logement",
+      categoryType: "expense",
+    });
+    const [miss] = explainFulfilmentMisses(
+      [occurrence()],
+      [rent],
+      [
+        {
+          transactionId: "tx-rent",
+          key: "other:2026-09-05",
+        } as FulfilmentProposal,
+      ],
+      { today: TODAY_HERE },
+    );
+    expect(miss!.reason).toBe("nothing-alike");
+  });
+});

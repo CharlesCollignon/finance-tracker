@@ -3,12 +3,14 @@ import { todayIsoLocal } from "@finance/core/constants";
 import {
   bankForecast,
   debitedPurchaseForecast,
+  explainFulfilmentMisses,
   fulfilmentOccurrences,
   fulfilmentScope,
   proposalsForMonth,
   proposeFulfilments,
   refusalKey,
   type BankForecast,
+  type FulfilmentMiss,
   type FulfilmentMovement,
   type FulfilmentProposal,
   type ProposeOptions,
@@ -241,6 +243,87 @@ export async function getBankForecast(
 }
 
 /**
+ * Why the bank has not brought an occurrence it was expected to — the one a
+ * « Pas encore passé » row stands for: nothing like it in its category, the
+ * nearest too far off in amount or days, a refusal, a movement filed under
+ * another category, or a bank line still waiting in « À vérifier ». Matched
+ * over the same months as `getBankForecast`, so the reason given is about the
+ * same pairing the forecast tried. Null when it was not missed after all.
+ */
+export async function explainAwaited(
+  db: Db,
+  userId: string,
+  templateId: string,
+  occurredOn: string,
+  today: string,
+): Promise<FulfilmentMiss | null> {
+  const { data: templates, error } = await db
+    .from("recurring_templates")
+    .select("*, categories(name, type, icon, counts_toward_summary)")
+    .eq("user_id", userId);
+  if (error || !templates?.some((template) => template.id === templateId)) {
+    return null;
+  }
+  const typed = templates as RecurringTemplateWithCategory[];
+  const scope = fulfilmentScope(
+    Number(today.slice(0, 4)),
+    Number(today.slice(5, 7)),
+  );
+  const key = recurringOccurrenceKey(templateId, occurredOn);
+  // Every template's, as the forecast matches them: a movement another
+  // occurrence took is not this one's.
+  const all = fulfilmentOccurrences(
+    typed,
+    typed.map((template) => ({
+      id: template.category_id,
+      type: template.categories.type,
+      name: template.categories.name,
+    })),
+    scope.months,
+  );
+  const occurrences = all.filter(
+    (occurrence) =>
+      recurringOccurrenceKey(occurrence.templateId, occurrence.occurredOn) ===
+      key,
+  );
+  if (occurrences.length === 0) {
+    return null;
+  }
+
+  const [{ movements, options }, { data: pending }] = await Promise.all([
+    readCandidates(db, userId, scope.from, scope.to),
+    db
+      .from("bank_feed_items")
+      .select("id, occurred_on, purchased_on, amount, note, direction")
+      .eq("user_id", userId)
+      .eq("status", "pending")
+      .gte("occurred_on", scope.from)
+      .lte("occurred_on", scope.to),
+  ]);
+  const wantsIn = occurrences[0]!.categoryType === "income";
+  const waiting: FulfilmentMovement[] = (pending ?? [])
+    .filter((row) => (row.direction === "in") === wantsIn)
+    .map((row) => ({
+      transactionId: `feed:${row.id}`,
+      occurredOn: row.purchased_on ?? row.occurred_on,
+      amount: Number(row.amount),
+      categoryId: "",
+      note: row.note,
+    }));
+
+  const proposals = proposeFulfilments(all, movements, options);
+  return (
+    explainFulfilmentMisses(
+      occurrences,
+      movements,
+      proposals,
+      options,
+      waiting,
+    )[0] ?? null
+  );
+}
+
+/**
  * The movements that could fulfil something between two days, and what the
  * user has already decided about them.
  */
@@ -260,7 +343,9 @@ async function readCandidates(
     // itself.
     db
       .from("transactions")
-      .select("id, occurred_on, amount, category_id, note")
+      .select(
+        "id, occurred_on, amount, category_id, note, categories(name, type)",
+      )
       .eq("user_id", userId)
       .is("recurring_template_id", null)
       .gte("occurred_on", from)
@@ -294,6 +379,12 @@ async function readCandidates(
     amount: Number(row.amount),
     categoryId: row.category_id as string,
     note: (row.note as string | null) ?? null,
+    ...(row.categories
+      ? {
+          categoryName: row.categories.name,
+          categoryType: row.categories.type,
+        }
+      : {}),
   }));
 
   return {

@@ -758,6 +758,7 @@ export const fr: Messages = {
   planned: {
     body: "Prévu le {date}. Il sera enregistré le jour même.",
     awaitedBody: "Prévu le {date}, pas encore passé à la banque.",
+    why: "Pourquoi\u00A0: {reason}.",
     recordNow: "L'enregistrer maintenant",
     recordNowHint: "C'est déjà arrivé — l'ajoute à la date d'aujourd'hui.",
     skip: "Passer cette date",
@@ -2081,6 +2082,9 @@ export const fr: Messages = {
     },
     misses: {
       nothingAlike: "rien dans sa catégorie à rapprocher",
+      otherCategory: "un mouvement de {amount} le {date} est classé dans {category}",
+      waiting:
+        "une ligne de {amount} du {date} attend sa catégorie dans «\u00A0À vérifier\u00A0»",
       refused:
         "vous avez dit que le mouvement le plus proche n'était pas le bon",
       notArrived: "le mouvement le plus proche n'a pas encore eu lieu",
