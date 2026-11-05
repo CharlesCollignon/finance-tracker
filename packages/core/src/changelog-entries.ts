@@ -17,6 +17,24 @@ import type { ChangelogEntry, RoadmapItem } from "./changelog";
  */
 export const CHANGELOG: readonly ChangelogEntry[] = [
   {
+    id: "2026-11-05-refunds",
+    date: "2026-11-05",
+    kind: "fixed",
+    platforms: ["web", "phone"],
+    fr: {
+      title: "Une note de frais remboursée ne compte plus deux fois",
+      body: "Un repas payé pour le travail puis remboursé comptait deux fois : la dépense, et le remboursement comme un revenu. Une nouvelle catégorie « Remboursements » le retire de vos dépenses. Pluclair la propose pour l’argent qui revient — une ligne « NOTE DE FRAIS », « REMBOURSEMENT », « AVOIR », ou un virement d’un commerce où vous dépensez d’habitude.",
+      detail:
+        "À vérifier, l’argent qui arrive ne propose plus que des catégories qui peuvent le recevoir : un revenu, un remboursement, une épargne qui revient. Classé sous « Restaurants », un remboursement était compté comme une dépense de plus. Ce tri arrive sur le téléphone avec la prochaine version.",
+    },
+    en: {
+      title: "A repaid expense report no longer counts twice",
+      body: "A meal paid for work and then repaid counted twice: the spending, and the refund as income. A new “Refunds” category takes it off your spending. Pluclair offers it for money coming back — a line saying “NOTE DE FRAIS”, “REMBOURSEMENT”, “AVOIR”, or a transfer from a shop you usually spend at.",
+      detail:
+        "In Review, money coming in now only offers categories that can receive it: income, a refund, savings coming back. Filed under “Restaurants”, a refund used to count as more spending. This sorting reaches the phone with its next version.",
+    },
+  },
+  {
     id: "2026-11-05-instalments",
     date: "2026-11-05",
     kind: "new",

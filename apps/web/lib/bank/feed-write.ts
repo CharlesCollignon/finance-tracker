@@ -1,5 +1,7 @@
 import { ledgerDatesOf } from "@finance/core/cash-date";
 import { rememberCards } from "@finance/data/cards";
+import { ensureRefundCategory } from "@finance/data/categories";
+import { DEFAULT_LOCALE } from "@finance/core/i18n/locale";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { allRows } from "@finance/core/paging";
 import {
@@ -61,6 +63,8 @@ export async function ownerContext(
   supabase: Client,
   ownerId: string,
 ): Promise<OwnerContext> {
+  // So money coming back has its category to be offered under.
+  await ensureRefundCategory(supabase, ownerId, DEFAULT_LOCALE);
   const [history, { data: categories }, seen, rules] = await Promise.all([
     allRows(
       (from, to) =>

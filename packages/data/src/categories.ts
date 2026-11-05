@@ -5,6 +5,7 @@ import {
   buildCategoryRenames,
   buildMissingCategorySeeds,
 } from "@finance/core/seed-categories";
+import { refundCategoryOf } from "@finance/core/categories";
 import type { Category } from "@finance/core/types/database";
 import { categorySchema, parseUuid } from "@finance/core/validations/finance";
 import type { z } from "zod";
@@ -206,4 +207,33 @@ export async function seedDefaultCategories(
   }
 
   await applyCategoryRenames(db, userId, existing ?? [], locale);
+}
+
+/**
+ * Give an account its « Remboursements » category when it has none — the
+ * default every new account is seeded with, added here for the accounts made
+ * before it existed, so a refund coming in from the bank has somewhere to go.
+ * Only that one category: never a rename, never another default. A failed
+ * insert is left for the next sign-in's seeding.
+ */
+export async function ensureRefundCategory(
+  db: Db,
+  userId: string,
+  locale: Locale,
+): Promise<void> {
+  const { data, error } = await db
+    .from("categories")
+    .select("id, name, type")
+    .eq("user_id", userId)
+    .eq("type", "income");
+  if (error || refundCategoryOf(data ?? [])) {
+    return;
+  }
+  await db.from("categories").insert({
+    user_id: userId,
+    name: locale === "en" ? "Refunds" : "Remboursements",
+    type: "income",
+    icon: "wallet",
+    counts_toward_summary: false,
+  });
 }

@@ -90,6 +90,11 @@ export interface BankFeedCandidate {
   /** A month's combined card debit (`isCardSettlement`). */
   settlement?: boolean;
   /**
+   * Money in that says it comes back — an expense report repaid (« NOTE DE
+   * FRAIS »), a refund (« REMBOURSEMENT », « AVOIR »): `looksLikeRefund`.
+   */
+  refund?: boolean;
+  /**
    * Positive decimal string, exactly as the bank stated it. Kept as a string
    * all the way to the numeric column: the provider is deliberate about never
    * handing out floats, and re-introducing one here to save a cast would put
@@ -234,6 +239,27 @@ function cleanIban(iban: string | null): string | null {
   return iban ? iban.replace(/\s+/g, "").toUpperCase() : null;
 }
 
+/**
+ * Whether money in reads as money coming back: an expense report repaid by an
+ * employer (« NOTE DE FRAIS », « NDF », « FRAIS PROFESSIONNELS », « FRAIS DE
+ * DEPLACEMENT »), a refund (« REMBOURSEMENT », « REMB », « AVOIR »,
+ * « RETOUR »). A loan repayment going out is never money in.
+ */
+export function looksLikeRefund(text: string | null | undefined): boolean {
+  if (!text) {
+    return false;
+  }
+  const line = text
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toUpperCase();
+  return (
+    /\bNOTES? DE FRAIS\b|\bNDF\b|\bFRAIS (PRO|PROFESSIONNELS|DE DEPLACEMENTS?|DE MISSION)\b/.test(
+      line,
+    ) || /\b(REMBOURSEMENTS?|REMB|REMBT|AVOIR|RETOUR|REFUND)\b/.test(line)
+  );
+}
+
 /** `null` when the row is not something the ledger should ever hold. */
 export function toCandidate(
   tx: BankTransaction,
@@ -270,7 +296,15 @@ export function toCandidate(
     translator(locale)("fallback.bankTransaction");
 
   const purchasedOn = purchaseDayOf(tx, occurredOn);
+  const refund =
+    direction === "in" &&
+    looksLikeRefund(
+      [tx.remittanceInformation, tx.debtorName, tx.creditorName]
+        .filter(Boolean)
+        .join(" "),
+    );
   return {
+    ...(refund ? { refund: true } : {}),
     providerId: tx.id,
     occurredOn,
     purchasedOn,
@@ -386,7 +420,13 @@ export function findLedgerMatch(
   return best;
 }
 
-export type FeedReason = "merchant" | "mcc" | "joint-transfer" | "rule";
+export type FeedReason =
+  | "merchant"
+  | "mcc"
+  | "joint-transfer"
+  | "rule"
+  /** Money coming back, offered as a refund (`looksLikeRefund`). */
+  | "refund";
 
 export interface FeedSuggestion {
   categoryId: string;
@@ -541,13 +581,35 @@ export function decide(
   // salary, a refund, a transfer someone sent. None of it should land
   // uninspected.
   if (candidate.direction === "in") {
-    const suggestion = rule
-      ? {
-          categoryId: rule.categoryId,
-          categoryName: rule.categoryName,
-          reason: "merchant" as const,
-        }
-      : null;
+    // Money coming back — from a shop spent at, or reading as a refund or an
+    // expense report — is offered as a refund, which the budget takes off
+    // spending. Filed under the shop's own spending category it would count
+    // as more spending.
+    const refunds =
+      categoryIdsByName.get("remboursements") ??
+      categoryIdsByName.get("refunds");
+    if (
+      refunds &&
+      (candidate.refund || (rule && rule.categoryType === "expense"))
+    ) {
+      return {
+        kind: "review",
+        suggestion: {
+          categoryId: refunds.id,
+          categoryName: refunds.name,
+          reason: "refund",
+        },
+        why: "possible-refund",
+      };
+    }
+    const suggestion =
+      rule && rule.categoryType !== "expense"
+        ? {
+            categoryId: rule.categoryId,
+            categoryName: rule.categoryName,
+            reason: "merchant" as const,
+          }
+        : null;
     return {
       kind: "review",
       suggestion,

@@ -6,6 +6,7 @@ import {
   ScrollView,
   View,
 } from "react-native";
+import { categoriesFor } from "@finance/core/categories";
 import { Ionicons } from "@expo/vector-icons";
 import Animated, {
   useReducedMotion,
@@ -417,7 +418,15 @@ export function BankInboxSheet({
   ) : choosing ? (
     <ReviewCategoryChooser
       title={choosing.kind === "pending" ? choosing.title : choosing.group.name}
-      categories={categories}
+      // Money in goes to income, a refund or savings coming back; money
+      // out anywhere but income (`categoriesFor`).
+      categories={categoriesFor(
+        choosing.kind === "pending"
+          ? (visible.find((group) => group.key === choosing.key)?.direction ??
+              "out")
+          : choosing.group.direction,
+        categories,
+      )}
       recentCategoryIds={recentCategoryIds}
       value={chooserValue}
       onPick={pick}
