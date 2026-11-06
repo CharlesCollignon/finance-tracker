@@ -17,6 +17,20 @@ import type { ChangelogEntry, RoadmapItem } from "./changelog";
  */
 export const CHANGELOG: readonly ChangelogEntry[] = [
   {
+    id: "2026-11-06-web-design-bearing",
+    date: "2026-11-06",
+    kind: "better",
+    platforms: ["web"],
+    fr: {
+      title: "Le point, mis en page par chaque design",
+      body: "En Papier, Le point se lit comme une une : le solde en article principal, les montants courts dans une colonne à côté. En Bento, le solde devient une grande tuile vert anis, entourée de tuiles plus petites. En Console, les cartes s’assemblent en une seule grille de panneaux. Les mêmes informations, dans le même ordre de lecture.",
+    },
+    en: {
+      title: "Le point, laid out by each design",
+      body: "In Papier, Le point reads like a front page: the balance as the lead story, the short figures in a column beside it. In Bento, the balance becomes a big lime tile among smaller ones. In Console, the cards join into a single grid of panels. The same information, read in the same order.",
+    },
+  },
+  {
     id: "2026-11-06-web-design-blocks",
     date: "2026-11-06",
     kind: "better",
