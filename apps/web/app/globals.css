@@ -1203,8 +1203,7 @@
     order: -1;
   }
   :root[data-design="papier"] .bearing-grid > .bearing-slot-trust,
-  :root[data-design="papier"] .bearing-grid > .bearing-slot-read,
-  :root[data-design="papier"] .bearing-grid > .bearing-slot-share {
+  :root[data-design="papier"] .bearing-grid > .bearing-slot-read {
     order: 1;
   }
   :root[data-design="papier"] .bearing-grid > .bearing-slot-upcoming,
@@ -1259,8 +1258,7 @@
     order: -1;
   }
   :root[data-design="bento"] .bearing-grid > .bearing-slot-trust,
-  :root[data-design="bento"] .bearing-grid > .bearing-slot-read,
-  :root[data-design="bento"] .bearing-grid > .bearing-slot-share {
+  :root[data-design="bento"] .bearing-grid > .bearing-slot-read {
     order: 1;
   }
 }

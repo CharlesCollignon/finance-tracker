@@ -1,6 +1,7 @@
 /**
- * « Relevé du mois »: one month as an image or a printed page
- * (`@finance/core/month-share`). `en.ts` mounts it as `monthShare`.
+ * « Relevé du mois »: one month as an image (`@finance/core/month-share`),
+ * kept only for the share button of APKs up to 1.5.0 — « Partager ce mois »
+ * left both apps in November 2026. `en.ts` mounts it as `monthShare`.
  */
 export const monthShareEn = {
   title: "{month} statement",
@@ -14,15 +15,5 @@ export const monthShareEn = {
   upcoming: "Still to go out",
   everythingElse: "Everything else",
   whereItWent: "Where it went",
-  /** The controls on Le point. */
-  share: "Share this month",
-  shareImage: "As an image",
-  sharePrint: "Print or save as PDF",
-  withAmounts: "With the amounts",
-  shareHint:
-    "An image of the month to send, or the page to print: with the amounts, or with the shares only.",
-  printEntries: "Entries",
-  print: "Print",
-  back: "Back to Le point",
   madeWith: "Pluclair · pluclair.com",
 };

@@ -12,7 +12,6 @@ import { TodoStrip } from "@/components/finance/bearing/TodoStrip";
 import { ArrivedCharges } from "@/components/finance/ArrivedCharges";
 import { PurchasesToConfirm } from "@/components/finance/PurchasesToConfirm";
 import { SetupCard } from "@/components/finance/bearing/SetupCard";
-import { ShareMonthCard } from "@/components/finance/bearing/ShareMonthCard";
 import { YearReadyCard } from "@/components/finance/bearing/YearReadyCard";
 import { MonthPicker } from "@/components/layout/MonthPicker";
 import { FadeIn, FadeInItem } from "@/components/motion/FadeIn";
@@ -216,14 +215,6 @@ export function BearingMonthView({
           {readSlot ? (
             <FadeInItem className="bearing-slot-read md:col-span-2 xl:col-span-3">
               {readSlot}
-            </FadeInItem>
-          ) : null}
-
-          {/* The month to send or to print: not a month ahead, which has
-              nothing to say yet, nor a first visit. */}
-          {!data.empty && data.balance.period !== "future" ? (
-            <FadeInItem className="bearing-slot-share md:col-span-2 xl:col-span-3">
-              <ShareMonthCard year={data.year} month={data.month} />
             </FadeInItem>
           ) : null}
         </FadeIn>
