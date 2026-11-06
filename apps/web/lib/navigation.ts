@@ -62,15 +62,17 @@ export const APP_NAV_ITEMS = [
     children: [] as NavChild[],
   },
   {
-    href: "/transactions",
+    // The calendar first: the Journal opens on the month by day (the owner's
+    // call, November 2026), the list one tab along.
+    href: "/calendar",
     labelKey: "nav.ledger" satisfies Key,
     icon: ArrowsLeftRight,
     // One of two surfaces with more than one way of looking at it. These are
     // the tabs at the top of the surface, at every width; the nav names the
     // surface and the tabs name its views.
     children: [
-      { href: "/transactions", labelKey: "nav.ledgerList" },
       { href: "/calendar", labelKey: "nav.ledgerCalendar" },
+      { href: "/transactions", labelKey: "nav.ledgerList" },
       { href: "/history", labelKey: "nav.ledgerByCategory" },
     ] as NavChild[],
   },

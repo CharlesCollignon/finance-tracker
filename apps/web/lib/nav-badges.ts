@@ -19,7 +19,7 @@ export const NO_BADGES: NavBadges = { bearing: 0, ledger: 0 };
 export function badgeFor(href: string, badges: NavBadges): number {
   return href === "/bearing"
     ? badges.bearing
-    : href === "/transactions"
+    : href === "/calendar" || href === "/transactions"
       ? badges.ledger
       : 0;
 }
