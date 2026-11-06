@@ -17,7 +17,6 @@ import { propertyFr } from "./property.fr";
 import { spaceFr } from "./space.fr";
 import { askFr } from "./ask.fr";
 import { rulesFr } from "./rules.fr";
-import { merchantsFr } from "./merchants.fr";
 import { paletteFr } from "./palette.fr";
 import { monthShareFr } from "./month-share.fr";
 import { eventsFr } from "./events.fr";
@@ -84,7 +83,6 @@ export const fr: Messages = {
     ledgerList: "Liste",
     ledgerCalendar: "Calendrier",
     ledgerByCategory: "Par catégorie",
-    ledgerByMerchant: "Par commerce",
     walletsPositions: "Comptes",
     walletsAnalysis: "Analyse",
     walletsLookThrough: "Composition",
@@ -3081,7 +3079,6 @@ export const fr: Messages = {
   space: spaceFr,
   ask: askFr,
   rules: rulesFr,
-  merchants: merchantsFr,
   palette: paletteFr,
   monthShare: monthShareFr,
   events: eventsFr,

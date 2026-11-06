@@ -165,12 +165,6 @@ export const landingCopy = {
         link: "",
       },
       {
-        id: "merchants",
-        title: "By shop",
-        body: "Each shop’s visits, its usual month and its twelve months, in one view of the Ledger.",
-        link: "",
-      },
-      {
         id: "receipts",
         title: "Parts and receipts",
         body: "One payment in several categories, and the receipt kept behind it — read by your AI if you wish.",

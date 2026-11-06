@@ -116,7 +116,9 @@ function PaletteSheet({
         );
         return;
       case "shop":
-        router.push(`/merchants?q=${encodeURIComponent(item.label)}`);
+        // The Journal's list, searched by the shop's name: « Par commerce »
+        // is gone (November 2026).
+        router.push(`/transactions?q=${encodeURIComponent(item.label)}`);
         return;
       case "charge":
         router.push(`/recurring?edit=${encodeURIComponent(item.id)}`);

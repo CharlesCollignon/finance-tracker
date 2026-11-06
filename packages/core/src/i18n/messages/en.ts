@@ -17,7 +17,6 @@ import { propertyEn } from "./property.en";
 import { spaceEn } from "./space.en";
 import { askEn } from "./ask.en";
 import { rulesEn } from "./rules.en";
-import { merchantsEn } from "./merchants.en";
 import { paletteEn } from "./palette.en";
 import { monthShareEn } from "./month-share.en";
 import { eventsEn } from "./events.en";
@@ -125,7 +124,6 @@ export const en = {
     ledgerList: "List",
     ledgerCalendar: "Calendar",
     ledgerByCategory: "By category",
-    ledgerByMerchant: "By shop",
     walletsPositions: "Accounts",
     walletsAnalysis: "Analysis",
     walletsLookThrough: "What's inside",
@@ -3920,7 +3918,6 @@ export const en = {
   space: spaceEn,
   ask: askEn,
   rules: rulesEn,
-  merchants: merchantsEn,
   palette: paletteEn,
   monthShare: monthShareEn,
   events: eventsEn,

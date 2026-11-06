@@ -14,7 +14,6 @@ import {
   Funnel,
   MagnifyingGlass,
   Receipt,
-  Storefront,
 } from "@phosphor-icons/react";
 import { EASE_STANDARD } from "@finance/core/motion";
 import { Orb } from "@/components/brand/Orb";
@@ -42,11 +41,10 @@ const SPAN: Record<string, string> = {
   search: "md:col-span-3",
   alerts: "md:col-span-3",
   privacy: "md:col-span-3",
-  // What the reference-app phases added (October 2026): a row of three over
-  // a row of two, since « Partager ce mois » left (November 2026).
-  rules: "md:col-span-2",
-  merchants: "md:col-span-2",
-  receipts: "md:col-span-2",
+  // What the reference-app phases added (October 2026): two rows of two,
+  // since « Partager ce mois » and « Par commerce » left (November 2026).
+  rules: "md:col-span-3",
+  receipts: "md:col-span-3",
   operations: "md:col-span-3",
   palette: "md:col-span-3",
 };
@@ -174,13 +172,6 @@ function Picture({
     case "rules":
       return (
         <IconPicture icon={<Funnel size={26} weight="light" />} seen={seen} />
-      );
-    case "merchants":
-      return (
-        <IconPicture
-          icon={<Storefront size={26} weight="light" />}
-          seen={seen}
-        />
       );
     case "receipts":
       return (

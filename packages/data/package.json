@@ -55,7 +55,6 @@
     "./demo": "./src/demo.ts",
     "./filing-rules": "./src/filing-rules.ts",
     "./investment-events": "./src/investment-events.ts",
-    "./merchant-screen": "./src/merchant-screen.ts",
     "./space-balance": "./src/space-balance.ts",
     "./splits": "./src/splits.ts",
     "./ask": "./src/ask.ts",

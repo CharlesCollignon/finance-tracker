@@ -308,7 +308,6 @@ export default function TabsLayout() {
               {/* Views of the Ledger, not destinations of their own. */}
               <Tabs.Screen name="transactions" options={{ href: null }} />
               <Tabs.Screen name="history" options={{ href: null }} />
-              <Tabs.Screen name="merchants" options={{ href: null }} />
               {/* And two of Placements: what the accounts earn, how the money
                   is spread and what it costs; and what the funds are made of. */}
               <Tabs.Screen name="analysis" options={{ href: null }} />
