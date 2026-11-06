@@ -1487,6 +1487,110 @@
   margin-top: -1px;
 }
 
+/* --- Placements and Plan, arranged per design -------------------------------
+
+   The patrimoine figure (`stat-hero`), the account pills (`account-chip`),
+   the monthly-transfer chips (`dca-chip`) and the holding tiles
+   (`position-tile`); Plan's cards share Le point's heading tags, and its
+   « Progression » is `plan-progression`. */
+
+/* « Papier »: the figure as a lead with an italic lede over it; the
+   accounts as underlined words; each holding a ruled entry. */
+:root[data-design="papier"] .stat-hero-label {
+  font-family: var(--font-serif);
+  font-size: 1.25rem;
+  font-style: italic;
+  font-weight: 400;
+}
+:root[data-design="papier"] .account-chip {
+  border: 0;
+  border-bottom: 3px solid transparent;
+  border-radius: 0;
+  background: transparent;
+  padding-inline: 0.25rem;
+  font-family: var(--font-serif);
+  font-size: 1.0625rem;
+  font-weight: 400;
+  color: var(--muted-foreground);
+}
+:root[data-design="papier"] .account-chip[aria-pressed="true"] {
+  border-bottom-color: var(--primary);
+  color: var(--foreground);
+  font-weight: 600;
+}
+:root[data-design="papier"] .dca-chip {
+  border-radius: 2px;
+}
+:root[data-design="papier"] .position-tile {
+  border: 0;
+  border-top: 2px solid var(--foreground);
+  border-radius: 0;
+  background: transparent;
+}
+
+/* « Bento »: the patrimoine is the big lime tile; holdings are grey tiles
+   inside the white account tile; « Progression » is lime too. */
+:root[data-design="bento"] .stat-hero,
+:root[data-design="bento"] .plan-progression {
+  --card: #d4f25c;
+  --foreground: #0f1115;
+  --card-foreground: #0f1115;
+  --muted: #c3e04a;
+  --muted-foreground: #4a5320;
+  --secondary: #c3e04a;
+  --primary: #0f1115;
+  --primary-ink: #0f1115;
+  --primary-foreground: #d4f25c;
+  --destructive: #a61b1b;
+  --success: #0d5a29;
+  --warning: #7a3d00;
+  --border: rgba(15, 17, 21, 0.14);
+  color: var(--foreground);
+}
+:root[data-design="bento"] .stat-hero {
+  padding: 2rem 1.5rem;
+  border-radius: var(--card-radius);
+  background-color: var(--card);
+}
+:root[data-design="bento"] .plan-progression {
+  background-color: var(--card);
+}
+:root[data-design="bento"] .position-tile {
+  border: 0;
+  border-radius: 20px;
+  background-color: var(--muted);
+}
+
+/* « Console »: the figure in a ruled panel with its label in capitals;
+   accounts as square tabs, the chosen one in the accent; holdings as
+   square panels. */
+:root[data-design="console"] .stat-hero {
+  padding: 1.5rem;
+  border: 1px solid var(--border);
+}
+:root[data-design="console"] .stat-hero-label {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+:root[data-design="console"] .account-chip,
+:root[data-design="console"] .dca-chip {
+  border-radius: 0;
+  font-family: var(--font-mono);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+:root[data-design="console"] .account-chip[aria-pressed="true"] {
+  border-color: var(--primary);
+  background-color: var(--primary);
+  color: var(--primary-foreground);
+}
+:root[data-design="console"] .position-tile {
+  border-radius: var(--card-radius);
+  background-color: transparent;
+}
+
 /* Privacy: blur monetary values when enabled */
 html[data-privacy="on"] .privacy-amount,
 html[data-privacy="on"] .privacy-sensitive {

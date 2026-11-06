@@ -73,6 +73,8 @@ export function ProgressionCard({
     <PlanCard
       icon={<Trophy size={ICON.sm} weight="fill" />}
       title={t("trajectory.progressionTitle")}
+      // « Bento » draws this one in lime (`globals.css`).
+      className="plan-progression"
     >
       <div className="grid gap-4 md:grid-cols-3 md:gap-6">
         <div className="flex flex-col gap-3">

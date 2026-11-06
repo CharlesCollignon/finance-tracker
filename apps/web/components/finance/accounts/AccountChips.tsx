@@ -324,7 +324,7 @@ export function AccountChips({
                   }
                 }}
                 className={cn(
-                  "min-h-11 shrink-0 select-none rounded-full border px-4 py-2 text-sm font-semibold [-webkit-touch-callout:none] lg:min-h-0",
+                  "account-chip min-h-11 shrink-0 select-none rounded-full border px-4 py-2 text-sm font-semibold [-webkit-touch-callout:none] lg:min-h-0",
                   "transition-colors duration-hover",
                   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
                   active

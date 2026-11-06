@@ -17,6 +17,20 @@ import type { ChangelogEntry, RoadmapItem } from "./changelog";
  */
 export const CHANGELOG: readonly ChangelogEntry[] = [
   {
+    id: "2026-11-06-web-design-placements-plan",
+    date: "2026-11-06",
+    kind: "better",
+    platforms: ["web"],
+    fr: {
+      title: "Placements et Plan, mis en page par chaque design",
+      body: "En Papier, votre patrimoine s’ouvre sur un chapeau en italique et les comptes se lisent comme des rubriques soulignées. En Bento, le patrimoine et la progression du Plan deviennent des tuiles vert anis, les lignes de placement des tuiles grises. En Console, le patrimoine prend place dans un panneau, et les comptes deviennent des onglets carrés.",
+    },
+    en: {
+      title: "Investments and Plan, laid out by each design",
+      body: "In Papier, your wealth opens under an italic lede and the accounts read as underlined sections. In Bento, your wealth and the Plan's progression become lime tiles, and each holding a grey tile. In Console, your wealth sits in a panel and the accounts become square tabs.",
+    },
+  },
+  {
     id: "2026-11-06-web-design-journal",
     date: "2026-11-06",
     kind: "better",
