@@ -256,6 +256,7 @@ function EntryCard({
         "overflow-hidden rounded-card border bg-card/70 p-card",
         entry.featured ? "border-foreground/15" : "border-border",
       )}
+      style={cardFrame()}
     >
       {fresh ? (
         <View className="absolute bottom-4 left-0 top-4 w-0.5 rounded-full bg-success" />

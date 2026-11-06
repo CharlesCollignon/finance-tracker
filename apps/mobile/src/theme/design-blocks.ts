@@ -587,3 +587,23 @@ export function heroLabelFace(): TextStyle | null {
       return null;
   }
 }
+
+/* ------------------------------------------- the rest (phase 12) */
+
+/**
+ * What floats over a screen — a menu, a dialog, a toast, the selection bar,
+ * the language offer: only the corners and edge change, never the ground,
+ * which must stay opaque to be read over whatever is behind it.
+ */
+export function panelFrame(): ViewStyle | null {
+  switch (currentDesign()) {
+    case "papier":
+      return { borderRadius: 2, borderColor: COLORS.hairlineStrong };
+    case "bento":
+      return { borderRadius: 24, borderWidth: 0 };
+    case "console":
+      return { borderRadius: 0, borderColor: COLORS.hairlineStrong };
+    default:
+      return null;
+  }
+}

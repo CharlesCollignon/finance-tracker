@@ -12,6 +12,7 @@ import { cn } from "@/lib/cn";
 import { useThemeColors } from "@/theme/useThemeColors";
 import { ICON } from "@/theme/tokens";
 import { useT } from "@/providers/LocaleProvider";
+import { panelFrame } from "@/theme/design-blocks";
 
 function initialFor(email: string | undefined, name: string | undefined) {
   const source = (name ?? email ?? "?").trim();
@@ -89,7 +90,10 @@ export function AccountMenu() {
             >
               {/* Solid surface: the frosted panel made the rows hard to
                   read against busy content behind it. */}
-              <View className="w-72 overflow-hidden rounded-card border border-border bg-card">
+              <View
+                className="w-72 overflow-hidden rounded-card border border-border bg-card"
+                style={panelFrame()}
+              >
                 <View className="gap-1 p-2">
                   <Pressable
                     accessibilityRole="link"

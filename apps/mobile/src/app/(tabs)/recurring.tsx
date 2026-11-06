@@ -353,7 +353,10 @@ export default function RecurringScreen() {
           contentContainerStyle={{ paddingBottom: tabBarClearance }}
         >
           {remindersPrompt ? (
-            <View className="gap-3 rounded-card border border-border p-4">
+            <View
+              className="gap-3 rounded-card border border-border p-4"
+              style={cardFrame()}
+            >
               <View className="gap-1">
                 <Text className="text-sm font-medium">
                   {t("charges.remindTitle")}
