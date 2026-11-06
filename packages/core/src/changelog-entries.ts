@@ -17,6 +17,20 @@ import type { ChangelogEntry, RoadmapItem } from "./changelog";
  */
 export const CHANGELOG: readonly ChangelogEntry[] = [
   {
+    id: "2026-11-06-site-feature-addresses",
+    date: "2026-11-06",
+    kind: "better",
+    platforms: ["web"],
+    fr: {
+      title: "Les pages du site, à des adresses en français",
+      body: "Les pages qui présentent Pluclair s’ouvrent désormais sous /fonctionnalites, avec leur nom en français : /fonctionnalites/le-point, /fonctionnalites/journal, /fonctionnalites/placements… Un ancien lien en /features mène toujours à la bonne page.",
+    },
+    en: {
+      title: "The site's pages, at French addresses",
+      body: "The pages that present Pluclair now open under /fonctionnalites, with their French names: /fonctionnalites/le-point, /fonctionnalites/journal, /fonctionnalites/placements… An old /features link still leads to the right page.",
+    },
+  },
+  {
     id: "2026-11-06-web-investment-tiles",
     date: "2026-11-06",
     kind: "better",
