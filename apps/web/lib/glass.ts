@@ -20,7 +20,7 @@
 
 /** Header bands — structure, not content. */
 export const GLASS_CHROME =
-  "border-border bg-background/60 backdrop-blur-xl backdrop-saturate-150";
+  "surface-chrome border-border bg-background/60 backdrop-blur-xl backdrop-saturate-150";
 
 /**
  * A content card floating on the veil.
@@ -30,11 +30,11 @@ export const GLASS_CHROME =
  * is the single easiest way to make an interface look cheap.
  */
 export const GLASS_CARD =
-  "border border-foreground/10 bg-card/60 backdrop-blur-xl backdrop-saturate-150";
+  "surface-card border border-foreground/10 bg-card/60 backdrop-blur-xl backdrop-saturate-150";
 
 /** Popovers, menus and sheets — above everything, over anything. */
 export const GLASS_PANEL =
-  "border border-foreground/10 bg-background/80 backdrop-blur-2xl backdrop-saturate-150";
+  "surface-panel border border-foreground/10 bg-background/80 backdrop-blur-2xl backdrop-saturate-150";
 
 /**
  * A panel that has to be solid.
@@ -50,7 +50,8 @@ export const GLASS_PANEL =
  * against busy content behind it". A control holding twelve small targets is
  * one to see clearly, not through.
  */
-export const SOLID_PANEL = "border border-foreground/10 bg-popover";
+export const SOLID_PANEL =
+  "surface-panel border border-foreground/10 bg-popover";
 
 /**
  * The hero card's extra lift.

@@ -46,7 +46,7 @@ export function PageHeader({ titleKey, children, className }: PageHeaderProps) {
   return (
     <header
       className={cn(
-        "sticky top-0 z-30 box-border h-[calc(var(--shell-header-height)+env(safe-area-inset-top,0px))] shrink-0",
+        "page-header sticky top-0 z-30 box-border h-[calc(var(--shell-header-height)+env(safe-area-inset-top,0px))] shrink-0",
         "border-b pt-safe",
         GLASS_CHROME,
         bare
@@ -57,6 +57,15 @@ export function PageHeader({ titleKey, children, className }: PageHeaderProps) {
         className,
       )}
     >
+      {/* The page's name drawn large, from `md`, in the designs that print
+          it there — a serif headline in « Papier », a heavy one in « Bento »,
+          a path in « Console » (`.page-title-display` in `globals.css`).
+          « Nuit » keeps it in the notch and draws none. Hidden from screen
+          readers: the `h1` below already names the page. */}
+      <div aria-hidden className="page-title-display hidden">
+        <span className="page-title-path">Pluclair / </span>
+        <PageTitle titleKey={titleKey} />
+      </div>
       <div className={SHELL_HEADER_INNER_CLASS}>
         {/* Shrinks and truncates rather than holding its width: on a 320px
             screen the month picker and the title together are wider than the

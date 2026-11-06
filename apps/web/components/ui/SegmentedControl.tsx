@@ -62,7 +62,7 @@ export function SegmentedControl<T extends string>({
       role="group"
       aria-label={label}
       className={cn(
-        "relative isolate grid rounded-full border border-border p-1",
+        "segmented relative isolate grid rounded-full border border-border p-1",
         className,
       )}
       style={{ gridTemplateColumns: `repeat(${segments.length}, 1fr)` }}
@@ -77,7 +77,7 @@ export function SegmentedControl<T extends string>({
       <span
         aria-hidden
         className={cn(
-          "pointer-events-none absolute inset-y-1 left-1 -z-10 rounded-full",
+          "segmented-pill pointer-events-none absolute inset-y-1 left-1 -z-10 rounded-full",
           "bg-secondary ring-1 ring-inset ring-hairline-strong",
           "transition-transform duration-hover ease-out",
         )}
@@ -103,7 +103,7 @@ export function SegmentedControl<T extends string>({
               if (!active) onChange(segment.value);
             }}
             className={cn(
-              "rounded-full px-3 py-1.5 text-xs font-medium whitespace-nowrap",
+              "segment rounded-full px-3 py-1.5 text-xs font-medium whitespace-nowrap",
               "transition-colors duration-hover sm:text-sm",
               "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring",
               active

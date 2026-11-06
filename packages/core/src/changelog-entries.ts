@@ -17,6 +17,20 @@ import type { ChangelogEntry, RoadmapItem } from "./changelog";
  */
 export const CHANGELOG: readonly ChangelogEntry[] = [
   {
+    id: "2026-11-06-web-design-blocks",
+    date: "2026-11-06",
+    kind: "better",
+    platforms: ["web"],
+    fr: {
+      title: "Les designs redessinent aussi les écrans",
+      body: "En Papier, les cartes deviennent des rubriques sous un filet noir, avec des pointillés jusqu’aux montants et le nom de la page en grand titre ; en Bento, des tuiles blanches aux coins arrondis et des boutons en pastille ; en Console, des panneaux carrés, des intitulés en capitales et le chemin de la page (PLUCLAIR / LE POINT). Nuit ne change pas.",
+    },
+    en: {
+      title: "The designs reshape the screens too",
+      body: "In Papier, cards become sections under a black rule, with dotted leaders to the amounts and the page's name as a headline; in Bento, white tiles with round corners and pill buttons; in Console, square panels, headings in capitals and the page's path (PLUCLAIR / LE POINT). Nuit is unchanged.",
+    },
+  },
+  {
     id: "2026-11-06-web-design-navigation",
     date: "2026-11-06",
     kind: "better",

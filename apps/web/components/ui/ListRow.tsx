@@ -79,7 +79,7 @@ export function ListRow({
       ) : null}
       <span
         className={cn(
-          "min-w-0 flex-1 text-left",
+          "list-row-label min-w-0 flex-1 text-left",
           !hint && "truncate",
           destructive && "text-destructive",
           disabled && "text-muted-foreground",
@@ -96,6 +96,11 @@ export function ListRow({
           label
         )}
       </span>
+      {value ? (
+        // A ledger's dotted leader, from the label to the value: drawn only
+        // in « Papier » (`.list-row-leader` in `globals.css`).
+        <span aria-hidden className="list-row-leader hidden" />
+      ) : null}
       {value ? (
         <span className="min-w-0 truncate text-sm text-muted-foreground">
           {value}
@@ -118,7 +123,7 @@ export function ListRow({
   return (
     <div
       className={cn(
-        "relative",
+        "list-row relative",
         // The inset divider. Starts at the label so the icon column reads as
         // one strip rather than as a set of boxed rows.
         "before:pointer-events-none before:absolute before:inset-x-0 before:top-0",
@@ -165,7 +170,7 @@ export function ListSection({
   return (
     <section className="flex w-full flex-col gap-2">
       {title ? (
-        <h2 className="px-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+        <h2 className="section-label px-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
           {title}
         </h2>
       ) : null}

@@ -70,7 +70,10 @@ export function SurfaceTabs({ tabs, className }: SurfaceTabsProps) {
       <MotionConfig reducedMotion="user">
         <nav
           aria-label={t("common.view")}
-          className={cn("flex items-center gap-1 overflow-x-auto", className)}
+          className={cn(
+            "surface-tabs flex items-center gap-1 overflow-x-auto",
+            className,
+          )}
         >
           {tabs.map(({ href, labelKey }) => {
             const active = shown === href;
@@ -85,7 +88,7 @@ export function SurfaceTabs({ tabs, className }: SurfaceTabsProps) {
                   }
                 }}
                 className={cn(
-                  "relative shrink-0 rounded-full px-3.5 py-1.5 text-sm font-medium",
+                  "surface-tab relative shrink-0 rounded-full px-3.5 py-1.5 text-sm font-medium",
                   "transition-colors duration-hover",
                   active
                     ? "text-background"
@@ -96,7 +99,7 @@ export function SurfaceTabs({ tabs, className }: SurfaceTabsProps) {
                   <m.span
                     layoutId={pillId}
                     aria-hidden
-                    className="absolute inset-0 rounded-full bg-foreground"
+                    className="surface-tab-pill absolute inset-0 rounded-full bg-foreground"
                     transition={PILL_SPRING}
                   />
                 ) : null}

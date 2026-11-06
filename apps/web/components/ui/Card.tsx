@@ -12,7 +12,7 @@ const Card = ({ className, ...props }: ICardProps) => {
       className={cn(
         // The card radius, as every other surface holding content: it was
         // the control radius, 10px against the system's 20.
-        "inline-block rounded-card border border-border bg-card",
+        "surface-card inline-block rounded-card border border-border bg-card",
         className,
       )}
       {...props}
@@ -34,14 +34,14 @@ const CardBezel = ({
   return (
     <div
       className={cn(
-        "rounded-shell border border-border bg-foreground/[0.04] p-1.5",
+        "surface-bezel rounded-shell border border-border bg-foreground/[0.04] p-1.5",
         className,
       )}
       {...props}
     >
       <div
         className={cn(
-          "h-full rounded-card bg-card shadow-bezel-inset",
+          "surface-bezel-inner h-full rounded-card bg-card shadow-bezel-inset",
           innerClassName,
         )}
       >
