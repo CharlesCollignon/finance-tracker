@@ -74,7 +74,7 @@ export function CategoryPanel({
   return (
     <section
       id={id}
-      className="fade-in mt-2 flex flex-col gap-4 rounded-card p-card border border-hairline-strong"
+      className="surface-card fade-in mt-2 flex flex-col gap-4 rounded-card p-card border border-hairline-strong"
     >
       <header className="flex items-start justify-between gap-3">
         <div className="flex flex-col gap-0.5">

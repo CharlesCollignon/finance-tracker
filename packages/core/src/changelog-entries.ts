@@ -17,6 +17,20 @@ import type { ChangelogEntry, RoadmapItem } from "./changelog";
  */
 export const CHANGELOG: readonly ChangelogEntry[] = [
   {
+    id: "2026-11-06-web-design-journal",
+    date: "2026-11-06",
+    kind: "better",
+    platforms: ["web"],
+    fr: {
+      title: "Le Journal, mis en page par chaque design",
+      body: "En Papier, le Journal devient un registre : jours en chiffres à empattements, aujourd’hui souligné, chaque journée sous un filet noir. En Bento, chaque jour du calendrier et de la liste est une tuile, le jour choisi en vert anis. En Console, un tableau : calendrier quadrillé, opérations serrées, montants en chasse fixe.",
+    },
+    en: {
+      title: "The Journal, laid out by each design",
+      body: "In Papier, the Journal becomes a ledger: days in a serif face, today underlined, each day under a black rule. In Bento, every day of the calendar and the list is a tile, the chosen day in lime. In Console, a table: a ruled calendar, close-set entries, amounts in a fixed-width face.",
+    },
+  },
+  {
     id: "2026-11-06-web-design-bearing",
     date: "2026-11-06",
     kind: "better",

@@ -281,11 +281,11 @@ export function CalendarView({
         <FadeInItem className="w-full min-w-0">
           {/* Full-bleed on mobile so the 7-day grid uses the screen width. */}
           <section
-            className="-mx-4 w-[calc(100%+2rem)] min-w-0 sm:mx-0 sm:w-full"
+            className="cal-grid -mx-4 w-[calc(100%+2rem)] min-w-0 sm:mx-0 sm:w-full"
             aria-label={t("calendarView.monthlyCalendar")}
             onMouseLeave={() => setHoverDate(null)}
           >
-            <div className="grid w-full grid-cols-7 border-b border-border/40">
+            <div className="cal-weekdays grid w-full grid-cols-7 border-b border-border/40">
               {weekdayLabels(locale).map((label) => (
                 <div
                   key={label}
@@ -300,11 +300,11 @@ export function CalendarView({
               ))}
             </div>
 
-            <div className="flex w-full flex-col">
+            <div className="cal-weeks flex w-full flex-col">
               {weeks.map((week, weekIndex) => (
                 <div
                   key={weekIndex}
-                  className="grid w-full grid-cols-7 border-b border-border/40 last:border-b-0"
+                  className="cal-week grid w-full grid-cols-7 border-b border-border/40 last:border-b-0"
                 >
                   {week.map((day) => {
                     const dayTxs = byDate.get(day.date) ?? [];
@@ -330,7 +330,7 @@ export function CalendarView({
                           setHoverDate(day.isCurrentMonth ? day.date : null)
                         }
                         className={cn(
-                          "flex min-h-[4.25rem] min-w-0 flex-col items-stretch",
+                          "cal-day flex min-h-[4.25rem] min-w-0 flex-col items-stretch",
                           "border-r border-border/40 p-1.5 text-left",
                           "transition-colors last:border-r-0",
                           "sm:min-h-[4.75rem] sm:p-2 md:min-h-[5.5rem]",
@@ -369,12 +369,14 @@ export function CalendarView({
                                 : t("calendarView.noTransactions"),
                         })}
                         aria-pressed={isSelected}
+                        data-today={day.isToday ? "" : undefined}
+                        data-outside={day.isCurrentMonth ? undefined : ""}
                       >
                         {/* Today's numeral needs no colour of its own: the
                               cell it sits in is the one carrying the inset
                               hairline, and every day of this month is already
                               set in the foreground. */}
-                        <span className="text-sm font-semibold leading-none">
+                        <span className="cal-daynum text-sm font-semibold leading-none">
                           {day.day}
                         </span>
 
@@ -576,7 +578,7 @@ export function CalendarView({
                         selectMode ? selected.has(tx.id) : undefined
                       }
                       className={cn(
-                        "flex w-full items-start gap-3 px-2 py-3.5 text-left transition-colors hover:bg-muted/30",
+                        "ledger-row flex w-full items-start gap-3 px-2 py-3.5 text-left transition-colors hover:bg-muted/30",
                         // The checkbox is what says a row is picked; the
                         // wash behind it only has to separate the picked
                         // rows from the rest, which the raised ground does.
@@ -624,7 +626,7 @@ export function CalendarView({
                       </div>
                       <span
                         className={cn(
-                          "privacy-amount shrink-0 font-mono text-sm font-semibold tabular-nums",
+                          "ledger-amount privacy-amount shrink-0 font-mono text-sm font-semibold tabular-nums",
                           TYPE_AMOUNT_CLASS[tx.categories.type],
                         )}
                       >
@@ -641,7 +643,7 @@ export function CalendarView({
                     disabled={selectMode}
                     onClick={() => setOpenPlanned(occurrence)}
                     aria-label={`${occurrence.name}, ${t(occurrence.awaited ? "ledger.awaited" : "ledger.planned")}`}
-                    className="flex w-full items-start gap-3 px-2 py-3.5 text-left transition-colors hover:bg-muted/30 disabled:cursor-default disabled:hover:bg-transparent"
+                    className="ledger-row flex w-full items-start gap-3 px-2 py-3.5 text-left transition-colors hover:bg-muted/30 disabled:cursor-default disabled:hover:bg-transparent"
                   >
                     <div className="min-w-0 flex-1">
                       <p className="text-sm font-medium leading-snug text-muted-foreground">
@@ -660,7 +662,7 @@ export function CalendarView({
                           .join(" · ")}
                       </p>
                     </div>
-                    <span className="privacy-amount shrink-0 font-mono text-sm font-semibold tabular-nums text-muted-foreground">
+                    <span className="ledger-amount privacy-amount shrink-0 font-mono text-sm font-semibold tabular-nums text-muted-foreground">
                       {amountSign(occurrence.categoryType)}
                       {formatEuro(occurrence.amount)}
                     </span>

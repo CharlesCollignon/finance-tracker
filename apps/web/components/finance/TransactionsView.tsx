@@ -474,7 +474,7 @@ export function TransactionsView({
         ) : (
           // No card on a phone: the list runs the full width and starts
           // right under its toolbar instead of inside another frame.
-          <section className="flex flex-col gap-3 md:gap-4 md:rounded-card md:border md:border-border md:bg-card md:p-card">
+          <section className="ledger-panel flex flex-col gap-3 md:gap-4 md:rounded-card md:border md:border-border md:bg-card md:p-card">
             <div className="flex flex-col gap-2 md:gap-3">
               <div className="flex items-center gap-2">
                 <div className="relative min-w-0 flex-1">
@@ -771,12 +771,18 @@ export function TransactionsView({
                 ) : null}
               </EmptyState>
             ) : (
-              <AnimatedDays deal={deals} className="flex flex-col gap-5">
+              <AnimatedDays
+                deal={deals}
+                className="ledger-days flex flex-col gap-5"
+              >
                 {days.map((day) => (
-                  <AnimatedDay key={day.date} className="flex flex-col gap-1">
+                  <AnimatedDay
+                    key={day.date}
+                    className="ledger-day flex flex-col gap-1"
+                  >
                     <div
                       className={cn(
-                        "flex items-baseline justify-between gap-3",
+                        "ledger-day-head flex items-baseline justify-between gap-3",
                         LEDGER_COLUMNS,
                       )}
                     >
@@ -791,7 +797,7 @@ export function TransactionsView({
                       ) : null}
                     </div>
 
-                    <div className="divide-y divide-border">
+                    <div className="ledger-rows divide-y divide-border">
                       {day.rows.map((tx) => (
                         <button
                           key={tx.id}
@@ -801,7 +807,7 @@ export function TransactionsView({
                             name: tx.categories.name,
                           })}
                           className={cn(
-                            "-mx-2 flex w-[calc(100%+1rem)] items-center justify-between gap-3 rounded-control px-2 py-2.5 text-left",
+                            "ledger-row -mx-2 flex w-[calc(100%+1rem)] items-center justify-between gap-3 rounded-control px-2 py-2.5 text-left",
                             // A press gives a little under the finger.
                             "transition-[background-color,scale] duration-press hover:bg-muted/40 active:scale-[0.985]",
                             LEDGER_COLUMNS,
@@ -826,7 +832,7 @@ export function TransactionsView({
                             <span className="relative shrink-0">
                               <CategoryIcon
                                 icon={tx.categories.icon}
-                                className="size-9 shrink-0 rounded-control border-0 bg-muted"
+                                className="ledger-icon size-9 shrink-0 rounded-control border-0 bg-muted"
                               />
                               <AuthorBadge createdBy={tx.created_by} />
                             </span>
@@ -886,7 +892,7 @@ export function TransactionsView({
                               all along; the rows now agree with it. */}
                           <span
                             className={cn(
-                              "privacy-amount shrink-0 whitespace-nowrap text-sm tabular-nums xl:text-right",
+                              "ledger-amount privacy-amount shrink-0 whitespace-nowrap text-sm tabular-nums xl:text-right",
                               TYPE_AMOUNT_CLASS[tx.categories.type],
                             )}
                           >
@@ -979,7 +985,7 @@ function PlannedRow({
       onClick={onOpen}
       aria-label={`${occurrence.name}, ${word}`}
       className={cn(
-        "-mx-2 flex w-[calc(100%+1rem)] items-center justify-between gap-3 rounded-control px-2 py-2.5 text-left",
+        "ledger-row -mx-2 flex w-[calc(100%+1rem)] items-center justify-between gap-3 rounded-control px-2 py-2.5 text-left",
         "transition-colors hover:bg-muted/40",
         LEDGER_COLUMNS,
       )}
@@ -987,7 +993,7 @@ function PlannedRow({
       <span className="flex min-w-0 items-center gap-3">
         <CategoryIcon
           icon={occurrence.categoryIcon}
-          className="size-9 shrink-0 rounded-control border border-dashed border-hairline-strong bg-transparent opacity-70"
+          className="ledger-icon size-9 shrink-0 rounded-control border border-dashed border-hairline-strong bg-transparent opacity-70"
         />
         <span className="min-w-0">
           <span className="block truncate text-sm font-medium text-muted-foreground">
@@ -1003,7 +1009,7 @@ function PlannedRow({
         {subtitle}
       </span>
 
-      <span className="privacy-amount shrink-0 whitespace-nowrap text-sm tabular-nums text-muted-foreground xl:text-right">
+      <span className="ledger-amount privacy-amount shrink-0 whitespace-nowrap text-sm tabular-nums text-muted-foreground xl:text-right">
         {amountSign(occurrence.categoryType)}
         {formatEuro(occurrence.amount)}
       </span>

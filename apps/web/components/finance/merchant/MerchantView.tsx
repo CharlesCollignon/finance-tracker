@@ -80,7 +80,7 @@ export function MerchantView({
               description={t("merchants.noMatchBody")}
             />
           ) : (
-            <ul className="flex flex-col gap-2">
+            <ul className="merchant-list flex flex-col gap-2">
               {shown.map((card) => (
                 <MerchantRow
                   key={card.key}
@@ -126,7 +126,7 @@ function MerchantRow({
   return (
     <li
       className={cn(
-        "rounded-card border border-border",
+        "surface-card rounded-card border border-border",
         open && "border-hairline-strong bg-muted/20",
       )}
     >
