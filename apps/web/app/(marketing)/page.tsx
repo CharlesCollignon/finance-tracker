@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { getAuthUser } from "@/lib/auth/get-user";
+import { hasOwnAccount } from "@/lib/auth/get-user";
 import { demoAvailable } from "@/lib/demo-env";
 import { LandingPage } from "@/components/marketing/LandingPage";
 import { landingCopyFor } from "@/components/marketing/landing-copy";
@@ -18,6 +18,7 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function HomePage() {
-  const user = await getAuthUser();
-  return <LandingPage isLoggedIn={Boolean(user)} demo={demoAvailable()} />;
+  return (
+    <LandingPage isLoggedIn={await hasOwnAccount()} demo={demoAvailable()} />
+  );
 }

@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { getAuthUser } from "@/lib/auth/get-user";
+import { hasOwnAccount } from "@/lib/auth/get-user";
 import { DownloadPage } from "@/components/marketing/DownloadPage";
 import {
   DOWNLOAD_HREF,
@@ -21,6 +21,5 @@ export async function generateMetadata(): Promise<Metadata> {
 
 /** The Android app, to download (`components/marketing/DownloadPage.tsx`). */
 export default async function DownloadRoutePage() {
-  const user = await getAuthUser();
-  return <DownloadPage isLoggedIn={Boolean(user)} />;
+  return <DownloadPage isLoggedIn={await hasOwnAccount()} />;
 }

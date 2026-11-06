@@ -1,4 +1,4 @@
-import { getAuthUser } from "@/lib/auth/get-user";
+import { hasOwnAccount } from "@/lib/auth/get-user";
 import { LandingFooter } from "@/components/marketing/LandingFooter";
 import { LandingHeader } from "@/components/marketing/LandingHeader";
 import { MarketingMotion } from "@/components/marketing/LandingReveal";
@@ -29,8 +29,7 @@ export default async function MarketingLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const user = await getAuthUser();
-  const isLoggedIn = Boolean(user);
+  const isLoggedIn = await hasOwnAccount();
 
   return (
     <div className="dark marketing-shell relative flex min-h-dvh flex-col text-marketing-ink">
