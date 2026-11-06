@@ -64,6 +64,13 @@ const nextConfig: NextConfig = {
         destination: "/plan",
         permanent: true,
       },
+      // « Par commerce » left the Journal (November 2026, the owner's call);
+      // a link to it lands on the list, where a shop's name can be searched.
+      {
+        source: "/merchants",
+        destination: "/transactions",
+        permanent: false,
+      },
       // The feature pages' earlier addresses — the app's route names, then
       // the English ids under `/features/` — now that they live under
       // `/fonctionnalites/` in French words. Shared and indexed, so kept.

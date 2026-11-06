@@ -16,7 +16,7 @@ import { useT } from "@/lib/locale-context";
  * call, November 2026), then the month in the middle under them, because it
  * is what everything below is about, with Add at the end of that row. The
  * views come first so they stay where they are on the views that have no
- * month, By category and By shop.
+ * month and By category.
  *
  * In the layout rather than in each view, so that switching views leaves it
  * where it is while the view under it loads. What differs between the views

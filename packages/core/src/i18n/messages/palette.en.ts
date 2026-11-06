@@ -12,7 +12,7 @@ export const paletteEn = {
   ask: "Ask a question",
   ledgerMonth: "Ledger · {month}",
   bearingMonth: "Overview · {month}",
-  shop: "{name} · By shop",
+  shop: "{name} · Journal",
   charge: "{name} · Recurring",
   category: "{name} · By category",
   empty: "Nothing for “{query}”",

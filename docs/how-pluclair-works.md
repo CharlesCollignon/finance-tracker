@@ -30,7 +30,6 @@ Vocabulary is fixed by `CONTEXT.md`; product commitments by
 | Ledger — list          | `/transactions`                          | `(tabs)/transactions`                                                    |
 | Ledger — calendar      | `/calendar`                              | `(tabs)/calendar`                                                        |
 | Ledger — by category   | `/history`                               | `(tabs)/history`                                                         |
-| Ledger — by shop       | `/merchants`                             | `(tabs)/merchants`                                                       |
 | Charges                | `/recurring`                             | `(tabs)/recurring`                                                       |
 | Plan                   | `/plan`                                  | `(tabs)/planning`                                                        |
 | Wallets — positions    | `/investments`                           | `(tabs)/investments`                                                     |
@@ -205,7 +204,6 @@ today's prices) leaves it unmarked, so the Plan still shows it as new.
 | Money-weighted return                                                                                       | `xirr.ts`, `investment-returns.ts`                                                                             |
 | « Dividendes et plus-values réalisées »: realised gains per wallet and year (first in, first out), dividends and fees by year| `investment-events.ts` (rows read by `@finance/data/investment-events`)                                        |
 | « Fiabilité du mois »: the lines' reach, the occurrences arrived and awaited, the review, the close         | `month-trust.ts` (read by `@finance/data/bearing-month`, the coverage from `@finance/data/statements`)        |
-| « Par commerce »: a shop's visits, its normal month, its twelve months (`merchantKeyOf`, two meaningful words) | `merchant-screen.ts` (read by `@finance/data/merchant-screen`)                                                |
 | « Équilibre entre vous »: each partner's part of the joint spending against what they put in                | `space-balance.ts` (read by `@finance/data/space-balance`, `space_contributions`)                             |
 
 ## AI features
@@ -852,7 +850,7 @@ what was typed — an amount (an add with it filled in, through the quick
 add's `defaultAmount`), a month in either language (`parseMonthQuery`), and
 the pages, categories, shops and charges whose words match — and the sheet
 draws it as a listbox the arrows walk. A category opens By category on it
-(`/history?open=`), a shop opens By shop on its words, a charge opens
+(`/history?open=`), a shop opens the Journal's list searched by its name, a charge opens
 Récurrents with its editor (`/recurring?edit=`).
 
 ## The month to share (retired)

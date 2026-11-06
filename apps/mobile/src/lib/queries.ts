@@ -12,7 +12,6 @@ import * as fulfilment from "@finance/data/fulfilment";
 import * as cards from "@finance/data/cards";
 import * as filingRules from "@finance/data/filing-rules";
 import * as investmentEvents from "@finance/data/investment-events";
-import { readMerchantScreen } from "@finance/data/merchant-screen";
 import { readSpaceBalance } from "@finance/data/space-balance";
 import type { Space } from "@finance/data/spaces";
 import * as statements from "@finance/data/statements";
@@ -634,17 +633,6 @@ export function getSpaceBalance(
   to: string,
 ): ReturnType<typeof readSpaceBalance> {
   return readSpaceBalance(supabase, space, from, to);
-}
-
-/** « Par commerce »: the last twelve months, one card a shop. */
-export function getMerchantScreen(
-  userId: string,
-  locale: Locale,
-): ReturnType<typeof readMerchantScreen> {
-  return readMerchantScreen(supabase, userId, {
-    ...getCurrentMonth(),
-    locale,
-  });
 }
 
 /** « Votre année » for one year (`readYearReview`). */

@@ -129,14 +129,13 @@ export function tabbedSurfaceOf(pathname: string): string | null {
 }
 
 /**
- * The Ledger's views: the same record, looked at four ways. The calendar
+ * The Ledger's views: the same record, looked at three ways. The calendar
  * first, where the nav lands (the owner's call, November 2026).
  */
 export const LEDGER_TABS: SurfaceTab[] = [
   { href: "/calendar", labelKey: "nav.ledgerCalendar" },
   { href: "/transactions", labelKey: "nav.ledgerList" },
   { href: "/history", labelKey: "nav.ledgerByCategory" },
-  { href: "/merchants", labelKey: "nav.ledgerByMerchant" },
 ];
 
 /**

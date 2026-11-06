@@ -11,7 +11,7 @@ export const paletteFr: typeof paletteEn = {
   ask: "Poser une question",
   ledgerMonth: "Journal · {month}",
   bearingMonth: "Le point · {month}",
-  shop: "{name} · Par commerce",
+  shop: "{name} · Journal",
   charge: "{name} · Récurrents",
   category: "{name} · Par catégorie",
   empty: "Rien pour « {query} »",

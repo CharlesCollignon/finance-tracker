@@ -91,7 +91,6 @@ export const LEDGER_TABS: SurfaceTab[] = [
   { href: "/transactions", labelKey: "nav.ledgerList" },
   // Cast until the typed-routes list next regenerates with the new files.
   { href: "/history" as Href, labelKey: "nav.ledgerByCategory" },
-  { href: "/merchants" as Href, labelKey: "nav.ledgerByMerchant" },
 ];
 
 /**

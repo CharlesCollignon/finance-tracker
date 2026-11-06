@@ -142,12 +142,6 @@ export const landingCopyFr: LandingCopySections & {
         link: "",
       },
       {
-        id: "merchants",
-        title: "Par commerce",
-        body: "Les passages de chaque commerce, son mois habituel et ses douze mois, dans une vue du Journal.",
-        link: "",
-      },
-      {
         id: "receipts",
         title: "Des parts, et le ticket",
         body: "Un paiement en plusieurs catégories, et le ticket gardé derrière — lu par votre IA si vous le souhaitez.",
