@@ -1,6 +1,9 @@
 import { Pressable, View } from "react-native";
 
-import type { InvestmentPositionItem } from "@finance/core/investment-positions";
+import {
+  positionReturnPct,
+  type InvestmentPositionItem,
+} from "@finance/core/investment-positions";
 import { isCryptoWallet } from "@finance/core/crypto-holdings";
 import {
   formatSignedPercent,
@@ -14,150 +17,122 @@ import { Text } from "@/components/ui/Text";
 import { cn } from "@/lib/cn";
 import { useFormatCurrency } from "@/providers/CurrencyProvider";
 import { useThemeColors } from "@/theme/useThemeColors";
+import { TYPE } from "@/theme/tokens";
 import { useLocale, useT } from "@/providers/LocaleProvider";
-import { formatSigned } from "@finance/core/amount-sign";
 
-interface InvestmentPositionRowProps {
+interface InvestmentPositionTileProps {
   item: InvestmentPositionItem;
   /** The instrument's own price over a year, once it has been read. */
   priceLine?: RangeSeries;
   onEdit: () => void;
 }
 
-function Metric({
-  label,
-  value,
-  tone = "neutral",
-}: {
-  label: string;
-  value: string;
-  tone?: "neutral" | "positive" | "negative";
-}) {
-  return (
-    <View className="min-w-0 flex-1">
-      <Text variant="muted" className="text-[10px] uppercase">
-        {label}
-      </Text>
-      <PrivateAmount
-        numberOfLines={1}
-        className={cn(
-          "font-mono text-xs font-semibold",
-          tone === "positive" && "text-success",
-          tone === "negative" && "text-destructive",
-        )}
-      >
-        {value}
-      </PrivateAmount>
-    </View>
-  );
-}
-
 /**
- * One wallet position: its mark, what it is, the three figures — and behind
- * them, faintly, the instrument's own price over a year, with its move said
- * once beside the name. The web's row, at phone width.
+ * One wallet position as a tile, two to a row (the owner's pick, November
+ * 2026): its mark and its return at the top, its name, what it is worth in
+ * the figure face, what went into it, and the instrument's price over a
+ * year as a faint grey line at the foot.
+ *
+ * It replaced a row of three labelled figures with the price line drawn
+ * under them, which read as columns of capitals over a chart. The line is
+ * grey now and has the bottom of the tile to itself: coloured, it said
+ * "up" in green beside a holding that had lost money, because the price of
+ * a share and what someone made buying it over time are two questions.
+ * Only the return is coloured.
  */
-export function InvestmentPositionRow({
+export function InvestmentPositionTile({
   item,
   priceLine,
   onEdit,
-}: InvestmentPositionRowProps) {
+}: InvestmentPositionTileProps) {
   const t = useT();
   const locale = useLocale();
   const formatEuro = useFormatCurrency();
   const colors = useThemeColors();
 
   const isCrypto = isCryptoWallet(item.walletId);
-  const valueLabel =
-    item.hasManualValue || item.hasMarketQuote
-      ? t("wallets.market")
-      : t("wallets.invested");
   const hasLine = (priceLine?.values.length ?? 0) > 1;
-  const change = priceLine?.changePct ?? null;
-  const lineColor =
-    change === null || change === 0
-      ? colors.mutedForeground
-      : change > 0
-        ? colors.success
-        : colors.destructive;
+  const returnPct = positionReturnPct(item);
 
   return (
-    // The whole row opens the position, as a ledger row does.
+    // The whole tile opens the position, as a ledger row does.
     <Pressable
       accessibilityRole="button"
       accessibilityLabel={t("wallets.editPosition", { name: item.name })}
       onPress={onEdit}
-      className="min-w-0 py-4 active:opacity-70"
+      className="min-h-[150px] flex-1 gap-2.5 overflow-hidden rounded-card border border-border bg-card/70 p-3.5 active:opacity-70"
     >
-      {hasLine ? (
-        <PriceSparkline
-          values={priceLine!.values}
-          color={lineColor}
-          style={{ left: 0, right: 0, bottom: 6, height: 48 }}
+      <View className="flex-row items-center justify-between gap-2">
+        <InstrumentLogo
+          symbol={item.instrumentSymbol}
+          fallbackIcon={item.icon}
         />
-      ) : null}
-      <View className="flex-row items-start justify-between gap-2">
-        <View className="min-w-0 flex-1 flex-row items-start gap-2.5">
-          <InstrumentLogo
-            symbol={item.instrumentSymbol}
-            fallbackIcon={item.icon}
-          />
-          <View className="min-w-0 flex-1">
-            <Text numberOfLines={1} className="text-sm font-medium">
-              {item.name}
-            </Text>
-            {item.instrumentSymbol ? (
-              <Text variant="muted" numberOfLines={1} className="text-xs">
-                {isCrypto
-                  ? t("position.bitcoin")
-                  : (item.instrumentName ?? item.instrumentSymbol)}
-              </Text>
-            ) : null}
-            {hasLine && change !== null ? (
-              <Text
-                numberOfLines={1}
-                className={cn(
-                  "text-xs font-medium",
-                  change > 0
-                    ? "text-success"
-                    : change < 0
-                      ? "text-destructive"
-                      : "text-muted-foreground",
-                )}
-              >
-                {t("wallets.priceOverYear", {
-                  change: formatSignedPercent(change, locale),
-                })}
-              </Text>
-            ) : null}
-            {item.needsShareCount ? (
-              <Text className="mt-1 text-xs font-medium text-primary-ink">
-                {isCrypto
-                  ? t("wallets.addBtcForValue")
-                  : t("wallets.addSharesForValue")}
-              </Text>
-            ) : null}
+        {returnPct !== null ? (
+          <View
+            className={cn(
+              "rounded-full px-2 py-0.5",
+              returnPct > 0
+                ? "bg-success/15"
+                : returnPct < 0
+                  ? "bg-destructive/15"
+                  : "bg-foreground/10",
+            )}
+          >
+            <PrivateAmount
+              className={cn(
+                "text-xs font-semibold",
+                returnPct > 0
+                  ? "text-success"
+                  : returnPct < 0
+                    ? "text-destructive"
+                    : "text-muted-foreground",
+              )}
+            >
+              {formatSignedPercent(returnPct, locale)}
+            </PrivateAmount>
           </View>
-        </View>
+        ) : null}
       </View>
 
-      <View className="mt-3 flex-row gap-2">
-        <Metric label={valueLabel} value={formatEuro(item.marketValue)} />
-        <Metric
-          label={t("wallets.invested")}
-          value={formatEuro(item.totalInvested)}
-        />
-        <Metric
-          label={t("wallets.profitLoss")}
-          value={formatSigned(item.gainLoss, formatEuro)}
-          tone={
-            item.gainLoss > 0
-              ? "positive"
-              : item.gainLoss < 0
-                ? "negative"
-                : "neutral"
-          }
-        />
+      <Text numberOfLines={2} className="text-sm font-semibold leading-tight">
+        {item.name}
+      </Text>
+
+      <View className="mt-auto gap-0.5">
+        {item.needsShareCount ? (
+          <Text className="text-xs font-medium text-primary-ink">
+            {isCrypto
+              ? t("wallets.addBtcForValue")
+              : t("wallets.addSharesForValue")}
+          </Text>
+        ) : (
+          <PrivateAmount
+            numberOfLines={1}
+            adjustsFontSizeToFit
+            minimumFontScale={0.75}
+            style={[TYPE.figure, { fontSize: 21, letterSpacing: -0.6 }]}
+          >
+            {formatEuro(item.marketValue)}
+          </PrivateAmount>
+        )}
+        <Text variant="muted" numberOfLines={1} className="text-xs">
+          {t("wallets.invested")}{" "}
+          <PrivateAmount className="text-xs text-muted-foreground">
+            {formatEuro(item.totalInvested)}
+          </PrivateAmount>
+        </Text>
+      </View>
+
+      {/* Its room kept when there is no line, so the figures of two tiles
+          side by side sit on one level. */}
+      <View className="h-6">
+        {hasLine ? (
+          <PriceSparkline
+            values={priceLine!.values}
+            color={colors.mutedForeground}
+            style={{ left: 0, right: 0, top: 0, bottom: 0 }}
+          />
+        ) : null}
       </View>
     </Pressable>
   );

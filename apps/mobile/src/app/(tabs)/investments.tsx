@@ -23,7 +23,7 @@ import { NewPositionSheet } from "@/components/accounts/NewPositionSheet";
 import { WalletEventsSheet } from "@/components/accounts/WalletEventsSheet";
 import { PeaCard } from "@/components/PeaCard";
 import { SavingsAccountCard } from "@/components/accounts/SavingsAccountCard";
-import { InvestmentPositionRow } from "@/components/InvestmentPositionRow";
+import { InvestmentPositionTile } from "@/components/InvestmentPositionTile";
 import { InvestmentPositionSheet } from "@/components/InvestmentPositionSheet";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
@@ -298,8 +298,8 @@ export default function InvestmentsScreen() {
                   </View>
                 ) : null}
               </View>
-              <Card bezel innerClassName="px-4 py-1">
-                {activeItems.length === 0 ? (
+              {activeItems.length === 0 ? (
+                <Card bezel innerClassName="px-4 py-1">
                   <View className="gap-1 py-4">
                     <Text variant="muted" className="text-sm">
                       {t("wallets.noItems")}
@@ -308,13 +308,14 @@ export default function InvestmentsScreen() {
                       {t("wallets.trackBody")}
                     </Text>
                   </View>
-                ) : (
-                  activeItems.map((item, index) => (
-                    <View
-                      key={item.id}
-                      className={index > 0 ? "border-t border-border" : ""}
-                    >
-                      <InvestmentPositionRow
+                </Card>
+              ) : (
+                // Two tiles to a row (the owner's pick, November 2026): see
+                // InvestmentPositionTile. 48.5% each leaves the 3% between.
+                <View className="flex-row flex-wrap justify-between gap-y-2.5">
+                  {activeItems.map((item) => (
+                    <View key={item.id} style={{ width: "48.5%" }}>
+                      <InvestmentPositionTile
                         item={item}
                         priceLine={
                           item.instrumentSymbol
@@ -324,9 +325,9 @@ export default function InvestmentsScreen() {
                         onEdit={() => setEditingPosition(item)}
                       />
                     </View>
-                  ))
-                )}
-              </Card>
+                  ))}
+                </View>
+              )}
               <View className="mt-3 flex-row flex-wrap gap-2">
                 <Button
                   label={t("position.addItem")}
