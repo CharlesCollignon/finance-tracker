@@ -85,6 +85,7 @@ import {
 } from "@/lib/queries";
 import { useScreenMonth } from "@/providers/MonthProvider";
 import { useOwner } from "@/providers/OwnerProvider";
+import { ledgerAmountFace, ledgerShowsIcons } from "@/theme/design-blocks";
 
 /** Stable identity, so the derived selection keeps a steady reference. */
 const EMPTY_SELECTION: ReadonlySet<string> = new Set();
@@ -534,7 +535,9 @@ export default function CalendarScreen() {
                         }
                       />
                     ) : null}
-                    <CategoryIcon icon={tx.categories.icon} />
+                    {ledgerShowsIcons() ? (
+                      <CategoryIcon icon={tx.categories.icon} />
+                    ) : null}
                     <View className="min-w-0 flex-1">
                       <View className="flex-row items-center gap-1.5">
                         {/* `shrink` because Yoga defaults flexShrink to 0 and
@@ -574,6 +577,7 @@ export default function CalendarScreen() {
                         "font-sans tabular-nums text-sm font-semibold",
                         TYPE_AMOUNT_CLASS[tx.categories.type],
                       )}
+                      style={ledgerAmountFace()}
                     >
                       {`${amountSign(tx.categories.type)}${formatEuro(Number(tx.amount))}`}
                     </PrivateAmount>
@@ -598,9 +602,11 @@ export default function CalendarScreen() {
                   )}
                   style={selectMode ? { opacity: 0.4 } : undefined}
                 >
-                  <View style={{ opacity: 0.5 }}>
-                    <CategoryIcon icon={occurrence.categoryIcon} />
-                  </View>
+                  {ledgerShowsIcons() ? (
+                    <View style={{ opacity: 0.5 }}>
+                      <CategoryIcon icon={occurrence.categoryIcon} />
+                    </View>
+                  ) : null}
                   <View className="min-w-0 flex-1">
                     <Text
                       numberOfLines={1}

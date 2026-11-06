@@ -133,6 +133,12 @@ import {
   type LedgerTime,
   type LedgerTypeFilter,
 } from "@finance/core/ledger-view";
+import {
+  ledgerAmountFace,
+  ledgerDayHeading,
+  ledgerRow,
+  ledgerShowsIcons,
+} from "@/theme/design-blocks";
 
 type FilterType = LedgerTypeFilter;
 
@@ -897,6 +903,14 @@ export default function TransactionsScreen() {
     </View>
   );
 
+  // The list in the design's shape (`theme/design-blocks.ts`): how a
+  // day is headed, how an entry is framed, whether it shows its icon, and
+  // the face of its amount.
+  const dayHeading = ledgerDayHeading();
+  const rowFrame = ledgerRow();
+  const showIcons = ledgerShowsIcons();
+  const amountFace = ledgerAmountFace();
+
   return (
     <Screen title={t("nav.ledger")} className="pb-0" shared>
       {/* No card around the list, as on the web's phone layout: the days run
@@ -914,8 +928,14 @@ export default function TransactionsScreen() {
         stickySectionHeadersEnabled={false}
         ListHeaderComponent={header}
         renderSectionHeader={({ section }) => (
-          <View className="flex-row items-baseline justify-between gap-3 pb-1 pt-5">
-            <Text className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+          <View
+            className="flex-row items-baseline justify-between gap-3 pb-1 pt-5"
+            style={dayHeading.frame}
+          >
+            <Text
+              className="text-xs font-medium uppercase tracking-wider text-muted-foreground"
+              style={dayHeading.label}
+            >
               {relativeDayLabel(section.date, formatShortDate, locale)}
             </Text>
             {section.recorded > 0 ? (
@@ -1003,14 +1023,17 @@ export default function TransactionsScreen() {
                   accessibilityLabel={`${occurrence.categoryName}, ${word}`}
                   accessibilityHint={occurrence.name}
                   className="min-h-14 flex-row items-center gap-3 py-3"
+                  style={rowFrame}
                   onPress={() => {
                     void hapticLight();
                     setOpenPlanned(occurrence);
                   }}
                 >
-                  <View style={{ opacity: 0.5 }}>
-                    <CategoryIcon icon={occurrence.categoryIcon} />
-                  </View>
+                  {showIcons ? (
+                    <View style={{ opacity: 0.5 }}>
+                      <CategoryIcon icon={occurrence.categoryIcon} />
+                    </View>
+                  ) : null}
                   <View className="min-w-0 flex-1">
                     <Text
                       numberOfLines={1}
@@ -1073,6 +1096,7 @@ export default function TransactionsScreen() {
                   "min-h-14 flex-row items-center gap-3 py-3",
                   selected.has(item.id) && "bg-primary/5",
                 )}
+                style={rowFrame}
                 onPress={() => {
                   void hapticLight();
                   setEditing(item);
@@ -1090,10 +1114,12 @@ export default function TransactionsScreen() {
                     setSelected((current) => toggleSelected(current, item.id))
                   }
                 />
-                <View>
-                  <CategoryIcon icon={item.categories.icon} />
-                  <AuthorBadge createdBy={item.created_by} />
-                </View>
+                {showIcons ? (
+                  <View>
+                    <CategoryIcon icon={item.categories.icon} />
+                    <AuthorBadge createdBy={item.created_by} />
+                  </View>
+                ) : null}
                 <View className="min-w-0 flex-1">
                   <View className="flex-row items-center gap-1.5">
                     {/* `shrink` because Yoga defaults flexShrink to 0 and
@@ -1138,6 +1164,7 @@ export default function TransactionsScreen() {
                     "text-sm font-semibold",
                     TYPE_AMOUNT_CLASS[item.categories.type],
                   )}
+                  style={amountFace}
                 >
                   {`${amountSign(item.categories.type)}${formatEuro(Number(item.amount))}`}
                 </PrivateAmount>
