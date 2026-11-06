@@ -49,12 +49,12 @@ const ADD_BUTTON_CLEARANCE = 88;
 
 export function useTabBarClearance(extra = ADD_BUTTON_CLEARANCE) {
   const insets = useSafeAreaInsets();
-  // « Bento »'s bar floats above the edge (`tab-bar-design.tsx`), so its
+  // « Bento »'s bar floats above the edge (`DesignTabBar`), so its
   // screens clear that lift too.
   const lift = currentDesign() === "bento" ? BENTO_LIFT : 0;
   return useTabBarHeight() + insets.bottom + extra + lift;
 }
 
-/** `BENTO_PILL_LIFT` and the pill's extra height, restated to keep this
- * module free of components. */
+/** How far « Bento »'s floating pill stands above where the docked bars
+ * end: 12 off the edge and 8 taller (`DesignTabBar`). */
 const BENTO_LIFT = 20;

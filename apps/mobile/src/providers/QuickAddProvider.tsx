@@ -24,7 +24,6 @@ import { Blur } from "@/components/ui/Blur";
 import { useTabBarHeight } from "@/theme/chrome";
 import { useThemeColors } from "@/theme/useThemeColors";
 import { COLORS, ICON, RADIUS } from "@/theme/tokens";
-import { BENTO_PILL_LIFT } from "@/components/layout/tab-bar-design";
 import { useDesign } from "@/providers/DesignProvider";
 import { useT } from "@/providers/LocaleProvider";
 import { useOwner } from "@/providers/OwnerProvider";
@@ -153,16 +152,14 @@ const GLASS_RIM = "rgba(255,240,210,0.35)";
 
 /**
  * The add button's shape in each design: « Nuit »'s orange glass; a square
- * of ink on « Papier »; a lime disc on « Bento » (over its floating pill);
- * a square of the accent on « Console ». Solid outside « Nuit »: there is no
+ * of ink on « Papier »; a square of the accent on « Console ». « Bento »
+ * draws none: its pill carries the add (`DesignTabBar`). Solid outside « Nuit »: there is no
  * lit ground behind them to show through.
  */
 function fabLook(design: Design) {
   switch (design) {
     case "papier":
       return { radius: 4, ground: COLORS.foreground, ink: COLORS.background };
-    case "bento":
-      return { radius: RADIUS.pill, ground: "#d4f25c", ink: "#0f1115" };
     case "console":
       return { radius: 0, ground: COLORS.primary, ink: COLORS.primaryForeground };
     default:
@@ -186,7 +183,8 @@ function QuickAddFab() {
     transform: [{ scale: scale.get() }],
   }));
 
-  if (!quickAdd || quickAdd.isOpen) {
+  // « Bento »'s pill carries the add in its middle (`DesignTabBar`).
+  if (!quickAdd || quickAdd.isOpen || design === "bento") {
     return null;
   }
 
@@ -197,11 +195,7 @@ function QuickAddFab() {
         position: "absolute",
         right: 16,
         // Above the tab bar, docked to the bottom edge.
-        bottom:
-          barHeight +
-          insets.bottom +
-          16 +
-          (design === "bento" ? BENTO_PILL_LIFT + 8 : 0),
+        bottom: barHeight + insets.bottom + 16,
       }}
     >
       <AnimatedPressable
