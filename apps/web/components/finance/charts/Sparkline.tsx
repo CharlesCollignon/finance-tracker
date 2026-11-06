@@ -5,6 +5,12 @@ interface SparklineProps {
   height?: number;
   /** Chart token to stroke with. Defaults to the first series colour. */
   colorVar?: string;
+  /**
+   * Stretch across whatever width the box has, `width` only setting the
+   * drawing's proportions. Without its end dot, which stretching would draw
+   * as an oval: a line at the foot of a tile, not a mark beside a figure.
+   */
+  fluid?: boolean;
   className?: string;
 }
 
@@ -33,6 +39,7 @@ export function Sparkline({
   // chart ramp is the set of five tokens that exist for exactly that. The
   // accent has four homes and a trend line beside a figure is not one.
   colorVar = "--chart-1",
+  fluid = false,
   className,
 }: SparklineProps) {
   if (values.length < 2) {
@@ -61,9 +68,10 @@ export function Sparkline({
 
   return (
     <svg
-      width={width}
+      width={fluid ? "100%" : width}
       height={height}
       viewBox={`0 0 ${width} ${height}`}
+      preserveAspectRatio={fluid ? "none" : undefined}
       aria-hidden
       focusable="false"
       className={className}
@@ -75,8 +83,9 @@ export function Sparkline({
         strokeWidth={1.5}
         strokeLinejoin="round"
         strokeLinecap="round"
+        vectorEffect={fluid ? "non-scaling-stroke" : undefined}
       />
-      <circle cx={lastX} cy={lastY} r={2.2} fill={stroke} />
+      {fluid ? null : <circle cx={lastX} cy={lastY} r={2.2} fill={stroke} />}
     </svg>
   );
 }

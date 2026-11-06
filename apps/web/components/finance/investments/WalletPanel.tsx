@@ -22,7 +22,7 @@ import { useFormatCurrency } from "@/lib/use-currency";
 import { ICON } from "@/lib/icon-scale";
 import { useT } from "@/lib/locale-context";
 import { formatSigned } from "@finance/core/amount-sign";
-import { InvestmentPositionRow } from "@/components/finance/investments/InvestmentPositionRow";
+import { InvestmentPositionTile } from "@/components/finance/investments/InvestmentPositionTile";
 import { Metric } from "@/components/finance/investments/metrics";
 import { WalletEventsSheet } from "@/components/finance/investments/WalletEventsSheet";
 import type { InvestmentEvent } from "@finance/core/investment-events";
@@ -171,10 +171,12 @@ export function WalletPanel({
             {t("wallets.noItems")}
           </p>
         ) : (
-          <ul className="flex min-w-0 flex-col divide-y divide-border">
+          // Tiles, as on the phone (the owner's pick, November 2026): two
+          // across a phone, more as the panel widens.
+          <ul className="grid min-w-0 grid-cols-2 gap-2.5 sm:grid-cols-3 xl:grid-cols-4">
             {ordered.map((item) => (
               <li key={item.id} className="min-w-0">
-                <InvestmentPositionRow
+                <InvestmentPositionTile
                   item={item}
                   series={
                     item.instrumentSymbol

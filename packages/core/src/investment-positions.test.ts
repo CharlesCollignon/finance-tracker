@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   buildInvestmentPortfolio,
+  positionReturnPct,
   sortPositions,
   type InvestmentPositionItem,
   type InvestmentPositionRow,
@@ -533,5 +534,41 @@ describe("purchases after the figures were typed", () => {
   it("ends the chart on the card's own total", () => {
     const [item] = build([pea], [buy("2026-09-08", 1020)], { "CW8.PA": 510 });
     expect(item!.chartPoints.at(-1)!.invested).toBe(6020);
+  });
+});
+
+describe("positionReturnPct", () => {
+  it("is the gain over what went in, to two decimals", () => {
+    expect(
+      positionReturnPct({
+        totalInvested: 505.99,
+        gainLoss: -97.78,
+        valuationSource: "live",
+      }),
+    ).toBe(-19.32);
+    expect(
+      positionReturnPct({
+        totalInvested: 898.03,
+        gainLoss: 141,
+        valuationSource: "manual",
+      }),
+    ).toBe(15.7);
+  });
+
+  it("says nothing for a holding valued at cost or with nothing in it", () => {
+    expect(
+      positionReturnPct({
+        totalInvested: 100,
+        gainLoss: 0,
+        valuationSource: "cost-basis",
+      }),
+    ).toBeNull();
+    expect(
+      positionReturnPct({
+        totalInvested: 0,
+        gainLoss: 0,
+        valuationSource: "live",
+      }),
+    ).toBeNull();
   });
 });
