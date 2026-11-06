@@ -17,6 +17,20 @@ import type { ChangelogEntry, RoadmapItem } from "./changelog";
  */
 export const CHANGELOG: readonly ChangelogEntry[] = [
   {
+    id: "2026-11-06-web-owner-tweaks-3",
+    date: "2026-11-06",
+    kind: "better",
+    platforms: ["web"],
+    fr: {
+      title: "Moins de choses qui bougent",
+      body: "« Partager ce mois » quitte Le point. Les cartes du point ne se soulèvent plus sous la souris. Et dans le Plan, survoler la courbe affiche le mois pointé sans faire sauter le graphique.",
+    },
+    en: {
+      title: "Fewer things that move",
+      body: "“Share this month” leaves Le point. Le point’s cards no longer lift under the mouse. And in the Plan, hovering the curve shows the month pointed at without making the chart jump.",
+    },
+  },
+  {
     id: "2026-11-06-web-design-every-screen",
     date: "2026-11-06",
     kind: "better",
