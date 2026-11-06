@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
 import { ListRow, ListSection } from "@/components/ui/ListRow";
+import { DesignPicker } from "@/components/profile/DesignPicker";
 import { useBankState } from "@/hooks/useBankState";
 import { useFlag } from "@/hooks/useFlag";
 import { useRefreshable } from "@/hooks/useRefreshable";
@@ -405,6 +406,16 @@ export default function ProfileScreen() {
               )
             }
           />
+        </ListSection>
+
+        {/* How the app looks, right after how a figure reads; the web's
+            profile has it in the same place. Shown open: four pictures say
+            more than a name, and a choice is one tap. */}
+        <ListSection
+          title={t("design.section")}
+          footer={t("design.footer")}
+        >
+          <DesignPicker />
         </ListSection>
 
         {/* Right under the person's money: the money they share. */}

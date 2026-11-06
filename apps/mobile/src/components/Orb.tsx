@@ -23,6 +23,8 @@ import Svg, {
 
 import { Blur } from "@/components/ui/Blur";
 import { cn } from "@/lib/cn";
+import { isLightDesign } from "@finance/core/designs";
+import { currentDesign } from "@/theme/designs";
 
 type OrbSize = "sm" | "nav" | "hero" | "login" | "watermark";
 
@@ -130,6 +132,8 @@ const WANDER = 0.055;
  * in `theme/tokens.ts` moved with it, to #fa9842, so the accent and the
  * mark read as one brand colour again.
  */
+/** « Nuit »'s ground, which the glass is drawn over in every design. */
+const NUIT_GROUND = "#0a0a10";
 const C1 = "#ffbf75";
 const C2 = "#fb7b18";
 const C3 = "#691f07";
@@ -440,6 +444,20 @@ export function Orb({
             overflow: "hidden",
           }}
         />
+        {/* On paper and grey the glass would take the light ground behind
+            it and read as a pale, flat ball — a different mark. There it
+            carries the ground it was drawn for, « Nuit »'s near-black, under
+            the clouds; the web orb does the same (`.pc-orb` in globals.css).
+            The logo is one object in every design. */}
+        {isLightDesign(currentDesign()) ? (
+          <View
+            style={{
+              ...layer,
+              borderRadius: box / 2,
+              backgroundColor: NUIT_GROUND,
+            }}
+          />
+        ) : null}
         <Animated.View style={[layer, driftStyle]}>
           <CloudLayer
             box={box}

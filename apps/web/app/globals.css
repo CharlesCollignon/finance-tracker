@@ -166,6 +166,9 @@
   --font-head: var(--font-sans);
   --font-logo: "Orbit", var(--font-sans);
   --radius: 0.625rem;
+  /* A card's and a bezel's corners; the designs below restate them. */
+  --card-radius: 20px;
+  --shell-radius: 26px;
   --shadow-2xs: none;
   --shadow-xs: none;
   --shadow-sm: none;
@@ -189,6 +192,201 @@
   --shell-notch-height: 3.5rem;
   --shell-bottom-nav-height: 3.5rem;
   --shell-bottom-nav-inset: 0.75rem;
+}
+
+/* --- designs ------------------------------------------------------------
+ *
+ * The three other looks a reader can choose in the profile
+ * (`packages/core/src/designs.ts`). « Nuit » is everything above, and stays
+ * the default: these only restate tokens, so every screen keeps its layout
+ * and changes its skin. `data-design` is painted on <html> by the root
+ * layout from the reader's cookie.
+ *
+ * Never on the marketing site, whose shell is « Nuit » whoever is reading:
+ * hence `:not(:has(.marketing-shell))` (the shell's own `.dark` would restate
+ * « Nuit » under it anyway; this keeps the page's own ground out of it too).
+ *
+ * The logo is not a token of any design. The orb's colours are its own
+ * (`--orb-c1/2/3`, below) and the wordmark is set in Orbit (`--font-logo`),
+ * so neither moves here.
+ *
+ * Hairlines keep « Nuit »'s two alphas, 0.10 and 0.16, over each design's
+ * own ink: the phone's classes apply those alphas to a colour's channels,
+ * so a design with other alphas could not be drawn the same there.
+ *
+ * Every pair that carries text is held at 4.5:1 or better: foreground and
+ * muted-foreground on background, card and muted; primary, success,
+ * destructive and warning as text on background and card; each
+ * *-foreground on its fill. */
+
+/* « Papier »: a ledger on warm paper. Ink, a sienna accent that keeps the
+   brand's orange in the family, figures and headings in Newsreader, corners
+   barely rounded. */
+:root[data-design="papier"]:not(:has(.marketing-shell)) {
+  --background: #f6f1e7;
+  --foreground: #1c1a17;
+  --frame: #e4dccb;
+  --card: #fbf8f2;
+  --card-foreground: #1c1a17;
+  --popover: #fffdf8;
+  --popover-foreground: #1c1a17;
+  --primary: #9a3412;
+  --primary-hover: #7c2d12;
+  --primary-foreground: #fff8f0;
+  --primary-ink: #9a3412;
+  --primary-rim: #9a3412;
+  --secondary: #ebe3d3;
+  --secondary-foreground: #1c1a17;
+  --muted: #ebe3d3;
+  --muted-foreground: #5f584e;
+  --accent: #f3e2cf;
+  --accent-foreground: #1c1a17;
+  --success: #2f6b3a;
+  --success-foreground: #ffffff;
+  --info: #1f5f8b;
+  --info-foreground: #ffffff;
+  --destructive: #b42318;
+  --destructive-foreground: #ffffff;
+  --warning: #865000;
+  --warning-foreground: #ffffff;
+  --border: rgba(28, 26, 23, 0.1);
+  --hairline-strong: rgba(28, 26, 23, 0.16);
+  --scrollbar-thumb: rgba(28, 26, 23, 0.28);
+  --input: #fffdf8;
+  --ring: #9a3412;
+  --chart-1: #b7791f;
+  --chart-2: #9a3412;
+  --chart-3: #4d7c0f;
+  --chart-4: #1f5f8b;
+  --chart-5: #78716c;
+  --sidebar: #efe8da;
+  --sidebar-foreground: #1c1a17;
+  --sidebar-primary: #9a3412;
+  --sidebar-primary-foreground: #fff8f0;
+  --sidebar-accent: #ebe3d3;
+  --sidebar-accent-foreground: #1c1a17;
+  --sidebar-border: rgba(28, 26, 23, 0.1);
+  --sidebar-ring: #9a3412;
+  --shadow-bezel-inset: inset 0 1px 0 rgba(255, 255, 255, 0.7);
+  --font-serif: var(--font-newsreader), ui-serif, Georgia, serif;
+  --font-head: var(--font-newsreader), ui-serif, Georgia, serif;
+  --radius: 0.25rem;
+  --card-radius: 4px;
+  --shell-radius: 6px;
+  color-scheme: light;
+}
+
+/* « Bento »: white tiles on a cool grey, round corners, a blue accent and a
+   lime wash where something is picked; figures and headings in Bricolage
+   Grotesque. The lime never carries text — on white it cannot. */
+:root[data-design="bento"]:not(:has(.marketing-shell)) {
+  --background: #eef0f3;
+  --foreground: #0f1115;
+  --frame: #dde1e7;
+  --card: #ffffff;
+  --card-foreground: #0f1115;
+  --popover: #ffffff;
+  --popover-foreground: #0f1115;
+  --primary: #2340f5;
+  --primary-hover: #1a31c4;
+  --primary-foreground: #ffffff;
+  --primary-ink: #2340f5;
+  --primary-rim: #2340f5;
+  --secondary: #e3e6eb;
+  --secondary-foreground: #0f1115;
+  --muted: #e6e9ee;
+  --muted-foreground: #535a68;
+  --accent: #e9f6b3;
+  --accent-foreground: #0f1115;
+  --success: #116a32;
+  --success-foreground: #ffffff;
+  --info: #0e6e8c;
+  --info-foreground: #ffffff;
+  --destructive: #c42b2b;
+  --destructive-foreground: #ffffff;
+  --warning: #a35200;
+  --warning-foreground: #ffffff;
+  --border: rgba(15, 17, 21, 0.1);
+  --hairline-strong: rgba(15, 17, 21, 0.16);
+  --scrollbar-thumb: rgba(15, 17, 21, 0.24);
+  --input: #ffffff;
+  --ring: #2340f5;
+  --chart-1: #2340f5;
+  --chart-2: #ea6a1a;
+  --chart-3: #4c9a2a;
+  --chart-4: #8b3fd6;
+  --chart-5: #6b7280;
+  --sidebar: #ffffff;
+  --sidebar-foreground: #0f1115;
+  --sidebar-primary: #2340f5;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #e9f6b3;
+  --sidebar-accent-foreground: #0f1115;
+  --sidebar-border: rgba(15, 17, 21, 0.1);
+  --sidebar-ring: #2340f5;
+  --shadow-bezel-inset: inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  --font-serif: var(--font-bricolage), var(--font-sans);
+  --font-head: var(--font-bricolage), var(--font-sans);
+  --radius: 0.875rem;
+  --card-radius: 28px;
+  --shell-radius: 34px;
+  color-scheme: light;
+}
+
+/* « Console »: black, square, white hairlines, figures and headings in IBM
+   Plex Mono; the brand's orange is the one signal colour, as in « Nuit ». */
+:root[data-design="console"]:not(:has(.marketing-shell)) {
+  --background: #0b0b0b;
+  --foreground: #ededed;
+  --frame: #000000;
+  --card: #121212;
+  --card-foreground: #ededed;
+  --popover: #141414;
+  --popover-foreground: #ededed;
+  --secondary: #1c1c1c;
+  --secondary-foreground: #ededed;
+  --muted: #1c1c1c;
+  --muted-foreground: #9a9a9a;
+  --accent: #2a1d10;
+  --accent-foreground: #ededed;
+  --success: #6fd08c;
+  --success-foreground: #0b0b0b;
+  --info: #6cc4ff;
+  --info-foreground: #0b0b0b;
+  --destructive: #ff7a7a;
+  --destructive-foreground: #0b0b0b;
+  --border: rgba(255, 255, 255, 0.1);
+  --hairline-strong: rgba(255, 255, 255, 0.16);
+  --scrollbar-thumb: #3a3a3a;
+  --input: #121212;
+  --chart-1: #fa9842;
+  --chart-2: #ededed;
+  --chart-3: #6fd08c;
+  --chart-4: #6cc4ff;
+  --chart-5: #8a8a8a;
+  --sidebar: #0b0b0b;
+  --sidebar-accent: #1c1c1c;
+  --sidebar-border: rgba(255, 255, 255, 0.1);
+  --shadow-bezel-inset: none;
+  --font-serif: var(--font-mono);
+  --font-head: var(--font-mono);
+  --tracking-normal: 0em;
+  --radius: 0.125rem;
+  --card-radius: 2px;
+  --shell-radius: 4px;
+}
+
+/* The logo in the light designs. The orb is glass, and glass takes its
+   colour from what is behind it: over paper or grey the same shell reads as
+   a pale, flat ball — a different mark from the deep amber sphere on
+   « Nuit ». So in these two the orb carries the ground it was drawn for: a
+   near-black fill under its own layers (a `background-color` paints beneath
+   every gradient of `.pc-orb`, and the circle clips it), which is « Nuit »'s
+   `--background`. Clouds, highlights and halo are untouched, so the logo is
+   the same object in every design. */
+:root[data-design="papier"]:not(:has(.marketing-shell)) .pc-orb,
+:root[data-design="bento"]:not(:has(.marketing-shell)) .pc-orb {
+  background-color: #0a0a10;
 }
 
 @theme inline {
@@ -246,6 +444,11 @@
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
+  /* Tailwind's own 1rem and 1.5rem, restated off `--radius` so a design that
+     squares its corners (« Console ») or rounds them (« Bento ») takes these
+     with it; at « Nuit »'s 0.625rem they are the same 1rem and 1.5rem. */
+  --radius-2xl: calc(var(--radius) + 0.375rem);
+  --radius-3xl: calc(var(--radius) + 0.875rem);
 
   /* Radius by role rather than by size, so a caller names what a thing is and
      not how round it wants it. The four below replace six size-named steps
@@ -260,8 +463,8 @@
 
      Nothing spends these yet — that is phase 2. */
   --radius-control: var(--radius);
-  --radius-card: 20px;
-  --radius-shell: 26px;
+  --radius-card: var(--card-radius);
+  --radius-shell: var(--shell-radius);
 
   /* The inset a surface gives its contents. 20px is not a compromise between
      the web's seven values: it is the phone's `p-5`, used in 36 of its 54

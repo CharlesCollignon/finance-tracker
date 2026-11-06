@@ -2,6 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@finance/core/types/database";
 import { seedDefaultCategories } from "@/lib/queries/categories";
 import { syncLocaleFromPreferences } from "@/lib/locale-cookies";
+import { syncDesignFromPreferences } from "@/lib/design-cookies";
 import { getLocale } from "@/lib/locale";
 
 /**
@@ -34,4 +35,6 @@ export async function afterLinkSignIn(
     // more session.
     console.error("Failed to sync locale preference", localeError);
   }
+  // The design chosen on another device; never fatal, see its comment.
+  await syncDesignFromPreferences(supabase, userId);
 }

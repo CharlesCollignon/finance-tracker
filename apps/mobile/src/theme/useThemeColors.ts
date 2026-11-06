@@ -6,8 +6,9 @@ import { COLORS } from "@/theme/tokens";
  * Always prefer a token className (text-foreground) in JSX; this exists so
  * the imperative cases stay in step with it.
  *
- * No longer reads the system colour scheme: Pluclair is dark, and the app
- * pins the scheme at boot so NativeWind's `dark:` variants agree.
+ * The palette of the design on screen (`theme/designs.ts`), not the system's
+ * colour scheme; a change of design remounts every screen, so this is read
+ * again then.
  */
 export function useThemeColors() {
   return COLORS;

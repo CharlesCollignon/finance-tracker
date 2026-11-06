@@ -35,6 +35,7 @@ import {
 import { NotificationKindRows } from "@/components/profile/NotificationKindRows";
 import { NotificationsRow } from "@/components/profile/NotificationsRow";
 import { AudienceRow } from "@/components/profile/AudienceRow";
+import { DesignPicker } from "@/components/profile/DesignPicker";
 import {
   AiAccountSection,
   type AiAccountRow,
@@ -305,6 +306,15 @@ export function ProfileView({
             value={LOCALE_LABELS[locale]}
             onClick={switchLocale}
           />
+        </ListSection>
+
+        {/* How the app looks, right after how a figure reads. Shown open
+            rather than behind a row: four pictures say more than a name, and
+            picking one is a single tap. */}
+        <ListSection title={t("design.section")} footer={t("design.footer")}>
+          <div className="p-3">
+            <DesignPicker />
+          </div>
         </ListSection>
 
         {/* Right under the person's money: the money they share. */}

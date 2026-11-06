@@ -174,7 +174,7 @@ export function CategoryFormSheet({
                     setIcon(selected ? null : key);
                   }}
                   style={{
-                    backgroundColor: selected ? ink : "rgba(236,236,241,0.06)",
+                    backgroundColor: selected ? ink : `${colors.foreground}0f`,
                   }}
                   className="h-12 w-12 items-center justify-center rounded-2xl active:opacity-70"
                 >

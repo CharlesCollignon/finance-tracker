@@ -2,6 +2,7 @@
 
 import dynamic from "next/dynamic";
 import { useCallback, useState } from "react";
+import { useDesign } from "@/lib/design-context";
 import { cn } from "@/lib/utils";
 
 /**
@@ -96,7 +97,19 @@ const HUE_SHIFT = 258;
 const RESOLUTION_SCALE = 0.34;
 const SHADER_BLUR = "blur(64px)";
 
+/**
+ * The light behind the app, in « Nuit » only. The other designs are drawn on
+ * a flat ground — paper, grey, black — that the body already paints, so the
+ * bloom and the shader are not mounted at all there, rather than mounted and
+ * hidden: the shader would otherwise keep a WebGL context drawing frames
+ * nobody sees.
+ */
 export function AppBackdrop() {
+  const { design } = useDesign();
+  return design === "nuit" ? <NuitBackdrop /> : null;
+}
+
+function NuitBackdrop() {
   const [shaderFailed, setShaderFailed] = useState(false);
 
   // Stable, so a failure does not retrigger the shader's setup effect and

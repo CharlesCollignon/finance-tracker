@@ -57,6 +57,8 @@ import { useFormatCurrency } from "@/providers/CurrencyProvider";
 import { useLocale, useT } from "@/providers/LocaleProvider";
 import { useToast } from "@/providers/ToastProvider";
 import { COLORS, ICON } from "@/theme/tokens";
+import { currentDesign, figureFace } from "@/theme/designs";
+import { isLightDesign } from "@finance/core/designs";
 
 /** How long a slide stays before the next one, when nothing holds it. */
 const SLIDE_MS = 6500;
@@ -104,7 +106,7 @@ export default function YearScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: COLORS.background }}>
-      <StatusBar style="light" />
+      <StatusBar style={isLightDesign(currentDesign()) ? "dark" : "light"} />
       {error ? (
         <View className="flex-1 justify-center px-4">
           <ScreenError message={error} onRetry={onRefresh} />
@@ -419,7 +421,7 @@ function Backdrop({ slide }: { slide: number }) {
           violetStyle,
         ]}
       />
-      <Blur amount={80} style={StyleSheet.absoluteFill} overlayColor="rgba(10,10,16,0.35)" />
+      <Blur amount={80} style={StyleSheet.absoluteFill} overlayColor={`${COLORS.background}59`} />
     </View>
   );
 }
@@ -443,13 +445,18 @@ function SlideTitle({ children }: { children: string }) {
   );
 }
 
-/** A slide's big figure: the card figure's face, at story size, in gold. */
-const HERO = {
-  fontFamily: "Fraunces-SemiBold",
-  fontSize: 64,
-  lineHeight: 72,
-  color: COLORS.primary,
-};
+/**
+ * A slide's big figure: the card figure's face, at story size, in the
+ * accent. A function, so it reads the design on screen (`theme/designs.ts`).
+ */
+function hero() {
+  return {
+    fontFamily: figureFace(),
+    fontSize: 64,
+    lineHeight: 72,
+    color: COLORS.primary,
+  };
+}
 
 function IntroSlide({ year }: { year: number }) {
   const t = useT();
@@ -467,7 +474,7 @@ function IntroSlide({ year }: { year: number }) {
             <Animated.Text
               key={position}
               entering={FadeInDown.delay(200 + position * 90).springify().damping(14)}
-              style={{ fontSize: 112, lineHeight: 124, color: COLORS.primary, fontFamily: "Fraunces-SemiBold" }}
+              style={{ fontSize: 112, lineHeight: 124, color: COLORS.primary, fontFamily: figureFace() }}
             >
               {digit}
             </Animated.Text>
@@ -499,7 +506,7 @@ function KeptSlide({ review }: { review: YearReview }) {
           value={kept.amount}
           startFrom={0}
           format={format}
-          style={HERO}
+          style={hero()}
           numberOfLines={1}
           adjustsFontSizeToFit
         />
@@ -592,7 +599,7 @@ function ClosesSlide({ review }: { review: YearReview }) {
           value={review.closes.count}
           startFrom={0}
           format={(value) => String(Math.round(value))}
-          style={HERO}
+          style={hero()}
         />
         <Text className="mt-1 text-lg">
           {t("yearReview.closesCaption", { count: review.closes.count })}
@@ -652,7 +659,7 @@ function CategorySlide({ review }: { review: YearReview }) {
       <>
         <SlideTitle>{t("yearReview.categoryTitle")}</SlideTitle>
         <Rise order={1}>
-          <Text style={HERO}>
+          <Text style={hero()}>
             {formatPercentLabel(Math.round(category.share * 100), locale)}
           </Text>
           <Text className="mt-1 text-lg">

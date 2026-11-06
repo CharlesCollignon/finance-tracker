@@ -92,7 +92,7 @@ export function CategoryGrid({
                 <View
                   className="h-12 w-12 items-center justify-center rounded-2xl"
                   style={{
-                    backgroundColor: selected ? ink : "rgba(236,236,241,0.06)",
+                    backgroundColor: selected ? ink : `${colors.foreground}0f`,
                   }}
                 >
                   <CategoryGlyph

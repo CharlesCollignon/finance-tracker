@@ -7,7 +7,9 @@
  * palette. Values are space-separated RGB channels so Tailwind's alpha
  * modifiers (bg-primary/10) keep working.
  *
- * There is one palette and it is dark, so these sit on `:root` unconditionally
+ * These are « Nuit », the default design. Another design restates them on the
+ * root view with NativeWind's `vars()` (`theme/designs.ts`). They sit on
+ * `:root` unconditionally
  * rather than behind `prefers-color-scheme`. A warm paper set used to hold
  * `:root` with the dark one in a media query, and three separate mechanisms
  * were keeping it off screen: `userInterfaceStyle: "dark"` in app.json,

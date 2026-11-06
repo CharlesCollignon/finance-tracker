@@ -68,6 +68,7 @@ import { useCurrency, useFormatCurrency } from "@/providers/CurrencyProvider";
 import { useLocale, useT } from "@/providers/LocaleProvider";
 import { useToast } from "@/providers/ToastProvider";
 import { ICON } from "@/theme/tokens";
+import { figureFace } from "@/theme/designs";
 import { useThemeColors } from "@/theme/useThemeColors";
 
 const CURRENCY_SYMBOL: Record<string, string> = { EUR: "€", USD: "$" };
@@ -645,7 +646,7 @@ function Tile({
         borderColor: active ? withAlpha(ink, 0.7) : colors.border,
         backgroundColor: active
           ? withAlpha(ink, 0.07)
-          : "rgba(236,236,241,0.04)",
+          : withAlpha(colors.foreground, 0.04),
       }}
       className="flex-1 gap-1 rounded-2xl border px-2.5 pb-2.5 pt-2 active:opacity-70"
     >
@@ -748,7 +749,7 @@ function SaveButton({
           {!gap && !pending && !justSaved ? (
             <Text
               style={{
-                fontFamily: "Fraunces-SemiBold",
+                fontFamily: figureFace(),
                 fontSize: 16,
                 color: colors.primaryForeground,
                 fontVariant: ["tabular-nums"],

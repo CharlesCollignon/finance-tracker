@@ -1564,6 +1564,29 @@ export const fr: Messages = {
     hideAmounts: "Masquer les montants",
   },
 
+  design: {
+    section: "Apparence",
+    settingLabel: "Design",
+    footer:
+      "Change les couleurs et les polices, rien d'autre. Le logo et les écrans restent les mêmes.",
+    nuit: {
+      name: "Nuit",
+      hint: "Sombre, éclairé par derrière. L'original.",
+    },
+    papier: {
+      name: "Papier",
+      hint: "Clair, comme un registre sur papier.",
+    },
+    bento: {
+      name: "Bento",
+      hint: "Clair, des tuiles blanches aux coins arrondis.",
+    },
+    console: {
+      name: "Console",
+      hint: "Noir, des chiffres en chasse fixe.",
+    },
+  },
+
   locale: {
     settingLabel: "Langue",
     settingHint:

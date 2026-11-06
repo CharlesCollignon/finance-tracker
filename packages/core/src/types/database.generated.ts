@@ -2639,6 +2639,7 @@ export type Database = {
           account_order: string[] | null;
           bearing_pins: Json | null;
           changelog_seen: string | null;
+          design: string | null;
           dismissed_prompts: string[];
           locale: string;
           measure_audience: boolean;
@@ -2652,6 +2653,7 @@ export type Database = {
           account_order?: string[] | null;
           bearing_pins?: Json | null;
           changelog_seen?: string | null;
+          design?: string | null;
           dismissed_prompts?: string[];
           locale?: string;
           measure_audience?: boolean;
@@ -2665,6 +2667,7 @@ export type Database = {
           account_order?: string[] | null;
           bearing_pins?: Json | null;
           changelog_seen?: string | null;
+          design?: string | null;
           dismissed_prompts?: string[];
           locale?: string;
           measure_audience?: boolean;
