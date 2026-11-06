@@ -20,6 +20,7 @@ import { Text } from "@/components/ui/Text";
 import { cn } from "@/lib/cn";
 import { hapticSelection } from "@/lib/haptics";
 import { useT } from "@/providers/LocaleProvider";
+import { accountChip } from "@/theme/design-blocks";
 
 /** How long a finger rests on a chip before it lifts; a tap is shorter. */
 const HOLD_MS = 350;
@@ -191,6 +192,8 @@ function Chip({
   onDrop?: (dx: number) => void;
   onStep?: (by: number) => void;
 }) {
+  // The design's chip (`theme/design-blocks.ts`).
+  const look = accountChip(selected);
   const dx = useSharedValue(0);
   const lift = useSharedValue(0);
 
@@ -245,7 +248,7 @@ function Chip({
     <GestureDetector gesture={Gesture.Exclusive(drag, tap)}>
       <Animated.View
         layout={reduceMotion ? undefined : LAYOUT}
-        style={style}
+        style={[look.frame, style]}
         onLayout={(event) => onLayoutWidth?.(event.nativeEvent.layout.width)}
         accessible
         accessibilityRole={onLift ? "radio" : "button"}
@@ -275,6 +278,7 @@ function Chip({
             "text-xs font-medium",
             selected ? "text-background" : "text-muted-foreground",
           )}
+          style={look.label}
         >
           {label}
         </Text>

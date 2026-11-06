@@ -1,13 +1,18 @@
 import { View, type ViewProps } from "react-native";
 
 import { cn } from "@/lib/cn";
-import { bezelShell, cardFrame } from "@/theme/design-blocks";
+import { accentTile, bezelShell, cardFrame } from "@/theme/design-blocks";
 
 export interface CardProps extends ViewProps {
   className?: string;
   /** Double-bezel nested look: tinted outer shell around the real surface. */
   bezel?: boolean;
   innerClassName?: string;
+  /**
+   * The design's accent tile (`accentTile`): lime on « Bento », for the one
+   * figure a screen leads with. Nothing in the other designs.
+   */
+  accent?: boolean;
 }
 
 /**
@@ -29,9 +34,11 @@ export function Card({
   innerClassName,
   style,
   bezel,
+  accent = false,
   children,
   ...props
 }: CardProps) {
+  const surface = [cardFrame(), accent ? accentTile() : null];
   if (bezel) {
     return (
       <View
@@ -43,7 +50,7 @@ export function Card({
         {...props}
       >
         <View
-          style={cardFrame()}
+          style={surface}
           className={cn("rounded-card p-card bg-card/70", innerClassName)}
         >
           {children}
@@ -54,7 +61,7 @@ export function Card({
 
   return (
     <View
-      style={[cardFrame(), style]}
+      style={[surface, style]}
       className={cn(
         "rounded-card p-card border border-border bg-card/70",
         className,

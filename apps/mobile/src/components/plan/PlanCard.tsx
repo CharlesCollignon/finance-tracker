@@ -11,16 +11,21 @@ import { Text } from "@/components/ui/Text";
 export function PlanCard({
   children,
   bezel,
+  accent = false,
 }: {
   children: ReactNode;
   bezel?: boolean;
+  /** Lime on « Bento » (`Card`'s `accent`): « Progression ». */
+  accent?: boolean;
 }) {
   return bezel ? (
-    <Card bezel innerClassName="gap-4 p-5">
+    <Card bezel accent={accent} innerClassName="gap-4 p-5">
       {children}
     </Card>
   ) : (
-    <Card className="gap-4 p-5">{children}</Card>
+    <Card accent={accent} className="gap-4 p-5">
+      {children}
+    </Card>
   );
 }
 

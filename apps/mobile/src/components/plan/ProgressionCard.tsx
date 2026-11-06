@@ -64,7 +64,7 @@ export function ProgressionCard({
   const lit = run !== null && run.streak > 0;
 
   return (
-    <PlanCard>
+    <PlanCard accent>
       <PlanCardHeader title={t("trajectory.progressionTitle")} />
 
       {reached.length > 0 ? (

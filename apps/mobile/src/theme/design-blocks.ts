@@ -495,3 +495,95 @@ export function ledgerAmountFace(): TextStyle | null {
       return null;
   }
 }
+
+/* --------------------------------------- Placements and Plan (phase 11) */
+
+/** An account's chip above Placements: underlined words, pills, square tabs. */
+export function accountChip(selected: boolean): {
+  frame: ViewStyle | null;
+  label: TextStyle | null;
+} {
+  switch (currentDesign()) {
+    case "papier":
+      return {
+        frame: {
+          borderWidth: 0,
+          borderBottomWidth: 3,
+          borderBottomColor: selected ? COLORS.primary : "transparent",
+          borderRadius: 0,
+          backgroundColor: "transparent",
+          paddingHorizontal: 4,
+        },
+        label: {
+          fontFamily: "Newsreader-SemiBold",
+          fontSize: 15,
+          color: selected ? COLORS.foreground : COLORS.mutedForeground,
+        },
+      };
+    case "console":
+      return {
+        frame: {
+          borderRadius: 0,
+          borderColor: selected ? COLORS.primary : COLORS.border,
+          backgroundColor: selected ? COLORS.primary : "transparent",
+        },
+        label: {
+          fontFamily: "IBMPlexMono-Medium",
+          textTransform: "uppercase",
+          letterSpacing: 0.6,
+          color: selected ? COLORS.primaryForeground : COLORS.mutedForeground,
+        },
+      };
+    default:
+      return { frame: null, label: null };
+  }
+}
+
+/**
+ * A holding's tile: a ruled entry on « Papier », a grey tile inside
+ * « Bento »'s white account tile (white on white would vanish), a square
+ * panel on « Console ».
+ */
+export function positionTile(): ViewStyle | null {
+  switch (currentDesign()) {
+    case "papier":
+      return {
+        backgroundColor: "transparent",
+        borderWidth: 0,
+        borderTopWidth: 2,
+        borderTopColor: COLORS.foreground,
+        borderRadius: 0,
+      };
+    case "bento":
+      return {
+        backgroundColor: COLORS.muted,
+        borderWidth: 0,
+        borderRadius: 20,
+      };
+    case "console":
+      return {
+        backgroundColor: "transparent",
+        borderColor: COLORS.border,
+        borderRadius: 2,
+      };
+    default:
+      return null;
+  }
+}
+
+/** The label over a hero figure (the patrimoine): serif, plain, or mono capitals. */
+export function heroLabelFace(): TextStyle | null {
+  switch (currentDesign()) {
+    case "papier":
+      return { fontFamily: "Newsreader-SemiBold", fontSize: 17 };
+    case "console":
+      return {
+        fontFamily: "IBMPlexMono-Medium",
+        fontSize: 11,
+        letterSpacing: 1.3,
+        textTransform: "uppercase",
+      };
+    default:
+      return null;
+  }
+}
