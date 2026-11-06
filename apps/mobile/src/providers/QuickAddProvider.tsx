@@ -23,11 +23,14 @@ import { getQuickEntryContext, type QuickEntryContext } from "@/lib/queries";
 import { Blur } from "@/components/ui/Blur";
 import { useTabBarHeight } from "@/theme/chrome";
 import { useThemeColors } from "@/theme/useThemeColors";
-import { ICON, RADIUS } from "@/theme/tokens";
+import { COLORS, ICON, RADIUS } from "@/theme/tokens";
+import { BENTO_PILL_LIFT } from "@/components/layout/tab-bar-design";
+import { useDesign } from "@/providers/DesignProvider";
 import { useT } from "@/providers/LocaleProvider";
 import { useOwner } from "@/providers/OwnerProvider";
 import { DURATION } from "@finance/core/motion";
 import type { CategoryType } from "@finance/core/types/database";
+import type { Design } from "@finance/core/designs";
 
 const EMPTY: QuickEntryContext = {
   categories: [],
@@ -148,8 +151,29 @@ const GOLD_GLASS = "rgba(250,152,66,0.72)";
 /** A lighter edge, so the glass reads as a surface over the content. */
 const GLASS_RIM = "rgba(255,240,210,0.35)";
 
+/**
+ * The add button's shape in each design: « Nuit »'s orange glass; a square
+ * of ink on « Papier »; a lime disc on « Bento » (over its floating pill);
+ * a square of the accent on « Console ». Solid outside « Nuit »: there is no
+ * lit ground behind them to show through.
+ */
+function fabLook(design: Design) {
+  switch (design) {
+    case "papier":
+      return { radius: 4, ground: COLORS.foreground, ink: COLORS.background };
+    case "bento":
+      return { radius: RADIUS.pill, ground: "#d4f25c", ink: "#0f1115" };
+    case "console":
+      return { radius: 0, ground: COLORS.primary, ink: COLORS.primaryForeground };
+    default:
+      return null;
+  }
+}
+
 function QuickAddFab() {
   const t = useT();
+  const { design } = useDesign();
+  const look = fabLook(design);
   const quickAdd = useQuickAdd();
   const insets = useSafeAreaInsets();
   const colors = useThemeColors();
@@ -173,7 +197,11 @@ function QuickAddFab() {
         position: "absolute",
         right: 16,
         // Above the tab bar, docked to the bottom edge.
-        bottom: barHeight + insets.bottom + 16,
+        bottom:
+          barHeight +
+          insets.bottom +
+          16 +
+          (design === "bento" ? BENTO_PILL_LIFT + 8 : 0),
       }}
     >
       <AnimatedPressable
@@ -193,12 +221,13 @@ function QuickAddFab() {
           {
             height: 56,
             width: 56,
-            borderRadius: RADIUS.pill,
+            borderRadius: look ? look.radius : RADIUS.pill,
             alignItems: "center",
             justifyContent: "center",
             overflow: "hidden",
-            borderWidth: StyleSheet.hairlineWidth,
+            borderWidth: look ? 0 : StyleSheet.hairlineWidth,
             borderColor: GLASS_RIM,
+            backgroundColor: look ? look.ground : "transparent",
           },
           animatedStyle,
         ]}
@@ -206,15 +235,17 @@ function QuickAddFab() {
         {/* Orange glass: still the one accent control on the screen, but what
             scrolls under it shows through, frosted, rather than being cut
             off by a solid disc. */}
-        <Blur
-          // Its own corners too: Android's blur clips to its own outline.
-          style={[StyleSheet.absoluteFill, { borderRadius: RADIUS.pill }]}
-          overlayColor={GOLD_GLASS}
-        />
+        {look ? null : (
+          <Blur
+            // Its own corners too: Android's blur clips to its own outline.
+            style={[StyleSheet.absoluteFill, { borderRadius: RADIUS.pill }]}
+            overlayColor={GOLD_GLASS}
+          />
+        )}
         <Ionicons
           name="add"
           size={ICON.hero}
-          color={colors.primaryForeground}
+          color={look ? look.ink : colors.primaryForeground}
         />
       </AnimatedPressable>
     </View>
