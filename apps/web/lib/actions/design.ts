@@ -5,6 +5,8 @@ import { isDesign } from "@finance/core/designs";
 import type { ActionResult } from "@finance/core/action-result";
 import * as preferences from "@finance/data/preferences";
 import { asUser } from "@/lib/actions/as-user";
+import { getAuthUser } from "@/lib/auth/get-user";
+import { isDemoUser } from "@/lib/demo";
 import { writeDesignCookie } from "@/lib/design-cookies";
 import { getLocale } from "@/lib/locale";
 
@@ -23,6 +25,14 @@ export async function setDesignPreference(
     return { error: "errors.invalidInput" };
   }
   await writeDesignCookie(design);
+  // The demo account is shared and read-only (migration 081): the visitor's
+  // design is theirs alone, so it lives in this browser's cookie and the
+  // row is not tried — trying it would only answer « read-only » to a choice
+  // that has already taken effect.
+  if (isDemoUser(await getAuthUser())) {
+    revalidatePath("/", "layout");
+    return { success: true };
+  }
   const locale = await getLocale();
   const result = await asUser(
     (db, userId) => preferences.setDesign(db, userId, design, locale),
