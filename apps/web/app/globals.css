@@ -829,6 +829,332 @@
   color-scheme: dark;
 }
 
+/* --- the designs' shared blocks --------------------------------------------
+
+   Layer 2 of `docs/plans/DESIGN_LAYOUTS_PLAN.md`: every screen is built from
+   a few blocks — cards and bezels, the page title, rows, tabs, segmented
+   controls, buttons, sheets and menus — each tagged with a class here
+   (`surface-card`, `list-row`…), and each design gives the tag its own
+   shape. « Nuit » restates nothing. These are unlayered, so they beat the
+   blocks' own utilities; they only set how a block is framed (ground,
+   border, corners, type), never its spacing, which stays the caller's. */
+
+/* The page's name, drawn large from `md` (PageHeader). « Nuit » keeps the
+   header out of sight there (its notch says where you are); the others
+   bring it back as a headline. */
+@media (min-width: 48rem) {
+  :root[data-design="papier"] .page-header,
+  :root[data-design="bento"] .page-header,
+  :root[data-design="console"] .page-header {
+    position: static;
+    width: auto;
+    height: auto;
+    margin: 0;
+    padding: 0;
+    overflow: visible;
+    clip-path: none;
+    white-space: normal;
+    border-width: 0;
+    background: transparent;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+  :root[data-design="papier"] .page-title-display,
+  :root[data-design="bento"] .page-title-display,
+  :root[data-design="console"] .page-title-display {
+    display: block;
+    width: 100%;
+    max-width: 48rem;
+    margin-inline: auto;
+    padding-inline: 1.5rem;
+    /* The rule under it, drawn inside the padding so it spans the text. */
+    background-repeat: no-repeat;
+    background-position: bottom center;
+    background-size: calc(100% - 3rem) 1px;
+  }
+}
+@media (min-width: 64rem) {
+  :root[data-design] .page-title-display {
+    max-width: 64rem;
+  }
+}
+@media (min-width: 80rem) {
+  :root[data-design] .page-title-display {
+    max-width: 72rem;
+  }
+}
+.page-title-path {
+  display: none;
+}
+:root[data-design="papier"] .page-title-display {
+  padding-top: 1.75rem;
+  padding-bottom: 0.875rem;
+  font-family: var(--font-head);
+  font-size: 2.75rem;
+  font-weight: 500;
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+  background-image: linear-gradient(var(--foreground), var(--foreground));
+}
+:root[data-design="bento"] .page-title-display {
+  padding-top: 1rem;
+  padding-bottom: 0.25rem;
+  font-family: var(--font-head);
+  font-size: 2.25rem;
+  font-weight: 800;
+  line-height: 1.1;
+  letter-spacing: -0.035em;
+}
+:root[data-design="console"] .page-title-display {
+  padding-top: 1.25rem;
+  padding-bottom: 0.875rem;
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  background-image: linear-gradient(var(--border), var(--border));
+}
+:root[data-design="console"] .page-title-path {
+  display: inline;
+  color: var(--muted-foreground);
+}
+
+/* Cards. « Papier »: no box, a section under an ink rule. « Bento »: a solid
+   white tile, round, no border. « Console »: a square panel with a hairline.
+   A bezel (a card inside a tinted shell) flattens to its inner card in all
+   three: the shell is « Nuit »'s way of catching its light. */
+:root[data-design="papier"] .surface-card,
+:root[data-design="papier"] .surface-bezel-inner {
+  background: transparent;
+  border: 0;
+  border-top: 2px solid var(--foreground);
+  border-radius: 0;
+  box-shadow: none;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+  transform: none;
+}
+:root[data-design="bento"] .surface-card,
+:root[data-design="bento"] .surface-bezel-inner {
+  background-color: var(--card);
+  border: 0;
+  border-radius: var(--card-radius);
+  box-shadow: 0 1px 2px rgba(15, 17, 21, 0.04);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+:root[data-design="console"] .surface-card,
+:root[data-design="console"] .surface-bezel-inner {
+  background-color: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--card-radius);
+  box-shadow: none;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+  transform: none;
+}
+:root[data-design="papier"] .surface-bezel,
+:root[data-design="bento"] .surface-bezel,
+:root[data-design="console"] .surface-bezel {
+  background: transparent;
+  border: 0;
+  padding: 0;
+  border-radius: var(--card-radius);
+}
+
+/* A card's heading (Le point's cards). */
+:root[data-design="papier"] .card-icon,
+:root[data-design="console"] .card-icon {
+  display: none;
+}
+:root[data-design="papier"] .card-title {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+:root[data-design="bento"] .card-title {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--foreground);
+}
+:root[data-design="bento"] .card-icon {
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 0.75rem;
+}
+:root[data-design="console"] .card-title,
+:root[data-design="console"] .section-label {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+:root[data-design="papier"] .section-label {
+  letter-spacing: 0.14em;
+}
+
+/* Rows. « Papier » draws a dotted leader from the label to the value, as a
+   ledger does; « Console » sets them close. */
+:root[data-design="papier"] .list-row-leader {
+  display: block;
+  flex: 1 1 1.5rem;
+  min-width: 1.5rem;
+  align-self: flex-end;
+  margin-bottom: 0.4em;
+  border-bottom: 1.5px dotted var(--hairline-strong);
+}
+:root[data-design="papier"] .list-row-label:has(+ .list-row-leader) {
+  flex: 0 1 auto;
+}
+:root[data-design="console"] .list-row > :first-child {
+  min-height: 2.75rem;
+  padding-block: 0.5rem;
+}
+
+/* The tabs naming a surface's views (SurfaceTabs). « Papier »: underlined
+   words. « Bento »: pills on a grey track. « Console »: square, bordered,
+   uppercase, the one you are in filled with the accent. The tab you are in
+   is the one holding the pill. */
+:root[data-design="papier"] .surface-tab-pill {
+  display: none;
+}
+:root[data-design="papier"] .surface-tab {
+  margin-right: 1.25rem;
+  padding-inline: 0;
+  border-radius: 0;
+  border-bottom: 3px solid transparent;
+  background: transparent;
+  font-family: var(--font-serif);
+  font-size: 1.0625rem;
+  font-weight: 400;
+}
+:root[data-design="papier"] .surface-tab:has(> .surface-tab-pill) {
+  border-bottom-color: var(--primary);
+  color: var(--foreground);
+  font-weight: 600;
+}
+:root[data-design="bento"] .surface-tabs {
+  width: fit-content;
+  max-width: 100%;
+  padding: 0.25rem;
+  border-radius: 999px;
+  background-color: var(--muted);
+}
+:root[data-design="console"] .surface-tabs {
+  gap: 0;
+}
+:root[data-design="console"] .surface-tab {
+  border: 1px solid var(--border);
+  margin-left: -1px;
+  border-radius: 0;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+:root[data-design="console"] .surface-tab-pill {
+  border-radius: 0;
+  background-color: var(--primary);
+}
+
+/* Segmented controls. */
+:root[data-design="papier"] .segmented,
+:root[data-design="papier"] .segmented-pill,
+:root[data-design="papier"] .segment {
+  border-radius: 2px;
+}
+:root[data-design="bento"] .segmented {
+  border-color: transparent;
+  background-color: var(--muted);
+}
+:root[data-design="bento"] .segmented-pill {
+  background-color: var(--card);
+  box-shadow: 0 1px 2px rgba(15, 17, 21, 0.08);
+}
+:root[data-design="console"] .segmented,
+:root[data-design="console"] .segmented-pill,
+:root[data-design="console"] .segment {
+  border-radius: 0;
+}
+:root[data-design="console"] .segment {
+  font-family: var(--font-mono);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+/* Buttons: square in « Papier » and « Console », pills in « Bento ». */
+:root[data-design="papier"] .btn,
+:root[data-design="papier"] .btn-pill {
+  border-radius: 2px;
+}
+:root[data-design="bento"] .btn {
+  border-radius: 999px;
+}
+:root[data-design="console"] .btn,
+:root[data-design="console"] .btn-pill {
+  border-radius: 0;
+  font-family: var(--font-mono);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+:root[data-design="papier"] .quick-add-fab {
+  border-radius: 4px;
+  background-color: var(--foreground);
+  color: var(--background);
+}
+
+/* Sheets, menus and popovers. */
+:root[data-design="papier"] .sheet-panel {
+  border-radius: 0;
+  border-top: 3px solid var(--foreground);
+}
+:root[data-design="papier"] .surface-panel {
+  border-radius: 2px;
+  background-color: var(--popover);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+:root[data-design="bento"] .sheet-panel {
+  border: 0;
+  border-radius: 32px 32px 0 0;
+}
+@media (min-width: 48rem) {
+  :root[data-design="bento"] .sheet-panel {
+    border-radius: 32px;
+  }
+}
+:root[data-design="bento"] .surface-panel {
+  border: 0;
+  border-radius: 24px;
+  background-color: var(--popover);
+  box-shadow: 0 12px 40px rgba(15, 17, 21, 0.12);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+:root[data-design="console"] .sheet-panel,
+:root[data-design="console"] .surface-panel {
+  border: 1px solid var(--hairline-strong);
+  border-radius: 0;
+  background-color: var(--popover);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+
+/* The phone's top band (GLASS_CHROME). */
+:root[data-design="papier"] .surface-chrome,
+:root[data-design="console"] .surface-chrome {
+  background-color: var(--background);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+:root[data-design="papier"] .surface-chrome {
+  border-bottom-color: var(--foreground);
+}
+:root[data-design="bento"] .surface-chrome {
+  border-bottom-color: transparent;
+}
+
 /* Privacy: blur monetary values when enabled */
 html[data-privacy="on"] .privacy-amount,
 html[data-privacy="on"] .privacy-sensitive {
