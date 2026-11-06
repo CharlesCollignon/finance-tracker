@@ -17,6 +17,20 @@ import type { ChangelogEntry, RoadmapItem } from "./changelog";
  */
 export const CHANGELOG: readonly ChangelogEntry[] = [
   {
+    id: "2026-11-06-web-journal-calendar-first",
+    date: "2026-11-06",
+    kind: "better",
+    platforms: ["web"],
+    fr: {
+      title: "Le Journal s’ouvre sur le calendrier",
+      body: "« Journal » mène d’abord au mois jour par jour. « Calendrier » est désormais le premier onglet, avant « Liste », « Par catégorie » et « Par commerce ».",
+    },
+    en: {
+      title: "The Journal opens on the calendar",
+      body: "“Journal” now leads to the month day by day. “Calendar” is the first tab, ahead of “List”, “By category” and “By shop”.",
+    },
+  },
+  {
     id: "2026-11-06-web-demo-exit",
     date: "2026-11-06",
     kind: "fixed",
