@@ -5,6 +5,7 @@ import * as WebBrowser from "expo-web-browser";
 
 import { mobileRouteForPushUrl } from "@finance/core/push-routes";
 
+import { requestApkUpdate } from "@/lib/apk-update";
 import { notifyDataChanged } from "@/lib/data-version";
 import { WEB_APP_URL } from "@/lib/env";
 import { stampReviewAsk } from "@/lib/review-ask";
@@ -53,7 +54,12 @@ export function useNotificationRouting(ready: boolean): void {
       return;
     }
 
-    const { url } = response.notification.request.content.data ?? {};
+    const { url, apkUpdate } = response.notification.request.content.data ?? {};
+    // « Pluclair x.y.z est disponible »: Le point starts the download
+    // (`NewVersionBanner`) when it opens just below.
+    if (typeof apkUpdate === "string") {
+      requestApkUpdate(apkUpdate);
+    }
     const route = mobileRouteForPushUrl(url);
     notifyDataChanged();
 
