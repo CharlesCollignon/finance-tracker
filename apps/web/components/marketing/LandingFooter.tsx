@@ -109,12 +109,16 @@ export async function LandingFooter({ isLoggedIn }: { isLoggedIn: boolean }) {
               ) : (
                 <>
                   <li>
-                    <Link href="/signup" className={footerLink}>
+                    <Link
+                      href="/signup"
+                      prefetch={false}
+                      className={footerLink}
+                    >
                       {copy.cta.getStarted}
                     </Link>
                   </li>
                   <li>
-                    <Link href="/login" className={footerLink}>
+                    <Link href="/login" prefetch={false} className={footerLink}>
                       {copy.cta.signIn}
                     </Link>
                   </li>

@@ -98,13 +98,19 @@ function JoinBody({ state, token }: { state: JoinState; token: string }) {
         <Heading>{t("space.joinSignedOutTitle")}</Heading>
         <Body>{t("space.joinSignedOutBody")}</Body>
         <div className="flex flex-wrap justify-center gap-2">
-          <Button variant="pill" render={<Link href="/signup" />}>
+          <Button
+            variant="pill"
+            render={<Link href="/signup" prefetch={false} />}
+          >
             {t("auth.createAccount")}
             <ButtonNub>
               <ArrowRight size={ICON.md} />
             </ButtonNub>
           </Button>
-          <Button variant="outline" render={<Link href="/login" />}>
+          <Button
+            variant="outline"
+            render={<Link href="/login" prefetch={false} />}
+          >
             {t("auth.signIn")}
           </Button>
         </div>

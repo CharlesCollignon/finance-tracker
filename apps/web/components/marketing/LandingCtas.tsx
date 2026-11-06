@@ -81,12 +81,17 @@ export function LandingCtas({
 
   return (
     <div className={cn("flex flex-wrap items-center gap-3", className)}>
-      <Link href="/signup" className={cn(base, sizes[size], gold)}>
+      <Link
+        href="/signup"
+        prefetch={false}
+        className={cn(base, sizes[size], gold)}
+      >
         {copy.cta.getStarted}
       </Link>
       {layout === "solo" ? null : (
         <Link
           href="/login"
+          prefetch={false}
           className={cn(
             base,
             sizes[size],

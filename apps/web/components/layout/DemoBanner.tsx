@@ -29,7 +29,11 @@ export function DemoBanner() {
         className="shrink-0 text-muted-foreground"
       />
       <span>{t("demo.banner")}</span>
-      <Link href="/signup" className="font-medium underline underline-offset-4">
+      <Link
+        href="/signup"
+        prefetch={false}
+        className="font-medium underline underline-offset-4"
+      >
         {t("demo.createAccount")}
       </Link>
     </div>
