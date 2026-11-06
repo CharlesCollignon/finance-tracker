@@ -223,44 +223,95 @@ function PapierBar({
         ]}
       />
       <View style={styles.row}>
-        {tabs.map((tab) => {
-          const lit = tab.name === active;
-          return (
-            <Pressable
-              key={tab.name}
-              onLayout={measure(tab.name)}
-              accessibilityRole="tab"
-              accessibilityState={{ selected: lit }}
-              accessibilityLabel={tab.label}
-              onPress={() => onPress(tab.name)}
-              style={({ pressed }) => [
-                styles.cell,
-                { opacity: pressed ? 0.55 : 1 },
-              ]}
-            >
-              <Text
-                numberOfLines={1}
-                adjustsFontSizeToFit
-                minimumFontScale={0.75}
-                maxFontSizeMultiplier={1.3}
-                style={{
-                  fontFamily: "Newsreader-SemiBold",
-                  fontSize: 14,
-                  color: lit ? COLORS.foreground : COLORS.mutedForeground,
-                }}
-              >
-                {tab.label}
-              </Text>
-              {tab.waiting ? (
-                <View
-                  style={[styles.papierDot, { backgroundColor: COLORS.primary }]}
-                />
-              ) : null}
-            </Pressable>
-          );
-        })}
+        {tabs.map((tab) => (
+          <PapierWord
+            key={tab.name}
+            tab={tab}
+            lit={tab.name === active}
+            // Six words across a 360pt phone leave about 58pt each, under
+            // what « Récurrents » needs at 14: the size follows the count,
+            // and Android and iOS shrink a word further rather than cut it.
+            size={tabs.length > 5 ? 12 : 14}
+            onLayout={measure(tab.name)}
+            onPress={() => onPress(tab.name)}
+          />
+        ))}
       </View>
     </View>
+  );
+}
+
+/** One word of « Papier »'s bar: it gives a little under the finger, and
+ * the one you are in rises a hair and darkens as the underline arrives. */
+function PapierWord({
+  tab,
+  lit,
+  size,
+  onPress,
+  onLayout,
+}: {
+  tab: DesignTab;
+  lit: boolean;
+  size: number;
+  onPress: () => void;
+  onLayout: (event: LayoutChangeEvent) => void;
+}) {
+  const reduce = useReducedMotion();
+  const scale = useSharedValue(1);
+  const ink = useSharedValue(lit ? 1 : 0);
+  useEffect(() => {
+    ink.set(reduce ? (lit ? 1 : 0) : withTiming(lit ? 1 : 0, { duration: 220 }));
+  }, [lit, reduce, ink]);
+  const word = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.get() }, { translateY: -1.5 * ink.get() }],
+  }));
+  const deep = useAnimatedStyle(() => ({ opacity: ink.get() }));
+  const text = (color: string) => (
+    <Text
+      numberOfLines={1}
+      adjustsFontSizeToFit
+      minimumFontScale={0.75}
+      maxFontSizeMultiplier={1.3}
+      style={{
+        fontFamily: "Newsreader-SemiBold",
+        fontSize: size,
+        letterSpacing: -0.1,
+        color,
+      }}
+    >
+      {tab.label}
+    </Text>
+  );
+  return (
+    <Pressable
+      onLayout={onLayout}
+      accessibilityRole="tab"
+      accessibilityState={{ selected: lit }}
+      accessibilityLabel={tab.label}
+      onPressIn={() => {
+        if (!reduce) scale.set(withTiming(0.92, { duration: 90 }));
+      }}
+      onPressOut={() => {
+        if (!reduce) scale.set(withSpring(1, { damping: 14, stiffness: 320 }));
+      }}
+      onPress={onPress}
+      style={styles.cell}
+    >
+      <Animated.View style={word}>
+        {text(COLORS.mutedForeground)}
+        {/* The deep ink laid over the quiet one, faded in: a colour change
+            Reanimated can run on the UI thread. */}
+        <Animated.View
+          pointerEvents="none"
+          style={[StyleSheet.absoluteFill, { alignItems: "center" }, deep]}
+        >
+          {text(COLORS.foreground)}
+        </Animated.View>
+      </Animated.View>
+      {tab.waiting ? (
+        <View style={[styles.papierDot, { backgroundColor: COLORS.primary }]} />
+      ) : null}
+    </Pressable>
   );
 }
 
