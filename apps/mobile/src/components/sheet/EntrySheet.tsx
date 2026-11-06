@@ -21,6 +21,7 @@ import { figureFace } from "@/theme/designs";
 import { useThemeColors } from "@/theme/useThemeColors";
 
 import { withAlpha } from "../add/kind-ink";
+import { sheetFrame } from "@/theme/design-blocks";
 
 /**
  * The frame every entry sheet shares since November 2026 — Ajouter, and
@@ -78,7 +79,7 @@ export function EntrySheet({
           onPress={onClose}
         />
         <View
-          style={{ maxHeight: "92%" }}
+          style={[{ maxHeight: "92%" }, sheetFrame()]}
           className="overflow-hidden rounded-t-[24px] border border-b-0 border-border bg-card"
         >
           {ink ? <KindGlow color={ink} /> : null}

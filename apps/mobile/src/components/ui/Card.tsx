@@ -1,6 +1,7 @@
 import { View, type ViewProps } from "react-native";
 
 import { cn } from "@/lib/cn";
+import { bezelShell, cardFrame } from "@/theme/design-blocks";
 
 export interface CardProps extends ViewProps {
   className?: string;
@@ -34,14 +35,17 @@ export function Card({
   if (bezel) {
     return (
       <View
-        style={style}
+        style={[bezelShell(), style]}
         className={cn(
           "rounded-shell border border-border bg-foreground/[0.06] p-1.5",
           className,
         )}
         {...props}
       >
-        <View className={cn("rounded-card p-card bg-card/70", innerClassName)}>
+        <View
+          style={cardFrame()}
+          className={cn("rounded-card p-card bg-card/70", innerClassName)}
+        >
           {children}
         </View>
       </View>
@@ -50,7 +54,7 @@ export function Card({
 
   return (
     <View
-      style={style}
+      style={[cardFrame(), style]}
       className={cn(
         "rounded-card p-card border border-border bg-card/70",
         className,

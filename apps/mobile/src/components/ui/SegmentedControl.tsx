@@ -12,6 +12,7 @@ import { hapticSelection } from "@/lib/haptics";
 import { useThemeColors } from "@/theme/useThemeColors";
 import { RADIUS } from "@/theme/tokens";
 import { DURATION } from "@finance/core/motion";
+import { segmented } from "@/theme/design-blocks";
 
 export interface Segment<T extends string> {
   value: T;
@@ -49,6 +50,8 @@ export function SegmentedControl<T extends string>({
   className,
 }: SegmentedControlProps<T>) {
   const colors = useThemeColors();
+  // The design's track, pill and labels (`theme/design-blocks.ts`).
+  const look = segmented();
   const [width, setWidth] = useState(0);
 
   const index = Math.max(
@@ -79,6 +82,7 @@ export function SegmentedControl<T extends string>({
         "flex-row rounded-full border border-border p-1",
         className,
       )}
+      style={look.track}
     >
       {slot > 0 ? (
         <Animated.View
@@ -93,6 +97,7 @@ export function SegmentedControl<T extends string>({
               borderRadius: RADIUS.pill,
               backgroundColor: colors.secondary,
             },
+            look.pill,
             pill,
           ]}
         />
@@ -128,6 +133,7 @@ export function SegmentedControl<T extends string>({
                 selected ? "text-foreground" : "text-muted-foreground",
                 segment.disabled && "opacity-40",
               )}
+              style={look.label}
             >
               {segment.label}
             </Text>

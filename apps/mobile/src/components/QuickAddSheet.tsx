@@ -70,6 +70,7 @@ import { useToast } from "@/providers/ToastProvider";
 import { ICON } from "@/theme/tokens";
 import { figureFace } from "@/theme/designs";
 import { useThemeColors } from "@/theme/useThemeColors";
+import { sheetFrame } from "@/theme/design-blocks";
 
 const CURRENCY_SYMBOL: Record<string, string> = { EUR: "€", USD: "$" };
 
@@ -442,7 +443,7 @@ function AddPanel({
 
   return (
     <View
-      style={{ height: "92%" }}
+      style={[{ height: "92%" }, sheetFrame()]}
       className="overflow-hidden rounded-t-[24px] border border-b-0 border-border bg-card"
     >
       <KindGlow color={ink} />

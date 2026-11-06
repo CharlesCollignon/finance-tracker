@@ -4,6 +4,7 @@ import { Modal, Pressable, ScrollView, View } from "react-native";
 import { SheetGrabber } from "@/components/ui/SheetGrabber";
 import { Text } from "@/components/ui/Text";
 import { useT } from "@/providers/LocaleProvider";
+import { sheetFrame } from "@/theme/design-blocks";
 
 interface PickerSheetProps {
   open: boolean;
@@ -49,7 +50,10 @@ export function PickerSheet({
           accessibilityLabel={t("common.close")}
           onPress={onClose}
         />
-        <View className="max-h-[80%] rounded-t-card border border-border bg-card pb-8">
+        <View
+          className="max-h-[80%] rounded-t-card border border-border bg-card pb-8"
+          style={sheetFrame()}
+        >
           <View className="items-center pt-3">
             <SheetGrabber />
           </View>
