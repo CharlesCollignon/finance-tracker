@@ -17,6 +17,42 @@ import type { ChangelogEntry, RoadmapItem } from "./changelog";
  */
 export const CHANGELOG: readonly ChangelogEntry[] = [
   {
+    id: "2026-11-06-phone-add-sheet",
+    date: "2026-11-06",
+    kind: "better",
+    platforms: ["phone"],
+    fr: {
+      title: "Ajouter, en un seul écran",
+      body: "« + » commence par ce que vous savez déjà : une dépense, un revenu, de l’épargne ou un placement. Le montant s’affiche en grand, dans la couleur de ce type ; Catégorie, Commerce et Quand se remplissent en dessous, et le bas de l’écran devient le pavé numérique, les catégories, les commerces connus ou le calendrier. Rien ne défile.",
+      detail:
+        "Une opération qui revient se règle dans « Quand », « Régulièrement » : chaque mois, semaine, trimestre ou année, le jour, « Le montant varie », l’acompte d’un salaire. Le bouton dit ce qui manque encore, puis « Enregistrer −42,50 € ». Le « + » à côté enregistre et garde l’écran ouvert pour la suivante.",
+    },
+    en: {
+      title: "Add, on one screen",
+      body: "“+” starts with what you already know: an expense, income, savings or an investment. The amount shows large, in that kind's colour; Category, Shop and When fill in below it, and the bottom of the screen becomes the keypad, the categories, the shops you know or the calendar. Nothing scrolls.",
+      detail:
+        "Something that repeats is set under “When”, “Regularly”: every month, week, quarter or year, the day, “The amount varies”, a salary's advance. The button says what is still missing, then “Save −€42.50”. The “+” beside it saves and keeps the screen open for the next one.",
+    },
+  },
+  {
+    id: "2026-11-06-phone-edit-sheets",
+    date: "2026-11-06",
+    kind: "better",
+    platforms: ["phone"],
+    fr: {
+      title: "Toutes les fenêtres de saisie, au même format",
+      body: "Modifier une opération, une opération récurrente ou une ligne de Placements, faire le bilan du mois, ouvrir une opération prévue ou créer une catégorie : chaque fenêtre s’ouvre sur son montant, en grand et dans sa couleur, avec le bouton orange en bas qui dit ce qu’il va faire, ou « Rien n’a changé ».",
+      detail:
+        "Supprimer est en bas et demande une confirmation sur place. Une catégorie se montre telle qu’elle apparaîtra pendant que vous la créez. Les comptes, les biens et les mouvements d’un compte-titres prennent le même cadre, et « Masquer les montants » cache aussi ceux affichés en grand.",
+    },
+    en: {
+      title: "Every entry sheet, in the same style",
+      body: "Editing an entry, a recurring entry or a holding in Investments, closing the month, opening a planned entry or creating a category: each sheet opens on its amount, large and in its colour, with the orange button at the bottom saying what it will do, or “Nothing has changed”.",
+      detail:
+        "Delete sits at the bottom and asks you to confirm in place. A category shows as it will appear while you create it. Accounts, properties and a brokerage account's movements take the same frame, and “Hide amounts” also covers the ones shown large.",
+    },
+  },
+  {
     id: "2026-11-06-web-other-sheets",
     date: "2026-11-06",
     kind: "better",
@@ -2176,10 +2212,10 @@ export const CHANGELOG: readonly ChangelogEntry[] = [
  */
 export const CHANGELOG_STATS = {
   /** `git rev-list --count HEAD` on the branch that wrote the newest entry. */
-  commits: 1186,
+  commits: 1248,
   /** The repository's first commit. */
   since: "2026-06-15",
-  asOf: "2026-11-05",
+  asOf: "2026-11-06",
 } as const;
 
 /**
