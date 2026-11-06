@@ -1984,6 +1984,34 @@ export const en = {
     hideAmounts: "Hide amounts",
   },
 
+  /**
+   * The design the app is read in (`packages/core/src/designs.ts`), from the
+   * profile's « Apparence » section on both apps. The names are the designs'
+   * own and are not translated.
+   */
+  design: {
+    section: "Appearance",
+    settingLabel: "Design",
+    footer:
+      "Changes colours and type only. The logo and every screen stay the same.",
+    nuit: {
+      name: "Nuit",
+      hint: "Dark, lit from behind. The original.",
+    },
+    papier: {
+      name: "Papier",
+      hint: "Light, like a ledger on paper.",
+    },
+    bento: {
+      name: "Bento",
+      hint: "Light, white tiles and round corners.",
+    },
+    console: {
+      name: "Console",
+      hint: "Black, figures in a fixed-width face.",
+    },
+  },
+
   /** Choosing a language, and being asked whether to. */
   locale: {
     /** The row in the profile's Money section, beside Currency. */

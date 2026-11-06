@@ -18,6 +18,7 @@ import { isDemoUser } from "@/lib/demo";
 import { getAuthUser } from "@/lib/auth/get-user";
 import { createClient } from "@/lib/supabase/server";
 import { seedDefaultCategories } from "@/lib/queries/categories";
+import { syncDesignFromPreferences } from "@/lib/design-cookies";
 import { getOwner } from "@/lib/owner";
 import { todayIsoLocal } from "@finance/core/constants";
 import { saveRecurringTemplate } from "@finance/data/recurring-templates";
@@ -87,6 +88,8 @@ export async function signUp(
 
   if (data.user) {
     await seedCategoriesSafely(data.user.id);
+    // The design chosen on another device is the one this one opens in.
+    await syncDesignFromPreferences(supabase, data.user.id);
   }
 
   return { success: true };
