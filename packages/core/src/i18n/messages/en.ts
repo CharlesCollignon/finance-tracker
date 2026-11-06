@@ -133,6 +133,15 @@ export const en = {
 
     /** The count on a destination that has things waiting behind it. */
     waiting: "{count} waiting",
+    /** The name of the bar of surfaces, for screen readers. */
+    main: "Main navigation",
+    /**
+     * « Console »'s command bar: a field that opens the palette, where an
+     * amount and a word add an entry and a name goes to a page.
+     */
+    command: "Add « 23.45 groceries », search, or go to…",
+    /** « Console »'s line under its surfaces: how the shortcuts work. */
+    shortcuts: "G then a letter goes to a surface.",
     /** « Nouveautés », in the account menus of both apps. */
     nouveautes: "What's new",
     /** How many changes this account has not seen yet. */

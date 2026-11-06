@@ -17,6 +17,20 @@ import type { ChangelogEntry, RoadmapItem } from "./changelog";
  */
 export const CHANGELOG: readonly ChangelogEntry[] = [
   {
+    id: "2026-11-06-web-design-navigation",
+    date: "2026-11-06",
+    kind: "better",
+    platforms: ["web"],
+    fr: {
+      title: "Chaque design a sa propre navigation",
+      body: "Papier ouvre sur un en-tête de journal, les rubriques en toutes lettres ; Bento range les rubriques dans une colonne sombre, avec « Ajouter » en vert ; Console les met en liste, avec une barre de commande (⌘K) et des raccourcis : G puis P pour Le point, J pour le Journal… Nuit ne change pas, et le logo reste le même partout.",
+    },
+    en: {
+      title: "Each design has its own navigation",
+      body: "Papier opens on a newspaper masthead with the sections spelled out; Bento puts them in a dark column, with “Add” in green; Console lists them, with a command bar (⌘K) and shortcuts: G then P for Le point, J for the Journal… Nuit is unchanged, and the logo stays the same everywhere.",
+    },
+  },
+  {
     id: "2026-11-06-web-designs",
     date: "2026-11-06",
     kind: "new",

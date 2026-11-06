@@ -1,8 +1,7 @@
 import type { ReactNode } from "react";
 import { AccountLabelProvider } from "@/components/layout/AccountLabel";
 import { AppBackdrop } from "@/components/layout/AppBackdrop";
-import { TopNav } from "@/components/layout/TopNav";
-import { BottomNav } from "@/components/layout/BottomNav";
+import { ShellNav } from "@/components/layout/shells/ShellNav";
 import { StatementDropTarget } from "@/components/finance/statements/StatementDropTarget";
 import { PageEnter } from "@/components/motion/PageEnter";
 import {
@@ -54,7 +53,8 @@ export function AppShell({
           {/* Outside the scrolling column and fixed to the viewport, so the veil
           stays put while content moves over it. */}
           <AppBackdrop />
-          <TopNav
+          {/* The navigation, in the reader's design. */}
+          <ShellNav
             displayName={displayName}
             initial={initial}
             nouveautes={nouveautes}
@@ -66,7 +66,9 @@ export function AppShell({
           to begin below them. */}
           <div
             className={cn(
-              "flex min-w-0 flex-1 flex-col",
+              // `app-main`: the other designs make room for their own
+              // navigation instead of the notch (`globals.css`).
+              "app-main flex min-w-0 flex-1 flex-col",
               "md:pt-[calc(var(--shell-edge)+var(--shell-notch-height))]",
               // The scrollbar's room is on the right; the same on the left
               // keeps the page centred in the frame rather than in the window.
@@ -91,7 +93,6 @@ export function AppShell({
               <PageEnter>{children}</PageEnter>
             </main>
           </div>
-          <BottomNav badges={badges} showProperty={showProperty} />
           {/* A bank's file dropped anywhere opens the import with it. */}
           <StatementDropTarget />
         </div>

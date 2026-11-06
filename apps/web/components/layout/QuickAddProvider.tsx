@@ -41,6 +41,8 @@ interface QuickAddValue {
   /** Opens the sheet; the reader can still switch kind inside it. */
   open: (options?: OpenOptions) => void;
   isOpen: boolean;
+  /** Opens the palette, as Cmd/Ctrl+K does — « Console »'s command bar. */
+  openPalette: () => void;
 }
 
 const QuickAddContext = createContext<QuickAddValue | null>(null);
@@ -184,9 +186,14 @@ export function QuickAddProvider({
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, []);
 
+  const openPalette = useCallback(() => {
+    setIsOpen(false);
+    setPaletteOpen(true);
+  }, []);
+
   const value = useMemo<QuickAddValue>(
-    () => ({ open, isOpen }),
-    [open, isOpen],
+    () => ({ open, isOpen, openPalette }),
+    [open, isOpen, openPalette],
   );
 
   return (
@@ -238,7 +245,9 @@ function QuickAddFab() {
       aria-label={t("add.open")}
       onClick={() => quickAdd.open()}
       className={cn(
-        "fixed right-4 z-40 md:hidden",
+        // `quick-add-fab`: the designs whose bar carries its own add hide
+        // this one (`globals.css`).
+        "quick-add-fab fixed right-4 z-40 md:hidden",
         "bottom-[calc(var(--shell-bottom-nav-height)+var(--shell-bottom-nav-inset)+env(safe-area-inset-bottom,0px)+1rem)]",
         "flex h-14 w-14 items-center justify-center rounded-full",
         "bg-primary text-primary-foreground",

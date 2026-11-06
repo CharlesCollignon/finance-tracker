@@ -745,6 +745,90 @@
   opacity: 1;
 }
 
+/* --- the designs' navigation ----------------------------------------------
+
+   « Nuit » frames the page in a bezel with a notch (`.app-frame`, above);
+   the other designs draw their own navigation (`components/layout/shells`)
+   and the page makes room for it here, through `.app-main` on the column
+   that holds it. Unlayered, so these beat the column's « Nuit » utilities. */
+
+/* No bezel to paint round the page, so the window is the page's ground. */
+:root[data-design="papier"]:not(:has(.marketing-shell)),
+:root[data-design="bento"]:not(:has(.marketing-shell)),
+:root[data-design="console"]:not(:has(.marketing-shell)) {
+  background-color: var(--background);
+}
+
+@media (min-width: 48rem) {
+  /* The masthead is in the page's flow: nothing to clear. */
+  :root[data-design="papier"] .app-main {
+    padding-top: 0;
+    padding-left: 0;
+  }
+  /* The rail: 14rem wide, 1rem in from the window, 1rem to the page. */
+  :root[data-design="bento"] .app-main {
+    padding-top: 1rem;
+    padding-left: 16rem;
+  }
+  /* The command bar, 3.5rem, and the list, 13rem. */
+  :root[data-design="console"] .app-main {
+    padding-top: 3.5rem;
+    padding-left: 13rem;
+  }
+}
+
+@media (max-width: 47.999rem) {
+  /* The ruled tabs sit on the window's edge, with no inset under them. */
+  :root[data-design="papier"] .app-main {
+    padding-bottom: calc(
+      var(--shell-bottom-nav-height) + 1rem + env(safe-area-inset-bottom, 0px)
+    );
+  }
+  /* The dock: 4rem, 0.75rem off the edge, and room to breathe. */
+  :root[data-design="bento"] .app-main {
+    padding-bottom: calc(5.5rem + env(safe-area-inset-bottom, 0px));
+  }
+  /* The prompt over the tabs: 2.75rem, 3rem and their margins. */
+  :root[data-design="console"] .app-main {
+    padding-bottom: calc(7.5rem + env(safe-area-inset-bottom, 0px));
+  }
+}
+
+/* Their bars carry the add themselves. */
+:root[data-design="bento"] .quick-add-fab,
+:root[data-design="console"] .quick-add-fab {
+  display: none;
+}
+
+/* « Bento »'s rail and dock: the one dark tile on a light page. The palette
+   is restated inside it, so what it holds — the switch, the account, the
+   controls, the add — is drawn for a dark ground without knowing it is on
+   one; lime is the add here, and on this ground it carries dark text. */
+.bento-rail {
+  --background: #0f1115;
+  --foreground: #ffffff;
+  --card: #1a1d24;
+  --card-foreground: #ffffff;
+  --popover: #1a1d24;
+  --popover-foreground: #ffffff;
+  --primary: #d4f25c;
+  --primary-hover: #c6e944;
+  --primary-foreground: #0f1115;
+  --primary-ink: #d4f25c;
+  --secondary: #2a2e37;
+  --secondary-foreground: #ffffff;
+  --muted: #2a2e37;
+  --muted-foreground: #b4b9c4;
+  --accent: #2a2e37;
+  --accent-foreground: #ffffff;
+  --border: rgba(255, 255, 255, 0.1);
+  --hairline-strong: rgba(255, 255, 255, 0.16);
+  --ring: #d4f25c;
+  background-color: var(--background);
+  color: var(--foreground);
+  color-scheme: dark;
+}
+
 /* Privacy: blur monetary values when enabled */
 html[data-privacy="on"] .privacy-amount,
 html[data-privacy="on"] .privacy-sensitive {
