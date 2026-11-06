@@ -17,6 +17,20 @@ import type { ChangelogEntry, RoadmapItem } from "./changelog";
  */
 export const CHANGELOG: readonly ChangelogEntry[] = [
   {
+    id: "2026-11-07-web-merchants-gone",
+    date: "2026-11-07",
+    kind: "better",
+    platforms: ["web"],
+    fr: {
+      title: "Le Journal sans « Par commerce »",
+      body: "L’onglet « Par commerce » quitte le Journal. Pour retrouver les opérations d’un commerce, cherchez son nom dans la Liste ; la palette de commandes y mène directement.",
+    },
+    en: {
+      title: "The Journal without “By shop”",
+      body: "The “By shop” tab leaves the Journal. To find a shop’s operations, search its name in the List; the command palette takes you straight there.",
+    },
+  },
+  {
     id: "2026-11-06-web-owner-tweaks-3",
     date: "2026-11-06",
     kind: "better",
@@ -2380,10 +2394,10 @@ export const CHANGELOG: readonly ChangelogEntry[] = [
  */
 export const CHANGELOG_STATS = {
   /** `git rev-list --count HEAD` on the branch that wrote the newest entry. */
-  commits: 1330,
+  commits: 1339,
   /** The repository's first commit. */
   since: "2026-06-15",
-  asOf: "2026-11-06",
+  asOf: "2026-11-07",
 } as const;
 
 /**
