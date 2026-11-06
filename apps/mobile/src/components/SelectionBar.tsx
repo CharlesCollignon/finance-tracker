@@ -19,6 +19,7 @@ import { useFormatCurrency } from "@/providers/CurrencyProvider";
 import { useThemeColors } from "@/theme/useThemeColors";
 import { ICON } from "@/theme/tokens";
 import { useLocale, useT } from "@/providers/LocaleProvider";
+import { panelFrame } from "@/theme/design-blocks";
 
 /** Mirrors the tab bar height so the sheet clears it. */
 const TAB_BAR_HEIGHT = 60;
@@ -109,6 +110,7 @@ export function SelectionBar({
         })}
         // No shadow, as everywhere: the strong hairline lifts it instead.
         className="gap-3 rounded-card p-row border border-hairline-strong bg-card"
+        style={panelFrame()}
       >
         {confirming ? (
           <>

@@ -16,6 +16,7 @@ import { cn } from "@/lib/cn";
 import { resolveMessage } from "@finance/core/i18n/t";
 import { useT } from "@/providers/LocaleProvider";
 import { FADE_IN, FADE_OUT } from "@/components/motion/fade";
+import { panelFrame } from "@/theme/design-blocks";
 
 type ToastVariant = "default" | "success" | "error";
 
@@ -132,6 +133,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
               "w-full max-w-sm flex-row items-center gap-3 rounded-card border border-border px-4 py-3",
               SURFACE[entry.variant],
             )}
+            style={panelFrame()}
           >
             <Text
               className={cn("flex-1 text-sm font-medium", LABEL[entry.variant])}

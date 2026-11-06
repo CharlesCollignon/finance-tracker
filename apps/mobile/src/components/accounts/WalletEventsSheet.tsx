@@ -40,6 +40,7 @@ import { useLocale, useT } from "@/providers/LocaleProvider";
 import { useToast } from "@/providers/ToastProvider";
 import { ICON } from "@/theme/tokens";
 import { useThemeColors } from "@/theme/useThemeColors";
+import { cardFrame } from "@/theme/design-blocks";
 
 /** The same ceiling as a statement: a broker's year is a few hundred lines. */
 const MAX_FILE_BYTES = 10 * 1024 * 1024;
@@ -256,7 +257,7 @@ export function WalletEventsSheet({
             </Text>
 
             {/* The broker's file. */}
-            <View className="gap-2 rounded-card border border-border p-4">
+            <View className="gap-2 rounded-card border border-border p-4" style={cardFrame()}>
               <View className="flex-row">
                 <Button
                   label={pending && !reading ? t("events.importing") : t("events.importFile")}
@@ -322,7 +323,7 @@ export function WalletEventsSheet({
 
             {/* One typed by hand. */}
             {draft ? (
-              <View className="gap-3 rounded-card border border-border p-4">
+              <View className="gap-3 rounded-card border border-border p-4" style={cardFrame()}>
                 <Text className="text-sm font-medium">{t("events.new")}</Text>
                 <View className="gap-1">
                   <Text className="text-xs font-semibold text-muted-foreground">{t("events.kind")}</Text>

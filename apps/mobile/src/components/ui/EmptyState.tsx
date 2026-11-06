@@ -3,6 +3,7 @@ import { View } from "react-native";
 
 import { Text } from "@/components/ui/Text";
 import { cn } from "@/lib/cn";
+import { cardFrame } from "@/theme/design-blocks";
 
 interface EmptyStateProps {
   /** What could be done here, in a handful of words. */
@@ -36,6 +37,7 @@ export function EmptyState({
         "gap-2 rounded-card p-card border border-border bg-card/70",
         className,
       )}
+      style={cardFrame()}
     >
       <Text variant="title">{title}</Text>
       <Text variant="muted">{description}</Text>

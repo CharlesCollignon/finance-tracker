@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/Button";
 import { Text } from "@/components/ui/Text";
 import { useT } from "@/providers/LocaleProvider";
 import { resolveMessage } from "@finance/core/i18n/t";
+import { panelFrame } from "@/theme/design-blocks";
 
 interface ConfirmSheetProps {
   open: boolean;
@@ -48,7 +49,10 @@ export function ConfirmSheet({
           className="absolute inset-0"
           onPress={onCancel}
         />
-        <View className="w-full max-w-sm rounded-card p-card border border-border bg-card">
+        <View
+          className="w-full max-w-sm rounded-card p-card border border-border bg-card"
+          style={panelFrame()}
+        >
           <Text className="font-semibold" style={{ fontSize: 17 }}>
             {title}
           </Text>

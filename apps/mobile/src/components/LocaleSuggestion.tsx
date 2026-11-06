@@ -9,6 +9,7 @@ import { translator } from "@finance/core/i18n/t";
 import { Text } from "@/components/ui/Text";
 import { devicePreferredLocale } from "@/lib/locale";
 import { useLocaleContext } from "@/providers/LocaleProvider";
+import { panelFrame } from "@/theme/design-blocks";
 
 const ASKED_KEY = "locale.asked";
 
@@ -93,7 +94,10 @@ export function LocaleSuggestion({ enabled }: { enabled: boolean }) {
       pointerEvents="box-none"
       style={{ position: "absolute", top: insets.top, left: 0, right: 0 }}
     >
-      <View className="mx-4 gap-3 rounded-card p-card border border-border bg-card">
+      <View
+        className="mx-4 gap-3 rounded-card p-card border border-border bg-card"
+        style={panelFrame()}
+      >
         <View className="gap-1">
           <Text variant="head">{offer("locale.suggest.title")}</Text>
           <Text variant="muted">{offer("locale.suggest.body")}</Text>
