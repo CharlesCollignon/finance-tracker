@@ -17,6 +17,20 @@ import type { ChangelogEntry, RoadmapItem } from "./changelog";
  */
 export const CHANGELOG: readonly ChangelogEntry[] = [
   {
+    id: "2026-11-06-web-demo-exit",
+    date: "2026-11-06",
+    kind: "fixed",
+    platforms: ["web"],
+    fr: {
+      title: "La démo ne retient plus personne",
+      body: "Après « Essayer la démo », le site propose de nouveau « Commencer » et « Se connecter », et ces boutons ouvrent bien la création de compte et la connexion, comme « Créer mon compte » dans la démo. Avant, ils ramenaient dans la démo.",
+    },
+    en: {
+      title: "The demo no longer holds on to you",
+      body: "After “Try the demo”, the site offers “Get started” and “Sign in” again, and they open sign-up and sign-in, as does “Create my account” inside the demo. Before, they led back into the demo.",
+    },
+  },
+  {
     id: "2026-11-06-phone-add-sheet",
     date: "2026-11-06",
     kind: "better",

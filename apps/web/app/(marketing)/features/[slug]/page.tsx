@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { getAuthUser } from "@/lib/auth/get-user";
+import { hasOwnAccount } from "@/lib/auth/get-user";
 import { FeaturePage } from "@/components/marketing/FeaturePage";
 import { getLocale } from "@/lib/locale";
 import {
@@ -43,6 +43,5 @@ export default async function FeatureRoutePage({ params }: FeatureRouteProps) {
   if (!isLandingPageId(slug)) {
     notFound();
   }
-  const user = await getAuthUser();
-  return <FeaturePage pageId={slug} isLoggedIn={Boolean(user)} />;
+  return <FeaturePage pageId={slug} isLoggedIn={await hasOwnAccount()} />;
 }

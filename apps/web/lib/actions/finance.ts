@@ -14,6 +14,7 @@ import { signInErrorKey, signUpErrorKey } from "@finance/core/auth-errors";
 import { asOwner } from "@/lib/actions/as-user";
 import { redirect } from "next/navigation";
 import { getSiteUrl } from "@/lib/supabase/env";
+import { isDemoUser } from "@/lib/demo";
 import { getAuthUser } from "@/lib/auth/get-user";
 import { createClient } from "@/lib/supabase/server";
 import { seedDefaultCategories } from "@/lib/queries/categories";
@@ -138,6 +139,14 @@ export async function seedCategoriesForCurrentUser(): Promise<void> {
 
 export async function signOut() {
   const supabase = await createClient();
+  const user = await getAuthUser();
+  if (isDemoUser(user)) {
+    // The demo account is shared by every visitor at once (migration 081):
+    // only this browser's session ends, and the visitor goes back to the
+    // site rather than to a sign-in form for an account that is not theirs.
+    await supabase.auth.signOut({ scope: "local" });
+    redirect("/");
+  }
   await supabase.auth.signOut();
   redirect("/login");
 }

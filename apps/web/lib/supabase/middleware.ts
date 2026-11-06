@@ -6,6 +6,7 @@ import {
   LOCALE_COOKIE,
   parseLocale,
 } from "@finance/core/i18n/locale";
+import { isDemoUser } from "@/lib/demo";
 import { OWNER_COOKIE, OWNER_COOKIE_OPTIONS } from "@/lib/owner-cookie";
 import { getSupabaseEnv } from "@/lib/supabase/env";
 
@@ -102,12 +103,23 @@ export async function updateSession(request: NextRequest) {
   });
 
   const {
-    data: { user },
+    data: { user: sessionUser },
   } = await supabase.auth.getUser();
 
   const { pathname } = request.nextUrl;
   const isAuthRoute =
     pathname.startsWith("/login") || pathname.startsWith("/signup");
+
+  // The demo (migration 081) is a look round, not an account: « Commencer »,
+  // « Se connecter » and the demo banner's « Créer mon compte » all lead
+  // here, and must open the form rather than send the visitor back into the
+  // sample. The demo session ends on this browser only — `local`, since a
+  // global sign-out would end it for every visitor looking round at once.
+  let user = sessionUser;
+  if (user && isDemoUser(user) && isAuthRoute && request.method === "GET") {
+    await supabase.auth.signOut({ scope: "local" });
+    user = null;
+  }
   const isProtected =
     pathname.startsWith("/bearing") ||
     pathname.startsWith("/transactions") ||

@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { getAuthUser } from "@/lib/auth/get-user";
+import { hasOwnAccount } from "@/lib/auth/get-user";
 import { AboutPage } from "@/components/marketing/AboutPage";
 import { ABOUT_HREF, aboutCopyFor } from "@/components/marketing/about-copy";
 import { getLocale } from "@/lib/locale";
@@ -18,6 +18,5 @@ export async function generateMetadata(): Promise<Metadata> {
 
 /** Who makes Pluclair, and why (`components/marketing/AboutPage.tsx`). */
 export default async function AboutRoutePage() {
-  const user = await getAuthUser();
-  return <AboutPage isLoggedIn={Boolean(user)} />;
+  return <AboutPage isLoggedIn={await hasOwnAccount()} />;
 }
