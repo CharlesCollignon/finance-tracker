@@ -13,6 +13,7 @@ import { cn } from "@/lib/cn";
 import { ICON, type COLORS } from "@/theme/tokens";
 import { useThemeColors } from "@/theme/useThemeColors";
 import { DURATION } from "@finance/core/motion";
+import { buttonFrame, buttonLabelFace } from "@/theme/design-blocks";
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
@@ -98,7 +99,7 @@ export function Button({
     <AnimatedPressable
       accessibilityRole="button"
       disabled={disabled}
-      style={animatedStyle}
+      style={[buttonFrame(), animatedStyle]}
       className={cn(
         "flex-row items-center justify-center gap-2",
         CONTAINER[variant],
@@ -123,7 +124,7 @@ export function Button({
       {leading}
       <Text
         className={cn("font-semibold", LABEL[variant], LABEL_SIZE[size])}
-        style={sansWeightFace("font-semibold")}
+        style={[sansWeightFace("font-semibold"), buttonLabelFace()]}
       >
         {label}
       </Text>

@@ -18,6 +18,7 @@ import { CHROME_MAX_FONT_SCALE, useChromeFontScale } from "@/theme/chrome";
 import { ICON } from "@/theme/tokens";
 import { useThemeColors } from "@/theme/useThemeColors";
 import { useOwner } from "@/providers/OwnerProvider";
+import { headerBar, headerTitleFace } from "@/theme/design-blocks";
 
 export interface ScreenProps {
   title?: string;
@@ -118,7 +119,7 @@ export function Screen({
       {showHeader ? (
         <View
           className="border-b border-border"
-          style={{ height: headerHeight }}
+          style={[{ height: headerHeight }, headerBar()]}
         >
           {/*
             All three zones are positioned absolutely rather than laid out as a
@@ -161,7 +162,7 @@ export function Screen({
             ) : (
               <Text
                 className="min-w-0 shrink font-sans text-foreground"
-                style={{ fontSize: TITLE_SIZE }}
+                style={[{ fontSize: TITLE_SIZE }, headerTitleFace()]}
                 maxFontSizeMultiplier={CHROME_MAX_FONT_SCALE}
                 numberOfLines={1}
                 adjustsFontSizeToFit

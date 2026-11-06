@@ -53,6 +53,7 @@ import { useOwner } from "@/providers/OwnerProvider";
 import { ICON } from "@/theme/tokens";
 import { useThemeColors } from "@/theme/useThemeColors";
 import { FADE_OUT, LAYOUT } from "@/components/motion/fade";
+import { sheetFrame } from "@/theme/design-blocks";
 
 interface BankInboxSheetProps {
   open: boolean;
@@ -579,7 +580,10 @@ export function BankInboxSheet({
           className="flex-1"
           onPress={close}
         />
-        <View className="max-h-[90%] rounded-t-card border border-border bg-card px-card pt-3">
+        <View
+          className="max-h-[90%] rounded-t-card border border-border bg-card px-card pt-3"
+          style={sheetFrame()}
+        >
           <SheetGrabber />
           <View className="mb-3 flex-row items-center justify-between gap-3">
             <Text

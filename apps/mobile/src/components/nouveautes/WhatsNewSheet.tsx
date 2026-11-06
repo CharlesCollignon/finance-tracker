@@ -18,6 +18,7 @@ import {
 import { useAuth } from "@/providers/AuthProvider";
 import { useLocale, useT } from "@/providers/LocaleProvider";
 import { FADE_IN } from "@/components/motion/fade";
+import { sheetFrame } from "@/theme/design-blocks";
 
 /** How many changes the sheet lists before « Tout voir » takes over. */
 const SHOWN = 4;
@@ -82,6 +83,7 @@ export function WhatsNewSheet() {
           accessible={false}
           onPress={(event) => event.stopPropagation()}
           className="gap-3 rounded-t-card border border-border bg-card px-4 pb-10 pt-3"
+          style={sheetFrame()}
         >
           <SheetGrabber />
           <Text variant="title">{t("nouveautes.whatsNewTitle")}</Text>

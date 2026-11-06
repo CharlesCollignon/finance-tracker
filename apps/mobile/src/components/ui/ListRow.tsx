@@ -8,6 +8,7 @@ import { cn } from "@/lib/cn";
 import { hapticSelection } from "@/lib/haptics";
 import { useThemeColors } from "@/theme/useThemeColors";
 import { ICON } from "@/theme/tokens";
+import { sectionLabelFace } from "@/theme/design-blocks";
 
 /**
  * The settings row, and the group it sits in.
@@ -145,7 +146,7 @@ export function ListSection({
   return (
     <View className="gap-2">
       {title ? (
-        <Text variant="label" className="px-1">
+        <Text variant="label" className="px-1" style={sectionLabelFace()}>
           {title}
         </Text>
       ) : null}

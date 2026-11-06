@@ -6,6 +6,7 @@ import { cn } from "@/lib/cn";
 import { hapticLight } from "@/lib/haptics";
 import { useT } from "@/providers/LocaleProvider";
 import type { Key } from "@finance/core/i18n/t";
+import { viewTab, viewTabsTrack } from "@/theme/design-blocks";
 
 export interface SurfaceTab {
   href: Href;
@@ -39,9 +40,12 @@ export function SurfaceTabs({ tabs, className }: SurfaceTabsProps) {
     <View
       accessibilityRole="tablist"
       className={cn("flex-row items-center gap-1", className)}
+      style={viewTabsTrack()}
     >
       {tabs.map((tab) => {
         const active = pathname === String(tab.href);
+        // The design's shape for it (`theme/design-blocks.ts`).
+        const look = viewTab(active);
         return (
           <Pressable
             hitSlop={8}
@@ -59,12 +63,14 @@ export function SurfaceTabs({ tabs, className }: SurfaceTabsProps) {
               "rounded-full px-3.5 py-1.5",
               active ? "bg-foreground" : "bg-transparent",
             )}
+            style={look.frame}
           >
             <Text
               className={cn(
                 "text-sm font-medium",
                 active ? "text-background" : "text-muted-foreground",
               )}
+              style={look.label}
             >
               {t(tab.labelKey)}
             </Text>
