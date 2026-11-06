@@ -17,6 +17,48 @@ import type { ChangelogEntry, RoadmapItem } from "./changelog";
  */
 export const CHANGELOG: readonly ChangelogEntry[] = [
   {
+    id: "2026-11-06-phone-designs",
+    date: "2026-11-06",
+    kind: "new",
+    platforms: ["phone"],
+    fr: {
+      title: "Quatre designs au choix, sur le téléphone aussi",
+      body: "Dans Profil, « Apparence » propose Nuit, Papier, Bento et Console, comme sur le web, et le choix suit d’un appareil à l’autre. Chaque design a sa barre d’onglets — des mots soulignés en Papier, une pastille sombre en Bento, des onglets numérotés en Console — ses cartes et sa mise en page du point. Le logo reste le même partout.",
+    },
+    en: {
+      title: "Four designs to choose from, on the phone too",
+      body: "In Profile, “Appearance” offers Nuit, Papier, Bento and Console, as on the web, and the choice follows you from one device to another. Each design has its own tab bar — underlined words in Papier, a dark pill in Bento, numbered tabs in Console — its own cards and its own layout of Le point. The logo stays the same everywhere.",
+    },
+  },
+  {
+    id: "2026-11-06-phone-investment-tiles",
+    date: "2026-11-06",
+    kind: "better",
+    platforms: ["phone"],
+    fr: {
+      title: "Vos placements, en tuiles",
+      body: "Dans Placements, chaque ligne d’un compte est une tuile, deux par rangée. La courbe du cours est en gris, au pied de la tuile, pour ne plus se lire comme votre résultat.",
+    },
+    en: {
+      title: "Your investments, as tiles",
+      body: "In Investments, each holding in an account is a tile, two to a row. The price line is grey, at the foot of the tile, so it no longer reads as your result.",
+    },
+  },
+  {
+    id: "2026-11-06-phone-journal-calendar-first",
+    date: "2026-11-06",
+    kind: "better",
+    platforms: ["phone"],
+    fr: {
+      title: "Le Journal s’ouvre sur le calendrier",
+      body: "« Journal » mène d’abord au mois jour par jour. Et la barre du bas reste allumée sur Journal ou Placements quand vous passez à Liste, Analyse ou Composition.",
+    },
+    en: {
+      title: "The Journal opens on the calendar",
+      body: "“Journal” now leads to the month day by day. And the bottom bar stays lit on Journal or Investments when you move to List, Analysis or Composition.",
+    },
+  },
+  {
     id: "2026-11-06-web-design-every-screen",
     date: "2026-11-06",
     kind: "better",
