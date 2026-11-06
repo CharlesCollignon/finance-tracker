@@ -1,5 +1,10 @@
-import { type ComponentProps, type ReactNode } from "react";
-import { Pressable, View } from "react-native";
+import {
+  Children,
+  isValidElement,
+  type ComponentProps,
+  type ReactNode,
+} from "react";
+import { Pressable, View, type StyleProp, type ViewStyle } from "react-native";
 import { useRouter, type Href } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import Animated, { useReducedMotion } from "react-native-reanimated";
@@ -11,6 +16,7 @@ import { useFormatCurrency } from "@/providers/CurrencyProvider";
 import { ICON } from "@/theme/tokens";
 import { useThemeColors } from "@/theme/useThemeColors";
 import { FADE_IN } from "@/components/motion/fade";
+import { cardFrame, cardHeading, homeStack } from "@/theme/design-blocks";
 
 /**
  * What Le point's cards are made of on the phone: the card itself, the
@@ -45,18 +51,26 @@ export function HomeCard({
 }) {
   const router = useRouter();
   const colors = useThemeColors();
+  // The design's heading (`theme/design-blocks.ts`).
+  const heading = cardHeading();
 
   return (
-    <View className="gap-4 rounded-card border border-border bg-card/70 p-card">
+    <View
+      className="gap-4 rounded-card border border-border bg-card/70 p-card"
+      style={cardFrame()}
+    >
       <View className="flex-row items-center justify-between gap-3">
         <View className="min-w-0 flex-1 flex-row items-center gap-2">
-          <View className="h-7 w-7 items-center justify-center rounded-full bg-muted">
-            <Ionicons name={icon} size={ICON.sm} color={colors.foreground} />
-          </View>
+          {heading.showIcon ? (
+            <View className="h-7 w-7 items-center justify-center rounded-full bg-muted">
+              <Ionicons name={icon} size={ICON.sm} color={colors.foreground} />
+            </View>
+          ) : null}
           <Text
             accessibilityRole="header"
             numberOfLines={1}
             className="shrink text-sm font-medium text-muted-foreground"
+            style={heading.title}
           >
             {title}
           </Text>
@@ -166,6 +180,37 @@ export function GrowBar({ ratio, color }: { ratio: number; color: string }) {
         className="h-full rounded-full"
         style={{ width: `${clamped * 100}%`, backgroundColor: color }}
       />
+    </View>
+  );
+}
+
+/**
+ * Le point's column of cards, spaced as the design spaces it
+ * (`homeStack`): « Console » joins the cards into one ruled column, each
+ * one's top hairline laid over the last one's bottom, so the line between
+ * two is one hairline rather than two.
+ */
+export function HomeStack({
+  style,
+  children,
+}: {
+  style?: StyleProp<ViewStyle>;
+  children: ReactNode;
+}) {
+  const { gap, joined } = homeStack();
+  const items = Children.toArray(children).filter(isValidElement);
+  return (
+    <View style={[{ gap }, style]}>
+      {joined
+        ? items.map((item, index) => (
+            <View
+              key={item.key ?? index}
+              style={index > 0 ? { marginTop: -1 } : undefined}
+            >
+              {item}
+            </View>
+          ))
+        : items}
     </View>
   );
 }

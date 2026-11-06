@@ -28,6 +28,7 @@ import { usePrivacy } from "@/providers/PrivacyProvider";
 import { CHART_COLORS, TYPE } from "@/theme/tokens";
 import { useThemeColors } from "@/theme/useThemeColors";
 import { FADE_IN } from "@/components/motion/fade";
+import { cardFrame } from "@/theme/design-blocks";
 
 const AnimatedCircle = Animated.createAnimatedComponent(Circle);
 const EASING = Easing.bezier(...EASE_STANDARD);
@@ -74,7 +75,10 @@ export function WhereItGoes({ rollup }: { rollup: RecurringRollup }) {
   };
 
   return (
-    <View className="gap-4 rounded-card border border-border bg-card px-5 py-5">
+    <View
+      className="gap-4 rounded-card border border-border bg-card px-5 py-5"
+      style={cardFrame()}
+    >
       <View className="flex-row items-center gap-4">
         <View className="min-w-0 flex-1 gap-1.5">
           <Text variant="label">{t("charges.leftEachMonth")}</Text>

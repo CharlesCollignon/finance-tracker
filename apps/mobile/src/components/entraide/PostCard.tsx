@@ -9,6 +9,7 @@ import { cn } from "@/lib/cn";
 import { hapticSelection } from "@/lib/haptics";
 import { ICON } from "@/theme/tokens";
 import { useThemeColors } from "@/theme/useThemeColors";
+import { cardFrame } from "@/theme/design-blocks";
 
 /**
  * Who wrote it and when: a pseudonym, the « Pluclair » mark on the owner's
@@ -81,6 +82,7 @@ export function PostCard({
         onOpen();
       }}
       className="gap-2 rounded-card border border-border bg-card/70 p-card active:bg-card"
+      style={cardFrame()}
     >
       <View className="flex-row flex-wrap items-center gap-2">
         <Text variant="label">{copy.kinds[post.kind]}</Text>

@@ -17,6 +17,7 @@ import { usePrivacy } from "@/providers/PrivacyProvider";
 import { ICON } from "@/theme/tokens";
 import { useThemeColors } from "@/theme/useThemeColors";
 import { FADE_IN, FADE_OUT } from "@/components/motion/fade";
+import { cardFrame } from "@/theme/design-blocks";
 
 /** The mask `PrivateAmount` shows, here inside a sentence. */
 const MASK = "••••••";
@@ -56,6 +57,7 @@ export function WeeklyRecapCard({ recap }: { recap: WeeklyRecap }) {
       entering={reduceMotion ? undefined : FADE_IN}
       exiting={reduceMotion ? undefined : FADE_OUT}
       className="gap-3 rounded-card border border-border bg-card/70 p-card"
+      style={cardFrame()}
     >
       <View className="flex-row items-center justify-between gap-3">
         <View className="min-w-0 flex-1 flex-row items-center gap-2">

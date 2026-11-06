@@ -11,6 +11,7 @@ import { hapticLight } from "@/lib/haptics";
 import { useT } from "@/providers/LocaleProvider";
 import { ICON } from "@/theme/tokens";
 import { useThemeColors } from "@/theme/useThemeColors";
+import { cardFrame } from "@/theme/design-blocks";
 
 /**
  * What a screen shows when it could not load: that something went wrong,
@@ -34,7 +35,10 @@ export function ScreenError({
   const known = resolved !== null && resolved !== message;
 
   return (
-    <View className="items-center gap-3 rounded-card border border-border bg-card/70 p-card">
+    <View
+      className="items-center gap-3 rounded-card border border-border bg-card/70 p-card"
+      style={cardFrame()}
+    >
       <Ionicons
         name="cloud-offline-outline"
         size={ICON.lg}

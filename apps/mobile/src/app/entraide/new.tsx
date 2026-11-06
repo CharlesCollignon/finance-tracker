@@ -40,6 +40,7 @@ import { useLocale } from "@/providers/LocaleProvider";
 import { ICON } from "@/theme/tokens";
 import { useThemeColors } from "@/theme/useThemeColors";
 import { FADE_IN, FADE_OUT } from "@/components/motion/fade";
+import { cardFrame } from "@/theme/design-blocks";
 
 /** How long the title rests before « Déjà demandé ? » looks. */
 const SEARCH_AFTER_MS = 450;
@@ -188,6 +189,7 @@ export default function NewEntraidePostScreen() {
               entering={reduceMotion ? undefined : FADE_IN}
               exiting={reduceMotion ? undefined : FADE_OUT}
               className="gap-1.5 rounded-card border border-border bg-card/70 p-3"
+              style={cardFrame()}
             >
               <Text variant="label" className="px-1 pb-1">
                 {words.already}

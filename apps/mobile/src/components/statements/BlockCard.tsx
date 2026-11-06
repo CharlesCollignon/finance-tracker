@@ -25,6 +25,7 @@ import { hapticSelection } from "@/lib/haptics";
 import { ICON } from "@/theme/tokens";
 import { useThemeColors } from "@/theme/useThemeColors";
 import { FADE_IN, FADE_OUT, LAYOUT } from "@/components/motion/fade";
+import { cardFrame } from "@/theme/design-blocks";
 
 export interface BlockChoice {
   account: AccountChoice;
@@ -182,6 +183,7 @@ export function BlockCard({
     <Animated.View
       entering={reduceMotion ? undefined : FADE_IN}
       className="gap-4 rounded-card border border-border bg-card/70 p-card"
+      style={cardFrame()}
     >
       <View className="flex-row items-start gap-3">
         <View className="h-10 w-10 items-center justify-center rounded-full bg-muted">

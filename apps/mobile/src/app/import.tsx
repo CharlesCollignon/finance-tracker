@@ -61,6 +61,7 @@ import { useToast } from "@/providers/ToastProvider";
 import { ICON } from "@/theme/tokens";
 import { useThemeColors } from "@/theme/useThemeColors";
 import { FADE_IN } from "@/components/motion/fade";
+import { cardFrame } from "@/theme/design-blocks";
 
 /** A statement bigger than this is not one. */
 const MAX_FILE_BYTES = 10 * 1024 * 1024;
@@ -469,7 +470,10 @@ export default function ImportScreen() {
               }
               onDismissed={(itemId) => setDismissed((current) => [...current, itemId])}
             />
-            <View className="gap-4 rounded-card border border-border bg-card/70 p-card">
+            <View
+              className="gap-4 rounded-card border border-border bg-card/70 p-card"
+              style={cardFrame()}
+            >
               <Text variant="title">{t("statements.heading")}</Text>
               <Text variant="muted" className="leading-5">
                 {t("statements.intro")}
@@ -500,7 +504,10 @@ export default function ImportScreen() {
             {known?.mail ? <MailInbox view={known.mail} /> : null}
 
             {listenerOn ? (
-              <View className="gap-2 rounded-card border border-border bg-card/70 p-card">
+              <View
+                className="gap-2 rounded-card border border-border bg-card/70 p-card"
+                style={cardFrame()}
+              >
                 <View className="flex-row items-center gap-2">
                   <Ionicons name="notifications-outline" size={ICON.md} color={colors.primary} />
                   <Text variant="head">{t("listener.title")}</Text>
@@ -520,7 +527,10 @@ export default function ImportScreen() {
             ) : null}
 
             {imports.length > 0 ? (
-              <View className="gap-1 rounded-card border border-border bg-card/70 p-card">
+              <View
+                className="gap-1 rounded-card border border-border bg-card/70 p-card"
+                style={cardFrame()}
+              >
                 <Text variant="head" className="pb-1">
                   {t("statements.history")}
                 </Text>
@@ -582,7 +592,10 @@ export default function ImportScreen() {
                 }}
               />
             ) : statement.blocks.length === 0 && scanReason ? (
-              <View className="gap-5 rounded-card border border-border bg-card/70 p-card">
+              <View
+                className="gap-5 rounded-card border border-border bg-card/70 p-card"
+                style={cardFrame()}
+              >
                 <ScanOffer
                   reason={scanReason}
                   aiAccount={known?.aiAccount ?? false}
@@ -592,7 +605,10 @@ export default function ImportScreen() {
                 {scanning ? null : <BankGuide initialBank={statement.bank} />}
               </View>
             ) : statement.blocks.length === 0 ? (
-              <View className="gap-4 rounded-card border border-border bg-card/70 p-card">
+              <View
+                className="gap-4 rounded-card border border-border bg-card/70 p-card"
+                style={cardFrame()}
+              >
                 <View className="flex-row items-start gap-2">
                   <Ionicons name="alert-circle-outline" size={ICON.lg} color={colors.foreground} />
                   <Text className="flex-1 text-sm leading-5">
@@ -644,6 +660,7 @@ export default function ImportScreen() {
           <Animated.View
             entering={reduceMotion ? undefined : FADE_IN}
             className="items-start gap-4 rounded-card border border-border bg-card/70 p-card"
+            style={cardFrame()}
           >
             <Animated.View entering={reduceMotion ? undefined : FADE_IN}>
               <Ionicons name="checkmark-circle" size={44} color={colors.success} />

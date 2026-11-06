@@ -60,6 +60,7 @@ import { useLocale } from "@/providers/LocaleProvider";
 import { ICON } from "@/theme/tokens";
 import { useThemeColors } from "@/theme/useThemeColors";
 import { FADE_IN, LAYOUT } from "@/components/motion/fade";
+import { cardFrame } from "@/theme/design-blocks";
 
 /** What is being edited: the question, or one answer. */
 type Editing = { kind: "post" } | { kind: "reply"; id: number } | null;
@@ -212,7 +213,10 @@ export default function EntraideThreadScreen() {
           {error ? (
             <ScreenError message={error} onRetry={onRefresh} />
           ) : (
-            <View className="rounded-card border border-border bg-card/70 p-card">
+            <View
+              className="rounded-card border border-border bg-card/70 p-card"
+              style={cardFrame()}
+            >
               <Text variant="muted">{copy.thread.missing}</Text>
             </View>
           )}

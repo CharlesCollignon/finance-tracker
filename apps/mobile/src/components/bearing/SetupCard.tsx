@@ -17,6 +17,7 @@ import { dismissSetupStep, saveBalanceReading } from "@/lib/mutations";
 import { useAuth } from "@/providers/AuthProvider";
 import { useLocale, useT } from "@/providers/LocaleProvider";
 import { useToast } from "@/providers/ToastProvider";
+import { cardFrame } from "@/theme/design-blocks";
 
 /**
  * Le point's setup card, as on the web: the one next thing the app needs to
@@ -70,7 +71,10 @@ export function SetupCard({
 
   if (step === "bank") {
     return (
-      <View className="gap-3 rounded-card border border-border bg-card/70 p-card">
+      <View
+        className="gap-3 rounded-card border border-border bg-card/70 p-card"
+        style={cardFrame()}
+      >
         <ConnectBankInvite surface="bearing" bank={bank} />
         {laterButton}
       </View>
@@ -105,7 +109,10 @@ export function SetupCard({
   }[step];
 
   return (
-    <View className="gap-3 rounded-card border border-border bg-card/70 p-card">
+    <View
+      className="gap-3 rounded-card border border-border bg-card/70 p-card"
+      style={cardFrame()}
+    >
       <View className="gap-1">
         <Text accessibilityRole="header" className="text-base font-semibold">
           {copy.title}
@@ -153,7 +160,10 @@ function BalanceStep({ laterButton }: { laterButton: ReactNode }) {
   }
 
   return (
-    <View className="gap-3 rounded-card border border-border bg-card/70 p-card">
+    <View
+      className="gap-3 rounded-card border border-border bg-card/70 p-card"
+      style={cardFrame()}
+    >
       <View className="gap-1">
         <Text accessibilityRole="header" className="text-base font-semibold">
           {t("setup.balance.title")}

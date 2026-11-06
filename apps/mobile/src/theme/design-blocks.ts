@@ -1,4 +1,5 @@
-import type { TextStyle, ViewStyle } from "react-native";
+import { vars } from "nativewind";
+import type { StyleProp, TextStyle, ViewStyle } from "react-native";
 
 import { currentDesign } from "@/theme/designs";
 import { COLORS } from "@/theme/tokens";
@@ -236,4 +237,87 @@ export function sheetFrame(): ViewStyle | null {
     default:
       return null;
   }
+}
+
+/** A card's heading (Le point's `HomeCard`): its icon disc and its title. */
+export function cardHeading(): {
+  showIcon: boolean;
+  title: TextStyle | null;
+} {
+  switch (currentDesign()) {
+    case "papier":
+      return {
+        showIcon: false,
+        title: {
+          fontSize: 11,
+          fontWeight: "600",
+          letterSpacing: 1.5,
+          textTransform: "uppercase",
+        },
+      };
+    case "bento":
+      return {
+        showIcon: true,
+        title: { fontSize: 15, color: COLORS.foreground },
+      };
+    case "console":
+      return {
+        showIcon: false,
+        title: {
+          fontFamily: "IBMPlexMono-Medium",
+          fontSize: 11,
+          letterSpacing: 1.3,
+          textTransform: "uppercase",
+        },
+      };
+    default:
+      return { showIcon: true, title: null };
+  }
+}
+
+/**
+ * The space between Le point's cards, and how each is set against the
+ * last: « Console » joins them into one ruled column (hairlines shared, not
+ * doubled), « Papier » leaves room between its sections.
+ */
+export function homeStack(): { gap: number; joined: boolean } {
+  switch (currentDesign()) {
+    case "papier":
+      return { gap: 24, joined: false };
+    case "bento":
+      return { gap: 12, joined: false };
+    case "console":
+      return { gap: 0, joined: true };
+    default:
+      return { gap: 16, joined: false };
+  }
+}
+
+/**
+ * « Bento »'s big lime tile (the balance on Le point), with the palette its
+ * classes read restated on it — dark ink, an olive for the quiet text, the
+ * reds, greens and ambers taken darker so each reads at 5:1 or better on
+ * lime — as the web's `.bearing-slot-balance` does. Hairlines are the ink
+ * at the classes' own alpha.
+ */
+const LIME_TILE = vars({
+  "--card": "212 242 92",
+  "--foreground": "15 17 21",
+  "--card-foreground": "15 17 21",
+  "--muted": "195 224 74",
+  "--muted-foreground": "74 83 32",
+  "--secondary": "195 224 74",
+  "--primary": "15 17 21",
+  "--primary-ink": "15 17 21",
+  "--primary-foreground": "212 242 92",
+  "--destructive": "166 27 27",
+  "--success": "13 90 41",
+  "--warning": "122 61 0",
+  "--border": "15 17 21",
+});
+
+export function accentTile(): StyleProp<ViewStyle> {
+  return currentDesign() === "bento"
+    ? [LIME_TILE, { backgroundColor: "#d4f25c" }]
+    : null;
 }

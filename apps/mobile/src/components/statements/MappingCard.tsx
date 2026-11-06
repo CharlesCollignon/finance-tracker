@@ -7,6 +7,7 @@ import { ChoiceChips } from "@/components/pickers/ChoiceChips";
 import { Button } from "@/components/ui/Button";
 import { Text } from "@/components/ui/Text";
 import { useT } from "@/providers/LocaleProvider";
+import { cardFrame } from "@/theme/design-blocks";
 
 /**
  * The rare file whose columns could not be told apart, on the phone: its
@@ -51,7 +52,10 @@ export function MappingCard({
   );
 
   return (
-    <View className="gap-4 rounded-card border border-border bg-card/70 p-card">
+    <View
+      className="gap-4 rounded-card border border-border bg-card/70 p-card"
+      style={cardFrame()}
+    >
       <Text className="text-sm font-medium">{t("statements.columns")}</Text>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} className="rounded-control border border-border">
         <View>
