@@ -2,13 +2,19 @@ import { Ionicons } from "@expo/vector-icons";
 import { Tabs, usePathname } from "expo-router";
 import { PlatformPressable } from "expo-router/react-navigation";
 import { useEffect, useRef, type ComponentProps } from "react";
-import { StyleSheet, Text, type ColorValue } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTabBarHeight } from "@/theme/chrome";
 
 import { SharedBackdrop } from "@/components/AppBackdrop";
 import { barTabOf } from "@/components/layout/SurfaceTabs";
-import { Blur } from "@/components/ui/Blur";
+import {
+  barOptions,
+  litItemStyle,
+  TabIcon,
+  TabLabel,
+  tabTint,
+} from "@/components/layout/tab-bar-design";
+import { useDesign } from "@/providers/DesignProvider";
 import { WhatsNewSheet } from "@/components/nouveautes/WhatsNewSheet";
 import { notifyDataChanged } from "@/lib/data-version";
 import { recordAppOpened } from "@/lib/mutations";
@@ -113,31 +119,6 @@ const PROPERTY_TAB: TabConfig = {
   iconInactive: "home-outline",
 };
 
-/**
- * A tab's label. Six surfaces leave a label about 50pt on a 360pt phone, less
- * than « Placements » needs at 10pt: it shrinks on one line, to 80% at most,
- * rather than lose its end. Measured in docs/plans/REAL_ESTATE_PLAN.md,
- * Phase 0.
- */
-function TabLabel({
-  color,
-  children,
-}: {
-  color: ColorValue;
-  children: string;
-}) {
-  return (
-    <Text
-      numberOfLines={1}
-      adjustsFontSizeToFit
-      minimumFontScale={0.8}
-      style={{ color, fontSize: 10, fontWeight: "500" }}
-    >
-      {children}
-    </Text>
-  );
-}
-
 /*
  * A glass pill floating above the bottom edge, as the web's bar is at phone
  * width — it was a full-width bar docked to the edge, with square corners.
@@ -147,6 +128,9 @@ function TabLabel({
 export default function TabsLayout() {
   const t = useT();
   const colors = useThemeColors();
+  // The bar's drawing (`tab-bar-design.tsx`); a change of design remounts
+  // the navigator, so this is read again then.
+  const { design } = useDesign();
   const insets = useSafeAreaInsets();
   const barHeight = useTabBarHeight();
   const badges = useTabBadges();
@@ -180,16 +164,36 @@ export default function TabsLayout() {
     recordAppOpened();
   }, []);
 
-  const tint = (lit: boolean) =>
-    lit ? colors.foreground : colors.mutedForeground;
+  const tint = (lit: boolean) => tabTint(design, lit);
+  // « Console » numbers its tabs: each one's place among those drawn.
+  const shown = [
+    "index",
+    "calendar",
+    "recurring",
+    ...(joint ? [] : ["investments"]),
+    ...(showProperty ? ["property"] : []),
+    ...(joint ? [] : ["planning"]),
+  ];
+  const numberOf = (name: string) => shown.indexOf(name) + 1;
+  // The dot on a tab with something waiting: the foreground on « Nuit »,
+  // the accent on paper and black, lime on « Bento »'s dark pill.
+  const dot =
+    design === "bento"
+      ? "#d4f25c"
+      : design === "nuit"
+        ? colors.foreground
+        : colors.primary;
   // The label in the same colour as the icon, and the button saying it is
   // the selected one, both from `activeTab` rather than the route's focus.
   // A tab hidden from the bar (`href: null`) gets no button of its own:
   // expo-router draws none for it, and refuses one alongside `href`.
   const litWhen = (lit: boolean, hidden: boolean) => ({
     tabBarLabel: ({ children }: { children: string }) => (
-      <TabLabel color={tint(lit)}>{children}</TabLabel>
+      <TabLabel design={design} color={tint(lit)} lit={lit}>
+        {children}
+      </TabLabel>
     ),
+    ...litItemStyle(design, lit),
     ...(hidden
       ? { href: null }
       : {
@@ -216,10 +220,13 @@ export default function TabsLayout() {
           title: t(titleKey),
           ...litWhen(activeTab === name, joint && PERSONAL_TABS.has(name)),
           tabBarIcon: ({ size }) => (
-            <Ionicons
-              name={activeTab === name ? icon : iconInactive}
+            <TabIcon
+              design={design}
+              lit={activeTab === name}
+              icon={icon}
+              iconInactive={iconInactive}
+              number={numberOf(name)}
               size={size ?? 20}
-              color={tint(activeTab === name)}
             />
           ),
           // Each question where it is answered: charges the bank
@@ -231,7 +238,7 @@ export default function TabsLayout() {
             ? {
                 tabBarBadge: "",
                 tabBarBadgeStyle: {
-                  backgroundColor: colors.foreground,
+                  backgroundColor: dot,
                   minWidth: 8,
                   maxWidth: 8,
                   height: 8,
@@ -253,34 +260,26 @@ export default function TabsLayout() {
             <Tabs
               screenOptions={{
                 headerShown: false,
-                // The active tab in foreground with its filled icon, as on the
-                // web's bar; gold stays for the add button.
-                tabBarActiveTintColor: colors.foreground,
-                tabBarInactiveTintColor: colors.mutedForeground,
+                // The active tab in its design's lit colour with its filled
+                // icon, as on the web's bar; the accent stays for the add.
+                tabBarActiveTintColor: tint(true),
+                tabBarInactiveTintColor: tint(false),
                 // Shrinks on one line rather than lose its end: see TabLabel.
                 tabBarLabel: ({ color, children }) => (
-                  <TabLabel color={color}>{children}</TabLabel>
+                  <TabLabel design={design} color={color} lit={false}>
+                    {children}
+                  </TabLabel>
                 ),
-                tabBarItemStyle: { paddingVertical: 4, paddingHorizontal: 2 },
-                // Docked to the bottom edge, square, over the content: blur only
-                // means something if content passes beneath the bar, so screens
-                // pad their scroll content to clear it rather than the bar
-                // taking room of its own. It runs under the gesture area, its
-                // items held above it.
-                tabBarBackground: () => <Blur style={StyleSheet.absoluteFill} />,
-                tabBarStyle: {
-                  position: "absolute",
-                  left: 0,
-                  right: 0,
-                  bottom: 0,
-                  height: barHeight + insets.bottom,
-                  paddingBottom: insets.bottom,
-                  backgroundColor: "transparent",
-                  borderTopWidth: StyleSheet.hairlineWidth,
-                  borderTopColor: colors.hairlineStrong,
-                  elevation: 0,
-                  shadowOpacity: 0,
-                },
+                // Over the content, never beside it: blur (« Nuit ») only
+                // means something if content passes beneath the bar, so
+                // screens pad their scroll content to clear it rather than the
+                // bar taking room of its own. Its ground, frame and placement
+                // are the design's (`tab-bar-design.tsx`).
+                ...barOptions({
+                  design,
+                  barHeight,
+                  insetBottom: insets.bottom,
+                }),
                 // Transparent over the one backdrop: see `SharedBackdrop`.
                 sceneStyle: { backgroundColor: "transparent" },
               }}
@@ -294,14 +293,13 @@ export default function TabsLayout() {
                   // A home owned together is the space's too (6c).
                   ...litWhen(activeTab === PROPERTY_TAB.name, !showProperty),
                   tabBarIcon: ({ size }) => (
-                    <Ionicons
-                      name={
-                        activeTab === PROPERTY_TAB.name
-                          ? PROPERTY_TAB.icon
-                          : PROPERTY_TAB.iconInactive
-                      }
+                    <TabIcon
+                      design={design}
+                      lit={activeTab === PROPERTY_TAB.name}
+                      icon={PROPERTY_TAB.icon}
+                      iconInactive={PROPERTY_TAB.iconInactive}
+                      number={numberOf(PROPERTY_TAB.name)}
                       size={size ?? 20}
-                      color={tint(activeTab === PROPERTY_TAB.name)}
                     />
                   ),
                 }}

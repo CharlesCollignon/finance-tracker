@@ -1,6 +1,8 @@
 import { useWindowDimensions } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+import { currentDesign } from "@/theme/designs";
+
 /** Tab bar height, at the system's default text size — the web's 3.5rem. */
 const TAB_BAR_BASE = 56;
 
@@ -47,5 +49,12 @@ const ADD_BUTTON_CLEARANCE = 88;
 
 export function useTabBarClearance(extra = ADD_BUTTON_CLEARANCE) {
   const insets = useSafeAreaInsets();
-  return useTabBarHeight() + insets.bottom + extra;
+  // « Bento »'s bar floats above the edge (`tab-bar-design.tsx`), so its
+  // screens clear that lift too.
+  const lift = currentDesign() === "bento" ? BENTO_LIFT : 0;
+  return useTabBarHeight() + insets.bottom + extra + lift;
 }
+
+/** `BENTO_PILL_LIFT` and the pill's extra height, restated to keep this
+ * module free of components. */
+const BENTO_LIFT = 20;
