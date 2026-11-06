@@ -17,6 +17,20 @@ import type { ChangelogEntry, RoadmapItem } from "./changelog";
  */
 export const CHANGELOG: readonly ChangelogEntry[] = [
   {
+    id: "2026-11-06-web-designs",
+    date: "2026-11-06",
+    kind: "new",
+    platforms: ["web"],
+    fr: {
+      title: "Quatre designs au choix",
+      body: "Dans Profil, « Apparence » propose quatre designs : Nuit, celui de toujours, Papier, clair comme un registre, Bento, clair aux coins arrondis, et Console, noir aux chiffres en chasse fixe. Les couleurs et les polices changent, les écrans et le logo restent les mêmes. Le choix vous suit d’un appareil à l’autre.",
+    },
+    en: {
+      title: "Four designs to choose from",
+      body: "In Profile, “Appearance” offers four designs: Nuit, the one Pluclair has always had, Papier, light like a ledger, Bento, light with round corners, and Console, black with figures in a fixed-width face. Colours and type change; the screens and the logo stay the same. The choice follows you from one device to another.",
+    },
+  },
+  {
     id: "2026-11-06-site-feature-addresses",
     date: "2026-11-06",
     kind: "better",
