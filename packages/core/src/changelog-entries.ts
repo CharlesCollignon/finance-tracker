@@ -2324,7 +2324,7 @@ export const CHANGELOG: readonly ChangelogEntry[] = [
  */
 export const CHANGELOG_STATS = {
   /** `git rev-list --count HEAD` on the branch that wrote the newest entry. */
-  commits: 1290,
+  commits: 1295,
   /** The repository's first commit. */
   since: "2026-06-15",
   asOf: "2026-11-06",
