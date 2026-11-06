@@ -118,9 +118,36 @@ export function TrajectoryCard({
         </Text>
       </View>
 
-      <View className="min-h-16 gap-0.5" accessibilityLiveRegion="polite">
+      {/* The range at rest stays laid out, hidden while a finger reads a
+          month, and the month is drawn over it: the block keeps one height,
+          so the chart under it does not jump as the finger comes and goes. */}
+      <View className="min-h-16" accessibilityLiveRegion="polite">
+        <View
+          className="gap-0.5"
+          style={{ opacity: active === null ? 1 : 0 }}
+          accessibilityElementsHidden={active !== null}
+          importantForAccessibility={
+            active !== null ? "no-hide-descendants" : "auto"
+          }
+        >
+          <Text className="text-sm tabular-nums">
+            {t("trajectory.rangeLine", {
+              low: shown(result.end.p10 + homes),
+              high: shown(result.end.p90 + homes),
+            })}
+          </Text>
+          <Text variant="muted" className="text-sm tabular-nums">
+            {t("trajectory.afterTax", { amount: shown(afterTax) })}
+          </Text>
+          <Text variant="muted" className="text-sm tabular-nums">
+            {t("trajectory.worstLine", {
+              month: historyMonthLabel(result.worst.start, locale),
+              amount: shown(result.worst.value + homes),
+            })}
+          </Text>
+        </View>
         {active !== null ? (
-          <Text className="text-sm font-medium tabular-nums">
+          <Text className="absolute left-0 right-0 top-0 text-sm font-medium tabular-nums">
             {t("trajectory.scrubPoint", {
               when: scrubWhen(active),
               median: shown(middle[active] ?? 0),
@@ -128,25 +155,7 @@ export function TrajectoryCard({
               high: shown(high[active] ?? 0),
             })}
           </Text>
-        ) : (
-          <>
-            <Text className="text-sm tabular-nums">
-              {t("trajectory.rangeLine", {
-                low: shown(result.end.p10 + homes),
-                high: shown(result.end.p90 + homes),
-              })}
-            </Text>
-            <Text variant="muted" className="text-sm tabular-nums">
-              {t("trajectory.afterTax", { amount: shown(afterTax) })}
-            </Text>
-            <Text variant="muted" className="text-sm tabular-nums">
-              {t("trajectory.worstLine", {
-                month: historyMonthLabel(result.worst.start, locale),
-                amount: shown(result.worst.value + homes),
-              })}
-            </Text>
-          </>
-        )}
+        ) : null}
       </View>
 
       <View className="gap-1">
