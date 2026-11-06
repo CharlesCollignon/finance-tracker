@@ -18,6 +18,7 @@ import { useLocale, useT } from "@/providers/LocaleProvider";
 import { ICON, TYPE } from "@/theme/tokens";
 import { useThemeColors } from "@/theme/useThemeColors";
 import { FADE_IN } from "@/components/motion/fade";
+import { heroLabelFace } from "@/theme/design-blocks";
 
 /**
  * Every placement at once, at the top of the screen: what it is worth
@@ -72,10 +73,10 @@ export function PlacementsSummary({
 
 
   return (
-    <Card bezel innerClassName="gap-4 p-5">
+    <Card bezel accent innerClassName="gap-4 p-5">
       <View className="flex-row items-start justify-between gap-3">
         <View className="min-w-0 flex-1 gap-1">
-          <Text variant="muted" className="text-sm">
+          <Text variant="muted" className="text-sm" style={heroLabelFace()}>
             {t("wallets.summaryTitle")}
           </Text>
           <AnimatedAmount

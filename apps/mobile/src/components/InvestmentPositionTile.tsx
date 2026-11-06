@@ -19,6 +19,7 @@ import { useFormatCurrency } from "@/providers/CurrencyProvider";
 import { useThemeColors } from "@/theme/useThemeColors";
 import { TYPE } from "@/theme/tokens";
 import { useLocale, useT } from "@/providers/LocaleProvider";
+import { positionTile } from "@/theme/design-blocks";
 
 interface InvestmentPositionTileProps {
   item: InvestmentPositionItem;
@@ -61,6 +62,7 @@ export function InvestmentPositionTile({
       accessibilityLabel={t("wallets.editPosition", { name: item.name })}
       onPress={onEdit}
       className="min-h-[150px] flex-1 gap-2.5 overflow-hidden rounded-card border border-border bg-card/70 p-3.5 active:opacity-70"
+      style={positionTile()}
     >
       <View className="flex-row items-center justify-between gap-2">
         <InstrumentLogo
