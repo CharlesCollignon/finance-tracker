@@ -19,6 +19,7 @@ import { useToast } from "@/providers/ToastProvider";
 import { ICON } from "@/theme/tokens";
 import { useThemeColors } from "@/theme/useThemeColors";
 import { FADE_IN, FADE_OUT, LAYOUT } from "@/components/motion/fade";
+import { cardFrame } from "@/theme/design-blocks";
 
 /** How long a forwarding code is worth showing. */
 const CODE_FRESH_MS = 60 * 60 * 1000;
@@ -65,6 +66,7 @@ export function MailWaiting({
       entering={reduceMotion ? undefined : FADE_IN}
       layout={reduceMotion ? undefined : LAYOUT}
       className="gap-2 rounded-card border border-border bg-card/70 p-card"
+      style={cardFrame()}
     >
       <View className="flex-row items-center gap-2 pb-1">
         <Ionicons name="mail-open-outline" size={ICON.md} color={colors.primary} />
@@ -190,6 +192,7 @@ export function MailInbox({ view: initial, onView }: { view: InboxView; onView?:
     <Animated.View
       layout={reduceMotion ? undefined : LAYOUT}
       className="gap-5 rounded-card border border-border bg-card/70 p-card"
+      style={cardFrame()}
     >
       <View className="flex-row items-start gap-3">
         <Animated.View

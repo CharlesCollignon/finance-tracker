@@ -77,6 +77,7 @@ import { useLocale, useT } from "@/providers/LocaleProvider";
 import { useOwner } from "@/providers/OwnerProvider";
 import type { Translate } from "@finance/core/i18n/t";
 import { FADE_IN } from "@/components/motion/fade";
+import { cardFrame } from "@/theme/design-blocks";
 
 /** Income first, as on the web: it is what the other three are paid from. */
 const GROUP_ORDER: CategoryType[] = [
@@ -617,7 +618,10 @@ function GroupCard({
   const router = useRouter();
 
   return (
-    <View className="rounded-card border border-border bg-card px-4 pb-1 pt-4">
+    <View
+      className="rounded-card border border-border bg-card px-4 pb-1 pt-4"
+      style={cardFrame()}
+    >
       <View className="flex-row items-baseline justify-between gap-3 pb-2">
         <Text className="text-sm font-medium">{label}</Text>
         {monthly > 0 ? (

@@ -18,6 +18,7 @@ import { reviewAsk } from "@/lib/review-ask";
 import { useLocale, useT } from "@/providers/LocaleProvider";
 import { ICON, TYPE } from "@/theme/tokens";
 import { useThemeColors } from "@/theme/useThemeColors";
+import { cardFrame } from "@/theme/design-blocks";
 
 /** How many items the strip shows before folding the rest behind « +N ». */
 const SHOWN = 3;
@@ -52,6 +53,7 @@ export function TodoStrip({ items }: { items: AttentionItem[] }) {
       accessibilityRole="summary"
       accessibilityLabel={`${t("month.todo")} · ${items.length}`}
       className="rounded-card border border-border bg-card/70 px-card py-3"
+      style={cardFrame()}
     >
       <View className="mb-1 flex-row items-center gap-2">
         <Ionicons

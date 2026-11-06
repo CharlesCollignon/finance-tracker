@@ -11,6 +11,7 @@ import { useT } from "@/providers/LocaleProvider";
 import { ICON } from "@/theme/tokens";
 import { useThemeColors } from "@/theme/useThemeColors";
 import { FADE_IN } from "@/components/motion/fade";
+import { cardFrame } from "@/theme/design-blocks";
 
 /** Where the invitation leads: Profile, with the connect row open. */
 const CONNECT_HREF = "/profile?ai=connect";
@@ -97,6 +98,7 @@ export function ConnectAiInvite({
         "gap-4",
         !bare && "rounded-card border border-border bg-card/70 p-card",
       )}
+      style={bare ? undefined : cardFrame()}
     >
       <View className="flex-row items-start gap-3">
         <Animated.View

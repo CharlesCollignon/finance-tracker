@@ -42,6 +42,7 @@ import { useLocale, useT } from "@/providers/LocaleProvider";
 import { ICON } from "@/theme/tokens";
 import { useThemeColors } from "@/theme/useThemeColors";
 import { FADE_IN, LAYOUT } from "@/components/motion/fade";
+import { cardFrame } from "@/theme/design-blocks";
 
 type KindFilter = "all" | ChangeKind;
 
@@ -177,6 +178,7 @@ export default function NouveautesScreen() {
               <View
                 key={item.id}
                 className="gap-1.5 rounded-card border border-border bg-card/70 p-card"
+                style={cardFrame()}
               >
                 <View className="h-3 w-3 rounded-full border border-dashed border-foreground/50" />
                 <Text variant="head" className="pt-2">

@@ -12,6 +12,7 @@ import { useLocale, useT } from "@/providers/LocaleProvider";
 import { TYPE } from "@/theme/tokens";
 import { useThemeColors } from "@/theme/useThemeColors";
 import { DeltaChip, Pill } from "@/components/bearing/card-parts";
+import { accentTile, cardFrame } from "@/theme/design-blocks";
 
 /* ------------------------------------------------------------ the balance */
 
@@ -95,7 +96,10 @@ export function BalanceCard({ data }: { data: HomeMonth }) {
   const overdrawn = (value: number) => !net && value < 0;
 
   return (
-    <View className="gap-5 rounded-card border border-border bg-card/70 p-card">
+    <View
+      className="gap-5 rounded-card border border-border bg-card/70 p-card"
+      style={[cardFrame(), accentTile()]}
+    >
       <View className="gap-1.5">
         <Text className="text-sm font-medium text-muted-foreground">
           {figures.left.label}

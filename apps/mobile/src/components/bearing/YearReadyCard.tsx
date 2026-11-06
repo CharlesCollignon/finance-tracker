@@ -10,6 +10,7 @@ import { dismissYearReview } from "@/lib/mutations";
 import { useLocale, useT } from "@/providers/LocaleProvider";
 import { ICON } from "@/theme/tokens";
 import { useThemeColors } from "@/theme/useThemeColors";
+import { cardFrame } from "@/theme/design-blocks";
 
 /**
  * January's card on Le point, as on the web: « Votre année » is ready. It
@@ -25,7 +26,10 @@ export function YearReadyCard({ year }: { year: number }) {
     return null;
   }
   return (
-    <View className="gap-3 rounded-card border border-border bg-card/70 p-card">
+    <View
+      className="gap-3 rounded-card border border-border bg-card/70 p-card"
+      style={cardFrame()}
+    >
       <View className="flex-row items-start gap-3">
         <View className="h-8 w-8 items-center justify-center rounded-full bg-primary">
           <Ionicons name="sparkles" size={ICON.md} color={colors.primaryForeground} />

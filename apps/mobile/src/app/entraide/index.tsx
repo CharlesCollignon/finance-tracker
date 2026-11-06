@@ -37,6 +37,7 @@ import { useLocale } from "@/providers/LocaleProvider";
 import { ICON } from "@/theme/tokens";
 import { useThemeColors } from "@/theme/useThemeColors";
 import { FADE_IN } from "@/components/motion/fade";
+import { cardFrame } from "@/theme/design-blocks";
 
 interface MorePages {
   key: string;
@@ -225,7 +226,10 @@ export default function EntraideScreen() {
             </Animated.View>
           )}
           ListEmptyComponent={
-            <View className="rounded-card border border-border bg-card/70 p-card">
+            <View
+              className="rounded-card border border-border bg-card/70 p-card"
+              style={cardFrame()}
+            >
               <Text variant="muted">
                 {filter === "all" ? copy.list.empty : copy.list.emptyFiltered}
               </Text>

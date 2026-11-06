@@ -42,6 +42,8 @@ import { useLocale, useT } from "@/providers/LocaleProvider";
 import { useTabBarClearance } from "@/theme/chrome";
 import { useThemeColors } from "@/theme/useThemeColors";
 import { useScreenMonth } from "@/providers/MonthProvider";
+import { cardFrame } from "@/theme/design-blocks";
+import { HomeStack } from "@/components/bearing/card-parts";
 
 /**
  * Le point: what is on the account, where the month ends, and what it went
@@ -195,10 +197,9 @@ export default function HomeScreen() {
         <NewVersionBanner />
 
         {data ? (
-          <View
+          <HomeStack
             // Replayed per month: a new month is a new set of figures arriving.
             key={`${data.year}-${data.month}`}
-            className="gap-4"
             style={stale ? { opacity: 0.5 } : undefined}
           >
             {/* Above the figures: a bank feed that has stopped leaves every
@@ -210,7 +211,10 @@ export default function HomeScreen() {
                 salary confirmed as arrived stops being counted as still to
                 come. */}
             {data.arrived ? (
-              <View className="rounded-card border border-border bg-card/70 p-card">
+              <View
+                className="rounded-card border border-border bg-card/70 p-card"
+                style={cardFrame()}
+              >
                 <ArrivedCharges
                   proposals={data.arrived.proposals}
                 />
@@ -224,7 +228,10 @@ export default function HomeScreen() {
 
             {/* The same kind of question, for what the bank cannot see. */}
             {data.purchases.length > 0 ? (
-              <View className="rounded-card border border-border bg-card/70 p-card">
+              <View
+                className="rounded-card border border-border bg-card/70 p-card"
+                style={cardFrame()}
+              >
                 <PurchasesToConfirm purchases={data.purchases} />
               </View>
             ) : null}
@@ -301,7 +308,10 @@ export default function HomeScreen() {
 
             {read && read.year === year && read.month === month && !stale ? (
               <FadeIn>
-                <View className="rounded-card border border-border bg-card/70 p-card">
+                <View
+                  className="rounded-card border border-border bg-card/70 p-card"
+                  style={cardFrame()}
+                >
                   <MonthRead
                     year={year}
                     month={month}
@@ -323,7 +333,7 @@ export default function HomeScreen() {
                 </View>
               </FadeIn>
             ) : null}
-          </View>
+          </HomeStack>
         ) : error ? (
           <ScreenError message={error} onRetry={onRefresh} />
         ) : (

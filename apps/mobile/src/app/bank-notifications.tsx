@@ -40,6 +40,7 @@ import {
   setListenedPackages,
   waitingCount,
 } from "../../modules/notification-listener";
+import { cardFrame } from "@/theme/design-blocks";
 
 /**
  * « Les notifications de votre banque » (Android, behind `listener.android`;
@@ -187,7 +188,10 @@ export default function BankNotificationsScreen() {
         </Text>
 
         {/* The access. */}
-        <View className="gap-3 rounded-card border border-border bg-card/70 p-card">
+        <View
+          className="gap-3 rounded-card border border-border bg-card/70 p-card"
+          style={cardFrame()}
+        >
           <View className="flex-row items-center gap-2">
             <Ionicons
               name={enabled ? "notifications-outline" : "notifications-off-outline"}
@@ -210,7 +214,10 @@ export default function BankNotificationsScreen() {
         </View>
 
         {/* The apps. */}
-        <View className="gap-2 rounded-card border border-border bg-card/70 p-card">
+        <View
+          className="gap-2 rounded-card border border-border bg-card/70 p-card"
+          style={cardFrame()}
+        >
           <Text variant="head">{t("listener.appsTitle")}</Text>
           {apps.length === 0 ? (
             <Text variant="muted" className="text-sm">
@@ -246,7 +253,10 @@ export default function BankNotificationsScreen() {
         </View>
 
         {/* The account. */}
-        <View className="gap-2 rounded-card border border-border bg-card/70 p-card">
+        <View
+          className="gap-2 rounded-card border border-border bg-card/70 p-card"
+          style={cardFrame()}
+        >
           <Text variant="head">{t("listener.accountTitle")}</Text>
           {accounts === null ? null : accounts.length === 0 ? (
             <Text variant="muted" className="text-sm">
@@ -277,7 +287,10 @@ export default function BankNotificationsScreen() {
         </View>
 
         {/* Reading. */}
-        <View className="gap-2 rounded-card border border-border bg-card/70 p-card">
+        <View
+          className="gap-2 rounded-card border border-border bg-card/70 p-card"
+          style={cardFrame()}
+        >
           <Text variant="muted" className="text-sm">
             {t("listener.waiting", { count: waiting })}
             {stats.lastReadAt

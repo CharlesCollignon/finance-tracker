@@ -23,6 +23,7 @@ import { useLocale, useT } from "@/providers/LocaleProvider";
 import { useToast } from "@/providers/ToastProvider";
 import { ICON } from "@/theme/tokens";
 import { useThemeColors } from "@/theme/useThemeColors";
+import { cardFrame } from "@/theme/design-blocks";
 
 /**
  * A category, in words — the web's `CategoryRead`, at phone width.
@@ -111,7 +112,10 @@ export function CategoryRead({
   }
 
   return (
-    <View className="gap-3 rounded-card border border-border bg-card/70 p-4">
+    <View
+      className="gap-3 rounded-card border border-border bg-card/70 p-4"
+      style={cardFrame()}
+    >
       <View className="gap-1">
         <View className="flex-row items-center gap-1.5">
           <Ionicons
