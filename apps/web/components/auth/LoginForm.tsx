@@ -120,7 +120,7 @@ export function LoginForm() {
       </form>
       <p className="mt-4 text-center text-sm text-muted-foreground">
         {t("auth.noAccount")}{" "}
-        <Link href="/signup" className="font-medium underline">
+        <Link href="/signup" prefetch={false} className="font-medium underline">
           {t("auth.signUp")}
         </Link>
       </p>

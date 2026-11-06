@@ -140,7 +140,11 @@ export function CheckInbox({
         </p>
         <p>
           {t("auth.alreadyConfirmed")}{" "}
-          <Link href="/login" className="font-medium underline">
+          <Link
+            href="/login"
+            prefetch={false}
+            className="font-medium underline"
+          >
             {t("auth.signIn")}
           </Link>
         </p>

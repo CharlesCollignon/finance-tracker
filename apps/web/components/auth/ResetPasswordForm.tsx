@@ -135,7 +135,7 @@ export function ResetPasswordForm() {
       )}
 
       <p className="mt-4 text-center text-sm text-muted-foreground">
-        <Link href="/login" className="font-medium underline">
+        <Link href="/login" prefetch={false} className="font-medium underline">
           {t("auth.backToSignIn")}
         </Link>
       </p>

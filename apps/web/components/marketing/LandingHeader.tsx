@@ -486,6 +486,7 @@ function SheetPanel({
         {isLoggedIn ? null : (
           <Link
             href="/login"
+            prefetch={false}
             onClick={onNavigate}
             className={cn(
               "flex min-h-11 items-center rounded-control px-3 text-sm text-marketing-muted transition-colors hover:bg-white/[0.07] hover:text-white sm:hidden",
