@@ -9,6 +9,9 @@ import {
 } from "@/lib/guide-list";
 import { loadGuide } from "@/lib/guides";
 import { shareMetadata } from "@/lib/og/share-metadata";
+import { JsonLd } from "@/components/JsonLd";
+import { article, graph } from "@/lib/seo/structured-data";
+import { getSiteUrl } from "@/lib/supabase/env";
 
 interface GuideRouteProps {
   params: Promise<{ slug: string }>;
@@ -44,5 +47,22 @@ export default async function GuideRoutePage({ params }: GuideRouteProps) {
   if (!isGuideSlug(slug)) {
     notFound();
   }
-  return <GuideArticle slug={slug} />;
+  const { meta } = await loadGuide(slug);
+  return (
+    <>
+      <JsonLd
+        data={graph([
+          article({
+            base: getSiteUrl(),
+            path: guideHref(slug),
+            title: meta.title,
+            description: meta.description,
+            published: meta.published,
+            updated: meta.updated,
+          }),
+        ])}
+      />
+      <GuideArticle slug={slug} />
+    </>
+  );
 }
