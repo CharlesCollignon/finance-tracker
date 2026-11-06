@@ -275,7 +275,7 @@ export function InvestmentsView({
                     type="button"
                     onClick={() => setAddOpen(true)}
                     className={cn(
-                      "flex min-h-11 shrink-0 items-center gap-1.5 rounded-full border border-border px-4 py-2 text-sm text-muted-foreground lg:min-h-0",
+                      "account-chip flex min-h-11 shrink-0 items-center gap-1.5 rounded-full border border-border px-4 py-2 text-sm text-muted-foreground lg:min-h-0",
                       "transition-colors duration-hover hover:bg-muted hover:text-foreground",
                       "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
                     )}

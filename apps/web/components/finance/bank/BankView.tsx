@@ -273,7 +273,7 @@ function ConsentCard() {
     <section
       className={cn(
         GLASS_CARD,
-        "flex flex-col gap-3 rounded-card border-primary/40 p-card",
+        "surface-card flex flex-col gap-3 rounded-card border-primary/40 p-card",
       )}
     >
       <h2 className="text-base font-semibold">
@@ -321,7 +321,7 @@ function ProblemCard({
     <section
       className={cn(
         GLASS_CARD,
-        "flex flex-col gap-3 rounded-card border-warning/40 p-card",
+        "surface-card flex flex-col gap-3 rounded-card border-warning/40 p-card",
       )}
     >
       <h2 className="flex items-center gap-2 text-base font-semibold">

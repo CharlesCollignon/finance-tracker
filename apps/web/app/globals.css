@@ -1103,10 +1103,10 @@
 }
 :root[data-design="console"] .btn,
 :root[data-design="console"] .btn-pill {
+  /* Mono, not capitals: in capitals the longer labels (« Se connecter avec
+     une clé d'accès ») ran to two lines on a phone. */
   border-radius: 0;
   font-family: var(--font-mono);
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
 }
 :root[data-design="papier"] .quick-add-fab {
   border-radius: 4px;

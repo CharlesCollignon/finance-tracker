@@ -17,6 +17,20 @@ import type { ChangelogEntry, RoadmapItem } from "./changelog";
  */
 export const CHANGELOG: readonly ChangelogEntry[] = [
   {
+    id: "2026-11-06-web-design-every-screen",
+    date: "2026-11-06",
+    kind: "better",
+    platforms: ["web"],
+    fr: {
+      title: "Tous les écrans suivent votre design",
+      body: "Récurrents, Immobilier, la banque, les relevés et l’historique d’un compte prennent eux aussi la forme de votre design : rubriques en Papier, tuiles en Bento, panneaux en Console. En Console sur téléphone, les six onglets affichent leur nom en entier.",
+    },
+    en: {
+      title: "Every screen follows your design",
+      body: "Recurring, Property, the bank, statements and an account's history now take your design's shape too: sections in Papier, tiles in Bento, panels in Console. In Console on a phone, the six tabs show their full names.",
+    },
+  },
+  {
     id: "2026-11-06-web-design-placements-plan",
     date: "2026-11-06",
     kind: "better",

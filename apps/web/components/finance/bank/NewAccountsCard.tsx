@@ -73,7 +73,7 @@ export function NewAccountsCard({ accounts }: { accounts: BankAccount[] }) {
     <section
       className={cn(
         GLASS_CARD,
-        "flex flex-col gap-4 rounded-card border-primary/40 p-card",
+        "surface-card flex flex-col gap-4 rounded-card border-primary/40 p-card",
       )}
     >
       <div>

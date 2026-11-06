@@ -333,7 +333,7 @@ export function PropertyDetail({
               {t("property.templatesNone")}
             </p>
           ) : (
-            <ul className="flex flex-col divide-y divide-border rounded-card border border-border bg-card">
+            <ul className="surface-card flex flex-col divide-y divide-border rounded-card border border-border bg-card">
               {attached.map((template) => (
                 <TemplateRow key={template.id} template={template} />
               ))}

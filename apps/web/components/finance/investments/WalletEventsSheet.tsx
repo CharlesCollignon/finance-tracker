@@ -214,7 +214,7 @@ export function WalletEventsSheet({
         <p className="text-sm text-muted-foreground">{t("events.intro")}</p>
 
         {/* The broker's file. */}
-        <section className="flex flex-col gap-2 rounded-card border border-border p-4">
+        <section className="surface-card flex flex-col gap-2 rounded-card border border-border p-4">
           <input
             ref={fileRef}
             type="file"
@@ -299,7 +299,7 @@ export function WalletEventsSheet({
         {/* One typed by hand. */}
         {draft ? (
           <form
-            className="flex flex-col gap-3 rounded-card border border-border p-4"
+            className="surface-card flex flex-col gap-3 rounded-card border border-border p-4"
             onSubmit={(event) => {
               event.preventDefault();
               save(draft);

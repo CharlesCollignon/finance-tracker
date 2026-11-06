@@ -20,7 +20,7 @@ import { AmountEditor, Fact } from "./property-controls";
 
 /** A plain card for a few lines of facts, as the recurring list draws. */
 const FACTS_CARD =
-  "flex flex-col gap-1 rounded-card border border-border bg-card p-4";
+  "surface-card flex flex-col gap-1 rounded-card border border-border bg-card p-4";
 
 const SERIES_KEYS: Record<RentSeries, Key> = {
   app: "property.askingSeriesApp",

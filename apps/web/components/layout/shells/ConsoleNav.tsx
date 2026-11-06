@@ -229,7 +229,9 @@ export function ConsoleTabs({
     >
       <CommandField className="mb-2 w-full" />
       <div
-        className="grid h-12 font-mono text-[10px] uppercase tracking-[0.04em]"
+        // 9px with no tracking: six surfaces (with Immobilier) fit their
+        // names on a 360px phone; 10px cut « RÉCURRENTS » to « RÉCURRE… ».
+        className="grid h-12 font-mono text-[9px] uppercase"
         style={{
           gridTemplateColumns: `repeat(${entries.length}, minmax(0, 1fr))`,
         }}

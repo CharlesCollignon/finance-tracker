@@ -29,7 +29,7 @@ export default function LookThroughLoading() {
       {[0, 1, 2].map((index) => (
         <div
           key={index}
-          className="w-full rounded-card p-card border border-border"
+          className="surface-card w-full rounded-card p-card border border-border"
         >
           <Bone className="h-4 w-32" />
           <div className="mt-4 flex flex-col gap-3">

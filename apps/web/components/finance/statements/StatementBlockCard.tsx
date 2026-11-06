@@ -244,7 +244,7 @@ export function StatementBlockCard({
   return (
     <m.section
       {...FADE}
-      className="flex flex-col gap-5 rounded-card border border-border bg-card p-6"
+      className="surface-card flex flex-col gap-5 rounded-card border border-border bg-card p-6"
     >
       <header className="flex items-start gap-3">
         <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-muted">
