@@ -2,6 +2,7 @@ import { parseAccountOrder } from "@finance/core/account-order";
 import type { AccountId } from "@finance/core/allocation";
 import { isLaterEntry } from "@finance/core/changelog";
 import { todayIsoLocal } from "@finance/core/constants";
+import { isDesign, parseDesign, type Design } from "@finance/core/designs";
 import { MILESTONE_TIERS } from "@finance/core/future-plan";
 import type { ActionResult } from "@finance/core/action-result";
 import {
@@ -127,6 +128,7 @@ async function writePreferences(
   change: {
     account_order?: string[];
     changelog_seen?: string;
+    design?: Design;
     dismissed_prompts?: string[];
     milestone_seen?: number;
     notification_prefs?: NotificationPrefs;
@@ -393,4 +395,36 @@ export async function setAccountOrder(
     return { error: "errors.invalidInput" };
   }
   return writePreferences(db, userId, locale, { account_order: parsed });
+}
+
+/**
+ * The design this person reads Pluclair in (migration 088), on any device.
+ * No row, no choice yet, or a deployment behind 088: the default.
+ */
+export async function readDesign(db: Db, userId: string): Promise<Design> {
+  const { data, error } = await db
+    .from("user_preferences")
+    .select("design")
+    .eq("user_id", userId)
+    .maybeSingle();
+  if (error) {
+    if (isMissingSchema(error)) {
+      return parseDesign(null);
+    }
+    throw error;
+  }
+  return parseDesign(data?.design);
+}
+
+/** Read Pluclair in this design, here and on the person's other devices. */
+export async function setDesign(
+  db: Db,
+  userId: string,
+  design: string,
+  locale: Locale,
+): Promise<ActionResult> {
+  if (!isDesign(design)) {
+    return { error: "errors.invalidInput" };
+  }
+  return writePreferences(db, userId, locale, { design });
 }

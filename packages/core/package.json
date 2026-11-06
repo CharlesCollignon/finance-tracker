@@ -48,6 +48,7 @@
     "./category-selection": "./src/category-selection.ts",
     "./category-selection-prompt": "./src/category-selection-prompt.ts",
     "./cards": "./src/cards.ts",
+    "./designs": "./src/designs.ts",
     "./cash-date": "./src/cash-date.ts",
     "./category-styles": "./src/category-styles.ts",
     "./constants": "./src/constants.ts",
