@@ -19,6 +19,7 @@ import { useFormatCurrency } from "@/lib/use-currency";
 import { PlanCard } from "./plan-controls";
 import { TrajectoryChart } from "./TrajectoryChart";
 import type { PlanReplay } from "./use-plan-replay";
+import { cn } from "@/lib/utils";
 
 /**
  * « Votre trajectoire »: the accounts replayed on every start since 1970,
@@ -112,35 +113,52 @@ export function TrajectoryCard({
         </p>
       </div>
 
-      <div className="privacy-sensitive flex min-h-10 flex-col gap-0.5 text-sm">
-        {active !== null ? (
-          <p className="font-medium tabular-nums">
-            {t("trajectory.scrubPoint", {
-              when: scrubWhen(active),
-              median: money(middle[active]!),
-              low: money(low[active]!),
-              high: money(high[active]!),
+      {/* The month under the pointer, or the range at rest: both are drawn in
+          the same cell and the one not in use is hidden rather than removed,
+          so the block keeps the height of the taller and the chart under it
+          does not jump when the pointer comes and goes. */}
+      <div className="privacy-sensitive grid text-sm [grid-template-areas:'readout']">
+        <div
+          aria-hidden={active === null}
+          className={cn(
+            "flex flex-col gap-0.5 [grid-area:readout]",
+            active === null && "invisible",
+          )}
+        >
+          {active !== null ? (
+            <p className="font-medium tabular-nums">
+              {t("trajectory.scrubPoint", {
+                when: scrubWhen(active),
+                median: money(middle[active]!),
+                low: money(low[active]!),
+                high: money(high[active]!),
+              })}
+            </p>
+          ) : null}
+        </div>
+        <div
+          aria-hidden={active !== null}
+          className={cn(
+            "flex flex-col gap-0.5 [grid-area:readout]",
+            active !== null && "invisible",
+          )}
+        >
+          <p className="tabular-nums">
+            {t("trajectory.rangeLine", {
+              low: money(result.end.p10 + homes),
+              high: money(result.end.p90 + homes),
             })}
           </p>
-        ) : (
-          <>
-            <p className="tabular-nums">
-              {t("trajectory.rangeLine", {
-                low: money(result.end.p10 + homes),
-                high: money(result.end.p90 + homes),
-              })}
-            </p>
-            <p className="text-muted-foreground tabular-nums">
-              {t("trajectory.afterTax", { amount: money(afterTax) })}
-            </p>
-            <p className="text-muted-foreground tabular-nums">
-              {t("trajectory.worstLine", {
-                month: historyMonthLabel(result.worst.start, locale),
-                amount: money(result.worst.value + homes),
-              })}
-            </p>
-          </>
-        )}
+          <p className="text-muted-foreground tabular-nums">
+            {t("trajectory.afterTax", { amount: money(afterTax) })}
+          </p>
+          <p className="text-muted-foreground tabular-nums">
+            {t("trajectory.worstLine", {
+              month: historyMonthLabel(result.worst.start, locale),
+              amount: money(result.worst.value + homes),
+            })}
+          </p>
+        </div>
       </div>
 
       <TrajectoryChart

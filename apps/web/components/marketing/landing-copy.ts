@@ -177,12 +177,6 @@ export const landingCopy = {
         link: "",
       },
       {
-        id: "share",
-        title: "Share this month",
-        body: "The month as an image to send or a page to print, with the amounts or with the shares only.",
-        link: "",
-      },
-      {
         id: "operations",
         title: "Inside each account",
         body: "A line sold, a dividend, a fee — typed or read off the broker’s export, and the gains by year.",

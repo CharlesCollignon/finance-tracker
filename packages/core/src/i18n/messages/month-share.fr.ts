@@ -13,14 +13,5 @@ export const monthShareFr: typeof monthShareEn = {
   upcoming: "Encore à sortir",
   everythingElse: "Tout le reste",
   whereItWent: "Où c'est parti",
-  share: "Partager ce mois",
-  shareImage: "En image",
-  sharePrint: "Imprimer ou enregistrer en PDF",
-  withAmounts: "Avec les montants",
-  shareHint:
-    "Une image du mois à envoyer, ou la page à imprimer : avec les montants, ou avec les parts seulement.",
-  printEntries: "Opérations",
-  print: "Imprimer",
-  back: "Retour au point",
   madeWith: "Pluclair · pluclair.com",
 };

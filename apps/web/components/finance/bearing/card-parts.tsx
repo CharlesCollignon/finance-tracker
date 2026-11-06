@@ -24,7 +24,9 @@ import { cn } from "@/lib/utils";
 /**
  * A card on this screen: glass over the lit ground, a small icon and title,
  * and — where there is a surface that explains its figures — a link there.
- * It lifts a pixel under the pointer; nothing else about it moves.
+ * It does not move under the pointer: it is not itself a button, and a card
+ * that rose under the cursor promised a press that did nothing (removed at
+ * the owner's ask, November 2026).
  */
 export function Card({
   icon,
@@ -49,8 +51,6 @@ export function Card({
       className={cn(
         GLASS_CARD,
         "flex h-full flex-col gap-4 rounded-card p-card",
-        "transition-[transform,border-color] duration-hover",
-        "hover:-translate-y-0.5 hover:border-foreground/20",
         className,
       )}
     >

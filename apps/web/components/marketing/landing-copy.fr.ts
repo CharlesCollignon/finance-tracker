@@ -154,12 +154,6 @@ export const landingCopyFr: LandingCopySections & {
         link: "",
       },
       {
-        id: "share",
-        title: "Partager ce mois",
-        body: "Le mois en image à envoyer ou en page à imprimer, avec les montants ou avec les parts seulement.",
-        link: "",
-      },
-      {
         id: "operations",
         title: "Dans chaque compte",
         body: "Une ligne vendue, un dividende, des frais — saisis ou lus dans l’export du courtier, et les plus-values par année.",
