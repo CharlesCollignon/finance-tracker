@@ -280,9 +280,18 @@ function topPanelStyle(
     return { top: "4.25rem", right: "1rem", width: "18rem" };
   }
   const rect = trigger.getBoundingClientRect();
+  // Below the button and right-aligned to it, where every design but one
+  // puts it: at the top right. « Bento » puts it at the foot of a sidebar on
+  // the left, so there it opens upwards and from the left edge instead.
+  const low = rect.top > window.innerHeight / 2;
+  const left = rect.left < window.innerWidth / 2;
   return {
-    top: `calc(${rect.bottom}px + 0.5rem)`,
-    right: `${window.innerWidth - rect.right}px`,
+    ...(low
+      ? { bottom: `calc(${window.innerHeight - rect.top}px + 0.5rem)` }
+      : { top: `calc(${rect.bottom}px + 0.5rem)` }),
+    ...(left
+      ? { left: `${rect.left}px` }
+      : { right: `${window.innerWidth - rect.right}px` }),
     width: "18rem",
   };
 }
