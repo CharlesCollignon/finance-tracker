@@ -1,11 +1,13 @@
 import { Ionicons } from "@expo/vector-icons";
-import { Tabs } from "expo-router";
+import { Tabs, usePathname } from "expo-router";
+import { PlatformPressable } from "expo-router/react-navigation";
 import { useEffect, useRef, type ComponentProps } from "react";
-import { StyleSheet, Text } from "react-native";
+import { StyleSheet, Text, type ColorValue } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTabBarHeight } from "@/theme/chrome";
 
 import { SharedBackdrop } from "@/components/AppBackdrop";
+import { barTabOf } from "@/components/layout/SurfaceTabs";
 import { Blur } from "@/components/ui/Blur";
 import { WhatsNewSheet } from "@/components/nouveautes/WhatsNewSheet";
 import { notifyDataChanged } from "@/lib/data-version";
@@ -68,8 +70,10 @@ const TABS: TabConfig[] = [
     icon: "compass",
     iconInactive: "compass-outline",
   },
+  // The Journal lands on its calendar (the owner's call, November 2026):
+  // the list is the view one tab along, hidden from the bar below.
   {
-    name: "transactions",
+    name: "calendar",
     titleKey: "nav.ledger",
     icon: "swap-horizontal",
     iconInactive: "swap-horizontal-outline",
@@ -109,6 +113,31 @@ const PROPERTY_TAB: TabConfig = {
   iconInactive: "home-outline",
 };
 
+/**
+ * A tab's label. Six surfaces leave a label about 50pt on a 360pt phone, less
+ * than « Placements » needs at 10pt: it shrinks on one line, to 80% at most,
+ * rather than lose its end. Measured in docs/plans/REAL_ESTATE_PLAN.md,
+ * Phase 0.
+ */
+function TabLabel({
+  color,
+  children,
+}: {
+  color: ColorValue;
+  children: string;
+}) {
+  return (
+    <Text
+      numberOfLines={1}
+      adjustsFontSizeToFit
+      minimumFontScale={0.8}
+      style={{ color, fontSize: 10, fontWeight: "500" }}
+    >
+      {children}
+    </Text>
+  );
+}
+
 /*
  * A glass pill floating above the bottom edge, as the web's bar is at phone
  * width — it was a full-width bar docked to the edge, with square corners.
@@ -125,6 +154,10 @@ export default function TabsLayout() {
   // Under « Commun », only the tabs a shared space has: no plan, no wallets
   // — those stay a person's.
   const { joint } = useOwner();
+  // Which tab the screen in view belongs to. The bar's own `focused` is
+  // true only for the route on screen, and the Ledger's and Placements'
+  // other views are hidden routes, so it left the bar dark on them.
+  const activeTab = barTabOf(usePathname());
   // The month's charges, written in when the app opens — there is no Apply
   // button any more.
   useMonthFill();
@@ -147,13 +180,32 @@ export default function TabsLayout() {
     recordAppOpened();
   }, []);
 
+  const tint = (lit: boolean) =>
+    lit ? colors.foreground : colors.mutedForeground;
+  // The label in the same colour as the icon, and the button saying it is
+  // the selected one, both from `activeTab` rather than the route's focus.
+  // A tab hidden from the bar (`href: null`) gets no button of its own:
+  // expo-router draws none for it, and refuses one alongside `href`.
+  const litWhen = (lit: boolean, hidden: boolean) => ({
+    tabBarLabel: ({ children }: { children: string }) => (
+      <TabLabel color={tint(lit)}>{children}</TabLabel>
+    ),
+    ...(hidden
+      ? { href: null }
+      : {
+          tabBarButton: (props: ComponentProps<typeof PlatformPressable>) => (
+            <PlatformPressable {...props} aria-selected={lit} />
+          ),
+        }),
+  });
+
   // One surface of the bar. A function rather than a map, because Plan is
   // drawn after Immobilier, which is declared on its own below.
   const renderTab = ({ name, titleKey, icon, iconInactive }: TabConfig) => {
     const waiting =
       name === "index"
         ? badges.bearing
-        : name === "transactions"
+        : name === "calendar"
           ? badges.ledger
           : 0;
     return (
@@ -161,14 +213,13 @@ export default function TabsLayout() {
         key={name}
         name={name}
         options={{
-          href:
-            joint && PERSONAL_TABS.has(name) ? null : undefined,
           title: t(titleKey),
-          tabBarIcon: ({ focused, color, size }) => (
+          ...litWhen(activeTab === name, joint && PERSONAL_TABS.has(name)),
+          tabBarIcon: ({ size }) => (
             <Ionicons
-              name={focused ? icon : iconInactive}
+              name={activeTab === name ? icon : iconInactive}
               size={size ?? 20}
-              color={color}
+              color={tint(activeTab === name)}
             />
           ),
           // Each question where it is answered: charges the bank
@@ -206,19 +257,9 @@ export default function TabsLayout() {
                 // web's bar; gold stays for the add button.
                 tabBarActiveTintColor: colors.foreground,
                 tabBarInactiveTintColor: colors.mutedForeground,
-                // Six surfaces leave a label about 50pt on a 360pt phone, less
-                // than « Placements » needs at 10pt: it shrinks on one line, to
-                // 80% at most, rather than lose its end. Measured in
-                // docs/plans/REAL_ESTATE_PLAN.md, Phase 0.
+                // Shrinks on one line rather than lose its end: see TabLabel.
                 tabBarLabel: ({ color, children }) => (
-                  <Text
-                    numberOfLines={1}
-                    adjustsFontSizeToFit
-                    minimumFontScale={0.8}
-                    style={{ color, fontSize: 10, fontWeight: "500" }}
-                  >
-                    {children}
-                  </Text>
+                  <TabLabel color={color}>{children}</TabLabel>
                 ),
                 tabBarItemStyle: { paddingVertical: 4, paddingHorizontal: 2 },
                 // Docked to the bottom edge, square, over the content: blur only
@@ -248,22 +289,26 @@ export default function TabsLayout() {
               <Tabs.Screen
                 name={PROPERTY_TAB.name}
                 options={{
+                  title: t(PROPERTY_TAB.titleKey),
                   // Not a tab at all without the flag, so the bar keeps five.
                   // A home owned together is the space's too (6c).
-                  href: showProperty ? undefined : null,
-                  title: t(PROPERTY_TAB.titleKey),
-                  tabBarIcon: ({ focused, color, size }) => (
+                  ...litWhen(activeTab === PROPERTY_TAB.name, !showProperty),
+                  tabBarIcon: ({ size }) => (
                     <Ionicons
-                      name={focused ? PROPERTY_TAB.icon : PROPERTY_TAB.iconInactive}
+                      name={
+                        activeTab === PROPERTY_TAB.name
+                          ? PROPERTY_TAB.icon
+                          : PROPERTY_TAB.iconInactive
+                      }
                       size={size ?? 20}
-                      color={color}
+                      color={tint(activeTab === PROPERTY_TAB.name)}
                     />
                   ),
                 }}
               />
               {renderTab(PLAN_TAB)}
               {/* Views of the Ledger, not destinations of their own. */}
-              <Tabs.Screen name="calendar" options={{ href: null }} />
+              <Tabs.Screen name="transactions" options={{ href: null }} />
               <Tabs.Screen name="history" options={{ href: null }} />
               <Tabs.Screen name="merchants" options={{ href: null }} />
               {/* And two of Placements: what the accounts earn, how the money

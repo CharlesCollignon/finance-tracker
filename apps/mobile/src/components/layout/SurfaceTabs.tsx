@@ -75,10 +75,14 @@ export function SurfaceTabs({ tabs, className }: SurfaceTabsProps) {
   );
 }
 
-/** The Ledger's views: the same record, looked at four ways, as on the web. */
+/**
+ * The Ledger's views: the same record, looked at four ways, as on the web.
+ * The calendar first, where the bar's Journal lands (the owner's call,
+ * November 2026).
+ */
 export const LEDGER_TABS: SurfaceTab[] = [
-  { href: "/transactions", labelKey: "nav.ledgerList" },
   { href: "/calendar", labelKey: "nav.ledgerCalendar" },
+  { href: "/transactions", labelKey: "nav.ledgerList" },
   // Cast until the typed-routes list next regenerates with the new files.
   { href: "/history" as Href, labelKey: "nav.ledgerByCategory" },
   { href: "/merchants" as Href, labelKey: "nav.ledgerByMerchant" },
@@ -95,3 +99,24 @@ export const WALLET_TABS: SurfaceTab[] = [
   { href: "/analysis" as Href, labelKey: "nav.walletsAnalysis" },
   { href: "/look-through" as Href, labelKey: "nav.walletsLookThrough" },
 ];
+
+/**
+ * The bar's tab a screen belongs to, by route name: a view of the Ledger
+ * or of Placements lights its surface, not nothing. Each view is a hidden
+ * route of the tabs navigator, so left to itself the bar lit only the route
+ * on screen — and on Liste or Analyse that is no tab at all.
+ */
+export function barTabOf(pathname: string): string {
+  const path = pathname.split("?")[0] ?? pathname;
+  if (LEDGER_TABS.some((tab) => String(tab.href) === path)) {
+    return "calendar";
+  }
+  if (WALLET_TABS.some((tab) => String(tab.href) === path)) {
+    return "investments";
+  }
+  if (path === "/" || path === "") {
+    return "index";
+  }
+  // `/property/abc` → `property`, `/planning` → `planning`.
+  return path.split("/")[1] ?? "";
+}
