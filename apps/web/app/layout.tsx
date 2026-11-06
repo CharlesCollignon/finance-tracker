@@ -20,6 +20,9 @@ import { getCurrency } from "@/lib/currency";
 import { CurrencyProvider } from "@/lib/use-currency";
 import { LocaleSuggestion } from "@/components/layout/LocaleSuggestion";
 import { getSiteUrl } from "@/lib/supabase/env";
+import { getDesign } from "@/lib/design";
+import { DesignProvider } from "@/lib/design-context";
+import { isLightDesign, type Design } from "@finance/core/designs";
 
 const instrumentSans = localFont({
   src: "./fonts/instrument-sans-latin.woff2",
@@ -58,6 +61,28 @@ const plexMono = localFont({
   display: "swap",
 });
 
+// The faces only the other designs set their figures and headings in
+// (`packages/core/src/designs.ts`): « Papier » in Newsreader, « Bento » in
+// Bricolage Grotesque. Not preloaded — a browser fetches a declared face only
+// when something on the page is set in it, so a reader in « Nuit » never
+// downloads either.
+const newsreader = localFont({
+  src: "./fonts/newsreader-latin.woff2",
+  variable: "--font-newsreader",
+  weight: "200 800",
+  display: "swap",
+  preload: false,
+  adjustFontFallback: "Times New Roman",
+});
+
+const bricolage = localFont({
+  src: "./fonts/bricolage-grotesque-latin.woff2",
+  variable: "--font-bricolage",
+  weight: "200 800",
+  display: "swap",
+  preload: false,
+});
+
 export const metadata: Metadata = {
   // What a page's relative addresses resolve against: its canonical link and
   // its Open Graph image (`lib/og`), which a crawler needs whole.
@@ -81,16 +106,28 @@ export const metadata: Metadata = {
   },
 };
 
-export const viewport: Viewport = {
-  width: "device-width",
-  initialScale: 1,
-  viewportFit: "cover",
-  // One colour, because there is one theme. Pluclair is dark: the figures
-  // are the brightest thing on the screen and the veil behind them only
-  // reads on a dark ground.
-  themeColor: "#0a0a10",
-  colorScheme: "dark",
+/**
+ * The browser's own chrome — the phone's status bar, an installed app's
+ * title bar — in the ground of the reader's design, so it never shows a
+ * near-black strip over paper. Each matches `--background` in globals.css.
+ */
+const DESIGN_GROUND: Record<Design, string> = {
+  nuit: "#0a0a10",
+  papier: "#f6f1e7",
+  bento: "#eef0f3",
+  console: "#0b0b0b",
 };
+
+export async function generateViewport(): Promise<Viewport> {
+  const design = await getDesign();
+  return {
+    width: "device-width",
+    initialScale: 1,
+    viewportFit: "cover",
+    themeColor: DESIGN_GROUND[design],
+    colorScheme: isLightDesign(design) ? "light" : "dark",
+  };
+}
 
 const privacyInitScript = `(function(){try{document.documentElement.dataset.privacy=localStorage.getItem("privacy-blur")==="1"?"on":"off";}catch(e){document.documentElement.dataset.privacy="off";}})();`;
 
@@ -121,16 +158,21 @@ export default async function RootLayout({
   // Reading a cookie makes this layout dynamic, which costs nothing here:
   // both group layouts below already call `getAuthUser()`, so every route in
   // the app was dynamic before this line existed.
-  const [locale, currency] = await Promise.all([getLocale(), getCurrency()]);
+  const [locale, currency, design] = await Promise.all([
+    getLocale(),
+    getCurrency(),
+    getDesign(),
+  ]);
 
   return (
-    // `dark` is rendered on the server rather than applied by a script, so
-    // there is no flash of the wrong theme and no blocking script in the
-    // head. The class stays — the tokens do not need it, but a few dozen
-    // `dark:` utilities across the app resolve against it.
+    // The design is rendered on the server rather than applied by a script,
+    // so there is no flash of the wrong one and no blocking script in the
+    // head: `data-design` picks the palette in globals.css, and `dark` stays
+    // on the dark designs for the `dark:` utilities that resolve against it.
     <html
       lang={locale}
-      className={`dark ${instrumentSans.variable} ${fraunces.variable} ${plexMono.variable} h-full`}
+      data-design={design}
+      className={`${isLightDesign(design) ? "" : "dark "}${instrumentSans.variable} ${fraunces.variable} ${plexMono.variable} ${newsreader.variable} ${bricolage.variable} h-full`}
       suppressHydrationWarning
     >
       <head>
@@ -140,8 +182,10 @@ export default async function RootLayout({
         <script dangerouslySetInnerHTML={{ __html: scrollbarGutterScript }} />
         <LocaleProvider locale={locale}>
           <CurrencyProvider currency={currency}>
-            <LocaleSuggestion />
-            {children}
+            <DesignProvider design={design}>
+              <LocaleSuggestion />
+              {children}
+            </DesignProvider>
           </CurrencyProvider>
         </LocaleProvider>
       </body>

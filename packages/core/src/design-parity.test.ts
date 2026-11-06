@@ -78,8 +78,12 @@ describe("design tokens, web against phone", () => {
   });
 
   it("uses the same radii and spacing", () => {
-    expect(web.get("radius-card")).toBe("20px");
-    expect(web.get("radius-shell")).toBe("26px");
+    // « Nuit »'s corners; `--radius-card` and `--radius-shell` read them, so
+    // the other designs can restate them.
+    expect(web.get("radius-card")).toBe("var(--card-radius)");
+    expect(web.get("radius-shell")).toBe("var(--shell-radius)");
+    expect(web.get("card-radius")).toBe("20px");
+    expect(web.get("shell-radius")).toBe("26px");
     expect(web.get("spacing-card")).toBe("20px");
     expect(web.get("spacing-row")).toBe("12px");
     const radius =
