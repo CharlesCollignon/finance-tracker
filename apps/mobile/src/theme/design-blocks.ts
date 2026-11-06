@@ -321,3 +321,177 @@ export function accentTile(): StyleProp<ViewStyle> {
     ? [LIME_TILE, { backgroundColor: "#d4f25c" }]
     : null;
 }
+
+/* ------------------------------------------------- the Journal (phase 10) */
+
+/** A week's row of the calendar. */
+export function calWeekRow(): ViewStyle | null {
+  switch (currentDesign()) {
+    case "papier":
+    case "console":
+      return { borderBottomColor: COLORS.border };
+    case "bento":
+      return { borderBottomWidth: 0, gap: 4, marginBottom: 4 };
+    default:
+      return null;
+  }
+}
+
+/** One day of the calendar: framed, tiled or ruled per design. */
+export function calDayCell(
+  selected: boolean,
+  inMonth: boolean,
+): ViewStyle | null {
+  switch (currentDesign()) {
+    case "papier":
+      return selected
+        ? {
+            backgroundColor: "transparent",
+            borderRightColor: COLORS.border,
+            borderWidth: 2,
+            borderColor: COLORS.foreground,
+          }
+        : { borderRightColor: COLORS.border };
+    case "bento":
+      return {
+        borderRightWidth: 0,
+        borderRadius: 12,
+        backgroundColor: selected
+          ? "#d4f25c"
+          : inMonth
+            ? COLORS.card
+            : "transparent",
+      };
+    case "console":
+      return selected
+        ? {
+            borderRightColor: COLORS.border,
+            borderLeftWidth: 2,
+            borderLeftColor: COLORS.primary,
+          }
+        : { borderRightColor: COLORS.border };
+    default:
+      return null;
+  }
+}
+
+/** The mark on today's cell: ringed in « Bento », left to the numeral elsewhere. */
+export function calTodayMark(): ViewStyle | null {
+  switch (currentDesign()) {
+    case "bento":
+      return { borderWidth: 2, borderColor: COLORS.primary, borderRadius: 12 };
+    case "papier":
+    case "console":
+      return { borderWidth: 0 };
+    default:
+      return null;
+  }
+}
+
+/** A day's numeral: serif, heavy grotesque or mono; today underlined or lit. */
+export function calDayNumeral(today: boolean): TextStyle | null {
+  switch (currentDesign()) {
+    case "papier":
+      return {
+        fontFamily: "Newsreader-SemiBold",
+        fontSize: 15,
+        ...(today
+          ? {
+              textDecorationLine: "underline",
+              textDecorationColor: COLORS.primary,
+            }
+          : null),
+      };
+    case "bento":
+      return { fontFamily: "BricolageGrotesque-Bold", fontSize: 13 };
+    case "console":
+      return {
+        fontFamily: "IBMPlexMono-Medium",
+        ...(today ? { color: COLORS.primary } : null),
+      };
+    default:
+      return null;
+  }
+}
+
+/** A day's heading in the list: its frame and its label. */
+export function ledgerDayHeading(): {
+  frame: ViewStyle | null;
+  label: TextStyle | null;
+} {
+  switch (currentDesign()) {
+    case "papier":
+      return {
+        frame: { borderBottomWidth: 2, borderBottomColor: COLORS.foreground },
+        label: {
+          fontFamily: "Newsreader-SemiBold",
+          fontSize: 16,
+          letterSpacing: 0,
+          textTransform: "none",
+          color: COLORS.foreground,
+        },
+      };
+    case "bento":
+      return {
+        frame: null,
+        label: {
+          fontFamily: "BricolageGrotesque-Bold",
+          fontSize: 15,
+          letterSpacing: 0,
+          textTransform: "none",
+          color: COLORS.foreground,
+        },
+      };
+    case "console":
+      return {
+        frame: { borderBottomWidth: 1, borderBottomColor: COLORS.border },
+        label: { fontFamily: "IBMPlexMono-Medium", letterSpacing: 1.3 },
+      };
+    default:
+      return { frame: null, label: null };
+  }
+}
+
+/** An entry's row in the list: ruled, a tile of its own, or close-set. */
+export function ledgerRow(): ViewStyle | null {
+  switch (currentDesign()) {
+    case "papier":
+      return { borderBottomWidth: 1, borderBottomColor: COLORS.border };
+    case "bento":
+      return {
+        marginTop: 6,
+        paddingHorizontal: 12,
+        borderRadius: 16,
+        backgroundColor: COLORS.card,
+      };
+    case "console":
+      return {
+        minHeight: 44,
+        paddingVertical: 8,
+        borderBottomWidth: 1,
+        borderBottomColor: COLORS.border,
+      };
+    default:
+      return null;
+  }
+}
+
+/** Whether an entry shows its category's icon: a ledger and a table do not. */
+export function ledgerShowsIcons(): boolean {
+  const design = currentDesign();
+  return design !== "papier" && design !== "console";
+}
+
+/** An entry's amount, in the design's figure face. */
+export function ledgerAmountFace(): TextStyle | null {
+  switch (currentDesign()) {
+    case "papier":
+      return { fontFamily: "Newsreader-SemiBold", fontSize: 15 };
+    case "bento":
+      return { fontFamily: "BricolageGrotesque-Bold" };
+    case "console":
+      return { fontFamily: "IBMPlexMono-Medium" };
+    default:
+      return null;
+  }
+}

@@ -30,6 +30,7 @@ import { useOwner } from "@/providers/OwnerProvider";
 import { ICON } from "@/theme/tokens";
 import { useTabBarClearance } from "@/theme/chrome";
 import { useThemeColors } from "@/theme/useThemeColors";
+import { cardFrame } from "@/theme/design-blocks";
 
 /**
  * The Ledger's by-shop view: every place the money went over the last
@@ -160,6 +161,7 @@ function MerchantRow({
         "rounded-card border border-border",
         open && "border-hairline-strong bg-muted/20",
       )}
+      style={cardFrame()}
     >
       <Pressable
         accessibilityRole="button"

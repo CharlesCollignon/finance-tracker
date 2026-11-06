@@ -13,6 +13,7 @@ import { hapticLight } from "@/lib/haptics";
 import { useFormatCurrency } from "@/providers/CurrencyProvider";
 import { useT } from "@/providers/LocaleProvider";
 import { useThemeColors } from "@/theme/useThemeColors";
+import { cardFrame } from "@/theme/design-blocks";
 
 /**
  * Which colour a category type is drawn in: the colours its amounts carry
@@ -136,7 +137,10 @@ function CategoryTile({
         "min-w-0 flex-1 gap-1 rounded-card border p-row",
         open ? "bg-muted/40" : "",
       )}
-      style={{ borderColor: open ? colors.hairlineStrong : colors.border }}
+      style={[
+        { borderColor: open ? colors.hairlineStrong : colors.border },
+        cardFrame(),
+      ]}
     >
       <View className="flex-row items-baseline justify-between gap-2">
         <Text numberOfLines={1} className="min-w-0 flex-1 text-sm font-medium">

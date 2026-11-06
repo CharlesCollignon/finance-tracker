@@ -24,6 +24,7 @@ import { useThemeColors } from "@/theme/useThemeColors";
 
 import { useCategoryTone } from "./CategoryGrid";
 import { CategoryRead } from "./CategoryRead";
+import { cardFrame } from "@/theme/design-blocks";
 
 /**
  * One category, opened in place — the web's `CategoryPanel`. Holds every
@@ -74,7 +75,7 @@ export function CategoryPanel({
     <FadeIn>
       <View
         className="gap-4 rounded-card border p-card"
-        style={{ borderColor: colors.hairlineStrong }}
+        style={[{ borderColor: colors.hairlineStrong }, cardFrame()]}
       >
         <View className="flex-row items-start justify-between gap-3">
           <View className="min-w-0 flex-1 gap-0.5">

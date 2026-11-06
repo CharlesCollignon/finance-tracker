@@ -18,6 +18,12 @@ import { hapticLight } from "@/lib/haptics";
 import { useLocale, useT } from "@/providers/LocaleProvider";
 import { useThemeColors } from "@/theme/useThemeColors";
 import { TYPE_AMOUNT_CLASS } from "@finance/core/category-styles";
+import {
+  calDayCell,
+  calDayNumeral,
+  calTodayMark,
+  calWeekRow,
+} from "@/theme/design-blocks";
 
 interface CalendarGridProps {
   weeks: CalendarDay[][];
@@ -115,6 +121,7 @@ export function CalendarGrid({
             "flex-row",
             weekIndex < weeks.length - 1 && "border-b border-border/40",
           )}
+          style={calWeekRow()}
         >
           {week.map((day, dayIndex) => {
             const totals = computeDayTotals(
@@ -152,12 +159,17 @@ export function CalendarGrid({
                   // Lit from the strip above, as the finger would.
                   !selected && day.date === litDate && "bg-muted/30",
                 )}
+                // The design's cell (`theme/design-blocks.ts`).
+                style={calDayCell(selected, day.isCurrentMonth)}
               >
                 {day.isToday ? (
                   <View
                     pointerEvents="none"
                     className="absolute inset-0 border"
-                    style={{ borderColor: colors.hairlineStrong }}
+                    style={[
+                      { borderColor: colors.hairlineStrong },
+                      calTodayMark(),
+                    ]}
                   />
                 ) : null}
                 <Text
@@ -165,6 +177,7 @@ export function CalendarGrid({
                     "text-xs font-semibold",
                     !day.isCurrentMonth && "text-muted-foreground",
                   )}
+                  style={calDayNumeral(day.isToday)}
                 >
                   {String(day.day)}
                 </Text>
