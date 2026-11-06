@@ -35,6 +35,7 @@ import { useNotificationRouting } from "@/lib/notification-routing";
 import { useQuickActionRouting } from "@/lib/quick-action-routing";
 import { useWidgetSync } from "@/widget/useWidgetSync";
 import { DesignProvider, useDesign } from "@/providers/DesignProvider";
+import { registerApkUpdateCheck } from "@/lib/apk-update";
 import { currentDesign } from "@/theme/designs";
 import { isLightDesign } from "@finance/core/designs";
 import { COLORS } from "@/theme/tokens";
@@ -79,6 +80,13 @@ function RootNavigator({ fontsReady }: { fontsReady: boolean }) {
   useQuickActionRouting(Boolean(session) && !initializing && fontsReady);
   // The Android widget's figure, read as the app goes to the background.
   useWidgetSync(session?.user.id ?? null, !initializing);
+
+  // Ask Android to look for a newer APK now and then, and say so
+  // (`lib/apk-update.ts`); the import below defines the task at start-up,
+  // which is when Android may wake the app to run it.
+  useEffect(() => {
+    void registerApkUpdateCheck();
+  }, []);
 
   // The design, for the key below. The colour scheme NativeWind resolves
   // `dark:` variants from is set by `applyDesign` with it — pinned to the

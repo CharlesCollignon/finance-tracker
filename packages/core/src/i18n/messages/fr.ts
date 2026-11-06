@@ -64,7 +64,6 @@ export const fr: Messages = {
     whatsNewClose: "Fermer",
     updateTitle: "Une nouvelle version est disponible",
     updateBody: "La version {version} de Pluclair est prête à télécharger.",
-    updateDownload: "Télécharger",
     updateLater: "Plus tard",
     reactLove: "J’adore",
     reactUseful: "Utile",
@@ -1565,6 +1564,19 @@ export const fr: Messages = {
     browserNotifications: "Notifications du navigateur",
     showAmounts: "Afficher les montants",
     hideAmounts: "Masquer les montants",
+  },
+
+  apkUpdate: {
+    channelName: "Mises à jour",
+    notificationTitle: "Pluclair {version} est disponible",
+    notificationBody: "Touchez pour la télécharger et l’installer.",
+    update: "Mettre à jour",
+    downloading: "Téléchargement…",
+    downloadingPercent: "Téléchargement… {percent} %",
+    install: "Installer",
+    installHint: "Android vous demande de confirmer la mise à jour — la première fois, aussi d’autoriser Pluclair à installer des applications.",
+    failed: "Le téléchargement n’a pas abouti. Vous pouvez la récupérer sur le site.",
+    fromSite: "Télécharger depuis le site",
   },
 
   design: {

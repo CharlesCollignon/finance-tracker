@@ -105,7 +105,6 @@ export const en = {
     whatsNewClose: "Close",
     updateTitle: "A new version is out",
     updateBody: "Version {version} of Pluclair is ready to download.",
-    updateDownload: "Download",
     updateLater: "Later",
     reactLove: "Love it",
     reactUseful: "Useful",
@@ -2019,6 +2018,21 @@ export const en = {
       name: "Console",
       hint: "Black, figures in a fixed-width face.",
     },
+  },
+
+  /** Updating the APK from inside the app (`apps/mobile/src/lib/apk-update.ts`). */
+  apkUpdate: {
+    /** Android's name for the notification channel, in its settings. */
+    channelName: "Updates",
+    notificationTitle: "Pluclair {version} is out",
+    notificationBody: "Tap to download and install it.",
+    update: "Update",
+    downloading: "Downloading…",
+    downloadingPercent: "Downloading… {percent} %",
+    install: "Install",
+    installHint: "Android asks you to confirm the update — the first time, also to allow Pluclair to install apps.",
+    failed: "The download did not finish. You can get it from the site instead.",
+    fromSite: "Download from the site",
   },
 
   /** Choosing a language, and being asked whether to. */
