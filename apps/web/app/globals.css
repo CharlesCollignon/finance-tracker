@@ -886,6 +886,16 @@
 .page-title-path {
   display: none;
 }
+/* A page with no controls of its own has nothing in the header's row from
+   `md` (the orb, the title and the account are the phone's): only the
+   headline is drawn there. */
+@media (min-width: 48rem) {
+  :root[data-design="papier"] .page-header-bare > :last-child,
+  :root[data-design="bento"] .page-header-bare > :last-child,
+  :root[data-design="console"] .page-header-bare > :last-child {
+    display: none;
+  }
+}
 :root[data-design="papier"] .page-title-display {
   padding-top: 1.75rem;
   padding-bottom: 0.875rem;
@@ -1153,6 +1163,142 @@
 }
 :root[data-design="bento"] .surface-chrome {
   border-bottom-color: transparent;
+}
+
+/* --- Le point, arranged per design ------------------------------------------
+
+   Layer 3 of `docs/plans/DESIGN_LAYOUTS_PLAN.md`: the same cards in the same
+   order (BearingMonthView), placed by each design. Every slot is
+   `bearing-slot-*`; a slot not named in a rule keeps the grid's default.
+   Unlayered, so these placements beat the slots' « Nuit » spans. */
+
+/* « Papier »: a front page. The balance is the lead story across two
+   columns; the short items — what is still to come, the run, what was
+   spent, the shared balance — stand in a narrow column beside it, behind a
+   column rule; everything else runs the full width below. */
+:root[data-design="papier"] .bearing-grid {
+  column-gap: 2.5rem;
+  row-gap: 2rem;
+}
+@media (min-width: 64rem) {
+  :root[data-design="papier"] .bearing-grid {
+    grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+    grid-auto-flow: row dense;
+  }
+  :root[data-design="papier"] .bearing-grid > * {
+    grid-column: 1 / -1;
+  }
+  :root[data-design="papier"] .bearing-grid > .bearing-slot-balance {
+    grid-column: 1;
+    grid-row: span 2;
+  }
+  :root[data-design="papier"] .bearing-grid > .bearing-slot-where {
+    grid-column: 1;
+  }
+  /* « Où c'est parti » comes up beside the run, under the lead; the
+     full-width strips follow it, and anything asking for an answer first
+     (the setup step, the week's recap) stays on top. */
+  :root[data-design="papier"] .bearing-grid > .bearing-slot-setup,
+  :root[data-design="papier"] .bearing-grid > .bearing-slot-recap {
+    order: -1;
+  }
+  :root[data-design="papier"] .bearing-grid > .bearing-slot-trust,
+  :root[data-design="papier"] .bearing-grid > .bearing-slot-read,
+  :root[data-design="papier"] .bearing-grid > .bearing-slot-share {
+    order: 1;
+  }
+  :root[data-design="papier"] .bearing-grid > .bearing-slot-upcoming,
+  :root[data-design="papier"] .bearing-grid > .bearing-slot-momentum,
+  :root[data-design="papier"] .bearing-grid > .bearing-slot-spent,
+  :root[data-design="papier"] .bearing-grid > .bearing-slot-between {
+    position: relative;
+    grid-column: 2;
+  }
+  /* The column rule, in the middle of the gap. */
+  :root[data-design="papier"] .bearing-grid > .bearing-slot-upcoming::before,
+  :root[data-design="papier"] .bearing-grid > .bearing-slot-momentum::before,
+  :root[data-design="papier"] .bearing-grid > .bearing-slot-spent::before,
+  :root[data-design="papier"] .bearing-grid > .bearing-slot-between::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    bottom: -2rem;
+    left: -1.25rem;
+    width: 1px;
+    background-color: var(--border);
+  }
+}
+
+/* « Bento »: tiles of different sizes. The balance is the big tile, in lime,
+   two columns by two rows; the small figures stand beside it as single
+   tiles; the lists take two; the strips run the whole row. */
+:root[data-design="bento"] .bearing-grid {
+  gap: 1rem;
+}
+@media (min-width: 80rem) {
+  :root[data-design="bento"] .bearing-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-auto-flow: row dense;
+  }
+  :root[data-design="bento"] .bearing-grid > .bearing-slot-balance {
+    grid-column: span 2;
+    grid-row: span 2;
+  }
+  :root[data-design="bento"] .bearing-grid > .bearing-slot-spent,
+  :root[data-design="bento"] .bearing-grid > .bearing-slot-momentum,
+  :root[data-design="bento"] .bearing-grid > .bearing-slot-upcoming,
+  :root[data-design="bento"] .bearing-grid > .bearing-slot-between {
+    grid-column: span 1;
+  }
+  :root[data-design="bento"] .bearing-grid > .bearing-slot-where {
+    grid-column: span 2;
+  }
+  /* The run and « Où c'est parti » share a row; the strips follow. */
+  :root[data-design="bento"] .bearing-grid > .bearing-slot-setup,
+  :root[data-design="bento"] .bearing-grid > .bearing-slot-recap {
+    order: -1;
+  }
+  :root[data-design="bento"] .bearing-grid > .bearing-slot-trust,
+  :root[data-design="bento"] .bearing-grid > .bearing-slot-read,
+  :root[data-design="bento"] .bearing-grid > .bearing-slot-share {
+    order: 1;
+  }
+}
+/* The big tile's lime, with the palette restated on it: dark ink, an olive
+   for the quiet text, and the reds, greens and ambers taken darker so each
+   still reads at 5:1 or better on lime. Its line is drawn in ink. */
+:root[data-design="bento"] .bearing-slot-balance {
+  --card: #d4f25c;
+  --foreground: #0f1115;
+  --card-foreground: #0f1115;
+  --muted: #c3e04a;
+  --muted-foreground: #4a5320;
+  --secondary: #c3e04a;
+  --primary: #0f1115;
+  --primary-ink: #0f1115;
+  --primary-foreground: #d4f25c;
+  --destructive: #a61b1b;
+  --success: #0d5a29;
+  --warning: #7a3d00;
+  --border: rgba(15, 17, 21, 0.14);
+  color: var(--foreground);
+}
+:root[data-design="bento"] .bearing-slot-balance > * {
+  height: 100%;
+}
+
+/* « Console »: the panels joined into one ruled grid, edge to edge — the
+   hairlines shared, not doubled — and set closer. */
+:root[data-design="console"] .bearing-grid {
+  gap: 0;
+  padding: 0 1px 1px 0;
+}
+:root[data-design="console"] .bearing-grid > * {
+  margin: 0 -1px -1px 0;
+}
+:root[data-design="console"] .bearing-grid .surface-card {
+  height: 100%;
+  padding: 1.25rem;
 }
 
 /* Privacy: blur monetary values when enabled */

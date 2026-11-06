@@ -50,7 +50,7 @@ export function PageHeader({ titleKey, children, className }: PageHeaderProps) {
         "border-b pt-safe",
         GLASS_CHROME,
         bare
-          ? "md:sr-only"
+          ? "page-header-bare md:sr-only"
           : // No glass and no hairline: the controls sit on the page rather
             // than in a bar of their own under the notch.
             "md:static md:h-[var(--shell-header-height)] md:border-b-0 md:bg-transparent md:pt-0 md:backdrop-filter-none",
