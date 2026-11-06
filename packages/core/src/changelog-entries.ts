@@ -17,6 +17,20 @@ import type { ChangelogEntry, RoadmapItem } from "./changelog";
  */
 export const CHANGELOG: readonly ChangelogEntry[] = [
   {
+    id: "2026-11-06-web-investment-tiles",
+    date: "2026-11-06",
+    kind: "better",
+    platforms: ["web"],
+    fr: {
+      title: "Vos placements, en tuiles",
+      body: "Dans Placements, chaque ligne d’un compte est une tuile : ce qu’elle vaut en grand, ce que vous y avez versé dessous, et en haut ce qu’elle vous a rapporté ou coûté en pourcentage. La courbe du cours reste en bas, en gris, et suit toujours la période choisie.",
+    },
+    en: {
+      title: "Your investments, as tiles",
+      body: "In Investments, each holding in an account is a tile: what it is worth in large type, what you put in below, and at the top what it has gained or lost you as a percentage. The price line stays at the bottom, in grey, and still follows the chosen period.",
+    },
+  },
+  {
     id: "2026-11-06-web-journal-calendar-first",
     date: "2026-11-06",
     kind: "better",

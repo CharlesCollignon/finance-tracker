@@ -6,10 +6,6 @@ import { PRICE_RANGES } from "@finance/core/instrument-price-series";
 import { formatSignedPercent } from "@finance/core/instrument-price-series";
 import { accountShortName } from "@/components/finance/accounts/account-format";
 import { Sparkline } from "@/components/finance/charts/Sparkline";
-import {
-  InlineMetric,
-  PRICE_TONE_VARS,
-} from "@/components/finance/investments/metrics";
 import { landingSampleFor } from "@/components/marketing/landing-sample";
 import { useLocale, useT } from "@/lib/locale-context";
 import { cn } from "@/lib/utils";
@@ -144,10 +140,15 @@ export function WalletsMock({ variant = "web" }: { variant?: Variant }) {
             />
           </div>
         )}
-        <ul className="divide-y divide-border">
+        <ul
+          className={cn(
+            "mt-3 grid grid-cols-2",
+            mobile ? "gap-2" : "gap-2.5 sm:grid-cols-3",
+          )}
+        >
           {pea.positions.map((position) => (
-            <li key={position.symbol}>
-              <PositionRow position={position} compact={mobile} />
+            <li key={position.symbol} className="min-w-0">
+              <PositionTile position={position} />
             </li>
           ))}
         </ul>
@@ -239,69 +240,43 @@ function Figure({
 
 type Position = ReturnType<typeof landingSampleFor>["pea"]["positions"][number];
 
-/** A line of the wallet, as `InvestmentPositionRow` draws it. */
-function PositionRow({
-  position,
-  compact,
-}: {
-  position: Position;
-  compact: boolean;
-}) {
-  const t = useT();
+/** A holding of the wallet, as `InvestmentPositionTile` draws it. */
+function PositionTile({ position }: { position: Position }) {
   const locale = useLocale();
+  const t = useT();
   const euro = useEuro();
   const gain = position.value - position.invested;
   return (
-    <div className={compact ? "py-2.5" : "py-3"}>
-      <div className="flex items-start justify-between gap-2">
-        <div className="flex min-w-0 items-start gap-2">
-          <span className="flex size-8 shrink-0 items-center justify-center rounded-full border border-border bg-secondary text-[11px] font-semibold">
-            {position.symbol.slice(0, 2)}
-          </span>
-          <div className="min-w-0">
-            <p className="truncate text-sm font-medium leading-snug">
-              {position.name}
-            </p>
-            <p className="truncate text-xs text-muted-foreground">
-              {position.symbol}
-            </p>
-          </div>
-        </div>
-      </div>
-      <div className="mt-1.5 flex flex-wrap items-center justify-between gap-x-4 gap-y-1.5">
-        <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1 text-xs">
-          <InlineMetric
-            label={t("wallets.market")}
-            value={euro(position.value)}
-          />
-          {compact ? null : (
-            <InlineMetric
-              label={t("wallets.invested")}
-              value={euro(position.invested)}
-            />
+    <div className="flex h-full min-w-0 flex-col gap-2 rounded-card border border-border bg-muted/30 p-3">
+      <div className="flex items-center justify-between gap-2">
+        <span className="flex size-7 shrink-0 items-center justify-center rounded-full border border-border bg-secondary text-[10px] font-semibold">
+          {position.symbol.slice(0, 2)}
+        </span>
+        <span className="rounded-full bg-success/15 px-2 py-0.5 text-[11px] font-semibold tabular-nums text-success">
+          {formatSignedPercent(
+            Math.round((gain / position.invested) * 10000) / 100,
+            locale,
           )}
-          <InlineMetric
-            label={t("wallets.profitLoss")}
-            value={formatSigned(gain, euro)}
-            suffix={formatSignedPercent(
-              Math.round((gain / position.invested) * 10000) / 100,
-              locale,
-            )}
-            tone="positive"
-          />
-        </div>
-        <div className="flex shrink-0 items-center gap-2">
-          <Sparkline
-            values={position.trend}
-            width={compact ? 80 : 110}
-            height={24}
-            colorVar={PRICE_TONE_VARS.positive}
-          />
-          <span className="font-mono text-xs tabular-nums text-success">
-            {formatSignedPercent(position.change, locale)}
-          </span>
-        </div>
+        </span>
       </div>
+      <p className="line-clamp-2 text-xs font-semibold leading-tight">
+        {position.name}
+      </p>
+      <div className="mt-auto min-w-0">
+        <p className="truncate font-serif text-lg font-semibold tabular-nums tracking-[-0.03em]">
+          {euro(position.value)}
+        </p>
+        <p className="truncate text-[11px] text-muted-foreground">
+          {t("wallets.invested")} {euro(position.invested)}
+        </p>
+      </div>
+      <Sparkline
+        values={position.trend}
+        height={20}
+        fluid
+        colorVar="--muted-foreground"
+        className="opacity-60"
+      />
     </div>
   );
 }

@@ -767,6 +767,28 @@ export function displayNameForRecurringTemplate(
  * A to Z; a list of amounts is scanned for the big ones, so it runs largest
  * first — and a reversed alphabet is a control nobody has ever wanted.
  */
+/**
+ * What a holding returned, in percent of everything put into it: the figure
+ * beside its gain or loss. Null while there is nothing to measure — no money
+ * in yet, or no value of its own (a holding valued at cost is worth exactly
+ * what was paid, and "0 %" would read as a result).
+ *
+ * Distinct from the instrument's price move: this counts every contribution
+ * at its own price, so a holding bought into all year rarely matches the
+ * line of the share it holds.
+ */
+export function positionReturnPct(
+  item: Pick<
+    InvestmentPositionItem,
+    "totalInvested" | "gainLoss" | "valuationSource"
+  >,
+): number | null {
+  if (item.totalInvested <= 0 || item.valuationSource === "cost-basis") {
+    return null;
+  }
+  return Math.round((item.gainLoss / item.totalInvested) * 10000) / 100;
+}
+
 export const POSITION_ORDERS = ["name", "invested"] as const;
 
 export type PositionOrder = (typeof POSITION_ORDERS)[number];
