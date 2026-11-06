@@ -80,7 +80,7 @@ export function CategoryTile({
       aria-controls={panelId}
       aria-label={t("categoryScreen.open", { name: history.name })}
       className={cn(
-        "flex flex-col gap-1 rounded-card p-row border border-border text-left",
+        "surface-card flex flex-col gap-1 rounded-card p-row border border-border text-left",
         "transition-colors hover:border-hairline-strong",
         open && "border-hairline-strong bg-muted/40",
       )}
