@@ -332,7 +332,7 @@ function GroupCard({
   const formatEuro = useFormatCurrency();
 
   return (
-    <section className="flex min-w-0 flex-col gap-3 rounded-card p-card border border-border bg-card">
+    <section className="surface-card flex min-w-0 flex-col gap-3 rounded-card p-card border border-border bg-card">
       <div className="flex items-baseline justify-between gap-3">
         <h2 className="text-sm font-medium">{label}</h2>
         {monthly > 0 ? (
@@ -467,7 +467,7 @@ function WhereItGoes({ rollup }: { rollup: RecurringRollup }) {
   };
 
   return (
-    <section className="flex flex-col gap-4 rounded-card border border-border bg-card px-5 py-6">
+    <section className="surface-card flex flex-col gap-4 rounded-card border border-border bg-card px-5 py-6">
       <div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-2">
         <div className="flex flex-col gap-2">
           <h2 className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
