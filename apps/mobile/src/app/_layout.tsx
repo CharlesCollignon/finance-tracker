@@ -34,29 +34,35 @@ import { ToastProvider } from "@/providers/ToastProvider";
 import { useNotificationRouting } from "@/lib/notification-routing";
 import { useQuickActionRouting } from "@/lib/quick-action-routing";
 import { useWidgetSync } from "@/widget/useWidgetSync";
-import { initTheme } from "@/lib/theme";
+import { DesignProvider, useDesign } from "@/providers/DesignProvider";
+import { currentDesign } from "@/theme/designs";
+import { isLightDesign } from "@finance/core/designs";
 import { COLORS } from "@/theme/tokens";
 import { DURATION } from "@finance/core/motion";
 
 SplashScreen.preventAutoHideAsync();
 
 /**
- * The navigators' own ground, Pluclair's near-black rather than React
- * Navigation's light grey. Every screen paints its own background, but the
- * container under them showed through for a frame on each change of screen —
- * the white flash between tabs and on opening a property.
+ * The navigators' own ground, the design's rather than React Navigation's
+ * light grey. Every screen paints its own background, but the container under
+ * them showed through for a frame on each change of screen — the white flash
+ * between tabs and on opening a property. Built while rendering, from the
+ * palette `applyDesign` has just written, so it follows the design.
  */
-const NAVIGATION_THEME = {
-  ...DarkTheme,
-  colors: {
-    ...DarkTheme.colors,
-    background: COLORS.background,
-    card: COLORS.background,
-    border: COLORS.border,
-    primary: COLORS.primary,
-    text: COLORS.foreground,
-  },
-};
+function navigationTheme() {
+  return {
+    ...DarkTheme,
+    dark: !isLightDesign(currentDesign()),
+    colors: {
+      ...DarkTheme.colors,
+      background: COLORS.background,
+      card: COLORS.background,
+      border: COLORS.border,
+      primary: COLORS.primary,
+      text: COLORS.foreground,
+    },
+  };
+}
 
 function RootNavigator({ fontsReady }: { fontsReady: boolean }) {
   const { session, initializing } = useAuth();
@@ -74,12 +80,11 @@ function RootNavigator({ fontsReady }: { fontsReady: boolean }) {
   // The Android widget's figure, read as the app goes to the background.
   useWidgetSync(session?.user.id ?? null, !initializing);
 
-  // Pinned rather than read: Pluclair has one palette, and NativeWind
-  // resolves `dark:` variants from the scheme, so a phone in light mode would
-  // otherwise render the light half of every variant over a dark palette.
-  useEffect(() => {
-    initTheme();
-  }, []);
+  // The design, for the key below. The colour scheme NativeWind resolves
+  // `dark:` variants from is set by `applyDesign` with it — pinned to the
+  // design rather than read from the phone, which would otherwise draw the
+  // light half of every variant over a dark palette, or the reverse.
+  const { design } = useDesign();
 
   const inOnboarding = pathname.startsWith("/onboarding");
   const inAuthGroup = segments[0] === "(auth)";
@@ -129,8 +134,11 @@ function RootNavigator({ fontsReady }: { fontsReady: boolean }) {
     return null;
   }
 
+  // Keyed by the design: a change remounts every screen, so each one reads
+  // the palette and figure face again rather than keeping the ones it
+  // rendered with (`theme/designs.ts`).
   return (
-    <ThemeProvider value={NAVIGATION_THEME}>
+    <ThemeProvider key={design} value={navigationTheme()}>
       <Stack
         screenOptions={{
           headerShown: false,
@@ -184,8 +192,9 @@ function RootNavigator({ fontsReady }: { fontsReady: boolean }) {
           !inAuthGroup
         }
       />
-      {/* Light glyphs, always: the ground behind them is near-black. */}
-      <StatusBar style="light" />
+      {/* Glyphs that read on the design's ground: dark over paper and grey,
+          light over the two dark designs. */}
+      <StatusBar style={isLightDesign(design) ? "dark" : "light"} />
     </ThemeProvider>
   );
 }
@@ -221,6 +230,12 @@ export default function RootLayout() {
     "InstrumentSans-Bold": require("../../assets/fonts/InstrumentSans-Bold.ttf"),
     "IBMPlexMono-Regular": require("../../assets/fonts/IBMPlexMono-Regular.ttf"),
     "IBMPlexMono-Medium": require("../../assets/fonts/IBMPlexMono-Medium.ttf"),
+    // The figure faces of the other designs (`theme/designs.ts`), static
+    // instances for the same reason as Fraunces: « Papier » sets figures in
+    // Newsreader, « Bento » in Bricolage Grotesque. « Console » uses the mono
+    // already above.
+    "Newsreader-SemiBold": require("../../assets/fonts/Newsreader-SemiBold.ttf"),
+    "BricolageGrotesque-Bold": require("../../assets/fonts/BricolageGrotesque-Bold.ttf"),
   });
 
   const fontsReady = fontsLoaded || fontError != null;
@@ -238,6 +253,8 @@ export default function RootLayout() {
                 than falling back to English, so a consumer mounted above this
                 line takes the first render down to the ErrorBoundary, and
                 RootNavigator never gets to hide the splash screen. */}
+            {/* The design, before anything draws: see the provider. */}
+            <DesignProvider>
             <LocaleProvider>
               <BiometricLockProvider>
                 <PrivacyProvider>
@@ -260,6 +277,7 @@ export default function RootLayout() {
                 </PrivacyProvider>
               </BiometricLockProvider>
             </LocaleProvider>
+            </DesignProvider>
           </AuthProvider>
         </ErrorBoundary>
       </SafeAreaProvider>

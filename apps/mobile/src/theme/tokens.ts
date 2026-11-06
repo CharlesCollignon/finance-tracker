@@ -6,12 +6,13 @@ import type { TextStyle } from "react-native";
  */
 
 /**
- * The palette. There is one.
+ * The palette on screen: « Nuit »'s as written here, the default.
  *
- * A warm paper light palette used to sit beside this one, chosen from the
- * system colour scheme. Pluclair is dark now — the screen leads with a figure
- * over a veil, and a veil on paper is a smudge — so there is nothing to pick
- * between and no second set of values to keep honest.
+ * Another design chosen in the profile rewrites these values in place
+ * before anything draws (`applyDesign` in `theme/designs.ts`; the other
+ * designs' values are `@finance/core/design-palettes`). Read them while
+ * rendering, never into a module-level constant, or a screen keeps the
+ * design it was first drawn in.
  */
 export const COLORS = {
   // Surfaces stay the cool near-black they were; only the accent is warm.

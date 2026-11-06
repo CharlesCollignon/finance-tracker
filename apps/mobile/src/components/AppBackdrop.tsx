@@ -2,6 +2,8 @@ import { createContext, useContext, type ReactNode } from "react";
 import { View } from "react-native";
 import Svg, { Defs, RadialGradient, Rect, Stop } from "react-native-svg";
 
+import { currentDesign } from "@/theme/designs";
+
 /**
  * The ground the app sits on, as the phone can draw it.
  *
@@ -65,6 +67,18 @@ const LIGHTS = [
 ] as const;
 
 export function AppBackdrop() {
+  // « Nuit » alone is lit. The other designs are drawn on their flat ground —
+  // paper, grey, black — so only that is painted.
+  if (currentDesign() !== "nuit") {
+    return (
+      <View
+        pointerEvents="none"
+        className="absolute inset-0 bg-background"
+        accessibilityElementsHidden
+        importantForAccessibility="no-hide-descendants"
+      />
+    );
+  }
   return (
     <View
       pointerEvents="none"

@@ -3,6 +3,7 @@ import { Pressable, View } from "react-native";
 import { Text } from "@/components/ui/Text";
 import { cn } from "@/lib/cn";
 import { hapticSelection } from "@/lib/haptics";
+import { COLORS } from "@/theme/tokens";
 import { useThemeColors } from "@/theme/useThemeColors";
 
 import { withAlpha } from "./kind-ink";
@@ -37,7 +38,7 @@ export function Chip({
         }
       }}
       style={{
-        borderColor: selected ? withAlpha(ink, 0.7) : "rgba(236,236,241,0.10)",
+        borderColor: selected ? withAlpha(ink, 0.7) : COLORS.border,
         backgroundColor: selected ? withAlpha(ink, 0.1) : "transparent",
       }}
       className={cn(
@@ -171,7 +172,7 @@ export function DayCells({
                   borderWidth: 1,
                   borderColor:
                     !isSelected && cell.day === marked
-                      ? "rgba(236,236,241,0.16)"
+                      ? COLORS.hairlineStrong
                       : "transparent",
                 }}
                 className="h-9 flex-1 items-center justify-center rounded-[10px]"

@@ -14,10 +14,9 @@ import type { CategoryType } from "@finance/core/types/database";
 
 import { useLocale, useT } from "@/providers/LocaleProvider";
 import { useThemeColors } from "@/theme/useThemeColors";
+import { figureFace } from "@/theme/designs";
 
 import { KIND_INK, withAlpha } from "./kind-ink";
-
-const FACE = "Fraunces-SemiBold";
 
 interface AmountFigureProps {
   /** The raw entry, "42.5" — see `@finance/core/amount-input`. */
@@ -108,7 +107,7 @@ export function AmountFigure({
           adjustsFontSizeToFit
           minimumFontScale={0.5}
           style={{
-            fontFamily: FACE,
+            fontFamily: figureFace(),
             fontSize: 60,
             letterSpacing: -2,
             color,

@@ -17,6 +17,7 @@ import { cn } from "@/lib/cn";
 import { usePrivacy } from "@/providers/PrivacyProvider";
 import { hapticWarning } from "@/lib/haptics";
 import { ICON } from "@/theme/tokens";
+import { figureFace } from "@/theme/designs";
 import { useThemeColors } from "@/theme/useThemeColors";
 
 import { withAlpha } from "../add/kind-ink";
@@ -203,7 +204,7 @@ export function FigureInput({
           adjustsFontSizeToFit
           minimumFontScale={0.5}
           style={{
-            fontFamily: "Fraunces-SemiBold",
+            fontFamily: figureFace(),
             fontSize: 54,
             letterSpacing: -1.8,
             color,
@@ -281,7 +282,7 @@ export function FigureValue({
         adjustsFontSizeToFit
         minimumFontScale={0.5}
         style={{
-          fontFamily: "Fraunces-SemiBold",
+          fontFamily: figureFace(),
           fontSize: 48,
           letterSpacing: -1.6,
           color: ink,
@@ -365,7 +366,7 @@ export function SaveButton({
         {figure ? (
           <Text
             style={{
-              fontFamily: "Fraunces-SemiBold",
+              fontFamily: figureFace(),
               fontSize: 16,
               color: disabled
                 ? colors.mutedForeground
