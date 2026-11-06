@@ -1,6 +1,7 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
+import { DESIGN_PALETTES } from "./design-palettes";
 
 /**
  * The web and the phone keep their design tokens in three places — the web's
@@ -92,4 +93,34 @@ describe("design tokens, web against phone", () => {
     expect(radius).toMatch(/card:\s*20\b/);
     expect(radius).toMatch(/shell:\s*26\b/);
   });
+});
+
+/** One design's block on the web, `:root[data-design="…"]`, as a map. */
+function designBlock(design: string): Map<string, string> {
+  const start = webCss.indexOf(`:root[data-design="${design}"]`);
+  const end = webCss.indexOf("}", start);
+  return cssVars(start < 0 ? "" : webCss.slice(start, end));
+}
+
+describe("design tokens, per design, web against phone", () => {
+  for (const [design, palette] of Object.entries(DESIGN_PALETTES)) {
+    it(`gives « ${design} » the same colours on both`, () => {
+      const block = designBlock(design);
+      expect(block.size, `no block for ${design} on the web`).toBeGreaterThan(
+        10,
+      );
+      for (const [key, value] of Object.entries(palette)) {
+        const name = key.replace(/[A-Z]/g, (c) => `-${c.toLowerCase()}`);
+        // What the block does not restate, it takes from « Nuit ».
+        const onWeb = block.get(name) ?? web.get(name);
+        expect(onWeb, `--${name} in ${design}`).toBeDefined();
+        expect(channels(value), `${design} ${name}`).toBe(channels(onWeb!));
+        if (value.startsWith("rgba")) {
+          expect(onWeb!.replace(/\s+/g, ""), `${design} ${name} alpha`).toMatch(
+            /,0\.1(6|0?)\)$/,
+          );
+        }
+      }
+    });
+  }
 });

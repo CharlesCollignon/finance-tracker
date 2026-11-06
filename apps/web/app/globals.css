@@ -210,6 +210,10 @@
  * (`--orb-c1/2/3`, below) and the wordmark is set in Orbit (`--font-logo`),
  * so neither moves here.
  *
+ * Hairlines keep « Nuit »'s two alphas, 0.10 and 0.16, over each design's
+ * own ink: the phone's classes apply those alphas to a colour's channels,
+ * so a design with other alphas could not be drawn the same there.
+ *
  * Every pair that carries text is held at 4.5:1 or better: foreground and
  * muted-foreground on background, card and muted; primary, success,
  * destructive and warning as text on background and card; each
@@ -245,8 +249,8 @@
   --destructive-foreground: #ffffff;
   --warning: #865000;
   --warning-foreground: #ffffff;
-  --border: rgba(28, 26, 23, 0.14);
-  --hairline-strong: rgba(28, 26, 23, 0.24);
+  --border: rgba(28, 26, 23, 0.1);
+  --hairline-strong: rgba(28, 26, 23, 0.16);
   --scrollbar-thumb: rgba(28, 26, 23, 0.28);
   --input: #fffdf8;
   --ring: #9a3412;
@@ -261,7 +265,7 @@
   --sidebar-primary-foreground: #fff8f0;
   --sidebar-accent: #ebe3d3;
   --sidebar-accent-foreground: #1c1a17;
-  --sidebar-border: rgba(28, 26, 23, 0.14);
+  --sidebar-border: rgba(28, 26, 23, 0.1);
   --sidebar-ring: #9a3412;
   --shadow-bezel-inset: inset 0 1px 0 rgba(255, 255, 255, 0.7);
   --font-serif: var(--font-newsreader), ui-serif, Georgia, serif;
@@ -303,7 +307,7 @@
   --warning: #a35200;
   --warning-foreground: #ffffff;
   --border: rgba(15, 17, 21, 0.1);
-  --hairline-strong: rgba(15, 17, 21, 0.18);
+  --hairline-strong: rgba(15, 17, 21, 0.16);
   --scrollbar-thumb: rgba(15, 17, 21, 0.24);
   --input: #ffffff;
   --ring: #2340f5;
@@ -329,7 +333,7 @@
   color-scheme: light;
 }
 
-/* « Console »: black, square, opaque hairlines, figures and headings in IBM
+/* « Console »: black, square, white hairlines, figures and headings in IBM
    Plex Mono; the brand's orange is the one signal colour, as in « Nuit ». */
 :root[data-design="console"]:not(:has(.marketing-shell)) {
   --background: #0b0b0b;
@@ -351,8 +355,8 @@
   --info-foreground: #0b0b0b;
   --destructive: #ff7a7a;
   --destructive-foreground: #0b0b0b;
-  --border: #262626;
-  --hairline-strong: #3a3a3a;
+  --border: rgba(255, 255, 255, 0.1);
+  --hairline-strong: rgba(255, 255, 255, 0.16);
   --scrollbar-thumb: #3a3a3a;
   --input: #121212;
   --chart-1: #fa9842;
@@ -362,7 +366,7 @@
   --chart-5: #8a8a8a;
   --sidebar: #0b0b0b;
   --sidebar-accent: #1c1c1c;
-  --sidebar-border: #262626;
+  --sidebar-border: rgba(255, 255, 255, 0.1);
   --shadow-bezel-inset: none;
   --font-serif: var(--font-mono);
   --font-head: var(--font-mono);
