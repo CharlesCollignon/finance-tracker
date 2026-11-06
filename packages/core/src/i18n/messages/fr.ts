@@ -1001,7 +1001,6 @@ export const fr: Messages = {
     quotesRefreshed: "Cours actualisés",
     value: "Valeur",
     invested: "Versé",
-    market: "Aujourd'hui",
     profitLoss: "Gain ou perte",
     namePea: "Plan d'épargne en actions",
     nameCto: "Compte-titres ordinaire",
@@ -1041,7 +1040,6 @@ export const fr: Messages = {
       other: "{count} mois de versements d'affilée",
     },
     nextContributionOn: "Prochain versement\u00A0: {date} · {amount}",
-    priceOverYear: "{change} sur un an",
     inWallet: "Dans votre {wallet}",
   },
 
