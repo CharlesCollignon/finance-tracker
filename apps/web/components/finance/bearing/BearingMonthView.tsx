@@ -140,10 +140,13 @@ export function BearingMonthView({
           key={`${data.year}-${data.month}`}
           // One column that may shrink below its content on a phone: a grid
           // with no columns sizes its one track to the widest thing in it.
-          className="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-5 xl:grid-cols-3"
+          // `bearing-grid` and each item's `bearing-slot-*`: « Papier »,
+          // « Bento » and « Console » arrange these same cards their own way
+          // (`globals.css`); « Nuit » is the grid as written here.
+          className="bearing-grid grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-5 xl:grid-cols-3"
         >
           {setupStep && data.setup ? (
-            <FadeInItem className="md:col-span-2 xl:col-span-3">
+            <FadeInItem className="bearing-slot-setup md:col-span-2 xl:col-span-3">
               <SetupCard
                 step={setupStep}
                 firstCloseOn={data.setup.firstCloseOn}
@@ -152,38 +155,38 @@ export function BearingMonthView({
           ) : null}
 
           {!data.empty ? (
-            <FadeInItem className="md:col-span-2 xl:col-span-3">
+            <FadeInItem className="bearing-slot-balance md:col-span-2 xl:col-span-3">
               <BalanceCard data={data} />
             </FadeInItem>
           ) : null}
 
           {recapSlot ? (
             // Hidden while empty, so a week with no card leaves no gap.
-            <FadeInItem className="empty:hidden md:col-span-2 xl:col-span-3">
+            <FadeInItem className="bearing-slot-recap empty:hidden md:col-span-2 xl:col-span-3">
               {recapSlot}
             </FadeInItem>
           ) : null}
 
           {hasSpentBefore && data.balance.period !== "future" ? (
-            <FadeInItem>
+            <FadeInItem className="bearing-slot-spent">
               <SpentCard data={data} />
             </FadeInItem>
           ) : null}
 
           {spaceBalance ? (
-            <FadeInItem>
+            <FadeInItem className="bearing-slot-between">
               <BalanceBetweenCard balance={spaceBalance} />
             </FadeInItem>
           ) : null}
 
           {!past && data.upcoming && data.recurring ? (
-            <FadeInItem>
+            <FadeInItem className="bearing-slot-upcoming">
               <UpcomingCard data={data} />
             </FadeInItem>
           ) : null}
 
           {hasMomentum ? (
-            <FadeInItem>
+            <FadeInItem className="bearing-slot-momentum">
               <MomentumCard data={data} askClose={askClose} />
             </FadeInItem>
           ) : null}
@@ -193,7 +196,7 @@ export function BearingMonthView({
               The whole row, as a strip: a fact a cell, never a card left
               alone beside an empty one. */}
           {!data.empty && data.trust.length > 0 ? (
-            <FadeInItem className="md:col-span-2 xl:col-span-3">
+            <FadeInItem className="bearing-slot-trust md:col-span-2 xl:col-span-3">
               <TrustCard signals={data.trust} />
             </FadeInItem>
           ) : null}
@@ -201,7 +204,7 @@ export function BearingMonthView({
           {hasSpending ? (
             <FadeInItem
               className={cn(
-                "md:col-span-2",
+                "bearing-slot-where md:col-span-2",
                 // Beside the spent card when nothing else shares the row.
                 current ? "xl:col-span-3" : "xl:col-span-2",
               )}
@@ -211,7 +214,7 @@ export function BearingMonthView({
           ) : null}
 
           {readSlot ? (
-            <FadeInItem className="md:col-span-2 xl:col-span-3">
+            <FadeInItem className="bearing-slot-read md:col-span-2 xl:col-span-3">
               {readSlot}
             </FadeInItem>
           ) : null}
@@ -219,7 +222,7 @@ export function BearingMonthView({
           {/* The month to send or to print: not a month ahead, which has
               nothing to say yet, nor a first visit. */}
           {!data.empty && data.balance.period !== "future" ? (
-            <FadeInItem className="md:col-span-2 xl:col-span-3">
+            <FadeInItem className="bearing-slot-share md:col-span-2 xl:col-span-3">
               <ShareMonthCard year={data.year} month={data.month} />
             </FadeInItem>
           ) : null}
