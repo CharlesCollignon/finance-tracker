@@ -1,7 +1,7 @@
 import { translator } from "@finance/core/i18n/t";
 import {
+  featureIdOfSlug,
   getLandingPage,
-  isLandingPageId,
   landingCopyFor,
 } from "@/components/marketing/landing-copy";
 import { OG_CONTENT_TYPE, OG_SIZE, ogCard } from "@/lib/og/og-card";
@@ -16,12 +16,12 @@ export default async function Image({
 }: {
   params: Promise<{ slug: string }>;
 }) {
-  const { slug } = await params;
-  if (!isLandingPageId(slug)) {
+  const id = featureIdOfSlug((await params).slug);
+  if (!id) {
     const { hero } = landingCopyFor("fr");
     return ogCard({ kicker: "Pluclair", title: hero.titleLines.join(" ") });
   }
-  const page = getLandingPage(slug, "fr");
+  const page = getLandingPage(id, "fr");
   return ogCard({
     kicker: translator("fr")("common.product"),
     title: page.title,

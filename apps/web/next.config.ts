@@ -1,5 +1,6 @@
 import type { NextConfig } from "next";
 import createMDX from "@next/mdx";
+import { legacyFeatureRedirects } from "./components/marketing/feature-slugs";
 
 const securityHeaders = [
   { key: "X-Frame-Options", value: "DENY" },
@@ -63,23 +64,11 @@ const nextConfig: NextConfig = {
         destination: "/plan",
         permanent: true,
       },
-      // The feature pages were named after the app's routes rather than
-      // after its surfaces, so `/features/home` described the Bearing and
-      // `/features/planning` described Plan. These are public URLs people
-      // read and share, which is the difference from the app's own paths —
-      // those mostly kept their old names on purpose, because nobody reads
-      // `/transactions` in an installed app. `/features/calendar` has no
-      // successor of its own: the calendar is a view of the Ledger now, and
-      // the Ledger's page is where it is described.
-      ...[
-        ["home", "bearing"],
-        ["transactions", "ledger"],
-        ["recurring", "charges"],
-        ["planning", "plan"],
-        ["calendar", "ledger"],
-      ].map(([from, to]) => ({
-        source: `/features/${from}`,
-        destination: `/features/${to}`,
+      // The feature pages' earlier addresses — the app's route names, then
+      // the English ids under `/features/` — now that they live under
+      // `/fonctionnalites/` in French words. Shared and indexed, so kept.
+      ...legacyFeatureRedirects().map((redirect) => ({
+        ...redirect,
         permanent: true,
       })),
     ];

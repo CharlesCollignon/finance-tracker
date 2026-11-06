@@ -22,6 +22,7 @@ import { LandingCtas } from "@/components/marketing/LandingCtas";
 import { LocaleChoices, LocaleMenu } from "@/components/marketing/LocaleSwitch";
 import { marketingFocus } from "@/components/marketing/marketing-focus";
 import { ABOUT_HREF } from "@/components/marketing/about-copy";
+import { FEATURES_BASE } from "@/components/marketing/feature-slugs";
 import { NOUVEAUTES_HREF } from "@/components/marketing/nouveautes-copy";
 import { BLOG_HREF } from "@/lib/guide-list";
 import {
@@ -226,7 +227,7 @@ export function LandingHeader({ isLoggedIn }: { isLoggedIn: boolean }) {
               className={cn(
                 "flex items-center gap-1.5 whitespace-nowrap rounded-control text-sm transition-colors duration-hover",
                 marketingFocus,
-                panel === "product" || pathname.startsWith("/features/")
+                panel === "product" || pathname.startsWith(`${FEATURES_BASE}/`)
                   ? "text-marketing-ink"
                   : "text-marketing-muted hover:text-white",
               )}
