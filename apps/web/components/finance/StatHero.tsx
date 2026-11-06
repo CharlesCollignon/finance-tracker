@@ -42,10 +42,15 @@ export function StatHero({
 
   return (
     <div
-      className={cn("flex w-full flex-col items-center text-center", className)}
+      className={cn(
+        "stat-hero flex w-full flex-col items-center text-center",
+        className,
+      )}
     >
       {label ? (
-        <p className="text-sm font-medium text-muted-foreground">{label}</p>
+        <p className="stat-hero-label text-sm font-medium text-muted-foreground">
+          {label}
+        </p>
       ) : null}
       <p className={label ? "mt-2" : undefined}>
         {animateValue !== undefined && format ? (

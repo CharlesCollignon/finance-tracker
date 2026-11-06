@@ -222,7 +222,7 @@ export function InvestmentsView({
               {visibleFunding.map((tag) => (
                 <li
                   key={tag.id}
-                  className="flex items-baseline gap-1.5 rounded-full border border-border px-3 py-1 text-xs text-muted-foreground sm:text-sm"
+                  className="dca-chip flex items-baseline gap-1.5 rounded-full border border-border px-3 py-1 text-xs text-muted-foreground sm:text-sm"
                 >
                   <span>{accountShortName(tag.id, locale)}</span>
                   <span className="privacy-amount font-mono font-medium text-foreground tabular-nums">

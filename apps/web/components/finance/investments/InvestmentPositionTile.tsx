@@ -57,7 +57,7 @@ export function InvestmentPositionTile({
       onClick={onEdit}
       aria-label={t("wallets.editPosition", { name: item.name })}
       className={cn(
-        "flex h-full min-h-[10rem] w-full min-w-0 flex-col gap-2.5 rounded-card border border-border bg-muted/30 p-3.5 text-left",
+        "position-tile flex h-full min-h-[10rem] w-full min-w-0 flex-col gap-2.5 rounded-card border border-border bg-muted/30 p-3.5 text-left",
         "transition-[background-color,scale] duration-press hover:bg-muted/60 active:scale-[0.99]",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
       )}

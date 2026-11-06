@@ -34,11 +34,11 @@ export function PlanCard({
         className,
       )}
     >
-      <header className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
-        <h2 className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+      <header className="card-head flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
+        <h2 className="card-title flex items-center gap-2 text-sm font-medium text-muted-foreground">
           <span
             aria-hidden
-            className="flex size-7 items-center justify-center rounded-full bg-muted text-foreground"
+            className="card-icon flex size-7 items-center justify-center rounded-full bg-muted text-foreground"
           >
             {icon}
           </span>
