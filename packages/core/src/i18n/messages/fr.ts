@@ -91,6 +91,9 @@ export const fr: Messages = {
     walletsLookThrough: "Composition",
 
     waiting: "{count} en attente",
+    main: "Navigation principale",
+    command: "Noter « 23,45 courses », chercher, ou aller à…",
+    shortcuts: "G puis une lettre mène à une rubrique.",
     nouveautes: "Nouveautés",
     nouveautesUnseen: "{count} à découvrir",
     entraide: "Entraide",
