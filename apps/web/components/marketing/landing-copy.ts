@@ -1,5 +1,9 @@
 import type { Locale } from "@finance/core/i18n/locale";
 import { landingCopyFr } from "@/components/marketing/landing-copy.fr";
+import {
+  FEATURE_SLUGS,
+  FEATURES_BASE,
+} from "@/components/marketing/feature-slugs";
 
 /**
  * Every word on the marketing site.
@@ -773,7 +777,15 @@ export function isLandingPageId(slug: string): slug is LandingPageId {
 }
 
 export function featureHref(id: LandingPageId): string {
-  return `/features/${id}`;
+  return `${FEATURES_BASE}/${FEATURE_SLUGS[id]}`;
+}
+
+/** The page a `/fonctionnalites/<slug>` address names, or null. */
+export function featureIdOfSlug(slug: string): LandingPageId | null {
+  return (
+    landingCopy.pages.find((page) => FEATURE_SLUGS[page.id] === slug)?.id ??
+    null
+  );
 }
 
 export function getLandingPage(id: LandingPageId, locale: Locale = "en") {

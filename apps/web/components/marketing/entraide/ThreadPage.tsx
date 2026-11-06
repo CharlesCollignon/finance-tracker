@@ -12,6 +12,7 @@ import { loadGuide } from "@/lib/guides";
 import { getLocale } from "@/lib/locale";
 import { getSiteUrl } from "@/lib/supabase/env";
 import { createClient } from "@/lib/supabase/server";
+import { JsonLd } from "@/components/JsonLd";
 import { entraideCopyFor, entraideWhen } from "@finance/core/entraide-copy";
 import { ThreadView } from "@/components/marketing/entraide/ThreadView";
 
@@ -125,14 +126,7 @@ export async function ThreadPage({ id, param }: { id: number; param: string }) {
 
   return (
     <div className="relative isolate overflow-x-clip px-6 pb-24 pt-32 md:pb-32 md:pt-40">
-      {jsonLd ? (
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{
-            __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c"),
-          }}
-        />
-      ) : null}
+      {jsonLd ? <JsonLd data={jsonLd} /> : null}
       <ThreadView
         thread={{
           id: post.id,

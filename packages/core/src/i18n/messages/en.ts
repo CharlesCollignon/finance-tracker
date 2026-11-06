@@ -1299,7 +1299,6 @@ export const en = {
     quotesRefreshed: "Prices refreshed",
     value: "Value",
     invested: "Paid in",
-    market: "Today",
     profitLoss: "Gain or loss",
     namePea: "French equity savings plan",
     nameCto: "Ordinary brokerage account",
@@ -1354,7 +1353,6 @@ export const en = {
       other: "{count} months of contributions in a row",
     },
     nextContributionOn: "Next contribution: {date} · {amount}",
-    priceOverYear: "{change} over a year",
     inWallet: "In your {wallet}",
   },
 

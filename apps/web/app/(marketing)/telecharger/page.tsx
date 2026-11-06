@@ -7,6 +7,8 @@ import {
 } from "@/components/marketing/download-copy";
 import { getLocale } from "@/lib/locale";
 import { shareMetadata } from "@/lib/og/share-metadata";
+import { JsonLd } from "@/components/JsonLd";
+import { faqPage, graph } from "@/lib/seo/structured-data";
 
 export async function generateMetadata(): Promise<Metadata> {
   const locale = await getLocale();
@@ -21,5 +23,12 @@ export async function generateMetadata(): Promise<Metadata> {
 
 /** The Android app, to download (`components/marketing/DownloadPage.tsx`). */
 export default async function DownloadRoutePage() {
-  return <DownloadPage isLoggedIn={await hasOwnAccount()} />;
+  const locale = await getLocale();
+  const { faq } = downloadCopyFor(locale);
+  return (
+    <>
+      <JsonLd data={graph([faqPage(faq.items, locale)])} />
+      <DownloadPage isLoggedIn={await hasOwnAccount()} />
+    </>
+  );
 }
