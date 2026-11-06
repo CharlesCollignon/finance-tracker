@@ -132,7 +132,7 @@ export function MobileSheet({
         aria-modal="true"
         aria-labelledby="mobile-sheet-title"
         className={cn(
-          "relative z-10 w-full overflow-y-auto border border-border",
+          "sheet-panel relative z-10 w-full overflow-y-auto border border-border",
           "bg-background",
           "max-h-[90dvh] max-w-lg",
           // Sheets that list rows to read need more than a phone's width once
