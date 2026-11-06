@@ -67,6 +67,7 @@ export function TryBeta({
               ) : null}
               <Link
                 href={web.href}
+                prefetch={false}
                 className={cn(
                   CTA_BASE,
                   CTA_SIZES.lg,

@@ -115,6 +115,11 @@ export async function updateSession(request: NextRequest) {
   // here, and must open the form rather than send the visitor back into the
   // sample. The demo session ends on this browser only — `local`, since a
   // global sign-out would end it for every visitor looking round at once.
+  //
+  // Only ever a visit, never a prefetch: every link to these two pages is
+  // `prefetch={false}` (held by `auth-links-prefetch.test.ts`), because
+  // Next hides the prefetch header from this proxy and a prefetched
+  // « Créer mon compte » would end the demo seconds after it began.
   let user = sessionUser;
   if (user && isDemoUser(user) && isAuthRoute && request.method === "GET") {
     await supabase.auth.signOut({ scope: "local" });

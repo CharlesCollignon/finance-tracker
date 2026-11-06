@@ -215,7 +215,11 @@ export function SignupForm({
                 {legalLinks ? <LegalConsent /> : null}
                 <p className="mt-4 text-center text-sm text-muted-foreground">
                   {t("auth.haveAccount")}{" "}
-                  <Link href="/login" className="font-medium underline">
+                  <Link
+                    href="/login"
+                    prefetch={false}
+                    className="font-medium underline"
+                  >
                     {t("auth.signIn")}
                   </Link>
                 </p>
