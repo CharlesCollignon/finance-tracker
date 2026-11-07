@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { Modal, Pressable, ScrollView, View } from "react-native";
 
+import { SheetPanel } from "@/components/ui/SheetDrag";
 import { SheetGrabber } from "@/components/ui/SheetGrabber";
 import { Text } from "@/components/ui/Text";
 import { useT } from "@/providers/LocaleProvider";
@@ -50,7 +51,8 @@ export function PickerSheet({
           accessibilityLabel={t("common.close")}
           onPress={onClose}
         />
-        <View
+        <SheetPanel
+          onClose={onClose}
           className="max-h-[80%] rounded-t-card border border-border bg-card pb-8"
           style={sheetFrame()}
         >
@@ -84,7 +86,7 @@ export function PickerSheet({
           >
             {children}
           </ScrollView>
-        </View>
+        </SheetPanel>
       </View>
     </Modal>
   );

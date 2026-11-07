@@ -71,6 +71,7 @@ import { ICON } from "@/theme/tokens";
 import { figureFace } from "@/theme/designs";
 import { useThemeColors } from "@/theme/useThemeColors";
 import { sheetFrame } from "@/theme/design-blocks";
+import { SheetDragHandle, SheetPanel } from "@/components/ui/SheetDrag";
 
 const CURRENCY_SYMBOL: Record<string, string> = { EUR: "€", USD: "$" };
 
@@ -442,12 +443,14 @@ function AddPanel({
         );
 
   return (
-    <View
+    <SheetPanel
+      onClose={onClose}
       style={[{ height: "92%" }, sheetFrame()]}
       className="overflow-hidden rounded-t-[24px] border border-b-0 border-border bg-card"
     >
       <KindGlow color={ink} />
 
+      <SheetDragHandle>
       <View className="items-center pt-2.5">
         <View className="h-1 w-9 rounded-full bg-hairline-strong" />
       </View>
@@ -491,6 +494,7 @@ function AddPanel({
           <Ionicons name="close" size={ICON.xl} color={colors.mutedForeground} />
         </Pressable>
       </View>
+      </SheetDragHandle>
 
       <View className="px-4 pt-1">
         <KindSwitch value={kind} onChange={changeKind} />
@@ -612,7 +616,7 @@ function AddPanel({
           onPress={() => void save(false)}
         />
       </View>
-    </View>
+    </SheetPanel>
   );
 }
 
