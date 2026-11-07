@@ -22,6 +22,7 @@ import { useThemeColors } from "@/theme/useThemeColors";
 
 import { withAlpha } from "../add/kind-ink";
 import { sheetFrame } from "@/theme/design-blocks";
+import { SheetDragHandle, SheetPanel } from "@/components/ui/SheetDrag";
 
 /**
  * The frame every entry sheet shares since November 2026 — Ajouter, and
@@ -78,11 +79,13 @@ export function EntrySheet({
           accessibilityLabel={closeLabel}
           onPress={onClose}
         />
-        <View
+        <SheetPanel
+          onClose={onClose}
           style={[{ maxHeight: "92%" }, sheetFrame()]}
           className="overflow-hidden rounded-t-[24px] border border-b-0 border-border bg-card"
         >
           {ink ? <KindGlow color={ink} /> : null}
+          <SheetDragHandle>
           <View className="items-center pt-2.5">
             <View className="h-1 w-9 rounded-full bg-hairline-strong" />
           </View>
@@ -127,6 +130,7 @@ export function EntrySheet({
               />
             </Pressable>
           </View>
+          </SheetDragHandle>
           <ScrollView
             key={scrollKey}
             keyboardShouldPersistTaps="handled"
@@ -140,7 +144,7 @@ export function EntrySheet({
               {footer}
             </View>
           ) : null}
-        </View>
+        </SheetPanel>
       </KeyboardAvoidingView>
     </Modal>
   );

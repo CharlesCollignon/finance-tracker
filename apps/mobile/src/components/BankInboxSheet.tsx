@@ -30,6 +30,7 @@ import { ReviewGroupCard } from "@/components/review/ReviewGroupCard";
 import { RecentlyDecided } from "@/components/review/RecentlyDecided";
 import { useTweenedCount } from "@/components/review/useTweenedCount";
 import { Button } from "@/components/ui/Button";
+import { SheetPanel } from "@/components/ui/SheetDrag";
 import { SheetGrabber } from "@/components/ui/SheetGrabber";
 import { Text } from "@/components/ui/Text";
 import {
@@ -580,7 +581,8 @@ export function BankInboxSheet({
           className="flex-1"
           onPress={close}
         />
-        <View
+        <SheetPanel
+          onClose={close}
           className="max-h-[90%] rounded-t-card border border-border bg-card px-card pt-3"
           style={sheetFrame()}
         >
@@ -609,7 +611,7 @@ export function BankInboxSheet({
           >
             {body}
           </ScrollView>
-        </View>
+        </SheetPanel>
       </View>
     </Modal>
   );

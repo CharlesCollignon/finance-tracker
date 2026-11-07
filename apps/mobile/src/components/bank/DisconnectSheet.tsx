@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Modal, Pressable, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { Button } from "@/components/ui/Button";
+import { SheetPanel } from "@/components/ui/SheetDrag";
 import { SheetGrabber } from "@/components/ui/SheetGrabber";
 import { Text } from "@/components/ui/Text";
 import { disconnectBank } from "@/lib/bank-connect";
@@ -77,7 +78,10 @@ export function DisconnectSheet({
           className="flex-1"
           onPress={close}
         />
-        <View className="gap-4 rounded-t-card border border-border bg-card p-card">
+        <SheetPanel
+          onClose={close}
+          className="gap-4 rounded-t-card border border-border bg-card p-card"
+        >
           <SheetGrabber />
           <View className="gap-1.5">
             <Text className="font-semibold" style={{ fontSize: 18 }}>
@@ -146,7 +150,7 @@ export function DisconnectSheet({
               onPress={close}
             />
           </View>
-        </View>
+        </SheetPanel>
       </View>
     </Modal>
   );

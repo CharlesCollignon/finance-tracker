@@ -5,6 +5,7 @@ import * as WebBrowser from "expo-web-browser";
 import { Ionicons } from "@expo/vector-icons";
 
 import { Button } from "@/components/ui/Button";
+import { SheetPanel } from "@/components/ui/SheetDrag";
 import { SheetGrabber } from "@/components/ui/SheetGrabber";
 import { Text } from "@/components/ui/Text";
 import {
@@ -176,7 +177,10 @@ export function ConnectBankSheet({
           className="flex-1"
           onPress={() => onOpenChange(false)}
         />
-        <View className="max-h-[88%] rounded-t-card border border-border bg-card p-card">
+        <SheetPanel
+          onClose={() => onOpenChange(false)}
+          className="max-h-[88%] rounded-t-card border border-border bg-card p-card"
+        >
           <SheetGrabber />
           <Text className="font-semibold" style={{ fontSize: 18 }}>
             {t("bankConnect.sheetTitle")}
@@ -328,7 +332,7 @@ export function ConnectBankSheet({
               />
             ) : null}
           </View>
-        </View>
+        </SheetPanel>
       </View>
     </Modal>
   );

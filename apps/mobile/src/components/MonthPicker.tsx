@@ -9,6 +9,7 @@ import {
 } from "@finance/core/constants";
 import { monthShort } from "@finance/core/i18n/calendar-names";
 import { Text } from "@/components/ui/Text";
+import { SheetPanel } from "@/components/ui/SheetDrag";
 import { SheetGrabber } from "@/components/ui/SheetGrabber";
 import { cn } from "@/lib/cn";
 import { hapticLight, hapticSelection } from "@/lib/haptics";
@@ -193,7 +194,10 @@ function MonthGrid({
           className="flex-1"
           onPress={onClose}
         />
-        <View className="rounded-t-card border border-border bg-card p-card pb-10">
+        <SheetPanel
+          onClose={onClose}
+          className="rounded-t-card border border-border bg-card p-card pb-10"
+        >
           <SheetGrabber />
           <View className="mb-4 flex-row items-center justify-between">
             <ArrowButton
@@ -251,7 +255,7 @@ function MonthGrid({
               );
             })}
           </View>
-        </View>
+        </SheetPanel>
       </View>
     </Modal>
   );

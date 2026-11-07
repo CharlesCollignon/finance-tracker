@@ -18,6 +18,7 @@ import Animated, {
   withSequence,
   withSpring,
   withTiming,
+  type SharedValue,
 } from "react-native-reanimated";
 import type { Design } from "@finance/core/designs";
 
@@ -546,7 +547,6 @@ function ConsoleBar({
     width: width.get(),
     transform: [{ translateX: x.get() }],
   }));
-  const caretStyle = useAnimatedStyle(() => ({ opacity: caret.get() }));
 
   return (
     <View
@@ -570,66 +570,102 @@ function ConsoleBar({
             block,
           ]}
         />
-        {tabs.map((tab, index) => {
-          const lit = tab.name === active;
-          const ink = lit ? COLORS.primaryForeground : COLORS.mutedForeground;
-          return (
-            <Pressable
-              key={tab.name}
-              onLayout={measure(tab.name)}
-              accessibilityRole="tab"
-              accessibilityState={{ selected: lit }}
-              accessibilityLabel={tab.label}
-              onPress={() => onPress(tab.name)}
-              onPressIn={() => {
-                if (!lit) void hapticLight();
-              }}
-              style={({ pressed }) => [
-                styles.cell,
-                styles.consoleCell,
-                { opacity: pressed && !lit ? 0.6 : 1 },
-              ]}
-            >
-              <View style={styles.consoleNumberRow}>
-                <Text style={[styles.consoleNumber, { color: ink }]}>
-                  {index + 1}
-                </Text>
-                {lit ? (
-                  <Animated.View
-                    style={[
-                      styles.consoleCaret,
-                      { backgroundColor: ink },
-                      caretStyle,
-                    ]}
-                  />
-                ) : null}
-              </View>
-              <Text
-                numberOfLines={1}
-                adjustsFontSizeToFit
-                minimumFontScale={0.7}
-                maxFontSizeMultiplier={1.2}
-                style={[styles.consoleLabel, { color: ink }]}
-              >
-                {tab.label}
-              </Text>
-              {tab.waiting ? (
-                <View
-                  style={[
-                    styles.consoleDot,
-                    {
-                      backgroundColor: lit
-                        ? COLORS.primaryForeground
-                        : COLORS.primary,
-                    },
-                  ]}
-                />
-              ) : null}
-            </Pressable>
-          );
-        })}
+        {tabs.map((tab, index) => (
+          <ConsoleTab
+            key={tab.name}
+            tab={tab}
+            number={index + 1}
+            lit={tab.name === active}
+            caret={caret}
+            onLayout={measure(tab.name)}
+            onPress={() => onPress(tab.name)}
+          />
+        ))}
       </View>
     </View>
+  );
+}
+
+/**
+ * One tab of « Console »'s bar. Its layout is a fixed style — every tab an
+ * equal share of the row — and the press shows as a faint wash of the
+ * accent, animated: a `style` worked out from `pressed` was dropped on
+ * Android in 1.10.0, and the tabs fell in a heap at the left.
+ */
+function ConsoleTab({
+  tab,
+  number,
+  lit,
+  caret,
+  onPress,
+  onLayout,
+}: {
+  tab: DesignTab;
+  number: number;
+  lit: boolean;
+  /** The blinking caret's opacity, shared by the bar. */
+  caret: SharedValue<number>;
+  onPress: () => void;
+  onLayout: (event: LayoutChangeEvent) => void;
+}) {
+  const reduce = useReducedMotion();
+  const wash = useSharedValue(0);
+  const washStyle = useAnimatedStyle(() => ({ opacity: wash.get() }));
+  const caretStyle = useAnimatedStyle(() => ({ opacity: caret.get() }));
+  const ink = lit ? COLORS.primaryForeground : COLORS.mutedForeground;
+  return (
+    <Pressable
+      onLayout={onLayout}
+      accessibilityRole="tab"
+      accessibilityState={{ selected: lit }}
+      accessibilityLabel={tab.label}
+      onPress={onPress}
+      onPressIn={() => {
+        if (lit) return;
+        void hapticLight();
+        wash.set(reduce ? 0.14 : withTiming(0.14, { duration: 60 }));
+      }}
+      onPressOut={() => {
+        wash.set(reduce ? 0 : withTiming(0, { duration: 220 }));
+      }}
+      style={[styles.cell, styles.consoleCell]}
+    >
+      <Animated.View
+        pointerEvents="none"
+        style={[
+          StyleSheet.absoluteFill,
+          { backgroundColor: COLORS.primary },
+          washStyle,
+        ]}
+      />
+      <View style={styles.consoleNumberRow}>
+        <Text style={[styles.consoleNumber, { color: ink }]}>{number}</Text>
+        {lit ? (
+          <Animated.View
+            style={[styles.consoleCaret, { backgroundColor: ink }, caretStyle]}
+          />
+        ) : null}
+      </View>
+      <Text
+        numberOfLines={1}
+        adjustsFontSizeToFit
+        minimumFontScale={0.7}
+        maxFontSizeMultiplier={1.2}
+        style={[styles.consoleLabel, { color: ink }]}
+      >
+        {tab.label}
+      </Text>
+      {tab.waiting ? (
+        <View
+          style={[
+            styles.consoleDot,
+            {
+              backgroundColor: lit ? COLORS.primaryForeground : COLORS.primary,
+            },
+          ]}
+        />
+      ) : null}
+    </Pressable>
   );
 }
 

@@ -7,6 +7,7 @@ import Animated, {
 
 import { changeText } from "@finance/core/changelog";
 
+import { SheetPanel } from "@/components/ui/SheetDrag";
 import { SheetGrabber } from "@/components/ui/SheetGrabber";
 import { Text } from "@/components/ui/Text";
 import { hapticLight } from "@/lib/haptics";
@@ -79,55 +80,57 @@ export function WhatsNewSheet() {
         className="flex-1 justify-end bg-black/40"
         onPress={() => close(false)}
       >
-        <Pressable
-          accessible={false}
-          onPress={(event) => event.stopPropagation()}
-          className="gap-3 rounded-t-card border border-border bg-card px-4 pb-10 pt-3"
-          style={sheetFrame()}
-        >
-          <SheetGrabber />
-          <Text variant="title">{t("nouveautes.whatsNewTitle")}</Text>
-          <Text variant="muted">{t("nouveautes.whatsNewIntro")}</Text>
-          {unseen.slice(0, SHOWN).map((entry) => {
-            const text = changeText(entry, locale);
-            return (
-              <Animated.View
-                key={entry.id}
-                entering={reduceMotion ? undefined : FADE_IN}
-                className="flex-row gap-3 rounded-card border border-border bg-background/40 p-3"
+        <SheetPanel onClose={() => close(false)}>
+          <Pressable
+            accessible={false}
+            onPress={(event) => event.stopPropagation()}
+            className="gap-3 rounded-t-card border border-border bg-card px-4 pb-10 pt-3"
+            style={sheetFrame()}
+          >
+            <SheetGrabber />
+            <Text variant="title">{t("nouveautes.whatsNewTitle")}</Text>
+            <Text variant="muted">{t("nouveautes.whatsNewIntro")}</Text>
+            {unseen.slice(0, SHOWN).map((entry) => {
+              const text = changeText(entry, locale);
+              return (
+                <Animated.View
+                  key={entry.id}
+                  entering={reduceMotion ? undefined : FADE_IN}
+                  className="flex-row gap-3 rounded-card border border-border bg-background/40 p-3"
+                >
+                  <View className="mt-1.5 h-2 w-2 rounded-full bg-success" />
+                  <View className="flex-1 gap-0.5">
+                    <Text variant="head">{text.title}</Text>
+                    <Text variant="muted">{text.body}</Text>
+                  </View>
+                </Animated.View>
+              );
+            })}
+            <View className="flex-row gap-2 pt-2">
+              <Pressable
+                accessibilityRole="link"
+                onPress={() => {
+                  void hapticLight();
+                  close(true);
+                }}
+                className="min-h-11 flex-1 items-center justify-center rounded-full bg-foreground"
               >
-                <View className="mt-1.5 h-2 w-2 rounded-full bg-success" />
-                <View className="flex-1 gap-0.5">
-                  <Text variant="head">{text.title}</Text>
-                  <Text variant="muted">{text.body}</Text>
-                </View>
-              </Animated.View>
-            );
-          })}
-          <View className="flex-row gap-2 pt-2">
-            <Pressable
-              accessibilityRole="link"
-              onPress={() => {
-                void hapticLight();
-                close(true);
-              }}
-              className="min-h-11 flex-1 items-center justify-center rounded-full bg-foreground"
-            >
-              <Text className="text-sm font-semibold text-background">
-                {t("nouveautes.whatsNewAll")}
-              </Text>
-            </Pressable>
-            <Pressable
-              accessibilityRole="button"
-              onPress={() => close(false)}
-              className="min-h-11 items-center justify-center rounded-full border border-border px-5"
-            >
-              <Text className="text-sm font-medium">
-                {t("nouveautes.whatsNewClose")}
-              </Text>
-            </Pressable>
-          </View>
-        </Pressable>
+                <Text className="text-sm font-semibold text-background">
+                  {t("nouveautes.whatsNewAll")}
+                </Text>
+              </Pressable>
+              <Pressable
+                accessibilityRole="button"
+                onPress={() => close(false)}
+                className="min-h-11 items-center justify-center rounded-full border border-border px-5"
+              >
+                <Text className="text-sm font-medium">
+                  {t("nouveautes.whatsNewClose")}
+                </Text>
+              </Pressable>
+            </View>
+          </Pressable>
+        </SheetPanel>
       </Pressable>
     </Modal>
   );

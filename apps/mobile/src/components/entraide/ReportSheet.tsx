@@ -17,6 +17,7 @@ import {
 
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
+import { SheetPanel } from "@/components/ui/SheetDrag";
 import { SheetGrabber } from "@/components/ui/SheetGrabber";
 import { Text } from "@/components/ui/Text";
 import { writeEntraide } from "@/lib/entraide";
@@ -96,7 +97,10 @@ export function ReportSheet({
           accessibilityLabel={copy.thread.cancel}
           onPress={close}
         />
-        <View className="max-h-[90%] rounded-t-card border border-border bg-card">
+        <SheetPanel
+          onClose={close}
+          className="max-h-[90%] rounded-t-card border border-border bg-card"
+        >
           <View className="items-center pt-3">
             <SheetGrabber />
           </View>
@@ -184,7 +188,7 @@ export function ReportSheet({
               </>
             )}
           </ScrollView>
-        </View>
+        </SheetPanel>
       </KeyboardAvoidingView>
     </Modal>
   );
