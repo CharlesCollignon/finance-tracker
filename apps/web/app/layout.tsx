@@ -13,8 +13,6 @@ import type { Metadata, Viewport } from "next";
 // production deploy down on 2026-10-09 on code a preview had just built.
 // These are the same latin files Google served, OFL licences beside them.
 import localFont from "next/font/local";
-import { Analytics } from "@vercel/analytics/next";
-import { SpeedInsights } from "@vercel/speed-insights/next";
 import "./globals.css";
 import { getLocale } from "@/lib/locale";
 import { LocaleProvider } from "@/lib/locale-context";
@@ -25,6 +23,10 @@ import { getSiteUrl } from "@/lib/supabase/env";
 import { getDesign } from "@/lib/design";
 import { DesignProvider } from "@/lib/design-context";
 import { isLightDesign, type Design } from "@finance/core/designs";
+import { readAudienceMeasurement } from "@finance/data/preferences";
+import { getAuthUser } from "@/lib/auth/get-user";
+import { createClient } from "@/lib/supabase/server";
+import { VercelMeasurement } from "@/components/layout/VercelMeasurement";
 
 const instrumentSans = localFont({
   src: "./fonts/instrument-sans-latin.woff2",
@@ -134,6 +136,24 @@ export async function generateViewport(): Promise<Viewport> {
 const privacyInitScript = `(function(){try{document.documentElement.dataset.privacy=localStorage.getItem("privacy-blur")==="1"?"on":"off";}catch(e){document.documentElement.dataset.privacy="off";}})();`;
 
 /**
+ * Whether Vercel Web Analytics and Speed Insights run on this page: the
+ * signed-in person's « Mesure d'audience », and on for a visitor without an
+ * account, who has no switch to turn. The app and marketing layouts already
+ * ask who is signed in, and `getAuthUser` is cached for the request, so this
+ * adds one read, for someone signed in. When it fails, nothing is measured: a page view
+ * missed is nothing, one counted against someone's wish is not.
+ */
+async function isMeasured(): Promise<boolean> {
+  const user = await getAuthUser();
+  if (!user) {
+    return true;
+  }
+  return readAudienceMeasurement(await createClient(), user.id).catch(
+    () => false,
+  );
+}
+
+/**
  * How wide the room kept for the scrollbar is (`scrollbar-gutter` in
  * globals.css), as `--scrollbar-gutter`: the bezel takes it on the other
  * three sides so the window is framed evenly. CSS cannot read it, and it
@@ -160,10 +180,11 @@ export default async function RootLayout({
   // Reading a cookie makes this layout dynamic, which costs nothing here:
   // both group layouts below already call `getAuthUser()`, so every route in
   // the app was dynamic before this line existed.
-  const [locale, currency, design] = await Promise.all([
+  const [locale, currency, design, measured] = await Promise.all([
     getLocale(),
     getCurrency(),
     getDesign(),
+    isMeasured(),
   ]);
 
   return (
@@ -190,8 +211,7 @@ export default async function RootLayout({
             </DesignProvider>
           </CurrencyProvider>
         </LocaleProvider>
-        <Analytics />
-        <SpeedInsights />
+        <VercelMeasurement on={measured} />
       </body>
     </html>
   );
