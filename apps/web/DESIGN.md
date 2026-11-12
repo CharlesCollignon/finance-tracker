@@ -659,10 +659,10 @@ nothing: `.glass-flat` and `.glass-grid` each take
 `inset 0 1px 0 rgba(255, 255, 255, 0.09)`, and `.pc-orb::after` takes
 `inset 0 -7cqw 11cqw -5cqw rgb(255 237 194 / calc(0.24 * var(--orb-glass)))`.
 The two cast declarations open with an inset of their own as well, so the file
-holds five inset declarations against two drops. (The landing hero's Earth
-draws its light in WebGL; its fallback, for a browser without it, rims a dark
-ellipse with a glow — light, like the orb's, and never seen beside the
-canvas.) An inset puts nothing in front
+holds five inset declarations against two drops. (The landing hero's stage —
+a faint white disc round the orb and the orb's amber pooled under it,
+`.landing-hero-stage` — is light too, like the orb's glow, and casts
+nothing.) An inset puts nothing in front
 of the element and moves nothing away from the page — it is light drawn on a
 surface, which is precisely what the bezel inset is and why the flatness rule
 can call a recess its one exception. So this rule is scoped to what is thrown,
@@ -1006,11 +1006,15 @@ and **exit** 120ms. Tailwind's default transition duration is pointed at the
 hover token, so a transition written without a duration is still on the
 scale. A global `prefers-reduced-motion` block reduces
 all animation and transition to 0.01ms, and the landing logo's float is
-switched off entirely. The hero's Earth (`components/marketing/LandingEarth.tsx`,
-WebGL) follows the same setting on its own: under reduced motion nothing
-twinkles, the stars stop drifting, and the aurora's curtains, the black hole's
-disk and the distant sun's glow hold still. Its light never follows the pointer
-on the landing; it rests in the distant sun.
+switched off entirely.
+
+The landing hero is kept to almost nothing (November 2026, the owner's call,
+after a Vercel-style mockup): the headline and two buttons on the left, the
+orb lit in the middle on a faint disc, three short lines on the right, and the
+app's screens named along its foot (`landing/LandingHero.tsx`). It replaced a
+WebGL Earth at dusk, with its sun, aurora and black hole, and the text drifting
+away on scroll. Nothing in it moves but the orb's own weather and the
+arrival — the headline rising line by line, the rest fading up after it.
 
 **Everything in the app arrives and leaves as a fade** (October 2026, the
 owner's call for "really smooth fade in or fade out, fast and smooth,
@@ -1043,7 +1047,7 @@ chapters of the month while its screens wipe up over each other, and the
 desktop screens running sideways as a reel. The rest of the app sits in an
 uneven grid whose cards rise in and carry a light under the pointer, and the
 page closes on a WebGL gold orb (`landing/GoldOrb.tsx`) rising out of a
-horizon — the hero's sunrise, answered — its light following the pointer.
+horizon — the hero's orb, answered — its light following the pointer.
 Under reduced motion none of it pins or turns: each section stands at its
 final state, the scroll is not smoothed, and the orb draws one still frame.
 

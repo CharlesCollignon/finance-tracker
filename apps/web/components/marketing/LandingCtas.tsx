@@ -31,11 +31,11 @@ interface LandingCtasProps {
    * `solo` drops the secondary link, for spots with one clear next step.
    * `pair-compact` keeps it but hides it on the narrowest screens — the nav
    * pill cannot hold two buttons and a menu trigger at phone width, and of
-   * the three the menu trigger is the one that must survive.
+   * the three the menu trigger is the one that must survive. `hero` keeps
+   * two: the gold button and the demo, or « Se connecter » when there is no
+   * demo — the header beside it already offers « Se connecter ».
    */
-  layout?: "pair" | "pair-compact" | "solo";
-  /** A glint of light across the gold button, once: the hero's sunrise. */
-  shine?: boolean;
+  layout?: "pair" | "pair-compact" | "solo" | "hero";
   /**
    * The secondary link folded away, for the nav pill once it has tightened
    * on scroll: it narrows and fades rather than leaving the row at once.
@@ -50,12 +50,11 @@ export function LandingCtas({
   isLoggedIn,
   size = "md",
   layout = "pair",
-  shine = false,
   foldSecondary = false,
   demo = false,
   className,
 }: LandingCtasProps) {
-  const gold = cn(solid, shine && "marketing-cta-shine");
+  const gold = solid;
   const copy = landingCopyFor(useLocale());
   if (isLoggedIn) {
     return (
@@ -88,7 +87,7 @@ export function LandingCtas({
       >
         {copy.cta.getStarted}
       </Link>
-      {layout === "solo" ? null : (
+      {layout === "solo" || (layout === "hero" && demo) ? null : (
         <Link
           href="/login"
           prefetch={false}
@@ -106,7 +105,7 @@ export function LandingCtas({
           {copy.cta.signIn}
         </Link>
       )}
-      {demo && layout === "pair" ? (
+      {demo && (layout === "pair" || layout === "hero") ? (
         // The sample account (migration 081): a look round before an
         // account, signed in as nobody in particular.
         <Link href="/demo" className={cn(base, sizes[size], quiet)}>

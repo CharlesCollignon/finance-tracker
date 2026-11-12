@@ -6,7 +6,7 @@ import { ImageResponse } from "next/og";
  * The card a shared link to the site shows: the marketing room's ground, a
  * small kicker, the page's title in the site's own type, a line under it,
  * and the orb rising out of the bottom-right corner in its own light — the
- * hero's sunrise, at the size of a link preview.
+ * landing's close, at the size of a link preview.
  *
  * Drawn in French whatever the sharer reads in: the crawlers that fetch it
  * carry no language cookie, and the site's first language is French.

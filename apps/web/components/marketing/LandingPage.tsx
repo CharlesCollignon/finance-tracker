@@ -1,43 +1,24 @@
-/* Hallmark · genre: atmospheric · macrostructure: Split Studio · theme: design.md (Pluclair) · enrichment: kept (WebGL Earth hero) · nav: kept · footer: kept */
+/* Hallmark · genre: atmospheric · macrostructure: Split Studio · theme: design.md (Pluclair) · enrichment: orb hero (minimal, Nov 2026) · nav: kept · footer: kept */
 
 import Link from "next/link";
-import { headers } from "next/headers";
 import {
   AndroidLogo,
   AppleLogo,
-  ArrowRight,
   GooglePlayLogo,
 } from "@phosphor-icons/react/dist/ssr";
-import { CHANGELOG } from "@finance/core/changelog-entries";
 import { getLocale } from "@/lib/locale";
-import { LandingCtas } from "@/components/marketing/LandingCtas";
-import { LandingEarth } from "@/components/marketing/LandingEarth";
 import {
   FadeUp,
-  HeroDepth,
-  HeroDrift,
   Questions,
-  RiseLines,
   RiseWords,
 } from "@/components/marketing/LandingReveal";
 import { landingCopyFor } from "@/components/marketing/landing-copy";
 import { marketingFocus } from "@/components/marketing/marketing-focus";
-import {
-  nouveautesCopyFor,
-  nouveautesEntryHref,
-} from "@/components/marketing/nouveautes-copy";
 import { openRoadmap } from "@/components/marketing/nouveautes/open-roadmap";
-import {
-  DOWNLOAD_HREF,
-  IPHONE_HREF,
-} from "@/components/marketing/download-copy";
-import {
-  CTA_BASE,
-  CTA_QUIET,
-  CTA_SIZES,
-} from "@/components/marketing/cta-classes";
-import { isIphone, storeLinks } from "@/lib/store-links";
+import { DOWNLOAD_HREF } from "@/components/marketing/download-copy";
+import { storeLinks } from "@/lib/store-links";
 import { FeatureBento } from "@/components/marketing/landing/FeatureBento";
+import { LandingHero } from "@/components/marketing/landing/LandingHero";
 import { FigureSection } from "@/components/marketing/landing/FigureSection";
 import { OrbFinale } from "@/components/marketing/landing/OrbFinale";
 import { PhoneStory } from "@/components/marketing/landing/PhoneStory";
@@ -76,8 +57,7 @@ export async function LandingPage({
   isLoggedIn,
   demo = false,
 }: LandingPageProps) {
-  const [locale, request] = await Promise.all([getLocale(), headers()]);
-  const iphone = isIphone(request.get("user-agent"));
+  const locale = await getLocale();
   const {
     hero,
     promise,
@@ -89,6 +69,7 @@ export async function LandingPage({
     phone,
     faq,
     finalCta,
+    pages,
   } = landingCopyFor(locale);
   // The phone app leaves « Bientôt » once a store has it, or the site hands
   // out its APK. The APK's buttons lead to its download page, which says how
@@ -108,107 +89,16 @@ export async function LandingPage({
     ...(inStores.length > 0 ? [] : soon.items),
     ...openRoadmap().map((item) => ({ id: item.id, ...item[locale] })),
   ];
-  // The latest change worth a screen of its own, under the buttons.
-  const latest = CHANGELOG.find((entry) => entry.featured);
-  const nouveautes = nouveautesCopyFor(locale);
 
   return (
     <>
       {/* ------------------------------------------------------------ hero */}
-      {/* A film title card: the headline, the tagline and the buttons set low
-          on the left, on the planet's dark body, leaving the sky, the sun and
-          the black hole the top and the right. It was centred, everything
-          stacked on one axis — the hero every generated page has. */}
-      <section className="relative isolate flex min-h-dvh flex-col justify-end overflow-hidden px-6 pb-14 pt-28 md:pb-20">
-        {/* The Earth from orbit, its rim arcing across the hero with Europe
-            lit at dusk below it, under its own nebula and stars, a distant
-            sun setting on the rim with the light in it. Still: the light
-            does not follow the pointer here, so the scene is out of the
-            pointer's way like the backgrounds elsewhere. The bottom fades
-            into the page's ground, so the black of space does not end on a
-            line. The surface at the renderer's ceiling (4, it was 3.5) and the
-            light a touch up (1.65, it was 1.5), so the land under the rim
-            reads a little brighter. */}
-        <HeroDepth className="pointer-events-none absolute inset-0 -z-10 [mask-image:linear-gradient(to_bottom,black_78%,transparent)]">
-          <LandingEarth
-            surfaceBrightness={4}
-            illumination={1.65}
-            aurora={0.6}
-            interactive={false}
-          />
-        </HeroDepth>
-
-        {/* One timeline with the Earth's: the nav slides down, the
-            headline's lines rise while the planet fades in, the tagline and
-            the buttons follow, and as the sun starts up behind the rim a
-            glint crosses the gold button. Scrolling away, the text drifts
-            up and fades while the planet comes slowly closer. */}
-        <HeroDrift className="relative z-20 mx-auto w-full max-w-6xl">
-          <RiseLines
-            lines={hero.titleLines}
-            className="marketing-display text-display-hero"
-            delay={0.35}
-          />
-          <FadeUp trigger="mount" delay={0.95}>
-            <p className="mt-6 max-w-xl text-[0.975rem] leading-relaxed text-marketing-muted sm:text-lg">
-              {hero.tagline}
-            </p>
-          </FadeUp>
-          <FadeUp trigger="mount" delay={1.2}>
-            {/* The phone among the first things seen, not after six
-                sections of scrolling: most visitors on a phone want it. An
-                iPhone cannot open the APK, so it is offered its own way. */}
-            <div className="mt-8 flex flex-wrap items-center gap-3">
-              <LandingCtas
-                isLoggedIn={isLoggedIn}
-                size="lg"
-                shine
-                demo={demo}
-              />
-              {apk ? (
-                <Link
-                  href={iphone ? IPHONE_HREF : apk}
-                  className={cn(CTA_BASE, CTA_SIZES.lg, CTA_QUIET, "gap-2.5")}
-                >
-                  {iphone ? (
-                    <AppleLogo size={20} weight="fill" aria-hidden />
-                  ) : (
-                    <AndroidLogo size={20} weight="fill" aria-hidden />
-                  )}
-                  {iphone ? hero.iphone : hero.android}
-                </Link>
-              ) : null}
-            </div>
-          </FadeUp>
-          {latest ? (
-            <FadeUp trigger="mount" delay={1.45}>
-              <Link
-                href={nouveautesEntryHref(latest.id)}
-                className={cn(
-                  "group mt-6 inline-flex min-h-11 max-w-full items-center gap-3 rounded-full border border-white/12 bg-white/[0.06] pl-3.5 pr-4 text-sm backdrop-blur-xl transition-colors duration-hover hover:bg-white/[0.1]",
-                  marketingFocus,
-                )}
-              >
-                <span className="inline-flex shrink-0 items-center gap-1.5 font-medium text-marketing-ink">
-                  <span
-                    className="size-1.5 rounded-full bg-success"
-                    aria-hidden
-                  />
-                  {nouveautes.landing.label}
-                </span>
-                <span className="min-w-0 truncate text-marketing-muted">
-                  {latest[locale].title}
-                </span>
-                <ArrowRight
-                  size={14}
-                  aria-hidden
-                  className="shrink-0 text-marketing-muted transition-transform duration-hover group-hover:translate-x-0.5"
-                />
-              </Link>
-            </FadeUp>
-          ) : null}
-        </HeroDrift>
-      </section>
+      <LandingHero
+        hero={hero}
+        pages={pages}
+        isLoggedIn={isLoggedIn}
+        demo={demo}
+      />
 
       {/* --------------------------------------------------------- promise */}
       <PromiseSection text={promise.text} />

@@ -17,7 +17,7 @@ type FinalCopy = LocalisedLandingCopy["finalCta"];
 
 /**
  * The close: the orb rising out of a horizon as the page reaches its end —
- * the hero's sunrise, answered — and the invitation arriving under it once
+ * the hero's orb, answered — and the invitation arriving under it once
  * it has cleared the rim. Pinned for a little over a screen so the rise is
  * read rather than scrolled past.
  */

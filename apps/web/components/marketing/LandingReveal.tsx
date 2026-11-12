@@ -7,9 +7,6 @@ import {
   LazyMotion,
   m,
   MotionConfig,
-  useReducedMotion,
-  useScroll,
-  useTransform,
 } from "motion/react";
 import { Plus } from "@phosphor-icons/react";
 import { DURATION, EASE_STANDARD } from "@finance/core/motion";
@@ -19,9 +16,8 @@ import { cn } from "@/lib/utils";
 /**
  * How the marketing site moves: one motif, said several ways.
  *
- * Things rise out of a horizon. The hero is a planet's rim with a sun coming
- * up behind it, so the headline's lines rise out of a mask as the planet
- * fades in, the headings rise word by word as they come into view, the app's
+ * Things rise out of a horizon. The hero's headline rises line by line out
+ * of a mask while the orb beside it fades in, the headings rise word by word as they come into view, the app's
  * screens tilt up from their bottom edge and settle as the page is scrolled,
  * and the promise sentence lights word by word as it is read. One curve
  * (`EASE_STANDARD`) for all of it, transforms and opacity only — but for the
@@ -185,50 +181,6 @@ export function FadeUp({
         },
       }}
     >
-      {children}
-    </m.div>
-  );
-}
-
-/**
- * The hero's text as the page scrolls away from it: it drifts up faster
- * than the page and fades, so the planet behind seems to stay.
- */
-export function HeroDrift({
-  children,
-  className,
-}: {
-  children: ReactNode;
-  className?: string;
-}) {
-  const still = useReducedMotion() ?? false;
-  const { scrollY } = useScroll();
-  const y = useTransform(scrollY, [0, 600], still ? [0, 0] : [0, -90]);
-  const opacity = useTransform(scrollY, [0, 480], still ? [1, 1] : [1, 0]);
-  return (
-    <m.div className={className} style={{ y, opacity }}>
-      {children}
-    </m.div>
-  );
-}
-
-/**
- * The Earth as the page scrolls away from it: it comes slowly closer and
- * sinks a little, a layer deeper than the text.
- */
-export function HeroDepth({
-  children,
-  className,
-}: {
-  children: ReactNode;
-  className?: string;
-}) {
-  const still = useReducedMotion() ?? false;
-  const { scrollY } = useScroll();
-  const scale = useTransform(scrollY, [0, 900], still ? [1, 1] : [1, 1.1]);
-  const y = useTransform(scrollY, [0, 900], still ? [0, 0] : [0, 70]);
-  return (
-    <m.div className={className} style={{ scale, y }}>
       {children}
     </m.div>
   );

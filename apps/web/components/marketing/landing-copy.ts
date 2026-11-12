@@ -30,14 +30,24 @@ import {
 
 export const landingCopy = {
   hero: {
-    /** Split so the line break is a choice rather than whatever the box does. */
-    titleLines: ["Your money,", "clearer every month"],
+    /** Split so the line breaks are a choice rather than whatever the box does. */
+    titleLines: ["Your money,", "clearer", "every month"],
+    /**
+     * No longer on the hero, which keeps to the headline: the page's
+     * description for search engines, link previews and `/llms.txt`.
+     */
     tagline:
       "Income, spending, savings and investments in one place. What repeats fills itself in each month, and once a month Pluclair checks against your bank to find what slipped through.",
-    /** Beside the buttons while the site hands out the APK. */
+    /** The three short lines on the right of the hero, the tagline in brief. */
+    facts: [
+      "Your income and spending",
+      "Your savings and investments",
+      "Checked against your bank each month",
+    ],
+    /** The accessible name of the row of screens along the hero's foot. */
+    screens: "The app's screens",
+    /** The footer's link while the site hands out the APK. */
     android: "Download for Android",
-    /** In its place on an iPhone, to the download page's iPhone section. */
-    iphone: "Install on iPhone",
   },
 
   /** The three commitments, as one sentence rather than three cards. */
@@ -685,8 +695,6 @@ export const landingCopy = {
       "Your income, spending, savings and investments in one place — checked every month against your bank.",
     copyright: "© 2026 Pluclair",
     madeBy: "Made in Paris by Charles Collignon",
-    imageCredit:
-      "Earth imagery: NASA, Blue Marble Next Generation (Reto Stöckli).",
     disclaimer:
       "No investment advice. No ads. Pluclair never touches your money.",
   },

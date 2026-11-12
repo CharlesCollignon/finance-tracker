@@ -30,11 +30,16 @@ export const landingCopyFr: LandingCopySections & {
   pages: Record<LandingPageId, LandingPageCopy>;
 } = {
   hero: {
-    titleLines: ["Votre argent,", "plus clair chaque mois"],
+    titleLines: ["Votre argent,", "plus clair", "chaque mois"],
     tagline:
       "Vos revenus, vos dépenses, votre épargne et vos placements au même endroit. Ce qui revient chaque mois s’ajoute tout seul, et une fois par mois, Pluclair compare avec votre banque pour retrouver ce qui a filé.",
+    facts: [
+      "Vos revenus et vos dépenses",
+      "Votre épargne et vos placements",
+      "Vérifiés chaque mois avec votre banque",
+    ],
+    screens: "Les écrans de l’application",
     android: "Télécharger pour Android",
-    iphone: "Installer sur iPhone",
   },
 
   promise: {
@@ -643,8 +648,6 @@ export const landingCopyFr: LandingCopySections & {
       "Vos revenus, vos dépenses, votre épargne et vos placements au même endroit — vérifiés chaque mois avec votre banque.",
     copyright: "© 2026 Pluclair",
     madeBy: "Fait à Paris par Charles Collignon",
-    imageCredit:
-      "Image de la Terre : NASA, Blue Marble Next Generation (Reto Stöckli).",
     disclaimer:
       "Aucun conseil en investissement. Aucune pub. Pluclair ne touche jamais à votre argent.",
   },
