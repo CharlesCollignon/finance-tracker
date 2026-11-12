@@ -17,8 +17,8 @@ void main() { gl_Position = vec4(position, 0., 1.); }
  * it rather than slide across); a gold rim where the glass is seen edge on;
  * a highlight where the light — the pointer — catches it; a halo breathing
  * round it. Below, the dark curve of a horizon with a lit rim, the orb
- * rising out of it as `uRise` goes from 0 to 1: the hero's sunrise, at the
- * end of the page.
+ * rising out of it as `uRise` goes from 0 to 1: the hero's orb, risen, at
+ * the end of the page.
  */
 const fragment = /* glsl */ `
 precision highp float;

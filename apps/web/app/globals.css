@@ -1869,9 +1869,10 @@ html:has(.marketing-shell) {
   }
 }
 
-/* A glint of light crossing the hero's gold button once, as the sun begins
-   to rise behind the planet (`SUN_DELAY_S` in LandingEarth): the light
-   catches the button. Not under reduced motion. */
+/* A glint of light crossing a gold button once, a beat after the page has
+   arrived: the download page's button. It began on the landing hero, timed
+   to a sunrise behind its Earth, which the hero no longer has. Not under
+   reduced motion. */
 .marketing-cta-shine::after {
   content: "";
   position: absolute;
@@ -1900,6 +1901,82 @@ html:has(.marketing-shell) {
     animation: none;
     opacity: 0;
   }
+}
+
+/* --- the landing hero ----------------------------------------------------- */
+
+/* Three areas — the headline and its buttons, the orb, three short lines —
+   stacked below `md` with the orb first, side by side from `md` with the
+   lines under the headline, and a column each from `xl` (the 1280px of
+   Tailwind's `xl`). See `landing/LandingHero.tsx`. */
+.landing-hero-grid {
+  display: grid;
+  align-content: center;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-areas: "orb" "text" "facts";
+  row-gap: 2.5rem;
+}
+
+@media (min-width: 48rem) {
+  .landing-hero-grid {
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas: "text orb" "facts orb";
+    column-gap: 3rem;
+  }
+}
+
+@media (min-width: 80rem) {
+  .landing-hero-grid {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    grid-template-areas: "text orb facts";
+    align-items: center;
+  }
+}
+
+/* The orb's stage: a faint disc of light round it, wider than its column
+   and drawn behind its neighbours, and the orb's own warmth pooled under
+   it, in the orb's body amber (`--orb-c2`, which lives on `.pc-orb` and so
+   is written out here). Both are light, not surfaces — nothing here is cast
+   (The Marketing Glass Rule). */
+.landing-hero-stage {
+  position: relative;
+  isolation: isolate;
+  display: grid;
+  place-items: center;
+  justify-self: center;
+  aspect-ratio: 1;
+  width: clamp(15rem, 26vw, 24rem);
+  max-width: 100%;
+}
+
+.landing-hero-stage::before,
+.landing-hero-stage::after {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.landing-hero-stage::before {
+  inset: -22%;
+  background: radial-gradient(
+    circle,
+    rgb(255 255 255 / 0.035) 0%,
+    rgb(255 255 255 / 0.016) 52%,
+    transparent 70%
+  );
+}
+
+.landing-hero-stage::after {
+  inset: 18%;
+  background: radial-gradient(
+    circle,
+    rgb(251 123 24 / 0.16) 0%,
+    rgb(251 123 24 / 0.05) 45%,
+    transparent 70%
+  );
+  filter: blur(18px);
 }
 
 /* --- the orb and its light ----------------------------------------------- */

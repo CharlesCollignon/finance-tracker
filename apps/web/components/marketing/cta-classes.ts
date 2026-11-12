@@ -37,7 +37,7 @@ export const CTA_SIZES = {
    Which of the two is the primary action was never the halo's work. */
 /* Gold glass: Lamplit Orange as a gradient, lighter at the top left and deeper
    at the bottom right, a little transparent and blurred over what is behind
-   it — the Earth, the stars — with a thin light along its top edge. Hover
+   it — the orb's light, the ambient bed — with a thin light along its top edge. Hover
    brightens it rather than lifting it. See `.marketing-cta-gold` in
    globals.css; the owner's call, October 2026. */
 export const CTA_SOLID = "marketing-cta-gold text-primary-foreground";

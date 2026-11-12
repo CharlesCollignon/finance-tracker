@@ -191,10 +191,6 @@ export async function LandingFooter({ isLoggedIn }: { isLoggedIn: boolean }) {
           </p>
           <p>{copy.footer.disclaimer}</p>
         </div>
-        {/* The hero's Earth is NASA's imagery, which asks for its credit. */}
-        <p className="text-xs text-marketing-faint">
-          {copy.footer.imageCredit}
-        </p>
       </div>
     </footer>
   );

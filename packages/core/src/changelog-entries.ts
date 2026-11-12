@@ -17,6 +17,20 @@ import type { ChangelogEntry, RoadmapItem } from "./changelog";
  */
 export const CHANGELOG: readonly ChangelogEntry[] = [
   {
+    id: "2026-11-12-web-minimal-hero",
+    date: "2026-11-12",
+    kind: "better",
+    platforms: ["web"],
+    fr: {
+      title: "Un accueil plus sobre",
+      body: "Le haut de pluclair.com tient en peu de choses : le titre et deux boutons, l’orbe au milieu, trois lignes sur ce que fait Pluclair, et en bas les écrans de l’application, chacun menant à sa page. La Terre et son lever de soleil s’en vont. Le lien Android reste plus bas sur la page et en pied de page.",
+    },
+    en: {
+      title: "A quieter home page",
+      body: "The top of pluclair.com comes down to a few things: the headline and two buttons, the orb in the middle, three lines on what Pluclair does, and the app’s screens along the bottom, each leading to its page. The Earth and its sunrise go. The Android link stays further down the page and in the footer.",
+    },
+  },
+  {
     id: "2026-11-12-web-page-measurement",
     date: "2026-11-12",
     kind: "better",
@@ -2408,10 +2422,10 @@ export const CHANGELOG: readonly ChangelogEntry[] = [
  */
 export const CHANGELOG_STATS = {
   /** `git rev-list --count HEAD` on the branch that wrote the newest entry. */
-  commits: 1339,
+  commits: 1351,
   /** The repository's first commit. */
   since: "2026-06-15",
-  asOf: "2026-11-07",
+  asOf: "2026-11-12",
 } as const;
 
 /**
