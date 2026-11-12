@@ -26,7 +26,7 @@
 | Acteur                                  | Rôle                                                                    | Lieu des données                                    | Garantie                                                                                                |
 | --------------------------------------- | ----------------------------------------------------------------------- | --------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
 | Supabase                                | Base de données, authentification                                       | Union européenne — Francfort (`eu-central-1`)       | Accord de sous-traitance (DPA v1, 1ᵉʳ août 2026) ; clauses contractuelles types pour tout accès hors UE |
-| Vercel Inc.                             | Hébergement du site et des fonctions serveur                            | Fonctions à Paris (`cdg1`) ; société aux États-Unis | Certification au cadre UE–États-Unis (Data Privacy Framework) ; DPA                                     |
+| Vercel Inc.                             | Hébergement du site et des fonctions serveur ; mesure des pages vues et de leur vitesse (§ 12) | Fonctions à Paris (`cdg1`) ; société aux États-Unis | Certification au cadre UE–États-Unis (Data Privacy Framework) ; DPA                                     |
 | Resend (Plus Five Five, Inc.)           | Envoi des e-mails du compte (confirmation de l'adresse, lien de réinitialisation du mot de passe) : adresse e-mail et contenu de ces e-mails | Envois depuis l'Irlande (`eu-west-1`) ; traitement principalement aux États-Unis | Certification au cadre UE–États-Unis (Data Privacy Framework) ; clauses contractuelles types ; DPA intégré aux conditions de service |
 | OpenRouter, Inc.                        | Si l'utilisateur connecte son propre compte IA — seule voie vers les lectures et les questions : transmission au modèle qu'il a choisi | États-Unis, puis selon le fournisseur du modèle | Sur le compte de l'utilisateur, à sa demande, après consentement ; OpenRouter agit selon les conditions que l'utilisateur a acceptées en ouvrant ce compte, auxquelles Pluclair n'est pas partie |
 | Brevo (Sendinblue SAS, France)          | Si l'utilisateur crée son adresse de relevés : réception des e-mails que sa messagerie y fait suivre, remis à Pluclair par webhook (pièces jointes téléchargées une fois) | Union européenne                                    | Accord de sous-traitance de Brevo, accepté à l'ouverture du compte                                      |
@@ -291,6 +291,39 @@ Ouvert au public le 13 octobre 2026, avec ses règles
   l'identifiant d'un compte ; RLS ; masquage des IBAN, numéros de carte,
   e-mails et téléphones avant publication ; données d'identification lisibles
   par le seul rôle de service.
+
+## 12. Mesure des pages vues et de leur vitesse (Vercel)
+
+En service depuis le 12 novembre 2026 : Vercel Web Analytics et Speed
+Insights, sur le site et l'application web (`VercelMeasurement` dans la mise
+en page racine, `lib/measurement.ts`). Pas sur l'application téléphone.
+
+- **Finalité** : savoir quelles pages sont lues et si elles s'affichent vite,
+  en chiffres d'ensemble par page. Jamais pour adapter ce qu'un utilisateur
+  voit, ni croisé avec la mesure d'audience du § 8.
+- **Base légale** : intérêt légitime (art. 6.1.f), avec droit d'opposition :
+  connecté, par l'interrupteur « Mesure d'audience » du Profil (le même qu'au
+  § 8), qui empêche les scripts de se charger, ou arrête tout envoi aussitôt
+  s'ils le sont ; sans compte, par Global Privacy Control, que le site
+  respecte. Rien n'est déposé ni lu sur l'appareil au sens de l'article 82 de
+  la loi Informatique et Libertés : aucun cookie, aucun stockage local.
+- **Personnes concernées** : les visiteurs du site et les utilisateurs de
+  l'application web, sauf ceux qui s'y opposent.
+- **Données** : pour chaque page vue, son adresse — sans paramètres de
+  requête hormis `ref` et `utm_*`, le jeton d'une invitation remplacé par
+  `[token]` et un identifiant par `[id]`, avant tout envoi —, la page d'où
+  l'on vient, le pays, la région et la ville déduits de l'adresse IP, le type
+  d'appareil, son système, son navigateur et leurs versions ; pour la vitesse,
+  les Web Vitals de la page, l'élément qu'ils désignent et le type de
+  connexion. Vercel distingue les visiteurs par une empreinte de la requête,
+  jamais conservée au-delà de 24 heures. Ni compte, ni e-mail, ni montant.
+- **Destinataires** : Vercel Inc. ; consulté par l'éditeur seul, dans le
+  tableau de bord Vercel.
+- **Durée** : l'empreinte, 24 heures ; les chiffres par page, selon Vercel,
+  sans rien qui désigne une personne.
+- **Sécurité** : le filtrage des adresses et l'interrupteur sont appliqués
+  dans le navigateur, avant l'envoi (`keepIfMeasured`) ; une lecture en échec
+  de l'interrupteur vaut « coupé ».
 
 ## Hors registre : cours de marché, ventes immobilières et indices
 

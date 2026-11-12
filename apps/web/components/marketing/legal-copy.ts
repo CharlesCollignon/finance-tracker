@@ -66,7 +66,7 @@ export const legalCopy: LegalCopy = {
     notice: "Legal notice",
   },
   updatedLabel: "Last updated:",
-  updated: "2026-10-25",
+  updated: "2026-11-12",
   contents: "On this page",
   draftNotice:
     "Draft for review. Highlighted blanks are for the operator to fill in, and the text has not been checked by a lawyer yet.",
@@ -90,7 +90,7 @@ export const legalCopy: LegalCopy = {
         body: [],
         points: [
           "Pluclair holds what you put in it, and what your bank sends if you choose to connect one. Nothing else.",
-          "No advertising, no tracking across sites, and nothing is sold or shared for marketing. An audience measurement, made by us alone, counts the days the app is opened without naming you; you can turn it off in Profile.",
+          "No advertising, no tracking across sites, and nothing is sold or shared for marketing. An audience measurement counts the days the app is opened, and Vercel, our host, counts the pages viewed and how long they take to appear, without cookies and without naming you; you turn both off in Profile.",
           "Pluclair offers no bank connection at the moment, and nothing in it can move money.",
           "You can correct or delete any entry, disconnect your bank, or delete your account from the app, and deleting the account takes everything with it.",
         ],
@@ -105,6 +105,7 @@ export const legalCopy: LegalCopy = {
           "Your preferences: language, which invitations you have dismissed, and the latest change in “What's new” you have read.",
           "Your reactions to “What's new” and your votes on “Coming soon”: everyone sees how many there are, never who gave them.",
           "The audience measurement, unless you turn it off: the days the app is opened, and how many times that day you added a transaction or closed a month. Under an identifier worked out from your account with a secret key, which does not name you. No amount, no shop, no text.",
+          "The pages viewed and how fast they appear, unless you turn the audience measurement off: for each page, its address — an invitation link and an id are replaced in it, and only the parameters saying where you came from are kept —, the site you arrived from, the country and approximate city, the type of device, its system and browser, the type of connection, and how long the page took to appear. Vercel tells visitors apart by a fingerprint of the request, which it erases after 24 hours; no cookie, nothing is stored on your device.",
           "Notifications, if you turn them on: the delivery address your browser or phone gives us (a push subscription, or a push token for the phone app), the browser's user agent, and a log of which reminders we have sent, so none is sent twice.",
           "Your properties, if you add any: what each cost and how it is used, its area and energy class, your share of it, the loans behind it and their terms, and what it is worth to you. Of its address we keep the town and the point it stands on, to compare it with the sales around it; the full address only if you ask us to.",
           "What you write in Entraide, if you post there: your pseudonym and your questions and answers are public; what else is kept about them, and for how long, is set out in Entraide's rules (pluclair.com/blog/entraide/regles), which this policy includes.",
@@ -151,6 +152,7 @@ export const legalCopy: LegalCopy = {
           "For the bank connection, on the consent you give on screen when you upload your credentials file, and at your bank. It covers the sensitive information your transactions can reveal — health, beliefs, union membership — which is processed only on that explicit consent (articles 6(1)(a) and 9(2)(a)). We keep the date and the version of the words you accepted, and you withdraw it by disconnecting.",
           "To send notifications, only when you turn them on. Turning them off on your device or in your browser stops them.",
           "To know whether Pluclair is used: the audience measurement serves only to work out three overall figures — how many come back after a month, how many open it on several days a week, how many close their month — never to change what you see, and it is neither shared nor matched with anything else. The basis is our legitimate interest (article 6(1)(f)), and you object at any time by turning off “Audience measurement” in Profile.",
+          "To know which pages are read and whether they appear quickly: Vercel Web Analytics and Speed Insights give us only overall figures, per page, never per person, and serve nothing else. The basis is our legitimate interest (article 6(1)(f)). Signed in, you object by turning off “Audience measurement” in Profile, which stops them at once; without an account, by turning on Global Privacy Control in your browser, which Pluclair respects.",
           "To keep the service secure and working: our host keeps short-lived technical logs of requests, and we look at them only to fix a fault or stop an abuse. The basis is our legitimate interest in running a safe service (article 6(1)(f)).",
         ],
         after: [
@@ -165,7 +167,7 @@ export const legalCopy: LegalCopy = {
         ],
         points: [
           "Supabase: the database and sign-in, in the European Union, in Frankfurt (Germany).",
-          "Vercel: hosting for the website and the server, with the server functions running in Paris, France.",
+          "Vercel: hosting for the website and the server, with the server functions running in Paris, France; and, unless you turn the audience measurement off, the pages viewed and how fast they appear, described above (Vercel Web Analytics and Speed Insights).",
           "Resend (Plus Five Five, Inc., United States): it sends the e-mails about your account — confirming your address and the link to change your password. For that it receives your e-mail address and the content of those e-mails, nothing else. They are sent from its European region (Ireland), but Resend processes this data mainly in the United States.",
           "OpenRouter (United States), only if you connect your own AI account: Pluclair has no AI model of its own, and reads and questions are written only by the model you chose, on your account and at your expense. OpenRouter receives the figures a read is written from — category names and monthly totals, the funds in a wallet and their values, the name and identifier of a fund to read — and, for a conversation in « Questions », your questions as you typed them — what you write there reaches it as it is —, the answers already given in that conversation, and what the model looks up to answer: totals by month, category or shop, your recurring entries, savings accounts, investments and loans, and, when the question is about them, individual entries (date, label, category, amount). It passes them to the model's provider (Mistral, OpenAI or Anthropic). If you ask it to read a scanned statement, a screenshot or an entry's receipt, it receives that file, once, and hands it to Mistral alone, on its servers in Europe, whatever model you chose for the rest; Pluclair does not keep it. Never your name, your email or your bank credentials. The account's key is kept encrypted on our server, and you can disconnect it at any time.",
           "Brevo (Sendinblue SAS, France), only if you create your statements address: it receives the e-mails your mail service forwards to that address and hands them to us, in the European Union.",
@@ -188,7 +190,7 @@ export const legalCopy: LegalCopy = {
           "A deleted entry: kept for 30 days so the deletion can be undone, then erased by a job that runs every night.",
           "When you delete your account (Profile → Delete account), your credentials file is deleted first, then everything is removed from the database at once. The Supabase plan in use includes no backups: what is removed cannot be restored.",
           "Your credentials file: until you disconnect the bank, replace the file, or delete your account.",
-          "The audience measurement: 13 months, then erased; deleting your account erases it at once.",
+          "The audience measurement: 13 months, then erased; deleting your account erases it at once. The fingerprint Vercel tells visitors apart by: 24 hours; the page and speed figures it keeps afterwards hold nothing that points to you.",
           "Your questions and their answers (« Questions »): 30 days, then erased; each can be deleted sooner, and deleting your account erases them at once.",
           "The log of reminders sent: for as long as the account exists, so none repeats.",
         ],

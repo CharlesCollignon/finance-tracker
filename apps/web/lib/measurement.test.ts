@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { keepIfMeasured, redactUrl, setMeasured } from "./measurement";
 
 describe("redactUrl", () => {
@@ -42,6 +42,17 @@ describe("keepIfMeasured", () => {
     expect(
       keepIfMeasured({ type: "pageview", url: "https://pluclair.com/join/x" }),
     ).toEqual({ type: "pageview", url: "https://pluclair.com/join/[token]" });
+  });
+
+  it("sends nothing when the browser objects (Global Privacy Control)", () => {
+    vi.stubGlobal("navigator", { globalPrivacyControl: true });
+    try {
+      expect(
+        keepIfMeasured({ type: "pageview", url: "https://pluclair.com/" }),
+      ).toBeNull();
+    } finally {
+      vi.unstubAllGlobals();
+    }
   });
 
   it("sends nothing once the switch is off", () => {

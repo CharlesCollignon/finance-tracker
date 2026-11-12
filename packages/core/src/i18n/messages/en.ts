@@ -208,7 +208,7 @@ export const en = {
     dataSection: "Data",
     audience: "Audience measurement",
     audienceHint:
-      "The days you open Pluclair, under an id that does not name you. No amounts, no shops.",
+      "The days you open Pluclair, and on the web the pages viewed, never naming you. No amounts, no shops.",
     deleteAllData: "Delete all data",
     deleteConfirmLabel: "Type DELETE to confirm",
     deleteConfirmPlaceholder: "Type DELETE",

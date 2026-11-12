@@ -64,9 +64,24 @@ export function redactUrl(url: string): string {
   return absolute ? parsed.toString() : `${parsed.pathname}${parsed.search}`;
 }
 
-/** `beforeSend` for both: nothing while the switch is off, a cleaned address otherwise. */
+/**
+ * Global Privacy Control, the browser's own « do not measure me ». The one
+ * way a visitor without an account — who has no switch — can object.
+ */
+function browserObjects(): boolean {
+  return (
+    typeof navigator !== "undefined" &&
+    (navigator as { globalPrivacyControl?: boolean }).globalPrivacyControl ===
+      true
+  );
+}
+
+/**
+ * `beforeSend` for both: nothing while the switch is off or the browser
+ * objects, a cleaned address otherwise.
+ */
 export function keepIfMeasured<T extends { url: string }>(event: T): T | null {
-  if (!measured) {
+  if (!measured || browserObjects()) {
     return null;
   }
   return { ...event, url: redactUrl(event.url) };
