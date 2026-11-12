@@ -13,6 +13,8 @@ import type { Metadata, Viewport } from "next";
 // production deploy down on 2026-10-09 on code a preview had just built.
 // These are the same latin files Google served, OFL licences beside them.
 import localFont from "next/font/local";
+import { Analytics } from "@vercel/analytics/next";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import "./globals.css";
 import { getLocale } from "@/lib/locale";
 import { LocaleProvider } from "@/lib/locale-context";
@@ -188,6 +190,8 @@ export default async function RootLayout({
             </DesignProvider>
           </CurrencyProvider>
         </LocaleProvider>
+        <Analytics />
+        <SpeedInsights />
       </body>
     </html>
   );
