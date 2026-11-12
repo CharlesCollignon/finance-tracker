@@ -591,6 +591,17 @@ cron (`sweep_activity`); deleting the account deletes its rows (a trigger on
 retention, the share of the week's users opening on three days or more, and
 the share who closed a month.
 
+The web also loads Vercel Web Analytics and Speed Insights
+(`components/layout/VercelMeasurement.tsx`, in the root layout), under the
+same switch: the root layout reads it for whoever is signed in (a failed read
+counts as off), and a visitor without an account is measured unless the
+browser sends Global Privacy Control. Off at load, neither script is fetched;
+turned off in Profile, `setMeasured` stops every event at once, since a
+loaded script cannot be unloaded. Every event goes through `keepIfMeasured`
+(`lib/measurement.ts`), which drops the query string but `ref` and `utm_*`,
+and turns an invitation token into `[token]` and an id into `[id]` before
+anything leaves the browser. The phone has neither.
+
 ## Bank feed
 
 The sync writes in batches: the feed's rows in a few upserts, and the balance

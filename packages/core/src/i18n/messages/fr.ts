@@ -140,7 +140,7 @@ export const fr: Messages = {
     dataSection: "Données",
     audience: "Mesure d'audience",
     audienceHint:
-      "Les jours où vous ouvrez Pluclair, sous un identifiant qui ne vous nomme pas. Aucun montant, aucun commerce.",
+      "Les jours où vous ouvrez Pluclair, et sur le web les pages vues, sans jamais vous nommer. Aucun montant, aucun commerce.",
     deleteAllData: "Supprimer toutes les données",
     deleteConfirmLabel: "Tapez DELETE pour confirmer",
     deleteConfirmPlaceholder: "Tapez DELETE",

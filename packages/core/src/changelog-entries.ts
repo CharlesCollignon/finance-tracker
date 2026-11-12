@@ -17,6 +17,20 @@ import type { ChangelogEntry, RoadmapItem } from "./changelog";
  */
 export const CHANGELOG: readonly ChangelogEntry[] = [
   {
+    id: "2026-11-12-web-page-measurement",
+    date: "2026-11-12",
+    kind: "better",
+    platforms: ["web"],
+    fr: {
+      title: "Les pages vues, comptées par Vercel",
+      body: "Sur le site et l’application web, Vercel, notre hébergeur, compte désormais les pages vues et le temps qu’elles mettent à s’afficher : sans cookie, sans votre nom ni rien de vos comptes, et un lien d’invitation n’en sort jamais. « Mesure d’audience », dans Profil, l’arrête aussitôt. La politique de confidentialité dit tout ce qui est envoyé.",
+    },
+    en: {
+      title: "Pages viewed, counted by Vercel",
+      body: "On the site and the web app, Vercel, our host, now counts the pages viewed and how long they take to appear: no cookie, not your name nor anything of your accounts, and an invitation link never leaves. “Audience measurement”, in Profile, stops it at once. The privacy policy says everything that is sent.",
+    },
+  },
+  {
     id: "2026-11-07-web-merchants-gone",
     date: "2026-11-07",
     kind: "better",

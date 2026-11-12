@@ -15,7 +15,7 @@ export const legalCopyFr: LegalCopy = {
     notice: "Mentions légales",
   },
   updatedLabel: "Dernière mise à jour\u00A0:",
-  updated: "2026-10-25",
+  updated: "2026-11-12",
   contents: "Sur cette page",
   draftNotice:
     "Brouillon à relire. Les blancs surlignés sont à compléter par l'éditeur, et le texte n'a pas encore été vérifié par un juriste.",
@@ -39,7 +39,7 @@ export const legalCopyFr: LegalCopy = {
         body: [],
         points: [
           "Pluclair conserve ce que vous y mettez, et ce que votre banque envoie si vous choisissez de la connecter. Rien d'autre.",
-          "Aucune publicité, aucun pistage d'un site à l'autre, et rien n'est vendu ni partagé à des fins commerciales. Une mesure d'audience, faite par nous seuls, compte les jours où l'application est ouverte sans vous nommer\u00A0; vous pouvez la couper dans Profil.",
+          "Aucune publicité, aucun pistage d'un site à l'autre, et rien n'est vendu ni partagé à des fins commerciales. Une mesure d'audience compte les jours où l'application est ouverte, et Vercel, notre hébergeur, les pages vues et le temps qu'elles mettent à s'afficher, sans cookie et sans vous nommer\u00A0; vous coupez les deux dans Profil.",
           "Pluclair ne propose pas de connexion bancaire pour le moment, et rien dans Pluclair ne peut déplacer d'argent.",
           "Vous pouvez corriger ou supprimer n'importe quelle écriture, déconnecter votre banque ou supprimer votre compte depuis l'application, et supprimer le compte emporte tout avec lui.",
         ],
@@ -54,6 +54,7 @@ export const legalCopyFr: LegalCopy = {
           "Vos préférences\u00A0: la langue, les invitations que vous avez écartées, et la dernière nouveauté que vous avez lue dans «\u00A0Nouveautés\u00A0».",
           "Vos réactions aux «\u00A0Nouveautés\u00A0» et vos votes sur «\u00A0Bientôt\u00A0»\u00A0: tout le monde voit combien il y en a, mais pas qui les a données.",
           "La mesure d'audience, sauf si vous la coupez\u00A0: les jours où l'application est ouverte, et combien de fois ce jour-là vous avez ajouté une opération ou clôturé un mois. Sous un identifiant calculé à partir de votre compte avec une clé secrète, qui ne vous nomme pas. Aucun montant, aucun commerce, aucun texte.",
+          "Les pages vues et leur vitesse d'affichage, sauf si vous coupez la mesure d'audience\u00A0: pour chaque page, son adresse — un lien d'invitation et un identifiant y sont remplacés, et seuls les paramètres qui disent d'où vous venez sont gardés —, le site d'où vous arrivez, le pays et la ville approximative, le type d'appareil, son système et son navigateur, le type de connexion, et le temps que la page a mis à s'afficher. Vercel distingue les visiteurs par une empreinte de la requête, qu'il efface au bout de 24 heures\u00A0; aucun cookie, rien n'est déposé sur votre appareil.",
           "Les notifications, si vous les activez : l'adresse de distribution que votre navigateur ou votre téléphone nous donne (un abonnement push, ou un jeton push pour l'application mobile), l'identifiant du navigateur (user agent), et la liste des rappels déjà envoyés, pour qu'aucun ne parte deux fois.",
           "Vos biens immobiliers, si vous en ajoutez : ce que chacun a coûté et son usage, sa surface et sa classe énergie, votre part, les prêts qui l'ont financé et leurs conditions, et ce qu'il vaut à vos yeux. De son adresse nous gardons la commune et le point où il se trouve, pour le comparer aux ventes alentour ; l'adresse complète seulement si vous le demandez.",
           "Ce que vous écrivez dans Entraide, si vous y publiez\u00A0: votre pseudonyme et vos questions et réponses sont publics\u00A0; ce qui en est gardé d'autre, et combien de temps, est dit dans les règles d'Entraide (pluclair.com/blog/entraide/regles), qui font partie de cette politique.",
@@ -100,6 +101,7 @@ export const legalCopyFr: LegalCopy = {
           "Pour la connexion bancaire, sur le consentement que vous donnez à l'écran en déposant votre fichier d'identifiants, et auprès de votre banque. Il couvre les informations sensibles que vos opérations peuvent révéler — santé, convictions, appartenance syndicale —, qui ne sont traitées que sur ce consentement explicite (articles 6.1.a et 9.2.a). Nous conservons la date et la version du texte accepté, et vous le retirez en déconnectant votre banque.",
           "Pour envoyer des notifications, seulement si vous les activez. Les désactiver sur votre appareil ou dans votre navigateur les arrête.",
           "Pour savoir si Pluclair sert\u00A0: la mesure d'audience ne sert qu'à calculer trois chiffres d'ensemble — combien reviennent après un mois, combien l'ouvrent plusieurs jours par semaine, combien clôturent leur mois —, jamais à changer ce que vous voyez, et n'est ni partagée ni croisée avec autre chose. La base est notre intérêt légitime (article 6.1.f), et vous vous y opposez à tout moment en coupant «\u00A0Mesure d'audience\u00A0» dans Profil.",
+          "Pour savoir quelles pages sont lues et si elles s'affichent vite\u00A0: Vercel Web Analytics et Speed Insights ne nous donnent que des chiffres d'ensemble, par page, jamais par personne, et ne servent à rien d'autre. La base est notre intérêt légitime (article 6.1.f). Connecté, vous vous y opposez en coupant «\u00A0Mesure d'audience\u00A0» dans Profil, qui les arrête aussitôt\u00A0; sans compte, en activant Global Privacy Control dans votre navigateur, que Pluclair respecte.",
           "Pour garder le service sûr et en état de marche : notre hébergeur conserve brièvement des journaux techniques des requêtes, que nous ne consultons que pour corriger une panne ou arrêter un abus. La base est notre intérêt légitime à faire fonctionner un service sûr (article 6.1.f).",
         ],
         after: [
@@ -114,7 +116,7 @@ export const legalCopyFr: LegalCopy = {
         ],
         points: [
           "Supabase\u00A0: la base de données et la connexion, dans l'Union européenne, à Francfort (Allemagne).",
-          "Vercel\u00A0: l'hébergement du site et du serveur, les fonctions serveur s'exécutant à Paris, en France.",
+          "Vercel\u00A0: l'hébergement du site et du serveur, les fonctions serveur s'exécutant à Paris, en France\u00A0; et, sauf si vous coupez la mesure d'audience, les pages vues et leur vitesse d'affichage décrites plus haut (Vercel Web Analytics et Speed Insights).",
           "Resend (Plus Five Five, Inc., États-Unis)\u00A0: il envoie les e-mails liés à votre compte — la confirmation de votre adresse et le lien pour changer de mot de passe. Il reçoit pour cela votre adresse e-mail et le contenu de ces e-mails, rien d'autre. Les envois partent de sa région européenne (Irlande), mais Resend traite ces données principalement aux États-Unis.",
           "OpenRouter (États-Unis), seulement si vous connectez votre propre compte IA\u00A0: Pluclair n'a pas de modèle d'IA à lui, et les lectures et les questions ne sont rédigées que par le modèle que vous avez choisi, sur votre compte et à vos frais. OpenRouter reçoit les chiffres à partir desquels une lecture est écrite — noms de catégories et totaux du mois, fonds d'un portefeuille et leurs valeurs, nom et identifiant d'un fonds à lire —, et, pour une conversation dans «\u00A0Questions\u00A0», vos questions telles que vous les avez tapées — ce que vous y écrivez lui parvient tel quel —, les réponses déjà données dans cette conversation, et ce que le modèle consulte pour y répondre\u00A0: des totaux par mois, catégorie ou commerce, vos opérations récurrentes, vos comptes d'épargne, vos placements et vos prêts, et, quand la question porte sur elles, des opérations une à une (date, libellé, catégorie, montant). Il les transmet au fournisseur du modèle (Mistral, OpenAI ou Anthropic). Si vous lui demandez de lire un relevé scanné, une capture d'écran ou le justificatif d'une opération, il reçoit ce fichier, une fois, et le confie à Mistral seul, sur ses serveurs en Europe, quel que soit le modèle choisi pour le reste\u00A0; Pluclair ne le garde pas. Jamais votre nom, votre e-mail ni vos identifiants bancaires. La clé de ce compte est conservée chiffrée sur notre serveur, et vous pouvez le déconnecter à tout moment.",
           "Brevo (Sendinblue SAS, France), seulement si vous créez votre adresse de relevés\u00A0: il reçoit les e-mails que votre messagerie fait suivre à cette adresse et nous les transmet, dans l'Union européenne.",
@@ -137,7 +139,7 @@ export const legalCopyFr: LegalCopy = {
           "Une écriture supprimée\u00A0: conservée 30 jours pour pouvoir annuler la suppression, puis effacée par une tâche qui passe chaque nuit.",
           "Quand vous supprimez votre compte (Profil → Supprimer le compte), votre fichier d'identifiants est d'abord supprimé, puis tout est retiré de la base d'un coup. L'offre Supabase utilisée ne comprend pas de sauvegardes\u00A0: ce qui est retiré ne peut pas être restauré.",
           "Votre fichier d'identifiants\u00A0: jusqu'à ce que vous déconnectiez la banque, remplaciez le fichier ou supprimiez votre compte.",
-          "La mesure d'audience\u00A0: 13 mois, puis effacée\u00A0; supprimer votre compte l'efface aussitôt.",
+          "La mesure d'audience\u00A0: 13 mois, puis effacée\u00A0; supprimer votre compte l'efface aussitôt. L'empreinte par laquelle Vercel distingue les visiteurs\u00A0: 24 heures\u00A0; les chiffres de pages et de vitesse qu'il garde ensuite ne contiennent rien qui vous désigne.",
           "Vos questions et leurs réponses («\u00A0Questions\u00A0»)\u00A0: 30 jours, puis effacées\u00A0; chacune peut être supprimée avant, et supprimer votre compte les efface aussitôt.",
           "La liste des rappels envoyés : tant que le compte existe, pour qu'aucun ne se répète.",
         ],
