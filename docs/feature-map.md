@@ -243,7 +243,7 @@ The person's categories, and the rules that file a bank line by itself.
 
 - **Web:** `/categories` (`CategoriesView`), `/rules` (`rules/RulesView`).
 - **Phone:** `categories`, `rules`.
-- **Core:** `categories`, `categories-for`, `category-styles`,
+- **Core:** `categories` (`categoriesFor`), `category-styles`,
   `seed-categories`, `filing-rules`, `merchant-memory`.
 - **Data:** `categories`, `filing-rules`.
 
@@ -256,7 +256,7 @@ split, feedback, account deletion.
 - **Web:** `/profile` (`components/profile/`: `ProfileView`,
   `PasskeysPanel`, `AiAccountSection`, design picker).
 - **Phone:** `(tabs)/profile` (`components/profile/`: `DesignPicker`,
-  `SecurityCards`, `SpaceSection`, `AiAccountSection`).
+  `SecurityCards.tsx` (passkeys), `SpaceSection`, `AiAccountSection`).
 - **Core:** `notification-kinds`, `designs`, `design-palettes`, `flags`,
   `ai-brands`, `ai-models`.
 - **Data:** `preferences`, `ai-connection`, `account`, `spaces`,

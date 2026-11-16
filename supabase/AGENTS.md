@@ -39,7 +39,10 @@ holds the auth e-mails. The root `AGENTS.md` applies too.
 - The local migration history is out of step (`supabase migration up --local`
   stops at 054 although the schema is current). Apply a new file directly:
   `docker exec -i supabase_db_finance-tracker psql -U postgres -d postgres < supabase/migrations/NNN_name.sql`.
-- Run a test file the same way with `supabase/tests/NNN_name.test.sql`.
+- Run a test file the same way with `supabase/tests/NNN_name.test.sql`, or
+  all of them:
+  `for f in supabase/tests/*.test.sql; do docker exec -i supabase_db_finance-tracker psql -U postgres -q -v ON_ERROR_STOP=1 < "$f" || break; done`.
+  CI doesn't run them, so run them by hand when you touch RLS or a function.
 - If the gateway (`supabase_kong_finance-tracker`) won't start, often after a
   template file changed, `supabase stop` then `start` recreates it and keeps
   the data.

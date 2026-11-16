@@ -188,9 +188,11 @@ first reader.
   surrounding style.
 - **Never run Prettier on `docs/legal/*.md` or `docs/store/*.md`.** It shifts
   the indentation after `[[…]]` placeholders on every run.
-- Web code, packages, `CONTEXT.md`, `docs/how-pluclair-works.md`,
-  `docs/plans/` and `docs/decisions/` are Prettier-clean. Formatting a file
-  you changed is fine there.
+- Elsewhere, **format a file only if it was Prettier-clean before your
+  change**: run `npx prettier --check <file>` first. Web code, the packages,
+  `CONTEXT.md`, `docs/feature-map.md`, `docs/operations.md` and
+  `docs/decisions/` are clean. `docs/how-pluclair-works.md` and some plans
+  are not. Formatting them buries your change in reflowed tables.
 
 ## This machine
 
