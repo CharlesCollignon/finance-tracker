@@ -1,4 +1,5 @@
 <!-- BEGIN:nextjs-agent-rules -->
+
 # This is NOT the Next.js you know
 
 This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` before writing any code. Heed deprecation notices.
@@ -106,18 +107,18 @@ Two more rules:
 
 ## Where code goes
 
-| What                                                              | Where                                                                               |
-| ----------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
-| A calculation, a rule, a zod schema, a string                     | `packages/core` (pure: no I/O, no React)                                            |
-| A Supabase read or write both apps make                           | `packages/data`, taking the caller's `db`                                           |
+| What                                                              | Where                                                                              |
+| ----------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
+| A calculation, a rule, a zod schema, a string                     | `packages/core` (pure: no I/O, no React)                                           |
+| A Supabase read or write both apps make                           | `packages/data`, taking the caller's `db`                                          |
 | A web screen                                                      | `apps/web/app/(app)/<route>/page.tsx` (server) + `apps/web/components/finance/...` |
 | A web write                                                       | a server action in `apps/web/lib/actions/`, through `asUser`/`asOwner`             |
-| Something the phone needs a server secret for (AI, bank, inbound) | a bearer route in `apps/web/app/api/`, sharing the server action's code             |
-| A phone screen                                                    | `apps/mobile/src/app/...` + `apps/mobile/src/components/...`                        |
-| A scheduled job                                                   | `apps/web/app/api/cron/<name>/route.ts` + `apps/web/vercel.json`                    |
-| A schema change                                                   | `supabase/migrations/NNN_name.sql` + `supabase/tests/NNN_name.test.sql`             |
-| A notification kind                                               | `packages/core/src/notification-kinds.ts`, sent by `apps/web/lib/push/`             |
-| A feature switch                                                  | `packages/core/src/flags.ts` + a migration seeding it                               |
+| Something the phone needs a server secret for (AI, bank, inbound) | a bearer route in `apps/web/app/api/`, sharing the server action's code            |
+| A phone screen                                                    | `apps/mobile/src/app/...` + `apps/mobile/src/components/...`                       |
+| A scheduled job                                                   | `apps/web/app/api/cron/<name>/route.ts` + `apps/web/vercel.json`                   |
+| A schema change                                                   | `supabase/migrations/NNN_name.sql` + `supabase/tests/NNN_name.test.sql`            |
+| A notification kind                                               | `packages/core/src/notification-kinds.ts`, sent by `apps/web/lib/push/`            |
+| A feature switch                                                  | `packages/core/src/flags.ts` + a migration seeding it                              |
 
 The web and the phone have the same features, each in its own native form
 ([0002](docs/decisions/0002-shared-core-and-parity.md)). A feature built on

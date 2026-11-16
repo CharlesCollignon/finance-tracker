@@ -6,18 +6,18 @@ differs from older training data. The root `AGENTS.md` applies too.
 
 ## Shape
 
-| Folder                    | What                                                                          |
-| ------------------------- | ----------------------------------------------------------------------------- |
-| `app/(app)/`              | Signed-in screens. Server components read Supabase with the cookie session.  |
-| `app/(auth)/`             | Sign in, sign up, password reset, joining a shared space.                     |
-| `app/(marketing)/`        | The public site: landing, blog, Entraide, Nouveautés, legal, download pages. |
-| `app/api/`                | Bearer routes for the phone, crons, webhooks.                                 |
-| `lib/actions/`            | Server actions, one file per area, all through `asUser` / `asOwner`.         |
-| `lib/queries/`            | Server reads used by pages.                                                   |
-| `components/finance/`     | The app's screens and blocks.                                                 |
-| `components/marketing/`   | The site. Its copy lives beside it (`*-copy.ts` / `*-copy.fr.ts`).            |
-| `content/guides/`         | « Le blog » guides in MDX. List a new one in `lib/guide-list.ts`.            |
-| `proxy.ts`                | Next 16's middleware: session refresh and route protection.                  |
+| Folder                  | What                                                                         |
+| ----------------------- | ---------------------------------------------------------------------------- |
+| `app/(app)/`            | Signed-in screens. Server components read Supabase with the cookie session.  |
+| `app/(auth)/`           | Sign in, sign up, password reset, joining a shared space.                    |
+| `app/(marketing)/`      | The public site: landing, blog, Entraide, Nouveautés, legal, download pages. |
+| `app/api/`              | Bearer routes for the phone, crons, webhooks.                                |
+| `lib/actions/`          | Server actions, one file per area, all through `asUser` / `asOwner`.         |
+| `lib/queries/`          | Server reads used by pages.                                                  |
+| `components/finance/`   | The app's screens and blocks.                                                |
+| `components/marketing/` | The site. Its copy lives beside it (`*-copy.ts` / `*-copy.fr.ts`).           |
+| `content/guides/`       | « Le blog » guides in MDX. List a new one in `lib/guide-list.ts`.            |
+| `proxy.ts`              | Next 16's middleware: session refresh and route protection.                  |
 
 Which page shows what, and which modules and tables each one uses, is in
 `docs/feature-map.md`.
