@@ -1,0 +1,19 @@
+---
+description: Where Pluclair's working rules, design rules and feature map live
+alwaysApply: true
+---
+
+# Pluclair
+
+Follow `AGENTS.md` at the repository root, and the `AGENTS.md` of the folder
+you are working in (`apps/web`, `apps/mobile`, `packages/core`,
+`packages/data`, `supabase`). They hold the product's lines, the git flow,
+the checks, and the rules for the database, copy and formatting.
+
+- Which page shows which feature, and the code behind it: `docs/feature-map.md`.
+- How it looks and moves: `apps/web/DESIGN.md` and `apps/mobile/DESIGN.md`.
+  They replace the old "transparent gamified UI" rule. Arrivals fade (no
+  stagger), and each design (Nuit, Papier, Bento, Console) frames its blocks
+  its own way.
+- Why things are the way they are: `docs/decisions/README.md`.
+- Every doc and when to update it: `docs/README.md`.

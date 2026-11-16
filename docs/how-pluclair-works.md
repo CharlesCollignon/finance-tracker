@@ -5,8 +5,9 @@ figure is computed, and what is known to be wrong. Written for whoever works
 on the repository next, human or agent. Every phase of
 `docs/plans/PLUCLAIR_UPGRADE_PLAN.md` updates it before it closes.
 
-Last updated: Plan du quotidien, phase 8 — the tax page removed (2026-10-09;
-`docs/plans/EVERYDAY_PLAN.md`, `docs/plans/SHARED_SPACE_DESIGN.md`).
+Last updated: docs foundation — sections moved to `docs/feature-map.md`,
+gates to `AGENTS.md` (2026-11-16). Sections below that predate it still say
+when they were last true.
 
 ## Shape
 
@@ -16,7 +17,7 @@ Last updated: Plan du quotidien, phase 8 — the tax page removed (2026-10-09;
 | `apps/mobile`   | Expo 57 with expo-router and NativeWind, dark only. Reads and writes Supabase directly under RLS; calls the web app for the month read (`POST /api/month-read`) and a bank refresh (`POST /api/bank/refresh`) with a bearer token.                                                                                                                                                                                                                                                                                                                                 |
 | `packages/core` | Pure TypeScript shared by both apps and shipped to them as source: every calculation, every zod schema, every string (`src/i18n/messages/en.ts`, `fr.ts`).                                                                                                                                                                                                                                                                                                                                                                                                         |
 | `packages/data` | The Supabase reads and writes both apps make, written once and handed the caller's client (`Db`): recurring templates and occurrences, transactions (`ledger`, `month-ledger`, `history`), deletes and their undo (`deletions`), categories and their seeding, fulfilment, the month close, the month's balance, the bank's balance, the review inbox (`bank-inbox`), positions and wallet plans, instrument readings, savings accounts, properties and their loans (`properties`), preferences, the weekly recap, delete-all. `pnpm --filter @finance/data test`. |
-| `supabase/`     | Migrations `001`–`068`, assertion scripts in `tests/`, one edge function (`delete-account`).                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| `supabase/`     | Migrations `001`–`088` (listed in `docs/feature-map.md`), SQL tests in `tests/`, one edge function, the auth e-mails.                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
 
 Vocabulary is fixed by `CONTEXT.md`; product commitments by
 `apps/web/PRODUCT.md`; visual rules by `apps/web/DESIGN.md` and
@@ -24,25 +25,11 @@ Vocabulary is fixed by `CONTEXT.md`; product commitments by
 
 ## Sections
 
-| Section                | Web route                                | Phone screen                                                             |
-| ---------------------- | ---------------------------------------- | ------------------------------------------------------------------------ |
-| Bearing                | `/bearing`                               | `(tabs)/index`                                                           |
-| Ledger — list          | `/transactions`                          | `(tabs)/transactions`                                                    |
-| Ledger — calendar      | `/calendar`                              | `(tabs)/calendar`                                                        |
-| Ledger — by category   | `/history`                               | `(tabs)/history`                                                         |
-| Charges                | `/recurring`                             | `(tabs)/recurring`                                                       |
-| Plan                   | `/plan`                                  | `(tabs)/planning`                                                        |
-| Wallets — positions    | `/investments`                           | `(tabs)/investments`                                                     |
-| Wallets — look-through | `/investments/look-through`              | none                                                                     |
-| Property — list        | `/property` (flag `property.track`)      | `(tabs)/property` (same flag)                                            |
-| Property — one         | `/property/[id]` (flag `property.track`) | `property/[id]`, pushed over the tabs                                    |
-| Categories             | `/categories`                            | `categories`                                                             |
-| Filing rules           | `/rules`                                 | `rules`                                                                  |
-| Import (CSV, OFX)      | `/import`                                | `import`                                                                 |
-| Welcome                | `/welcome`                               | `onboarding`                                                             |
-| Profile                | `/profile`                               | `(tabs)/profile`                                                         |
-| Sign in, sign up       | `/login`, `/signup`, `/auth/confirm`     | `(auth)/login`, `(auth)/signup`                                          |
-| Password reset         | `/reset`, `/auth/confirm`, `/reset/new`  | `(auth)/reset` (the new password is set on the web page the email opens) |
+Which web route and phone screen show each feature, and the modules, tables,
+server routes, notifications and flags behind it, are in
+`docs/feature-map.md`. That file is checked against the code by
+`pnpm check:docs`, so it is the one to trust when this guide and the code
+disagree.
 
 ## Conventions for a write
 
@@ -956,22 +943,15 @@ update feature_flags set enabled_by_default = true where key = 'bank.connect';
 
 ## Gates
 
-```
-pnpm --filter @finance/core exec tsc --noEmit
-pnpm --filter web exec tsc --noEmit
-pnpm --filter mobile exec expo customize tsconfig.json && pnpm --filter mobile exec tsc --noEmit
-pnpm --filter @finance/core test
-pnpm --filter web test
-pnpm --filter web exec eslint --max-warnings 0 .
-pnpm --filter mobile exec expo lint --max-warnings 0
-pnpm check:reachability
-```
-
-Migrations: `npx supabase start`, `npx supabase db reset`, then every
-assertion script:
-`for f in supabase/tests/*.test.sql; do docker exec -i supabase_db_finance-tracker psql -U postgres -q -v ON_ERROR_STOP=1 < "$f" || break; done`.
+The commands are in `AGENTS.md` « Checks before every commit », in the order
+CI runs them. The SQL assertion scripts are in `supabase/AGENTS.md`.
 
 ## Known issues
+
+- Migration `087` created `cards` without the demo account's
+  `refuse_demo_write` trigger (`081` only covered the tables that existed
+  then), so a demo visitor can add a card. A migration adding the trigger is
+  the fix; every later table needs it (`supabase/AGENTS.md`).
 
 - Until the Supabase dashboard's "Reset password" and "Confirm signup" email
   templates link to `/auth/confirm` with the token hash
