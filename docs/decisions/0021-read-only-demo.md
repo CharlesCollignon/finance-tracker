@@ -20,6 +20,6 @@ account to look at.
 ## Consequences
 
 - **Every table created later must add the trigger.** `087`'s `cards` did
-  not. See `supabase/AGENTS.md`.
+  not, until `089` added it. See `supabase/AGENTS.md`.
 - The demo has no bank feed, cards or statements.
 - It is the cheapest way to check a deployed screen.
