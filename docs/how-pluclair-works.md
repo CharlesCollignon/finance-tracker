@@ -948,11 +948,6 @@ CI runs them. The SQL assertion scripts are in `supabase/AGENTS.md`.
 
 ## Known issues
 
-- Migration `087` created `cards` without the demo account's
-  `refuse_demo_write` trigger (`081` only covered the tables that existed
-  then), so a demo visitor can add a card. A migration adding the trigger is
-  the fix; every later table needs it (`supabase/AGENTS.md`).
-
 - Until the Supabase dashboard's "Reset password" and "Confirm signup" email
   templates link to `/auth/confirm` with the token hash
   (`supabase/templates/`), a reset or confirmation link only works in the

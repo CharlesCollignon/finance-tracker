@@ -729,5 +729,6 @@ its row. Run order and the local and hosted procedures are in
 | `086_recurring_amount_varies`      | « Le montant varie »                                                     |
 | `087_cards`                        | Cards and deferred debit                                                 |
 | `088_design`                       | The chosen design                                                        |
+| `089_demo_cards`                   | The demo guard on `cards`                                                |
 
 <!-- /docs-check -->

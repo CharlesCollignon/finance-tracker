@@ -17,8 +17,8 @@ holds the auth e-mails. The root `AGENTS.md` applies too.
    - the demo guard:
      `create trigger refuse_demo_write before insert or update or delete on public.<table> for each row execute function public.refuse_demo_write();`
      Migration `081` added it to every table that existed then. A table
-     created later must add its own (`087`'s `cards` didn't; see
-     `docs/how-pluclair-works.md` « Known issues »).
+     created later must add its own (`087`'s `cards` didn't, until `089`).
+     `tests/089_demo_cards.test.sql` fails while any public table lacks it.
 3. A `security definer` function:
    - `revoke all … from public, anon, authenticated`, then grant only what is
      needed;
