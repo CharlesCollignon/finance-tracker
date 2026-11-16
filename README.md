@@ -1,586 +1,127 @@
 # Pluclair
 
-Personal finance app (EUR-centric) — [pluclair.com](https://pluclair.com).
-Next.js web client + Expo (React Native) mobile app, sharing one Supabase
-backend and domain logic in `packages/core`.
+A free personal-finance app for French users —
+[pluclair.com](https://pluclair.com). A Next.js web app and an Expo phone
+app share one Supabase backend and two TypeScript packages that hold every
+rule and every query.
 
-The git monorepo folder may still be named `finance-tracker`; the product
-brand is **Pluclair**.
+The repository folder may still be called `finance-tracker`; the product is
+**Pluclair**.
 
-## Monorepo layout
+## Find your way
+
+| You want to…                                               | Read                         |
+| ---------------------------------------------------------- | ---------------------------- |
+| Change the code (rules for humans and agents)              | `AGENTS.md`                  |
+| Find which doc covers what                                 | `docs/README.md`             |
+| See which page shows which feature, and the code behind it | `docs/feature-map.md`        |
+| Understand how it works                                    | `docs/how-pluclair-works.md` |
+| Know why it is the way it is                               | `docs/decisions/README.md`   |
+| Deploy, configure, release, fix production                 | `docs/operations.md`         |
+| Learn the words                                            | `CONTEXT.md`                 |
+
+## Layout
 
 ```
-finance-tracker/          (repo root)
+finance-tracker/
 ├── apps/
-│   ├── web/          Next.js 16 (desktop + mobile web)
-│   └── mobile/       Expo SDK 57 (Android / iOS via Expo Go)
+│   ├── web/          Next.js 16: the web app, its API and the public site (Vercel)
+│   └── mobile/       Expo SDK 57: the phone app (Android APK)
 ├── packages/
-│   └── core/         Shared TypeScript (budget, recurrence, validations…)
-└── supabase/         Postgres migrations and RLS policies
+│   ├── core/         Pure TypeScript: calculations, rules, zod schemas, strings (FR/EN)
+│   └── data/         The Supabase reads and writes both apps make
+├── supabase/         Migrations, SQL tests, auth e-mail templates, one edge function
+├── scripts/          Release, changelog, docs check, demo, types, brand icons
+└── docs/             Feature map, how it works, decisions, operations, plans, legal
 ```
 
-## Prerequisites
+## Set up
 
-- **Node.js** 20+ (22 recommended for Supabase)
-- **pnpm** 11 (`npm install -g pnpm`)
-- A **Supabase** project ([supabase.com](https://supabase.com))
-- **Mobile only:** [Expo Go](https://expo.dev/go) on your phone (SDK 57)
-
-Apply the database schema once on your Supabase project (SQL editor or
-CLI) using the files in `supabase/migrations/`, in order (`001` → `029`).
-Optional account deletion from mobile also needs the
-`delete-account` Edge Function in `supabase/functions/`.
-
----
-
-## 1. Install dependencies
-
-From the repository root:
+You need Node 22 (CI uses 22; 20 works locally), pnpm 11
+(`npm install -g pnpm`), and Docker for the local database. For the phone:
+Expo Go (SDK 57) or a development build.
 
 ```bash
 pnpm install
 ```
 
-This repo uses a **hoisted** pnpm layout (`nodeLinker: hoisted` in
-`pnpm-workspace.yaml`) so Metro and Expo autolinking work correctly.
-Do not change that unless you know what you are doing.
+The workspace uses a hoisted layout (`nodeLinker: hoisted` in
+`pnpm-workspace.yaml`) so Metro and Expo autolinking work. Keep it.
 
----
+### The database
 
-## 2. Environment variables
+Develop against a **local** Supabase, never against the hosted project:
 
-### Web (`apps/web`)
+```bash
+pnpm dlx supabase@2.119.0 start
+pnpm dlx supabase@2.119.0 status -o json   # URL and keys
+```
 
-Copy the example file and fill in your Supabase values (Dashboard →
-Project Settings → API):
+The local stack applies `supabase/migrations/` on first start. After a new
+migration, see `supabase/AGENTS.md`.
+
+### Environment
 
 ```bash
 cp apps/web/.env.local.example apps/web/.env.local
-```
-
-| Variable                        | Required | Notes                                                                   |
-| ------------------------------- | -------- | ----------------------------------------------------------------------- |
-| `NEXT_PUBLIC_SUPABASE_URL`      | yes      | `https://xxxx.supabase.co`                                              |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | yes      | Public anon key                                                         |
-| `NEXT_PUBLIC_SITE_URL`          | yes      | `http://localhost:3000` in dev; `https://pluclair.com` in production    |
-| `SUPABASE_SERVICE_ROLE_KEY`     | optional | “Delete account” on web, and the daily cron jobs                        |
-| `APPLE_TEAM_ID`                 | optional | Passkeys on iOS — Apple Team ID for AASA                                |
-| `ANDROID_SHA256_FINGERPRINTS`   | optional | Passkeys on Android — colon-hex SHA-256 fingerprints                    |
-| `AI_SECRETS_KEY`                | optional | 32 random bytes, base64; seals each user's AI account key. Reads and    |
-|                                 |          | questions need a connected account, so none are written without it      |
-| `BANK_SECRETS_KEY`              | optional | 32 random bytes, base64; seals each user's credentials file. Bank setup |
-|                                 |          | is then offered where the `bank.connect` flag is on                     |
-
-Pluclair holds no model key of its own. Every read and every question is
-written on the user's own AI account, connected from Profile through
-OpenRouter and paid by them, with the model they chose
-(`docs/plans/AI_ACCOUNT_PLAN.md`). Without a connected account, nothing is
-written and the screens invite the person to connect one.
-
-Every one of these is server-side. None is `NEXT_PUBLIC_` and none is read in
-a browser; a screen learns only whether an account is connected and the name
-of its model.
-
-The look-through reads an instrument with OpenRouter's web search, on the
-same account. Without an answer, the attempt is refunded, and the geography
-and sector sections say "not yet read" — which is the truth. Overlap by index,
-weighted charges, wrapper eligibility and the target allocation are computed
-without any model and are unaffected.
-
-Google OAuth is configured in the **Supabase dashboard**, not in env files.
-
-### Mobile (`apps/mobile`)
-
-Same Supabase project; **public keys only** (never put the service role
-key in the mobile app):
-
-```bash
 cp apps/mobile/.env.example apps/mobile/.env
 ```
 
-| Variable                        | Required | Notes                                                                                                                                                                                                      |
-| ------------------------------- | -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `EXPO_PUBLIC_SUPABASE_URL`      | yes      | Same project as the web app                                                                                                                                                                                |
-| `EXPO_PUBLIC_SUPABASE_ANON_KEY` | yes      | Public anon key                                                                                                                                                                                            |
-| `EXPO_PUBLIC_WEB_APP_URL`       | optional | The web app's origin. Anything needing a server secret — asking the bank for new movements, writing a month read — goes through it. Without it the phone still works; those two buttons are simply absent. |
+Fill them with the local Supabase values. Every variable is described in
+`docs/operations.md` « Environment variables ». The phone takes public keys
+only.
 
-After changing `.env`, restart Expo with a cleared cache (`-c`).
-
-Deep link scheme: `pluclair://` (see `apps/mobile/app.json`).
-
----
-
-## 3. Desktop / web
-
-Start the Next.js dev server:
+### Run the web app
 
 ```bash
-pnpm dev:web
-# or: pnpm --filter web dev
+pnpm dev:web          # http://localhost:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000).
-
-Other web commands (from root):
+### Run the phone app
 
 ```bash
-pnpm --filter web build    # production build
-pnpm --filter web start    # serve production build
-pnpm --filter web lint
-pnpm --filter web check:supabase   # smoke-check env + categories table
+pnpm dev:mobile       # scan the QR code with Expo Go
 ```
 
-### Deploy on Vercel
+On WSL2, or when Expo Go shows `Failed to download remote update`:
+`pnpm --filter mobile exec expo start -c --tunnel` (`-c` clears Metro's
+cache, needed after a `.env` or NativeWind change). Push notifications,
+passkeys, biometric unlock, the widget and the bank-notification listener
+need an EAS build, not Expo Go.
 
-The Next.js app lives in **`apps/web`**, not the repo root.
+## Check before a commit
 
-In Vercel → Project Settings → Build and Deployment:
-
-- **Root Directory:** `apps/web`
-- Enable **Include files outside of the root directory** (for the
-  workspace lockfile and `packages/core`).
-
-Set the same env vars as in `apps/web/.env.local`, and for **Production**:
-
-- `NEXT_PUBLIC_SITE_URL=https://pluclair.com`
-
-Domain: attach `pluclair.com` (and optionally `www`) under Project → Domains,
-then point Namecheap DNS at the records Vercel shows (usually A `@` →
-`10.0.1.2` and CNAME `www` → `cname.vercel-dns.com`).
-
-### Background jobs (Vercel cron)
-
-Six daily jobs are declared in `apps/web/vercel.json`, four of them pointed
-at the same refresh route. All run under the service role, so all need
-`SUPABASE_SERVICE_ROLE_KEY`, and all refuse to run without `CRON_SECRET` —
-Vercel sends it as `Authorization: Bearer <secret>`.
-
-| Route                        | When                | What it does                                                                               |
-| ---------------------------- | ------------------- | ------------------------------------------------------------------------------------------ |
-| `/api/cron/refresh`          | 07:00               | Fills the month's charges, reprices not-yet-due occurrences, then pulls and syncs the bank |
-| `/api/cron/notify`           | 08:00               | Sends the day's web push digest                                                            |
-| `/api/cron/refresh`          | 12:00, 17:00, 21:00 | Pulls and syncs the bank only                                                              |
-| `/api/cron/read-instruments` | 04:00               | Re-reads one aging instrument reading, for a few users                                     |
-
-**Refreshing** is everything that brings the ledger up to date from outside
-it. Hobby allows a hundred cron jobs per project but insists each runs at most
-once a day, so four separate daily entries at four different hours is how the
-app is current four times a day rather than once. Vercel sends the firing
-schedule as `x-vercel-cron-schedule`, and the route reads it to decide how
-much to do: only the 07:00 run fills and reprices, because quoting every
-user's templates against the market is slow and prices move on a scale of
-days, while the statement is worth re-reading. A hand-run `curl` sends no such
-header and gets the full job.
-
-The steps fail independently: an unreachable bank does not stop quotes
-refreshing, and a rate-limited quote source does not stop the statement being
-read.
-
-_Filling_ writes every occurrence whose day has come and that is not written
-yet — this month and last — for every user whose ledger is not fed by a bank.
-Occurrences after today are never stored: the apps draw them as planned rows
-from the templates. This run is the server's half of what replaced the "Apply
-recurring" button; both apps also fill when they open, so the run is what makes
-the morning's charges already be there rather than arrive a second later.
-
-**Reading instruments** has its own entry rather than a step inside the
-refresh, for the same reason: a search-backed reading takes tens of seconds,
-and bolting one onto a run that already reprices every user's templates and
-reads a bank statement would be the thing that runs the function out of time
-— taking the statement down with it. It needs `AI_SECRETS_KEY` on top of
-the two above, and answers `{ "skipped": ... }` rather than failing when
-either is absent; it reads only for users with an AI account connected, on
-that account. One instrument per user, a few users per run: a portfolio's
-readings arrive over a few days, and nothing about it is urgent because a
-reading one day staler is a reading still being used.
-
-_Repricing_ brings occurrences that are applied but still dated ahead back in
-line with their instrument's quote, and refreshes each template's stored
-price. It never touches a date that has passed and never creates a
-transaction. This is what keeps a DCA written ahead of time at the price it
-will actually cost.
-
-_The bank sync_ reads the statement open-banking.io already holds (it never
-asks the bank itself; see _Pulling_ below), files what the user's own history already answers for, and leaves the rest in
-the review inbox. It pushes only when the run left something needing a
-decision, keyed by the day so it is said once. It runs for every
-connected user, stalest first, inside a 40-second share of the run, and
-records each connection's health so an expired consent or a paused wallet
-reaches the Bank page and the Bearing. A connection comes from a credentials
-file the user uploaded on `/bank` (sealed with `BANK_SECRETS_KEY`), or from the
-owner's `OPEN_BANKING_CREDENTIALS` and `OPEN_BANKING_OWNER_USER_ID` until they
-upload their own; with neither the step is skipped and the refresh still
-reprices.
-
-Both answer `200` with a JSON summary of what they did, so a run can be
-checked by hand:
+The full list, in the same order as CI, is in `AGENTS.md` « Checks before
+every commit ». The short version:
 
 ```bash
-curl -H "Authorization: Bearer $CRON_SECRET" https://pluclair.com/api/cron/refresh
+pnpm check:reachability   # unused strings and exports
+pnpm check:docs           # the feature map matches the code
+pnpm test                 # core, data and web tests
 ```
 
-**Notifying** says at most one useful thing a day — a new month, a breached
-budget — to every device the user has granted permission on. A bank consent
-ending within seven days, or a connection that stopped, is said on top of
-that, once per event.
-
-Two kinds of device, reached two different ways, and neither is a fallback for
-the other. A browser is reached over Web Push and needs the VAPID keys; a
-phone is reached by handing its Expo token to Expo, which needs no
-configuration here at all. So a deployment with no VAPID keys still notifies
-phones and only skips browsers, and one without migration `026` still
-notifies browsers and only skips phones. Both fan out through
-`lib/push/send.ts`, which the daily digest and the bank sync share.
-
-`notification_log` keys what has already been said per user rather than per
-device, which is what makes "said once" mean once across a laptop and a phone
-rather than once each.
-
-Careful with the word "notification" on mobile: two things wear it. A
-_reminder_ is something the phone already knows — a template says rent leaves
-on the 5th, so the evening of the 4th can be scheduled months ahead, on the
-device, with no server involved. _News_ cannot be scheduled: a breached cap,
-or the overnight sync leaving entries needing a category, are facts about the
-world the phone has no way to have. Reminders were the only kind the app had,
-which is why a review inbox filled overnight was announced to the browser and
-not to the phone it mattered on. One switch in Profile covers both: granting
-permission schedules the reminders and registers an Expo push token.
-
-Expo push tokens need a development or production build — Expo Go on Android
-cannot get one — so this is a feature you test on an EAS build, not in Go.
-
-### Asking the bank, and how often
-
-Two different calls hide behind the word "sync", and only one of them has a
-limit.
-
-Reading open-banking.io's stored statement (`getAccounts`, `getTransactions`)
-is a read of our own copy. It reaches no bank, costs nothing, and can be done
-as often as anyone likes — but it is only as current as the last sync, and
-open-banking.io never syncs on its own: the bank identifier is sealed under
-the user's key, so a sync happens only in their browser, their own client, or
-when they press Refresh in Pluclair.
-
-_Pulling_ — the SDK's `syncAll` — is the call that reaches the bank, and
-Pluclair makes it **only when the user presses Refresh**. PSD2 reserves
-scheduled, unattended access (four reads a day per account) to the licensed
-account information provider, which Pluclair is not, so `pullFromBank`
-refuses an unattended pull outright and the cron only reads (October 2026,
-see `docs/legal/AIPD.md`):
-
-| Kind       | Who                     | Limit                                                                    |
-| ---------- | ----------------------- | ------------------------------------------------------------------------ |
-| Attended   | Someone pressed refresh | None, beyond a 90-second cooldown so a double-tap is not two round trips |
-| Unattended | Nobody                  | Refused — the cron reads what is already synced                          |
-
-The tally lives in `bank_pulls` (migration 022), one row per user per day,
-because a serverless function remembers nothing between invocations and an
-in-memory guard would reset on every cold start. The decision itself is in
-`packages/core/src/bank-pull.ts` and is unit-tested; `apps/web/lib/bank/pull.ts`
-is the plumbing around it.
-
-A refused pull is an ordinary outcome, not an error: the stored statement is
-still read, and every screen says how old the figures are. Without migration
-022 applied, attended refreshes still work.
-
-### Closing a month
-
-The app tracks flows — money it was told about — so it cannot see the spending
-nobody enters: the restaurant, the round of drinks, the thing bought on the way
-home. One balance a month closes that gap. From the previous close, the
-recorded movements and the balance now, the app works out what it never heard
-about, and what the month actually kept.
-
-The balance is read on a fixed **reading day** of the following month
-(the 5th by default, changeable on the Planning/Budgets screen), not on the
-last of the month. With a deferred-debit card the month's card spending has
-not reached the account by the 31st, so a balance read then flatters the month
-and saddles the next one with the bill. Reading it a few days later catches
-the debit; keeping the day fixed makes whatever distortion remains the same
-every month, which is what lets one close be compared with the next. Against
-calendar-month transactions this is an approximation of a few days at each
-end — good enough for the trend, which is the part worth trusting.
-
-Nothing here needs configuring or deploying. A close is a row the user writes;
-skipping months costs nothing beyond having nothing to compare.
-
-### A month, in words
-
-The Month page can carry a short written read of the month: a headline, up to
-four observations, and up to three suggestions. It is written on request — a
-button on the card — never on page load, and stored, so opening the page costs
-nothing.
-
-It is written on the user's own AI account, with the model they chose.
-Without one, the card invites them to connect it. The key is opened
-server-side only; the phone reaches the feature through the web app's
-`POST /api/month-read` with its Supabase session as a bearer token, which is
-the same route the bank refresh takes.
-
-**The model never writes a number.** It is given a set of named figures — the
-labels, values and directions in `packages/core/src/month-facts.ts` — and
-answers in prose containing references like `{{fact:unrecorded}}`, which the
-app replaces with its own formatted value at render time. That is what lets
-the currency toggle and the privacy blur work on a written paragraph, and it
-means a figure nobody computed cannot reach the screen: `verifyMonthRead`
-refuses any answer citing a datum that was never sent, and drops any single
-claim that writes a number of its own. The severities are deliberate — an
-invented figure is fatal, whereas a claim thirty characters too long, or one
-suggestion too many, is trimmed and the rest of the read survives, because
-spending someone's allowance to show them nothing is the wrong price for a
-wrapping problem. All of it is pure and unit-tested, with a fake source that
-asserts no network happened.
-
-Reads are capped at five a month per user, with a minute's cooldown and a
-reservation taken _before_ the call so two presses cannot both spend the last
-one. The counters live in `month_reads` (migration 024) behind `security
-definer` functions, for the same reason the bank tally does: a serverless
-function remembers nothing, and a counter a client may write is a counter a
-client may reset. Without migration 024 the feature is off rather than
-uncapped.
-
-Migration 025 is not optional. A `security definer` function is only as good
-as the check on who may call it, and the ones in 022 and 024 shipped with two
-mistakes that compound: Postgres grants EXECUTE to PUBLIC by default, so the
-explicit grant restricted nothing, and the guard trusted any caller with no
-`auth.uid()` — written for the service role, which has none because it is not
-a person, but equally true of `anon`, which has none for the opposite reason.
-025 revokes the default grant and makes the guard name the service role
-instead of inferring it from an absence.
-
-What goes over the wire is aggregates only — totals, rates, category sums, the
-close figures. No merchant names, no individual transactions, no balances, no
-IBANs, no account holder. The provider behind the model is the user's
-choice, on their own OpenRouter account.
-
-The read is rendered against the figures as they stand _now_, not the ones
-stored with it, so a number in the prose can never contradict the card above
-it. What can age is the judgement: when a figure it rests on has moved, the
-card says which and how long ago it was written. A month still in progress is
-never called stale — its figures change whenever anything is recorded, and a
-warning that is always on is one nobody reads.
-
-### Where it all stands
-
-The app's landing page is the **Bearing**: one screen of figures answering
-"where do I stand, and where is this heading". Everything on it is computed by
-an engine some other surface already renders — the pulse from Month, the
-projection and runway from Plan, the returns, allocation and fund costs from
-Wallets — so a figure links to the page where its number is explained and the
-whole screen is checkable rather than a second source of truth.
-
-Month keeps its `/dashboard` URL and moves under the Bearing in the nav, the
-way Calendar and History sit under the Ledger. The bar holds five surfaces;
-that ceiling is why the Bearing took Month's place rather than being added
-beside it.
-
-### Where the months lead
-
-Plan's projection walks the standing charges forward on **two tracks**: what
-the spending accounts will hold, and everything kept — that plus every euro
-set aside along the way. One line used to do the job and counted money moved
-into savings or a wallet as money gone, so anyone putting half their pay by
-watched their position sink while it grew.
-
-It is arithmetic on instructions already given, not a prediction, so no
-market value appears in it: what is already invested is the Bearing's net
-position to state and Wallets' to value. The one figure in it nobody
-scheduled is a normal month's unrecorded spending, and **that is what the
-second close buys you** — with two closed months the median across them is
-subtracted from every month ahead, and until then the card says plainly that
-it is not counted yet.
-
-The card lists what the figure is made of, charge by charge, and each row
-links to where it is edited. That is not trim: without an income charge every
-number there is arithmetic on outflow alone, so the card says so above the
-figures and the Bearing's fact pack withholds them outright rather than
-putting a catastrophe that is really a missing template on the landing page.
-
-**Two figures and five cards.** The headline states what the accounts hold
-and what the month has left. Beneath it is one card per fact family — this
-month, the accounts, your run, the year ahead, wallets — each opening where it
-stands to show the rest of its figures and the blocks that explain them. A
-figure links to the surface where its number is worked out; a figure with
-nowhere honest to lead is drawn as a plain label and number rather than sent
-somewhere invented.
-
-**Nothing on it is ranked, because nothing is hidden.** It was twelve
-draggable tiles in a bento whose order a model wrote and a reader could
-overrule by dragging, and all three mechanisms that produced that order — an
-arrangement, a set of pins, a twelve-slot template — were answers to "which of
-these figures matters most?". A list of five does not ask the question. So the
-model went, and with it the arrange button, its eight-a-month allowance, the
-pins in `user_preferences` and the `@dnd-kit` grid. There is no model on
-this screen any more and no degraded state without one: the Bearing is the
-same surface for everybody.
-
-Migration `029`'s `bearing_arrangements` table is still there and nothing
-reads it. Dropping it is a migration, so it is recorded as debt in
-`docs/superpowers/specs/2026-09-20-bearing-as-five-cards-design.md` rather
-than done half-way here.
-
-**A card's detail is fetched on the press, never with the page.** `month-read`
-and `arrived-charges` are the expensive blocks — a dozen reads between them —
-and `CARD_FAMILY_BLOCKS` puts each on exactly one card, so two open cards can
-never pay twice for one answer. Nothing about the Bearing goes over the wire
-to a model at all now; what the month read still sends is described above.
-
-### Supabase auth URLs (production)
-
-In Supabase → Authentication → URL configuration:
-
-- **Site URL:** `https://pluclair.com`
-- **Redirect URLs:** include  
-  `https://pluclair.com/**` and  
-  `https://pluclair.com/auth/callback`
-
-### Passkeys (WebAuthn) — dashboard
-
-In Supabase → Authentication → Passkeys. **Do not save the
-`example.com` placeholders.** Passkeys are bound to the Relying Party
-ID; changing it later invalidates every enrolled credential.
-
-| Field                         | Value                                                                                                          |
-| ----------------------------- | -------------------------------------------------------------------------------------------------------------- |
-| Enable Passkey authentication | on                                                                                                             |
-| Relying Party Display Name    | `Pluclair`                                                                                                     |
-| Relying Party ID              | `pluclair.com` (bare domain, no `https://`)                                                                    |
-| Relying Party Origins         | `https://pluclair.com` and, after you have the Android signing cert, `android:apk-key-hash:<base64url-sha256>` |
-
-The Android origin is **not** the colon-hex fingerprint used in
-`assetlinks.json`. From the same SHA-256 hex (no colons):
-
-```bash
-echo -n '<hex without colons>' | xxd -r -p | openssl base64 -A | tr '+/' '-_' | tr -d '='
-```
-
-Prefix the result with `android:apk-key-hash:`.
-
-Localhost web passkeys will not work against RP ID `pluclair.com`. Test
-on the production domain (or a tunnel to it). Native passkeys and Face
-ID unlock require an **EAS development/production build**, not Expo Go.
-
-Domain association files are served from the web app:
-
-- `https://pluclair.com/.well-known/apple-app-site-association`
-- `https://pluclair.com/.well-known/assetlinks.json`
-
-Set these server env vars on Vercel (and in `apps/web/.env.local`):
-
-| Variable                      | Notes                                                                   |
-| ----------------------------- | ----------------------------------------------------------------------- |
-| `APPLE_TEAM_ID`               | 10-character Apple Team ID for the AASA `webcredentials` entry          |
-| `ANDROID_SHA256_FINGERPRINTS` | Comma-separated colon-hex SHA-256 cert fingerprints (`eas credentials`) |
-
-iOS bundle ID: `com.salutcharles.pluclair`. Android package:
-`com.salut_charles.pluclair`.
-
----
-
-## 4. Mobile (Expo Go)
-
-Start the Metro bundler:
-
-```bash
-pnpm dev:mobile
-# or: pnpm --filter mobile start
-```
-
-Scan the QR code with **Expo Go** on your phone (same Wi‑Fi as your
-machine).
-
-### WSL2 / phone cannot reach your PC
-
-If Expo Go shows `Failed to download remote update`, use tunnel mode:
-
-```bash
-pnpm --filter mobile exec expo start -c --tunnel
-```
-
-`-c` clears the Metro cache (needed after config or `.env` changes).
-
-### Other mobile commands
-
-```bash
-pnpm --filter mobile exec expo start --android   # Android emulator
-pnpm --filter mobile exec expo start --ios       # iOS simulator (macOS)
-pnpm --filter mobile exec expo start --web       # Expo web preview (not the main web app)
-```
-
-### EAS (optional)
-
-Run all EAS commands from **`apps/mobile`** (not the repo root).
-Display name is **Pluclair**; Expo slug is `pluclair`.
-
-```bash
-npx eas-cli login
-cd apps/mobile
-npx eas-cli build --platform android --profile preview   # installable APK for testing
-```
-
-Use **`preview`** for local testing; **`production`** when you are ready
-for the Play Store. Google OAuth deep links should use `pluclair://`
-(and work more reliably in a development build than in Expo Go).
-
-Android package id: `com.salut_charles.pluclair`. iOS bundle id:
-`com.salutcharles.pluclair`.
-
-Passkeys and Face ID / fingerprint unlock need a **development
-build** (`eas build --profile development`), not Expo Go.
-
----
-
-## 5. Shared package (`@finance/core`)
-
-Domain logic (budget math, recurrence, Zod schemas, types) lives in
-`packages/core` and is imported as `@finance/core/...` from both apps.
-
-After editing core, restart the web or mobile dev server. No separate
-build step is required (TypeScript source is consumed directly).
-
----
-
-## Branding
-
-- Wordmark: **Pluclair** in Orbit (Maxence Duterne Regular)
-  - Web: `apps/web/public/fonts/OrbitMaxenceDuterne-Regular.otf`
-  - Mobile: `apps/mobile/assets/fonts/OrbitMaxenceDuterne-Regular.otf`
-- Text faces: Instrument Sans (body), Fraunces (figures), IBM Plex Mono
-  (ledger amounts). The web app loads all three through `next/font/google`;
-  the phone bundles them under `apps/mobile/assets/fonts/`.
-- The phone's two Fraunces files are **static instances**, not the variable
-  font. React Native cannot set variation axes, so a variable font renders
-  only its default location — and the file that used to sit here defaulted to
-  `wght 900 / opsz 9`, which is why `font-serif` had been drawing Black text
-  at the smallest optical size despite being named Regular. Both are
-  instanced at `opsz 48`, between the sizes `TYPE.figure` (32) and
-  `TYPE.hero` (56) actually render at:
-  - `Fraunces-Regular.ttf` — `wght 400`
-  - `Fraunces-SemiBold.ttf` — `wght 600`, the figure weight, matching web's
-    `font-semibold` on the same face
-    To regenerate either, ask the Google Fonts CSS API for the instance with a
-    legacy user agent (which makes it serve TrueType rather than woff2):
-    `curl -A "Mozilla/4.0" "https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@48,600"`
-    and download the `.ttf` it points at.
-
----
+plus the typecheck and lint of each package (`AGENTS.md`).
+
+## Scripts
+
+| Command                   | What it does                           |
+| ------------------------- | -------------------------------------- |
+| `pnpm dev:web`            | Next.js dev server                     |
+| `pnpm dev:mobile`         | Expo dev server                        |
+| `pnpm test`               | Core, data and web tests               |
+| `pnpm check:reachability` | Unused i18n keys and knip              |
+| `pnpm check:docs`         | `docs/feature-map.md` against the code |
+| `pnpm gen:types`          | Database types from the local schema   |
+
+Other scripts in `scripts/` are listed in `docs/operations.md`.
 
 ## Troubleshooting
 
-| Issue                                        | What to try                                                 |
-| -------------------------------------------- | ----------------------------------------------------------- |
-| Vercel `frozen-lockfile` / lockfile mismatch | Run `pnpm install` at repo root and commit `pnpm-lock.yaml` |
-| Vercel build finds no Next.js app            | Set Root Directory to `apps/web`                            |
-| Expo Go cannot load the bundle               | `expo start -c --tunnel`                                    |
-| Styles missing after NativeWind changes      | Restart with `-c`                                           |
-| Supabase auth errors on web                  | Check `.env.local` / `NEXT_PUBLIC_SITE_URL` and restart     |
-| Supabase auth errors on mobile               | Check `apps/mobile/.env` and restart Expo with `-c`         |
-
----
-
-## Scripts (root)
-
-| Command           | Description             |
-| ----------------- | ----------------------- |
-| `pnpm dev:web`    | Next.js dev server      |
-| `pnpm dev:mobile` | Expo / Metro dev server |
+| Issue                                      | Try                                                                  |
+| ------------------------------------------ | -------------------------------------------------------------------- |
+| Expo Go can't load the bundle              | `expo start -c --tunnel`                                             |
+| Styles missing after a NativeWind change   | Restart Expo with `-c`                                               |
+| Auth errors on the web                     | Check `apps/web/.env.local` and `NEXT_PUBLIC_SITE_URL`, then restart |
+| Auth errors on the phone                   | Check `apps/mobile/.env`, then restart Expo with `-c`                |
+| Mobile typecheck can't find `@/global.css` | `pnpm --filter mobile exec expo customize tsconfig.json`             |
+| A deploy fails                             | `docs/operations.md` « Deploying »                                   |
