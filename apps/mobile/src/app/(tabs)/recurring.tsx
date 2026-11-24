@@ -16,7 +16,7 @@ import {
   canBeFundedByTransfer,
   isFundedDca,
 } from "@finance/core/dca-need";
-import { formatRecurrenceSchedule } from "@finance/core/recurrence";
+import { distinctNote, formatRecurrenceSchedule } from "@finance/core/recurrence";
 import { rollUpRecurring } from "@finance/core/recurring-rollup";
 import { formatSharesLabel } from "@finance/core/recurring-shares";
 import { TYPE_AMOUNT_CLASS } from "@finance/core/category-styles";
@@ -685,13 +685,14 @@ function GroupCard({
                     {t("charges.fixedToBitcoin")}
                   </Text>
                 ) : null}
-                {item.description ? (
+                {/* Only when it says more than the category's name above it. */}
+                {distinctNote(item.description, item.categories.name) ? (
                   <Text variant="muted" className="mt-0.5 text-xs">
-                    {item.description}
+                    {distinctNote(item.description, item.categories.name)}
                   </Text>
                 ) : null}
                 <Text variant="muted" className="mt-1 text-xs">
-                  {formatRecurrenceSchedule(item, locale)}
+                  {formatRecurrenceSchedule(item, locale, todayIsoLocal())}
                 </Text>
               </Pressable>
               {/* The DCA's tick, beside the row's press like the link below:

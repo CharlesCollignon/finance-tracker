@@ -2095,6 +2095,8 @@ export const en = {
     twiceYearly: "Twice a year · day {day} ({months})",
     someMonths: "Some months · day {day} ({months})",
     monthlyExcept: "Monthly except {months} · day {day}",
+    fromDate: "from {date}",
+    untilDate: "until {date}",
   },
 
   /**

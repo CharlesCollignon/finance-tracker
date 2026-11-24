@@ -1639,6 +1639,8 @@ export const fr: Messages = {
     twiceYearly: "Semestriel · le {day} ({months})",
     someMonths: "Certains mois · le {day} ({months})",
     monthlyExcept: "Mensuel sauf {months} · le {day}",
+    fromDate: "à partir de {date}",
+    untilDate: "jusqu'en {date}",
   },
 
   pullAge: {

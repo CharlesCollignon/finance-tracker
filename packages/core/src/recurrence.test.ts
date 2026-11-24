@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   estimateMonthlyAmount,
+  distinctNote,
   formatRecurrenceSchedule,
   getRecurringOccurrenceDates,
   isSpreadExpense,
@@ -145,5 +146,87 @@ describe("formatRecurrenceSchedule with months", () => {
 
   it("is unchanged for every month", () => {
     expect(formatRecurrenceSchedule(monthly, "fr")).toBe("Mensuel · le 15");
+  });
+});
+
+describe("formatRecurrenceSchedule on a list's row", () => {
+  const TODAY = "2026-11-24";
+
+  it("says nothing of the window once begun, with no end", () => {
+    expect(
+      formatRecurrenceSchedule(
+        { ...monthly, starts_on: "2026-02-01" },
+        "fr",
+        TODAY,
+      ),
+    ).toBe("Mensuel · le 15");
+  });
+
+  it("keeps the whole window where no day is given", () => {
+    expect(
+      formatRecurrenceSchedule({ ...monthly, starts_on: "2026-02-01" }, "fr"),
+    ).toBe("Mensuel · le 15 · févr. 2026 → …");
+  });
+
+  it("says when one that has begun will stop", () => {
+    expect(
+      formatRecurrenceSchedule(
+        { ...monthly, starts_on: "2026-02-01", ends_on: "2027-12-15" },
+        "fr",
+        TODAY,
+      ),
+    ).toBe("Mensuel · le 15 · jusqu'en déc. 2027");
+    expect(
+      formatRecurrenceSchedule(
+        { ...monthly, ends_on: "2027-12-15" },
+        "en",
+        TODAY,
+      ),
+    ).toBe("Monthly · day 15 · until Dec 2027");
+  });
+
+  it("says when one that has not begun will start, eliding before a vowel", () => {
+    expect(
+      formatRecurrenceSchedule(
+        { ...monthly, starts_on: "2027-03-01" },
+        "fr",
+        TODAY,
+      ),
+    ).toBe("Mensuel · le 15 · à partir de mars 2027");
+    expect(
+      formatRecurrenceSchedule(
+        { ...monthly, starts_on: "2027-04-01" },
+        "fr",
+        TODAY,
+      ),
+    ).toBe("Mensuel · le 15 · à partir d'avr. 2027");
+  });
+
+  it("keeps both ends for one that has yet to begin and will stop", () => {
+    expect(
+      formatRecurrenceSchedule(
+        { ...monthly, starts_on: "2027-03-01", ends_on: "2028-02-01" },
+        "fr",
+        TODAY,
+      ),
+    ).toBe("Mensuel · le 15 · mars 2027 → févr. 2028");
+  });
+});
+
+describe("distinctNote", () => {
+  it("is the note when it says more than the category", () => {
+    expect(distinctNote("Netflix", "Abonnements")).toBe("Netflix");
+    expect(distinctNote("  Salle de sport ", "Sport")).toBe("Salle de sport");
+  });
+
+  it("is nothing when it only repeats the category, whatever the case or accents", () => {
+    expect(distinctNote("Loyer", "Loyer")).toBeNull();
+    expect(distinctNote("électricité", "Électricité")).toBeNull();
+    expect(distinctNote(" Salaire ", "Salaire")).toBeNull();
+  });
+
+  it("is nothing for an empty note", () => {
+    expect(distinctNote(null, "Loyer")).toBeNull();
+    expect(distinctNote("  ", "Loyer")).toBeNull();
   });
 });
