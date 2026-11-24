@@ -192,6 +192,18 @@ export const landingCopy = {
         body: "On the desktop, one shortcut to add, ask, or go anywhere — an amount typed arrives already filled in.",
         link: "",
       },
+      {
+        id: "designs",
+        title: "Four designs",
+        body: "Nuit, Papier, Bento or Console: Pluclair’s look is chosen in Profile, and follows you from the desktop to the phone.",
+        link: "",
+      },
+      {
+        id: "rhythms",
+        title: "Every rhythm",
+        body: "Every quarter, some months only, in several goes, or an amount that varies: a recurring entry follows the real rhythm of the spending.",
+        link: "",
+      },
     ],
   },
 
@@ -306,21 +318,25 @@ export const landingCopy = {
     {
       id: "ledger",
       title: "Ledger",
-      body: "Every transaction — as a list, on a calendar, or by category.",
+      body: "Every transaction — on a calendar, as a list, or by category.",
       utility:
         "Everything that comes in and goes out, in one place: what you typed, what your recurring items added, and what you imported from your bank.",
       steps: [
         {
-          title: "A list, a calendar, or by category",
-          body: "The same lines, three ways. The list to find and fix one; the calendar to see which days the month gets tight; by category to see what each one usually costs.",
+          title: "A calendar, a list, or by category",
+          body: "The same lines, three ways. The calendar, where the Ledger opens, to see which days the month gets tight; the list to find and fix one; by category to see what each one usually costs.",
         },
         {
           title: "It suggests, you decide",
-          body: "Put a shop in the same category twice and Pluclair suggests it the next time. You confirm, and the suggestions get better — the filing stays yours. Say “Always file here” and a rule is written: a line with those words goes there every time, before anything learned. A fourth view, by shop, shows each shop’s visits and its usual month.",
+          body: "Put a shop in the same category twice and Pluclair suggests it the next time. You confirm, and the suggestions get better — the filing stays yours. Say “Always file here” and a rule is written: a line with those words goes there every time, before anything learned.",
         },
         {
           title: "Or bring your statement",
           body: "The file your bank gives, as it is: CSV, Excel, OFX, PDF… Pluclair recognises what it already knows, the rest waits in “Review”, and an import can be undone for a month.",
+        },
+        {
+          title: "Parts and receipts",
+          body: "One payment in several categories — the groceries and the gift in one go — and the receipt kept behind it, read by your AI account if you wish. The Ledger marks a part with a fork and a receipt with a clip.",
         },
       ],
     },
@@ -333,7 +349,7 @@ export const landingCopy = {
       steps: [
         {
           title: "Note what repeats",
-          body: "An amount and a rhythm. For a monthly purchase of shares, the amount follows the price on the day.",
+          body: "An amount and a rhythm: every month, every quarter, some months only, or in several goes. If the amount varies from one month to the next, say so: it then serves as an estimate. For a monthly purchase of shares, the amount follows the price on the day.",
         },
         {
           title: "Added on its day",
@@ -342,10 +358,6 @@ export const landingCopy = {
         {
           title: "Change it once for every month ahead",
           body: "Edit a recurring item and every coming month follows. This month’s lines change only if you say so.",
-        },
-        {
-          title: "Parts and receipts",
-          body: "One payment in several categories — the groceries and the gift in one go — and the receipt kept behind it, read by your AI account if you wish. The Ledger marks a part with a fork and a receipt with a clip.",
         },
       ],
     },
@@ -382,6 +394,10 @@ export const landingCopy = {
           body: "One account per wrapper, and each investment in it with what you put in. Prices arrive in euros, whatever currency they are quoted in.",
         },
         {
+          title: "All your holdings, side by side",
+          body: "In Analysis, what you hold across all your accounts in one list: each holding’s value, its share of your investments, your return, and what the instrument itself did over a month, a year or five years. Two percentages, never mixed up: yours, and the price’s.",
+        },
+        {
           title: "See what is inside",
           body: "Two funds can hold the same companies without saying so. What’s inside shows where your money really is — shares, bonds, gold, crypto — and, for funds, the countries, sectors and fees.",
         },
@@ -409,6 +425,10 @@ export const landingCopy = {
         {
           title: "See what it is worth",
           body: "An estimate from the sales recorded nearby, moved by how prices have changed since, with the range it sits in. You can put your own figure instead.",
+        },
+        {
+          title: "Follow how its price has moved",
+          body: "Your purchase price, carried quarter by quarter by the home price index of its area: the rise or fall since you bought, on a line to read along, with the highest point reached. The estimated value from sales stands apart on it.",
         },
         {
           title: "Watch your part grow",

@@ -17,6 +17,20 @@ import type { ChangelogEntry, RoadmapItem } from "./changelog";
  */
 export const CHANGELOG: readonly ChangelogEntry[] = [
   {
+    id: "2026-11-24-web-site-up-to-date",
+    date: "2026-11-24",
+    kind: "better",
+    platforms: ["web"],
+    fr: {
+      title: "Le site dit ce que fait l’application aujourd’hui",
+      body: "pluclair.com rattrape l’application : la page Placements présente « Toutes vos lignes », la page Immobilier l’évolution du prix d’un bien, la page Récurrents les rythmes possibles, et l’accueil gagne deux cartes, « Quatre designs » et « Tous les rythmes ». La page du Journal ne parle plus de la vue « Par commerce », retirée début novembre, et présente le calendrier en premier, comme l’application.",
+    },
+    en: {
+      title: "The site says what the app does today",
+      body: "pluclair.com catches up with the app: the Investments page presents “All your holdings”, the Property page a home’s price history, the Recurring page the rhythms on offer, and the home page gains two cards, “Four designs” and “Every rhythm”. The Ledger page no longer mentions the “By shop” view, removed in early November, and presents the calendar first, as the app does.",
+    },
+  },
+  {
     id: "2026-11-24-web-lighter-lists",
     date: "2026-11-24",
     kind: "better",
@@ -2464,10 +2478,10 @@ export const CHANGELOG: readonly ChangelogEntry[] = [
  */
 export const CHANGELOG_STATS = {
   /** `git rev-list --count HEAD` on the branch that wrote the newest entry. */
-  commits: 1351,
+  commits: 1373,
   /** The repository's first commit. */
   since: "2026-06-15",
-  asOf: "2026-11-12",
+  asOf: "2026-11-24",
 } as const;
 
 /**

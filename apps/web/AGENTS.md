@@ -64,6 +64,13 @@ Which page shows what, and which modules and tables each one uses, is in
   pages sit inside `.marketing-shell`. A design never applies there.
 - **Legal switches** (`components/marketing/legal-status.ts`) publish legal
   commitments. Only the owner flips them.
+- **The site's French copy (`*-copy.fr.ts`) holds no-break spaces** before
+  « : », « ; » and « ? » (U+00A0), and plain spaces inside guillemets. A
+  search-and-replace typed with ordinary spaces finds nothing: match on a
+  shorter stretch, or write the no-break space explicitly.
+- **A stale `.next/types/validator.ts` fails `tsc`** after a route is moved
+  or removed. `npx next typegen` (from `apps/web`) rewrites it without a
+  build.
 - **Links to `/signup` and `/login` are never prefetched**, or the demo
   signs its visitors out.
 - **Crons** check `CRON_SECRET` (Vercel sends it as a bearer token) and run

@@ -13,7 +13,9 @@ import {
   EyeSlash,
   Funnel,
   MagnifyingGlass,
+  Palette,
   Receipt,
+  Repeat,
 } from "@phosphor-icons/react";
 import { EASE_STANDARD } from "@finance/core/motion";
 import { Orb } from "@/components/brand/Orb";
@@ -47,6 +49,10 @@ const SPAN: Record<string, string> = {
   receipts: "md:col-span-3",
   operations: "md:col-span-3",
   palette: "md:col-span-3",
+  // What November 2026 added: the four designs, and the rhythms a
+  // recurring entry can follow. A row of two, like the ones above.
+  designs: "md:col-span-3",
+  rhythms: "md:col-span-3",
 };
 
 /**
@@ -187,6 +193,14 @@ function Picture({
     case "palette":
       return (
         <IconPicture icon={<Command size={26} weight="light" />} seen={seen} />
+      );
+    case "designs":
+      return (
+        <IconPicture icon={<Palette size={26} weight="light" />} seen={seen} />
+      );
+    case "rhythms":
+      return (
+        <IconPicture icon={<Repeat size={26} weight="light" />} seen={seen} />
       );
     default:
       return null;
