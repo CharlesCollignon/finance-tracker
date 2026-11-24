@@ -789,7 +789,9 @@ export function TransactionsView({
                       <h3 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
                         {relativeDayLabel(day.date, formatShortDate, locale)}
                       </h3>
-                      {day.rows.length > 0 ? (
+                      {/* A day's total only when it adds something: with
+                          one row it repeated that row's amount above it. */}
+                      {day.rows.length > 1 ? (
                         <span className="privacy-amount text-xs tabular-nums text-muted-foreground xl:col-start-3 xl:text-right">
                           {day.net >= 0 ? "+" : "−"}
                           {formatEuro(Math.abs(day.net))}
