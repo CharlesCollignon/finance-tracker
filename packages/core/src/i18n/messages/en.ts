@@ -1360,6 +1360,16 @@ export const en = {
     },
     nextContributionOn: "Next contribution: {date} · {amount}",
     inWallet: "In your {wallet}",
+    priceMove: "Price over the period: {change}",
+    holdingsTitle: "All your holdings",
+    holdingsBody:
+      "What you hold across all your accounts, from the largest holding to the smallest.",
+    holdingsWeight: "Share",
+    holdingsReturn: "Your return",
+    holdingsPrice: "Price",
+    holdingsShare: "{share} of your investments",
+    holdingsNote:
+      "“Your return” compares what you put in with what the holding is worth today. “Price” is what the instrument itself did over the chosen period: the two differ as soon as you buy in several goes.",
   },
 
   /** The ongoing-charge card at the foot of the investments page. */

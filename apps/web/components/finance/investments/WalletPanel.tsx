@@ -20,8 +20,10 @@ import {
 } from "@finance/core/investment-positions";
 import { useFormatCurrency } from "@/lib/use-currency";
 import { ICON } from "@/lib/icon-scale";
-import { useT } from "@/lib/locale-context";
+import { useLocale, useT } from "@/lib/locale-context";
 import { formatSigned } from "@finance/core/amount-sign";
+import { formatSignedPercentOf } from "@finance/core/constants";
+import { returnShare } from "@finance/core/holdings-overview";
 import { InvestmentPositionTile } from "@/components/finance/investments/InvestmentPositionTile";
 import { Metric } from "@/components/finance/investments/metrics";
 import { WalletEventsSheet } from "@/components/finance/investments/WalletEventsSheet";
@@ -56,9 +58,11 @@ export function WalletPanel({
   onRemove,
 }: WalletPanelProps) {
   const t = useT();
+  const locale = useLocale();
   const formatEuro = useFormatCurrency();
   const [eventsOpen, setEventsOpen] = useState(false);
   const showPl = column.hasMarketSnapshot && column.totalGainLoss !== 0;
+  const share = returnShare(column.totalGainLoss, column.totalInvested);
   const [range, setRange] = useState<PriceRange>("1Y");
   // Largest first by default. A wallet is opened to see where the money is
   // before it is opened to find one holding by name, and the alphabet is one
@@ -118,6 +122,11 @@ export function WalletPanel({
             label={t("wallets.profitLoss")}
             value={
               showPl ? formatSigned(column.totalGainLoss, formatEuro) : "—"
+            }
+            sub={
+              showPl && share !== null
+                ? formatSignedPercentOf(share, locale)
+                : null
             }
             tone={
               showPl

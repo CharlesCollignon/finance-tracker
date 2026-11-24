@@ -21,7 +21,10 @@ import { useToast } from "@/components/layout/ToastProvider";
 import type { SavingsAccountsRead } from "@/lib/queries/savings-accounts";
 import { SAVINGS_KINDS } from "@finance/core/savings-accounts";
 import type { InstrumentPriceSeries } from "@finance/core/instrument-price-series";
-import type { WalletFundingNeed } from "@finance/core/investment-upcoming";
+import type {
+  UpcomingInvestment,
+  WalletFundingNeed,
+} from "@finance/core/investment-upcoming";
 import {
   INVESTMENT_WALLET_IDS,
   type InvestmentWalletId,
@@ -43,6 +46,8 @@ import type { RecurringTemplateWithCategory } from "@finance/core/types/database
 import { ICON } from "@/lib/icon-scale";
 import { useLocale, useT } from "@/lib/locale-context";
 import { formatSigned } from "@finance/core/amount-sign";
+import { formatSignedPercentOf } from "@finance/core/constants";
+import { returnShare } from "@finance/core/holdings-overview";
 import { WalletPanel } from "@/components/finance/investments/WalletPanel";
 import type { InvestmentEvent } from "@finance/core/investment-events";
 
@@ -50,6 +55,8 @@ interface InvestmentsViewProps {
   portfolio: InvestmentPortfolioSummary;
   recurringTemplates: RecurringTemplateWithCategory[];
   fundingNeeds: WalletFundingNeed[];
+  /** The next purchase the recurring entries plan, if any. */
+  nextPurchase: UpcomingInvestment | null;
   /** What each held instrument's price did, keyed by symbol. */
   priceSeries: Record<string, InstrumentPriceSeries>;
   /** The savings accounts the user has declared, and what each holds. */
@@ -79,6 +86,7 @@ export function InvestmentsView({
   portfolio,
   recurringTemplates,
   fundingNeeds,
+  nextPurchase,
   priceSeries,
   savings,
   keptWallets,
@@ -149,6 +157,10 @@ export function InvestmentsView({
       .filter((tag) => tag.monthly > 0),
   ];
   const showPl = portfolio.hasMarketSnapshot && portfolio.totalGainLoss !== 0;
+  const totalReturn = returnShare(
+    portfolio.totalGainLoss,
+    portfolio.totalInvested,
+  );
   const savingsTotal = savings.accounts.reduce(
     (sum, account) => sum + account.balance.balance,
     0,
@@ -202,6 +214,9 @@ export function InvestmentsView({
                       )}
                     >
                       {formatSigned(portfolio.totalGainLoss, formatEuro)}
+                      {totalReturn !== null
+                        ? ` (${formatSignedPercentOf(totalReturn, locale)})`
+                        : null}
                     </span>
                   </>
                 ) : null}
@@ -210,28 +225,41 @@ export function InvestmentsView({
           />
         </FadeInItem>
 
-        {visibleFunding.length > 0 ? (
-          <FadeInItem className="w-full">
+        {visibleFunding.length > 0 || nextPurchase ? (
+          <FadeInItem className="flex w-full flex-col items-center gap-3">
             {/* One row of tags rather than one sentence per wallet: three
                   lines of "Send to X €Y / month" is three lines of height for
                   three numbers, and the wallet name is label enough. */}
-            <ul
-              aria-label={t("wallets.fundingLabel")}
-              className="flex flex-wrap items-center justify-center gap-2"
-            >
-              {visibleFunding.map((tag) => (
-                <li
-                  key={tag.id}
-                  className="dca-chip flex items-baseline gap-1.5 rounded-full border border-border px-3 py-1 text-xs text-muted-foreground sm:text-sm"
-                >
-                  <span>{accountShortName(tag.id, locale)}</span>
-                  <span className="privacy-amount font-mono font-medium text-foreground tabular-nums">
-                    {formatEuro(tag.monthly)}
-                  </span>
-                  <span>{t("wallets.perMonth")}</span>
-                </li>
-              ))}
-            </ul>
+            {visibleFunding.length > 0 ? (
+              <ul
+                aria-label={t("wallets.fundingLabel")}
+                className="flex flex-wrap items-center justify-center gap-2"
+              >
+                {visibleFunding.map((tag) => (
+                  <li
+                    key={tag.id}
+                    className="dca-chip flex items-baseline gap-1.5 rounded-full border border-border px-3 py-1 text-xs text-muted-foreground sm:text-sm"
+                  >
+                    <span>{accountShortName(tag.id, locale)}</span>
+                    <span className="privacy-amount font-mono font-medium text-foreground tabular-nums">
+                      {formatEuro(tag.monthly)}
+                    </span>
+                    <span>{t("wallets.perMonth")}</span>
+                  </li>
+                ))}
+              </ul>
+            ) : null}
+            {/* The one date a holder looks for: when the next purchase goes. */}
+            {nextPurchase ? (
+              <p className="privacy-sensitive text-center text-xs text-muted-foreground sm:text-sm">
+                {t("wallets.nextContributionOn", {
+                  date: nextPurchase.dateLabel,
+                  amount: formatEuro(nextPurchase.amount),
+                })}
+                {" · "}
+                {nextPurchase.name}
+              </p>
+            ) : null}
           </FadeInItem>
         ) : null}
 

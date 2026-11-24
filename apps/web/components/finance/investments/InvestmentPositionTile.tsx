@@ -28,7 +28,8 @@ interface InvestmentPositionTileProps {
  * One position in a wallet, as a tile (the owner's pick, November 2026, the
  * phone's tile at every width): its mark and its return at the top, its
  * name, what it is worth in the figure face, what went into it, and the
- * instrument's price over the chosen range as a faint grey line at the foot.
+ * instrument's price over the chosen range as a faint grey line at the foot,
+ * with its move in percent at the line's end.
  *
  * It replaced a row of three labelled figures beside a coloured price line.
  * The line is grey now: coloured, it said "up" in green beside a holding
@@ -111,16 +112,38 @@ export function InvestmentPositionTile({
       </span>
 
       {/* Its room kept when there is no line, so the figures of tiles side
-          by side sit on one level. */}
-      <span className="block h-6 w-full">
+          by side sit on one level. The line's own figure sits at its end, in
+          the line's grey: the price's move, not the holder's return. */}
+      <span className="flex h-6 w-full items-center gap-2">
         {hasPriceLine ? (
-          <Sparkline
-            values={priceLine!.values}
-            height={24}
-            fluid
-            colorVar="--muted-foreground"
-            className="opacity-60"
-          />
+          <>
+            <span className="block min-w-0 flex-1">
+              <Sparkline
+                values={priceLine!.values}
+                height={24}
+                fluid
+                colorVar="--muted-foreground"
+                className="opacity-60"
+              />
+            </span>
+            {priceLine!.changePct !== null ? (
+              <span
+                title={t("wallets.priceMove", {
+                  change: formatSignedPercent(priceLine!.changePct, locale),
+                })}
+                className="shrink-0 text-[11px] tabular-nums text-muted-foreground"
+              >
+                <span className="sr-only">
+                  {t("wallets.priceMove", {
+                    change: formatSignedPercent(priceLine!.changePct, locale),
+                  })}
+                </span>
+                <span aria-hidden>
+                  {formatSignedPercent(priceLine!.changePct, locale)}
+                </span>
+              </span>
+            ) : null}
+          </>
         ) : null}
       </span>
     </button>

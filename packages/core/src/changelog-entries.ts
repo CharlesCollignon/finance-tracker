@@ -17,6 +17,20 @@ import type { ChangelogEntry, RoadmapItem } from "./changelog";
  */
 export const CHANGELOG: readonly ChangelogEntry[] = [
   {
+    id: "2026-11-24-web-placements-monitoring",
+    date: "2026-11-24",
+    kind: "new",
+    platforms: ["web"],
+    fr: {
+      title: "Placements : toutes vos lignes côte à côte",
+      body: "Dans Analyse, « Toutes vos lignes » réunit ce que vous détenez sur tous vos comptes, de la plus grosse ligne à la plus petite : sa valeur, sa part de vos placements, votre gain, et ce que le titre lui-même a fait sur un mois, un an, cinq ans ou depuis toujours. Dans Comptes, le gain s’affiche aussi en pourcentage, le prochain versement prévu est rappelé sous vos versements mensuels, et chaque ligne donne l’évolution de son cours au bout de sa courbe grise.",
+    },
+    en: {
+      title: "Investments: all your holdings side by side",
+      body: "In Analysis, “All your holdings” brings together what you hold across all your accounts, from the largest holding to the smallest: its value, its share of your investments, your return, and what the instrument itself did over a month, a year, five years or since the start. In Accounts, the gain also shows as a percentage, the next planned contribution is recalled under your monthly ones, and each holding gives its price’s move at the end of its grey line.",
+    },
+  },
+  {
     id: "2026-11-24-web-property-price-history",
     date: "2026-11-24",
     kind: "new",

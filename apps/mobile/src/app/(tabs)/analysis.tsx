@@ -2,8 +2,12 @@ import { RefreshControl, ScrollView, View } from "react-native";
 import { useRouter } from "expo-router";
 
 import type { AccountId } from "@finance/core/allocation";
+import { todayIsoLocal } from "@finance/core/constants";
 import { ENVELOPE_SHORT_KEYS } from "@finance/core/future-plan";
+import { heldSymbols } from "@finance/core/holdings-overview";
+import type { InstrumentPriceSeries } from "@finance/core/instrument-price-series";
 import { returnUnavailableLabel } from "@finance/core/investment-returns";
+import { fetchPriceSeriesBySymbol } from "@finance/core/market/fx";
 import {
   FRENCH_SAVINGS_2026,
   formatRate,
@@ -12,6 +16,7 @@ import { formatAnnualRate } from "@finance/core/xirr";
 
 import { EventsCard } from "@/components/EventsCard";
 import { FundCostCard } from "@/components/FundCostCard";
+import { HoldingsCard } from "@/components/HoldingsCard";
 import { SurfaceTabs, WALLET_TABS } from "@/components/layout/SurfaceTabs";
 import { WalletPlanPanel } from "@/components/WalletPlanPanel";
 import { Button } from "@/components/ui/Button";
@@ -50,6 +55,16 @@ export default function AnalysisScreen() {
   );
 
   const kept = data ? keptAccounts(data) : null;
+  // The price lines of what is held, read after the screen, as on Comptes:
+  // the list stands without them and gains its « Cours » column when they come.
+  const symbolsKey = (data ? heldSymbols(data.portfolio) : []).sort().join(",");
+  const { data: priceSeries } = useRefreshable(
+    async (): Promise<Record<string, InstrumentPriceSeries>> =>
+      symbolsKey
+        ? fetchPriceSeriesBySymbol(symbolsKey.split(","), todayIsoLocal())
+        : {},
+    [symbolsKey],
+  );
   const savings = data?.savings.accounts ?? [];
   const wallets = kept?.wallets ?? [];
   const hasAccounts = savings.length > 0 || wallets.length > 0;
@@ -187,6 +202,13 @@ export default function AnalysisScreen() {
               ) : null}
             </View>
           </Card>
+
+          {data && kept && wallets.length > 0 ? (
+            <HoldingsCard
+              portfolio={kept.keptPortfolio}
+              priceSeries={priceSeries ?? {}}
+            />
+          ) : null}
 
           {data && kept ? (
             <WalletPlanPanel

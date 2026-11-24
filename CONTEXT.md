@@ -616,6 +616,14 @@ catalogue and writes no figure of its own — it chooses a role and a size for
 each suggestion, and the app turns those into percentages.
 _Avoid_: portfolio review, analysis, advice, recommendation
 
+**Holdings overview**:
+_En français_ : toutes vos lignes
+Every position of every wallet in one list, largest first: what each is
+worth, its share of everything invested, the holder's return on it and its
+instrument's price move over a chosen range. A list of facts; it sets no
+target and suggests no trade.
+_Avoid_: portfolio monitor, watchlist, ranking, top movers
+
 ### Property
 
 **Property**:

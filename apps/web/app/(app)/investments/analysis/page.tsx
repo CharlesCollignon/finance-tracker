@@ -1,7 +1,9 @@
 import { redirect } from "next/navigation";
 import type { AccountId } from "@finance/core/allocation";
+import { heldSymbols } from "@finance/core/holdings-overview";
 import { buildInvestmentReturns } from "@finance/core/investment-returns";
 import { getAuthUser } from "@/lib/auth/get-user";
+import { getCachedPriceSeries } from "@/lib/queries/market-quotes";
 import { getPlacementsBase } from "@/lib/queries/placements";
 import { AnalysisView } from "@/components/finance/analysis/AnalysisView";
 
@@ -48,6 +50,12 @@ export default async function AnalysisPage() {
     0,
   );
 
+  // The same cached series Comptes draws its tiles' lines from.
+  const priceSeries = await getCachedPriceSeries(
+    heldSymbols(base.portfolio),
+    base.today,
+  );
+
   // The header, the views and the quotes' refresh are Placements' layout's,
   // so they stay put while this loads.
   return (
@@ -63,6 +71,7 @@ export default async function AnalysisPage() {
       targets={base.targets}
       monthlyContribution={monthlyContribution}
       events={base.events}
+      priceSeries={priceSeries}
     />
   );
 }

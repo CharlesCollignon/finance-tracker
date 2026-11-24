@@ -7,6 +7,8 @@ import { cn } from "@/lib/utils";
 interface MetricProps {
   label: string;
   value: string;
+  /** A second figure under the first, in its tone: a gain's percentage. */
+  sub?: string | null;
   tone?: "positive" | "negative" | "neutral";
   className?: string;
 }
@@ -14,6 +16,7 @@ interface MetricProps {
 export function Metric({
   label,
   value,
+  sub = null,
   tone = "neutral",
   className,
 }: MetricProps) {
@@ -29,6 +32,18 @@ export function Metric({
       >
         {value}
       </p>
+      {sub ? (
+        <p
+          className={cn(
+            "privacy-amount text-xs font-medium tabular-nums",
+            tone === "positive" && "text-success",
+            tone === "negative" && "text-destructive",
+            tone === "neutral" && "text-muted-foreground",
+          )}
+        >
+          {sub}
+        </p>
+      ) : null}
     </div>
   );
 }
