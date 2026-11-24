@@ -164,6 +164,18 @@ export const landingCopyFr: LandingCopySections & {
         body: "Sur l’ordinateur, un raccourci pour ajouter, demander ou aller n’importe où — un montant tapé arrive déjà rempli.",
         link: "",
       },
+      {
+        id: "designs",
+        title: "Quatre designs",
+        body: "Nuit, Papier, Bento ou Console : l’allure de Pluclair se choisit dans Profil, et vous suit de l’ordinateur au téléphone.",
+        link: "",
+      },
+      {
+        id: "rhythms",
+        title: "Tous les rythmes",
+        body: "Chaque trimestre, certains mois seulement, en plusieurs fois, ou un montant qui varie : une opération récurrente suit le rythme réel de la dépense.",
+        link: "",
+      },
     ],
   },
 
@@ -268,17 +280,17 @@ export const landingCopyFr: LandingCopySections & {
     },
     ledger: {
       title: "Journal",
-      body: "Toutes vos opérations — en liste, sur un calendrier, ou par catégorie.",
+      body: "Toutes vos opérations — sur un calendrier, en liste, ou par catégorie.",
       utility:
         "Tout ce qui entre et tout ce qui sort, au même endroit : ce que vous avez saisi, ce que vos opérations récurrentes ont ajouté, et ce que vous avez importé de votre banque.",
       steps: [
         {
-          title: "En liste, en calendrier ou par catégorie",
-          body: "Les mêmes lignes, de trois façons. La liste pour en retrouver une et la corriger ; le calendrier pour voir quels jours le mois se tend ; par catégorie pour voir ce que chacune coûte d’habitude.",
+          title: "En calendrier, en liste ou par catégorie",
+          body: "Les mêmes lignes, de trois façons. Le calendrier, où s’ouvre le Journal, pour voir quels jours le mois se tend ; la liste pour en retrouver une et la corriger ; par catégorie pour voir ce que chacune coûte d’habitude.",
         },
         {
           title: "Il propose, vous décidez",
-          body: "Rangez deux fois un commerçant dans la même catégorie, et Pluclair vous la propose la fois suivante. Vous validez, les propositions s’affinent — le classement reste le vôtre. Dites « Toujours ranger ici » et une règle s’écrit : une ligne avec ces mots va là à chaque fois, avant tout ce qui a été appris. Une quatrième vue, par commerce, montre les passages de chaque commerce et son mois habituel.",
+          body: "Rangez deux fois un commerçant dans la même catégorie, et Pluclair vous la propose la fois suivante. Vous validez, les propositions s’affinent — le classement reste le vôtre. Dites « Toujours ranger ici » et une règle s’écrit : une ligne avec ces mots va là à chaque fois, avant tout ce qui a été appris.",
         },
         {
           title: "Ou apportez votre relevé",
@@ -298,7 +310,7 @@ export const landingCopyFr: LandingCopySections & {
       steps: [
         {
           title: "Notez ce qui revient",
-          body: "Un montant et un rythme. Pour un achat mensuel d’actions, le montant suit le cours du jour.",
+          body: "Un montant et un rythme : chaque mois, chaque trimestre, certains mois seulement, ou en plusieurs fois. Si le montant varie d’un mois à l’autre, dites-le : il sert alors d’estimation. Pour un achat mensuel d’actions, le montant suit le cours du jour.",
         },
         {
           title: "Ajouté le jour venu",
@@ -341,6 +353,10 @@ export const landingCopyFr: LandingCopySections & {
           body: "Un compte par enveloppe, et chaque placement dedans avec ce que vous y avez versé. Les cours arrivent en euros, quelle que soit leur devise.",
         },
         {
+          title: "Toutes vos lignes, côte à côte",
+          body: "Dans Analyse, ce que vous détenez sur tous vos comptes dans une seule liste : la valeur de chaque ligne, sa part de vos placements, votre gain, et ce que le titre lui-même a fait sur un mois, un an ou cinq ans. Deux pourcentages, jamais confondus : le vôtre, et celui du cours.",
+        },
+        {
           title: "Voyez ce qu’il y a dedans",
           body: "Deux fonds peuvent détenir les mêmes entreprises sans le dire. La Composition montre où est vraiment votre argent — actions, obligations, or, crypto — et, pour les fonds, les pays, les secteurs et les frais.",
         },
@@ -367,6 +383,10 @@ export const landingCopyFr: LandingCopySections & {
         {
           title: "Voyez ce qu’il vaut",
           body: "Une estimation à partir des ventes enregistrées autour, ajustée de l’évolution des prix depuis, avec la fourchette où elle se situe. Vous pouvez mettre votre propre chiffre.",
+        },
+        {
+          title: "Suivez l’évolution de son prix",
+          body: "Votre prix d’achat, porté trimestre après trimestre par l’indice des prix de son secteur : la hausse ou la baisse depuis l’achat, sur une courbe à parcourir, avec le plus haut atteint. La valeur estimée d’après les ventes y figure à part.",
         },
         {
           title: "Regardez votre part grandir",
