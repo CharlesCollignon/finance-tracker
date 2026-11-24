@@ -1041,6 +1041,16 @@ export const fr: Messages = {
     },
     nextContributionOn: "Prochain versement\u00A0: {date} · {amount}",
     inWallet: "Dans votre {wallet}",
+    priceMove: "Cours sur la période\u00A0: {change}",
+    holdingsTitle: "Toutes vos lignes",
+    holdingsBody:
+      "Ce que vous détenez sur tous vos comptes, de la plus grosse ligne à la plus petite.",
+    holdingsWeight: "Part",
+    holdingsReturn: "Votre gain",
+    holdingsPrice: "Cours",
+    holdingsShare: "{share} de vos placements",
+    holdingsNote:
+      "«\u00A0Votre gain\u00A0» compare ce que vous avez versé à ce que la ligne vaut aujourd'hui. «\u00A0Cours\u00A0» est ce que le titre lui-même a fait sur la période choisie\u00A0: les deux diffèrent dès qu'on achète en plusieurs fois.",
   },
 
   fundCost: {

@@ -88,6 +88,7 @@
     "./ledger-view": "./src/ledger-view.ts",
     "./left-to-spend": "./src/left-to-spend.ts",
     "./investment-upcoming": "./src/investment-upcoming.ts",
+    "./holdings-overview": "./src/holdings-overview.ts",
     "./look-through": "./src/look-through.ts",
     "./look-through-facts": "./src/look-through-facts.ts",
     "./look-through-target": "./src/look-through-target.ts",

@@ -1,5 +1,8 @@
 import { redirect } from "next/navigation";
+import { heldSymbols } from "@finance/core/holdings-overview";
+import { buildUpcomingInvestments } from "@finance/core/investment-upcoming";
 import { getAuthUser } from "@/lib/auth/get-user";
+import { getLocale } from "@/lib/locale";
 import { getPlacementsBase } from "@/lib/queries/placements";
 import { getCachedPriceSeries } from "@/lib/queries/market-quotes";
 import { InvestmentsView } from "@/components/finance/InvestmentsView";
@@ -19,22 +22,27 @@ export default async function InvestmentsPage() {
 
   const base = await getPlacementsBase(user.id);
 
-  const heldSymbols = Array.from(
-    new Set(
-      base.portfolio.columns.flatMap((column) =>
-        column.items
-          .map((item) => item.instrumentSymbol)
-          .filter((symbol): symbol is string => Boolean(symbol)),
-      ),
-    ),
+  const priceSeries = await getCachedPriceSeries(
+    heldSymbols(base.portfolio),
+    base.today,
   );
-  const priceSeries = await getCachedPriceSeries(heldSymbols, base.today);
+
+  // The next purchase the recurring entries plan, as the phone's summary
+  // says it: the earliest one not yet made.
+  const nextPurchase =
+    buildUpcomingInvestments(
+      base.investmentTemplates,
+      base.investmentTransactions,
+      base.today,
+      await getLocale(),
+    )[0] ?? null;
 
   return (
     <InvestmentsView
       portfolio={base.portfolio}
       recurringTemplates={base.investmentTemplates}
       fundingNeeds={base.fundingNeeds}
+      nextPurchase={nextPurchase}
       priceSeries={priceSeries}
       savings={base.savings}
       keptWallets={base.keptWallets}

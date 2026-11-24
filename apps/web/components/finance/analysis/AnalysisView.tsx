@@ -15,6 +15,8 @@ import type { WalletPlan } from "@finance/core/types/database";
 import { formatAnnualRate } from "@finance/core/xirr";
 import { AllocationCard } from "@/components/finance/AllocationCard";
 import { EventsCard } from "@/components/finance/analysis/EventsCard";
+import { HoldingsCard } from "@/components/finance/analysis/HoldingsCard";
+import type { InstrumentPriceSeries } from "@finance/core/instrument-price-series";
 import type { InvestmentEvent } from "@finance/core/investment-events";
 import { FundCostCard } from "@/components/finance/FundCostCard";
 import {
@@ -46,6 +48,8 @@ interface AnalysisViewProps {
   monthlyContribution: number;
   /** What happened inside the wallets (migration 080), newest first. */
   events: InvestmentEvent[];
+  /** What each held instrument's price did, keyed by symbol. */
+  priceSeries: Record<string, InstrumentPriceSeries>;
 }
 
 /**
@@ -66,6 +70,7 @@ export function AnalysisView({
   targets,
   monthlyContribution,
   events,
+  priceSeries,
 }: AnalysisViewProps) {
   const t = useT();
 
@@ -106,6 +111,12 @@ export function AnalysisView({
           savingsAccounts={savingsAccounts}
         />
       </FadeInItem>
+
+      {keptWallets.length > 0 ? (
+        <FadeInItem>
+          <HoldingsCard portfolio={portfolio} priceSeries={priceSeries} />
+        </FadeInItem>
+      ) : null}
 
       <FadeInItem>
         <AllocationCard
