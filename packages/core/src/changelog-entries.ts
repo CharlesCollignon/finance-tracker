@@ -17,6 +17,20 @@ import type { ChangelogEntry, RoadmapItem } from "./changelog";
  */
 export const CHANGELOG: readonly ChangelogEntry[] = [
   {
+    id: "2026-11-24-web-lighter-lists",
+    date: "2026-11-24",
+    kind: "better",
+    platforms: ["web"],
+    fr: {
+      title: "Des listes plus légères",
+      body: "Dans Récurrents, une ligne ne répète plus le nom de sa catégorie et n’affiche sa période que lorsqu’elle compte : « jusqu’en déc. 2027 » pour une opération qui s’arrêtera, « à partir d’avr. 2027 » pour une qui n’a pas commencé. Dans la Liste du Journal, le total d’un jour ne s’affiche que s’il réunit plusieurs opérations, et les cases à cocher se font discrètes jusqu’à ce qu’on s’en serve.",
+    },
+    en: {
+      title: "Lighter lists",
+      body: "In Recurring, a row no longer repeats its category’s name, and shows its period only when it matters: “until Dec 2027” for an entry that will stop, “from Apr 2027” for one that has not begun. In the Journal’s List, a day’s total shows only when it brings several operations together, and the checkboxes stay quiet until you use them.",
+    },
+  },
+  {
     id: "2026-11-24-web-placements-monitoring",
     date: "2026-11-24",
     kind: "new",

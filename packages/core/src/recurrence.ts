@@ -196,21 +196,63 @@ function formatIsoMonthYear(isoDate: string, locale: Locale): string {
 /**
  * Compact échéancier label, or null when open-ended.
  *
- * No message of its own: two dates, an arrow and an ellipsis read the same in
- * both languages, and a sentence that is only punctuation is not a sentence
- * worth translating twice.
+ * Without `today`, both ends as they were typed: two dates, an arrow and an
+ * ellipsis, for a form or an answer that has to say the whole window.
+ *
+ * With `today`, only what a reader of a list still needs: nothing for an
+ * instruction that has begun and has no end (the month it began is in its
+ * sheet, and « févr. 2026 → … » on every row read as text cut short), the
+ * end alone for one that has begun and will stop, and the start for one
+ * that has not begun yet.
  */
 export function formatScheduleWindow(
   startsOn: string | null | undefined,
   endsOn: string | null | undefined,
   locale: Locale,
+  today?: string,
 ): string | null {
   if (!startsOn && !endsOn) {
     return null;
   }
+  if (today !== undefined) {
+    const t = translator(locale);
+    const begun = !startsOn || startsOn <= today;
+    if (begun) {
+      return endsOn
+        ? t("recurrence.untilDate", {
+            date: formatIsoMonthYear(endsOn, locale),
+          })
+        : null;
+    }
+    if (!endsOn) {
+      return t("recurrence.fromDate", {
+        date: formatIsoMonthYear(startsOn!, locale),
+      });
+    }
+  }
   const start = startsOn ? formatIsoMonthYear(startsOn, locale) : "…";
   const end = endsOn ? formatIsoMonthYear(endsOn, locale) : "…";
   return `${start} → ${end}`;
+}
+
+/**
+ * The user's own note on a standing instruction, when it says more than the
+ * category's name already does. A rent filed under « Loyer » and described
+ * « Loyer » has nothing to add on its row.
+ */
+export function distinctNote(
+  note: string | null | undefined,
+  categoryName: string,
+): string | null {
+  const text = note?.trim();
+  if (!text) {
+    return null;
+  }
+  const same =
+    text.localeCompare(categoryName.trim(), undefined, {
+      sensitivity: "base",
+    }) === 0;
+  return same ? null : text;
 }
 
 export function formatRecurrenceSchedule(
@@ -224,6 +266,8 @@ export function formatRecurrenceSchedule(
     ends_on?: string | null;
   },
   locale: Locale,
+  /** Given on a list's row: the window is then cut to what still matters. */
+  today?: string,
 ): string {
   const t = translator(locale);
 
@@ -249,6 +293,7 @@ export function formatRecurrenceSchedule(
     template.starts_on,
     template.ends_on,
     locale,
+    today,
   );
   return window ? `${base} · ${window}` : base;
 }

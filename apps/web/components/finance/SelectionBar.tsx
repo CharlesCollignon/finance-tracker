@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ArrowsLeftRight, Trash, X } from "@phosphor-icons/react";
+import { ArrowsLeftRight, Check, Trash, X } from "@phosphor-icons/react";
 import {
   describeSelectionDeletion,
   describeSelectionMove,
@@ -247,14 +247,33 @@ export function RowCheckbox({
   onChange: () => void;
 }) {
   return (
-    <input
-      type="checkbox"
-      checked={checked}
-      onChange={onChange}
-      aria-label={label}
-      // Stops a click on the box from also opening the row's edit sheet.
-      onClick={(event) => event.stopPropagation()}
-      className="size-5 shrink-0 accent-foreground"
-    />
+    // Drawn here rather than left to the browser, whose unchecked box is a
+    // filled grey square on a dark ground: twenty of them down a list
+    // weighed more than the amounts. An outline at rest, the foreground
+    // with its tick once checked, and a little quieter until the row is
+    // under the pointer or the box has the focus.
+    <span className="relative inline-flex size-5 shrink-0">
+      <input
+        type="checkbox"
+        checked={checked}
+        onChange={onChange}
+        aria-label={label}
+        // Stops a click on the box from also opening the row's edit sheet.
+        onClick={(event) => event.stopPropagation()}
+        className={cn(
+          "row-checkbox peer size-5 cursor-pointer appearance-none rounded-[6px] border border-foreground/30 bg-transparent",
+          "transition-[background-color,border-color,opacity] duration-hover",
+          "checked:border-foreground checked:bg-foreground",
+          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+          "pointer-fine:opacity-60 pointer-fine:checked:opacity-100 pointer-fine:hover:opacity-100 pointer-fine:focus-visible:opacity-100 pointer-fine:[.ledger-row:hover_&]:opacity-100",
+        )}
+      />
+      <Check
+        aria-hidden
+        size={ICON.xs}
+        weight="bold"
+        className="pointer-events-none absolute inset-0 m-auto text-background opacity-0 peer-checked:opacity-100"
+      />
+    </span>
   );
 }

@@ -30,7 +30,11 @@ import {
 } from "@finance/core/dca-need";
 import { AnimatedAmount } from "@/components/finance/AnimatedAmount";
 import moments from "@/components/motion/moments.module.css";
-import { formatRecurrenceSchedule } from "@finance/core/recurrence";
+import { todayIsoLocal } from "@finance/core/constants";
+import {
+  distinctNote,
+  formatRecurrenceSchedule,
+} from "@finance/core/recurrence";
 import {
   allocationSegments,
   rollUpRecurring,
@@ -130,6 +134,8 @@ function RecurringItemRow({
   const locale = useLocale();
   const t = useT();
   const sharesLabel = formatSharesLabel(template);
+  // Only when it says more than the category's name above it.
+  const note = distinctNote(template.description, template.categories.name);
   const propertyNames = useContext(PropertyNames);
   const propertyName = template.property_id
     ? propertyNames.get(template.property_id)
@@ -174,18 +180,18 @@ function RecurringItemRow({
               {t("charges.fixedToBitcoin")}
             </p>
           ) : null}
-          {template.description ? (
+          {note ? (
             // The user's own note about the charge, and the only prose on the
             // row. It was `text-muted-foreground/70`, about 3.9:1 at 12px —
             // under the 4.5:1 body floor — and dimmer than the two lines above
             // it for no reason anyone chose. Full-strength muted foreground is
             // the token that already means secondary text.
             <p className="mt-0.5 text-xs leading-snug text-muted-foreground break-words">
-              {template.description}
+              {note}
             </p>
           ) : null}
           <p className="mt-1 text-xs text-muted-foreground">
-            {formatRecurrenceSchedule(template, locale)}
+            {formatRecurrenceSchedule(template, locale, todayIsoLocal())}
           </p>
         </button>
         {/* The DCA's tick, outside the row's button like the link below:

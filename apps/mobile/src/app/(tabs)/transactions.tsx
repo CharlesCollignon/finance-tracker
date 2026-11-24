@@ -938,7 +938,9 @@ export default function TransactionsScreen() {
             >
               {relativeDayLabel(section.date, formatShortDate, locale)}
             </Text>
-            {section.recorded > 0 ? (
+            {/* A day's total only when it adds something: with one row it
+                repeated that row's amount above it. */}
+            {section.recorded > 1 ? (
               <PrivateAmount className="text-xs text-muted-foreground">
                 {`${section.net >= 0 ? "+" : "−"}${formatEuro(Math.abs(section.net))}`}
               </PrivateAmount>
