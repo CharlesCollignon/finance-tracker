@@ -677,6 +677,15 @@ Paris, a département, an agglomeration, a region. What carries a sale or a
 purchase price from its quarter to today.
 _Avoid_: inflation, market trend
 
+**Price history**:
+_En français_ : évolution du prix
+A property's purchase price carried quarter by quarter by its area's price
+index, from the quarter it was bought to the latest the index has: what the
+area's prices have done to it since. Not what the property itself would have
+sold for each quarter. Today's estimated value stands apart from the line
+when it comes from a market reading or the user's own figure.
+_Avoid_: valuation history, price chart, appreciation
+
 **Market reading**:
 _En français_ : relevé du marché
 What homes of one kind sold for per square metre around a property, or

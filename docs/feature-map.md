@@ -139,16 +139,18 @@ operations, returns, fund costs and what the funds are made of.
 ### Immobilier — property (`property`)
 
 Homes and premises owned: price, loans (each with its own charge), market
-value from DVF sales and the INSEE index, rental, a share of a joint home.
+value from DVF sales and the INSEE index, the price history since the
+purchase, rental, a share of a joint home.
 Behind the `property.track` flag (on by default).
 
 - **Web:** `/property` (`property/PropertyList`), `/property/[id]`
-  (`property/PropertyDetail`, `JointDeed`).
+  (`property/PropertyDetail`, `PriceHistoryCard`, `JointDeed`).
 - **Phone:** `(tabs)/property/index`, `(tabs)/property/[id]`
-  (`components/property/`).
+  (`components/property/`, with its `PriceHistoryCard`).
 - **Core:** `property`, `property-form`, `property-progress`,
-  `property-future`, `property-moments`, `loan-schedule`, `rental`,
-  `rent-reference`, `price-index`, `address-search`.
+  `property-history` (« Évolution du prix »), `property-future`,
+  `property-moments`, `loan-schedule`, `rental`, `rent-reference`,
+  `price-index`, `address-search`.
 - **Data:** `properties`.
 - **Server:** `/api/property/addresses` (IGN geocoder),
   `/api/property/market` (DVF reading); `/api/cron/market`.

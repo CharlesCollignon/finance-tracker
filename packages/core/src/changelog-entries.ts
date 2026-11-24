@@ -17,6 +17,20 @@ import type { ChangelogEntry, RoadmapItem } from "./changelog";
  */
 export const CHANGELOG: readonly ChangelogEntry[] = [
   {
+    id: "2026-11-24-web-property-price-history",
+    date: "2026-11-24",
+    kind: "new",
+    platforms: ["web"],
+    fr: {
+      title: "Immobilier : l’évolution du prix de votre bien",
+      body: "La page d’un bien montre ce que les prix de son secteur ont fait de votre prix d’achat, trimestre après trimestre, d’après l’indice Notaires-INSEE : la hausse ou la baisse depuis l’achat, une courbe à parcourir, le plus haut atteint. La valeur estimée d’après les ventes, ou la vôtre, y figure à part. C’est l’évolution du secteur, pas ce que ce bien se serait vendu chaque trimestre.",
+    },
+    en: {
+      title: "Property: your home’s price history",
+      body: "A property’s page shows what prices in its area have done to your purchase price, quarter by quarter, from the Notaires-INSEE index: the rise or fall since the purchase, a line to read along, the highest point reached. The estimated value from sales, or your own, stands apart on it. It is how the area moved, not what this home would have sold for each quarter.",
+    },
+  },
+  {
     id: "2026-11-12-web-minimal-hero",
     date: "2026-11-12",
     kind: "better",
