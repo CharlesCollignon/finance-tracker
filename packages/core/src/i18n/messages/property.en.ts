@@ -190,6 +190,20 @@ export const propertyEn = {
   valueRange: "Between {low} and {high}",
   pricePerM2: "Price per m² around it",
   pricePerM2Line: "{median} · {low} to {high}",
+  historyTitle: "Price history",
+  historyLead:
+    "Your purchase price, carried quarter by quarter by the home price index of its area (Notaires-INSEE).",
+  historySince: "Prices in the area since {quarter}",
+  historyPaid: "Purchase price",
+  historyCarried: "At the area's prices, {quarter}",
+  historyPeak: "At its highest",
+  historyEstimateMarket: "Estimated value from sales",
+  historyEstimateOwn: "Your own estimate",
+  historyStartsLate:
+    "The index is followed since {quarter}: the line starts there, not at your purchase.",
+  historyNote:
+    "What prices in the area have done to your purchase price, not what this home would have sold for each quarter.",
+  historyChartLabel: "Price history, quarter by quarter",
   longViewGrowth: "Growth a year",
 
   rooms: "Rooms",

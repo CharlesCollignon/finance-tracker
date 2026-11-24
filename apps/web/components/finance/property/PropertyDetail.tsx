@@ -28,6 +28,7 @@ import {
   valueSourceLine,
 } from "@finance/core/property";
 import { formatRecurrenceSchedule } from "@finance/core/recurrence";
+import { priceHistory } from "@finance/core/property-history";
 import { equityMoment, loanMoment } from "@finance/core/property-moments";
 import { loanProgress, ownership } from "@finance/core/property-progress";
 import { isLet } from "@finance/core/rental";
@@ -61,6 +62,7 @@ import { useMomentSeen } from "@/components/motion/use-moment-seen";
 import { cn } from "@/lib/utils";
 import { AmountEditor, Fact } from "./property-controls";
 import { LoanTrack, OwnershipBar, PaymentBar } from "./ProgressBars";
+import { PriceHistoryCard } from "./PriceHistoryCard";
 import { RentalSection } from "./RentalSection";
 import { useReadingWait } from "./use-reading-wait";
 import { LoanSheet } from "./LoanSheet";
@@ -113,6 +115,7 @@ export function PropertyDetail({
   );
   const source = position.estimate.source;
   const partOwned = property.ownership_share < 1;
+  const history = priceHistory(property, detail.market, position.estimate);
 
   return (
     <>
@@ -285,6 +288,8 @@ export function PropertyDetail({
             ) : null}
           </div>
         </Card.Bezel>
+
+        {history ? <PriceHistoryCard history={history} /> : null}
 
         {isLet(property.usage) ? (
           <RentalSection detail={detail} position={position} today={today} />

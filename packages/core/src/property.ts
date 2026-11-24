@@ -20,7 +20,7 @@ import {
   type LoanPayment,
   type LoanTerms,
 } from "./loan-schedule";
-import type { Carry } from "./price-index";
+import type { Carry, CarryStep } from "./price-index";
 import { MAX_AMOUNT_DRIFT, MIN_AMOUNT_TOLERANCE } from "./recurring-fulfilment";
 import type { Property, PropertyLoan } from "./types/database";
 
@@ -106,6 +106,11 @@ export interface MarketContext {
   } | null;
   /** How the purchase price moves to the latest quarter, when the index can say. */
   purchaseCarry: Carry | null;
+  /**
+   * The same move quarter by quarter, for the price history
+   * (`property-history.ts`). Absent or empty: there is none to draw.
+   */
+  purchasePath?: readonly CarryStep[];
 }
 
 /**

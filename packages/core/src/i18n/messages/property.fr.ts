@@ -191,6 +191,20 @@ export const propertyFr: typeof propertyEn = {
   valueRange: "Entre {low} et {high}",
   pricePerM2: "Prix au m² alentour",
   pricePerM2Line: "{median} · de {low} à {high}",
+  historyTitle: "Évolution du prix",
+  historyLead:
+    "Votre prix d'achat, porté trimestre après trimestre par l'indice des prix des logements de son secteur (Notaires-INSEE).",
+  historySince: "Les prix du secteur depuis {quarter}",
+  historyPaid: "Prix d'achat",
+  historyCarried: "Au prix du secteur, {quarter}",
+  historyPeak: "Au plus haut",
+  historyEstimateMarket: "Valeur estimée d'après les ventes",
+  historyEstimateOwn: "Votre estimation",
+  historyStartsLate:
+    "L'indice est suivi depuis {quarter} : la courbe part de là, pas de votre achat.",
+  historyNote:
+    "Ce que les prix du secteur ont fait de votre prix d'achat, pas ce que ce bien se serait vendu chaque trimestre.",
+  historyChartLabel: "Évolution du prix, trimestre par trimestre",
   longViewGrowth: "Hausse par an",
 
   rooms: "Pièces",
