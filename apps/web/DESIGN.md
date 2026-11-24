@@ -990,6 +990,21 @@ patrimoine, savings and investments, with the split under it.
 - The split covers every account kept, savings accounts included; its bars
   are one colour, and the label says which account.
 
+### Immobilier: The Price History
+
+A property's page carries « Évolution du prix » under its value card: one
+figure (the move of the area's prices since the purchase, never coloured: it
+is a fact about the area, not a result) over a `HistoryLine`
+(`components/finance/charts/`), then the amounts a reader looks for. The
+line is the purchase price carried by the index. Today's estimated value,
+when it comes from a market reading or the user's own figure, is a hollow
+mark at the right edge, never the line's end.
+
+- `HistoryLine` is the chart for any dated run with a scale: one line in
+  `--primary` over a faint wash, round amounts in a gutter of their own so
+  none sits on the line, and a point read under the pointer, a finger or the
+  arrow keys. It fades in and otherwise holds still.
+
 ### Signature: The Privacy Blur
 
 Any element marked `.privacy-amount` or `.privacy-sensitive` blurs to `7px`

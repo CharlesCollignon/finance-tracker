@@ -1,5 +1,5 @@
 /**
- * The chart vocabulary: three marks, and not one of them costs a runtime.
+ * The chart vocabulary: four marks, and not one of them costs a runtime.
  *
  * The app had drifted to five ways of drawing a chart — a charting library on
  * two screens, a hand-written donut on a third, CSS bars on a fourth, a
@@ -9,6 +9,7 @@
  *   BarSeries     one series over time     plain elements
  *   SpendStrip    a whole split as one bar plain elements
  *   Sparkline     the shape of a run       inline SVG
+ *   HistoryLine   a dated run with its scale inline SVG, read under a pointer
  *
  * There was a fifth: an ECharts line on Wallets, plotting a position's value
  * against what had been put into it. It went when the question changed. What
@@ -25,3 +26,4 @@
 export { BarSeries, type BarPoint } from "./BarSeries";
 export { SpendStrip } from "./SpendStrip";
 export { Sparkline } from "./Sparkline";
+export { HistoryLine } from "./HistoryLine";

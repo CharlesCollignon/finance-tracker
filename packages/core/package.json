@@ -159,6 +159,7 @@
     "./loan-schedule": "./src/loan-schedule.ts",
     "./property": "./src/property.ts",
     "./property-future": "./src/property-future.ts",
+    "./property-history": "./src/property-history.ts",
     "./property-moments": "./src/property-moments.ts",
     "./property-progress": "./src/property-progress.ts",
     "./validations/property": "./src/validations/property.ts",

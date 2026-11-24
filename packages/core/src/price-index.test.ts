@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  carryPath,
   carryToLatest,
   INDEX_SERIES,
   inseeIndexUrl,
@@ -109,6 +110,42 @@ describe("carryToLatest", () => {
       carryToLatest(index, ["010567011", "010567077"], "2026-Q2")?.series,
     ).toBe("010567077");
     expect(carryToLatest(index, ["010567011"], "2026-Q2")).toBeNull();
+  });
+});
+
+describe("carryPath", () => {
+  const index = priceIndexFromRows([
+    { series: "010567013", quarter: "2022-Q4", value: 131.0 },
+    { series: "010567013", quarter: "2023-Q1", value: 130.4 },
+    { series: "010567013", quarter: "2024-Q1", value: 120.2 },
+    { series: "010567013", quarter: "2026-Q2", value: 120.6 },
+    { series: "010567077", quarter: "2026-Q2", value: 116.9 },
+  ]);
+
+  it("gives every quarter from the purchase to the latest, the first at one", () => {
+    const path = carryPath(index, ["010567013"], "2023-Q1");
+    expect(path.map((step) => step.quarter)).toEqual([
+      "2023-Q1",
+      "2024-Q1",
+      "2026-Q2",
+    ]);
+    expect(path[0]!.factor).toBe(1);
+    expect(path[1]!.factor).toBeCloseTo(120.2 / 130.4, 10);
+  });
+
+  it("ends on the factor carryToLatest gives", () => {
+    const path = carryPath(index, ["010567013"], "2023-Q3");
+    expect(path[0]!.quarter).toBe("2023-Q1");
+    expect(path.at(-1)!.factor).toBeCloseTo(
+      carryToLatest(index, ["010567013"], "2023-Q3")!.factor,
+      10,
+    );
+  });
+
+  it("is empty when nothing carries the price, or it is already the latest", () => {
+    expect(carryPath(index, ["010567011"], "2023-Q1")).toEqual([]);
+    expect(carryPath(index, ["010567013"], "2026-Q2")).toEqual([]);
+    expect(carryPath(index, ["010567077"], "2020-Q1")).toEqual([]);
   });
 });
 

@@ -8,6 +8,7 @@ import {
 import type { MarketReading } from "@finance/core/market-reading";
 import { allRows } from "@finance/core/paging";
 import {
+  carryPath,
   carryToLatest,
   priceIndexFromRows,
   quarterOf,
@@ -425,6 +426,11 @@ export async function getProperties(
             }
           : null,
         purchaseCarry: carryToLatest(
+          index,
+          candidates.get(property.id) ?? [],
+          quarterOf(property.purchased_on),
+        ),
+        purchasePath: carryPath(
           index,
           candidates.get(property.id) ?? [],
           quarterOf(property.purchased_on),

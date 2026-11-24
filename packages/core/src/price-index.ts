@@ -236,6 +236,36 @@ export function carryToLatest(
   return null;
 }
 
+/** One quarter along a carry. */
+export interface CarryStep {
+  quarter: string;
+  /** What a price of the carry's first quarter is multiplied by to be this quarter's. */
+  factor: number;
+}
+
+/**
+ * The same carry as `carryToLatest`, quarter by quarter: every quarter the
+ * series has from the one the price is carried from to its latest, the
+ * first at a factor of one. Empty when nothing carries it, or when the
+ * price is already of the latest quarter.
+ */
+export function carryPath(
+  index: PriceIndex,
+  candidates: readonly string[],
+  fromQuarter: string,
+): CarryStep[] {
+  const carry = carryToLatest(index, candidates, fromQuarter);
+  const series = carry ? index.get(carry.series) : undefined;
+  if (!carry || !series || carry.from === carry.to) {
+    return [];
+  }
+  const start = series.get(carry.from)!;
+  return [...series.keys()]
+    .filter((quarter) => quarter >= carry.from && quarter <= carry.to)
+    .sort()
+    .map((quarter) => ({ quarter, factor: series.get(quarter)! / start }));
+}
+
 const INSEE_SDMX = "https://bdm.insee.fr/series/sdmx/data/SERIES_BDM/";
 
 /** The request for `series` from `startQuarter` on: one call for all. */

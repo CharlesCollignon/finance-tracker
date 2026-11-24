@@ -484,6 +484,14 @@ split across every account kept with its targets, and the fees, where a
 savings account reads "No fees". An account is named by its short name
 (`ENVELOPE_SHORT_KEYS`) everywhere — "Life insurance", never "AV".
 
+### Immobilier
+
+A property's screen carries « Évolution du prix » under its value card, as
+on the web: the move of the area's prices since the purchase (not coloured),
+over a `HistoryLine` (`components/charts/`) a finger reads along with a tick
+per quarter, then the purchase price, its value at the area's prices, and
+the estimated value as a hollow mark apart from the line.
+
 ### Sheets and Modals
 
 Bottom sheets carry a grabber and are the default for a focused sub-task;
