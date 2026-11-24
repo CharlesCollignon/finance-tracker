@@ -116,12 +116,14 @@ operations, returns, fund costs and what the funds are made of.
 
 - **Web:** `/investments` (`InvestmentsView`, `investments/`, `accounts/`,
   `InvestmentPositionSheet`, `PeaCard`), `/investments/analysis`
-  (`analysis/AnalysisView`, `FundCostCard`, `AllocationCard`),
-  `/investments/look-through` (`LookThroughView`, `look-through/`).
+  (`analysis/AnalysisView`, `analysis/HoldingsCard` « Toutes vos lignes »,
+  `FundCostCard`, `AllocationCard`), `/investments/look-through`
+  (`LookThroughView`, `look-through/`).
 - **Phone:** `(tabs)/investments` (`InvestmentPositionTile`,
-  `accounts/AccountChipRow`, `WalletEventsSheet`), `(tabs)/analysis`,
-  `(tabs)/look-through`.
-- **Core:** `investments`, `investment-positions`, `investment-returns`,
+  `accounts/AccountChipRow`, `WalletEventsSheet`), `(tabs)/analysis`
+  (`HoldingsCard`), `(tabs)/look-through`.
+- **Core:** `investments`, `investment-positions`, `holdings-overview`,
+  `investment-returns`,
   `investment-events`, `investment-upcoming`, `investment-streak`,
   `savings-accounts`, `allocation`, `fund-costs`, `pea`, `xirr`,
   `look-through`, `look-through-facts`, `wallet-read`, `instrument-reading`,

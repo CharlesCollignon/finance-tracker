@@ -484,6 +484,13 @@ split across every account kept with its targets, and the fees, where a
 savings account reads "No fees". An account is named by its short name
 (`ENVELOPE_SHORT_KEYS`) everywhere — "Life insurance", never "AV".
 
+Analysis also carries « Toutes vos lignes » (`HoldingsCard`): every holding
+of every wallet, largest first, with its value, its share as one neutral
+bar, the holder's return (coloured) and the instrument's price move over a
+chosen range (grey). The same two percentages sit on a tile: the return in
+its pill, the year's price move at the end of the grey line. They are never
+shown in the same colour.
+
 ### Immobilier
 
 A property's screen carries « Évolution du prix » under its value card, as

@@ -989,6 +989,15 @@ patrimoine, savings and investments, with the split under it.
   each month, wallets then savings accounts, in the same pill.
 - The split covers every account kept, savings accounts included; its bars
   are one colour, and the label says which account.
+- **Two percentages, never mixed.** The holder's return (gain over what was
+  put in) is coloured, on a tile's pill, under an account's gain and in the
+  hero. The instrument's price move over the chosen range is grey, like the
+  tile's price line it ends: the figure at the foot of a tile, and the
+  « Cours » column of « Toutes vos lignes ».
+- « Toutes vos lignes » (Analyse) lists every holding of every wallet,
+  largest first, with its share as one neutral bar. A weight is a fact
+  there: no target, no warning colour.
+- The next planned purchase is one muted line under the monthly tags.
 
 ### Immobilier: The Price History
 
