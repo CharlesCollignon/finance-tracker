@@ -29,6 +29,7 @@ import {
   valueSourceLine,
 } from "@finance/core/property";
 import { formatRecurrenceSchedule } from "@finance/core/recurrence";
+import { priceHistory } from "@finance/core/property-history";
 import { equityMoment, loanMoment } from "@finance/core/property-moments";
 import { loanProgress, ownership } from "@finance/core/property-progress";
 import { isLet } from "@finance/core/rental";
@@ -46,6 +47,7 @@ import { AnimatedAmount } from "@/components/AnimatedAmount";
 import { FadeIn } from "@/components/motion/FadeIn";
 import { LoanTrack, OwnershipBar, PaymentBar } from "@/components/property/ProgressBars";
 import { JointDeed, type JointDeedView } from "@/components/property/JointDeed";
+import { PriceHistoryCard } from "@/components/property/PriceHistoryCard";
 import { EditPropertySheet, LoanSheet } from "@/components/property/PropertySheets";
 import { RentalSection } from "@/components/property/RentalSection";
 import { PrivateAmount } from "@/components/PrivateAmount";
@@ -194,6 +196,7 @@ export default function PropertyDetailScreen() {
   const source = position.estimate.source;
   const partOwned = property.ownership_share < 1;
   const attached = templates.filter((template) => template.attached);
+  const history = priceHistory(property, detail.market, position.estimate);
 
   return (
     <Screen title={property.name} back={back}>
@@ -333,6 +336,12 @@ export default function PropertyDetailScreen() {
           </View>
         </Card>
         </FadeIn>
+
+        {history ? (
+          <FadeIn>
+            <PriceHistoryCard history={history} />
+          </FadeIn>
+        ) : null}
 
         {isLet(property.usage) ? (
           <FadeIn>
