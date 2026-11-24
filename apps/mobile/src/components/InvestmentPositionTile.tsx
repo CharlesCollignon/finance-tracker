@@ -127,13 +127,30 @@ export function InvestmentPositionTile({
 
       {/* Its room kept when there is no line, so the figures of two tiles
           side by side sit on one level. */}
-      <View className="h-6">
+      <View className="h-6 flex-row items-center gap-2">
         {hasLine ? (
-          <PriceSparkline
-            values={priceLine!.values}
-            color={colors.mutedForeground}
-            style={{ left: 0, right: 0, top: 0, bottom: 0 }}
-          />
+          <>
+            <View className="h-6 flex-1">
+              <PriceSparkline
+                values={priceLine!.values}
+                color={colors.mutedForeground}
+                style={{ left: 0, right: 0, top: 0, bottom: 0 }}
+              />
+            </View>
+            {/* The line's own figure, in the line's grey: the price's move
+                over the year, not the holder's return. */}
+            {priceLine!.changePct !== null ? (
+              <Text
+                variant="micro"
+                className="tabular-nums"
+                accessibilityLabel={t("wallets.priceMove", {
+                  change: formatSignedPercent(priceLine!.changePct, locale),
+                })}
+              >
+                {formatSignedPercent(priceLine!.changePct, locale)}
+              </Text>
+            ) : null}
+          </>
         ) : null}
       </View>
     </Pressable>

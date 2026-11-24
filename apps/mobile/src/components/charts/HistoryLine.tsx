@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from "react";
+import { useId, useMemo, useRef, useState } from "react";
 import { View, type GestureResponderEvent } from "react-native";
 import Animated, { useReducedMotion } from "react-native-reanimated";
 import Svg, { Circle, Defs, Line, LinearGradient, Path, Stop } from "react-native-svg";
@@ -48,6 +48,8 @@ export function HistoryLine({
 }) {
   const colors = useThemeColors();
   const reduce = useReducedMotion();
+  // Its own id, so two charts on a screen never share a wash.
+  const washId = `history-wash-${useId().replace(/[^a-zA-Z0-9]/g, "")}`;
   const [width, setWidth] = useState(0);
   const lastIndex = useRef<number | null>(null);
   const last = values.length - 1;
@@ -147,12 +149,12 @@ export function HistoryLine({
             style={{ position: "absolute", left: 0, top: 0 }}
           >
             <Defs>
-              <LinearGradient id="history-wash" x1="0" y1="0" x2="0" y2="1">
+              <LinearGradient id={washId} x1="0" y1="0" x2="0" y2="1">
                 <Stop offset="0" stopColor={colors.primary} stopOpacity={0.18} />
                 <Stop offset="1" stopColor={colors.primary} stopOpacity={0} />
               </LinearGradient>
             </Defs>
-            <Path d={geometry.wash} fill="url(#history-wash)" />
+            <Path d={geometry.wash} fill={`url(#${washId})`} />
             <Path
               d={geometry.line}
               fill="none"
